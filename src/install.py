@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""Currently unused; intended as a standalone installer script for the package's
+conda environments and supporting data.
+"""
+
 import sys
 # do version check before importing other stuff
 if sys.version_info[0] != 3 or sys.version_info[1] < 7:
@@ -43,7 +47,7 @@ def fatal_exception_handler(exc, msg=None):
     print('ERROR: caught exception {0}({1!r})'.format(type(exc).__name__, exc.args))
     if msg:
         print(msg)
-    exit(1)
+    util.exit_handler(code=1)
 
 def find_conda(code_root, conda_config):
     """Attempt to determine conda location on this system.
@@ -78,7 +82,7 @@ def conda_env_create(envs, code_root, conda_config):
         print(("To use envs interactively, run `conda config --append envs_dirs "
             '"{conda_env_root}"`'.format(**conda_config)))
         flags = flags + ' --env_dir "{conda_env_root}"'.format(**conda_config)
-    else: 
+    else:
         print("Installing envs into system conda")
     try:
         _ = shell_command_wrapper(conda_config['setup_script'] + flags)
@@ -97,7 +101,7 @@ def ftp_download(ftp_config, ftp_data, install_config):
             if num < step_unit:
                 return "%3.1f %s" % (num, x)
             num /= step_unit
-    
+
     try:
         print("Initiating anonymous FTP connection to {}.".format(ftp_config['host']))
         ftp = ftplib.FTP(**ftp_config)
@@ -108,10 +112,10 @@ def ftp_download(ftp_config, ftp_data, install_config):
         # solution from https://stackoverflow.com/a/19693709 tried previously
         ftp.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         ftp.voidcmd('NOOP') # test connection
-    except Exception as exc:  
+    except Exception as exc:
         # do whatever we can to cleanup gracefully before exiting
         try: ftp.quit()
-        except Exception: 
+        except Exception:
             pass
         fatal_exception_handler(exc,
             "ERROR: could not establish FTP connection to {}.".format(ftp_config['host'])
@@ -143,7 +147,7 @@ def ftp_download(ftp_config, ftp_data, install_config):
         # ftp may have closed if we hit an error
         ftp.voidcmd('NOOP')
         ftp.quit()
-    except Exception: 
+    except Exception:
         pass
     print("Closed connection to {}.".format(ftp_config['host']))
 
@@ -159,13 +163,13 @@ def untar_data(ftp_data, install_config):
             # Location on Yosemite and earlier
             test_path = "/System/Library/CoreServices/Archive Utility.app"
             if os.path.exists(test_path):
-                tar_cmd = tar_cmd.format(test_path)    
+                tar_cmd = tar_cmd.format(test_path)
             else:
                 print("ERROR: could not find Archive Utility.app.")
-                exit(1)
+                util.exit_handler(code=1)
     else:
         tar_cmd = 'tar -xf '
-    
+
     for f in iter(ftp_data.values()):
         print("Extracting {}".format(f.file))
         cwd = install_config[f.target_dir]
@@ -230,7 +234,7 @@ def framework_test(code_root, output_dir, cli_config):
         log_str = shell_command_wrapper(
             './mdtf -f {input_file}'.format(
                 input_file=os.path.join(code_root, cli_config['config_out'])
-            ), 
+            ),
             cwd=code_root
         )
         log_str = util.to_iter(log_str)
@@ -240,7 +244,7 @@ def framework_test(code_root, output_dir, cli_config):
             raise IOError("Can't find framework output in {}".format(abs_out_dir))
         run_output = max(runs, key=os.path.getmtime)
         with io.open(
-            os.path.join(run_output, 'mdtf_test.log'), 
+            os.path.join(run_output, 'mdtf_test.log'),
             'w', encoding='utf-8'
         ) as f:
             f.write('\n'.join(log_str))
@@ -262,7 +266,7 @@ def framework_verify(code_root, run_output):
     if missing_dict:
         print("ERROR: the following files are missing:")
         print(util.pretty_print_json(missing_dict))
-        exit(1)
+        util.exit_handler(code=1)
     print("SUCCESS: no missing links found.")
     print("Finished: framework test run successful!")
 
@@ -271,7 +275,7 @@ def framework_verify(code_root, run_output):
 # classes just handle the configuration logic
 
 
-class InstallCLIHandler(cli.CLIHandler):
+class InstallCLIHandler(cli.MDTFArgParser):
     def make_parser(self, d):
         _ = d.setdefault('usage', "%(prog)s [options] [env_setup]")
         p = super(InstallCLIHandler, self).make_parser(d)
@@ -302,7 +306,7 @@ class MDTFInstaller(object):
         self.get_config(args)
         self.parse_config()
         self.print_config()
-    
+
     def get_config(self, args=None):
         # assemble from CLI
         cli_dict = util.read_json(
@@ -328,7 +332,7 @@ class MDTFInstaller(object):
             d.downloads_list.append('model_cesm')
         if not d.no_am4:
             d.downloads_list.append('model_am4')
-        
+
         # determine runtime setup
         d.pods = 'all'
         d.conda_envmgr = True
@@ -399,7 +403,7 @@ class MDTFInstaller(object):
 # ------------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    # get dir of currently executing script: 
+    # get dir of currently executing script:
     cwd = os.path.dirname(os.path.realpath(__file__))
     code_root, src_dir = os.path.split(cwd)
     install = MDTFInstaller(code_root, os.path.join(src_dir, 'install_settings.jsonc'))

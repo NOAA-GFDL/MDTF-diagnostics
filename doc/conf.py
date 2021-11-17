@@ -14,26 +14,52 @@
 #
 import os
 import sys
+import re
+import abc
+import inspect
+import unittest.mock as mock
+import traceback
+stdlib_path = os.path.dirname(traceback.__file__)
 cwd = os.path.dirname(os.path.realpath(__file__))
+code_root = os.path.abspath(os.path.join(cwd, '..'))
 sys.path.insert(0, os.path.abspath(cwd))
-sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..')))
-sys.path.insert(0, os.path.abspath(os.path.join(cwd, '..', 'src')))
+sys.path.insert(0, code_root)
+sys.path.insert(0, os.path.join(code_root, 'src'))
 
 # AutoStructify needed for getting full Sphinx features from markdown (.md) files
 # https://recommonmark.readthedocs.io/en/latest/auto_structify.html
 import recommonmark
 from recommonmark.transform import AutoStructify
 
-# mock out imports of non-standard library modules here if needed in future
-autodoc_mock_imports = []
-import unittest.mock as mock
-for module_name in autodoc_mock_imports:
-    sys.modules[module_name] = mock.Mock()
+# mock out imports of non-standard library modules -- not installed when
+# we build docs on readthedocs
+autodoc_mock_imports = [
+    'numpy', 'xarray', 'cftime', 'cfunits', 'cf_xarray',
+    'pandas', 'intake', 'intake_esm'
+]
+# need to manually mock out explicit patching of cf_xarray.accessor done
+# on import in xr_parser; may be possible to do this with mock.patch() but the
+# following works
+mock_accessor = mock.Mock()
+mock_accessor.configure_mock(**({
+    '__name__': 'accessor', '__doc__': '', # for functools.wraps
+    'CFDatasetAccessor': object, 'CFDataArrayAccessor': object
+}))
+sys.modules['cf_xarray'] = mock.Mock()
+setattr(sys.modules['cf_xarray'], 'accessor', mock_accessor)
+
+# Also necessary to manually mock out cfunits.Units since src.units.Units
+# inherits from it.
+class DummyUnits():
+    def __init__(self, units=None, calendar=None, formatted=False, names=False,
+        definition=False, _ut_unit=None):
+        pass
+mock.patch('src.util.units.cfunits.Units', autospec=DummyUnits)
 
 # -- Project information -----------------------------------------------------
 
 project = u'MDTF Diagnostics'
-copyright = u'2020, Model Diagnostics Task Force'
+copyright = u'2021, Model Diagnostics Task Force'
 author = u'Model Diagnostics Task Force'
 
 # The short X.Y version
@@ -92,7 +118,11 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store']
+# NB: this is *only* applied to built .rst files, not to the imports done
+# by sphinx-apidoc.
+exclude_patterns = [u'_build', 'Thumbs.db',
+    '**/test*'
+]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'default'
@@ -102,18 +132,18 @@ pygments_style = 'default'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
 html_theme = 'alabaster'
 
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-#
+# Theme options are theme-specific.
+# See https://alabaster.readthedocs.io/en/latest/customization.html
 html_theme_options = {
+    'page_width': '1024px',
+    'sidebar_collapse': False,
+    'fixed_sidebar': False,
     'extra_nav_links' : {
-        "Getting Started (PDF)": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_getting_started.pdf",
-        "Developer's Walkthough (PDF)": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_walkthrough.pdf",
-        "Full documentation (PDF)": "https://mdtf-diagnostics.readthedocs.io/_/downloads/en/latest/pdf/"
+        "Getting Started [PDF]": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_getting_started.pdf",
+        "Developer's Walkthough [PDF]": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_walkthrough.pdf",
+        "Full documentation [PDF]": "https://mdtf-diagnostics.readthedocs.io/_/downloads/en/latest/pdf/"
     }
 }
 
@@ -124,9 +154,9 @@ html_theme_options = {
 html_static_path = ['_static']
 
 # # Paths (filenames) here must be relative to (under) html_static_path as above:
-# html_css_files = [
-#     'custom.css',
-# ]
+html_css_files = [
+    '_static/custom.css',
+]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -160,19 +190,20 @@ latex_elements = {
     'pointsize': '11pt',
     # fonts
     'fontpkg': r'''
-        \usepackage{fontspec}
+        \RequirePackage{fontspec}
         % RTD uses a texlive installation on linux; apparently xelatex can only
         % find fonts by filename in this situation.
         \setmainfont{texgyretermes-regular.otf}
         \setsansfont{Heuristica-Bold.otf}
     ''',
+    'geometry': r"\usepackage[xetex,letterpaper]{geometry}",
     # chapter style
-    'fncychap': '\\usepackage[Bjarne]{fncychap}',
+    'fncychap': r"\usepackage[Bjarne]{fncychap}",
     # Latex figure (float) alignment
     'figure_align': 'H',
     # Additional stuff for the LaTeX preamble.
     'preamble': r"""
-        \usepackage{unicode-math}
+        \RequirePackage{unicode-math}
         \makeatletter
         \fancypagestyle{normal}{
             \fancyhf{}
@@ -189,6 +220,7 @@ latex_elements = {
             \fancyfoot[LE,RO]{{\py@HeaderFamily\thepage}}
             \renewcommand{\footrulewidth}{0pt}
         }
+        \setlength{\headheight}{13.61pt} % otherwise get errors from fancyhdr
         \makeatother
     """,
     'extraclassoptions': 'openany'
@@ -200,22 +232,22 @@ latex_documents = [
     (
         # "Main" PDF containing all source files. This is built automatically by
         # ReadTheDocs (filename is fixed by the RTD account name).
-        'tex_all', 'mdtf-diagnostics.tex', 
+        'tex_all', 'mdtf-diagnostics.tex',
         u'MDTF Diagnostics Documentation', author, 'manual'
     ),(
-        # Secondary PDF. Sphinx will build multiple PDFs, but as far as I can 
-        # tell, ReadTheDocs won't (linked open issues in prior commits to this 
-        # file?). Instead these are currently built manually and checked into 
-        # /docs/static_. The ".tex_" extension is to prevent an error in RTD's 
+        # Secondary PDF. Sphinx will build multiple PDFs, but as far as I can
+        # tell, ReadTheDocs won't (linked open issues in prior commits to this
+        # file?). Instead these are currently built manually and checked into
+        # /docs/static_. The ".tex_" extension is to prevent an error in RTD's
         # build process if it finds multiple .tex files, and doesn't affect sphinx.
-        'tex_getting_started', 'MDTF_getting_started.tex_', 
-        u"MDTF Getting Started Guide", 
-        r"Thomas Jackson (GFDL) \and Yi-Hung Kuo (UCLA) \and Dani Coleman (NCAR)", 
+        'tex_getting_started', 'MDTF_getting_started.tex_',
+        u"MDTF Getting Started Guide",
+        r"Thomas Jackson (GFDL) \and Yi-Hung Kuo (UCLA) \and Dani Coleman (NCAR)",
         'manual'
     ),(
         # another secondary PDF.
-        'tex_walkthrough', 'MDTF_walkthrough.tex_', 
-        u"MDTF Developer's Walkthrough", 
+        'tex_walkthrough', 'MDTF_walkthrough.tex_',
+        u"MDTF Developer's Walkthrough",
         (
         r"Yi-Hung Kuo\textsuperscript{a} \and Dani Coleman\textsuperscript{b} "
         r"\and Thomas Jackson\textsuperscript{c} \and Chih-Chieh (Jack) Chen\textsuperscript{b} "
@@ -228,13 +260,8 @@ latex_documents = [
 ]
 
 latex_additional_files = [
-    'latex/sphinxmdtfhowto.cls',
     'latex/latexmkrc'
 ]
-
-# latex_docclass = {
-#     'mdtfhowto': 'mdtfhowto'
-# }
 
 latex_logo = 'img/CPO_MAPP_MDTF_Logo.jpg'
 
@@ -298,17 +325,95 @@ epub_exclude_files = ['search.html']
 # set options, see http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 autodoc_member_order = 'bysource'
 autodoc_default_options = {
-    'member-order': 'bysource',
-    'special-members': '__init__',
-    'private-members': False,
-    'undoc-members': True,
-    'show-inheritance': True
+    'special-members': '__init__, __post_init__',
+    'inherited-members': True
 }
+
+def no_namedtuple_attrib_docstring(app, what, name, obj, options, lines):
+    """Remove duplicated doc info in namedtuples.
+    https://chrisdown.name/2015/09/20/removing-namedtuple-docstrings-from-sphinx.html
+    """
+    is_namedtuple_docstring = (
+        len(lines) == 1 and
+        lines[0].startswith('Alias for field number')
+    )
+    if is_namedtuple_docstring:
+        # We don't return, so we need to purge in-place
+        del lines[:]
+
+def abbreviate_logger_in_signature(app, what, name, obj, options, signature,
+    return_annotation):
+    """Abbreviate logger arguments in function/method signatures.
+    """
+    if isinstance(signature, str):
+        signature = re.sub(r'log=<Logger[^>]+>', r'log=<Logger>', signature)
+    return (signature, return_annotation)
+
+def skip_members_handler(app, what, name, obj, skip, options):
+    """1) Skip unit test related classes and methods;
+    2) Skip all inherited methods from python builtins,
+    3) Skip __init__ on abstract base classes.
+    """
+    def _get_class_that_defined_method(meth):
+        # https://stackoverflow.com/a/25959545
+        if inspect.ismethod(meth) or (
+            inspect.isbuiltin(meth) and getattr(meth, '__self__', None) is not None \
+                and getattr(meth.__self__, '__class__', None)
+        ):
+            for cls in inspect.getmro(meth.__self__.__class__):
+                if meth.__name__ in cls.__dict__:
+                    return cls
+            meth = getattr(meth, '__func__', meth)  # fallback to __qualname__ parsing
+        if inspect.isfunction(meth):
+            cls = getattr(inspect.getmodule(meth),
+                        meth.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0],
+                        None)
+            if isinstance(cls, type):
+                return cls
+        return getattr(meth, '__objclass__', None)  # handle special descriptor objects
+
+    try:
+        # other methods of excluding unit tests aren't working?
+        if what in ('module', 'class') and name.startswith('test_'):
+            return True
+
+        cls_ = None
+        if what in ('class', 'exception', "method", "attribute"):
+            cls_ = _get_class_that_defined_method(obj)
+        if cls_ is None:
+            cls_ = obj
+
+        # Suppress init on abstract classes
+        if name == '__init__':
+            if inspect.isabstract(cls_) or issubclass(cls_, abc.ABC):
+                return True
+
+        # Resort to manually excluding methods on some builtins
+        if issubclass(cls_, tuple) and name in ('count', 'index'):
+            return True
+        if issubclass(cls_, dict) and name in ('copy', 'clear', 'fromkeys', 'get',
+            'items', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values'):
+            return True
+
+        # # We set 'inherited-members': True to include inherited methods, but this
+        # # brings in methods inherited from python builtins etc. To exclude these,
+        # # skip any item that wasn't defined by code in the repo.
+        if inspect.isbuiltin(obj) or inspect.isbuiltin(cls_):
+            return True
+        try:
+            if inspect.getfile(cls_).startswith(stdlib_path):
+                return True
+        except TypeError:
+            return None
+
+        return None # value for default behavior
+    except Exception:
+        return None
 
 # generate autodocs by running sphinx-apidoc when evaluated on readthedocs.org.
 # source: https://github.com/readthedocs/readthedocs.org/issues/1139#issuecomment-398083449
 def run_apidoc(_):
-    ignore_paths = []
+    ignore_paths = ["**/test*"]
     argv = ["--force", "--no-toc", "--separate", "-o", "./sphinx", "../src"
         ] + ignore_paths
 
@@ -324,7 +429,7 @@ def run_apidoc(_):
 
 # -- Extensions to the Napoleon GoogleDocstring class ---------------------
 # copied from: https://michaelgoerz.net/notes/extending-sphinx-napoleon-docstring-sections.html
-# purpose: provide correct formatting of class attributes when documented 
+# purpose: provide correct formatting of class attributes when documented
 # with Google-style docstrings.
 
 from sphinx.ext.napoleon.docstring import GoogleDocstring
@@ -351,8 +456,16 @@ def patched_parse(self):
 GoogleDocstring._unpatched_parse = GoogleDocstring._parse
 GoogleDocstring._parse = patched_parse
 
+napoleon_include_private_with_doc = False
+
 # -- Options for intersphinx extension -----------------------------------------
-intersphinx_mapping = {'python': ('https://docs.python.org/3.7', None)}
+# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3.7', None),
+    'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
+    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    'xarray': ('http://xarray.pydata.org/en/stable/', None)
+}
 
 # -- Options for todo extension ----------------------------------------------
 
@@ -364,7 +477,9 @@ todo_include_todos = True
 def setup(app):
     # register autodoc events
     app.connect('builder-inited', run_apidoc)
-    # app.connect('autodoc-skip-member', autodoc_skip_member)
+    app.connect('autodoc-process-docstring', no_namedtuple_attrib_docstring)
+    app.connect('autodoc-process-signature', abbreviate_logger_in_signature)
+    app.connect('autodoc-skip-member', skip_members_handler)
 
     # AutoStructify for recommonmark
     # see eg https://stackoverflow.com/a/52430829

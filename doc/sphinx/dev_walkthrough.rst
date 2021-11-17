@@ -1,3 +1,7 @@
+.. role:: console(code)
+   :language: console
+   :class: highlight
+
 .. _ref-dev-walkthrough:
 
 Walkthrough of framework operation
@@ -21,7 +25,7 @@ Step 1: Framework invocation
 
 The user runs the framework by executing the framework’s main driver script ``$CODE_ROOT/mdtf``, rather than executing the PODs directly. This is where the user specifies the model run to be analyzed, and chooses which PODs to run via the ``pod_list`` section in ``default_tests.jsonc``.
 
-- Some of the configuration options can be input through command line, see the :doc:`command line reference <ref_cli>` or run ``% $CODE_ROOT/mdtf --help``.
+- Some of the configuration options can be input through command line, see the :doc:`command line reference <ref_cli>` or run :console:`% $CODE_ROOT/mdtf --help`.
 
 At this stage, the framework also creates the directory ``$OUTPUT_DIR/`` (default: ``mdtf/wkdir/``) and all subdirectories therein for hosting the output files by the framework and PODs from each run.
 

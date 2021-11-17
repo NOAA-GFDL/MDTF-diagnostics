@@ -12,7 +12,7 @@ from src.util.datelabel import DateFrequency
 class TestDiagnosticInit(unittest.TestCase):
     # pylint: disable=maybe-no-member
     default_pod_CF = {
-        'settings':{}, 
+        'settings':{},
         'varlist':[{'var_name': 'pr_var', 'freq':'mon'}]
         }
     dummy_paths = {
@@ -27,7 +27,7 @@ class TestDiagnosticInit(unittest.TestCase):
     @mock.patch('src.configs.util.read_json', return_value=dummy_var_translate)
     def setUp(self, mock_read_json):
         setUp_ConfigManager(
-            paths=self.dummy_paths, 
+            paths=self.dummy_paths,
             pods={'DUMMY_POD': self.default_pod_CF}
         )
         _ = configs.VariableTranslator(unittest = True)
@@ -35,7 +35,7 @@ class TestDiagnosticInit(unittest.TestCase):
     def tearDown(self):
         tearDown_ConfigManager()
 
-    # ---------------------------------------------------  
+    # ---------------------------------------------------
 
     def test_parse_pod_settings(self):
         # normal operation
@@ -65,7 +65,7 @@ class TestDiagnosticInit(unittest.TestCase):
             }]
         }
         test_ds = DataSet({
-                'name':'foo', 'freq':'mon', 
+                'name':'foo', 'freq':'mon',
                 'CF_name':'foo', 'required': True,
                 'original_name':'pr_var', 'alternates':[]
                 })
@@ -103,8 +103,8 @@ class TestDiagnosticSetUp(unittest.TestCase):
     @mock.patch('src.configs.util.read_json', return_value=dummy_var_translate)
     def setUp(self, mock_read_json):
         setUp_ConfigManager(
-            config=self.default_case, 
-            paths=self.dummy_paths, 
+            config=self.default_case,
+            paths=self.dummy_paths,
             pods={'DUMMY_POD': self.default_pod}
         )
         _ = configs.VariableTranslator(unittest = True)
@@ -112,7 +112,7 @@ class TestDiagnosticSetUp(unittest.TestCase):
     def tearDown(self):
         tearDown_ConfigManager()
 
-    # ---------------------------------------------------  
+    # ---------------------------------------------------
 
     @unittest.skip("")
     # @mock.patch.multiple(DataManager, __abstractmethods__=set())
@@ -126,14 +126,14 @@ class TestDiagnosticSetUp(unittest.TestCase):
         pod._set_pod_env_vars()
         self.assertEqual(pod.pod_env_vars['POD_HOME'], 'TEST_CODE_ROOT/diagnostics/C')
         self.assertEqual(pod.pod_env_vars['OBS_DATA'], 'TEST_OBS_DATA_ROOT/C')
-        self.assertEqual(pod.pod_env_vars['WK_DIR'], 'A')  
+        self.assertEqual(pod.pod_env_vars['WK_DIR'], 'A')
 
-    @mock.patch('src.util.check_dirs')
+    @mock.patch('src.util.check_dir')
     @mock.patch('os.path.exists', return_value = False)
     @mock.patch('os.makedirs')
     def test_setup_pod_directories_mkdir(self, mock_makedirs, mock_exists, \
-        mock_check_dirs): 
-        # create output dirs if not present    
+        mock_check_dirs):
+        # create output dirs if not present
         pod = Diagnostic('DUMMY_POD')
         pod.POD_WK_DIR = 'A/B'
         pod._setup_pod_directories()
@@ -146,18 +146,18 @@ class TestDiagnosticSetUp(unittest.TestCase):
     @mock.patch('os.path.exists', return_value = True)
     @mock.patch('os.makedirs')
     def test_setup_pod_directories_no_mkdir(self, mock_makedirs, mock_exists):
-        # don't create output dirs if already present       
+        # don't create output dirs if already present
         pod = Diagnostic('DUMMY_POD')
         pod.POD_WK_DIR = 'A'
         pod._setup_pod_directories()
-        mock_makedirs.assert_not_called()     
+        mock_makedirs.assert_not_called()
 
-    @mock.patch('os.path.exists', return_value = True) 
+    @mock.patch('os.path.exists', return_value = True)
     def test_check_pod_driver_no_driver_1(self, mock_exists):
         # fill in driver from pod name
         programs = util.get_available_programs()
-        pod = Diagnostic('DUMMY_POD')  
-        pod._check_pod_driver()
+        pod = Diagnostic('DUMMY_POD')
+        pod.set_entry_point()
         ext = os.path.splitext(pod.driver)[1][1:]
         self.assertTrue(ext in programs)
         self.assertEqual(pod.program, programs[ext])
@@ -165,8 +165,8 @@ class TestDiagnosticSetUp(unittest.TestCase):
     @mock.patch('os.path.exists', return_value = False)
     def test_check_pod_driver_no_driver_2(self, mock_exists):
         # assertion fails if no driver found
-        pod = Diagnostic('DUMMY_POD')  
-        self.assertRaises(PodRuntimeError, pod._check_pod_driver)
+        pod = Diagnostic('DUMMY_POD')
+        self.assertRaises(PodRuntimeError, pod.set_entry_point)
 
 @unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
 class TestDiagnosticCheckVarlist(unittest.TestCase):
@@ -184,7 +184,7 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
     @mock.patch('src.configs.util.read_json', return_value=dummy_var_translate)
     def setUp(self, mock_read_json):
         setUp_ConfigManager(
-            paths=self.dummy_paths, 
+            paths=self.dummy_paths,
             pods={'DUMMY_POD': self.default_pod}
         )
         _ = configs.VariableTranslator(unittest = True)
@@ -192,7 +192,7 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
     def tearDown(self):
         tearDown_ConfigManager()
 
-    # ---------------------------------------------------  
+    # ---------------------------------------------------
 
     def _populate_pod__local_data(self, pod):
         # reproduce logic in DataManager._setup_pod rather than invoke it here
@@ -223,7 +223,7 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
         'settings':{}, 'varlist':[
             {'var_name': 'pr_var', 'freq':'mon'}
         ]}
-        pod = Diagnostic('DUMMY_POD') 
+        pod = Diagnostic('DUMMY_POD')
         self._populate_pod__local_data(pod)
         (found, missing) = pod._check_for_varlist_files(pod.varlist)
         self.assertEqual(found, ['TEST_MODEL_DATA_ROOT/A/mon/A.PRECT.mon.nc'])
@@ -237,7 +237,7 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
         'settings':{}, 'varlist':[
             {'var_name': 'pr_var', 'freq':'mon', 'required': True}
         ]}
-        pod = Diagnostic('DUMMY_POD') 
+        pod = Diagnostic('DUMMY_POD')
         self._populate_pod__local_data(pod)
         (found, missing) = pod._check_for_varlist_files(pod.varlist)
         self.assertEqual(found, [])
@@ -251,7 +251,7 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
         'settings':{}, 'varlist':[
             {'var_name': 'pr_var', 'freq':'mon', 'required': False}
         ]}
-        pod = Diagnostic('DUMMY_POD') 
+        pod = Diagnostic('DUMMY_POD')
         self._populate_pod__local_data(pod)
         (found, missing) = pod._check_for_varlist_files(pod.varlist)
         self.assertEqual(found, [])
@@ -263,10 +263,10 @@ class TestDiagnosticCheckVarlist(unittest.TestCase):
         config = configs.ConfigManager(unittest=True)
         config.pods['DUMMY_POD'] = {
         'settings':{}, 'varlist':[
-            {'var_name': 'pr_var', 'freq':'mon', 
+            {'var_name': 'pr_var', 'freq':'mon',
             'required': True, 'alternates':['prc_var']}
         ]}
-        pod = Diagnostic('DUMMY_POD') 
+        pod = Diagnostic('DUMMY_POD')
         self._populate_pod__local_data(pod)
         (found, missing) = pod._check_for_varlist_files(pod.varlist)
         # name_in_model translation now done in DataManager._setup_pod
@@ -289,7 +289,7 @@ class TestDiagnosticSetUpCustomSettings(unittest.TestCase):
     @mock.patch('src.configs.util.read_json', return_value=dummy_var_translate)
     def setUp(self, mock_read_json):
         setUp_ConfigManager(
-            paths=self.dummy_paths, 
+            paths=self.dummy_paths,
             pods={'DUMMY_POD': self.default_pod}
         )
         _ = configs.VariableTranslator(unittest = True)
@@ -297,7 +297,7 @@ class TestDiagnosticSetUpCustomSettings(unittest.TestCase):
     def tearDown(self):
         tearDown_ConfigManager()
 
-    # ---------------------------------------------------  
+    # ---------------------------------------------------
 
     @mock.patch('os.path.exists', return_value = True)
     def test_set_pod_env_vars_vars(self, mock_exists):
@@ -320,8 +320,8 @@ class TestDiagnosticSetUpCustomSettings(unittest.TestCase):
         config.pods['DUMMY_POD'] = {
             'settings':{'driver':'C.ncl'}, 'varlist':[]
         }
-        pod = Diagnostic('DUMMY_POD')  
-        pod._check_pod_driver()
+        pod = Diagnostic('DUMMY_POD')
+        pod.set_entry_point()
         self.assertEqual(pod.driver, 'TEST_CODE_ROOT/diagnostics/A/C.ncl')
         self.assertEqual(pod.program, 'ncl')
 
@@ -332,8 +332,8 @@ class TestDiagnosticSetUpCustomSettings(unittest.TestCase):
         config.pods['DUMMY_POD'] = {
             'settings':{'driver':'C.foo'}, 'varlist':[]
         }
-        pod = Diagnostic('DUMMY_POD') 
-        self.assertRaises(PodRuntimeError, pod._check_pod_driver)
+        pod = Diagnostic('DUMMY_POD')
+        self.assertRaises(PodRuntimeError, pod.set_entry_point)
 
 @unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
 class TestDiagnosticTearDown(unittest.TestCase):
@@ -351,7 +351,7 @@ class TestDiagnosticTearDown(unittest.TestCase):
     @mock.patch('src.configs.util.read_json', return_value=dummy_var_translate)
     def setUp(self, mock_read_json):
         setUp_ConfigManager(
-            paths=self.dummy_paths, 
+            paths=self.dummy_paths,
             pods={'DUMMY_POD': self.default_pod}
         )
         _ = configs.VariableTranslator(unittest = True)
@@ -359,7 +359,7 @@ class TestDiagnosticTearDown(unittest.TestCase):
     def tearDown(self):
         tearDown_ConfigManager()
 
-    # ---------------------------------------------------  
+    # ---------------------------------------------------
 
     # expected to fail because error will be raised about missing TEMP_HTML
     # attribute, which is set when PODs are initialized by data_manager
@@ -371,7 +371,7 @@ class TestDiagnosticTearDown(unittest.TestCase):
     @mock.patch('os.remove')
     @mock.patch('src.util.append_html_template')
     def test_make_pod_html(self, mock_append_html_template, mock_remove, \
-        mock_system, mock_copy2, mock_exists): 
+        mock_system, mock_copy2, mock_exists):
         pod = Diagnostic('DUMMY_POD')
         pod.MODEL_WK_DIR = '/B'
         pod.POD_WK_DIR = '/B/DUMMY_POD'
@@ -395,8 +395,8 @@ class TestDiagnosticTearDown(unittest.TestCase):
     def test_convert_pod_figures(self, mock_subprocess, mock_glob):
         # assert we munged filenames correctly
         config = configs.ConfigManager(unittest=True)
-        pod = Diagnostic('DUMMY_POD') 
-        pod.POD_WK_DIR = 'A'  
+        pod = Diagnostic('DUMMY_POD')
+        pod.POD_WK_DIR = 'A'
         pod._convert_pod_figures(config)
         mock_system.assert_has_calls([
             mock.call('convert -C A/model/PS/B.ps A/model/B.png')

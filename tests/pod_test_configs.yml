@@ -1,5 +1,5 @@
 # Specifications for models to use for convergence testing of individual PODs.
-# 
+#
 case_list:
   - CASENAME: QBOi.EXP1.AMIP.001
     model: CESM
@@ -12,7 +12,7 @@ case_list:
       - convective_transition_diag
       - MJO_suite
       - MJO_teleconnection
-      - precip_diurnal_cycle 
+      - precip_diurnal_cycle
   - CASENAME: GFDL.CM4.c96L32.am4g10r8
     model: AM4
     variable_convention: AM4

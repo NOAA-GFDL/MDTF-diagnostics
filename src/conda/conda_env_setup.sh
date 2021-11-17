@@ -5,21 +5,21 @@
 set -Eeo pipefail
 # Enable extended globbing, see
 # https://www.gnu.org/software/bash/manual/bashref.html#Pattern-Matching
-shopt -s extglob 
+shopt -s extglob
 
-# get directory this script is located in, resolving any 
+# get directory this script is located in, resolving any
 # symlinks/aliases (https://stackoverflow.com/a/246128)
 _source="${BASH_SOURCE[0]}"
 while [ -h "$_source" ]; do # resolve $_source until the file is no longer a symlink
     script_dir="$( cd -P "$( dirname "$_source" )" >/dev/null 2>&1 && pwd )"
     _source="$( readlink "$_source" )"
-    # if $_source was a relative symlink, we need to resolve it relative to the 
+    # if $_source was a relative symlink, we need to resolve it relative to the
     # path where the symlink file was located
-    [[ $_source != /* ]] && _source="$script_dir/$_source" 
+    [[ $_source != /* ]] && _source="$script_dir/$_source"
 done
 script_dir="$( cd -P "$( dirname "$_source" )" >/dev/null 2>&1 && pwd )"
 
-# relative paths resolved relative to repo directory, which is grandparent 
+# relative paths resolved relative to repo directory, which is grandparent
 # of dir this script is in
 repo_dir="$( cd -P "$script_dir" >/dev/null 2>&1 && cd ../../ && pwd )"
 
@@ -38,7 +38,7 @@ while (( "$#" )); do
             ;;
         -e|--env)
             # specify one env by name
-            env_glob="env_${2}.yml" 
+            env_glob="env_${2}.yml"
             if [ ! -f "${script_dir}/${env_glob}" ]; then
                 echo "ERROR: ${script_dir}/${env_glob} not found."
                 exit 1
@@ -47,7 +47,7 @@ while (( "$#" )); do
             ;;
         --dev-only)
             # dev and base only (for Travis CI/ auto testing)
-            env_glob="env_@(base|dev).yml" 
+            env_glob="env_@(base|dev).yml"
             shift 1
             ;;
         --all-dev)
@@ -93,7 +93,9 @@ while (( "$#" )); do
 done
 popd > /dev/null   # restore CWD
 
-# setup conda in non-interactive shell
+# setup conda for non-interactive shell
+# NB: 'conda' isn't an executable; it's created as a shell alias. This is why we
+# invoke it as 'conda' below, instead of the absolute path in $CONDA_EXE.
 if [ -z "$_MDTF_CONDA_ROOT" ]; then
     set -- # clear cmd line
     . "${script_dir}/conda_init.sh" -v
@@ -112,23 +114,49 @@ if [ "$make_envs" = "true" ]; then
         echo "To use envs interactively, run \"conda config --append envs_dirs $_CONDA_ENV_ROOT\""
     fi
 
+    # install envs with mamba (https://github.com/mamba-org/mamba) for
+    # performance reasons; need to find mamba executable, or install it if not
+    # present
+    _INSTALL_EXE=$( command -v mamba ) || true
+    mamba_temp="false"
+    if [[ ! -x "$_INSTALL_EXE" ]]; then
+        echo "Couldn't find mamba executable; installing in temp environment."
+        mamba_temp="true"
+        conda create --force -qy -n _MDTF_install_temp
+        conda install -qy mamba -n _MDTF_install_temp -c conda-forge
+        # still no idea why this works but "conda activate" doesn't
+        conda activate _MDTF_install_temp
+        _INSTALL_EXE=$( command -v mamba ) || true
+    fi
+    if [[ ! -x "$_INSTALL_EXE" ]]; then
+        echo "Mamba installation failed."
+        exit 1
+    fi
+
     # create all envs in a loop
-    "$CONDA_EXE" clean -i
+    "$_INSTALL_EXE" clean -qi
     for env_file in "${script_dir}/"${env_glob}; do
         [ -e "$env_file" ] || continue # catch the case where nothing matches
-        # get env name from reading "name:" attribute of yaml file 
+        # get env name from reading "name:" attribute of yaml file
         env_name=$( sed -n "s/^[[:space:]]*name:[[:space:]]*\([[:alnum:]_\-]*\)[[:space:]]*/\1/p" "$env_file" )
         if [ -z "$_CONDA_ENV_ROOT" ]; then
-            echo "Creating conda env ${env_name}..."
-            "$CONDA_EXE" env create --force -q -f="$env_file"
+            # need to set manually, otherwise mamba will install in a subdir
+            # of its env's directory
+            conda_prefix="${_CONDA_ROOT}/envs/${env_name}"
         else
             conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
-            echo "Creating conda env ${env_name} in ${conda_prefix}..."
-            "$CONDA_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
         fi
+        echo "Creating conda env ${env_name} in ${conda_prefix}..."
+        "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
         echo "... conda env ${env_name} created."
     done
-    "$CONDA_EXE" clean -ay
+    "$_INSTALL_EXE" clean -aqy
+
+    if [ "$mamba_temp" = "true" ]; then
+        # delete the temp env we used for the install
+        conda deactivate
+        conda env remove -y -n _MDTF_install_temp
+    fi
 fi
 
 # create script wrapper to activate base environment

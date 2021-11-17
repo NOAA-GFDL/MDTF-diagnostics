@@ -25,7 +25,6 @@
 import sys
 import os
 
-import time
 import datetime
 
 shared_dir = os.path.join(

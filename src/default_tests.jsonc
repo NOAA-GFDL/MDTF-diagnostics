@@ -23,7 +23,7 @@
       "LASTYR" : 2005,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-         "ENSO_RWS"
+         "ENSO_MSE"
       ]
     }
   ],
@@ -41,11 +41,11 @@
   "MODEL_DATA_ROOT": "./inputdata/model",
 
   // Working directory.
-  "WORKING_DIR": "./wkdir",
+  "WORKING_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be
   // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.
-  "OUTPUT_DIR": "./wkdir",
+  "OUTPUT_DIR": "../wkdir",
 
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned by running `conda info --base`.) If empty,

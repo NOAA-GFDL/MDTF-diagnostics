@@ -13,6 +13,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$POD_HOME/calc_utils.ncl"
 load "$POD_HOME/evans_plot.ncl"
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 begin
 ; Set variables for two runs.
 

@@ -56,12 +56,10 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
     varname = ['WZS_2401','T_25','RH_910','QL_137','AT_21','BP_915']
 
     var_file_dict = {}
-    #print('Read Variables:')
     for nvar,var in enumerate(varlist):
         var_file = []
         location = []
         files = os.listdir(os.path.join(obs_data_dir,dirlist[nvar],'daily'))
-        #print('======',var,'======')
         for file in files:
             if file.startswith(var) and file.endswith('_dy.cdf'):
                 startlen = len(var)
@@ -281,12 +279,10 @@ def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
     varname = ['WZS_2401','T_25','RH_910','QL_137','AT_21','BP_915']
 
     var_file_dict = {}
-    #print('Read Variables:')
     for nvar,var in enumerate(varlist):
         var_file = []
         location = []
         files = os.listdir(os.path.join(obs_data_dir,dirlist[nvar],'daily'))
-        #print('======',var,'======')
         for file in files:
             if file.startswith(var) and file.endswith('_dy.cdf'):
                 startlen = len(var)

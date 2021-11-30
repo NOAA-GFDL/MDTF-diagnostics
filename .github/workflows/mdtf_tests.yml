@@ -91,7 +91,7 @@ jobs:
       run: |
         cd ../
         conda activate _MDTF_synthetic_data
-        pip install mdtf-test-data
+        pip install mdtf-test-data==1.0.4.post2
         mkdir mdtf_test_data ; cd mdtf_test_data
         # generate the data and run unit tests
         mdtf_synthetic.py -c GFDL --startyear 1 --nyears 10 --unittest
@@ -174,10 +174,13 @@ jobs:
         # allow 20 min for transfer before timeout; Github actions allows 6 hours for individual
         # jobs, but we don't want to max out resources that are shared by the NOAA-GFDL repos.
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/temp_extremes_distshape_obs_data.tar --output temp_extremes_distshape_obs_data.tar
+        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/tropical_pacific_sea_level_obs_data.tar.gz --output tropical_pacific_sea_level_obs_data.tar.gz
         echo "Untarring set 3 test files"
         tar -xvf temp_extremes_distshape_obs_data.tar
+        tar -zxvf tropical_pacific_sea_level_obs_data.tar.gz
         # clean up tarballs
         rm -f *.tar
+        rm -f *.tar.gz
     - name: Run diagnostic tests set 3
       run: |
         conda activate _MDTF_base

@@ -321,17 +321,3 @@ fig.savefig(
     pad_inches=None,
     frameon=None,
 )
-fig.savefig(
-    os.getenv("WK_DIR") + "/obs/PS/example_obs_plot.eps",
-    facecolor="w",
-    edgecolor="w",
-    orientation="portrait",
-    papertype=None,
-    format=None,
-    transparent=False,
-    bbox_inches="tight",
-    pad_inches=None,
-    frameon=None,
-)
-
-

@@ -24,7 +24,6 @@
 #
 ##      This package is distributed under the LGPLv3 license (see LICENSE.txt) 
 
-import numpy as np
 import sys
 import os
 
@@ -36,7 +35,6 @@ sys.path.insert(0, shared_dir)
 
 from get_parameters_in import get_parameters_in
 
-import time
 import datetime
 
 from generate_ncl_call import generate_ncl_call

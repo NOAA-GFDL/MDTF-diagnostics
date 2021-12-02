@@ -310,7 +310,7 @@ ax2.set_xlabel('10m wind speed ($m/s$)',size=15)
 
 # output figures
 fig.savefig(
-    os.getenv("WK_DIR") + "/model/PS/example_model_plot.eps",
+    os.getenv("WK_DIR") + "/model/PS/LHFLXdiag_modelbias_example.eps",
     facecolor="w",
     edgecolor="w",
     orientation="portrait",

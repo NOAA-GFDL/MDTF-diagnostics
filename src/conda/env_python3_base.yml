@@ -23,3 +23,8 @@ dependencies:
 - xesmf=0.3.0
 - gsw=3.3
 - metpy=1.1
+- xgcm
+- xhistogram
+- pip
+- pip:
+  - git+https://github.com/jetesdal/xwmt.git

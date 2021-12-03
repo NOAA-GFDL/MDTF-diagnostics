@@ -1,17 +1,41 @@
-"""Classes and utility methods for dealing with dates as expressed in filenames
-and paths. Intended use case is, eg, determining if a file contains data for a
-given year from the filename, without having to open it and parse the header.
+"""Classes for serializing and deserializing dates and times expressed as strings
+in filenames and paths.
 
-Note:
-    These classes should *not* be used for calendar math! We currently implement
-    and test comparison logic only, not anything more (eg addition, subtraction).
+Intended use case is, e.g., determining if a file contains data for a
+given year based on the filename alone, without having to open it and parse the
+header.
 
-Note:
-    These classes are based on the datetime standard library, and as such assume
-    a proleptic Gregorian calendar for *all* dates.
+Warning:
+    Classes are implemented on top of the Python standard library
+    :mod:`datetime` package, and as such *always* assume a proleptic Gregorian
+    calendar. This is adequate for the intended filename-parsing use case.
 
-Note:
-    Timezone support is not currently implemented.
+    Timezone support is not currently implemented, for the same reason.
+
+Warning:
+    These classes should *not* be used for detailed calendar math. We currently
+    implement and test comparison logic only, not anything more (e.g. addition,
+    subtraction, although increment/decrement are supported).
+
+Properties and use of :class:`DateRange`, :class:`Date` and :class:`DateFrequency`
+objects are best illustrated by examples:
+
+.. code-block:: python
+
+    >>> Date('20001215').month
+    12
+
+    >>> Date('200012') == datetime(2000, 12, 1)
+    True
+
+    >>> DateRange('2010-2020') in DateRange('2008-2019')
+    False
+
+    >>> DateRange('2010-2020').overlaps(DateRange('2008-2019'))
+    True
+
+    >>> DateFrequency('daily') < DateFrequency('24hr')
+    True
 """
 import abc
 import copy
@@ -33,7 +57,7 @@ _log = logging.getLogger(__name__)
 class AtomicInterval(object):
     """
     This class represents an atomic interval.
-    An atomic interval is a single interval, with a lower and upper bounds,
+    An atomic interval is a single interval, with a lower and upper bound,
     and two (closed or open) boundaries.
     """
     __slots__ = ('_left', '_lower', '_upper', '_right')
@@ -93,7 +117,9 @@ class AtomicInterval(object):
 
     def is_empty(self):
         """Test interval emptiness.
-        :return: True if interval is empty, False otherwise.
+
+        Returns:
+            True if interval is empty, False otherwise.
         """
         return (
             self._lower > self._upper or
@@ -115,7 +141,8 @@ class AtomicInterval(object):
             ignore_inf: ignore infinities if functions are provided
                 (default is True).
 
-        Returns: an Interval instance
+        Returns:
+            An Interval instance.
         """
         if callable(left):
             left = left(self._left)
@@ -144,9 +171,13 @@ class AtomicInterval(object):
         If 'adjacent' is set to True (default is False), then it returns True
         for adjacent intervals as well (e.g., [1, 2) and [2, 3], but not
         [1, 2) and (2, 3]).
-        :param other: an atomic interval.
-        :param adjacent: set to True to accept adjacent intervals as well.
-        :return: True if intervals overlap, False otherwise.
+
+        Args:
+            other: an atomic interval.
+            adjacent: set to True to accept adjacent intervals as well.
+
+        Returns:
+            True if intervals overlap, False otherwise.
         """
         if not isinstance(other, AtomicInterval):
             raise TypeError('Only AtomicInterval instances are supported.')
@@ -168,8 +199,11 @@ class AtomicInterval(object):
     def intersection(self, other):
         """
         Return the intersection of two intervals.
-        :param other: an interval.
-        :return: the intersection of the intervals.
+
+        Args:
+            other: an interval.
+        Returns:
+            The intersection of the intervals.
         """
         return self & other
 
@@ -177,16 +211,24 @@ class AtomicInterval(object):
         """Return the union of two intervals. If the union cannot be represented
         using a single atomic interval, return an Interval instance (which
         corresponds to an union of atomic intervals).
-        :param other: an interval.
-        :return: the union of the intervals.
+
+        Args:
+            other: an interval.
+
+        Returns:
+            The union of the intervals.
         """
         return self | other
 
     def contains(self, item):
         """Test if given item is contained in this interval.
         This method accepts atomic intervals, intervals and arbitrary values.
-        :param item: an atomic interval, an interval or any arbitrary value.
-        :return: True if given item is contained, False otherwise.
+
+        Args:
+            item: an atomic interval, an interval or any arbitrary value.
+
+        Returns:
+            True if given item is contained, False otherwise.
         """
         return item in self
 
@@ -329,24 +371,33 @@ class AtomicInterval(object):
             )
 
     def adjoins_left(self, other):
-        # self < other
+        """Returns True if *other* follows *self* with no gap or overlap."""
         return self._right != other._left and self._upper == other._lower
 
     def adjoins_right(self, other):
-        # other < self
+        """Returns True if *self* follows *other* with no gap or overlap."""
         return self._left != other._right and self._lower == other._upper
 
     def adjoins(self, other):
+        """Returns True if there is no gap or overlap between *self* and *other*."""
         return self.adjoins_left(other) or self.adjoins_right(other)
 
     @classmethod
     def span(cls, *args):
+        """Return an AtomicInterval covering the collection of intervals in *args*."""
         min_ = min(args, key=op.attrgetter('lower'))
         max_ = max(args, key=op.attrgetter('upper'))
         return AtomicInterval(min_.left, min_.lower, max_.upper, max_.right)
 
     @classmethod
     def contiguous_span(cls, *args):
+        """Return an AtomicInterval covering the collection of intervals in *args*
+        if those intervals are contiguous and nonoverlapping.
+
+        Raises:
+            ValueError: If collection of intervals is not contiguous and
+                nonoverlapping.
+        """
         ints = sorted(args, key=op.attrgetter('lower'))
         for i in list(range(0, len(ints) - 1)):
             if not ints[i].adjoins_left(ints[i+1]):
@@ -359,8 +410,15 @@ class AtomicInterval(object):
 
 class DatePrecision(enum.IntEnum):
     """:py:class:`~enum.IntEnum` to encode the recognized levels of precision
-    for date intervals. For example, Date('200012') has DatePrecision.MONTH since
-    the length of the corresponding interval is a month.
+    for :class:`Date`\s and :class:`DateRange`\s. Example:
+
+    .. code-block:: python
+
+       >>> Date('200012').precision == DatePrecision.MONTH
+       True
+
+    because the date in the example, "December 2000," is only defined up to a
+    month, and hence is represented by the interval from 1 Dec 2000 to 31 Dec 2000.
     """
     STATIC = -1
     YEAR = 1
@@ -370,13 +428,13 @@ class DatePrecision(enum.IntEnum):
     MINUTE = 5
     SECOND = 6
 
-class _DateMixin(object):
+class DateMixin(object):
     """Utility methods for dealing with dates.
     """
     @staticmethod
     def date_format(dt, precision=None):
-        """Print date in YYYYMMDDHHMMSS format, with length being set automatically
-        from precision.
+        """Print date *dt* in YYYYMMDDHHMMSS format, with length being set
+        automatically from *precision*.
 
         Note:
             strftime() is broken for dates prior to 1900 in python < 3.3, see
@@ -395,8 +453,8 @@ class _DateMixin(object):
 
     @classmethod
     def increment(cls, dt, precision):
-        """Return a copy of dt advanced by one time unit as specified by
-        the `precision` attribute.
+        """Return a copy of *dt* advanced by one time unit as specified by
+        the *precision* attribute.
         """
         if precision == DatePrecision.MONTH: # can't handle this with timedeltas
             if dt.month == 12:
@@ -408,8 +466,8 @@ class _DateMixin(object):
 
     @classmethod
     def decrement(cls, dt, precision):
-        """Return a copy of Date moved back by one time unit as specified by
-        the `precision` attribute.
+        """Return a copy of *dt* moved back by one time unit as specified by
+        the *precision* attribute.
         """
         if precision == DatePrecision.MONTH: # can't handle this with timedeltas
             if dt.month == 1:
@@ -445,18 +503,49 @@ class _DateMixin(object):
         return dt + td
 
 
-class DateRange(AtomicInterval, _DateMixin):
-    """Class representing a range of variable-precision dates.
+class DateRange(AtomicInterval, DateMixin):
+    """Class representing a range of dates specified with variable precision.
+
+    Endpoints of the interval are represented internally as
+    :py:class:`~datetime.datetime` objects.
 
     Note:
-        This is defined as a *closed* interval (containing both endpoints).
-        Eg, DateRange('1990-1999') starts at 0:00 on 1 Jan 1990 and
-        ends at 23:59 on 31 Dec 1999.
+        In keeping with convention, this is always defined as a *closed* interval
+        (containing both endpoints). E.g., DateRange('1990-1999') starts at 0:00
+        on 1 Jan 1990 and ends at 23:59 on 31 Dec 1999, inclusive.
+
+    Attributes:
+        precision (:class:`DatePrecision`): Precision to which both endpoints of
+            the DateRange are known. E.g., DateRange('1990-1999') has a precision
+            of DatePrecision.YEAR.
     """
     _range_sep = '-'
 
     def __init__(self, start, end=None, precision=None, log=_log):
-        "Init method for DateRange."
+        """Constructor.
+
+        Args:
+            start (str or datetime): Start date of the interval as a
+                :py:class:`~datetime.datetime` object, or string in YYYYMMDD...
+                or YYYY-MM-DD formats, or a two-item collection or string defining
+                *both* endpoints of the interval as strings in YYYYMMDD... format
+                separated by a single hyphen.
+            end (str or datetime): Optional. End date of the interval as a
+                :py:class:`~datetime.datetime` object, or string in YYYYMMDD...
+                or YYYY-MM-DD formats. Ignored if the entire range was specified
+                as a string in *start*.
+            precision (int or :class:`DatePrecision`): Optional. Manually set
+                precision of date endpoints defining the range. If not supplied,
+                set based on the length of the YYYYMMDD... strings supplied in
+                *start* and *end*.
+
+        Raises:
+            ValueError: If *start* or *end* don't follow one of the recognized
+                forms.
+            :class:`~exception.MixedDatePrecisionException`: If manually specified
+                *precision* is greater than the precision inferred from *start* or
+                *end*.
+        """
         if not end:
             if isinstance(start, str):
                 (start, end) = start.split(self._range_sep)
@@ -476,7 +565,7 @@ class DateRange(AtomicInterval, _DateMixin):
         super(DateRange, self).__init__(self.CLOSED, dt0, dt1, self.OPEN)
         if precision is not None:
             if not isinstance(precision, DatePrecision):
-                precision = (DatePrecision)
+                precision = DatePrecision(precision)
             if precision > prec0 or precision > prec1:
                 raise util.MixedDatePrecisionException((
                     "Attempted to init DateRange with manual prec {}, but date "
@@ -488,7 +577,7 @@ class DateRange(AtomicInterval, _DateMixin):
 
     @property
     def is_static(self):
-        """Property indicating time-independent data (eg, 'fx' in CMIP6 DRS.)
+        """Property indicating time-independent data (e.g., ``fx`` in the CMIP6 DRS.)
         """
         return False
 
@@ -543,21 +632,31 @@ class DateRange(AtomicInterval, _DateMixin):
 
     @property
     def start_datetime(self):
+        """Start of the interval, returned as a :py:class:`~datetime.datetime` object.
+        """
         return self.lower
 
     @property
     def start(self):
+        """Start of the interval, returned as a :class:`Date` object of appropriate
+        precision.
+        """
         assert self.precision
         return Date(self.start_datetime, precision=self.precision)
 
     @property
     def end_datetime(self):
+        """End of the interval, returned as a :py:class:`~datetime.datetime` object.
+        """
         # don't decrement here, even though interval is closed, because of how
         # adjoins_left and adjoins_right are implemented
         return self.upper
 
     @property
     def end(self):
+        """End of the interval, returned as a :class:`Date` object of appropriate
+        precision.
+        """
         # need to decrement because interval is closed, but Date() assumes its
         # input is the start of the interval (set by precision)
         assert self.precision
@@ -569,7 +668,7 @@ class DateRange(AtomicInterval, _DateMixin):
     @classmethod
     def from_contiguous_span(cls, *args):
         """Given multiple DateRanges, return interval containing them
-        ONLY IF ranges are continguous and nonoverlapping.
+        only if their time intervals are continguous and nonoverlapping.
         """
         if len(args) == 1 and isinstance(args[0], DateRange):
             return args[0]
@@ -581,8 +680,8 @@ class DateRange(AtomicInterval, _DateMixin):
     @classmethod
     def from_date_span(cls, *args):
         """Return a DateRange coresponding to the interval containing a set of
-        Dates. Differs from :meth:`from_contiguous_span` in that we don't expect
-        intervals to be contiguous.
+        :class:`Date`\s. Differs from :meth:`from_contiguous_span` in that we
+        don't expect intervals to be contiguous.
         """
         dt_args = [Date._coerce_to_self(arg) for arg in args]
         prec, _ = cls._precision_check(*[dtr.precision for dtr in dt_args])
@@ -590,6 +689,10 @@ class DateRange(AtomicInterval, _DateMixin):
         return DateRange(interval.lower, interval.upper, precision=prec)
 
     def format(self, precision=None):
+        """Return string representation of this DateRange, of the form
+        `YYYYMMDD...-YYYYMMDD...`. The length of the YYYYMMDD... representation
+        is determined by the *precision* attribute if not manually given.
+        """
         if not precision:
             precision = self.precision
         # need to decrement upper bound because interval is open there
@@ -664,18 +767,40 @@ class DateRange(AtomicInterval, _DateMixin):
         return hash((self.__class__, self.lower, self.upper, self.precision))
 
 class Date(DateRange):
-    """Define a date with variable level precision.
+    """Defines a single date with variable level precision.
 
-    Note:
-        Date objects are mapped to datetimes representing the start of the
-        interval implied by their precision, eg. DateTime('2000-05') maps to
-        0:00 on 1 May 2000.
+    The date is represented as an interval, with precision setting the length of
+    the interval (which is why this inherits from :class:`DateRange` and not vice
+    versa.)
+
+    Date objects are mapped to :py:class:`~datetime.datetime`\s representing the
+    *start* of the interval implied by their precision, e.g. Date('2000-05') maps
+    to 0:00 on 1 May 2000.
+
+    Attributes:
+        year, month, day, hour, minute, second: Components of the
+            :py:class:`~datetime.datetime` representing the start of the interval
+            defined by Date. We do not check that the attribute access is
+            appropriate to the Date's *precision*.
+        precision (:class:`DatePrecision`): Precision to which both endpoints of
+            the DateRange are known. E.g., Date(1990) has a precision
+            of DatePrecision.YEAR.
+
     """
-
     _datetime_attrs = ('year','month','day','hour','minute','second')
 
     def __init__(self, *args, **kwargs):
-        "Init method for Date."
+        """Constructor.
+
+        Args:
+            args: Either a :py:class:`~datetime.datetime` object, a string in
+                YYYYMMDD... or YYYY-MM-DD format, or one to six integers specifying
+                year, month, ... separately (as in the constructor for
+                :py:class:`~datetime.datetime`.)
+            precision: Optional keyword argument, int or :class:`DatePrecision`.
+                Sets precision of date manually, similar to :class:`DateRange`.
+                If not provided, precision is set from input.
+        """
         if isinstance(args[0], (datetime.date, datetime.datetime)):
             dt_args = self._parse_datetime(args[0])
             single_arg_flag = True
@@ -732,6 +857,10 @@ class Date(DateRange):
         return tuple(ans)
 
     def format(self, precision=None):
+        """Return YYYYMMDD... string representation of this Date. The length
+        of the representation is determined by the *precision* attribute if not
+        manually given.
+        """
         if precision:
             return self.date_format(self.lower, precision)
         else:
@@ -742,6 +871,9 @@ class Date(DateRange):
         return "Date('{}')".format(self)
 
     def isoformat(self):
+        """Return string representation of the start datetime of this Date
+        interval in ``YYYY-MM-DD HH:MM:SS`` format.
+        """
         # same remarks on strftime/timetuple apply here
         tup_ = self.lower.timetuple()
         str_ = '{0.tm_year:04}-{0.tm_mon:02}-{0.tm_mday:02} '.format(tup_)
@@ -790,7 +922,7 @@ class Date(DateRange):
     def __hash__(self):
         return hash((self.__class__, self.lower, self.upper, self.precision))
 
-class StaticTimeDependenceBase(object):
+class _StaticTimeDependenceBase(object):
     """Dummy class to label sentinel objects for use in describing static data
     with no time dependence.
     """
@@ -814,7 +946,7 @@ class StaticTimeDependenceBase(object):
     def date_format(dt, precision=None):
         return "<N/A>"
 
-class _FXDateMin(StaticTimeDependenceBase, Date):
+class _FXDateMin(_StaticTimeDependenceBase, Date):
     def __init__(self):
         # call DateRange's init
         super(_FXDateMin, self).__init__(
@@ -834,7 +966,7 @@ class _FXDateMin(StaticTimeDependenceBase, Date):
         return self.lower
 FXDateMin = _FXDateMin()
 
-class _FXDateMax(StaticTimeDependenceBase, Date):
+class _FXDateMax(_StaticTimeDependenceBase, Date):
     def __init__(self):
         # call DateRange's init
         super(_FXDateMax, self).__init__(
@@ -854,7 +986,7 @@ class _FXDateMax(StaticTimeDependenceBase, Date):
         return self.upper
 FXDateMax = _FXDateMax()
 
-class _FXDateRange(StaticTimeDependenceBase, DateRange):
+class _FXDateRange(_StaticTimeDependenceBase, DateRange):
     """Singleton placeholder/sentinel object for use in describing static data
     with no time dependence.
     """
@@ -874,13 +1006,19 @@ class _FXDateRange(StaticTimeDependenceBase, DateRange):
     def end(self):
         return FXDateMax
 FXDateRange = _FXDateRange()
+"""Singleton placeholder/sentinel object for use in describing static data
+with no time dependence.
+"""
 
 class DateFrequency(datetime.timedelta):
-    """Class representing a date frequency or period.
+    """Class representing a frequency or time period.
 
     .. warning::
        Period lengths are *not* defined accurately, eg. a year is taken as
-       365 days and a month is taken as 30 days.
+       365 days and a month is taken as 30 days. For this reason, we do not
+       implement addition and subtraction of DateFrequency objects to Dates,
+       as is possible for :py:class:`~datetime.timedelta` and
+       :py:class:`~datetime.datetime`.
     """
     # define __new__, not __init__, because timedelta is immutable
     def __new__(cls, quantity, unit=None):
@@ -900,14 +1038,14 @@ class DateFrequency(datetime.timedelta):
 
     @property
     def is_static(self):
-        """Property indicating time-independent data (eg, 'fx' in CMIP6 DRS.)
+        """Property indicating time-independent data (e.g., ``fx`` in CMIP6 DRS.)
         """
         return (self.quantity == 0 and self.unit == "fx")
 
     @classmethod
     def from_struct(cls, str_):
-        """Workaround for object creation, using the method mdtf_dataclass is
-        looking for.
+        """Object instantiation method used by :func:`src.util.dataclass.mdtf_dataclass`
+        for type coercion.
         """
         return cls.__new__(cls, str_, None)
 
@@ -971,6 +1109,7 @@ class DateFrequency(datetime.timedelta):
             raise ValueError("Malformed input {} {}".format(q, s))
 
     def format(self):
+        """Return string representation of the DateFrequency."""
         # conversion? only hr and yr used
         if self.unit == 'fx':
             return 'fx'
@@ -979,7 +1118,7 @@ class DateFrequency(datetime.timedelta):
     __str__ = format
 
     def format_local(self):
-        """Format frequency as used in framework's local directory hierarchy
+        """String representation as used in framework's local directory hierarchy
         (defined in :meth:`src.data_manager.DataManager.dest_path`.)
         """
         if self.quantity == 1:
@@ -1016,7 +1155,7 @@ class DateFrequency(datetime.timedelta):
     def __hash__(self):
         return hash((self.__class__, self.quantity, self.unit))
 
-class _FXDateFrequency(DateFrequency, StaticTimeDependenceBase):
+class _FXDateFrequency(DateFrequency, _StaticTimeDependenceBase):
     """Singleton placeholder/sentinel object for use in describing static data
     with no time dependence.
     """
@@ -1035,25 +1174,28 @@ class _FXDateFrequency(DateFrequency, StaticTimeDependenceBase):
         return self.__class__.__new__(self.__class__)
 
 FXDateFrequency = _FXDateFrequency()
+"""Singleton placeholder/sentinel object for use in describing static data
+with no time dependence.
+"""
 
 class AbstractDateRange(abc.ABC):
-    """Defines interface (set of attributes) for :class:`DMDimension` objects.
+    """Defines interface (set of attributes) for :class:`DateRange` objects.
     """
     pass
 
 class AbstractDate(abc.ABC):
-    """Defines interface (set of attributes) for :class:`DMDimension` objects.
+    """Defines interface (set of attributes) for :class:`Date` objects.
     """
     pass
 
 class AbstractDateFrequency(abc.ABC):
-    """Defines interface (set of attributes) for :class:`DMDimension` objects.
+    """Defines interface (set of attributes) for :class:`DateFrequency` objects.
     """
     pass
 
 
-# Use the "register" method, instead of inheritance, to identify the
-# DM*Dimension classes as implementations of AbstractDMDimension, because
+# Use the "register" method, instead of inheritance, to identify these
+# classes as implementations of corresponding ABCs, because
 # Python dataclass fields aren't recognized as implementing an abc.abstractmethod.
 AbstractDateRange.register(DateRange)
 AbstractDateRange.register(_FXDateRange)

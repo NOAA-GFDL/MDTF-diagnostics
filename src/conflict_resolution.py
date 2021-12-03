@@ -1,3 +1,7 @@
+"""Currently unused; implements dependency resolution for plug-ins, intended as
+part of a future release.
+"""
+
 from itertools import chain
 from collections import defaultdict
 
@@ -59,7 +63,8 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
         datasets (iterable of :class:`~data_manager.DataSetBase`):
             Collection of all variables being requested in this DataManager.
 
-    Returns: :py:obj:`list` of :py:obj:`str`: name(s) of model components to use.
+    Returns:
+        List of :py:obj:`str`: name(s) of model components to use.
 
     Raises: AssertionError if problem is unsatisfiable. This indicates some
         error in the input data.

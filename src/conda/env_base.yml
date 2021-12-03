@@ -25,3 +25,4 @@ dependencies:
 - intake-esm=2020.11.4
 # bump version 0.3.1 -> 0.4 feb 2021
 - cf_xarray=0.4.0
+- subprocess32

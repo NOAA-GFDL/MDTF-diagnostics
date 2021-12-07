@@ -41,7 +41,7 @@ See the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/)
 ## Notes
 - `$` indicates strings to be substituted, e.g., the string `$CODE_ROOT` should be substituted by the actual path to the MDTF-diagnostics directory.
 - Consult the [Getting started](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/start_toc.html) section to learn how to run the framework on your own data and configure general settings.
-- POD contributors can consult the **[Developer Cheatsheet](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/dev_cheatsheet.rst)** for brief instructions and useful tips
+- POD contributors can consult the **[Developer Cheatsheet](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/doc/sphinx/dev_cheatsheet.rst)** for brief instructions and useful tips
 
 ## 1. Install MDTF-diagnostics
 

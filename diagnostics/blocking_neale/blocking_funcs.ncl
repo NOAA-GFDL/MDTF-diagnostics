@@ -816,10 +816,9 @@ begin
     exit
   end if
 
-  var_names = set_from_env("zg500_var",opts)  
-              ;zg500_var decided in settings.jsonc file,
-              ;actual variable name for input model determined in data/fieldlist_$model.jsonc
-
+  ;"zg" set in diagnostics/blocking_neale/settings.json
+  ;model variable name set in data/fieldlist_$model.jsonc
+  var_names = set_from_env("zg_var",opts)  
   file_names = model_data_path  
 
 

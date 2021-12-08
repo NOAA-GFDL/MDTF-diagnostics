@@ -27,14 +27,14 @@
     // key:value pairs. The user can't change these at runtime, but they can be 
     // used to set site-specific installation settings for your diagnostic.
     "pod_env_vars" : {
-	"MDTF_BLOCKING_OBS" : "True",
-	"MDTF_BLOCKING_CAM3": "False",
-	"MDTF_BLOCKING_CAM4": "False",
-	"MDTF_BLOCKING_CAM5": "True",
-	"MDTF_BLOCKING_READ_DIGESTED": "True",
-	"MDTF_BLOCKING_WRITE_DIGESTED": "False",
-	"MDTF_BLOCKING_WRITE_DIGESTED_DIR": "",
-        "MDTF_BLOCKING_COMPARE_LONG_YEARS": "False",
+	"MDTF_BLOCKING_OBS" : "True",  //webpage will fail without
+	"MDTF_BLOCKING_CAM3": "False", //will run but doesn't show on webpage
+	"MDTF_BLOCKING_CAM4": "False", //will run but doesn't show on webpage
+	"MDTF_BLOCKING_CAM5": "True",  //webpage will fail without
+	"MDTF_BLOCKING_READ_DIGESTED" : "True",
+	"MDTF_BLOCKING_WRITE_DIGESTED": "False",      //requires READ_DIGESTED = False
+	"MDTF_BLOCKING_WRITE_DIGESTED_DIR": "",       //default outdir
+        "MDTF_BLOCKING_COMPARE_LONG_YEARS": "False",  //see notes below
         "MDTF_BLOCKING_DEBUG": "False"
     },
   // MDTF_BLOCKING_COMPARE_LONG_YEARS:
@@ -78,29 +78,13 @@
     // Variable identifier. An environment variable with this name followed by _var 
     // will be set
    // to what the corresponding field is called in the model being analyzed.
-    "zg500": {    
-
-      // Standard name for the variable according to the CF conventions. This
-      // is used to reliably identify the variable if it's called by a different
-      // name in the output format of the model being analyzed.
-      // Needs to match the model-specific names in data/fieldlist_*.jsonc
-      "standard_name" : "geopotential_height", 
-
+    "zg": {    
       "path_variable" : "MODEL_DATA_PATH",
-
-      // Units the script expects this variable to be in (UDUnits2- compatible
-      // string). If the model being analyzed provides the variable in different
-      // units, the MDTF package will do unit conversion before calling the script.
+      "standard_name" : "geopotential_height", 
       "units": "m",
-
-      // Time frequency the data should be sampled at. Currently recognized
-      // values are '1hr', '3hr', '6hr', 'day' and 'mon'.
       "frequency" : "day",
-
-      // Coordinates of the variable (defined in the section above.)
       "dimensions": ["time", "lat", "lon"],	 
-      "scalar_coordinates": {"lev" : 500}		
+      "scalar_coordinates": {"lev" : 500}
     }
-    // If we needed a second variable, we'd list it here.
   }
 }

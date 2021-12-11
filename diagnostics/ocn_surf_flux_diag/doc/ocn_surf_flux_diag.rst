@@ -1,7 +1,7 @@
 Ocean Surface Latent Heat Flux Diagnostic Documentation 
 ================================
 
-Last update: 10/15/2021
+Last update: 12/10/2021
 
 Tropical intra-seasonal (20-100 day) convection regulates weather patterns 
 globally through extratropical teleconnections. Surface latent heat fluxes 
@@ -13,20 +13,20 @@ fluxes contribute about 8% of the intra-seasonal precipitation anomaly over
 the Indian and western tropical Pacific Oceans [Dellaripa and Maloney, 2015, 
 Bui et al., 2020].
 
-we use in-situ data from TAO/TRITON/RAMA to create a location-based latent 
+For this diagnostic, we use in-situ data from TAO/TRITON/RAMA to create a location-based latent 
 heat flux matrix determined by specific humidity deficiency at the surface layer 
 (dq) and surface wind speed (sfcWind). By comparing the matrix between observation 
-and models/reanalysis, we reveal where model/reanalysis latent heat flux biases are 
-largest in dq-sfcWind space. The latent heat flux biases shown in the matrix 
+and models/reanalysis, the diagnostic can help revealing where model/reanalysis latent heat flux biases are 
+in the dq-sfcWind space. The latent heat flux biases shown in the diagnostic  
 demonstrate dependence on both sfcWind and dq. An offline latent heat bias correction
-can be performed on model simulations based on the bias latent heat fluxes matrix 
+can be performed on simulations based on the bias latent heat fluxes matrix 
 as a function of dq and sfcWind.
 
 
 Version & Contact info
 ----------------------
 
-- Version/revision information: version 1 (10/15/2021)
+- Version/revision information: version 2 (12/10/2021)
 - PI (Charlotte A. DeMott, Colorado State University, charlotte.demott@colostate.edu)
 - Developer/point of contact (Chia-Wei Hsu, Colorado State University, Chia-Wei.Hsu@colostate.edu)
 
@@ -76,8 +76,7 @@ Required programming language and libraries
 -------------------------------------------
 
 The programming language is python version 3 or up. The third-party libraries
-include "matplotlib", "xarray", "metpy","numpy","scipy". The conda environment
-need to be set to _MDTF_ocn_surf_flux_diag.
+include "matplotlib", "xarray", "metpy","numpy","scipy".
 
 Required model output variables
 -------------------------------
@@ -127,12 +126,21 @@ References
 
 .. _ref-Hsu: 
    
-1. C.-W. Hsu et al. (2020): Ocean Surface Flux Algorithm Effects on Tropical 
-    Indo-Pacific Intraseasonal Precipitation. *GRL*, under review.
+1. C.-W. Hsu et al. (2021): Ocean Surface Flux Algorithm Effects on Tropical 
+Indo-Pacific Intraseasonal Precipitation. *GRL*, under review.
 
 
 
 More about this diagnostic
 --------------------------
 
-Surface latent heat flux from ocean to the atmosphere is one of the important processes that provides water vapor and energy to the daily tropical rainfall. A visually intuitive latent heat flux diagnostic is proposed to better understand the model shortfall on its latent heat flux representation. This diagnostic allows a simple assessment of model latent heat flux biases arising either from biases in water vapor or surface wind speed as well as other empirical coefficients in the model. Sample POD result shows that, compared to ''observed'' fluxes also estimated from water vapor and surface wind speed measured at tropical moorings, tropical latent heat fluxes in the NCAR CEMS2 models are significantly overestimated when extreme water vapor or surface wind speed happens.
+Surface latent heat flux from ocean to the atmosphere is one of the important 
+processes that provides water vapor and energy to the daily tropical rainfall. 
+A visually intuitive latent heat flux diagnostic is proposed to better understand 
+the model shortfall on its latent heat flux representation. This diagnostic allows 
+a simple assessment of model latent heat flux biases arising either from biases in 
+water vapor or surface wind speed as well as other empirical coefficients in the model. 
+Sample POD result shows that, compared to ''observed'' fluxes also estimated from 
+water vapor and surface wind speed measured at tropical moorings, tropical latent heat 
+fluxes in the NCAR CEMS2 models are significantly overestimated when extreme water vapor 
+or surface wind speed happens.

@@ -93,10 +93,10 @@ jobs:
         # allow 20 min for transfer before timeout; Github actions allows 6 hours for individual
         # jobs, but we don't want to max out resources that are shared by the NOAA-GFDL repos.
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/mixed_layer_depth_obs_data.tar --output mixed_layer_depth_obs_data.tar
-        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/ocn_surf_flux_diag_obs_data.tar --output ocn_surf_flux_diag_obs_data.tar
+        #curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --disable-epsv --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/ocn_surf_flux_diag_obs_data.tar --output ocn_surf_flux_diag_obs_data.tar
         echo "Untarring set 3 test files"
         tar -xvf mixed_layer_depth_obs_data.tar
-        tar -xvf ocn_surf_flux_diag_obs_data.tar
+        #tar -xvf ocn_surf_flux_diag_obs_data.tar
         # clean up tarballs
         rm -f *.tar
     - name: Run diagnostic tests set 3
@@ -107,6 +107,7 @@ jobs:
         ./mdtf --version
         # run the test PODs
         ./mdtf -v -f ${{matrix.json-file-set3}}
+        cat ../wkdir/MDTF_CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231_1_10/mixed_layer_depth/mixed_layer_depth.log
     - name: Run unit tests
       run: |
         echo "${PWD}"

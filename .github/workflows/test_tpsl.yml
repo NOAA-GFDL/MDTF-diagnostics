@@ -23,7 +23,7 @@ jobs:
         conda-root: [/usr/share/miniconda3, /Users/runner/miniconda3]
         json-file-set3: ["tests/github_actions_test_ubuntu_set3.jsonc", "tests/github_actions_test_macos_set3.jsonc"]
         # if experimental is true, other jobs to run if one fails
-        experimental: [false]
+        experimental: [true]
         exclude:
           - os: ubuntu-latest
             conda-root: /Users/runner/miniconda3

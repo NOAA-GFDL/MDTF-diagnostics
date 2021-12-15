@@ -109,9 +109,7 @@ jobs:
         ./mdtf --version
         # run the test PODs
         ./mdtf -v -f ${{matrix.json-file-set3}}
-        printf "%s" "$(< ../wkdir/MDTF_CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231_1_10/mixed_layer_depth/mixed_layer_depth.log)"
-    - name: Run unit tests
-      run: |
-        echo "${PWD}"
-        conda activate _MDTF_base
-        python -m unittest discover
+    - name: dump POD output
+        ls /home/runner/work/MDTF-diagnostics/wkdir/MDTF_CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231_1_10/*
+        printf "%s" "$(< /home/runner/work/MDTF-diagnostics/wkdir/MDTF_CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231_1_10/mixed_layer_depth/mixed_layer_depth.log)"
+

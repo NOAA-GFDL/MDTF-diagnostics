@@ -23,7 +23,7 @@ jobs:
         conda-root: [/usr/share/miniconda3, /Users/runner/miniconda3]
         json-file-set3: ["tests/github_actions_test_ubuntu_set3.jsonc", "tests/github_actions_test_macos_set3.jsonc"]
         # if experimental is true, other jobs to run if one fails
-        experimental: [true]
+        experimental: [false]
         exclude:
           - os: ubuntu-latest
             conda-root: /Users/runner/miniconda3
@@ -107,7 +107,7 @@ jobs:
         ./mdtf --version
         # run the test PODs
         ./mdtf -v -f ${{matrix.json-file-set3}}
-        cat ../wkdir/MDTF_CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231_1_10/mixed_layer_depth/mixed_layer_depth.log
+        printf "%s" "$(< ../wkdir/MDTF_CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231_1_10/mixed_layer_depth/mixed_layer_depth.log)"
     - name: Run unit tests
       run: |
         echo "${PWD}"

@@ -21,8 +21,8 @@ dependencies:
 - numba=0.53.1
 - scikit-learn=0.24.2
 - xesmf=0.6.2
+- esmpy=8.2.0
 - pip:
   - git+https://github.com/pangeo-data/xESMF.git
-- esmpy=8.2.0
 - gsw=3.3
 - metpy=1.1

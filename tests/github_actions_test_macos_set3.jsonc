@@ -11,9 +11,9 @@
       "FIRSTYR" : 1,
       "LASTYR" : 10,
       "pod_list": [
-         // "temp_extremes_distshape",
-         // "tropical_pacific_sea_level",
-         // "ocn_surf_flux_diag",
+       //   "temp_extremes_distshape",
+       //   "tropical_pacific_sea_level",
+          "ocn_surf_flux_diag",
           "mixed_layer_depth"
       ]
     }

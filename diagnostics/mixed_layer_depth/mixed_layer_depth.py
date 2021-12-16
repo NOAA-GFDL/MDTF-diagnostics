@@ -42,7 +42,7 @@
 #         and Mixed Layer Depth in MDTF Special Issue
 #
 
-# from __future__ import print_function
+
 import os
 
 # undo these for the framework version
@@ -63,6 +63,7 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import gsw
 import time
+import datetime
 
 months = [
     "Jan",
@@ -89,8 +90,10 @@ modelname = CASENAME
 
 def readinocndata(file, varname="so", firstyr="2010", lastyr="2014"):
     ds = xr.open_dataset(file)
+    date_begin = datetime.date(int(firstyr), 1, 1).isoformat()
+    date_end = datetime.date(int(lastyr), 12, 31).isoformat()
     ds = ds.sel(
-        time=slice(firstyr + "-01-01", lastyr + "-12-31")
+        time=slice(date_begin, date_end)
     )  # limit to yrs of interest, maybe model dep
     print(
         "Limit domain to Arctic to match obs"

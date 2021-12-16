@@ -77,7 +77,6 @@ Required programming language and libraries
 
 The programming language is python version 3 or up. The third-party libraries
 include "matplotlib", "xarray", "metpy","numpy","scipy".
-
 Required model output variables
 -------------------------------
 
@@ -128,7 +127,6 @@ References
    
 1. C.-W. Hsu et al. (2021): Ocean Surface Flux Algorithm Effects on Tropical 
 Indo-Pacific Intraseasonal Precipitation. *GRL*, under review.
-
 
 
 More about this diagnostic

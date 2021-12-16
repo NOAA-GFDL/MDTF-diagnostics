@@ -219,7 +219,6 @@ if ds_model_bin['hfls_count']/ds_model_bin['hfls_count'].sum().any() in ratiolev
     ax2.clabel(cs, ratiolevel, inline=True, fmt='%0.2f', fontsize=10)
 
 
-
 ax1.set_yticks(np.arange(bin2_range[0],bin2_range[1]+1,2))
 ax1.set_xticks(np.arange(bin1_range[0],bin1_range[1]+1,2))
 ax1.set_xlim([bin1_range[0],bin1_range[1]])

@@ -180,7 +180,11 @@ cs = ((ds_stn_bin['hfls_count']/ds_stn_bin['hfls_count'].sum())
                                           levels=ratiolevel,
                                           colors='w',linewidths=6)
      )
-ax1.clabel(cs, ratiolevel, inline=True, fmt='%0.2f', fontsize=10)
+
+# verify that plotted data falls within defined ratiolevel range before adding labels
+# (useful when working with synthetic data)
+if ds_stn_bin['hfls_count']/ds_stn_bin['hfls_count'].sum().any() in ratiolevel:
+    ax1.clabel(cs, ratiolevel, inline=True, fmt='%0.2f', fontsize=10)
 
 # ========== hlfs model ===========
 ax2 = fig.add_axes([1,0,1,0.8])
@@ -208,7 +212,11 @@ cs = ((ds_model_bin['hfls_count']/ds_model_bin['hfls_count'].sum())
                                           levels=ratiolevel,
                                           colors='w',linewidths=6)
      )
-ax2.clabel(cs, ratiolevel, inline=True, fmt='%0.2f', fontsize=10)
+
+# verify that plotted data falls within defined ratiolevel range before adding labels
+# (useful when working with synthetic data)
+if ds_model_bin['hfls_count']/ds_model_bin['hfls_count'].sum().any() in ratiolevel:
+    ax2.clabel(cs, ratiolevel, inline=True, fmt='%0.2f', fontsize=10)
 
 
 
@@ -307,10 +315,9 @@ ax2.tick_params(axis='x',labelsize=15,length=5,width=1)
 ax2.set_ylabel('',size=15)
 ax2.set_xlabel('10m wind speed ($m/s$)',size=15)
 
-
 # output figures
 fig.savefig(
-    os.getenv("WK_DIR") + "/model/PS/LHFLXdiag_modelbias_example.eps",
+    os.path.join(os.getenv("WK_DIR"), "model/LHFLXdiag_modelbias_example.png"),
     facecolor="w",
     edgecolor="w",
     orientation="portrait",

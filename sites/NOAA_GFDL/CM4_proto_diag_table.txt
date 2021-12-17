@@ -1,0 +1,80 @@
+﻿# REQUIRED FIELDS TO RUN MDTF DIAGNOSTICS                                                                                                                                                                                                                                                                      
+                                                                                                                                                                                                                                                                          
+#--------------------------------------------------------------------------------------------------                                                                                                                                                          
+#-- grid_spec
+#--------------------------------------------------------------------------------------------------
+
+
+"grid_spec",            -1, "months",  1, "days", "time",
+
+
+"dynamics", "grid_lon",  "grid_lon",  "grid_spec", "all", .false.,  "none", 2
+"dynamics", "grid_lat",  "grid_lat",  "grid_spec", "all", .false.,  "none", 2
+"dynamics", "grid_lont", "grid_lont", "grid_spec", "all", .false.,  "none", 2
+"dynamics", "grid_latt", "grid_latt", "grid_spec", "all", .false.,  "none", 2
+"dynamics", "area",      "area",      "grid_spec", "all", .false.,  "none", 2
+"dynamics", "bk",        "bk",        "grid_spec", "all", .false.,  "none", 2
+"dynamics", "pk",        "pk",        "grid_spec", "all", .false.,  "none", 2
+"flux",     "land_mask", "land_mask", "grid_spec", "all", .false.,  "none", 2
+"dynamics", "zsurf",     "zsurf",     "grid_spec", "all", .false.,  "none", 2
+
+
+
+
+#--------------------------------------------------------------------------------------------------
+#-- Monthly Data
+#--------------------------------------------------------------------------------------------------
+
+
+"atmos_month_cmip",         1, "months",    1,  "days",  "time",
+
+
+"flux",          "evspsbl", "evspsbl",       "atmos_month_cmip",   "all",  .true.,  "none", 2
+"moist",         "pr",      "pr",            "atmos_month_cmip",   "all",  .true.,  "none", 2
+"flux",          "psl",     "psl",           "atmos_month_cmip",   "all",  .true.,  "none", 2
+"atmos",         "ps",      "ps",            "atmos_month_cmip",   "all",  .true.,  "none", 2
+"atmos_plev19",  "zg",      "zg_unmsk",      "atmos_month_cmip",   "all",  .true.,  "none", 2
+
+
+"land_month_cmip",          1, "months",    1,  "days",  "time",
+
+
+"land",        "geolon_t",   "geolon_t",    "land_month_cmip", "all", .false., "none", 1
+"land",        "geolat_t",   "geolat_t",    "land_month_cmip", "all", .false., "none", 1
+"cmor_land",   "mrsos",      "mrsos",       "land_month_cmip",    "all",  .true.,  "none", 2
+
+
+
+
+#--------------------------------------------------------------------------------------------------
+#-- Daily Data
+#--------------------------------------------------------------------------------------------------
+
+
+"atmos_daily_cmip",          24,  "hours",  1, "days", "time",
+
+
+"atmos_plev19",  "hus",   "hus_unmsk",     "atmos_daily_cmip",    "all",  .true.,  "none", 2
+"radiation",     "rlut",  "rlut",          "atmos_daily_cmip",    "all",  .true.,  "none", 2
+"atmos_plev19",  "ua",    "ua_unmsk",      "atmos_daily_cmip",    "all",  .true.,  "none", 2
+"atmos_plev19",  "va",    "va_unmsk",      "atmos_daily_cmip",    "all",  .true.,  "none", 2
+"atmos_plev19",  "wap",   "wap_unmsk",     "atmos_daily_cmip",    "all",  .true. , "none", 2
+"atmos_plev19",  "zg",    "zg_unmsk",      "atmos_daily_cmip",    "all",  .true.,  "none", 2
+"moist",         "pr",    "pr",            "atmos_daily_cmip",    "all",  .true.,  "none", 2
+"atmos",         "ps",    "ps",            "atmos_daily_cmip",    "all",  .true.,  "none", 2
+
+
+
+
+#--------------------------------------------------------------------------------------------------
+#-- 6 hourly data
+#--------------------------------------------------------------------------------------------------
+
+
+"atmos_4xdaily_cmip",         6,  "hours",  1, "days", "time",
+
+
+"moist",         "pr",    "pr",            "atmos_4xdaily_cmip",    "all",  .true.,  "none", 2
+"moist",         "prw",   "prw",           "atmos_4xdaily_cmip",    "all",  .true.,  "none", 2
+"atmos",         "ps",    "ps",            "atmos_4xdaily_cmip",    "all",  .true.,  "none", 2
+"atmos_plev19",  "ta",    "ta_unmsk",      "atmos_4xdaily_cmip",    "all",  .true.,  "none", 2

@@ -1,5 +1,7 @@
 ; This file is part of the MJO_suite module of the MDTF code package (see LICENSE.txt)
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 ;================================================================================
 function pinterp (var_name:string,plev:float,fin:file,fin_ps:file)
 begin

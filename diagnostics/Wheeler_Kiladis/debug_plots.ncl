@@ -1,4 +1,5 @@
 load "$POD_HOME/panel_two_sets.ncl" 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
 
 undef("debug_print")
 procedure debug_print(string_to_print,routine_name,debug_flag)

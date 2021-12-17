@@ -1,11 +1,11 @@
 // Configuration for command-line arguments for MDTF-diagnostics driver script.
-// This is used by install.py to generate cli.jsonc. 
+// This is used by install.py to generate cli.jsonc.
 // DO NOT modify this file. Instead, edit cli.jsonc.
 //
-// Entries here are used in framework/cli.py to configure command-line options 
+// Entries here are used in framework/cli.py to configure command-line options
 // accepted by the script. Syntax is based on python's argparse library, see
-// https://docs.python.org/2.7/library/argparse.html or 
-// https://docs.python.org/2.7/howto/argparse.html. 
+// https://docs.python.org/2.7/library/argparse.html or
+// https://docs.python.org/2.7/howto/argparse.html.
 //
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.)
@@ -29,7 +29,7 @@
       "arguments" : [
         {
           "name": "OBS_DATA_ROOT",
-          "help": "Parent directory containing observational data used by individual PODs.",
+          "help": "Required setting. Parent directory containing observational data used by individual PODs.",
           "metavar" : "<DIR>",
           "action": "PathAction"
         },{
@@ -46,14 +46,14 @@
         },{
           "name": "OUTPUT_DIR",
           "short_name" : "o",
-          "help": "Directory to write output files.",
+          "help": "Required setting. Directory to write output files.",
           "metavar" : "<DIR>",
           "action": "PathAction"
         }
       ]
     },{
       "title" : "DATA",
-      "description" : "Settings describing the input model data.",
+      "description" : "Options describing the input model data.",
       "arguments" : [
         {
           "name": "convention",
@@ -62,8 +62,20 @@
           "default": "CMIP",
           "metavar" : "<convention>"
         },{
+          "name": "large_file",
+          "help": "Set this flag to handle large volumes of input model data. If set, use netCDF4 format in intermediate data files to handle variables >4gb (HDF5 API). Default is to use netCDF4 classic format.",
+          "default" : false
+        },{
           "name": "strict",
           "help": "If set, disables experiment selection heuristics and raises error if experiment not uniquely specified by user input.",
+          "default" : false
+        },{
+          "name": "disable_preprocessor",
+          "help": "If set, disables metadata checks and unit conversion by the framework prior to POD execution. This is only provided as a workaround for input data which is known to have incorrect metadata.",
+          "default" : false
+        },{
+          "name": "overwrite_file_metadata",
+          "help": "If set, overwrites file metadata in the event of conflict with user's specifications (via --convention or --data_manager=ExplicitFile). This is provided as a workaround for input data which is known to have incorrect metadata.",
           "default" : false
         },{
           "name": "data_manager",
@@ -79,18 +91,18 @@
         {
           "name": "CASENAME",
           "short_name" : "n",
-          "help": "Identifier used to label the package's output for the selected model data.",
+          "help": "Required setting. Identifier used to label the package's output for the selected model data.",
           "metavar" : "<name>"
         },{
           "name": "FIRSTYR",
           "short_name" : "Y",
-          "help": "Starting year of analysis period.",
+          "help": "Required setting. Starting year of analysis period.",
           "type" : "int",
           "metavar" : "<year>"
         },{
           "name": "LASTYR",
           "short_name" : "Z",
-          "help": "Ending year of analysis period (inclusive).",
+          "help": "Required setting. Ending year of analysis period (inclusive).",
           "type" : "int",
           "metavar" : "<year>"
         },{
@@ -106,7 +118,7 @@
       ]
     },{
       "title" : "RUNTIME",
-      "description" : "Settings affecting the runtime environment of the PODs.",
+      "description" : "Options affecting the runtime environment of the PODs.",
       "arguments" : [
         {
           "name": "environment_manager",
@@ -123,7 +135,7 @@
       ]
     },{
       "title" : "OUTPUT",
-      "description" : "Settings affecting what output is generated.",
+      "description" : "Options affecting what output is generated.",
       "arguments" : [
         {
           "name": "output_manager",
@@ -140,7 +152,7 @@
         {
           "name": "OBS_DATA_REMOTE",
           "help": "Site-specific installation of observational data used by individual PODs. This will be GCP'ed locally if running on PPAN.",
-          "default" : "/home/Oar.Gfdl.Mdteam/DET/analysis/mdtf/obs_data",
+          "default" : "/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data",
           "metavar" : "<DIR>",
           "action": "PathAction"
         },{
@@ -167,20 +179,20 @@
       ]
     },{
       "title" : "DEBUG",
-      "description" : "Settings used in debugging.",
+      "description" : "Options used in debugging.",
       "arguments" : [
         {
           "name": "verbose",
           "short_name": "v",
           "help": "Increase console log verbosity level. -v prints debug information.",
-          "default" : 0, 
-          "action": "count" 
+          "default" : 0,
+          "action": "count"
         },{
           "name": "quiet",
           "short_name": "q",
           "help": "Decrease console log verbosity level. -q prints warnings only, -qq prints errors only, and -qqq prints no output.",
-          "default" : 0, 
-          "action": "count" 
+          "default" : 0,
+          "action": "count"
         },{
           "name": "file_transfer_timeout",
           "help": "Time (in seconds) to wait before giving up on transferring a data file to the local filesystem. Set to zero to disable.",

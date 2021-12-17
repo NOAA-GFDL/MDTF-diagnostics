@@ -1,0 +1,96 @@
+{
+  "settings": {
+    "driver": "ocn_surf_flux_diag.py",
+    "long_name": "ocean surface flux diagnostic",
+    "realm": "atmosphere",
+    "description": "Ocean surface flux diagnostic",
+    "runtime_requirements": {
+      "python3": [
+        "matplotlib",
+        "xarray",
+        "numpy",
+        "scipy",
+        "metpy"
+      ]
+    },
+    "pod_env_vars": {
+      "lat_min": "-20",
+      "lat_max": "20",
+      "lon_min": "30",
+      "lon_max": "180"
+    }
+  },
+  "data": {
+    "frequency": "day"
+  },
+  "dimensions": {
+    "lat": {
+      "standard_name": "latitude"
+    },
+    "lon": {
+      "standard_name": "longitude"
+    },
+    "time": {
+      "standard_name": "time"
+    }
+  },
+  "varlist": {
+    "ts": {
+      "standard_name": "surface_temperature",
+      "units": "K",
+      "dimensions": [
+        "time",
+        "lat",
+        "lon"
+      ]
+    },
+    "psl": {
+      "standard_name": "air_pressure_at_mean_sea_level",
+      "units": "Pa",
+      "dimensions": [
+        "time",
+        "lat",
+        "lon"
+      ]
+    },
+    "sfcWind": {
+      "standard_name": "wind_speed",
+      "units": "m s-1",
+      "modifier": "atmos_height",
+      "dimensions": [
+        "time",
+        "lat",
+        "lon"
+      ]
+    },
+    "huss": {
+      "standard_name": "specific_humidity",
+      "units": "1",
+      "modifier": "atmos_height",
+      "dimensions": [
+        "time",
+        "lat",
+        "lon"
+      ]
+    },
+    "hfls": {
+      "standard_name": "surface_upward_latent_heat_flux",
+      "units": "W m-2",
+      "dimensions": [
+        "time",
+        "lat",
+        "lon"
+      ]
+    },
+    "pr": {
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1",
+      "dimensions": [
+        "time",
+        "lat",
+        "lon"
+      ]
+    }
+  }
+}
+

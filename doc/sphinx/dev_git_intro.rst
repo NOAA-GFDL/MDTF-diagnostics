@@ -126,7 +126,7 @@ Method 1: Web interface+command line
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 See the `MDTF Best Practices Overview <https://docs.google.com/presentation/d/18jbi50vC9X89vFbL0W1Ska1dKuW_yWY51SomWx_ahYE/edit?usp=sharing>`__  presentation for instructions with figures.
 
-1. Click the *Fetch Upstream* link on the main page of your MDTF-diagnostics fork, then click the *Open Pull Request" button
+1. Click the *Fetch Upstream* link on the main page of your MDTF-diagnostics fork, then click the *Open Pull Request* button
 2. Verify that your fork is set as the **base** repository, and *develop* is set as the **base branch**,
    that *NOAA-GFDL* is set as the **head repository**, and *develop* is set as the **head** branch
 3. Create a title for your PR, add a description if you want, then click *Create pull request*

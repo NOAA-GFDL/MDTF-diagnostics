@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""Currently unused; intended as a standalone installer script for the package's
+conda environments and supporting data.
+"""
+
 import sys
 # do version check before importing other stuff
 if sys.version_info[0] != 3 or sys.version_info[1] < 7:
@@ -43,7 +47,7 @@ def fatal_exception_handler(exc, msg=None):
     print('ERROR: caught exception {0}({1!r})'.format(type(exc).__name__, exc.args))
     if msg:
         print(msg)
-    exit(1)
+    util.exit_handler(code=1)
 
 def find_conda(code_root, conda_config):
     """Attempt to determine conda location on this system.
@@ -162,7 +166,7 @@ def untar_data(ftp_data, install_config):
                 tar_cmd = tar_cmd.format(test_path)
             else:
                 print("ERROR: could not find Archive Utility.app.")
-                exit(1)
+                util.exit_handler(code=1)
     else:
         tar_cmd = 'tar -xf '
 
@@ -262,7 +266,7 @@ def framework_verify(code_root, run_output):
     if missing_dict:
         print("ERROR: the following files are missing:")
         print(util.pretty_print_json(missing_dict))
-        exit(1)
+        util.exit_handler(code=1)
     print("SUCCESS: no missing links found.")
     print("Finished: framework test run successful!")
 
@@ -271,7 +275,7 @@ def framework_verify(code_root, run_output):
 # classes just handle the configuration logic
 
 
-class InstallCLIHandler(cli.CLIHandler):
+class InstallCLIHandler(cli.MDTFArgParser):
     def make_parser(self, d):
         _ = d.setdefault('usage', "%(prog)s [options] [env_setup]")
         p = super(InstallCLIHandler, self).make_parser(d)

@@ -41,18 +41,18 @@ def main():
     # poor man's subparser: argparse's subparser doesn't handle this
     # use case easily, so just dispatch on first argument
     if len(sys.argv) == 1 or \
-        len(sys.argv) == 2 and sys.argv[1].lower().endswith('help'):
-        # build CLI, print its help and exit
+        len(sys.argv) == 2 and sys.argv[1].lower() in ('-h', '--help'):
+        # case where we print CLI help
         cli_obj = cli.MDTFTopLevelArgParser(code_root)
         cli_obj.print_help()
         return 0 # will actually exit from print_help
     elif sys.argv[1].lower() == 'info':
+        # case where we print command-line info on PODs
         from src import mdtf_info
-        # "subparser" for command-line info
         mdtf_info.InfoCLIHandler(code_root, sys.argv[2:])
         return 0 # will actually exit from print_help
     else:
-        # run the actual framework
+        # case where we run the actual framework
         print(f"=== Starting {os.path.realpath(__file__)}\n")
         validate_base_environment()
 

@@ -23,7 +23,7 @@ class TestEnvironmentManager(unittest.TestCase):
     # def test_check_pod_driver_no_program_2(self, mock_exists, mock_read_json):
     #     # assertion fail if explicitly specified program not found
     #     pod = Diagnostic('A')
-    #     self.assertRaises(AssertionError, pod._check_pod_driver)
+    #     self.assertRaises(AssertionError, pod.set_entry_point)
 
     # ---------------------------------------------------
 

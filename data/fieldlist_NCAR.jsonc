@@ -93,7 +93,8 @@
       // correct name? CMIP6 equivalent should be tas, temp at 2m ref height
       "standard_name": "air_temperature",
       "units": "K",
-      "ndim": 3
+      "ndim": 3,
+      "modifier": "atmos_height"
     },
     "TAUX": {
       "standard_name": "surface_downward_eastward_stress",
@@ -156,6 +157,26 @@
       "standard_name": "surface_upward_latent_heat_flux",
       "units": "W m-2",
       "ndim": 3
+    },
+    "zos": {
+      "standard_name": "sea_surface_height_above_geoid",
+      "units": "m",
+      "ndim": 3
+    },
+    "tauuo": {
+      "standard_name": "surface_downward_x_stress",
+      "units": "N m-2",
+      "ndim": 3
+    },
+    "tauvo": {
+      "standard_name": "surface_downward_y_stress",
+      "units": "N m-2",
+      "ndim": 3
+    },
+    "areacello": {
+      "standard_name": "cell_area",
+      "units": "m2",
+      "ndim": 2
     },
     // Variables for AMOC_3D_Structure module:
     // "uo": {

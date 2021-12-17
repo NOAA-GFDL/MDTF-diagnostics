@@ -90,7 +90,7 @@ class ModuleManager(util.Singleton):
 
 # ========================================================================
 
-def gcp_wrapper(source_path, dest_dir, timeout=None, dry_run=None):
+def gcp_wrapper(source_path, dest_dir, timeout=None, dry_run=None, log=_log):
     """Wrapper for file and recursive directory copying using the GFDL
     site-specific General Copy Program (`https://gitlab.gfdl.noaa.gov/gcp/gcp`__.)
     Assumes GCP environment module has been loaded beforehand, and calls GCP in
@@ -114,14 +114,13 @@ def gcp_wrapper(source_path, dest_dir, timeout=None, dry_run=None):
     else:
         source = ['gfdl:' + source_path]
         dest = ['gfdl:' + dest_dir + os.sep]
-    _log.info('\tGCP {} -> {}'.format(source[-1], dest[-1]))
+    log.info('\tGCP {} -> {}'.format(source[-1], dest[-1]))
     util.run_command(
         ['gcp', '--sync', '-v', '-cd'] + source + dest,
-        timeout=timeout,
-        dry_run=dry_run
+        timeout=timeout, dry_run=dry_run, log=log
     )
 
-def make_remote_dir(dest_dir, timeout=None, dry_run=None):
+def make_remote_dir(dest_dir, timeout=None, dry_run=None, log=_log):
     """Workaround to create a directory on a remote filesystem by GCP'ing it.
     """
     try:
@@ -130,43 +129,43 @@ def make_remote_dir(dest_dir, timeout=None, dry_run=None):
         # use GCP for this because output dir might be on a read-only filesystem.
         # apparently trying to test this with os.access is less robust than
         # just catching the error
-        _log.debug("os.makedirs at %s failed (%r); trying GCP.", dest_dir, exc)
+        log.debug("os.makedirs at %s failed (%r); trying GCP.", dest_dir, exc)
         tmpdirs = core.TempDirManager()
         work_dir = tmpdirs.make_tempdir()
         work_dir = os.path.join(work_dir, os.path.basename(dest_dir))
         os.makedirs(work_dir)
-        gcp_wrapper(work_dir, dest_dir, timeout=timeout, dry_run=dry_run)
+        gcp_wrapper(work_dir, dest_dir, timeout=timeout, dry_run=dry_run, log=log)
 
-def fetch_obs_data(source_dir, dest_dir, timeout=None, dry_run=None):
+def fetch_obs_data(source_dir, dest_dir, timeout=None, dry_run=None, log=_log):
     """Function to fetch site-wide copy of the MDTF package observational data
     to local disk (taken to be source_dir and dest_dir, respectively.)
     """
     if source_dir == dest_dir:
         return
     if not os.path.exists(source_dir) or not os.listdir(source_dir):
-        _log.error("Empty obs data directory at '%s'.", source_dir)
+        log.error("Empty obs data directory at '%s'.", source_dir)
     if not os.path.exists(dest_dir) or not os.listdir(dest_dir):
-        _log.debug("Empty obs data directory at '%s'.", dest_dir)
+        log.debug("Empty obs data directory at '%s'.", dest_dir)
     if running_on_PPAN():
-        _log.info("\tGCPing data from {}.".format(source_dir))
+        log.info("\tGCPing data from {}.".format(source_dir))
         # giving -cd to GCP, so will create dirs
         gcp_wrapper(
-            source_dir, dest_dir, timeout=timeout, dry_run=dry_run
+            source_dir, dest_dir, timeout=timeout, dry_run=dry_run, log=log
         )
     else:
-        _log.info("\tSymlinking obs data dir to {}.".format(source_dir))
+        log.info("\tSymlinking obs data dir to {}.".format(source_dir))
         dest_parent = os.path.dirname(dest_dir)
         if os.path.exists(dest_dir):
             assert os.path.isdir(dest_dir)
             try:
                 os.remove(dest_dir) # remove symlink only, not source dir
             except OSError:
-                _log.error('Expected symlink at %s', dest_dir)
+                log.error('Expected symlink at %s', dest_dir)
                 os.rmdir(dest_dir)
         elif not os.path.exists(dest_parent):
             os.makedirs(dest_parent)
         if dry_run:
-            print('DRY_RUN: symlink {} -> {}'.format(source_dir, dest_dir))
+            log.info('DRY_RUN: symlink %s -> %s', source_dir, dest_dir)
         else:
             os.symlink(source_dir, dest_dir)
 
@@ -199,7 +198,12 @@ def rmtree_wrapper(path):
         shutil.rmtree(path, ignore_errors=True)
 
 def frepp_freq(date_freq):
-    # logic as written would give errors for 1yr chunks (?)
+    """Formats a string representation of a DateFrequency object according to
+    the conventions used by frepp.
+
+    Note that the DateFrequency classmethod for creating an object from a string
+    can handle frepp conventions with no modification.
+    """
     if date_freq is None:
         return date_freq
     assert isinstance(date_freq, util.DateFrequency)
@@ -225,12 +229,13 @@ frepp_translate = {
     'yr2': 'LASTYR'
 }
 
-def parse_frepp_stub(frepp_stub):
+def parse_frepp_stub(frepp_stub, log=_log):
     """Converts the frepp arguments to a Python dictionary.
 
     See `<https://wiki.gfdl.noaa.gov/index.php/FRE_User_Documentation#Automated_creation_of_diagnostic_figures>`__.
 
-    Returns: :py:obj:`dict` of frepp parameters.
+    Returns:
+        :py:obj:`dict` of frepp parameters.
     """
     # parse arguments and relabel keys
     d = {}
@@ -246,7 +251,7 @@ def parse_frepp_stub(frepp_stub):
         \s*$          # remainder of line must be whitespace.
         """, re.VERBOSE)
     for line in frepp_stub.splitlines():
-        _log.debug("line = '{}'".format(line))
+        log.debug("line = '{}'".format(line))
         match = re.match(regex, line)
         if match:
             if match.group('key') in frepp_translate:

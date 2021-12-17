@@ -14,6 +14,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl" 
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 begin
 
 ;lag desired for geopotential height plots

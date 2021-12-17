@@ -10,8 +10,8 @@ class TestCheckDirs(unittest.TestCase):
     def test_check_dirs_found(self, mock_makedirs, mock_isdir):
         # exit function normally if all directories found
         try:
-            util.check_dirs('DUMMY/PATH/NAME', create=False)
-            util.check_dirs('DUMMY/PATH/NAME', create=True)
+            util.check_dir('DUMMY/PATH/NAME', create=False)
+            util.check_dir('DUMMY/PATH/NAME', create=True)
         except (Exception, SystemExit):
             self.fail()
         mock_makedirs.assert_not_called()
@@ -21,7 +21,7 @@ class TestCheckDirs(unittest.TestCase):
     def test_check_dirs_not_found(self, mock_makedirs, mock_isdir):
         # try to exit() if any directories not found
         with self.assertRaises(exceptions.MDTFFileNotFoundError):
-            util.check_dirs('DUMMY/PATH/NAME', create=False)
+            util.check_dir('DUMMY/PATH/NAME', create=False)
         mock_makedirs.assert_not_called()
 
     @mock.patch('os.path.isdir', return_value = False)
@@ -29,7 +29,7 @@ class TestCheckDirs(unittest.TestCase):
     def test_check_dirs_not_found_created(self, mock_makedirs, mock_isdir):
         # don't exit() and call os.makedirs if in create_if_nec
         try:
-            util.check_dirs('DUMMY/PATH/NAME', create=True)
+            util.check_dir('DUMMY/PATH/NAME', create=True)
         except (Exception, SystemExit):
             self.fail()
         mock_makedirs.assert_called_once_with('DUMMY/PATH/NAME', exist_ok=False)

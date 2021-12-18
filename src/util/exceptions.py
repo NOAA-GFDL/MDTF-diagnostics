@@ -2,49 +2,67 @@
 imports.
 """
 import os
+import sys
 import errno
 from subprocess import CalledProcessError
-import traceback
 
 import logging
 _log = logging.getLogger(__name__)
 
-class ExceptionQueue(object):
-    """Class to retain information about exceptions that were raised, for later
-    output.
-    """
-    def __init__(self):
-        self._queue = []
-
-    @property
-    def is_empty(self):
-        return (len(self._queue) == 0)
-
-    def log(self, exc, exc_to_chain=None):
-        wrapped_exc = traceback.TracebackException.from_exception(exc)
-        self._queue.append(wrapped_exc)
-
-    def format(self):
-        strs_ = [''.join(exc.format()) for exc in self._queue]
-        strs_ = [f"***** Caught exception #{i+1}:\n{exc}\n" \
-            for i, exc in enumerate(strs_)]
-        return "".join(strs_)
 
 def exit_on_exception(exc, msg=None):
-    """Prints information about a fatal exception to the console beofre exiting.
+    """Prints information about a fatal exception to the console before exiting.
     Use case is in user-facing subcommands (``mdtf install`` etc.), since we
     have more sophisticated logging in the framework itself.
+
     Args:
-        exc: :py:class:`Exception` object
-        msg (str, optional): additional message to print.
+        exc (:py:class:`Exception`): Exception to print.
+        msg (str): Optional, additional message to print.
     """
     # if subprocess failed, will have already logged its own info
     print(f'ERROR: caught exception {repr(exc)}')
     if msg:
         print(msg)
-    exit(1)
+    exit_handler(code=1)
 
-# -----------------------------------------------------------------
+def exit_handler(code=1, msg=None):
+    """Wraps all calls to :py:func:`sys.exit`; could do additional
+    cleanup not handled by atexit() here.
+    """
+    if msg:
+        print(msg)
+    sys.exit(code)
+
+def chain_exc(exc, new_msg, new_exc_class=None):
+    """Raise a new exception from an existing one, in order to give more
+    context for debugging. See Python documentation on
+    `exception chaining <https://docs.python.org/3.7/library/exceptions.html>`__.
+
+    Args:
+        exc (:py:class:`Exception`): Incoming exception to chain new exception from.
+        new_msg (str): Message for new Exception.
+        new_exc_class (class): Optional. Class of new exception to raise. If not
+            provided, raises a new exception of the same type as *exc*.
+    """
+    if new_exc_class is None:
+        new_exc_class = type(exc)
+    try:
+        if new_msg.istitle():
+            new_msg = new_msg[0].lower() + new_msg[1:]
+        if new_msg.endswith('.'):
+            new_msg = new_msg[:-1]
+        new_msg = f"{exc_descriptor(exc)} while {new_msg.lstrip()}: {repr(exc)}."
+        raise new_exc_class(new_msg) from exc
+    except Exception as chained_exc:
+        return chained_exc
+
+def exc_descriptor(exc):
+    # MDTFEvents are raised during normal program operation; use correct wording
+    # for log messages so user doesn't think it's an error
+    if isinstance(exc, MDTFEvent):
+        return "Received event"
+    else:
+        return "Caught exception"
 
 class TimeoutAlarm(Exception):
     """Dummy exception raised if a subprocess times out."""
@@ -52,9 +70,38 @@ class TimeoutAlarm(Exception):
     pass
 
 class MDTFBaseException(Exception):
-    """Dummy base class to describe all MDTF-specific errors that can happen
-    during the framework's operation."""
-    pass
+    """Base class to describe all MDTF-specific errors that can happen during
+    the framework's operation."""
+
+    def __repr__(self):
+        # full repr of attrs of child classes may take lots of space to print;
+        # instead just print message
+        return f'{self.__class__.__name__}("{str(self)}")'
+
+class ChildFailureEvent(MDTFBaseException):
+    """Exception raised when a member of the object hierarchy is deactivated
+    because all its child objects have failed.
+    """
+    def __init__(self, obj):
+        self.obj = obj
+
+    def __str__(self):
+        return (f"Deactivating {self.obj.full_name} due to failure of all "
+            f"child objects.")
+
+class PropagatedEvent(MDTFBaseException):
+    """Exception passed between members of the object hierarchy when a parent
+    object (:class:`~core.MDTFObjectBase`) has been deactivated and needs to
+    deactivate its children.
+    """
+    def __init__(self, exc, parent):
+        self.exc = exc
+        self.parent = parent
+
+    def __str__(self):
+        return (f"{exc_descriptor(self.exc)} {repr(self.exc)} from deactivation "
+            f"of parent {self.parent.full_name}.")
+
 
 class MDTFFileNotFoundError(FileNotFoundError, MDTFBaseException):
     """Wrapper for :py:class:`FileNotFoundError` which handles error codes so we
@@ -86,7 +133,8 @@ class WormKeyError(KeyError, MDTFBaseException):
 
 class DataclassParseError(ValueError, MDTFBaseException):
     """Raised when parsing input data fails on a
-    :func:`~src.util.dataclass.mdtf_dataclass` or :func:`~src.util.dataclass.regex_dataclass`.
+    :func:`~src.util.dataclass.mdtf_dataclass` or
+    :func:`~src.util.dataclass.regex_dataclass`.
     """
     pass
 
@@ -144,67 +192,86 @@ class FXDateException(MDTFBaseException):
         return ("Attempted datelabel method '{}' on FXDate "
             "placeholder: {}.").format(self.func_name, self.msg)
 
-class DataExceptionBase(MDTFBaseException):
-    """Base class and common formatting code for exceptions raised in data
-    query/fetch.
+class DataRequestError(MDTFBaseException):
+    """Dummy class used for fatal errors that take place during the
+    data query/fetch/preprocess stage of the framework.
     """
-    _error_str = ""
+    pass
 
-    def __init__(self, msg=None, dataset=None):
+class MDTFEvent(MDTFBaseException):
+    """Dummy class to denote non-fatal errors, specifically "events" that are
+    passed during the data query/fetch/preprocess stage of the framework.
+    """
+    pass
+
+class FatalErrorEvent(MDTFBaseException):
+    """Dummy class used to "convert" :class:`MDTFEvent`\s to fatal errors
+    (resulting in deactivation of a variable, pod or case.) via exception
+    chaining.
+    """
+    pass
+
+class DataProcessingEvent(MDTFEvent):
+    """Base class and common formatting code for events raised in data
+    query/fetch. These should *not* be used for fatal errors (when a variable or
+    POD is deactivated.)
+    """
+    def __init__(self, msg="", dataset=None):
         self.msg = msg
         self.dataset = dataset
 
     def __str__(self):
-        s = self._error_str
-        if self.dataset is not None:
-            if hasattr(self.dataset, 'remote_path'):
-                data_id = self.dataset.remote_path
-            elif hasattr(self.dataset, 'name'):
-                data_id = self.dataset.name
-            else:
-                data_id = str(self.dataset)
-            s += f" for data in {data_id}"
-        if self.msg is not None:
-            s += f": {self.msg}"
-        if not s.endswith('.'):
-            s += "."
-        return s
+        # if self.dataset is not None:
+        #     if hasattr(self.dataset, 'remote_path'):
+        #         data_id = self.dataset.remote_path
+        #     elif hasattr(self.dataset, 'name'):
+        #         data_id = self.dataset.name
+        #     else:
+        #         data_id = str(self.dataset)
+        return self.msg
 
-    def __repr__(self):
-        # full repr of dataset may take lots of space to print
-        return f"{self.__class__.__name__}({str(self)})"
-
-class DataQueryError(DataExceptionBase):
+class DataQueryEvent(DataProcessingEvent):
     """Exception signaling a failure to find requested data in the remote location.
-
-    Raised by :meth:`~data_manager.DataManager.queryData` to signal failure of a
-    data query. Should be caught properly in :meth:`~data_manager.DataManager.planData`
-    or :meth:`~data_manager.DataManager.fetchData`.
     """
-    _error_str = "Data query error"
+    pass
 
-class DataExperimentError(DataExceptionBase):
+class DataExperimentEvent(DataProcessingEvent):
     """Exception signaling a failure to uniquely select an experiment for all
     variables based on query results.
     """
-    _error_str = "Experiment selection error"
+    pass
 
-class DataFetchError(DataExceptionBase):
+class DataFetchEvent(DataProcessingEvent):
     """Exception signaling a failure to obtain data from the remote location.
     """
-    _error_str = "Data fetch error"
+    pass
 
-class DataPreprocessError(DataExceptionBase):
+class DataPreprocessEvent(DataProcessingEvent):
     """Exception signaling an error in preprocessing data after it's been
     fetched, but before any PODs run.
     """
-    _error_str = "Data preprocessing error"
+    pass
 
-class GenericDataSourceError(DataExceptionBase):
+class MetadataEvent(DataProcessingEvent):
+    """Exception signaling discrepancies in variable metadata.
+    """
+    pass
+
+class MetadataError(MDTFBaseException):
+    """Exception signaling unrecoverable errors in variable metadata.
+    """
+    pass
+
+class UnitsUndefinedError(MetadataError):
+    """Exception signaling unrecoverable errors in variable metadata.
+    """
+    pass
+
+class GenericDataSourceEvent(DataProcessingEvent):
     """Exception signaling a failure originating in the DataSource query/fetch
     pipeline whose cause doesn't fall into the above categories.
     """
-    _error_str = "General DataSource error"
+    pass
 
 class PodExceptionBase(MDTFBaseException):
     """Base class and common formatting code for exceptions affecting a single
@@ -219,20 +286,16 @@ class PodExceptionBase(MDTFBaseException):
     def __str__(self):
         s = self._error_str
         if self.pod is not None:
-            if hasattr(self.pod, 'name'):
-                pod_name = self.pod.name
+            if hasattr(self.pod, 'full_name'):
+                pod_name = self.pod.full_name
             else:
-                pod_name = self.pod
-            s += f" for POD '{pod_name}'"
+                pod_name = f"'{self.pod}'"
+            s += f" for POD {pod_name}"
         if self.msg is not None:
             s += f": {self.msg}"
         if not s.endswith('.'):
             s += "."
         return s
-
-    def __repr__(self):
-        # full repr of Diagnostic takes lots of space to print
-        return f"{self.__class__.__name__}({str(self)})"
 
 class PodConfigError(PodExceptionBase):
     """Exception raised if we can't parse info in a POD's settings.jsonc file.
@@ -241,6 +304,11 @@ class PodConfigError(PodExceptionBase):
     parse the file.
     """
     _error_str = "Couldn't parse the settings.jsonc file"
+
+class PodConfigEvent(MDTFEvent):
+    """Exception raised during non-fatal events in resolving POD configuration.
+    """
+    pass
 
 class PodDataError(PodExceptionBase):
     """Exception raised if POD doesn't have required data to run.

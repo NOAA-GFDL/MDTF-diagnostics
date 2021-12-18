@@ -1,5 +1,6 @@
 load "$POD_HOME/debug_plots.ncl"  
 ; DRB this contains debug_print so should get it from there
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
 
 ;-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 ;                  diagnostics_cam.ncl                             

@@ -1,4 +1,5 @@
 ; This file is part of the Wheeler_Kiladis module of the MDTF code package (see LICENSE.txt)
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
 
 
 ;==================================================================

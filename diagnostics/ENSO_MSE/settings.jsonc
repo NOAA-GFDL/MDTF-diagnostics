@@ -4,7 +4,8 @@
 		"long_name": "ENSO moist static energy budget",
 		"description": "ENSO moist static energy budget",
               "runtime_requirements": {
-              "ncl": ["contributed", "gsn_code", "gsn_csm", "shea_util", "calendar_decode2"]
+              "ncl": ["contributed", "gsn_code", "gsn_csm", "shea_util", "calendar_decode2"],
+              "python3": ["xarray"]
     }
    },
     "data": {

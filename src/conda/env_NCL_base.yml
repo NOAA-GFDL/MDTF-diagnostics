@@ -8,3 +8,7 @@ dependencies:
 # - openblas=0.3.4 # otherwise ncl 6.5 installs but doesn't function on macs
 - ncl=6.6.2
 - nco>=4.7.6,<=4.8.1
+- numpy=1.19
+- xarray=0.16
+- scipy=1.5.2
+- netCDF4=1.4.2

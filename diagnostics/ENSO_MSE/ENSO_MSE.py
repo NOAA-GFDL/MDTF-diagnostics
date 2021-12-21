@@ -68,11 +68,6 @@ if os.environ["ENSO_COMPOSITE"] == "1":
         print("=================================================================")
 
         print("=================================================================")
-        print(" General information is in README_general.docx/README_general.pdf files under")
-        print("  ~/diagnostics/ENSO_MSE                                              ")
-        print("=================================================================")
-
-        print("=================================================================")
         print(" The COMPOSITE routine requires the following monthly variables in the input:  ")
         print("  Zg - geopotential height [m]        ")
         print("  U  - U wind [m/s], V - V wind [m/s] ")
@@ -97,12 +92,7 @@ if os.environ["ENSO_COMPOSITE"] == "1":
         print("=================================================================")
 
 
-        print("=================================================================")
-        print(" More detailed information regarding the COMPOSITE module is in  ")
-        print(" README_LEVEL_01.docx/README_LEVEL_01.pdf files under ~/diagnostics/ENSO_MSE/COMPOSITE/")
-        print("=================================================================")
-
-###  set if to run Observational Preprocessing :
+#  set if to run Observational Preprocessing :
         if os.environ["ENSO_OBS"] == "1":
             print("=================================================================")
             print(" Starting Observational COMPOSITE module                         ")
@@ -132,12 +122,6 @@ if os.environ["ENSO_COMPOSITE"] == "1":
             os.system("rm -f "+file_dest)
             os.system("cp "+file_src+" "+file_dest)
 
-        file_src  = os.environ["POD_HOME"]+"/doc/ENSO_MSE.pdf"
-        file_dest = os.environ["ENSO_MSE_WKDIR"]+"/ENSO_MSE.pdf"
-        if os.path.isfile( file_dest ):
-            os.system("rm -f "+file_dest)
-        os.system("cp "+file_src+" "+file_dest)
-
         print("=================================================================")
         print("                         COMPOSITES FINISHED                     ")
         print("=================================================================")
@@ -155,12 +139,6 @@ if os.environ["ENSO_MSE"] == "1":
         print("=================================================================")
         print(" Scripts is going to calculate Moist Static Energy compoments    ")
         print(" The routine requires data  input from COMPOSITE routine         ")
-        print("=================================================================")
-
-        print("=================================================================")
-        print(" More detailed information regarding the MSE module is in        ")
-        print(" README_LEVEL_02.docx/README_LEVEL_02.pdf  files under           ")
-        print(" ~/diagnostics/ENSO_MSE/MSE/                                        ")
         print("=================================================================")
         if os.environ["ENSO_OBS"] == "1":
             print("=================================================================")
@@ -192,12 +170,6 @@ if os.environ["ENSO_MSE_VAR"] == "1":
         print(" The routine requires data  input from COMPOSITE and MSE routines")
         print("=================================================================")
 
-        print("=================================================================")
-        print(" More detailed information regarding the MSE_VAR module is in    ")
-        print(" README_LEVEL_03.docx/README_LEVEL_03.pdf files under            ")
-        print("  ~/diagnostics/ENSO_MSE/MSE_VAR/                                   ")
-        print("=================================================================")
-
         if os.environ["ENSO_OBS"] == "1":
             print("=================================================================")
             print("  Calculation of Observational  Moist Static Energy Variances    ")
@@ -225,13 +197,6 @@ if os.environ["ENSO_SCATTER"] == "1":
         print(" Scripts is going to plot selected Scatter Plots                ")
         print(" The routine requires data input from COMPOSITE and MSE routines")
         print("=================================================================")
-
-        print("=================================================================")
-        print(" More detailed information regarding the SCATTER module is in    ")
-        print(" README_LEVEL_04.docx/README_LEVEL_04.pdf files under            ")
-        print(" ~/diagnostics/ENSO_MSE/SCATTER/                                    ")
-        print("=================================================================")
-
         os.system("python "+os.environ["POD_HOME"]+"/SCATTER/check_input_files.py")
         os.system("python "+os.environ["POD_HOME"]+"/SCATTER/SCATTER.py")
 

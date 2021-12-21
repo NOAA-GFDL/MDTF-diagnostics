@@ -156,7 +156,7 @@ divergence in the column (Frad) constructed from CCSM4 historical
 simulations (1950-2005): (a) El Niño and (b) La Nina
 
 More details on Level 1 diagnostics can be found in the
-README_LEVEL_01.pdf document.
+README_LEVEL_01 document.
 
 **Level 2 – MSE (Moist Static Energy) budget analysis (for composite
 ENSO)**
@@ -190,7 +190,7 @@ vertical advection of MSE (W/m2). Results are for composite El Niño
 winters.
 
 More details on Level 2 diagnostics can be found in the
-README_LEVEL_02.pdf document.
+README_LEVEL_02 document.
 
 **Level 3 – MSE variance diagnostics (for composite ENSO)**
 
@@ -228,7 +228,7 @@ estimated from CCSM4 historical solutions for composite: (a) El Niño
 winter and (b) La Nina winter.
 
 More details on Level 3 diagnostics can be found in the
-README_LEVEL_03.pdf document.
+README_LEVEL_03 document.
 
 **Level 4 – MSE scatter plots (Metrics).**
 
@@ -256,4 +256,4 @@ Pacific and (b) Eastern Pacific. In the panels, inter-model correlations
 and best regression fit lines are also provided.
 
 More details on Level 4 diagnostics can be found in the
-README_LEVEL_04.pdf document.
+README_LEVEL_04 document.

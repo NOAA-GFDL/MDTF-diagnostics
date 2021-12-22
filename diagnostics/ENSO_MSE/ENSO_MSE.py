@@ -21,27 +21,13 @@ import datetime
 # ======================================================================`
 
 now = datetime.datetime.now()
-print( "STARTING ENSO_MSE.py  on:" + now.strftime("%Y-%m-%d %H:%M"))
+print("STARTING ENSO_MSE.py  on:" + now.strftime("%Y-%m-%d %H:%M"))
 
 os.environ["ENSO_MSE_WKDIR"] = os.environ["WK_DIR"]
 
-# TODO remove the ENSO module environment switch definitions after framework
-# pod_env_vars issue is fixed
-os.environ["ENSO_OBS"] = "1"
-os.environ["ENSO_COMPOSITE"] = "1"
-os.environ["ENSO_MSE"] = "1"
-os.environ["ENSO_MSE_VAR"] = "1"
-os.environ["ENSO_SCATTER"] = "0"
-# NOTE: MSE_SCATTER does not work
-
-os.environ["slon1"] = "160"
-os.environ["slon2"] = "200"
-os.environ["slat1"] = "-10"
-os.environ["slat2"] = "5"
-
 # Subpackage control variables optionally set in namelist eg. VAR ENSO_COMPOSITE 1
 # nb. OBS isn't really a subpackage but is a switch used by all subpackages
-subpackages = ["OBS","COMPOSITE","MSE","MSE_VAR","SCATTER"]
+subpackages = ["OBS", "COMPOSITE", "MSE", "MSE_VAR", "SCATTER"]
 subpack_default = "1"  # Run all subpackage unless envvars are set not to
 
 for subpack in subpackages:
@@ -53,72 +39,63 @@ for subpack in subpackages:
     else:
         print(" ENSO_MSE subpackage ENSO_"+subpack+" off. Turn on by adding line to namelist input: VAR ENSO_"+subpack+" 1 ")
 
-
-#DRB: unfortunately these don't get copied to namelist_save, which means
-#debugging requires starting from this script. To add them here requires
-#adding the POD_HOME/util path (easy, see mdtf.py) and getting the envvars
-#dict here, but currently the file is written before the pods are called.
+# DRB: unfortunately these don't get copied to namelist_save, which means
+# debugging requires starting from this script. To add them here requires
+# adding the POD_HOME/util path (easy, see mdtf.py) and getting the envvars
+# dict here, but currently the file is written before the pods are called.
 
 # ==================================================================================================
 
 # 1.  COMPOSITE
 if os.environ["ENSO_COMPOSITE"] == "1":
+    print("=================================================================")
+    print(" The COMPOSITE routine requires the following monthly variables in the input:  ")
+    print("  Zg - geopotential height [m]        ")
+    print("  U  - U wind [m/s], V - V wind [m/s] ")
+    print("  T  - temperature [K]                ")
+    print("  Q  - specific humidity [kg/kg]      ")
+    print("  OMEGA  - vertical velocity [Pa/s]   ")
+    print("  TS   - skin surface temperature [K] ")
+    print("  PR   - precipitation rate [kg/m2/s] ")
+    print("  TS   - skin surface temperature [K] ")
+    print("  PR   - precipitation rate [kg/m2/s] ")
+    print("  SHF  - surface sensible heat flux [W/m2] ")
+    print("  LHF  - surface latent heat flux [W/m2]  ")
+    print("  SW   - shortwave radiative fluxes [W/m2]  as follows: ")
+    print("         RSUS - surface SW up   ")
+    print("         RSDS - surface SW down ")
+    print("         RSDT - TOA incoming SW ")
+    print("         RSUT - TOA outgoing SW ")
+    print("  LW   - longwave radiative fluxes [W/m2]  as follows: ")
+    print("         RLUS - surface LW up ")
+    print("         RLDS - surface LW down ")
+    print("         RLUT - TOA outgoing LW ")
+    print("=================================================================")
     try:
-        print("=================================================================")
-        print(" Scripts is going to calculate composites of simple variables    ")
-        print("=================================================================")
-
-        print("=================================================================")
-        print(" The COMPOSITE routine requires the following monthly variables in the input:  ")
-        print("  Zg - geopotential height [m]        ")
-        print("  U  - U wind [m/s], V - V wind [m/s] ")
-        print("  T  - temperature [K]                ")
-        print("  Q  - specific humidity [kg/kg]      ")
-        print("  OMEGA  - vertical velocity [Pa/s]   ")
-        print("  TS   - skin surface temperature [K] ")
-        print("  PR   - precipitation rate [kg/m2/s] ")
-        print("  TS   - skin surface temperature [K] ")
-        print("  PR   - precipitation rate [kg/m2/s] ")
-        print("  SHF  - surface sensible heat flux [W/m2] ")
-        print("  LHF  - surface latent heat flux [W/m2]  ")
-        print("  SW   - shortwave radiative fluxes [W/m2]  as follows: ")
-        print("         RSUS - surface SW up   ")
-        print("         RSDS - surface SW down ")
-        print("         RSDT - TOA incoming SW ")
-        print("         RSUT - TOA outgoing SW ")
-        print("  LW   - longwave radiative fluxes [W/m2]  as follows: ")
-        print("         RLUS - surface LW up ")
-        print("         RLDS - surface LW down ")
-        print("         RLUT - TOA outgoing LW ")
-        print("=================================================================")
-
-
-#  set if to run Observational Preprocessing :
+        # Run Observational Preprocessing
         if os.environ["ENSO_OBS"] == "1":
-            print("=================================================================")
             print(" Starting Observational COMPOSITE module                         ")
             os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/check_input_files_OBS.py")
-            print("        Finished check_input_files_OBS.py")
+            print(" Finished check_input_files_OBS.py")
             os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/get_directories_OBS.py")
-            print("        Finished get_directories_OBS.py")
+            print("  Finished get_directories_OBS.py")
             os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/COMPOSITE_OBS.py")
-            print("        Finished COMPOSITE_OBS.py")
-            print(" Finished Observational COMPOSITE module                         ")
-            print("=================================================================")
+            print(" Finished COMPOSITE_OBS.py")
+            print(" Finished Observational COMPOSITE module")
 
-#  check for model input dat
+#  check for model input data
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/check_input_files.py")
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/get_directories.py")
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/COMPOSITE.py")
 #       copy the banner file : mdtf_diag_banner.png to "ENSO_MSE_WKDIR" needed by individual component html files
-        file_src  = os.environ["POD_HOME"]+"/mdtf_diag_banner.png"
-        file_dest = os.environ["ENSO_MSE_WKDIR"]+"/mdtf_diag_banner.png"
-        if os.path.isfile( file_dest ):
-            os.system("rm -f "+file_dest)
+        file_src = os.environ["POD_HOME"] + "/mdtf_diag_banner.png"
+        file_dest = os.environ["ENSO_MSE_WKDIR"] + "/mdtf_diag_banner.png"
+        if os.path.isfile(file_dest):
+            os.system("rm -f " + file_dest)
             os.system("cp "+file_src+" "+file_dest)
-        file_src  = os.environ["POD_HOME"]+"/ENSO_MSE.html"
+        file_src = os.environ["POD_HOME"]+"/ENSO_MSE.html"
         file_dest = os.environ["ENSO_MSE_WKDIR"]+"/ENSO_MSE.html"
-        if os.path.isfile( file_dest ):
+        if os.path.isfile(file_dest):
             os.system("rm -f "+file_dest)
             os.system("cp "+file_src+" "+file_dest)
 
@@ -126,9 +103,10 @@ if os.environ["ENSO_COMPOSITE"] == "1":
         print("                         COMPOSITES FINISHED                     ")
         print("=================================================================")
     except OSError as e:
-        print('WARNING',e.errno,e.strerror)
+        print('WARNING', e.errno, e.strerror)
         print("COMPOSITE is NOT Executed as Expected!")
-
+else:
+    print("Skipping ENSO_COMPOSITE calculation")
 
 # ==================================================================================================
 # 2. MSE
@@ -159,6 +137,8 @@ if os.environ["ENSO_MSE"] == "1":
     except OSError as e:
         print('WARNING',e.errno,e.strerror)
         print("MSE is NOT Executed as Expected!")
+else:
+    print("Skipping MSE Calculations.")
 
 # 3. MSE variances
 #    getting Moist Static Energy variable VARIANCES
@@ -187,8 +167,10 @@ if os.environ["ENSO_MSE_VAR"] == "1":
     except OSError as e:
         print('WARNING',e.errno,e.strerror)
         print("MSE VARIANCE is NOT Executed as Expected!")
-#####
-# 4.  CMIP5 scatter plots
+else:
+    print("Skipping MSE_VAR calculation.")
+#
+# 4.  CMIP scatter plots
 #
 # ==================================================================================================
 if os.environ["ENSO_SCATTER"] == "1":

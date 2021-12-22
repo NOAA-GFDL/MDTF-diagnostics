@@ -74,36 +74,34 @@ from generate_ncl_call import generate_ncl_call
 wkdir_obs = os.environ["ENSO_MSE_WKDIR_COMPOSITE"]+"/obs"
 # make the composite plots
 now = datetime.datetime.now()
-print ("  Seasonal Observational ENSO composites starting:  " + now.strftime("%Y-%m-%d %H:%M"))
-print ("  ")
+print("Seasonal Observational ENSO composites starting:  " + now.strftime("%Y-%m-%d %H:%M"))
 
 generate_ncl_call(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_composite_all_OBS.ncl")
 
 now = datetime.datetime.now()
-print ("   Seasonal Observational ENSO composites completed:  " + now.strftime("%Y-%m-%d %H:%M"))
-print ("   plots of ENSO seasonal composites finished  ")
-print ("   resulting plots are located in : " + wkdir_obs)
-print ("   with prefix composite  + ELNINO/LANINA +  variable name ")
+print("Seasonal Observational ENSO composites completed: " + now.strftime("%Y-%m-%d %H:%M"))
+print("plots of ENSO seasonal composites finished  ")
+print("resulting plots are located in : " + wkdir_obs)
+print("with prefix composite + ELNINO/LANINA + variable name ")
 
 # correlation
-generate_ncl_call(os.environ["POD_HOME"]+ "/COMPOSITE/NCL/plot_correlation_all_OBS.ncl")
+generate_ncl_call(os.environ["POD_HOME"] + "/COMPOSITE/NCL/plot_correlation_all_OBS.ncl")
 
-print ("   Seasonal Observational SST  correlations completed  ")
-print ("   plots of  seasonal correlations  finished  ")
-print ("   resulting plots are located in : " + wkdir_obs)
-print ("   with prefix correlation + variable name ")
+print("Seasonal Observational SST correlations completed")
+print("plots of  seasonal correlations finished")
+print("resulting plots are located in : " + wkdir_obs)
+print("with prefix correlation + variable name ")
 
 # regression
 generate_ncl_call(os.environ["POD_HOME"] + "/COMPOSITE/NCL/plot_regression_all_OBS.ncl")
 
-print ("   Seasonal Observational SST  regressions completed  ")
-print ("   plots of seasonal regressions  finished  ")
-print ("   resulting plots are located in : " + wkdir_obs)
-print ("     with prefix  regression  +  variable name ")
+print("Seasonal Observational SST regressions completed")
+print("plots of seasonal regressions finished")
+print("resulting plots are located in: " + wkdir_obs)
+print("with prefix regression + variable name ")
 
 now = datetime.datetime.now()
-print ("   ")
-print (" ===================================================================" )
-print (" Observational Composite Module Finished  " + now.strftime("%Y-%m-%d %H:%M") )
-print (" ===================================================================" )
+print(" ===================================================================" )
+print(" Observational Composite Module Finished  " + now.strftime("%Y-%m-%d %H:%M") )
+print(" ===================================================================" )
 

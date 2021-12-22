@@ -93,7 +93,6 @@ iundef = -9999
 prefix = os.path.join(os.environ["POD_HOME"],"COMPOSITE")
 wkdir_model = os.path.join(os.environ["ENSO_MSE_WKDIR_COMPOSITE"],"model")
 
-
 season = "NIL"
 
 llon1 = undef
@@ -117,40 +116,39 @@ iy1 = int(iy1)
 iy2 = int(iy2)
 
 model = os.environ["CASENAME"] 
-im1 = int( undef)
-im2 = int( undef)  
+im1 = int(undef)
+im2 = int(undef)
 
 llon1, llon2, llat1, llat2, sigma, imindx1, imindx2,  composite, im1, im2, season,  composite24, regression, correlation, undef = get_parameters_in(llon1, llon2, llat1, llat2, sigma, imindx1, imindx2, composite, im1, im2, season, composite24, regression, correlation,  undef, prefix)
 
-
-print("  The following parameters are set in the Composite Module Calculations  ")
-print("      the reference area for SST indices calculations is selected to:        ")
-print("      lon = ", llon1, " - ", llon2 , " E", "lat = ", llat1, " - ", llat2, "N")
-print("      ENSO indices  based on SST reference anomalies +/- ", sigma, " of SST sigma")
-print("      Selected season  is : ", season)
-print("      Selected year span for composites is : ", iy1,"/",  iy2)
-print("      Selected model  : ", model)
+print("The following parameters are set in the Composite Module Calculations  ")
+print("the reference area for SST indices calculations is selected to:")
+print("lon = ", llon1, " - ", llon2, " E", "lat = ", llat1, " - ", llat2, "N")
+print("ENSO indices based on SST reference anomalies +/- ", sigma, " of SST sigma")
+print(" Selected season is: ", season)
+print("Selected year span for composites is: ", iy1, "/",  iy2)
+print("Selected model: ", model)
 print("The following elements will be calculated ")
 if composite == 1:
-    print(" Seasonal Composites for El Nino/La Nina years ")
+    print("Seasonal Composites for El Nino/La Nina years ")
 if composite24 == 1:
-    print(" 2 Year life cycle of ENSO:  Year(0) and Year(1) ")
-    print (" Year (0) = developing phase and Year(1) = decaying phase ")
+    print("2 Year life cycle of ENSO:  Year(0) and Year(1)")
+    print("Year (0) = developing phase and Year(1) = decaying phase")
 if correlation == 1:
-    print("       Reference area SST correlations will be calculated ")
+    print("Reference area SST correlations will be calculated")
 if regression == 1:
-    print("      Regressions to reference area SST will be calculated ")
+    print("Regressions to reference area SST will be calculated")
 
 # run the composite data routine
-generate_ncl_call(os.environ["POD_HOME"]+ "/COMPOSITE/NCL_DATA/get_composites.ncl")
+generate_ncl_call(os.environ["POD_HOME"] + "/COMPOSITE/NCL_DATA/get_composites.ncl")
 # plot composites
 generate_ncl_call(os.environ["POD_HOME"] + "/COMPOSITE/NCL/plot_composite_all.ncl")
 
 now = datetime.datetime.now()
-print("   Seasonal ENSO composites completed:  " + now.strftime("%Y-%m-%d %H:%M") )
-print("   plots of ENSO seasonal composites finished  ")
-print("   resulting plots are located in : " + wkdir_model)
-print("   with prefix composite  + ELNINO/LANINA +  variable name " )
+print("Seasonal ENSO composites completed:  " + now.strftime("%Y-%m-%d %H:%M") )
+print("plots of ENSO seasonal composites finished  ")
+print("resulting plots are located in : " + wkdir_model)
+print("with prefix composite  + ELNINO/LANINA +  variable name " )
 
 # seasonal correlation, calculations with seasonal NINO3.4 SST anomalies
 # plot correlations
@@ -173,7 +171,7 @@ print(" with prefix  regression  +  variable name ")
 
 print(os.system("ls " + wkdir_model))
 
-file_src  = os.environ["POD_HOME"]+"/COMPOSITE/COMPOSITE.html"
+file_src = os.environ["POD_HOME"]+"/COMPOSITE/COMPOSITE.html"
 file_dest = os.environ["ENSO_MSE_WKDIR"]+"/COMPOSITE.html" 
 if os.path.isfile( file_dest ):
     os.system("rm -f "+file_dest)

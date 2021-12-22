@@ -24,32 +24,28 @@ unit = ["m", "m s-1", "m s-1", "K", "1", "Pa s-1",\
         "kg m-2 s-1", "K", "W m-2", "W m-2",  "W m-2", "W m-2",\
         "W m-2", "W m-2",  "W m-2", "W m-2", "W m-2"]
 
-for iv in range(0, size-1):
+for iv in range(0, size):
     filevar = os.path.join(os.environ["DATADIR"], "mon", os.environ["CASENAME"] + "." + vvar[iv] + ".mon.nc")
-# check the units for each variables
-    data = xr.open_dataset( filevar, decode_cf=False)
-    datax = data[ vvar[iv] ]
+    try:
+        os.path.isfile(filevar)
+    except FileExistsError:
+        print("===  MISSING INPUT FILE ", filevar)
+        print("====  EXITING =================== ")
+        sys.exit(1)
+
+# check the units for each variable
+    data = xr.open_dataset(filevar, decode_cf=False)
+    datax = data[vvar[iv]]
     chunit = datax.attrs["units"]
 
     data.close()
     if not chunit == unit[iv]:
         print("Warning: unit", chunit, "for variable ",  vvar[iv])
-        print(" in file : ", filevar )
+        print(" in file : ", filevar)
         print("does not match assumed unit of ",  unit[iv])
         print("please quit and check the units, or proceed with caution")
-        input("Press any key to continue")
 
-    if not os.path.isfile(filevar):
-        print ("=============================================")
-        print ("===  MISSING INPUT FILE " + filevar  )
-        print ("====  EXITING =================== ")
-        input("Press any key to continue")
-        sys.exit()
+print(" =========================================================")
+print("====== All model input files found for COMPOSITE calculation =======")
+print(" =========================================================")
 
-
-print  (" =========================================================")
-print  (" ==========================================================")
-print  ("===========  All model input files found =============== ")
-print  ( " =========================================================")
-print  (" ==========================================================")
-####

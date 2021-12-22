@@ -7,63 +7,44 @@ shared_dir = os.path.join(
 )
 sys.path.insert(0, shared_dir)
 
-###   
-###  check  the input data in inputdata/obs_data  directories  DATADIR 
-####    pre-digested data 
-## 3D
-size = 13
+# check the input data in inputdata/obs_data directories DATADIR  pre-digested data
+# 3D
+vvar = ["zg", "ua", "va", "ta", "hus", "wap", "pr", "ts", "hfss", "hfls", "lw", "sw", "frad"]
 
-vvar = [ "zg", "ua", "va", "ta", "hus", "wap", "pr", "ts", "hfss", "hfls", "lw", "sw", "frad" ]
+# check for missing files
 
-## check for missing files 
-## 
+mode = ["ELNINO", "LANINA"]
 
-mode = [ "ELNINO", "LANINA" ]
+for n in range(0, len(mode)):
+    for iv in range(0, len(vvar)):
+        filevar = os.environ["OBS_DATA"] + "/DATA/netCDF/" + mode[n] + "/" + vvar[iv] + ".nc"
+        try:
+            os.path.exists(filevar)
+        except FileExistsError:
+            print("===  MISSING  PRE-DIGESTED OBSERVATIONAL DATA FILE " + filevar)
+            print("====  EXITING =================== ")
+            sys.exit(1)
 
-for n in range(0, 2):
-    for iv in range(0, 13):
-        filevar = os.environ["OBS_DATA"] + "/DATA/netCDF/" + mode[n]  + "/" +  vvar[iv] + ".nc"
+        filevarobs = os.environ["OBS_DATA"] + "/DATA/netCDF/" + vvar[iv] + "_clim.nc"
+        try:
+            os.path.exists(filevarobs)
+        except FileExistsError:
+            print("===  MISSING  PRE-DIGESTED OBSERVATIONAL DATA FILE " + filevarobs)
+            print("====  EXITING =====")
+            sys.exit(1)
 
-        if not os.path.exists(filevar):
-            print ("=============================================")
-            print ("===  MISSING  PRE-DIGESTED OBSERVATIONAL DATA FILE " + filevar  )
-            print ("====  EXITING =================== ")
-            sys.exit()
-        else:
-            print ("L49 Found "+filevar)
+# Search for CORR and REGRESS files
+mode = ["CORR", "REGRESS"]
+vvar = ["pr", "hfss", "hfls", "sw", "lw"]
 
+for n in range(0, len(mode)):
+    for iv in range(0, len(vvar)):
+        filevar = os.environ["OBS_DATA"] + "/DATA/netCDF/" + mode[n] + "_" + vvar[iv] + ".nc"
+        try:
+            os.path.exists(filevar)
+        except FileExistsError:
+            print("===  MISSING  PRE-DIGESTED OBSERVATIONAL DATA FILE " + filevar)
+            print("====  EXITING =================== ")
+            sys.exit(1)
 
-        filevar = os.environ["OBS_DATA"] + "/DATA/netCDF/" +  vvar[iv] + "_clim.nc"
-
-        if not os.path.exists(filevar):
-            print ("=============================================")
-            print ("===  MISSING  PRE-DIGESTED OBSERVATIONAL DATA FILE " + filevar  )
-            print ("====  EXITING =================== ")
-            sys.exit()
-        else:
-            print ("L49 Found "+filevar)
-
-###   similarly CORR and REGRESS
-
-mode = [ "CORR", "REGRESS" ]
-vvar = [ "pr", "hfss", "hfls", "sw", "lw" ] 
-
-for n in range(0, 2):
-    for iv in range(0, 5):
-        filevar = os.environ["OBS_DATA"] + "/DATA/netCDF/" + mode[n]  + "_" +  vvar[iv] + ".nc"
-
-        if not os.path.exists(filevar):
-            print ("=============================================")
-            print ("===  MISSING  PRE-DIGESTED OBSERVATIONAL DATA FILE " + filevar  )
-            print ("====  EXITING =================== ")
-            sys.exit()
-        else:
-            print ("L49 Found "+filevar)
-
-print (" =========================================================")
-print (" ==========================================================")
-print (" ==== All Pre-digested Observational files  found ======== ")
-print (" =========================================================")
-print (" ==========================================================")
-print (" ==========================================================")
-####
+print(" ==== All Pre-digested Observational files found for COMPOSITE calculations ===== ")

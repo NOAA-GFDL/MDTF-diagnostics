@@ -31,7 +31,8 @@ os.environ["ENSO_OBS"] = "1"
 os.environ["ENSO_COMPOSITE"] = "1"
 os.environ["ENSO_MSE"] = "1"
 os.environ["ENSO_MSE_VAR"] = "1"
-os.environ["ENSO_SCATTER"] = "1"
+os.environ["ENSO_SCATTER"] = "0"
+# NOTE: MSE_SCATTER does not work
 
 os.environ["slon1"] = "160"
 os.environ["slon2"] = "200"
@@ -41,7 +42,7 @@ os.environ["slat2"] = "5"
 # Subpackage control variables optionally set in namelist eg. VAR ENSO_COMPOSITE 1
 # nb. OBS isn't really a subpackage but is a switch used by all subpackages
 subpackages = ["OBS","COMPOSITE","MSE","MSE_VAR","SCATTER"]
-subpack_default = "1"  #Run all subpackage unless envvars are set not to
+subpack_default = "1"  # Run all subpackage unless envvars are set not to
 
 for subpack in subpackages:
     os.environ["ENSO_"+subpack] = os.environ.get("ENSO_"+subpack,subpack_default)
@@ -60,7 +61,7 @@ for subpack in subpackages:
 
 # ==================================================================================================
 
-#### 1.  COMPOSITE
+# 1.  COMPOSITE
 if os.environ["ENSO_COMPOSITE"] == "1":
     try:
         print("=================================================================")
@@ -105,12 +106,11 @@ if os.environ["ENSO_COMPOSITE"] == "1":
             print(" Finished Observational COMPOSITE module                         ")
             print("=================================================================")
 
-###  check for model input dat
+#  check for model input dat
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/check_input_files.py")
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/get_directories.py")
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/COMPOSITE.py")
-###       copy the banner file : mdtf_diag_banner.png to "ENSO_MSE_WKDIR" needed by
-###                             individual component html files
+#       copy the banner file : mdtf_diag_banner.png to "ENSO_MSE_WKDIR" needed by individual component html files
         file_src  = os.environ["POD_HOME"]+"/mdtf_diag_banner.png"
         file_dest = os.environ["ENSO_MSE_WKDIR"]+"/mdtf_diag_banner.png"
         if os.path.isfile( file_dest ):
@@ -206,7 +206,9 @@ if os.environ["ENSO_SCATTER"] == "1":
 
     except OSError as e:
         print('WARNING',e.errno,e.strerror)
-        print("MSE VARIANCE is NOT Executed as Expected!")
+        print("MSE SCATTER is NOT Executed as Expected!")
+else:
+    print("Skipping MSE_SCATTER module")
 
 now = datetime.datetime.now()
 print( "FINISHED ENSO_MSE.py  on:" + now.strftime("%Y-%m-%d %H:%M"))

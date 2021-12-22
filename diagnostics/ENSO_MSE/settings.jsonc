@@ -3,6 +3,17 @@
         "driver": "ENSO_MSE.py",
         "long_name": "ENSO moist static energy budget",
         "description": "ENSO moist static energy budget",
+        "pod_env_vars": {
+           "slon1": "160",
+           "slon2": "200",
+           "slat1": "-10",
+           "slat2": "5",
+           "ENSO_OBS": "1",
+           "ENSO_COMPOSITE": "1",
+           "ENSO_MSE": "0",
+           "ENSO_MSE_VAR": "0",
+           "ENSO_SCATTER": "0"
+        },
         "runtime_requirements": {
             "ncl": [
                 "contributed",
@@ -35,17 +46,7 @@
             "standard_name": "time"
         }
     },
-    "pod_env_vars": {
-        "slon1": "160",
-        "slon2": "200",
-        "slat1": "-10",
-        "slat2": "5",
-        "ENSO_OBS": "0",
-        "ENSO_COMPOSITE": "1",
-        "ENSO_MSE": "0",
-        "ENSO_MSE_VAR": "0",
-        "ENSO_SCATTER": "0"
-    },
+
     "varlist": {
         "zg": {
             "standard_name": "geopotential_height",

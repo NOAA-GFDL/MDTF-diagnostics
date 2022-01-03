@@ -1,0 +1,103 @@
+// Configuration file to specify file locations for desired PODs
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.)
+//
+// Copy this file and customize the setting values as needed when file locations or names do not adhere to the
+// default [MODEL ROOT]/[case name]/[frequency]/[case name].[frequency].[variable name].nc format.
+//
+// Pass the config file to the framework using the flags: --data_manager="Explicit_file"
+// --config_file="./sites/NOAA_GFDL/gfdl_file_path_config.jsonc"
+// (assuming you are launching the mdtf executable from the MDTF-diagnostics directory;
+// adjust the --config-file location accordingly).
+//
+// You can also specify the data_manager in your default_tests.jsonc
+// file (or whatever you have named your primary MDTF-diagnostics config file) by modifying/adding the lines:
+// "data_manager": "Explicit_file",
+// "config-file": "<path to file name config file"
+//
+{
+// "MJO_prop_amp": {
+ //   "hus": {
+ //       "files" : "atmos/ts/daily/c96L33_am4p0_cmip6Diag.hus.day.nc",
+ //       "var_name" : "hus",
+ //       "metadata": {
+ //           "units" : "1"
+ //       }
+//     },
+//    "pr": "atmos/ts/daily/c96L33_am4p0_cmip6Diag.pr.day.nc",
+//    "prw": {
+//        "files": "atmos/ts/daily/c96L33_am4p0_cmip6Diag.prw.day.nc",
+//        "var_name": "prw",
+//        "metadata": {
+ //           "standard_name": "atmosphere_mass_content_of_water_vapor"
+//        }
+//    }
+ // }//,
+
+//   "EOF_500hPa":{
+ //     "zg":{
+ //        "files":"atmos/ts/monthly/5yr/atmos.198001-198412.zg500.nc",
+ //        "var_name":"hght",
+  //       "metadata":{
+  //          "standard_name":"geopotential_height"
+   //     }
+    //  },
+ //     "ps": "atmos/ts/monthly/5yr/atmos.198001-198412.ps.nc"//,
+ //     "zg_hybrid_sigma":{
+ //        "files":"mon/aerosol_cmip.198001-198412.zg.nc",
+ //        "var_name":"zg_hybrid_sigma",
+ //        "metadata":{
+ //           "standard_name":"geopotential_height",
+  //          "units":"m"
+  //       }
+  //    }
+ //  }
+ // "temp_extremes_distshape":{
+ //     "zg":{
+ //        "files":"atmos/ts/daily/5yr/atmos.19800101-19841231.hght.nc", // path to file in CASE_ROOT_DIR
+ //        "var_name":"hght",
+ //        "metadata":{
+ //           "standard_name":"geopotential_height"
+  //       }
+  //    },
+  //    "psl":{
+  //       "files": "atmos/ts/daily/5yr/atmos.19800101-19841231.psl.nc",
+  //       "metadata:":{
+  //          "standard_name": "air_pressure_at_mean_sea_level"
+  //       }
+  //    },
+  //    "tas":{
+  //       "files":"atmos/ts/daily/5yr/atmos.19800101-19841231.tas.nc",
+   //      "var_name":"tas"  // name of variable in the file (may not match var_name in POD settings file)
+   //   }
+   //}
+   "MJO_suite":{
+      "rlut":"atmos/ts/daily/5yr/atmos.19800101-19841231.rlut.nc",
+      "pr":"atmos/ts/daily/5yr/atmos.19800101-19841231.pr.nc",
+      "u200":{
+          "files": "atmos/ts/daily/5yr/atmos.19800101-19841231.u200.nc",
+          "metadata:":{
+            "standard_name": "eastward_wind"
+         }
+      },
+      "v200":{
+          "files": "atmos/ts/daily/5yr/atmos.19800101-19841231.v200.nc",
+          "metadata:":{
+            "standard_name": "northward_wind"
+         }
+      },
+      "u850":{
+          "files": "atmos/ts/daily/5yr/atmos.19800101-19841231.u850.nc",
+          "metadata:":{
+            "standard_name": "eastward_wind"
+         }
+      },
+      "v850":{
+          "files": "atmos/ts/daily/5yr/atmos.19800101-19841231.v850.nc",
+          "metadata:":{
+            "standard_name": "northward_wind"
+         }
+      }
+   }
+}

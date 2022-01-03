@@ -44,7 +44,7 @@ class GFDLMDTFFramework(core.MDTFFramework):
         self.global_env_vars['MDTF_TMPDIR'] = gfdl_tmp_dir
 
     def _post_parse_hook(self, cli_obj, config, paths):
-        ### call parent class method
+        # call parent class method
         super(GFDLMDTFFramework, self)._post_parse_hook(cli_obj, config, paths)
 
         self.reset_case_pod_list(cli_obj, config, paths)
@@ -429,7 +429,9 @@ gfdlppDataManager_same_components_col_spec = data_manager.DataframeQueryColumnSp
     daterange_col = "date_range"
 )
 
+
 class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
+    # extends GFDL_GCP_FileDataSourceBase
     _FileRegexClass = PPTimeseriesDataFile
     _DirectoryRegex = pp_dir_regex
     _AttributesClass = PPDataSourceAttributes
@@ -577,12 +579,17 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
                 col_name, df[col_name].iloc[0], obj.name)
         return df
 
+
 class GfdlautoDataManager(object):
     """Wrapper for dispatching DataManager based on user input. If CASE_ROOT_DIR
     ends in "pp", use :class:`GfdlppDataManager`, otherwise use CMIP6 data on
     /uda via :class:`Gfdludacmip6DataManager`.
     """
-    def __new__(cls, case_dict, *args, **kwargs):
+    # Note, object is explicitly defined as a parameter for Python 2/3
+    # compatibility reasons; omitting object in Python2 yields "old-style" classes
+    # All classes are "new-style" in Python3 by default.
+    # TODO: Since WE DO NOT SUPPORT PYTHON2, remove object parm and verify that it doesn't destroy everything
+    def __new__(cls, case_dict, parent, *args, **kwargs):
         """Dispatch DataManager instance creation based on the contents of
         case_dict."""
         config = core.ConfigManager()
@@ -597,7 +604,7 @@ class GfdlautoDataManager(object):
         _log.debug("%s: Dispatched DataManager to %s.",
             cls.__name__, dispatched_cls.__name__)
         obj = dispatched_cls.__new__(dispatched_cls)
-        obj.__init__(case_dict)
+        obj.__init__(case_dict, parent)
         return obj
 
     def __init__(self, *args, **kwargs):

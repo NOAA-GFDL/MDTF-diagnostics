@@ -37,18 +37,19 @@
       "CASENAME" : "c96L33_am4p0_cmip6Diag",
       "model" : "GFDL-CM4",
       "convention" : "CMIP",
-      "FIRSTYR" : 1985,
-      "LASTYR" : 1989,
-      "CASE_ROOT_DIR" : "/archive/Jessica.Liptak/awg/2021.02/c96L33_am4p0_cmip6Diag/gfdl.ncrc3-intel21-prod-openmp/pp",
+      "FIRSTYR" : 1980,
+      "LASTYR" : 1984,
+     // "CASE_ROOT_DIR" : "/archive/Jessica.Liptak/awg/2021.02/c96L33_am4p0_cmip6Diag/gfdl.ncrc3-intel21-prod-openmp/pp",
+      "CASE_ROOT_DIR" : "/net2/jml/inputdata/model/pp/c96L33_am4p0_cmip6Diag",
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-          "Wheeler_Kiladis"
+        //  "Wheeler_Kiladis"
      //      "EOF_500hPa"
          //"convective_transition_diag"
          // "MJO_suite"
          // "MJO_teleconnection"
          // "precip_diurnal_cycle"
-         // "MJO_prop_amp"
+         "MJO_prop_amp"
          //"SM_ET_coupling"
       ]
     }
@@ -58,8 +59,8 @@
   // resolved relative to the MDTF-diagnostics code directory.
   "MDTF_TMPDIR": "/net2/$USER/tmp",
   // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "$MDTF_TMPDIR/inputdata/model",
-
+  //"MODEL_DATA_ROOT": "$MDTF_TMPDIR/inputdata/model",
+  "MODEL_DATA_ROOT": "/net2/$USER/inputdata/model/pp",
   // Site-specific installation of observational data used by individual PODs.
   // This will be GCP'ed locally if running on PPAN.
   "OBS_DATA_REMOTE": "/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data",
@@ -72,8 +73,8 @@
   "WORKING_DIR": "../wkdir",
 
   // Directory to write output files. Defaults to working directory if blank.
-  "OUTPUT_DIR": "$MDTF_TMPDIR/mdtf_out",
- 
+  //"OUTPUT_DIR": "$MDTF_TMPDIR/mdtf_out",
+  "OUTPUT_DIR": "../wkdir",
 
   // GFDL ----------------------------------------------------------------------
   // Settings specific to operation at GFDL.
@@ -99,7 +100,10 @@
   // Settings affecting the framework's retrieval of model data.
 
   // Method used to fetch model data.
-  "data_manager": "GFDL_auto",
+  //"data_manager": "GFDL_auto",
+  "data_manager": "Explicit_file",
+
+  "config-file": "/net/jml/mdtf/MDTF-diagnostics/sites/NOAA_GFDL/gfdl_file_path_config.jsonc",
 
   // Method used to preprocess data.
   "preprocessor": "MDTFData",

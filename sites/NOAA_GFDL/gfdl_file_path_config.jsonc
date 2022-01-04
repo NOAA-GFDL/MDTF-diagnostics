@@ -1,0 +1,32 @@
+// Configuration file to specify file locations for desired PODs
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.)
+//
+// Copy this file and customize the setting values as needed when file locations or names do not adhere to the
+// default [MODEL ROOT]/[case name]/[frequency]/[case name].[frequency].[variable name].nc format.
+//
+// Pass the config file to the framework using the flags: --data_manager="Explicit_file"
+// --config_file="./sites/NOAA_GFDL/gfdl_file_path_config.jsonc"
+// (assuming you are launching the mdtf executable from the MDTF-diagnostics directory;
+// adjust the --config-file location accordingly).
+//
+// You can also specify the data_manager in your default_tests.jsonc
+// file (or whatever you have named your primary MDTF-diagnostics config file) by modifying/adding the lines:
+// "data_manager": "Explicit_file",
+// "config-file": "<path to file name config file"
+//
+{
+ "MJO_prop_amp": {
+    "hus": "day/c96L33_am4p0_cmip6Diag.hus.day.nc",
+    "pr": "day/c96L33_am4p0_cmip6Diag.pr.day.nc",
+    "prw": {
+        "files": "day/c96L33_am4p0_cmip6Diag.prw.day.nc",
+        "var_name": "prw",
+        "metadata": {
+            "standard_name": "atmosphere_water_vapor_content",
+            "units": "kg m-2"
+        }
+    }
+ }
+}

@@ -2,13 +2,11 @@
 # Note look at save file for some settings
 # /project/amp/bundy/mdtf/MDTF_v3.0beta.OBS_WK.20210225/MDTF_30L_cam5301_FAMIP_1990_1994/config_save.json
 # and the blocking/settings.jsonc file for others
-#set echo verbose
 set unit_test = 0   # 1 - calls test.ncl, where test flags need to be set
                     # 0 - calls blocking.ncl, runs as if in MDTF
 
 #case info
 setenv CASENAME 30L_cam5301_FAMIP
-#unsetenv CASENAME   # to skip an mdtf case, eg digest data
 setenv  FIRSTYR 1990
 setenv  LASTYR  1994
 

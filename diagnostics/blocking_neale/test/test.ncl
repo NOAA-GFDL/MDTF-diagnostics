@@ -145,7 +145,6 @@ if ( test_get_legend.or.test_get_plot_settings_all ) then
   wks = gsn_open_wks(figure_type, figure_name)
   gsn_define_colormap(wks,"rainbow")
   legend1 = get_legend(wks,all_cases)
-;  printVarSummary(legend1)
 
   ;nobs & nlines set in get_legend
   nobs = all_cases@nobs

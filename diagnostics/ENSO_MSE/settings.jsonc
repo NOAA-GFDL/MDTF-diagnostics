@@ -10,9 +10,9 @@
            "slat2": "5",
            "ENSO_OBS": "1",
            "ENSO_COMPOSITE": "1",
-           "ENSO_MSE": "0",
-           "ENSO_MSE_VAR": "0",
-           "ENSO_SCATTER": "0"
+           "ENSO_MSE": "1",
+           "ENSO_MSE_VAR": "1",
+           "ENSO_SCATTER": "1"
         },
         "runtime_requirements": {
             "ncl": [

@@ -31,7 +31,6 @@ setenv  MDTF_BLOCKING_WRITE_DIGESTED True
 setenv  MDTF_BLOCKING_WRITE_DIGESTED_DIR digested.20211110  #rel to WK_DIR
 setenv  path_variable MODEL_DATA_PATH  
 
-#setenv  standard_name geopotential_height_500mb 
 setenv POD_HOME /home/bundy/mdtf/blocking/diagnostics/blocking_neale
 setenv TEST_HOME /home/bundy/mdtf/blocking/diagnostics/blocking_neale/test
 setenv MDTF_BLOCKING_OBS  True  # No figures produced without obs, but it works for writing digested data
@@ -68,7 +67,6 @@ else
 	set ps_dir = $WK_DIR/$dir/PS
 	set list = `ls $ps_dir/*.ps`
 	echo $list
-    #    echo "converting $list"
 	foreach file ( $list )  #just the file name, doesn't have path
 	    convert $file $webdir/$file:t:r.png
 	    if ( $status == 0 ) then

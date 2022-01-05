@@ -62,7 +62,6 @@ if (test_file_read) then
   print("calling blocking_readfile for: "+myfile)
   mytest = blocking_readfile(file_opts)
 
-  ; another
   myfile = "/project/amp/bundy/mdtf/inputdata/model/blocking_cam4/f40.1979_amip.track1.1deg.003_dmeans_ts_Z500.nc"
   myvar = "Z500"
   delete(file_opts)
@@ -71,9 +70,6 @@ if (test_file_read) then
 
    print("calling blocking_readfile for: "+myfile)
    mytest = blocking_readfile(file_opts)
-
-;   printVarSummary_if_verbose_gt(0,mytest)
-;   printVarSummary(mytest)
 
 end if; (test_file_read) then
 
@@ -109,7 +105,6 @@ end if
 if ( test_ensemble_find.or.test_get_legend.or.test_get_plot_settings_all ) then
   print("================ test_ensemble_find: ")
   ensemble_names = get_ensemble_names(all_cases@case_names) ; Number of ensemble sets
-;  print("Ensembles: "+ensemble_names)
   nens = dimsizes(ensemble_names)
   ne_size = get_ensemble_sizes(ensemble_names,all_cases@case_names)
 
@@ -118,10 +113,6 @@ if ( test_ensemble_find.or.test_get_legend.or.test_get_plot_settings_all ) then
   all_cases@ensemble_names = ensemble_names
   all_cases@ne_size = ne_size  ; need this?
 
-;  print("Ensemble names and numbers of members ")
-;  do i=0,dimsizes(ne_size)-1
-;    print(ensemble_names(i)+" "+ne_size(i))
-;  end do
 
  do iens=0,nens-1
     ;drbdbg change to fileind, and uses as fileind@it0 etc to save lines
@@ -192,8 +183,7 @@ if ( test_get_plot_settings_all ) then
 
   set_plotting_info(all_cases,settings)
   wks = gsn_open_wks("ps", "test_meanlon")
-  res = get_plot_settings_meanlon(wks,all_cases)
-;  print("res line colors "+res@xyLineColors)  
+  res = get_plot_settings_meanlon(wks,all_cases) 
   print(res)
 
   wks_t = gsn_open_wks("ps", "test_ann_cycle")
@@ -201,9 +191,7 @@ if ( test_get_plot_settings_all ) then
   res_t = get_plot_settings_ann_cycle(wks_t,all_cases)  
   print(res_t)
 
-;  print("res_t line colors "+res_t@xyLineColors)
   res_m = get_plot_settings_panel(res,all_cases)
   print(res_m)
-;  print("res_m line colors "+res_m@xyLineColors)
 
 end if

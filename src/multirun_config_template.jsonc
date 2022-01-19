@@ -13,7 +13,7 @@
   // Run each ensemble on the example POD.
   // Add other PODs that work on ensemble datasets to the pod_list as needed
   "pod_list" : [
-     "example"
+     "example_multicase"
    ],
    // Each CASENAME corresponds to an ensemble member.
   "case_list" : [

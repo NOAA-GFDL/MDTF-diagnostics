@@ -153,6 +153,7 @@ def find_files(src_dirs, filename_globs, n_files=None):
         raise exceptions.MDTFFileNotFoundError(str(filename_globs))
     return list(files)
 
+
 def check_dir(dir_, attr_name="", create=False):
     """Check existence of directories. No action is taken for directories that
     already exist; nonexistent directories either raise a
@@ -190,6 +191,7 @@ def check_dir(dir_, attr_name="", create=False):
         else:
             raise OSError(f"Caught exception when checking {attr_name}={dir_}: {repr(exc)}") \
                 from exc
+
 
 def bump_version(path, new_v=None, extra_dirs=None):
     """Append a version number to *path*, if necessary, so that it doesn't

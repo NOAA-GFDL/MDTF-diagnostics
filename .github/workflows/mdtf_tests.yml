@@ -131,8 +131,6 @@ jobs:
         ./mdtf --version
         # run the test PODs
         ./mdtf -v -f ${{matrix.json-file}}
-        ls../wkdir/*/*
-        printf “%s” ../wkdir/*/*/EOF_500hPa.log
     - name: Get observational data for set 2
       run: |
         echo "${PWD}"

@@ -577,11 +577,31 @@ class CLICommand(object):
         if self.cli is not None:
             self.cli = CLIParser.from_dict(self.cli)
 
-    def import_target(self):
+    def import_target(self, data_type=""):
         """Imports the function or class referred to by the ``entry_point``
         attribute.
+
+        Args:
+            data_type: single_run (default), or multi_run. This value is provided at runtime,
+            and the default value is set in src/cli_template.jsonc. data_type is only queried for
+            "_manager" classes (e.g., data_manager) with more than one possible entry point
+            that are defined as lists in cli_plugins.jsonc.
         """
-        mod_name, cls_name = self.entry_point.split(':')
+        # entry_point has more than one possible value that is determined by the data_type
+        if isinstance(self.entry_point, list):
+            dm_match = False
+            for e in self.entry_point:
+                mod_name, cls_name = e.split(':')
+                if ("multi" in data_type.lower() and "multirun" in cls_name.lower()
+                        or "single" in data_type.lower() and "multirun" not in cls_name.lower()):
+                    _log.info('Data type is %s and using data_manager %s', data_type, mod_name)
+                    dm_match = True
+                    break
+            if not dm_match:
+                raise Exception("Data source " + cls_name + " does not correspond to data type " + data_type)
+        else:  # only one entry point defined by a string
+            mod_name, cls_name = self.entry_point.split(':')
+
         try:
             mod_ = importlib.import_module(mod_name)
         except ImportError:
@@ -1304,12 +1324,14 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         if defaults_text:
             _log.info(defaults_text)
         # import plugin classes
+
+
         for act in self.iter_actions():
             if isinstance(act, ClassImportAction):
                 key = act.dest
                 assert key in self.config
                 plugin_cmd = config.get_plugin(key, self.config[key])
-                self.imports[key] = plugin_cmd.import_target()
+                self.imports[key] = plugin_cmd.import_target(self.config.get('data_type'))
         # multiple subcommand functionality not being used yet
         assert len(config.subcommands) == 1
         cmd = tuple(config.subcommands.values())[0]

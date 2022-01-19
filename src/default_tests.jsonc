@@ -23,10 +23,10 @@
       "LASTYR" : 1981,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-          "Wheeler_Kiladis",
-          "EOF_500hPa",
-          "MJO_suite",
-          "MJO_teleconnection"
+         // "Wheeler_Kiladis"
+          "EOF_500hPa"
+          //"MJO_suite",
+         // "MJO_teleconnection"
           // "convective_transition_diag",
           // "precip_diurnal_cycle",
           // "ocn_surf_flux_diag",
@@ -84,13 +84,13 @@
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned by running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  "conda_root": "",
+  "conda_root": "~/miniconda3",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in the system default
   // location.
-  "conda_env_root": "",
+  "conda_env_root": "~/miniconda3/envs",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
@@ -111,7 +111,7 @@
   "save_nc": false,
 
   // Set to true to save HTML and bitmap plots in a .tar file.
-  "make_variab_tar": true,
+  "make_variab_tar": false,
 
   // Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
   // under a unique name.

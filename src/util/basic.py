@@ -49,7 +49,7 @@ class MDTFABCMeta(abc.ABCMeta):
             abstract attribute, by analogy with :py:func:`abc.abstract_method`.
     """
 
-    # THe __call__ method allows the class to be called like a function
+    # The __call__ method allows the class to be called like a function
     # >>> ABCM = abcMDTFABCMeta()
     # >>> ABCM() # invoke the __call__ method on a class cls, and append the abstract_attributes set to ABCM
     def __call__(cls, *args, **kwargs):

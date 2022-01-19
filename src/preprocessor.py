@@ -60,29 +60,31 @@ def edit_request_wrapper(wrapped_edit_request_func):
     """
     @functools.wraps(wrapped_edit_request_func)
     def wrapped_edit_request(self, data_mgr, pod):
-        new_varlist = []
-        for v in pod.varlist.iter_contents():
-            new_v = wrapped_edit_request_func(self, v, pod, data_mgr)
-            if new_v is None:
-                # no change, pass through VE unaltered
-                new_varlist.append(v)
-                continue
-            else:
-                # insert new_v between v itself and v's old alternate sets
-                # in varlist query order
-                new_v.alternates = v.alternates
-                v.alternates = [[new_v]]
-                new_v_t_name = (str(new_v.translation)
-                                if getattr(new_v, 'translation', None) is not None
-                                else "(not translated)")
-                v_t_name = (str(v.translation) if getattr(v, 'translation', None)
-                                                  is not None else "(not translated)")
-                pod.log.debug("%s for %s: add translated %s as alternate for %s.",
-                              self.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
-                new_varlist.append(v)
-                new_varlist.append(new_v)
-        pod.varlist = diagnostic.Varlist(contents=new_varlist)
-
+        for case_name, case_d in pod.case_varlist.items():
+            for var_name, var_d in case_d.items():
+                new_varlist = []
+                for v in var_d.iter_contents():
+                    new_v = wrapped_edit_request_func(self, v, pod, data_mgr)
+                    if new_v is None:
+                        # no change, pass through VE unaltered
+                        new_varlist.append(v)
+                        continue
+                    else:
+                        # insert new_v between v itself and v's old alternate sets
+                        # in varlist query order
+                        new_v.alternates = v.alternates
+                        v.alternates = [[new_v]]
+                        new_v_t_name = (str(new_v.translation) \
+                            if getattr(new_v, 'translation', None) is not None \
+                            else "(not translated)")
+                        v_t_name = (str(v.translation) if getattr(v, 'translation', None) \
+                            is not None else "(not translated)")
+                        pod.log.debug("%s for %s: add translated %s as alternate for %s.",
+                            self.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
+                        new_varlist.append(v)
+                        new_varlist.append(new_v)
+            case_d.varlist = diagnostic.Varlist(contents=new_varlist)
+        pod.varlist = diagnostic.Varlist(contents=new_varlist)  # will append contents of last case TODO--remove later
     return wrapped_edit_request
 
 

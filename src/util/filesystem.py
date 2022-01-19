@@ -12,6 +12,7 @@ import shutil
 import string
 from . import basic
 from . import exceptions
+# TODO from envyaml import EnvYAML
 
 import logging
 _log = logging.getLogger(__name__)
@@ -306,6 +307,7 @@ def strip_comments(str_, delimiter=None):
     new_str = '\n'.join([s for s in lines if (s and not s.isspace())])
     return (new_str, line_nos)
 
+
 def parse_json(str_):
     """Parse JSONC (JSON with ``//``-comments) string *str\_* into a Python object.
     Comments are discarded. Wraps standard library :py:func:`json.loads`.
@@ -337,6 +339,7 @@ def parse_json(str_):
             doc=strip_str, pos=0
         )
     return parsed_json
+
 
 def read_json(file_path, log=_log):
     """Reads a struct from a JSONC file at *file_path*.
@@ -399,6 +402,7 @@ def write_json(struct, file_path, sort_keys=False, log=_log):
     except IOError:
         _log.critical(f'Fatal IOError when trying to write {file_path}. Exiting.')
         exit(1)
+
 
 def pretty_print_json(struct, sort_keys=False):
     """Serialize *struct* to a pseudo-YAML string for human-readable debugging

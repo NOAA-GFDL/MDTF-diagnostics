@@ -223,14 +223,18 @@ class GFDL_GCP_FileDataSourceBase(
     _AttributesClass = util.abstract_attribute()
     _fetch_method = 'auto' # symlink if not on /archive, else gcp
 
-    def __init__(self, case_dict, parent):
+    def __init__(self, case_dict, pod, parent):
         self.catalog = None
-        super(GFDL_GCP_FileDataSourceBase, self).__init__(case_dict, parent)
+        super(GFDL_GCP_FileDataSourceBase, self).__init__(case_dict, pod, parent)
 
         config = core.ConfigManager()
         self.frepp_mode = config.get('frepp', False)
         self.dry_run = config.get('dry_run', False)
         self.timeout = config.get('file_transfer_timeout', 0)
+        if len(case_dict) > 1:
+            self.multirun = True
+        else:
+            self.multirun = False
 
         if self.frepp_mode:
             paths = core.PathManager()
@@ -239,7 +243,7 @@ class GFDL_GCP_FileDataSourceBase(
             self.file_overwrite = True
             # if overwrite=False, WK_DIR & OUT_DIR will have been set to a
             # unique name in parent's init. Set it back so it will be overwritten.
-            d = paths.model_paths(self, overwrite=True)
+            d = paths.model_paths(self, overwrite=True, multirun=self.multirun)
             self.MODEL_WK_DIR = d.MODEL_WK_DIR
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 

@@ -547,7 +547,7 @@ class CLICommand(object):
     code_root: dataclasses.InitVar = ""
 
     def __post_init__(self, code_root):
-        """Post-initialization type converstion of attributes.
+        """Post-initialization type conversion of attributes.
         """
         if self.cli is None and self.cli_file is not None:
             try:
@@ -955,7 +955,7 @@ class MDTFArgParser(argparse.ArgumentParser):
             for k,v in parsed_args.items():
                 setattr(namespace, k, v)
         self._call_actions_on_defaults(namespace)
-        return (namespace, remainder)
+        return namespace, remainder
 
     def parse_args(self, args=None, namespace=None):
         """Subclassed implementation of :py:meth:`~argparse.ArgumentParser.parse_args`
@@ -1024,6 +1024,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         """Iterate over all arguments defined on the parser for the subcommand
         *subcommand*.
         """
+        config = CLIConfigManager()
         config = CLIConfigManager()
         if subcommand:
             subcmds = config.subcommands.get(subcommand, [])
@@ -1095,6 +1096,8 @@ class MDTFTopLevelArgParser(MDTFArgParser):
             raise ValueError()
         if not str_:
             return
+        # TODO define variable fname_suffix = os.path.splitext(path)[1].lower()
+        # add to json and yaml checks
         # try to determine if file is json
         if 'json' in os.path.splitext(path)[1].lower():
             # assume config_file a JSON dict of option:value pairs.
@@ -1108,6 +1111,15 @@ class MDTFTopLevelArgParser(MDTFArgParser):
             except Exception:
                 _log.exception('Attempted to parse %s as JSONC; failed.', path)
                 raise ValueError()
+        # TODO Add call to yaml parser here
+        # elif 'yml' in fname_suffix :
+        #    try:
+        #        d = util.parse_yaml(str_)
+        #        self.file_case_list = d.pop('case_list', [])
+        #        d = {canonical_arg_name(k): v for k,v in d.items()}
+        #        config.user_defaults.update(d)
+        #    except IOerror :
+        #       sys.exit(f"ERROR: Unable to parse yaml file in {path}:\n\t{exc}")
         else:
             # assume config_file is a plain text file containing flags, etc.
             # as they would be passed on the command line.

@@ -678,6 +678,7 @@ class NoTranslationFieldlist(util.Singleton):
             log=var.log
         )
 
+
 class VariableTranslator(util.Singleton):
     """:class:`~util.Singleton` containing information for different variable
     naming conventions. These are defined in the ``data/fieldlist_*.jsonc``
@@ -696,7 +697,7 @@ class VariableTranslator(util.Singleton):
             self.aliases[model] = conv_name
         self.conventions[conv_name] = Fieldlist.from_struct(d)
 
-    def read_conventions(self,code_root, unittest=False):
+    def read_conventions(self, code_root, unittest=False):
         """ Read in the conventions from the Fieldlists and populate the convention attribute. """
         if unittest:
             # value not used, when we're testing will mock out call to read_json
@@ -812,6 +813,7 @@ class MDTFFramework(MDTFObjectBase):
         """
         self._cli_post_parse_hook(cli_obj)
         self.dispatch_classes(cli_obj)
+        # TODO: modify parse_mdtf_args to read in separate pod_list for multirun
         self.parse_mdtf_args(cli_obj, pod_info_tuple)
         # init singletons
         config = ConfigManager(cli_obj, pod_info_tuple,
@@ -944,6 +946,7 @@ class MDTFFramework(MDTFObjectBase):
         else:
             return self.parse_pod_list(case['pod_list'], pod_info_tuple)
 
+    # TODO: focus here for multirun mods
     def parse_case(self, n, d, cli_obj, pod_info_tuple):
         # really need to move this into init of DataManager
         if 'CASE_ROOT_DIR' not in d and 'root_dir' in d:
@@ -1062,9 +1065,15 @@ class MDTFFramework(MDTFObjectBase):
         return False
 
     def main(self):
+        # check for pod_list nested dict in self.cases
         # only run first case in list until dependence on env vars cleaned up
-        self.cases = dict(list(self.cases.items())[0:1])
-
+        d = dict(list(self.cases.items())[0:1])
+        if d.get('pod_list'):
+            _log.info("### %s: Found pod_list in case list. Using single-run mode. '%s'.")
+            self.cases = d
+        else:
+            _log.info("### %s: Using multi-run mode. '%s'.")
+            self.cases = dict(list(self.cases.items()))
         new_d = dict()
         for case_name, case_d in self.cases.items():
             _log.info("### %s: initializing case '%s'.", self.full_name, case_name)

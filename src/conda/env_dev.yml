@@ -1,4 +1,4 @@
-# Conda environment for development work. 
+# Conda environment for development work.
 name: _MDTF_dev
 channels:
 - conda-forge
@@ -13,11 +13,19 @@ dependencies:
 - xarray=0.16
 - matplotlib=3.3
 - cartopy=0.18
+- pandas<1.3
+- pint=0.16
+- dask=2.30
 # additional development tools
-- mock # needed until tests updated from py2
 - jupyter
 - jupyterlab
 - sphinx=3.1.2
 - recommonmark=0.6
 - pylint
 - doc8
+# additions dec 2020
+- cfunits=3.3.1
+- intake=0.6
+- intake-esm=2020.11.4
+# bump version 0.3.1 -> 0.4 feb 2021
+- cf_xarray=0.4.0

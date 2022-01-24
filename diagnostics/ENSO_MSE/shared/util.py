@@ -8,17 +8,16 @@ def setenv (varname,varvalue,env_dict,verbose=0):
     # automatically get written to the file
     "replaces os.environ to set the variable AND save it to write out in namelist"
 
-    if (verbose > 2 ): print "Saving ",varname," = ",varvalue
+    if (verbose > 2 ): print ("Saving ",varname," = ",varvalue)
     os.environ[varname] = varvalue
     env_dict[varname]   = varvalue
-    if ( verbose > 2) : print "Check ",varname," ",env_dict[varname]
+    if ( verbose > 2) : print ("Check ",varname," ",env_dict[varname])
 
 
 
 def check_required_dirs(verbose=3, already_exist =[], create_if_nec = []):
     # arguments can be envvar name or just the paths
 
-#   print("var_code/ENSO_MSE/COMPOSITE/util.py check_required_dirs")
     import os
     filestr = __file__+":check_required_dirs: "
     errstr = "ERROR "+filestr

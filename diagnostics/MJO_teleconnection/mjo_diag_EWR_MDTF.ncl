@@ -1,10 +1,12 @@
-; This file is part of the MJO_teleconnection module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_teleconnection module of the MDTF code package (see LICENSE.txt)
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"   
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"    
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"    
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"    
    
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;This scripts calculates wave frequeency specra fo a given models precipitation
 ;Written by : Sptephnaie Handerson
@@ -13,8 +15,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 begin
 
-  Model = getenv("CASENAME") 
-  pr_conv=stringtofloat(getenv("pr_conversion_factor"))
+  Model = getenv("CASENAME")
   latS   = -10.
   latN   =  10.
 print("----------------------------------------------------------------------------------")
@@ -37,12 +38,10 @@ print("-------------------------------------------------------------------------
 ;---------------------------------------------------------------------------------
   print("Reading daily precipitation data") 
   pName     = getenv("pr_var")           ; mm/day
-  diri      = getenv("DATADIR")+"/day/"                               ;Input data directory
   dirobs    = getenv("OBS_DATA")+"/"
   diro      = getenv("WK_DIR")+"/model/netCDF/"
   filp      = getenv("prec_file")    
   filewcmip ="EWratio_wf_CMIP5"
-     print("Input data path   :" + diri)
      print("Input data file observation geop composite :" + filp)
    
      print("Input data path (Observations EWR) :" + dirobs)
@@ -57,7 +56,7 @@ print("-------------------------------------------------------------------------
 ;     Read user specified period
 ;************************************************************
 
-  f  = addfile(diri+filp, "r")  
+  f  = addfile(filp, "r")  
   temp_time = f->time
   
    calend = temp_time@calendar
@@ -77,7 +76,7 @@ print("-------------------------------------------------------------------------
   
 ; if(m .gt. 0)
     print("convert kg m-2 s-1 flux to mm/day rate")
-    P = P *pr_conv * 86400.0
+    P = P * 86400.0
 ; end if
 
    P@_FillValue = -999.0  

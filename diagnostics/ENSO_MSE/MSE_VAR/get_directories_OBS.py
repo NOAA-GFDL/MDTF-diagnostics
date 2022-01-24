@@ -1,6 +1,4 @@
-import numpy as np
 import os
-import math
 import sys
 
 shared_dir = os.path.join(
@@ -12,6 +10,7 @@ from util import check_required_dirs
 
 ###   
 ###  def get_directories():
+###   
 
 outdir  = os.environ["ENSO_MSE_WKDIR_MSE_VAR"]+"/obs"   #wkdir, defined in ENSO_MSE.py, figures created by COMPOSITE for obs
 dirs_to_create = [ outdir+"/PS",

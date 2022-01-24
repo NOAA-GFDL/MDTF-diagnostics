@@ -1,0 +1,82 @@
+// Default logging configuration for the MDTF package.
+// Schema follows
+// https://docs.python.org/3.7/library/logging.config.html#logging-config-dictschema.
+// Customize as needed to change the logging output and format for your site.
+{
+  "version": 1,
+  "disable_existing_loggers": false, // must be false
+  "root": {
+    "level" : "NOTSET",
+    // define additional handlers in the section below and add them to this list
+    "handlers": ["mdtf_log_file", "debug", "stdout", "stderr"]
+  },
+  "loggers": {
+    "<CASES>": {
+      "handlers": []
+    },
+    "<PODS>": {
+      "handlers": []
+    },
+    "<VARIABLES>": {
+      "handlers": []
+    }
+  },
+  "handlers": {
+    "debug": {
+        // writes DEBUG statements to stdout
+        // verbosity level set from CLI (--verbose/--quiet) by
+        // src.util.logs._set_console_log_level
+        "class": "logging.StreamHandler",
+        "formatter": "level",
+        "level" : "DEBUG",
+        "stream" : "ext://sys.stdout"
+    },
+    "stdout": {
+        // writes INFO statements to stdout
+        // verbosity level set from CLI (--verbose/--quiet) by
+        // src.util.logs._set_console_log_level
+        "class": "logging.StreamHandler",
+        "formatter": "normal",
+        "level" : "INFO",
+        "stream" : "ext://sys.stdout"
+    },
+    "stderr": {
+        // writes WARNING and ERROR statements to stderr
+        // verbosity level set from CLI (--verbose/--quiet) by
+        // src.util.logs._set_console_log_level
+        "class": "logging.StreamHandler",
+        "formatter": "level",
+        "level" : "WARNING",
+        "stream" : "ext://sys.stderr"
+    },
+    "mdtf_log_file": {
+      // writes all log events to file saved along with run in WKDIR
+      // This is linked to from index.html, so don't change the filename
+      "()": "src.util.logs.MDTFHeaderFileHandler",
+      "filename": "debug_test.log",
+      "level" : "DEBUG",
+      "formatter": "mdtf_log_file",
+      "mode": "w",
+      "encoding": "utf-8"
+    }
+  },
+  "formatters": {
+    "normal": {"format": "%(message)s"},
+    "level": {"format": "%(levelname)s: %(message)s"},
+    "debug": {
+      "()": "src.util.logs.HangingIndentFormatter",
+      "format": "%(asctime)s %(levelname)s in %(funcName)s() (%(filename)s line %(lineno)d):\n%(message)s",
+      "datefmt": "%H:%M:%S",
+      "style": "%",
+      "tabsize": 4,
+      "header": "",
+      "footer": "\n"
+    },
+    "mdtf_log_file": {
+      "format": "%(asctime)s %(levelname)s: %(message)s",
+      "datefmt": "%H:%M:%S",
+      "style": "%",
+      "tabsize": 4
+    }
+  }
+}

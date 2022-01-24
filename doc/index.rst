@@ -16,11 +16,12 @@ This site contains documentation for the MDTF Diagnostics framework. The code is
    :maxdepth: 2
 
    sphinx/start_toc
+   sphinx/ref_toc
+   sphinx/pod_toc
    sphinx/site_toc
    sphinx/dev_toc
-   sphinx/pod_toc
-   sphinx/ref_toc
-   sphinx/src_autodoc
+   sphinx/ref_dev_toc
+   sphinx/fmwk_toc
 
 
 Acknowledgements
@@ -39,5 +40,4 @@ Indices and tables
 ------------------
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

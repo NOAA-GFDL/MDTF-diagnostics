@@ -1,25 +1,4 @@
 ;---------------------------------------------------------------------
-; scatter_7.ncl
-;
-; Concepts illustrated:
-;   - Drawing a scatter plot with markers of different colors and sizes
-;   - Annotating a plot with labelbars, text, and markers
-;   - Creating a color map using named colors
-;   - Drawing polymarkers and text in NDC space
-;----------------------------------------------------------------------
-; The original version of this script was contributed by Larry
-; McDaniel of IMAGe/NCAR. It had several lines of data processing
-; calls before the plotting section.
-;
-; This script is a pared down version of the original one, with 
-; the data processing calls removed. The values are read from
-;  two simple ASCII files. 
-;----------------------------------------------------------------------
-;
-; These files are loaded by default in NCL V6.2.0 and newer
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-; load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 ;
 ; This file still has to be loaded manually
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
@@ -27,22 +6,19 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 begin
       varcode = getenv("POD_HOME")
       wkdir = getenv("ENSO_MSE_WKDIR")
-      obsdir = getenv("OBS_DATA")
 
-      prefix = varcode + "/SCATTER/"
+   prefix = wkdir + "/SCATTER/netCDF/"
 
 ;;---Tickmark resources
-    dxx = (/  50., 50. /)
-    dyy = (/  2., 2. /)
-    xmin     =  (/ 0.,  0. /)
-    xmax     =  (/ 180.,  200. /)
-    ymin    =  (/ -10.,  0. /)
-    ymax    =  (/ 15.,   50. /)
+    dxx    = (/  50., 50. /)
+    dyy    = (/  2., 2. /)
+    xmin   =  (/ 0.,  0. /)
+    xmax   =  (/ 180.,  200. /)
+    ymin   =  (/ -12.,  0. /)
+    ymax   =  (/ 15.,   50. /)
     xlabel = "Precipitation [W/m~S~2~N~]"
     ylabel = "THF [W/m~S~2~N~]"
 ;;;----------------------------------------------------------------------
-; Data is hard-coded here. It was originally calculated by running
-; a compute-intensive script.
 ;----------------------------------------------------------------------
 ;;  read in the data based on the region .. 
   
@@ -57,75 +33,77 @@ begin
     region = (/ "Central Pacific", "Eastern Pacific" /)
 
     nameout = (/ "central_elnino_04",  "eastern_elnino_04" /)
-    namein  = (/ "central_pacific_MSE_terms.txt", "eastern_pacific_MSE_terms.txt" /)
+    namein1 = (/ "central_pacific_MSE_terms.txt", "eastern_pacific_MSE_terms.txt" /)
+    namein2 = (/ "central_pacific_MSE_terms_NEW_MODEL.txt", "eastern_pacific_MSE_terms_NEW_MODEL.txt" /)  ;; NEW MODEL data
+
 
    xdim = 37
    ydim = 6
 
 ;; read in the models:
-     namemodel =  varcode +  "/SCATTER/list-models-historical-obs"
+     namemodel = prefix + "list-models-historical-obs"
      models = readAsciiTable ( namemodel, 1, "string", 0)
+     models2 = new ( (/ xdim+1 /), "string" )
+     models2(0:xdim-1) = models(0:xdim-1, 0)
+     models2(xdim) = "NEW MODEL"
 
 ;;  the order of datain is the order of variables  SST first , RR second
 
    do ibox = 0, 1
 
     maintitle = region(ibox) +  " "  + " "  + mode + " (" + season + ")"
-    namein2 = prefix + namein(ibox)
-   datain = asciiread(namein2,(/xdim, ydim/),"float")
-   undef9 = -9999.
-   datain@_FillValue =  undef9   
-   dataX = datain(:, 0)
-   dataY = datain(:, 4) + datain(:, 5)
 
-;;   printMinMax (dataX, False)
-;;   printMinMax (dataY, False)
+    namein11 = prefix + namein1(ibox)
+    datain1 = asciiread(namein11,(/xdim, ydim/),"float")
+    undef2 = 1.1E+20
+    datain1@_FillValue =  undef2
+;;;  read the new model
+    namein22 = prefix + namein2(ibox)
+    datain2 = asciiread(namein22,(/1, ydim/),"float")
+    datain2@_FillValue =  undef2
+;;;   fill dataX and dataY
+    dataX = new ( (/ xdim+1 /), float, datain1@_FillValue)
+    dataY = new ( (/ xdim+1 /), float, datain1@_FillValue)
+    dataX(0:xdim-1) = datain1(0:xdim-1, 0)
+    dataX(xdim) = datain2(0, 0)
+    dataY(0:xdim-1) = datain1(0:xdim-1, 4) + datain1(0:xdim-1, 5)
+    dataY(xdim) = datain2(0, 4) +  datain2(0, 5) 
 
 ;----------------------------------------------------------------------
 ; Open a PNG file and define the color table
 ;----------------------------------------------------------------------
-;;  colors  = (/"white","black","dodgerblue2","firebrick","forestgreen",\
-;              "dodgerblue2","darkorange2","forestgreen","deeppink2",\
-;              "darkorange2","purple"/)
 ;;  colors for the markers 
-   colors1  = (/ 2, 3,   2, 3,   2, 3, 4,   2, 3, 4, 8,   2,   2, 3, \  ;; 14
-             2,    2, 3, 4,    2, 3, 4, 8,    2,    2,   \              ;; 24
-             2, 3, 4,    2, 3,     2, 3, 4,  1, 14, 1, 14 ,  \          ;; 36
-             14,  14, 14, 14, 14 /)                  ;;; ERA + OBS
-                                                                        ;; 36 + 5 =  41
-                                       ;; the last 4 are OBS, the 5th from end is ERA
 
-   markers1 =   (/16, 16,   1, 1,   2,   4,  5,   6, 6, 6, 6,  7,  8, 8, \   ;; 14
-                  9,   10, 10, 10,   11, 11, 11, 11,    12,  13, \    ;;  24
-                  14, 14, 14,    15, 15,    0, 0, 0, 0, 0,  1,   2,  \  ;;  36
-                  4,   8, 7, 5, 16/)               ;;  36 + 5 =  41
+    colors1  = (/ 2,  3,   2,   3,   2,   3,  4,   2,  3,  4,  \ ;;   
+                 8,  2,   2,   3,   2,   2,  3,   4,  2,  3, \ ;;   
+                 4,  8,   2,   2,   2,   3,  4,   2,  3,  2, \  ;;; 
+                 3,  4,   1,  14,   1,   14,  \                 ;; 
+                14,  6,  14,  14, 14 /)                  ;;; ERA +  NEW_MODEL
 
-    markersizes = (/ 0.02,  0.02, 0.02, 0.02,  0.02, 0.03, \
-                     0.03,  0.02, 0.03, 0.02,  0.02, 0.02,  \
-                     0.02,  0.02, 0.02, 0.02,  0.02, 0.03,  \
-                     0.02,  0.02, 0.02, 0.02,  0.02, 0.02,  \
-                     0.02,  0.02, 0.02, 0.02,  0.03, 0.02,  \
-                     0.02,  0.02, 0.02, 0.02,  0.02, 0.02,  \   ;; 36
-                     0.03,  0.03, 0.03, 0.03,  0.03/)
+   markers1 =   (/16,  16,  1,  1,  2,  4,  5,  6,  6,  6,  \  ;; 
+                   6,   7,  8,  8,  9, 10, 10, 10, 11, 11,  \ ;;; 
+                   11, 11, 12, 13, 14, 14, 14, 15, 15,  0,  \ ;; 
+                    0,  0,  0,  0,  1,  2,  \  ;;  36
+                    4, 12,  7,  5, 16/)               ;;      ERA + NEW_MODEL
 
 
-     markerthick =  (/   3., 3., 3., 3., 3., 10.,  \
-                        10., 3., 10., 3., 3., 3.,  \
-                         3., 3., 3., 3., 3., 10.,  \
-                        3., 3., 3., 3., 3., 3.,  \
-                        3., 3., 3., 3., 10., 3.,  \
-                        3., 3., 3., 3., 3., 3.,  \  ! 36
-                        10., 6., 6.,  6., 6./)
+    markersizes = (/ 0.02,  0.02, 0.02, 0.02, 0.02, 0.03, 0.03, 0.02, 0.03, 0.02, \ ;; 
+                     0.02,  0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.03, 0.02, 0.02, \ ;; 
+                     0.02,  0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.03, 0.02,  \ ;; 
+                     0.02,  0.02, 0.02, 0.02,  0.02, 0.02,  \   ;; 
+                     0.03,  0.03, 0.03, 0.03,  0.03/)        ;;; ERA + NEW_MODEL
 
 
+     markerthick =  (/   3., 3., 3., 3., 3., 10., 10.,  3., 10., 3., \  ;;  
+                         3., 3., 3., 3., 3.,  3.,  3., 10.,  3., 3., \ ;;; 
+                         3., 3., 3., 3., 3.,  3.,  3.,  3., 10., 3.,  \ ;; 
+                         3., 3., 3., 3., 3., 3.,  \  ! 36
+                        10., 10., 6.,  6., 6./)      ;; ERA + NEW_MODEL
 
-;;  wks = gsn_open_wks ("ps","scatter")
-   wks_type = "png"
-   wks_type@wkWidth = 1000
-   wks_type@wkHeight = 1000 
-   wks = gsn_open_wks( wks_type, wkdir + "/SCATTER/" + nameout(ibox))
+   wks_type = "eps"
+   nameout2 = wkdir +  "/model/PS/" + nameout(ibox)
+   wks = gsn_open_wks( wks_type, nameout2)
 
-;;   wks = gsn_open_wks ("X11", "scatter")
     gsn_define_colormap(wks, "grads_default")
 
 ;----------------------------------------------------------------------
@@ -143,9 +121,6 @@ begin
     aminy = miny - dy
 ;----------------------------------------------------------------------
 ;----------------------------------------------------------------------
-; Draw time stamp first, then the plot.
-;----------------------------------------------------------------------
-;;  infoTimeStamp(wks,0.005,"")
 ;;;;;; ***********  regression line  
    
    rc =   regline ( dataX, dataY)
@@ -168,7 +143,6 @@ begin
 
 ;************************************************
 ; plotting parameters
-; This illustrates one approach. Overlays could also be used.
 ;************************************************
 
    res1 = True
@@ -176,8 +150,8 @@ begin
    res1@txFont   = "helvetica"
    res1@txFuncCode    = "~"
 
-   res1@tmXBMode         =  "Explicit" ;; "Manual"
-   res1@tmYLMode         =  "Explicit" ;;  "Manual"
+   res1@tmXBMode         =  "Explicit" ;; 
+   res1@tmYLMode         =  "Explicit" ;;  
    res1@tmXBTickSpacingF =  dxx(ibox)
    res1@tmYLTickSpacingF =  dyy(ibox) 
    res1@trXMinF           = xmin(ibox)
@@ -188,16 +162,14 @@ begin
   res1@gsnDraw            = False       ; Don't draw plot
   res1@gsnFrame           = False       ; Don't advance frame
 ;;;
-  res1@vpXF              = 0.18 ;; 0.14
-  res1@vpYF              = 0.8  ;; 0.82
-  res1@vpWidthF          = 0.53 ;; 0.55
-  res1@vpHeightF         = 0.53 ;; 0.55
+  res1@vpXF              = 0.18 ;; 
+  res1@vpYF              = 0.8  ;; 
+  res1@vpWidthF          = 0.53 ;; 
+  res1@vpHeightF         = 0.53 ;; 
 
 ;---Title resources
   res1@txFont   = "helvetica"
   res1@tiMainString       = maintitle
-;;  res1@tiXAxisString      =  xlabel
- ;; res1@tiYAxisString      =  ylabel
   res1@tiMainFontHeightF  = 0.02
 ;;;; X label
     txres3 = True
@@ -216,23 +188,15 @@ begin
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
    res1@tiMainFontHeightF  = 0.02
-;---Resources for X/Y axes.
-;  res1@trYMinF            =  aminy               ; min value on y-axis
-;  res1@trYMaxF            =  amaxy               ; max value on y-axis
-;  res1@trXMinF            =  minx                  ; min value on x-axis
-;  res1@trXMaxF            =  maxx                  ; max value on x-axis
  
   res1@tmLabelAutoStride = True
 ;--XY marker resources
   res1@xyMarkLineMode     = "Markers"
-;;  res1@xyMarkerSizeF      = 0.02
-;;  res1@xyMarkerThicknessF = 3.
   res1@xyMonoMarkerColor  = False          ; Allow different colors for markers
   res1@xyMarkerSizes            = markersizes(:)
   res1@xyMarkerThicknesses      = markerthick(:)
 
-  res1@xyMarkerColors     = colors1(:)     ; It's okay to list more than
-                                          ; you need here
+  res1@xyMarkerColors     = colors1(:)     ; 
   res1@xyMarkers          =  markers1(:)
 
 ;---Title resources
@@ -246,7 +210,6 @@ begin
     
    res1@xyMarkLineMode      = "Lines"
    res1@xyLineColors        = "red"  ; choose which have markers
-;;   res1@xyMarkerSizeF       = 0.005  ; Marker size (default 0.01)
    res1@xyDashPatterns      = 0                ; solid line 
    res1@xyLineThicknesses   = 4                 ; 
 
@@ -255,7 +218,7 @@ begin
 ;----------------------------------------------------------------------
 ; Draw some markers and text. based on external file :
 ;----------------------------------------------------------------------
-  labels2  = models 
+  labels2  = models2
 
   mkres               = True         ; Marker resources
   txres               = True         ; Text resources
@@ -268,20 +231,20 @@ begin
 
   ypos2 = 0.90
   dyy2 = 0.018
-  do i = 0, xdim-1
+  do i = 0, xdim
       ypos2 = ypos2 - dyy2
       txres@txFontThicknessF = 1.
       txres@txFontColor =  colors1(i)
       txres@txFont   = "helvetica"
       txres@txFontHeightF = 0.01
-     ;;mkres@gsMarkerColor  = True
-     mkres@gsMarkerColor =  colors1(i)
-     mkres@gsMarkerThicknessF = 3.5
-     mkres@gsMarkerSizeF      = 0.012
-     mkres@gsMarkerIndex      = markers1(i)
-     fheight  = 0.016
-     fthick = 6.
-     mthick = 6.
+
+      mkres@gsMarkerColor =  colors1(i)
+      mkres@gsMarkerThicknessF = 3.5
+      mkres@gsMarkerSizeF      = 0.012
+      mkres@gsMarkerIndex      = markers1(i)
+      fheight  = 0.016
+      fthick = 6.
+      mthick = 6.
 
 ;;  bold selected markers = models
      if( (i .eq. 5) .or. (i .eq. 6) .or. (i .eq. 8) .or.  (i .eq. 17) .or.  \
@@ -293,7 +256,7 @@ begin
      end if
 
      gsn_polymarker_ndc(wks,             xpos2, ypos2, mkres)
-     gsn_text_ndc      (wks,labels2(i,0),xpos3, ypos2, txres)
+     gsn_text_ndc      (wks,labels2(i),xpos3, ypos2, txres)
   end do
 
 ;;;  the correlations

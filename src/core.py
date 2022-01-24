@@ -813,7 +813,6 @@ class MDTFFramework(MDTFObjectBase):
         """
         self._cli_post_parse_hook(cli_obj)
         self.dispatch_classes(cli_obj)
-        # TODO: modify parse_mdtf_args to read in separate pod_list for multirun
         self.parse_mdtf_args(cli_obj, pod_info_tuple)
         # init singletons
         config = ConfigManager(cli_obj, pod_info_tuple,
@@ -859,7 +858,9 @@ class MDTFFramework(MDTFObjectBase):
         """
         self.parse_flags(cli_obj)
         self.parse_env_vars(cli_obj)
-        pod_list = cli_obj.config.pop('pods', [])
+        pod_list = cli_obj.config.pop('pod_list', None)  # if separate pod_list not in cli_obj, return None
+        if not pod_list:  # single-run mode
+            pod_list = cli_obj.config.pop('pods', [])  # remove pods if present; return empty list if not present
         self.pod_list = self.parse_pod_list(pod_list, pod_info_tuple)
         self.parse_case_list(cli_obj, pod_info_tuple)
 
@@ -895,7 +896,7 @@ class MDTFFramework(MDTFObjectBase):
         self.global_env_vars['MPLBACKEND'] = "Agg"
 
     def parse_pod_list(self, pod_list, pod_info_tuple):
-        pod_data = pod_info_tuple.pod_data # pod names -> contents of settings file
+        pod_data = pod_info_tuple.pod_data  # pod names -> contents of settings file
         args = util.to_iter(pod_list, set)
         bad_args = []
         pods = []
@@ -930,7 +931,7 @@ class MDTFFramework(MDTFObjectBase):
             )
             util.exit_handler(code=1)
 
-        pods = list(set(pods)) # delete duplicates
+        pods = list(set(pods))  # delete duplicates
         if not pods:
             _log.critical(("ERROR: no PODs selected to be run. Do `./mdtf info pods`"
                 " for a list of available PODs, and check your -p/--pods argument."
@@ -946,7 +947,6 @@ class MDTFFramework(MDTFObjectBase):
         else:
             return self.parse_pod_list(case['pod_list'], pod_info_tuple)
 
-    # TODO: focus here for multirun mods
     def parse_case(self, n, d, cli_obj, pod_info_tuple):
         # really need to move this into init of DataManager
         if 'CASE_ROOT_DIR' not in d and 'root_dir' in d:
@@ -973,7 +973,7 @@ class MDTFFramework(MDTFObjectBase):
         return d
 
     def parse_case_list(self, cli_obj, pod_info_tuple):
-        d = cli_obj.config # abbreviate
+        d = cli_obj.config  # abbreviate
         if 'CASENAME' in d and d['CASENAME']:
             # defined case from CLI
             cli_d = self._populate_from_cli(cli_obj, 'MODEL')

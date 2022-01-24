@@ -1052,7 +1052,6 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         *subcommand*.
         """
         config = CLIConfigManager()
-        config = CLIConfigManager()
         if subcommand:
             subcmds = config.subcommands.get(subcommand, [])
         else:

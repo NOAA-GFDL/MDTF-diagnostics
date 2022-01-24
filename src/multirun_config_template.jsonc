@@ -18,18 +18,18 @@
    // Each CASENAME corresponds to an ensemble member.
   "case_list" : [
      {
-       "CASENAME" : "case_name_01",
+       "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231",
        "model" : "test",
        "convention" : "CMIP",
        "FIRSTYR" : 1980,
        "LASTYR" : 1984
      },
      {
-       "CASENAME": "case_name_02",
+       "CASENAME": "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231",
        "model" : "test",
        "convention" : "CMIP",
-       "FIRSTYR" : 1986,
-       "LASTYR" : 1984
+       "FIRSTYR" : 1985,
+       "LASTYR" : 1989
      }
   ],
   // PATHS ---------------------------------------------------------------------
@@ -44,7 +44,7 @@
 
   // Parent directory containing results from different models.
  // "MODEL_DATA_ROOT": "../mdtf_test_data",
-  "MODEL_DATA_ROOT": "../inputdata/model",
+  "MODEL_DATA_ROOT": "~/mdtf_test_data",
 
   // Working directory.
   "WORKING_DIR": "../wkdir",

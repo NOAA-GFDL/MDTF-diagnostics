@@ -632,7 +632,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         for p in self.iter_children():
             for v in p.iter_children():
                 if v.status == core.ObjectStatus.ACTIVE:
-                    v.log.debug('Data request for %s completed succesfully.',
+                    v.log.debug('Data request for %s completed successfully.',
                         v.full_name)
                     v.status = core.ObjectStatus.SUCCEEDED
                 elif v.failed:
@@ -642,7 +642,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             if p.failed:
                 p.log.debug('Data request for %s failed.', p.full_name)
             else:
-                p.log.debug('Data request for %s completed succesfully.',
+                p.log.debug('Data request for %s completed successfully.',
                     p.full_name)
 
     def query_and_fetch_cleanup(self, signum=None, frame=None):

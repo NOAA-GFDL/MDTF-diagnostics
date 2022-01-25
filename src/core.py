@@ -1065,15 +1065,11 @@ class MDTFFramework(MDTFObjectBase):
         return False
 
     def main(self):
-        # check for pod_list nested dict in self.cases
-        # only run first case in list until dependence on env vars cleaned up
-        d = dict(list(self.cases.items())[0:1])
-        if d.get('pod_list'):
-            _log.info("### %s: Found pod_list in case list. Using single-run mode. '%s'.")
-            self.cases = d
+        self.cases = dict(list(self.cases.items()))
+        if len(self.cases) > 1:
+            _log.info("###: Using multi-run mode.")
         else:
-            _log.info("### %s: Using multi-run mode. '%s'.")
-            self.cases = dict(list(self.cases.items()))
+            _log.info("###: Using single-run mode.")
         new_d = dict()
         for case_name, case_d in self.cases.items():
             _log.info("### %s: initializing case '%s'.", self.full_name, case_name)

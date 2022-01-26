@@ -2,7 +2,6 @@
 
 # Importing Python packages to create plots
 import matplotlib.pyplot as plt
-# from mpl_toolkits.basemap import Basemap, maskoceans, shiftgrid
 import cartopy
 from cartopy.util import add_cyclic_point
 import numpy as np 

@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import cartopy
 from cartopy.util import add_cyclic_point
 import numpy as np 
-import os
 
 def plot_zonal(model_zonal_means, erai_zonal_means, era5_zonal_means, out_file=''): 
 

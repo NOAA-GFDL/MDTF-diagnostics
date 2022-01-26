@@ -69,10 +69,6 @@ def model_std_dev(data, start_year, time, season='djf'):
     zonal_mean = np.nanmean(out_std_dev, axis=1)
     zonal_mean[zonal_mean == 0] = np.nan
 
-  # out_sum = np.nansum(eddy_year, axis=0)
-  # out_cnt = np.count_nonzero(~np.isnan(eddy_year), axis=0)
-  # return out_std_dev, out_sum, out_cnt
-
   return out_std_dev, zonal_mean
 
 def obs_std_dev(obs_data_file, obs_topo_file):
@@ -168,10 +164,6 @@ def obs_std_dev(obs_data_file, obs_topo_file):
   lonGrid, latGrid = np.meshgrid(in_lon, in_lat)
 
   zonal_means = {'djf': zonal_djf, 'jja': zonal_jja, 'son': zonal_son, 'mam': zonal_mam, 'lat': in_lat}
-
-  # import matplotlib.pyplot as plt; 
-  # plt.style.use(['classic', 'dark_background'])
-  # import pdb; pdb.set_trace()
 
   return latGrid, lonGrid, djf, mam, jja, son, start_year, end_year, zonal_means
 

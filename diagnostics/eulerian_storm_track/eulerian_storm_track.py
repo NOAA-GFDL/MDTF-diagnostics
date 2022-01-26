@@ -85,16 +85,6 @@ else:
   # Creating the plot for the different seasons
   ##########################################################
 
-  # # getting the all year standard deviation average
-  # season = 'all'
-  # time_ind = est.get_time_ind(int(os.environ['FIRSTYR']), time, season=season)
-  # std_dev = est.model_std_dev(diff, time_ind)
-  # out_file = os.environ['variab_dir']+'/eulerian_storm_track/model/PS/%s.%s.ps'%(os.environ['CASENAME'], season)
-  # plotter.plot(lonGrid, latGrid, std_dev, out_file=out_file, levels=np.arange(0,6), extend='max')
-  # out_file = os.environ['variab_dir']+'/eulerian_storm_track/model/%s.%s.png'%(os.environ['CASENAME'], season)
-  # plotter.plot(lonGrid, latGrid, std_dev, out_file=out_file, levels=np.arange(0,6), extend='max')
-
-
   print('*** Processing Model Data...')
   model_zonal_means = {}
   model_zonal_means['lat'] = lat
@@ -192,16 +182,6 @@ else:
   os.system(cmd)
   cmd = "cp "+os.environ["POD_HOME"]+"/doc/MDTF_Documentation_eulerian_storm_track.pdf "+os.environ["WK_DIR"]+"/"
   os.system(cmd)
-
-  # # Replace CASENAME so that the figures are correctly linked through the html
-  # os.system("cp "+os.environ["WK_DIR"]+"/eulerian_storm_track.html "+os.environ["WK_DIR"]+"/tmp.html")
-  # os.system("cat "+os.environ["WK_DIR"]+"/eulerian_storm_track.html "+"| sed -e s/casename/"+os.environ["CASENAME"]+"/g > "+os.environ["WK_DIR"]+"/tmp.html")
-  # os.system("cp "+os.environ["WK_DIR"]+"/tmp.html "+os.environ["WK_DIR"]+"/eulerian_storm_track.html")
-  # os.system("rm -f "+os.environ["WK_DIR"]+"/tmp.html")
-
-  # a = os.system("cat "+os.environ["WK_DIR"]+"/index.html | grep eulerian_storm_track > /dev/null")
-  # if a != 0:
-  #    os.system("echo '<H3><font color=navy>Eulerian Strom Track Diagnostics <A HREF=\"eulerian_storm_track/eulerian_storm_track.html\">plots</A></H3>' >> "+os.environ["WK_DIR"]+"/index.html")
 
   # ======================================================================
   # End of HTML sections

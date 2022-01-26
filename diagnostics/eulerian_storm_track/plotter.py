@@ -63,9 +63,6 @@ def plot(lonGrid, latGrid, data, show=False, out_file='', title='', **kwargs):
 
   plt.close('all')
 
-  # data = maskoceans(lonGrid, latGrid, data, inlands=False, resolution='l')
-  # data.mask = ~(data.mask)
-
   plt.figure()
 
   # adding cyclic point

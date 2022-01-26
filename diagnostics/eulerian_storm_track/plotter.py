@@ -67,10 +67,6 @@ def plot(lonGrid, latGrid, data, show=False, out_file='', title='', **kwargs):
   # data.mask = ~(data.mask)
 
   plt.figure()
-  lllat = np.nanmin(latGrid) 
-  urlat = np.nanmax(latGrid) 
-  lllon = np.nanmin(lonGrid) 
-  urlon = np.nanmax(lonGrid)
 
   # adding cyclic point
   # provided the values are given as lat x lon
@@ -80,18 +76,10 @@ def plot(lonGrid, latGrid, data, show=False, out_file='', title='', **kwargs):
   new_data, new_lons = add_cyclic_point(data, coord=lons)
   new_lonGrid, new_latGrid = np.meshgrid(new_lons, lats)
 
-  # m = Basemap(projection='cyl', urcrnrlat=urlat, urcrnrlon=urlon, llcrnrlat=lllat, llcrnrlon=lllon)
-  # cnt = m.contourf(lonGrid, latGrid, data, cmap='jet', **kwargs)
-  # m.colorbar()
-  # # m.fillcontinents(lake_color=None)
-  # m.drawcoastlines(linewidth=.5)
-  # m.drawparallels(np.arange(-90, 90, 25), labels=[True, False, False, False])
-  # m.drawmeridians(np.arange(-180, 180, 75), labels=[False, False, False, True])
-
   ax = plt.axes(projection=cartopy.crs.PlateCarree())
   ax.coastlines()
   # getting rid of the line due to lack of continuity
-  cnt = plt.contourf(new_lonGrid, new_latGrid, new_data, cmap='jet', **kwargs)
+  _ = plt.contourf(new_lonGrid, new_latGrid, new_data, cmap='jet', **kwargs)
   cb = plt.colorbar(ax=ax, shrink=0.5)
   cb.ax.set_ylabel(r'$\tilde{V}^{st}_{850}$ [m/s]')
   

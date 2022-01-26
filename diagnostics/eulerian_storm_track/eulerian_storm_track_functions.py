@@ -95,9 +95,7 @@ def get_time_ind(start_year, time, season='djf'):
     dates_month.append(temp_time.month)
     dates_year.append(temp_time.year)
 
-  uni_year = sorted(set(dates_year))
   dates_month = np.asarray(dates_month)
-  dates_year = np.asarray(dates_year)
 
   # getting the time index
   if (season == ''):

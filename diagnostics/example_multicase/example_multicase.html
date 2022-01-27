@@ -1,0 +1,26 @@
+<title>MDTF example diagnostic</title>
+<img src="../mdtf_diag_banner.png">
+<h3>Multi-case Example diagnostic: zonal-average near-surface temperature anomaly</h3>
+<p>
+    This POD illustrates how multiple cases (experiments) can be analyzed together. The
+    muliple cases are specified to the MDTF Framework where they are initialized and
+    preprocessed independently. The framework then passes off a dictionary metadata
+    information for each case that can then be used byt the POD.
+</p>
+<p>
+    In this example POD, near-surface air temperature is read from multiple cases. The
+    POD time averages the data and calculates the anomaly relative to the global mean.
+    The anomalies are zonally-averaged and the results from all cases are shown
+    on a single plot.
+</p>
+<TABLE>
+    <TR>
+        <TH align=left><font color=navy>Time averages, {{FIRSTYR}}-{{LASTYR}}
+        <TH align=left>Model Results
+    <TR>
+        <TH align=left>Zonal-mean near-surface temperature anomalies (K)
+            <!--
+                Relative links to bitmaps of plots made by the diagnostic, see above.
+            -->
+        <TH align=center><A href=model/example_model_plot.png>plot</A>
+</TABLE>

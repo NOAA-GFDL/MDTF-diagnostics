@@ -17,6 +17,7 @@ from src import util, cli, mdtf_info, data_model, units
 from src.units import Units
 
 import logging
+
 _log = logging.getLogger(__name__)
 
 ObjectStatus = util.MDTFEnum(
@@ -36,6 +37,7 @@ ObjectStatus.__doc__ = """
   work will be done.
 - *SUCCEEDED*: Processing finished successfully.
 """
+
 
 @util.mdtf_dataclass
 class MDTFObjectBase(metaclass=util.MDTFABCMeta):
@@ -63,7 +65,7 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
     @property
     def _log_name(self):
         if self._parent is None:
-            return util.OBJ_LOG_ROOT # framework: root of tree
+            return util.OBJ_LOG_ROOT  # framework: root of tree
         else:
             _log_name = f"{self.name}_{self._id}".replace('.', '_')
             return f"{self._parent._log_name}.{_log_name}"
@@ -77,11 +79,11 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
 
     @property
     def failed(self):
-        return self.status == ObjectStatus.FAILED # abbreviate
+        return self.status == ObjectStatus.FAILED  # abbreviate
 
     @property
     def active(self):
-        return self.status == ObjectStatus.ACTIVE # abbreviate
+        return self.status == ObjectStatus.ACTIVE  # abbreviate
 
     @property
     @abc.abstractmethod
@@ -122,7 +124,7 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
 
         # if all children have failed, deactivate self
         if not self.failed and \
-            next(self.iter_children(status_neq=ObjectStatus.FAILED), None) is None:
+                next(self.iter_children(status_neq=ObjectStatus.FAILED), None) is None:
             self.deactivate(util.ChildFailureEvent(self), level=None)
 
     # level at which to log deactivation events
@@ -135,7 +137,7 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
         if not (self.failed or self.status == ObjectStatus.SUCCEEDED):
             # only need to log and update on status change for still-active objs
             if level is None:
-                level = self._deactivation_log_level # default level for child class
+                level = self._deactivation_log_level  # default level for child class
             self.log.log(level, "Deactivated %s due to %r.", self.full_name, exc)
 
             # update status on self
@@ -148,6 +150,7 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
             for obj in self.iter_children(status_neq=ObjectStatus.FAILED):
                 obj.deactivate(util.PropagatedEvent(exc=exc, parent=self), level=None)
 
+
 # -----------------------------------------------------------------------------
 
 ConfigTuple = collections.namedtuple(
@@ -157,9 +160,10 @@ ConfigTuple.__doc__ = """
     Class wrapping general structs used for configuration.
 """
 
+
 class ConfigManager(util.Singleton, util.NameSpace):
     def __init__(self, cli_obj=None, pod_info_tuple=None, global_env_vars=None,
-        case_d=None, log_config=None, unittest=False):
+                 case_d=None, log_config=None, unittest=False):
         self._unittest = unittest
         self._configs = dict()
         if self._unittest:
@@ -185,7 +189,7 @@ class ConfigManager(util.Singleton, util.NameSpace):
         backup config file.
         """
         d = copy.deepcopy(cli_obj.config)
-        d = {k:v for k,v in d.items() if not k.endswith('_is_default_')}
+        d = {k: v for k, v in d.items() if not k.endswith('_is_default_')}
         d['case_list'] = copy.deepcopy(case_d)
         return ConfigTuple(
             name='backup_config',
@@ -193,16 +197,18 @@ class ConfigManager(util.Singleton, util.NameSpace):
             contents=d
         )
 
+
 class PathManager(util.Singleton, util.NameSpace):
     """:class:`~util.Singleton` holding the root directories for all paths used
     by the code.
     """
+
     def __init__(self, cli_obj=None, env_vars=None, unittest=False):
         self._unittest = unittest
         if self._unittest:
             for path in ['CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT',
-                'WORKING_DIR', 'OUTPUT_DIR']:
-                setattr(self, path, 'TEST_'+path)
+                         'WORKING_DIR', 'OUTPUT_DIR']:
+                setattr(self, path, 'TEST_' + path)
             self.TEMP_DIR_ROOT = self.WORKING_DIR
         else:
             # normal code path
@@ -225,7 +231,7 @@ class PathManager(util.Singleton, util.NameSpace):
             # set as attribute any CLI setting that has "action": "PathAction"
             # in its definition in the .jsonc file
             cli_paths = [act.dest for act in cli_obj.iter_actions() \
-                if isinstance(act, cli.PathAction)]
+                         if isinstance(act, cli.PathAction)]
             if not cli_paths:
                 _log.warning("Didn't get list of paths from CLI.")
             for key in cli_paths:
@@ -242,8 +248,8 @@ class PathManager(util.Singleton, util.NameSpace):
                     self.TEMP_DIR_ROOT = self.WORKING_DIR
 
     def _init_path(self, key, d, env=None):
-        if self._unittest: # use in unit testing only
-            return 'TEST_'+key
+        if self._unittest:  # use in unit testing only
+            return 'TEST_' + key
         else:
             # need to check existence in case we're being called directly
             if not d.get(key, False):
@@ -254,7 +260,8 @@ class PathManager(util.Singleton, util.NameSpace):
                 log=_log
             )
 
-    def model_paths(self, case, overwrite=False):
+    # TODO: rework to place case_wk_dir in root dir = CASENAME for each multirun case
+    def model_paths(self, case, overwrite=False, multirun=False):
         d = util.NameSpace()
         if isinstance(case, dict):
             name = case['CASENAME']
@@ -306,12 +313,12 @@ class TempDirManager(util.Singleton):
         if hash_obj is None:
             new_dir = tempfile.mkdtemp(prefix=self._prefix, dir=self._root)
         elif isinstance(hash_obj, str):
-            new_dir = os.path.join(self._root, self._prefix+hash_obj)
+            new_dir = os.path.join(self._root, self._prefix + hash_obj)
         else:
             # nicer-looking hash representation
             hash_ = hex(hash(hash_obj))[2:]
             assert isinstance(hash_, str)
-            new_dir = os.path.join(self._root, self._prefix+hash_)
+            new_dir = os.path.join(self._root, self._prefix + hash_)
         if not os.path.isdir(new_dir):
             os.makedirs(new_dir)
         assert new_dir not in self._dirs
@@ -335,9 +342,11 @@ class TempDirManager(util.Singleton):
         util.signal_logger(self.__class__.__name__, signum, frame, log=_log)
         self.cleanup()
 
+
 # --------------------------------------------------------------------
 
-_NO_TRANSLATION_CONVENTION = 'None' # naming convention for disabling translation
+_NO_TRANSLATION_CONVENTION = 'None'  # naming convention for disabling translation
+
 
 @util.mdtf_dataclass
 class TranslatedVarlistEntry(data_model.DMVariable):
@@ -359,7 +368,8 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     # modifier : str
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
-    log: typing.Any = util.MANDATORY # assigned from parent var
+    log: typing.Any = util.MANDATORY  # assigned from parent var
+
 
 @util.mdtf_dataclass
 class FieldlistEntry(data_model.DMDependentVariable):
@@ -393,6 +403,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         'PLACEHOLDER_T_COORD': data_model.DMPlaceholderTCoordinate,
         'PLACEHOLDER_COORD': data_model.DMPlaceholderCoordinate
     }
+
     @classmethod
     def from_struct(cls, dims_d, name, **kwargs):
         # if we only have ndim, map to axes names
@@ -409,14 +420,14 @@ class FieldlistEntry(data_model.DMDependentVariable):
                 kwargs['coords'].append(coord_cls())
             elif d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in fieldlist "
-                    f"entry for {name}."))
+                                  f"entry for {name}."))
             else:
                 kwargs['coords'].append(dims_d[d_name])
 
         for d_name in kwargs.get('scalar_coord_templates', dict()):
             if d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in scalar "
-                    f"coord definition for fieldlist entry for {name}."))
+                                  f"coord definition for fieldlist entry for {name}."))
 
         filter_kw = util.filter_dataclass(kwargs, cls, init=True)
         assert filter_kw['coords']
@@ -427,25 +438,26 @@ class FieldlistEntry(data_model.DMDependentVariable):
         variable name for this variable on a scalar coordinate slice (eg.
         pressure level).
         """
-        c = old_coord # abbreviate
+        c = old_coord  # abbreviate
         assert c.is_scalar
         key = new_coord.name
         if key not in self.scalar_coord_templates:
             raise ValueError((f"Don't know how to name {c.name} ({c.axis}) slice "
-                f"of {self.name}."
-            ))
+                              f"of {self.name}."
+                              ))
         # construct convention's name for this variable on a level
         name_template = self.scalar_coord_templates[key]
         new_name = name_template.format(value=int(new_coord.value))
         if units.units_equal(c.units, new_coord.units):
             log.debug("Renaming %s %s %s slice of '%s' to '%s'.",
-                c.value, c.units, c.axis, self.name, new_name)
+                      c.value, c.units, c.axis, self.name, new_name)
         else:
             log.debug(("Renaming %s slice of '%s' to '%s' (@ %s %s = %s %s)."),
-                c.axis, self.name, new_name, c.value, c.units,
-                new_coord.value, new_coord.units
-            )
+                      c.axis, self.name, new_name, c.value, c.units,
+                      new_coord.value, new_coord.units
+                      )
         return new_name
+
 
 @util.mdtf_dataclass
 class Fieldlist():
@@ -468,7 +480,7 @@ class Fieldlist():
         def _process_coord(section_name, d, temp_d):
             # build two-stage lookup table (by axis type, then standard name)
             section_d = d.pop(section_name, dict())
-            for k,v in section_d.items():
+            for k, v in section_d.items():
                 ax = v['axis']
                 entry = data_model.coordinate_from_struct(v, name=k)
                 d['axes'][k] = entry
@@ -479,7 +491,7 @@ class Fieldlist():
             # build two-stage lookup table (by standard name, then data
             # dimensionality)
             section_d = d.pop(section_name, dict())
-            for k,v in section_d.items():
+            for k, v in section_d.items():
                 entry = FieldlistEntry.from_struct(d['axes'], name=k, **v)
                 d['entries'][k] = entry
                 temp_d[entry.standard_name][entry.modifier] = entry
@@ -528,7 +540,7 @@ class Fieldlist():
 
         if standard_name not in self.lut:
             raise KeyError((f"Standard name '{standard_name}' not defined in "
-                  f"convention '{self.name}'."))
+                            f"convention '{self.name}'."))
         lut1 = self.lut[standard_name]  # abbreviate
         fl_entry = None
         empty_mod_count = 0  # counter for modifier attributes that are blank strings in the fieldlist lookup table
@@ -541,14 +553,14 @@ class Fieldlist():
                         empty_mod_count += 1
                 if fl_entry is None or empty_mod_count > 1:
                     raise ValueError((f"Variable name in convention '{self.name}' "
-                        f"not uniquely determined by standard name '{standard_name}'."))
+                                      f"not uniquely determined by standard name '{standard_name}'."))
             else:
                 fl_entry = entries[0]
         else:
             if modifier not in lut1:
                 raise KeyError((f"Queried standard name '{standard_name}' with an "
-                    f"unexpected modifier {modifier} not in convention "
-                    f"'{self.name}'."))
+                                f"unexpected modifier {modifier} not in convention "
+                                f"'{self.name}'."))
             fl_entry = lut1[modifier]
 
         return copy.deepcopy(fl_entry)
@@ -567,26 +579,26 @@ class Fieldlist():
         if ax not in self.axes_lut:
             raise KeyError(f"Axis {ax} not defined in convention '{self.name}'.")
 
-        lut1 = self.axes_lut[ax] # abbreviate
+        lut1 = self.axes_lut[ax]  # abbreviate
         if not hasattr(coord, 'standard_name'):
             coords = tuple(lut1.values())
             if len(coords) > 1:
                 raise ValueError((f"Coordinate dimension in convention '{self.name}' "
-                    f"not uniquely determined by coordinate {coord.name}."))
+                                  f"not uniquely determined by coordinate {coord.name}."))
             new_coord = coords[0]
         else:
             if coord.standard_name not in lut1:
                 raise KeyError((f"Coordinate {coord.name} with standard name "
-                    f"'{coord.standard_name}' not defined in convention '{self.name}'."))
+                                f"'{coord.standard_name}' not defined in convention '{self.name}'."))
             new_coord = lut1[coord.standard_name]
 
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             new_coord = copy.deepcopy(new_coord)
             new_coord.value = units.convert_scalar_coord(coord, new_coord.units,
-                log=log)
+                                                         log=log)
         else:
             new_coord = dc.replace(coord,
-                **(util.filter_dataclass(new_coord, coord)))
+                                   **(util.filter_dataclass(new_coord, coord)))
         return new_coord
 
     def translate(self, var):
@@ -600,7 +612,7 @@ class Fieldlist():
         if var.use_exact_name:
             # HACK; dataclass.asdict says VarlistEntry has no _id attribute & not sure why
             fl_entry = {f.name: getattr(var, f.name, util.NOTSET) \
-                for f in dc.fields(TranslatedVarlistEntry) if hasattr(var, f.name)}
+                        for f in dc.fields(TranslatedVarlistEntry) if hasattr(var, f.name)}
             new_name = var.name
         else:
             fl_entry = self.from_CF(var.standard_name, var.modifier, var.dims.__len__())
@@ -624,11 +636,13 @@ class Fieldlist():
             convention=self.name, log=var.log
         )
 
+
 class NoTranslationFieldlist(util.Singleton):
     """Class which partially implements the :class:`Fieldlist` interface but
     does no variable translation. :class:`~diagnostic.VarlistEntry` objects from
     the POD are passed through to create :class:`TranslatedVarlistEntry` objects.
     """
+
     def __init__(self):
         # only a Singleton to ensure that we only log this message once
         _log.info('Variable name translation disabled.')
@@ -674,7 +688,7 @@ class NoTranslationFieldlist(util.Singleton):
             units=var.units,
             convention=_NO_TRANSLATION_CONVENTION,
             coords=coords_copy,
-            modifier = var.modifier,
+            modifier=var.modifier,
             log=var.log
         )
 
@@ -684,6 +698,7 @@ class VariableTranslator(util.Singleton):
     naming conventions. These are defined in the ``data/fieldlist_*.jsonc``
     files.
     """
+
     def __init__(self, code_root=None, unittest=False):
         self._unittest = unittest
         self.conventions = util.WormDict()
@@ -714,7 +729,7 @@ class VariableTranslator(util.Singleton):
                 self.add_convention(d)
             except Exception as exc:
                 _log.exception("Caught exception loading fieldlist file %s: %r",
-                    f, exc)
+                               f, exc)
                 continue
 
     def get_convention_name(self, conv_name):
@@ -722,14 +737,14 @@ class VariableTranslator(util.Singleton):
         :class:`Fieldlist` object from among a set of possible aliases.
         """
         if conv_name in self.conventions \
-            or conv_name == _NO_TRANSLATION_CONVENTION:
+                or conv_name == _NO_TRANSLATION_CONVENTION:
             return conv_name
         if conv_name in self.aliases:
             _log.debug("Using convention '%s' based on alias '%s'.",
-                self.aliases[conv_name], conv_name)
+                       self.aliases[conv_name], conv_name)
             return self.aliases[conv_name]
         _log.error("Unrecognized variable name convention '%s'.",
-            conv_name)
+                   conv_name)
         raise KeyError(conv_name)
 
     def get_convention(self, conv_name):
@@ -760,17 +775,18 @@ class VariableTranslator(util.Singleton):
 
     def from_CF(self, conv_name, standard_name, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF',
-            standard_name, modifier=modifier)
+                                      standard_name, modifier=modifier)
 
     def from_CF_name(self, conv_name, standard_name, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF_name',
-            standard_name, modifier=modifier)
+                                      standard_name, modifier=modifier)
 
     def translate_coord(self, conv_name, coord, log=_log):
         return self._fieldlist_method(conv_name, 'translate_coord', coord, log=log)
 
     def translate(self, conv_name, var):
         return self._fieldlist_method(conv_name, 'translate', var)
+
 
 # ---------------------------------------------------------------------------
 
@@ -785,6 +801,7 @@ class MDTFFramework(MDTFObjectBase):
         self.pod_list = []
         self.cases = dict()
         self.global_env_vars = dict()
+        self.multirun = False
         try:
             # load pod data
             pod_info_tuple = mdtf_info.load_pod_settings(self.code_root)
@@ -816,7 +833,7 @@ class MDTFFramework(MDTFObjectBase):
         self.parse_mdtf_args(cli_obj, pod_info_tuple)
         # init singletons
         config = ConfigManager(cli_obj, pod_info_tuple,
-            self.global_env_vars, self.cases, log_config)
+                               self.global_env_vars, self.cases, log_config)
         paths = PathManager(cli_obj)
         self.verify_paths(config, paths)
         _ = TempDirManager(paths.TEMP_DIR_ROOT, self.global_env_vars)
@@ -848,7 +865,7 @@ class MDTFFramework(MDTFObjectBase):
         for arg in cli_obj.iter_group_actions(subcommand=None, group=group_nm):
             key = arg.dest
             val = cli_obj.config.get(key, None)
-            if val: # assign nonempty items only
+            if val:  # assign nonempty items only
                 target_d[key] = val
         return target_d
 
@@ -870,27 +887,27 @@ class MDTFFramework(MDTFObjectBase):
 
         if cli_obj.config.get('disable_preprocessor', False):
             _log.warning(("User disabled metadata checks and unit conversion in "
-                "preprocessor."), tags=util.ObjectLogTag.BANNER)
+                          "preprocessor."), tags=util.ObjectLogTag.BANNER)
         if cli_obj.config.get('overwrite_file_metadata', False):
             _log.warning(("User chose to overwrite input file metadata with "
-                "framework values (convention = '%s')."),
-                cli_obj.config.get('convention', ''),
-                tags=util.ObjectLogTag.BANNER
-            )
+                          "framework values (convention = '%s')."),
+                         cli_obj.config.get('convention', ''),
+                         tags=util.ObjectLogTag.BANNER
+                         )
         # check this here, otherwise error raised about missing caselist is not informative
         try:
             if cli_obj.config.get('CASE_ROOT_DIR', ''):
                 util.check_dir(cli_obj.config['CASE_ROOT_DIR'], 'CASE_ROOT_DIR',
-                    create=False)
+                               create=False)
         except Exception as exc:
             _log.fatal((f"Mis-specified input for CASE_ROOT_DIR (received "
-                f"'{cli_obj.config.get('CASE_ROOT_DIR', '')}', caught {repr(exc)}.)"))
+                        f"'{cli_obj.config.get('CASE_ROOT_DIR', '')}', caught {repr(exc)}.)"))
             util.exit_handler(code=1)
 
     def parse_env_vars(self, cli_obj):
         # don't think PODs use global env vars?
         # self.env_vars = self._populate_from_cli(cli_obj, 'PATHS', self.env_vars)
-        self.global_env_vars['RGB'] = os.path.join(self.code_root,'shared','rgb')
+        self.global_env_vars['RGB'] = os.path.join(self.code_root, 'shared', 'rgb')
         # globally enforce non-interactive matplotlib backend
         # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
         self.global_env_vars['MPLBACKEND'] = "Agg"
@@ -921,21 +938,21 @@ class MDTFFramework(MDTFObjectBase):
 
         if bad_args:
             valid_args = ['all', 'examples'] \
-                + pod_info_tuple.sorted_realms \
-                + pod_info_tuple.sorted_pods
+                         + pod_info_tuple.sorted_realms \
+                         + pod_info_tuple.sorted_pods
             _log.critical(("The following POD identifiers were not recognized: "
-                "[%s].\nRecognized identifiers are: [%s].\n(Received --pods = %s)."),
-                ', '.join(f"'{p}'" for p in bad_args),
-                ', '.join(f"'{p}'" for p in valid_args),
-                str(list(args))
-            )
+                           "[%s].\nRecognized identifiers are: [%s].\n(Received --pods = %s)."),
+                          ', '.join(f"'{p}'" for p in bad_args),
+                          ', '.join(f"'{p}'" for p in valid_args),
+                          str(list(args))
+                          )
             util.exit_handler(code=1)
 
         pods = list(set(pods))  # delete duplicates
         if not pods:
             _log.critical(("ERROR: no PODs selected to be run. Do `./mdtf info pods`"
-                " for a list of available PODs, and check your -p/--pods argument."
-                f"\nReceived --pods = {str(list(args))}"))
+                           " for a list of available PODs, and check your -p/--pods argument."
+                           f"\nReceived --pods = {str(list(args))}"))
             util.exit_handler(code=1)
         return pods
 
@@ -957,7 +974,7 @@ class MDTFFramework(MDTFObjectBase):
 
         if not ('CASENAME' in d or ('model' in d and 'experiment' in d)):
             _log.warning(("Need to specify either CASENAME or model/experiment "
-                "in caselist entry #%d, skipping."), n+1)
+                          "in caselist entry #%d, skipping."), n + 1)
             return None
         _ = d.setdefault('model', d.get('convention', ''))
         _ = d.setdefault('experiment', '')
@@ -966,7 +983,7 @@ class MDTFFramework(MDTFObjectBase):
         for field in ['FIRSTYR', 'LASTYR', 'convention']:
             if not d.get(field, None):
                 _log.warning(("No value set for %s in caselist entry #%d, "
-                    "skipping."), field, n+1)
+                              "skipping."), field, n + 1)
                 return None
         # if pods set from CLI, overwrite pods in case list
         d['pod_list'] = self.set_case_pod_list(d, cli_obj, pod_info_tuple)
@@ -990,8 +1007,8 @@ class MDTFFramework(MDTFObjectBase):
                 self.cases[case['CASENAME']] = case
         if not self.cases:
             _log.critical(("No valid entries in case_list. Please specify "
-                "model run information.\nReceived:"
-                f"\n{util.pretty_print_json(case_list_in)}"))
+                           "model run information.\nReceived:"
+                           f"\n{util.pretty_print_json(case_list_in)}"))
             util.exit_handler(code=1)
 
     def verify_paths(self, config, p):
@@ -1000,18 +1017,18 @@ class MDTFFramework(MDTFObjectBase):
         keep_temp = config.get('keep_temp', False)
         # clean out WORKING_DIR if we're not keeping temp files:
         if os.path.exists(p.WORKING_DIR) and not \
-            (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
+                (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
             shutil.rmtree(p.WORKING_DIR)
 
         try:
             for dir_name, create_ in (
-                ('CODE_ROOT', False), ('OBS_DATA_ROOT', False),
-                ('MODEL_DATA_ROOT', True), ('WORKING_DIR', True)
+                    ('CODE_ROOT', False), ('OBS_DATA_ROOT', False),
+                    ('MODEL_DATA_ROOT', True), ('WORKING_DIR', True)
             ):
                 util.check_dir(p, dir_name, create=create_)
         except Exception as exc:
             _log.fatal((f"Input settings for {dir_name} mis-specified (caught "
-                f"{repr(exc)}.)"))
+                        f"{repr(exc)}.)"))
             util.exit_handler(code=1)
 
     def _post_parse_hook(self, cli_obj, config, paths):
@@ -1032,13 +1049,13 @@ class MDTFFramework(MDTFObjectBase):
         d['paths'].pop('_unittest', None)
         d['settings'] = dict()
         all_groups = set(arg_gp.title for arg_gp in \
-            cli_obj.iter_arg_groups(subcommand=None))
+                         cli_obj.iter_arg_groups(subcommand=None))
         settings_gps = all_groups.difference(
-            ('parser','PATHS','MODEL','DIAGNOSTICS'))
+            ('parser', 'PATHS', 'MODEL', 'DIAGNOSTICS'))
         for group in settings_gps:
             d['settings'] = self._populate_from_cli(cli_obj, group, d['settings'])
-        d['settings'] = {k:v for k,v in d['settings'].items() \
-            if k not in d['paths']}
+        d['settings'] = {k: v for k, v in d['settings'].items() \
+                         if k not in d['paths']}
         d['env_vars'] = config.global_env_vars
         _log.info('PACKAGE SETTINGS:')
         _log.info(util.pretty_print_json(d))
@@ -1050,6 +1067,7 @@ class MDTFFramework(MDTFObjectBase):
         """Overall success/failure of this run of the framework. Return True if
         any case or any POD has failed, else return False.
         """
+
         def _failed(obj):
             # need this workaround in case we failed early in init
             return (not hasattr(obj, 'failed')) or obj.failed
@@ -1066,44 +1084,51 @@ class MDTFFramework(MDTFObjectBase):
 
     def main(self):
         self.cases = dict(list(self.cases.items()))
+        new_d = dict()
         if len(self.cases) > 1:
+            self.multirun = True
             _log.info("###: Using multi-run mode.")
         else:
             _log.info("###: Using single-run mode.")
-        new_d = dict()
+        count = 0
         for case_name, case_d in self.cases.items():
+            count += 1
             _log.info("### %s: initializing case '%s'.", self.full_name, case_name)
             case = self.DataSource(case_d, parent=self)
             case.setup()
             new_d[case_name] = case
-        self.cases = new_d
-        util.transfer_log_cache(close=True)
-
-        for case_name, case in self.cases.items():
             if not case.failed:
-                _log.info("### %s: requesting data for case '%s'.",
-                    self.full_name, case_name)
+                _log.info("### %s: requesting data for case '%s'.", self.full_name, case_name)
                 case.request_data()
             else:
                 _log.info(("### %s: initialization for case '%s' failed; skipping "
-                    f"data request."), self.full_name, case_name)
+                           f"data request."), self.full_name, case_name)
+        self.cases = new_d
+        util.transfer_log_cache(close=True)
 
-            if not case.failed:
-                _log.info("### %s: running case '%s'.", self.full_name, case_name)
-                run_mgr = self.RuntimeManager(case, self.EnvironmentManager)
-                run_mgr.setup()
-                run_mgr.run()
-            else:
-                _log.info(("### %s: Data request for case '%s' failed; skipping "
-                    "execution."), self.full_name, case_name)
+        for pod in self.pod_list:
+            _log.info("### %s: running POD'%s'.", self.full_name, pod)
+            # TODO reformat RuntimeManager to accept pod instead of case
+            run_mgr = self.RuntimeManager(case, self.EnvironmentManager)
+            run_mgr.setup()
+            # run_mgr.run()
+        else:
+            _log.info(("### %s: Data request for case '%s' failed; skipping "
+                       "execution."), self.full_name, case_name)
 
-            out_mgr = self.OutputManager(case)
-            out_mgr.make_output()
+            # out_mgr = self.OutputManager(case)
+            # out_mgr.make_output()
+        # run POD just once. This run_mgr and output_mgr instances correspond to the last case/ensemble member
+        # in the case_list
+        run_mgr.run()
+        out_mgr = self.OutputManager(case)
+        out_mgr.make_output()
 
         tempdirs = TempDirManager()
         tempdirs.cleanup()
         print_summary(self)
-        return (1 if self.failed else 0) # exit code
+        return (1 if self.failed else 0)  # exit code
+
 
 # --------------------------------------------------------------------
 
@@ -1135,10 +1160,10 @@ def print_summary(fmwk):
             else:
                 if tup[1]:
                     _log.info((f"\tThe following PODs exited normally: "
-                        f"{', '.join(tup[1])}"))
+                               f"{', '.join(tup[1])}"))
                 if tup[0]:
                     _log.info((f"\tThe following PODs raised errors: "
-                        f"{', '.join(tup[0])}"))
+                               f"{', '.join(tup[0])}"))
             _log.info(f"\tOutput written to {tup[2]}")
     else:
         _log.info(f"Exiting normally.")

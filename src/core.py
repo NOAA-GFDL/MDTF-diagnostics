@@ -1090,31 +1090,29 @@ class MDTFFramework(MDTFObjectBase):
             _log.info("###: Using multi-run mode.")
         else:
             _log.info("###: Using single-run mode.")
-        count = 0
-        for case_name, case_d in self.cases.items():
-            count += 1
-            _log.info("### %s: initializing case '%s'.", self.full_name, case_name)
-            case = self.DataSource(case_d, parent=self)
-            case.setup()
-            new_d[case_name] = case
-            if not case.failed:
+        for pod_name in self.pod_list:
+            _log.info("### %s: initializing POD '%s'.", self.full_name, pod_name)
+            pod = self.DataSource(self.cases, pod_name, parent=self)
+            pod.setup()
+            new_d[pod_name] = pod
+            if not pod.failed:
                 _log.info("### %s: requesting data for case '%s'.", self.full_name, case_name)
-                case.request_data()
+                pod.request_data()
             else:
                 _log.info(("### %s: initialization for case '%s' failed; skipping "
                            f"data request."), self.full_name, case_name)
-        self.cases = new_d
+        self.pods = new_d
         util.transfer_log_cache(close=True)
 
         for pod in self.pod_list:
             _log.info("### %s: running POD'%s'.", self.full_name, pod)
             # TODO reformat RuntimeManager to accept pod instead of case
-            run_mgr = self.RuntimeManager(case, self.EnvironmentManager)
+            run_mgr = self.RuntimeManager(case, pod, self.EnvironmentManager)
             run_mgr.setup()
             # run_mgr.run()
-        else:
-            _log.info(("### %s: Data request for case '%s' failed; skipping "
-                       "execution."), self.full_name, case_name)
+       # else:
+       #     _log.info(("### %s: Data request for case '%s' failed; skipping "
+       #                "execution."), self.full_name, case_name)
 
             # out_mgr = self.OutputManager(case)
             # out_mgr.make_output()

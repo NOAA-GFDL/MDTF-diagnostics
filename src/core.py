@@ -288,8 +288,10 @@ class PathManager(util.Singleton, util.NameSpace):
         d = util.NameSpace()
         d.POD_CODE_DIR = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
         d.POD_OBS_DATA = os.path.join(self.OBS_DATA_ROOT, pod.name)
-        d.POD_WK_DIR = os.path.join(case.MODEL_WK_DIR, pod.name)
-        d.POD_OUT_DIR = os.path.join(case.MODEL_OUT_DIR, pod.name)
+        #d.POD_WK_DIR = os.path.join(case.MODEL_WK_DIR, pod.name)
+        #d.POD_OUT_DIR = os.path.join(case.MODEL_OUT_DIR, pod.name)
+        d.POD_WK_DIR = os.path.join(self.WORKING_DIR, pod.name)
+        d.POD_OUT_DIR = os.path.join(self.OUTPUT_DIR, pod.name)
         return d
 
 

@@ -633,7 +633,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             self.log_file = None
 
     # -------------------------------------
-
+    # TODO: stick case_list in here somewhere probably
     def setup(self, data_source):
         """Configuration set by the DataSource on the POD (after the POD is
         initialized, but before pre-run checks.)

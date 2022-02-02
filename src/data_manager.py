@@ -242,8 +242,8 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         self.MODEL_OUT_DIR = dict()
         self.env_vars = dict()
         self.attrs = dict()
-        self.pods = pod_name
         self.convention = ""
+        self.pods = dict.fromkeys([pod_name])
         for case_name, case_d in case_dict.items():
             d = paths.model_paths(case_d, overwrite=self.overwrite)
             self.MODEL_DATA_DIR[case_name] = d.MODEL_DATA_DIR
@@ -257,7 +257,6 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                 case_d, self._AttributesClass, log=self.log, init=True
             )
             self.strict = config.get('strict', False)
-
         #self.pods = dict.fromkeys(case_dict.get('pod_list', []))
 
             # set variable name convention
@@ -282,7 +281,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                 config.global_env_vars.copy()
             )
             self.env_vars[case_name].update({
-                k: case_dict[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
+                k: case_d[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
             })
             # add naming-convention-specific env vars
             convention_obj = translate.get_convention(self.convention)
@@ -379,6 +378,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         for v in pod.iter_children():
             try:
                 self.setup_var(pod, v)
+                #TODO find a way to attach date_range specs from all cases to POD atts
             except Exception as exc:
                 chained_exc = util.chain_exc(exc, f"configuring {v.full_name}.",
                                              util.PodConfigError)

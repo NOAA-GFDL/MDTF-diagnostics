@@ -406,19 +406,21 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         dependency inversion.
         """
         translate = core.VariableTranslator().get_convention(self.convention)
-        if v.T is not None:
-            v.change_coord(
-                'T',
-                new_class={
-                    'self': diagnostic.VarlistTimeCoordinate,
-                    'range': util.DateRange,
-                    'frequency': util.DateFrequency
-                },
-                range=self.attrs.date_range,
-                calendar=util.NOTSET,
-                units=util.NOTSET
-            )
-        v.dest_path = self.variable_dest_path(pod, v)
+        for case_name, case_d in self.attrs.items():
+            if v.T is not None:
+                v.change_coord(
+                    'T',
+                    new_class={
+                        'self': diagnostic.VarlistTimeCoordinate,
+                        'range': util.DateRange,
+                        'frequency': util.DateFrequency
+                    },
+                    range=case_d.date_range,
+                    calendar=util.NOTSET,
+                    units=util.NOTSET
+                )
+
+        #v.dest_path = self.variable_dest_path(pod, v)
         try:
             trans_v = translate.translate(v)
             v.translation = trans_v
@@ -437,18 +439,24 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             v.log.store_exception(chained_exc)
         v.stage = diagnostic.VarlistEntryStage.INITED
 
-    def variable_dest_path(self, pod, var):
+    def variable_dest_path(self, pod, var, case_name=""):
         """Returns the absolute path of the POD's preprocessed, local copy of
         the file containing the requested dataset. Files not following this
         convention won't be found by the POD.
         """
         if var.is_static:
             f_name = f"{self.name}.{var.name}.static.nc"
-            return os.path.join(pod.POD_WK_DIR, f_name)
+            if case_name:
+                return os.path.join(pod.POD_WK_DIR, case_name, f_name)
+            else:
+                return os.path.join(pod.POD_WK_DIR, f_name)
         else:
             freq = var.T.frequency.format_local()
             f_name = f"{self.name}.{var.name}.{freq}.nc"
-            return os.path.join(pod.POD_WK_DIR, freq, f_name)
+            if case_name:
+                return os.path.join(pod.POD_WK_DIR, case_name, freq, f_name)
+            else:
+                return os.path.join(pod.POD_WK_DIR, freq, f_name)
 
     # DATA QUERY/FETCH/PREPROCESS -------------------------------------
 

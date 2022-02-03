@@ -146,7 +146,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         env_var: Name of env var which is set to the variable's name in the
             provided dataset.
         path_variable: Name of env var containing path to local data.
-        dest_path: Path to local data.
+        dest_path: List of paths to local data for each case.
         alternates: List of lists of VarlistEntries.
         translation: :class:`core.TranslatedVarlistEntry`, populated by DataSource.
         data: dict mapping experiment_keys to DataKeys. Populated by DataSource.
@@ -164,7 +164,8 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
     use_exact_name: bool = False
     env_var: str = dc.field(default="", compare=False)
     path_variable: str = dc.field(default="", compare=False)
-    dest_path: str = ""
+    # dest_path: str = ""
+    dest_path: type(dict) = dict()
     requirement: VarlistEntryRequirement = dc.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False
     )

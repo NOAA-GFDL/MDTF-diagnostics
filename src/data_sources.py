@@ -341,13 +341,14 @@ class ExplicitFileDataSource(
     expt_key_cols = tuple()
     expt_cols = expt_key_cols
 
-    def __init__(self, case_dict, parent):
+    def __init__(self, case_dict, pod_name, parent):
         self.catalog = None
         self._config = collections.defaultdict(dict)
         self.config_by_id = dict()
         self._has_user_metadata = None
+        self.pods = dict.fromkeys([pod_name])
 
-        super(ExplicitFileDataSource, self).__init__(case_dict, parent)
+        super(ExplicitFileDataSource, self).__init__(case_dict, pod_name, parent)
 
         # Read config file; parse contents into ExplicitFileDataSourceConfigEntry
         # objects and store in self.config_by_id

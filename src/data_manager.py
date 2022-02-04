@@ -242,6 +242,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         self.MODEL_OUT_DIR = dict()
         self.env_vars = dict()
         self.attrs = dict()
+        self.cases = dict()
         self.convention = ""
         self.pods = dict.fromkeys([pod_name])
         for case_name, case_d in case_dict.items():
@@ -256,6 +257,8 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             self.attrs[case_name] = util.coerce_to_dataclass(
                 case_d, self._AttributesClass, log=self.log, init=True
             )
+            self.cases[case_name] = dict.fromkeys(['name', 'varlist'])
+            self.cases[case_name]['name'] = case_name
             self.strict = config.get('strict', False)
         #self.pods = dict.fromkeys(case_dict.get('pod_list', []))
 
@@ -346,7 +349,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
     def setup(self):
         for pod_name in self.pods:
             self.pods[pod_name] = \
-                self._DiagnosticClass.from_config(pod_name, parent=self)
+                self._DiagnosticClass.from_config(pod_name, parent=self) #TODO--make from_config populate self.caselist with a varlist for each case
         for pod in self.iter_children():
             try:
                 self.setup_pod(pod)
@@ -420,7 +423,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                     units=util.NOTSET
                 )
 
-        #v.dest_path = self.variable_dest_path(pod, v)
+            v.dest_path = self.variable_dest_path(pod, v)
         try:
             trans_v = translate.translate(v)
             v.translation = trans_v

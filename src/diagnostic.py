@@ -1,6 +1,7 @@
 """Classes representing configuration and status of individual diagnostic scripts
 (PODs) and variables required by the scripts.
 """
+import copy
 import os
 import dataclasses as dc
 import io
@@ -146,7 +147,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         env_var: Name of env var which is set to the variable's name in the
             provided dataset.
         path_variable: Name of env var containing path to local data.
-        dest_path: List of paths to local data for each case.
+        dest_path: Path to local data for a case.
         alternates: List of lists of VarlistEntries.
         translation: :class:`core.TranslatedVarlistEntry`, populated by DataSource.
         data: dict mapping experiment_keys to DataKeys. Populated by DataSource.
@@ -164,8 +165,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
     use_exact_name: bool = False
     env_var: str = dc.field(default="", compare=False)
     path_variable: str = dc.field(default="", compare=False)
-    # dest_path: str = ""
-    dest_path: type(dict) = dict()
+    dest_path: str = ""
     requirement: VarlistEntryRequirement = dc.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False
     )
@@ -531,7 +531,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
     log_file: io.IOBase = dc.field(default=None, init=False)
     nc_largefile: bool = False
-
+    case_varlist: dict = dc.field(default_factory=dict)
     varlist: Varlist = None
     preprocessor: typing.Any = dc.field(default=None, compare=False)
 
@@ -669,6 +669,10 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             else:
                 # argument to netCDF4-python/xarray/etc.
                 self.pod_env_vars['MDTF_NC_FORMAT'] = "NETCDF4_CLASSIC"
+        # attach varlist to each case
+        for case_name, case_d in data_source.cases.items():
+            self.case_varlist[case_name] = dict.fromkeys(['varlist'], Varlist)
+            self.case_varlist[case_name]['varlist'] = self.varlist
 
     def setup_pod_directories(self):
         """Check and create directories specific to this POD.

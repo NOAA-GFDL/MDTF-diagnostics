@@ -634,7 +634,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             self.log_file = None
 
     # -------------------------------------
-    # TODO: stick case_list in here somewhere probably
+    # TODO: stick case_varlist in here somewhere probably
     def setup(self, data_source):
         """Configuration set by the DataSource on the POD (after the POD is
         initialized, but before pre-run checks.)
@@ -672,7 +672,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
         # attach varlist to each case
         for case_name, case_d in data_source.cases.items():
             self.case_varlist[case_name] = dict.fromkeys(['varlist'], Varlist)
-            self.case_varlist[case_name]['varlist'] = self.varlist
+            self.case_varlist[case_name]['varlist'] = copy.copy(self.varlist)
 
     def setup_pod_directories(self):
         """Check and create directories specific to this POD.

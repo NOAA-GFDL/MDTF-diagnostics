@@ -241,7 +241,6 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         self.MODEL_WK_DIR = dict()
         self.MODEL_OUT_DIR = dict()
         self.env_vars = dict()
-        self.attrs = dict()
         self.cases = dict()
         self.convention = ""
         self.pods = dict.fromkeys([pod_name])
@@ -254,12 +253,12 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             util.check_dir(d.MODEL_OUT_DIR, create=True)
             # set up log (CaseLoggerMixin)
             self.init_log(log_dir=self.MODEL_WK_DIR[case_name])
-            self.attrs[case_name] = util.coerce_to_dataclass(
-                case_d, self._AttributesClass, log=self.log, init=True
-            )
             self.cases[case_name] = dict.fromkeys(['name', 'varlist'])
             self.cases[case_name]['name'] = case_name
             self.strict = config.get('strict', False)
+            self.attrs = util.coerce_to_dataclass(
+                case_d, self._AttributesClass, log=self.log, init=True
+            )  # this will rewrite for each case, but only need atts for verification ATM. Deal with this later.
         #self.pods = dict.fromkeys(case_dict.get('pod_list', []))
 
             # set variable name convention
@@ -267,18 +266,17 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             if not self.convention:
                 if hasattr(self, '_convention'):
                     self.convention = self._convention
-                if not hasattr(self.attrs[case_name], 'convention') and not (
-                        self.attrs[case_name].convention != self.convention):
+                if not hasattr(self.attrs, 'convention') and not (
+                        self.attrs.convention != self.convention):
                     self.log.warning(f"{self.__class__.__name__} requires convention"
                                      f"'{self.convention}'; ignoring argument "
                                      f"'{self.attrs[case_name].convention}'.")
-                elif hasattr(self.attrs[case_name], 'convention'):
-                    self.convention = self.attrs[case_name].convention
+                elif hasattr(self.attrs, 'convention'):
+                    self.convention = self.attrs.convention
                 else:
                     raise util.GenericDataSourceEvent((f"'convention' not configured "
                                                        f"for {self.__class__.__name__}."))
                 self.convention = translate.get_convention_name(self.convention)
-
             # configure case-specific env vars
             self.env_vars[case_name] = util.WormDict.from_struct(
                 config.global_env_vars.copy()
@@ -289,7 +287,6 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             # add naming-convention-specific env vars
             convention_obj = translate.get_convention(self.convention)
             self.env_vars[case_name].update(getattr(convention_obj, 'env_vars', dict()))
-
     @property
     def full_name(self):
         return f"<#{self._id}:{self.name}>"
@@ -378,15 +375,17 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         dependency inversion.
         """
         pod.setup(self)
-        for v in pod.iter_children():
-            try:
-                self.setup_var(pod, v)
-                #TODO find a way to attach date_range specs from all cases to POD atts
-            except Exception as exc:
-                chained_exc = util.chain_exc(exc, f"configuring {v.full_name}.",
-                                             util.PodConfigError)
-                v.deactivate(chained_exc)
-                continue
+        for case_name, case_d in pod.case_varlist.items():
+            for name, v_d in case_d.items():
+                for v in v_d.vars:
+                    try:
+                        self.setup_var(pod, v)
+                        #TODO find a way to attach date_range specs from all cases to POD atts
+                    except Exception as exc:
+                        chained_exc = util.chain_exc(exc, f"configuring {v.full_name}.",
+                                                     util.PodConfigError)
+                        v.deactivate(chained_exc)
+                        continue
         # preprocessor will edit varlist alternates, depending on enabled functions
         pod.preprocessor = self._PreprocessorClass(self, pod)
         pod.preprocessor.edit_request(self, pod)
@@ -423,7 +422,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                     units=util.NOTSET
                 )
 
-            v.dest_path = self.variable_dest_path(pod, v)
+            v.dest_path = self.variable_dest_path(pod, v, case_name=case_name)
         try:
             trans_v = translate.translate(v)
             v.translation = trans_v

@@ -253,14 +253,13 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             util.check_dir(d.MODEL_OUT_DIR, create=True)
             # set up log (CaseLoggerMixin)
             self.init_log(log_dir=self.MODEL_WK_DIR[case_name])
-            self.cases[case_name] = dict.fromkeys(['name', 'varlist'])
+            self.cases[case_name] = dict.fromkeys(['name', 'varlist', 'date_range'])
             self.cases[case_name]['name'] = case_name
+            self.cases[case_name]['date_range'] = util.DateRange(case_d['FIRSTYR'], case_d['LASTYR'])
             self.strict = config.get('strict', False)
             self.attrs = util.coerce_to_dataclass(
-                case_d, self._AttributesClass, log=self.log, init=True
+               case_d, self._AttributesClass, log=self.log, init=True
             )  # this will rewrite for each case, but only need atts for verification ATM. Deal with this later.
-        #self.pods = dict.fromkeys(case_dict.get('pod_list', []))
-
             # set variable name convention
             translate = core.VariableTranslator()
             if not self.convention:
@@ -376,10 +375,10 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         """
         pod.setup(self)
         for case_name, case_d in pod.case_varlist.items():
-            for name, v_d in case_d.items():
-                for v in v_d.vars:
+            for var_name, var_d in case_d.items():
+                for v in var_d.vars:
                     try:
-                        self.setup_var(pod, v)
+                        self.setup_var(pod, v, self.cases[case_name])
                         #TODO find a way to attach date_range specs from all cases to POD atts
                     except Exception as exc:
                         chained_exc = util.chain_exc(exc, f"configuring {v.full_name}.",
@@ -399,7 +398,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                 any(v.status == core.ObjectStatus.ACTIVE for v in pod.iter_children()):
             pod.status = core.ObjectStatus.ACTIVE
 
-    def setup_var(self, pod, v):
+    def setup_var(self, pod, v, c_dict):
         """Update VarlistEntry fields with information that only becomes
         available after DataManager and Diagnostic have been configured (ie,
         only known at runtime, not from settings.jsonc.)
@@ -408,21 +407,21 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         dependency inversion.
         """
         translate = core.VariableTranslator().get_convention(self.convention)
-        for case_name, case_d in self.attrs.items():
-            if v.T is not None:
-                v.change_coord(
-                    'T',
-                    new_class={
-                        'self': diagnostic.VarlistTimeCoordinate,
-                        'range': util.DateRange,
-                        'frequency': util.DateFrequency
-                    },
-                    range=case_d.date_range,
-                    calendar=util.NOTSET,
-                    units=util.NOTSET
-                )
+        if v.T is not None:
+            v.change_coord(
+                'T',
+                new_class={
+                    'self': diagnostic.VarlistTimeCoordinate,
+                    'range': util.DateRange,
+                    'frequency': util.DateFrequency
+                },
 
-            v.dest_path = self.variable_dest_path(pod, v, case_name=case_name)
+                range=c_dict['date_range'],
+                calendar=util.NOTSET,
+                units=util.NOTSET
+            )
+
+        v.dest_path = self.variable_dest_path(pod, v, case_name=c_dict['name'])  # result copied to pod.varlist.vars.dest_path
         try:
             trans_v = translate.translate(v)
             v.translation = trans_v

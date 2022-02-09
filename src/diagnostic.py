@@ -576,6 +576,12 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
         except Exception as exc:
             raise util.PodConfigError("Caught exception while parsing varlist",
                 pod_name) from exc
+        # attach varlist to each case--hopefully allows unique specs for each component
+        # note that case_varlist[case_name is a Varlist object rather than a sub-dictionary with a Varlist object
+        # so you only need 2 loops to access: 1 for case info, 2 for varlist contents
+        for case_name, case_d in parent.cases.items():
+            pod.case_varlist[case_name] = Varlist.from_struct(d, parent=pod)
+
         return pod
 
     @classmethod
@@ -634,7 +640,6 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             self.log_file = None
 
     # -------------------------------------
-    # TODO: stick case_varlist in here somewhere probably
     def setup(self, data_source):
         """Configuration set by the DataSource on the POD (after the POD is
         initialized, but before pre-run checks.)
@@ -669,10 +674,6 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             else:
                 # argument to netCDF4-python/xarray/etc.
                 self.pod_env_vars['MDTF_NC_FORMAT'] = "NETCDF4_CLASSIC"
-        # attach varlist to each case
-        for case_name, case_d in data_source.cases.items():
-            self.case_varlist[case_name] = dict.fromkeys(['varlist'], Varlist)
-            self.case_varlist[case_name]['varlist'] = copy.copy(self.varlist)
 
     def setup_pod_directories(self):
         """Check and create directories specific to this POD.

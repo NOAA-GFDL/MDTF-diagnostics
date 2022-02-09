@@ -258,7 +258,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             self.cases[case_name]['date_range'] = util.DateRange(case_d['FIRSTYR'], case_d['LASTYR'])
             self.strict = config.get('strict', False)
             self.attrs = util.coerce_to_dataclass(
-               case_d, self._AttributesClass, log=self.log, init=True
+                case_d, self._AttributesClass, log=self.log, init=True
             )  # this will rewrite for each case, but only need atts for verification ATM. Deal with this later.
             # set variable name convention
             translate = core.VariableTranslator()
@@ -286,6 +286,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             # add naming-convention-specific env vars
             convention_obj = translate.get_convention(self.convention)
             self.env_vars[case_name].update(getattr(convention_obj, 'env_vars', dict()))
+
     @property
     def full_name(self):
         return f"<#{self._id}:{self.name}>"
@@ -345,7 +346,8 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
     def setup(self):
         for pod_name in self.pods:
             self.pods[pod_name] = \
-                self._DiagnosticClass.from_config(pod_name, parent=self) #TODO--make from_config populate self.caselist with a varlist for each case
+                self._DiagnosticClass.from_config(pod_name,
+                                                  parent=self)  # TODO--make from_config populate self.caselist with a varlist for each case
         for pod in self.iter_children():
             try:
                 self.setup_pod(pod)
@@ -375,28 +377,27 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         """
         pod.setup(self)
         for case_name, case_d in pod.case_varlist.items():
-            for var_name, var_d in case_d.items():
-                for v in var_d.vars:
-                    try:
-                        self.setup_var(pod, v, self.cases[case_name])
-                        #TODO find a way to attach date_range specs from all cases to POD atts
-                    except Exception as exc:
-                        chained_exc = util.chain_exc(exc, f"configuring {v.full_name}.",
-                                                     util.PodConfigError)
-                        v.deactivate(chained_exc)
-                        continue
+            for v in case_d.vars:
+                try:
+                    self.setup_var(pod, v, self.cases[case_name])
+                except Exception as exc:
+                    chained_exc = util.chain_exc(exc, f"configuring {v.full_name}.",
+                                                 util.PodConfigError)
+                    v.deactivate(chained_exc)
+                    continue
         # preprocessor will edit varlist alternates, depending on enabled functions
         pod.preprocessor = self._PreprocessorClass(self, pod)
         pod.preprocessor.edit_request(self, pod)
 
-        for v in pod.iter_children():
-            # deactivate failed variables, now that alternates are fully
-            # specified
-            if v.last_exception is not None and not v.failed:
-                v.deactivate(v.last_exception, level=logging.WARNING)
-        if pod.status == core.ObjectStatus.NOTSET and \
-                any(v.status == core.ObjectStatus.ACTIVE for v in pod.iter_children()):
-            pod.status = core.ObjectStatus.ACTIVE
+        for case_name, case_d in pod.case_varlist.items():
+            for v in case_d.vars:
+                # deactivate failed variables, now that alternates are fully
+                # specified
+                if v.last_exception is not None and not v.failed:
+                    v.deactivate(v.last_exception, level=logging.WARNING)
+            if pod.status == core.ObjectStatus.NOTSET and \
+                    any(v.status == core.ObjectStatus.ACTIVE for v in pod.iter_children()):
+                        pod.status = core.ObjectStatus.ACTIVE
 
     def setup_var(self, pod, v, c_dict):
         """Update VarlistEntry fields with information that only becomes
@@ -421,7 +422,8 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                 units=util.NOTSET
             )
 
-        v.dest_path = self.variable_dest_path(pod, v, case_name=c_dict['name'])  # result copied to pod.varlist.vars.dest_path
+        v.dest_path = self.variable_dest_path(pod, v,
+                                              case_name=c_dict['name'])  # result copied to pod.varlist.vars.dest_path
         try:
             trans_v = translate.translate(v)
             v.translation = trans_v

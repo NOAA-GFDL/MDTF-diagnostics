@@ -298,13 +298,14 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         """
         return self.pods.values()
 
-    def iter_vars(self, active=None, pod_active=None):
+    def iter_vars(self, active=None, pod_active=None, case_name=None):
         """Iterator over all :class:`~diagnostic.VarlistEntry`\s (grandchildren)
         associated with this case. Returns :class:`PodVarTuple`\s (namedtuples)
         of the :class:`~diagnostic.Diagnostic` and :class:`~diagnostic.VarlistEntry`
         objects corresponding to the POD and its variable, respectively.
 
         Args:
+            case_name: str, name of case to query in pod case_varlist
             active: bool or None, default None. Selects subset of
                 :class:`~diagnostic.VarlistEntry`\s which are returned in the
                 namedtuples:
@@ -331,15 +332,22 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         pod_kwargs = _get_kwargs(pod_active)
         var_kwargs = _get_kwargs(active)
         for p in self.iter_children(**pod_kwargs):
-            for v in p.iter_children(**var_kwargs):
-                yield PodVarTuple(pod=p, var=v)
+            if case_name:
+                for v in p.case_varlist[case_came].vars:
+                    yield PodVarTuple(pod=p, var=v)
+            else:
+                for v in p.iter_children(**var_kwargs):
+                    yield PodVarTuple(pod=p, var=v)
 
-    def iter_vars_only(self, active=None):
+    def iter_vars_only(self, active=None, case_name=None):
         """Convenience wrapper for :meth:`iter_vars` that returns only the
         :class:`~diagnostic.VarlistEntry` objects (grandchildren) from all PODs
         in this DataSource.
+
+        Args:
+            case_name (str): name of case to query in case_varlist
         """
-        yield from (pv.var for pv in self.iter_vars(active=active, pod_active=None))
+        yield from (pv.var for pv in self.iter_vars(active=active, pod_active=None, case_name=case_name))
 
     # -------------------------------------
     # TODO: fix this just to work with pod list. Call after reconfigured initialization
@@ -499,6 +507,15 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
     def query_data(self):
         # really a while-loop, but limit # of iterations to be safe
         for _ in range(MAX_DATASOURCE_ITERS):
+            for pod_name, pod_dict in self.pods.items():
+                try:
+                    cv = pod_dict.case_varlist
+                except util.DataQueryEvent as exc:
+                    print("No case_varlist attribute found for pod", pod_name)
+                for case_name, case_dict in cv.items():
+                    pass
+                    #try:
+                     #   case_dict
             vars_to_query = [
                 v for v in self.iter_vars_only(active=True) \
                 if v.stage < diagnostic.VarlistEntryStage.QUERIED
@@ -655,7 +672,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         # Call cleanup method if we're killed
         signal.signal(signal.SIGTERM, self.query_and_fetch_cleanup)
         signal.signal(signal.SIGINT, self.query_and_fetch_cleanup)
-        self.pre_query_and_fetch_hook()
+        self.pre_query_and_fetch_hook()  # returns a dataframe (self.df) with arrays of all file paths in caserootdir
         try:
             self.preprocess_data()
         except Exception as exc:

@@ -428,6 +428,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
                 d[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
         return d
 
+
 class Varlist(data_model.DMDataSet):
     """Class to perform bookkeeping for the model variables requested by a
     single POD.
@@ -438,6 +439,7 @@ class Varlist(data_model.DMDataSet):
         settings.jsonc file when instantiating a new :class:`Diagnostic` object.
 
         Args:
+            parent: parent class of Varlist
             d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
 
         Returns:
@@ -504,6 +506,27 @@ class Varlist(data_model.DMDataSet):
 
 # ------------------------------------------------------------
 
+
+class CaseVarlist(Varlist):
+    """:class:`CaseVarlist` class to hold Varlist information for multiple
+    cases/
+
+    .. note::
+       Due to implementation, the catalog used by the DataSource must be static.
+       This code could readily be adapted to a dynamic catalog if its schema
+       provided a unique ID number for each row, to take the place of the row
+       index used here.
+    """
+
+    def __init__(self):
+        pass
+
+    def set_casename(self, casename, d, parent):
+        super().from_struct(d, parent)
+        for v in vlist_vars.values():
+            pass
+# ------------------------------------------------------------
+
 @util.mdtf_dataclass
 class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     """Class holding configuration for a diagnostic script. Object attributes
@@ -531,7 +554,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
     log_file: io.IOBase = dc.field(default=None, init=False)
     nc_largefile: bool = False
-    case_varlist: dict = dc.field(default_factory=dict)
+    case_varlist: CaseVarlist = None
     varlist: Varlist = None
     preprocessor: typing.Any = dc.field(default=None, compare=False)
 
@@ -584,6 +607,8 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
 
         return pod
 
+    # creates a new Diagnostic class instance for a pod with pod_name using info in the POD settings.jsonc
+    # TODO: add methods to Diagnostic to ingest addtl data from pod case_list jsonc for multirun
     @classmethod
     def from_config(cls, pod_name, parent):
         """Usual method of instantiating Diagnostic objects, from the contents

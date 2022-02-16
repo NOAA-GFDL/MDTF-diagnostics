@@ -198,6 +198,12 @@ class DataSourceAttributesBase:
         self.date_range = util.DateRange(self.FIRSTYR, self.LASTYR)
 
 
+# New tuple subclass with field names 'pod' and 'var': instantiate w/ p = PodVarTuple('pod', 'var')
+# Can index like a normal tuple: p("example", "tas")
+# unpack like a normal tuple: pod, var = p, >>> pod,var >>>> ("example", "tas")
+# and access using dot notation: p.pod, p.var >>> example, tas
+
+
 PodVarTuple = collections.namedtuple('PodVarTuple', ['pod', 'var'])
 MAX_DATASOURCE_ITERS = 5
 
@@ -305,7 +311,6 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         objects corresponding to the POD and its variable, respectively.
 
         Args:
-            case_name: str, name of case to query in pod case_varlist
             active: bool or None, default None. Selects subset of
                 :class:`~diagnostic.VarlistEntry`\s which are returned in the
                 namedtuples:
@@ -319,6 +324,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
 
             pod_active: bool or None, default None. Same as *active*, but
                 filtering the PODs that are selected.
+            case_name: str, name of case to query in pod case_varlist
         """
 
         def _get_kwargs(active_):
@@ -333,7 +339,8 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         var_kwargs = _get_kwargs(active)
         for p in self.iter_children(**pod_kwargs):
             if case_name:
-                for v in p.case_varlist[case_came].vars:
+                pp = p.case_varlist[case_name].vars
+                for v in p.case_varlist[case_name].vars:
                     yield PodVarTuple(pod=p, var=v)
             else:
                 for v in p.iter_children(**var_kwargs):
@@ -345,6 +352,16 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         in this DataSource.
 
         Args:
+            active: bool or None, default None. Selects subset of
+                :class:`~diagnostic.VarlistEntry`\s which are returned in the
+                namedtuples:
+
+                - active = True: only iterate over currently active VarlistEntries.
+                - active = False: only iterate over inactive VarlistEntries
+                    (VarlistEntries which have either failed or are currently
+                    unused alternate variables).
+                - active = None: iterate over both active and inactive
+                    VarlistEntries.
             case_name (str): name of case to query in case_varlist
         """
         yield from (pv.var for pv in self.iter_vars(active=active, pod_active=None, case_name=case_name))
@@ -356,7 +373,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             self.pods[pod_name] = \
                 self._DiagnosticClass.from_config(pod_name,
                                                   parent=self)  # TODO--make from_config populate self.caselist with a varlist for each case
-        for pod in self.iter_children():
+        for pod in self.iter_children():  # pod object is full of child objects from the _iter_children generator
             try:
                 self.setup_pod(pod)
             except Exception as exc:
@@ -405,7 +422,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                     v.deactivate(v.last_exception, level=logging.WARNING)
             if pod.status == core.ObjectStatus.NOTSET and \
                     any(v.status == core.ObjectStatus.ACTIVE for v in pod.iter_children()):
-                        pod.status = core.ObjectStatus.ACTIVE
+                pod.status = core.ObjectStatus.ACTIVE
 
     def setup_var(self, pod, v, c_dict):
         """Update VarlistEntry fields with information that only becomes
@@ -513,13 +530,12 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                 except util.DataQueryEvent as exc:
                     print("No case_varlist attribute found for pod", pod_name)
                 for case_name, case_dict in cv.items():
-                    pass
-                    #try:
-                     #   case_dict
-            vars_to_query = [
-                v for v in self.iter_vars_only(active=True) \
-                if v.stage < diagnostic.VarlistEntryStage.QUERIED
-            ]
+                    case_varlist = case_dict
+
+                    vars_to_query = [
+                        v for v in self.iter_vars_only(active=True)
+                        if v.stage < diagnostic.VarlistEntryStage.QUERIED
+                        ]
             if not vars_to_query:
                 break  # exit: queried everything or nothing active
 
@@ -738,7 +754,7 @@ class DataFrameDataKey(DataKeyBase):
         return self._parent.df[self._parent.remote_data_col].loc[idxs]
 
 
-class DataFrameQueryColumnGroup():
+class DataFrameQueryColumnGroup:
     """Class wrapping a set of catalog (DataFrame) column names used by
     :class:`DataframeQueryDataSourceBase` in selecting experiment attributes of
     a given scope (case-wide, pod-wide or var-wide).

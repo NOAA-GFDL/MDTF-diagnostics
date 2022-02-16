@@ -598,7 +598,7 @@ class CLICommand(object):
         ``entry_point`` attribute, and calls it with the passed arguments.
         """
         cls_ = self.import_target()
-        instance = cls_(*args, **kwargs)
+        instance = cls_(*args, **kwargs)  # call the cls_ instance like function
         return instance
 
 

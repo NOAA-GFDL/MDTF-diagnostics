@@ -518,13 +518,15 @@ class CaseVarlist(Varlist):
        index used here.
     """
 
-    def __init__(self):
+    def __init__(self, casename):
+        print(casename)
         pass
 
-    def set_casename(self, casename, d, parent):
+    def add_contents(self, *vars_):
+        pass
+
+    def set_casename(self, d, parent):
         super().from_struct(d, parent)
-        for v in vlist_vars.values():
-            pass
 # ------------------------------------------------------------
 
 @util.mdtf_dataclass
@@ -599,11 +601,8 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
         except Exception as exc:
             raise util.PodConfigError("Caught exception while parsing varlist",
                 pod_name) from exc
-        # attach varlist to each case--hopefully allows unique specs for each component
-        # note that case_varlist[case_name is a Varlist object rather than a sub-dictionary with a Varlist object
-        # so you only need 2 loops to access: 1 for case info, 2 for varlist contents
-        for case_name, case_d in parent.cases.items():
-            pod.case_varlist[case_name] = Varlist.from_struct(d, parent=pod)
+        # redefine case_varlist struct with a dictionary of case_list names, and attach varlist atts to each entry
+        pod.case_varlist = CaseVarlist.from_struct(d, parent)
 
         return pod
 

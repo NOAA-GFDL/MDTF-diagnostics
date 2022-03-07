@@ -1,0 +1,68 @@
+{
+	"settings": {
+		"driver": "ENSO_RWS.py",
+		"long_name": "ENSO Rossby Wave Source",
+		"description": "ENSO Rossby Wave Source",
+              "runtime_requirements": {
+              "ncl": ["contributed", "gsn_code", "gsn_csm", "shea_util", "calendar_decode2"]
+    }
+   },
+    "data": {
+    "frequency": "mon"
+  },
+   "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {"standard_name": "time"}
+  },
+	"varlist": {
+		"zg": {
+                    "standard_name": "geopotential_height",
+                    "units": "m",
+                     "dimensions": ["time", "lev", "lat", "lon"],
+			"freq": "mon"
+		},
+		"ua": {
+                     "standard_name": "eastward_wind",
+                     "units": "m s-1",
+                     "dimensions": ["time", "lev", "lat", "lon"],
+			"freq": "mon"
+		},
+		"va": {
+                     "standard_name": "northward_wind",
+                     "units": "m s-1",
+                     "dimensions": ["time", "lev", "lat", "lon"],
+			"freq": "mon"
+		},
+		"ta": {
+                      "standard_name": "air_temperature",
+                     "units": "K",
+                     "dimensions": ["time", "lev", "lat", "lon"],
+			"freq": "mon"
+		},
+		"wap": {
+                     "standard_name": "lagrangian_tendency_of_air_pressure",
+                     "units": "Pa s-1",
+                     "dimensions": ["time", "lev", "lat", "lon"],
+			"freq": "mon"
+		},
+		"pr": {
+                     "standard_name": "precipitation_flux",
+                     "units": "kg m-2 s-1",
+                     "dimensions": ["time", "lat", "lon"],
+			"freq": "mon"
+		},
+		"ts": {
+                     "standard_name": "surface_temperature",
+                     "units": "K",
+                     "dimensions": ["time", "lat", "lon"],
+			"freq": "mon"
+		}
+	}
+}

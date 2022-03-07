@@ -21,7 +21,7 @@ This site contains documentation for the MDTF Diagnostics framework. The code is
    sphinx/site_toc
    sphinx/dev_toc
    sphinx/ref_dev_toc
-   sphinx/fmwk_autodoc_toc
+   sphinx/fmwk_toc
 
 
 Acknowledgements
@@ -40,5 +40,4 @@ Indices and tables
 ------------------
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

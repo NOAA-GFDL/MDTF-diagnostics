@@ -82,38 +82,33 @@ of your POD, and put all your *digested* observation data in (or more
 generally, any quantities that are independent of the model being
 analyzed).  The "digested" data policy is described in :numref:`ref-pod-digested-data`.
 
-Requirements
-   - Digested data should be in the form of numerical data, not figures.
-   - The data files should be small (preferably a few MB) and just enough
-     for producing figures for model comparison. If you really cannot reduce the data size and your POD requires more
-     than 1GB of space, consult with the lead team.
-   - Include in the directory a “README.txt” description file with original source info.
-   - Include in the directory any necessary licensing information, files,
-     etc. (if applicable)
+- Requirements
+  - Digested data should be in the form of numerical data, not figures.
+  - The data files should be small (preferably a few MB) and just enough for producing figures for model comparison. If you really cannot reduce the data size and your POD requires more than 1GB of space, consult with the lead team.
+  - Include in the directory a “README.txt” description file with original source info.
+  - Include in the directory any necessary licensing information, files, etc. (if applicable)
 
-Create a tar file of your obs_data directory:
-   - Use the --hard_dereference flag so that all users can read your file.
-   - Naming convention: $pod_name.yyyymmdd.tar, where yyyymmdd is the file
-     creation date. Alternatively, you may use some other version tag
-     to allow the framework to check compatibiity between the POD code and
-     data provided.  
-   - Create the tar file from the inputdata directory so the file paths
-     start with obs_data
-   - Example (c-shell)
-     ::
-	set pod_name = MJO_suite
-	set tartail  =  `date +'%Y%m%d'`
-	cd inputdata/obs_data
-	tar cfh $pod_name.$tartail.tar --hard-dereference $pod_name
+- Create a tar file of your obs_data directory:
+  - Use the --hard_dereference flag so that all users can read your file.
+  - Naming convention: $pod_name.yyyymmdd.tar, where yyyymmdd is the file creation date. Alternatively, you may use some other version tag to allow the framework to check compatibiity between the POD code and data provided.  
+  - Create the tar file from the inputdata directory so the file paths start with obs_data.
+  - Example (c-shell):
 
+    .. code-block:: console
 
-   - To check ``tar tf $pod_name.$tartail.tar``
-     ::
-	MJO_suite/
-	MJO_suite/ERA.v200.EOF.summer-0.png
-	MJO_suite/ERA.u200.EOF.summer-1.png
-	...
+       set pod_name = MJO_suite
+       set tartail  =  `date +'%Y%m%d'`
+       cd inputdata/obs_data
+       tar cfh $pod_name.$tartail.tar --hard-dereference $pod_name
 
+  - To check:
+
+    .. code-block:: console
+
+       % tar tf $pod_name.$tartail.tar
+       MJO_suite/
+       MJO_suite/ERA.v200.EOF.summer-0.png
+       MJO_suite/ERA.u200.EOF.summer-1.png
 
 After following the above instructions, please refer to 
 `the GitHub Discussion on transfering obs_data <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/125>`__ 

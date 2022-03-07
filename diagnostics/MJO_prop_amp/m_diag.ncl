@@ -5,6 +5,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 begin
 
 wk_dir = getenv("WK_DIR")

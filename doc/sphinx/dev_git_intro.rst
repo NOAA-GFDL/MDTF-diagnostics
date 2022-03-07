@@ -15,9 +15,9 @@ Steps for brand new users:
 Steps for users continuing work on an existing feature branch
 -------------------------------------------------------------
 1. Create a backup copy of the MDTF-Diagnostics repo on your local machine
-2. Pull in updates from the NOAA-GFDL/develop branch to the develop branch in your remote repo (:ref:`ref-update-develop`) 
+2. Pull in updates from the NOAA-GFDL/develop branch to the develop branch in your remote repo (:ref:`ref-update-develop`)
 3. Pull in updates from develop branch in your remote fork into the develop branch in your local repo (:ref:`ref-update-develop`)
-4. Sync your feature branch in your local repository with the local develop branch using an interactive rebase (:ref:`ref-rebase`) or merge (:ref:`ref-merge`). Be sure to make a backup copy of of your local *MDTF-diagnostics* repo first, and test your branch after rebasing/merging as described in the linked instructions before proceeding to the next step. 
+4. Sync your feature branch in your local repository with the local develop branch using an interactive rebase (:ref:`ref-rebase`) or merge (:ref:`ref-merge`). Be sure to make a backup copy of of your local *MDTF-diagnostics* repo first, and test your branch after rebasing/merging as described in the linked instructions before proceeding to the next step.
 5. Continue working on your feature branch
 6. Commit the changes in your feature branch
 7. Push the changes to the copy of the feature branch in your remote fork (:ref:`ref-push`)
@@ -81,25 +81,41 @@ Pushing to your remote feature branch on your fork
 ----------------------------------------------------------
 When you are ready to push your updates to the remote feature branch on your fork
 
-1. type ``git status`` to list the file(s) that have been updated
+1. Type ``git status`` to list the file(s) that have been updated
 
-2. type ``git add <file>`` to add individual files, or ``git add --all`` to add all files, that have been updated to the staging area
-
-3. Commit the changes with ``git commit -m "your commit message"``. You can also type ``git commit`` to launch an editor in the terminal where you can enter your message.
-
-If you use the editor or BASH shell, you can easily break up your message over multiple lines for better readability.
-
-4. Push the updates to your fork: ``git push -u origin feature/[POD name]`` (The ``-u`` flag is for creating a new branch remotely and only needs to be used the first time.)
+2. Repeat steps 3--5 of section  (:ref:`ref-new-feature`)
 
 .. _ref-pull-request:
 
 Submitting Pull Requests
 ------------------------
-A Pull Request (PR) is your proposal to the maintainers to incorporate your feature into NOAA's repo. When your feature is ready, submit a PR by going to the GitHub page of your fork and clicking on **Pull request** to the right of the branch description. Make sure you are submitting the PR to NOAA-GFDL/develop. Enter a brief description for the PR, and check the boxes in the to-do list for the completed tasks. If you are still working on your POD, but want to test it with the CI, you can select the *Create Draft Pull Request* option from the dropdown menu by clicking the green button with the arrow to the right of the **Create Pull Request Button**.
-
+The pull request (PR) for your branch is your proposal to the maintainers to incorporate your feature into NOAA's repo.
 Your changes will not affect the official NOAA's repo until the PR is accepted by the lead-team programmer.
-
 Note that if any buttons are missing, try ``CRTL`` + ``+`` or ``CRTL`` + ``-`` to adjust the webpage font size so the missing buttons may magically appear.
+
+To submit a PR :
+
+1. Click the *Contribute* link on the main page of your MDTF-diagnostics fork and click the *Open Pull Request* button
+
+2. Verify that your fork is set as the **base** repository, and *develop* is set as the **base branch**,
+that *NOAA-GFDL* is set as the **head repository**, and *develop* is set as the **head** branch
+
+3. Click the *Create Pull Request* button, add a brief description to the PR header, and go through the checklist to
+ensure that your code meets that baseline requirements for review
+
+4. Click the *Create Pull Request* button (now in the lower left corner of the message box).
+
+Note that you can submit a Draft Pull Request if you want to run the code through the CI, but are not ready
+for a full review by the framework team. Starting from step 3. above
+
+1. Click the arrow on the right edge of the *Create Pull Request* button and select *Create draft pull request* from the dropdown menu.
+
+2. Continue pushing changes to your feature branch until you are ready for a review (the PR will update automatically)
+
+3. When you are ready for review, navigate to the NOAA-GFDL/MDTF-Diagnostics `*Pull requests* <https://github.com/NOAA-GFDL/MDTF-diagnostics/pulls>`__ page,
+and click on your PR
+
+4. Scroll down to the header that states "this pull request is still a work in progress", and click the *ready for review* button to move the PR out of *draft* mode
 
 .. _ref-update-develop:
 
@@ -110,27 +126,26 @@ Method 1: Web interface+command line
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 See the `MDTF Best Practices Overview <https://docs.google.com/presentation/d/18jbi50vC9X89vFbL0W1Ska1dKuW_yWY51SomWx_ahYE/edit?usp=sharing>`__  presentation for instructions with figures.
 
-1. Click the *Pull request* link on the main page of your MDTF-diagnostics fork
-2. Select your fork as the **base** repository, and *develop* as the **base branch**
-3. Select *compare across forks* to switch the head repository to *NOAA-GFDL*
-4. Set *NOAA-GFDL* as the **head repository**, and *develop* as the **head** branch
-5. Add a brief description to the PR header, and click **Create pull request**
-6. Click **Merge pull request**.
+1. Click the *Fetch Upstream* link on the main page of your MDTF-diagnostics fork, then click the *Open Pull Request* button
+2. Verify that your fork is set as the **base** repository, and *develop* is set as the **base branch**,
+   that *NOAA-GFDL* is set as the **head repository**, and *develop* is set as the **head** branch
+3. Create a title for your PR, add a description if you want, then click *Create pull request*
+4. Click **Merge pull request**
 
 Your remote develop branch is now up-to-date with the NOAA-GFDL/develop branch.
 
-7. On your machine, open a terminal and check out the develop branch
+5. On your machine, open a terminal and check out the develop branch
 ::
 
    git checkout develop
 
-8. Fetch the updates to the develop branch from your remote fork
+6. Fetch the updates to the develop branch from your remote fork
 ::
 
    git fetch
 
-9. Pull in the updates from the remote develop branch.
-:: 
+7. Pull in the updates from the remote develop branch.
+::
 
    git pull
 

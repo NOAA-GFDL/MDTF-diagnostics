@@ -119,9 +119,21 @@ Python: Plotting
 
   When developing your POD, you'll want an interactive backend -- for example, this is automatically set up for you in a Jupyter notebook. When it comes to testing your POD outside of the framework, however, you should be aware of this backend difference.
 
+- **Pass the cartopy CRS to plotting functions**: See cartopy's `documentation <https://scitools.org.uk/cartopy/docs/latest/tutorials/understanding_transform.html>`__. A coordinate reference system (CRS) must be passed as a ``projection`` argument when plot axes are created. This should be passed to subsequent functions that set the plot range (``crs`` argument of ``set_extent``: avoid the use of ``set_xlim``/``set_ylim``) and to plotting functions (``transform`` argument). 
+
+Note that this applies even to simple lat/lon plots, for which the appropriate CRS is ``PlateCarree()``. Not specifying a CRS in this case will give rise to subtle errors, e.g. when trying to set longitude ranges of [-180,180] or [0, 360] in which the bounds map to the same location.
 
 NCL
 ---
+
+- **Large file support**: By default, NCL cannot read netCDF files larger than 2gb. To drop this limitation, call `setfileoption <https://www.ncl.ucar.edu/Document/Functions/Built-in/setfileoption.shtml>`__ with the following arguments in every script before any file operations:
+
+  .. code-block:: 
+
+    setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
+  ``"netCDF4"`` can also be used as the requested format in the above call.
+
 
 - **Deprecated calendar functions**: Check the `function reference <https://www.ncl.ucar.edu/Document/Functions/index.shtml>`__ to verify that the functions you use are not deprecated in the current version of `NCL <https://www.ncl.ucar.edu/>`__. This is especially necessary for `date/calendar functions <https://www.ncl.ucar.edu/Document/Functions/date.shtml>`__.
 

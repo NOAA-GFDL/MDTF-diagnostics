@@ -18,6 +18,7 @@ undef("add_ep_label_bar")
 undef("evans_plot_map")
 undef("evans_plot_vector_map")
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
 
 ;**********************************************************************;
 ; Function : evans_plot_color_map

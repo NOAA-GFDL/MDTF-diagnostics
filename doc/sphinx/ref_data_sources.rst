@@ -1,24 +1,19 @@
-Data sources
-============
-
-This section details how to select the input model data for the package to analyze. The main command-line option for this functionality is the ``--data-manager`` flag, which selects a ":ref:`data source<ref-data-sources>`": a code plug-in that implements the functionality of querying and fetching data from a remote host. The plug-in may define its own specific command-line options, which are documented here. 
-
-If you're using site-specific functionality (via the ``--site`` flag), additional options for the ``--data-manager`` flag may be available. See the :doc:`site-specific documentation<site_toc>` for your site.
-
-The choice of data source determines where and how the data needed by the diagnostics is obtained, but doesn't specify anything about the data's contents. For that purpose we allow the user to specify a "variable naming :ref:`convention<ref-data-conventions>`" with the ``--convention`` flag. Also consult the :doc:`requirements<ref_data>` that input model data must satisfy in terms of file formats.
-
 .. _ref-data-sources:
 
 Model data sources
-------------------
+==================
 
-By "data source," we mean a code plug-in for the package that provides all functionality needed to obtain model data needed by the PODs, based on user input:
+This section details how to select the input model data for the package to analyze. The command-line option for this functionality is the ``--data-manager`` flag, which selects a "data source": a code plug-in that implements all functionality needed to obtain model data needed by the PODs, based on user input:
 
 * An interface to query the remote store of data for the variables requested by the PODs, whether in the form of a file naming convention or an organized data catalog/database;
 * (Optional) heuristics for refining the query results in order to guarantee that all data selected came from the same model run;
 * The data transfer protocol to use for transferring the selected data to a local filesystem, for processing by the framework and by the PODs.
 
-There are currently two data sources implemented in the package, described below. If you would like the package to support obtaining data from a source that hasn't currently been implemented, please make a request in the appropriate GitHub `discussion thread <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/175>`__.
+Each data source may define its own specific command-line options, which are documented here. 
+
+The choice of data source determines where and how the data needed by the diagnostics is obtained, but doesn't specify anything about the data's contents. For that purpose we allow the user to specify a "variable naming :ref:`convention<ref-data-conventions>`" with the ``--convention`` flag. Also consult the :doc:`requirements<ref_data>` that input model data must satisfy in terms of file formats.
+
+There are currently three data sources implemented in the package, described below. If you're using site-specific functionality (via the ``--site`` flag), additional options may be available; see the :doc:`site-specific documentation<site_toc>` for your site. If you would like the package to support obtaining data from a source that hasn't currently been implemented, please make a request in the appropriate GitHub `discussion thread <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/175>`__.
 
 .. _ref-data-source-localfile:
 
@@ -46,6 +41,58 @@ At runtime, the user selects which dataset to use with the following flag:
    | Optional; if not given, this attribute is set equal to <*CASENAME*> (for backwards compatibility reasons).
 
 When using this data source, ``-c``/``--convention`` should be set to the convention used to assign <*variable_name*>s: the data source does not enforce consistency in this setting. If not given, ``--convention`` defaults to ``CMIP`` (see below).
+
+.. _ref-data-source-explictfile:
+
+Explicit file data source
++++++++++++++++++++++++++
+
+Selected via ``--data-manager="Explicit_file"``.
+
+This data source lets the user explicitly assign model data files to each variable requested by a POD using standard shell glob syntax, without needing to move or symlink them to a directory hierarchy (as is needed for, e.g., the :ref:`ref-data-source-localfile`). Files must be on a locally mounted filesystem, and satisfy the requirements in :doc:`ref_data` (with the exception of metadata).
+
+In addition, it also provides the option to rewrite arbitrary metadata attributes in these files, on a per-file basis. This may be useful in situations where the metadata used by the framework is missing or incorrect -- see :ref:`documentation<ref-data-metadata>` for what metadata is used by the framework. Note that many tools offer greater functionality for editing metadata, such as the `ncatted <http://nco.sourceforge.net/nco.html#ncatted>`__ tool in the `NCO <http://nco.sourceforge.net/>`__ utilities and the `setattribute <https://code.mpimet.mpg.de/projects/cdo/embedded/cdo_refcard.pdf>`__ operator in `CDO <https://code.mpimet.mpg.de/projects/cdo>`__.
+
+Due to the number of required configuration options specific to this data source, the only mechanism provided to configure it is via an additional configuration file, passed with the following flag:
+
+**Command-line options**
+
+--config-file <config file path>     Path to a JSONC file configuring the above options. 
+
+An example of the format for this file is:
+
+.. code-block:: js
+
+  {
+    "EOF_500PhPa": {
+      "zg_hybrid_sigma": "mon/QBOi.EXP1.AMIP.001.Z*.mon.nc",
+      "ps": {
+        "files": "mon/QBOi.EXP1.AMIP.001.PS.mon.nc",
+        "var_name": "PS",
+        "metadata": {
+          "standard_name": "surface_air_pressure",
+          "units": "Pa",
+          "any_name": "any_value",
+        }
+      }
+    },
+    "example": {
+      "tas": "**/NCAR-CAM5.atmos.19??-19??.tas.nc",
+    }
+  }
+
+The file should be organized as a nested struct, with keys corresponding to names of PODs and then names of variables used by those PODs in their data request. The entry corresponding to variable names can either be a string or another struct. Strings are taken to be a shell glob specifying the set of files that contain the data for that variable. The struct may have up to three keys: ``files`` (the shell glob; required), ``var_name``, the name used for the variable in the data file, and ``metadata``, an arbitrary list of metadata attributes to assign to that variable.
+
+Paths to the data for each variable are specified with standard shell glob syntax as implemented by python's :py:mod:`glob` module: ``?`` matches one character (excluding directory separators), ``*`` matches zero or more characters (excluding directory separators), and ``**`` matches any number of subdirectories. Globs given as relative paths are resolve relative to <*CASE_ROOT_DIR*>. Paths are not validated ahead of time; mis-specified globs or omitted entries (such as ``EOF_500PhPa``'s request for ``zg`` in the example above) are reported as a data query with zero results.
+
+If the name of the variable used by the data files is not specified via the ``var_name`` attribute, it is assumed to be the name for that variable used by the POD in its data request. In either case, if a variable by that name is not found in the data file, the data source will use heuristics to determine the correct name, assuming one dependent variable per data file. (The behavior for all other data sources in this situation is to raise an error.)
+
+Metadata attributes are set as strings, and are not validated before being set on the variable. Setting metadata attributes on a variable's coordinates (such as the ``calendar`` attribute) is not currently supported. Incorrect unit metadata may be fixed either with one of the third-party tools mentioned above, or by setting the ``scale_factor`` and ``add_offset`` `CF attributes <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#attribute-appendix>`__.
+
+The user setting for ``-c``/``--convention`` is ignored by this data source: the ``None`` convention is always used, since the user has assigned files directly to the variable names used by each POD.
+
+If changes to metadata are requested in the config file, the ``--overwrite-file-metadata`` flag is assumed and file metadata will always be overwritten if it differs from the framework's record.
+
 
 .. _ref-data-source-cmip6:
 
@@ -90,27 +137,3 @@ This data source implements the following logic to guarantee that all data it pr
 
 * Variables that don't have global coverage (e.g., are restricted to the Greenland or Antarctic regions) or are zonally or otherwise spatially averaged are excluded from the search, as no POD is currently designed to use these types of data.
 
-
-.. _ref-data-conventions:
-
-Conventions for variable names and units
-----------------------------------------
-
-The use of data source plug-ins, as described above, is how we let the package obtain data files by different methods, but doesn't address problems arising from differing content of these files. For example, the name for total precipitation used by NCAR models is ``PRECT`` and is given as a rate (meters per second), while the name for the same physical quantity in GFDL models is ``precip``, given in units of a flux (kg m\ :sup:`-2`\  s\ :sup:`-1`\ ).
-
-Frequently a data source (in the sense described above) will only identify a variable through this "native" name, which makes it necessary to tell the package which "language to speak" when searching for different variables. Setting the ``--convention`` flag translates the data request for each POD into the variable naming convention used by the model that's being analyzed. 
-
-This feature also provides a mechanism to deal with missing metadata, and to warn the user that the metadata for a specific file may be inaccurate: before any PODs are run, the framework examines each file and converts the name and units of each variable to the values that the POD has requested. 
-
-Recognized conventions
-++++++++++++++++++++++
-
-Naming conventions are specified with the ``--convention`` flag. The currently implemented naming conventions are:
-
-* ``CMIP``: Variable names and units as used in the `CMIP6 <https://www.wcrp-climate.org/wgcm-cmip/wgcm-cmip6>`__ `data request <https://doi.org/10.5194/gmd-2019-219>`__. There is a `web interface <http://clipc-services.ceda.ac.uk/dreq/index.html>`__ to the request. Data from any model that has been `published <https://esgf-node.llnl.gov/projects/cmip6/>`__ as part of CMIP6, or processed with the `CMOR3 <https://cmor.llnl.gov/>`__ tool, should follow this convention.
-
-* ``NCAR``: Variable names and units used in the default output of models developed at the `National Center for Atmospheric Research <https://ncar.ucar.edu>`__ (NCAR), headquartered in Boulder, CO, USA. Recognized synonyms for this convention: ``CAM4``, ``CESM``, ``CESM2``.
-
-* ``GFDL``: Variable names and units used in the default output of models developed at the `Geophysical Fluid Dynamics Laboratory <https://www.gfdl.noaa.gov/>`__ (GFDL), Princeton, NJ, USA. Recognized synonyms for this convention: ``AM4``, ``CM4``, ``ESM4``, ``SPEAR``.
-
-If you would like the package to support a naming convention that hasn't currently been implemented, please make a request in the appropriate GitHub `discussion thread <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/174>`__.

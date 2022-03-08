@@ -493,12 +493,11 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
     """
     _PodWrapperClass = SubprocessRuntimePODWrapper
 
-    def __init__(self, case, pod, EnvMgrClass):
+    def __init__(self, case, EnvMgrClass):
         config = core.ConfigManager()
         self.test_mode = config.test_mode
         # transfer all pods, even failed ones, because we need to call their
         self.pods = [self._PodWrapperClass(pod=p) for p in case.pods.values()]
-        self.pod_name = pod
         self.env_mgr = EnvMgrClass(log=case.log)
         self.case = case
 

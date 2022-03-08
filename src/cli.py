@@ -77,7 +77,7 @@ def read_config_files(code_root, file_name, site=""):
     site_dir = os.path.join(code_root, 'sites', site)
     site_d = util.find_json(site_dir, file_name, exit_if_missing=False, log=_log)
     fmwk_d = util.find_json(src_dir, file_name, exit_if_missing=True, log=_log)
-    return (site_d, fmwk_d)
+    return site_d, fmwk_d
 
 
 def read_config_file(code_root, file_name, site=""):

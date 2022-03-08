@@ -10,7 +10,7 @@ import itertools
 import signal
 import textwrap
 import typing
-from src import util, core, diagnostic, xr_parser, preprocessor
+from src import util, core, diagnostic, preprocessor, multirun
 import pandas as pd
 import intake_esm
 
@@ -199,12 +199,6 @@ class DataSourceAttributesBase:
         self.date_range = util.DateRange(self.FIRSTYR, self.LASTYR)
 
 
-# New tuple subclass with field names 'pod' and 'var': instantiate w/ p = PodVarTuple('pod', 'var')
-# Can index like a normal tuple: p("example", "tas")
-# unpack like a normal tuple: pod, var = p, >>> pod,var >>>> ("example", "tas")
-# and access using dot notation: p.pod, p.var >>> example, tas
-
-
 PodVarTuple = collections.namedtuple('PodVarTuple', ['pod', 'var'])
 MAX_DATASOURCE_ITERS = 5
 
@@ -216,6 +210,10 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
     data locally, preprocesses it, and performs cleanup/formatting of the POD's
     output.
     """
+    # The single underscore define private class variables for internal (i.e., developer) use.
+    # The abstract_attribute defines a placeholder object, and DefaultPreprocessor defines a default class and methods.
+    # Default features for each _[class name] will be defined in all DataSourceBase instances, and will be modified
+    # (overridden) as needed.
     _AttributesClass = util.abstract_attribute()
     _DiagnosticClass = util.abstract_attribute()
     _PreprocessorClass = preprocessor.DefaultPreprocessor
@@ -223,76 +221,65 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
 
     _deactivation_log_level = logging.ERROR  # default log level for failure
 
-    def __init__(self, case_dict, pod_name, parent):
-        """
-
-        Args:
-            case_dict (dict): dictionary with information for all cases run by a pod
-            pod_name (str): name of the POD
-            parent (object): parent object of class
-        """
+    def __init__(self, case_dict, parent):
         # _id = util.MDTF_ID()        # attrs inherited from core.MDTFObjectBase
         # name: str
         # _parent: object
         # log = util.MDTFObjectLogger
         # status: ObjectStatus
         core.MDTFObjectBase.__init__(
-            self, name=pod_name, _parent=parent
+            self, name=case_dict['CASENAME'], _parent=parent
         )
         # configure paths
         config = core.ConfigManager()
         paths = core.PathManager()
         self.overwrite = config.overwrite
+        d = paths.model_paths(case_dict, overwrite=self.overwrite)
         self.code_root = paths.CODE_ROOT
-        self.MODEL_DATA_DIR = dict()
-        self.MODEL_WK_DIR = dict()
-        self.MODEL_OUT_DIR = dict()
-        self.env_vars = dict()
-        self.cases = dict()
-        self.convention = ""
-        self.pods = dict.fromkeys([pod_name])
-        for case_name, case_d in case_dict.items():
-            d = paths.model_paths(case_d, overwrite=self.overwrite)
-            self.MODEL_DATA_DIR[case_name] = d.MODEL_DATA_DIR
-            self.MODEL_WK_DIR[case_name] = d.MODEL_WK_DIR
-            self.MODEL_OUT_DIR[case_name] = d.MODEL_OUT_DIR
-            util.check_dir(d.MODEL_WK_DIR, create=True)
-            util.check_dir(d.MODEL_OUT_DIR, create=True)
-            # set up log (CaseLoggerMixin)
-            self.init_log(log_dir=self.MODEL_WK_DIR[case_name])
-            self.cases[case_name] = dict.fromkeys(['name', 'varlist', 'date_range'])
-            self.cases[case_name]['name'] = case_name
-            self.cases[case_name]['date_range'] = util.DateRange(case_d['FIRSTYR'], case_d['LASTYR'])
-            self.strict = config.get('strict', False)
-            self.attrs = util.coerce_to_dataclass(
-                case_d, self._AttributesClass, log=self.log, init=True
-            )  # this will rewrite for each case, but only need atts for verification ATM. Deal with this later.
-            # set variable name convention
-            translate = core.VariableTranslator()
-            if not self.convention:
-                if hasattr(self, '_convention'):
-                    self.convention = self._convention
-                if not hasattr(self.attrs, 'convention') and not (
-                        self.attrs.convention != self.convention):
-                    self.log.warning(f"{self.__class__.__name__} requires convention"
-                                     f"'{self.convention}'; ignoring argument "
-                                     f"'{self.attrs[case_name].convention}'.")
-                elif hasattr(self.attrs, 'convention'):
-                    self.convention = self.attrs.convention
-                else:
-                    raise util.GenericDataSourceEvent((f"'convention' not configured "
-                                                       f"for {self.__class__.__name__}."))
-                self.convention = translate.get_convention_name(self.convention)
-            # configure case-specific env vars
-            self.env_vars[case_name] = util.WormDict.from_struct(
-                config.global_env_vars.copy()
-            )
-            self.env_vars[case_name].update({
-                k: case_d[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
-            })
-            # add naming-convention-specific env vars
-            convention_obj = translate.get_convention(self.convention)
-            self.env_vars[case_name].update(getattr(convention_obj, 'env_vars', dict()))
+        self.MODEL_DATA_DIR = d.MODEL_DATA_DIR
+        self.MODEL_WK_DIR = d.MODEL_WK_DIR
+        self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
+        util.check_dir(self, 'MODEL_WK_DIR', create=True)
+        util.check_dir(self, 'MODEL_DATA_DIR', create=True)
+
+        # set up log (CaseLoggerMixin)
+        self.init_log(log_dir=self.MODEL_WK_DIR)
+
+        self.strict = config.get('strict', False)
+        self.attrs = util.coerce_to_dataclass(
+            case_dict, self._AttributesClass, log=self.log, init=True
+        )
+
+        self.multirun = parent.multirun
+        if not self.multirun:
+            self.pods = dict.fromkeys(case_dict.get('pod_list', []))
+
+        # set variable name convention
+        translate = core.VariableTranslator()
+        if hasattr(self, '_convention'):
+            self.convention = self._convention
+            if hasattr(self.attrs, 'convention') \
+                    and self.attrs.convention != self.convention:
+                self.log.warning(f"{self.__class__.__name__} requires convention"
+                                 f"'{self.convention}'; ignoring argument "
+                                 f"'{self.attrs.convention}'.")
+        elif hasattr(self.attrs, 'convention') and self.attrs.convention:
+            self.convention = self.attrs.convention
+        else:
+            raise util.GenericDataSourceEvent((f"'convention' not configured "
+                                               f"for {self.__class__.__name__}."))
+        self.convention = translate.get_convention_name(self.convention)
+
+        # configure case-specific env vars
+        self.env_vars = util.WormDict.from_struct(
+            config.global_env_vars.copy()
+        )
+        self.env_vars.update({
+            k: case_dict[k] for k in ("CASENAME", "FIRSTYR", "LASTYR")
+        })
+        # add naming-convention-specific env vars
+        convention_obj = translate.get_convention(self.convention)
+        self.env_vars.update(getattr(convention_obj, 'env_vars', dict()))
 
     @property
     def full_name(self):
@@ -305,7 +292,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         """
         return self.pods.values()
 
-    def iter_vars(self, active=None, pod_active=None, case_name=None):
+    def iter_vars(self, active=None, pod_active=None):
         """Iterator over all :class:`~diagnostic.VarlistEntry`\s (grandchildren)
         associated with this case. Returns :class:`PodVarTuple`\s (namedtuples)
         of the :class:`~diagnostic.Diagnostic` and :class:`~diagnostic.VarlistEntry`
@@ -325,7 +312,6 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
 
             pod_active: bool or None, default None. Same as *active*, but
                 filtering the PODs that are selected.
-            case_name: str, name of case to query in pod case_varlist
         """
 
         def _get_kwargs(active_):
@@ -339,59 +325,68 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         pod_kwargs = _get_kwargs(pod_active)
         var_kwargs = _get_kwargs(active)
         for p in self.iter_children(**pod_kwargs):
-            if case_name:
-                pp = p.case_varlist[case_name].vars
-                for v in p.case_varlist[case_name].vars:
-                    yield PodVarTuple(pod=p, var=v)
-            else:
-                for v in p.iter_children(**var_kwargs):
-                    yield PodVarTuple(pod=p, var=v)
+            for v in p.iter_children(**var_kwargs):
+                yield PodVarTuple(pod=p, var=v)
 
-    def iter_vars_only(self, active=None, case_name=None):
+    def iter_vars_only(self, active=None):
         """Convenience wrapper for :meth:`iter_vars` that returns only the
         :class:`~diagnostic.VarlistEntry` objects (grandchildren) from all PODs
         in this DataSource.
-
-        Args:
-            active: bool or None, default None. Selects subset of
-                :class:`~diagnostic.VarlistEntry`\s which are returned in the
-                namedtuples:
-
-                - active = True: only iterate over currently active VarlistEntries.
-                - active = False: only iterate over inactive VarlistEntries
-                    (VarlistEntries which have either failed or are currently
-                    unused alternate variables).
-                - active = None: iterate over both active and inactive
-                    VarlistEntries.
-            case_name (str): name of case to query in case_varlist
         """
-        yield from (pv.var for pv in self.iter_vars(active=active, pod_active=None, case_name=case_name))
+        yield from (pv.var for pv in self.iter_vars(active=active, pod_active=None))
 
     # -------------------------------------
-    # TODO: fix this just to work with pod list. Call after reconfigured initialization
-    def setup(self):
-        for pod_name in self.pods:
-            self.pods[pod_name] = \
-                self._DiagnosticClass.from_config(pod_name,
-                                                  parent=self)  # TODO--make from_config populate self.caselist with a varlist for each case
-        for pod in self.iter_children():  # pod object is full of child objects from the _iter_children generator
+
+    def setup(self, pname=""):
+        if self.multirun:
+            self.get_pod_config_multirun(pname)
+        else:
+            for pod_name in self.pods:
+                self.pods[pod_name] = \
+                    self._DiagnosticClass.from_config(pod_name, parent=self)
+            for pod in self.iter_children():
+                try:
+                    self.setup_pod(pod)
+                except Exception as exc:
+                    chained_exc = util.chain_exc(exc, "setting up DataSource",
+                                                 util.PodConfigError)
+                    pod.deactivate(chained_exc)
+                    continue
+
+            if self.status == core.ObjectStatus.NOTSET and \
+                    any(p.status == core.ObjectStatus.ACTIVE for p in self.iter_children()):
+                self.status = core.ObjectStatus.ACTIVE
+
+            _log.debug('#' * 70)
+            _log.debug('Pre-query varlists for %s:', self.full_name)
+            for v in self.iter_vars_only(active=None):
+                _log.debug("%s", v.debug_str())
+            _log.debug('#' * 70)
+
+    def get_pod_config_multirun(self, pod_name):
+        pod = self._DiagnosticClass.from_config(pod_name, parent=self)
+        parent_vars = pod.varlist.vars
+        for v in parent_vars:
+            print(v)
+            child = multirun.MultirunVarlistEntry()
+  #          child.from_parent(v)
+        pod.multirun = True
+        try:
+            pod.setup(self)
+        except Exception as exc:
+            chained_exc = util.chain_exc(exc, "setting up Multirun DataSource",
+                                         util.PodConfigError)
+            pod.deactivate(chained_exc)
+        return pod
+
+    def setup_varlist_multirun(self, varlist):
             try:
-                self.setup_pod(pod)
+                self.setup_var(pod, v)
             except Exception as exc:
-                chained_exc = util.chain_exc(exc, "setting up DataSource",
+                chained_exc = util.chain_exc(exc, f"configuring {v.full_name}.",
                                              util.PodConfigError)
-                pod.deactivate(chained_exc)
-                continue
+                v.deactivate(chained_exc)
 
-        if self.status == core.ObjectStatus.NOTSET and \
-                any(p.status == core.ObjectStatus.ACTIVE for p in self.iter_children()):
-            self.status = core.ObjectStatus.ACTIVE
-
-        _log.debug('#' * 70)
-        _log.debug('Pre-query varlists for %s:', self.full_name)
-        for v in self.iter_vars_only(active=None):
-            _log.debug("%s", v.debug_str())
-        _log.debug('#' * 70)
 
     def setup_pod(self, pod):
         """Update POD with information that only becomes available after
@@ -402,30 +397,28 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         dependency inversion.
         """
         pod.setup(self)
-        for case_name, case_d in pod.case_varlist.items():
-            for v in case_d.vars:
-                try:
-                    self.setup_var(pod, v, self.cases[case_name])
-                except Exception as exc:
-                    chained_exc = util.chain_exc(exc, f"configuring {v.full_name}.",
-                                                 util.PodConfigError)
-                    v.deactivate(chained_exc)
-                    continue
+        for v in pod.iter_children():
+            try:
+                self.setup_var(pod, v)
+            except Exception as exc:
+                chained_exc = util.chain_exc(exc, f"configuring {v.full_name}.",
+                                             util.PodConfigError)
+                v.deactivate(chained_exc)
+                continue
         # preprocessor will edit varlist alternates, depending on enabled functions
         pod.preprocessor = self._PreprocessorClass(self, pod)
         pod.preprocessor.edit_request(self, pod)
 
-        for case_name, case_d in pod.case_varlist.items():
-            for v in case_d.vars:
-                # deactivate failed variables, now that alternates are fully
-                # specified
-                if v.last_exception is not None and not v.failed:
-                    v.deactivate(v.last_exception, level=logging.WARNING)
-            if pod.status == core.ObjectStatus.NOTSET and \
-                    any(v.status == core.ObjectStatus.ACTIVE for v in pod.iter_children()):
-                pod.status = core.ObjectStatus.ACTIVE
+        for v in pod.iter_children():
+            # deactivate failed variables, now that alternates are fully
+            # specified
+            if v.last_exception is not None and not v.failed:
+                v.deactivate(v.last_exception, level=logging.WARNING)
+        if pod.status == core.ObjectStatus.NOTSET and \
+                any(v.status == core.ObjectStatus.ACTIVE for v in pod.iter_children()):
+            pod.status = core.ObjectStatus.ACTIVE
 
-    def setup_var(self, pod, v, c_dict):
+    def setup_var(self, pod, v):
         """Update VarlistEntry fields with information that only becomes
         available after DataManager and Diagnostic have been configured (ie,
         only known at runtime, not from settings.jsonc.)
@@ -442,14 +435,11 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                     'range': util.DateRange,
                     'frequency': util.DateFrequency
                 },
-
-                range=c_dict['date_range'],
+                range=self.attrs.date_range,
                 calendar=util.NOTSET,
                 units=util.NOTSET
             )
-
-        v.dest_path = self.variable_dest_path(pod, v,
-                                              case_name=c_dict['name'])  # result copied to pod.varlist.vars.dest_path
+        v.dest_path = self.variable_dest_path(pod, v)
         try:
             trans_v = translate.translate(v)
             v.translation = trans_v
@@ -474,24 +464,18 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
 
         v.stage = diagnostic.VarlistEntryStage.INITED
 
-    def variable_dest_path(self, pod, var, case_name=""):
+    def variable_dest_path(self, pod, var):
         """Returns the absolute path of the POD's preprocessed, local copy of
         the file containing the requested dataset. Files not following this
         convention won't be found by the POD.
         """
         if var.is_static:
             f_name = f"{self.name}.{var.name}.static.nc"
-            if case_name:
-                return os.path.join(pod.POD_WK_DIR, case_name, f_name)
-            else:
-                return os.path.join(pod.POD_WK_DIR, f_name)
+            return os.path.join(pod.POD_WK_DIR, f_name)
         else:
             freq = var.T.frequency.format_local()
             f_name = f"{self.name}.{var.name}.{freq}.nc"
-            if case_name:
-                return os.path.join(pod.POD_WK_DIR, case_name, freq, f_name)
-            else:
-                return os.path.join(pod.POD_WK_DIR, freq, f_name)
+            return os.path.join(pod.POD_WK_DIR, freq, f_name)
 
     # DATA QUERY/FETCH/PREPROCESS -------------------------------------
 
@@ -531,18 +515,10 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
     def query_data(self):
         # really a while-loop, but limit # of iterations to be safe
         for _ in range(MAX_DATASOURCE_ITERS):
-            for pod_name, pod_dict in self.pods.items():
-                try:
-                    cv = pod_dict.case_varlist
-                except util.DataQueryEvent as exc:
-                    print("No case_varlist attribute found for pod", pod_name)
-                for case_name, case_dict in cv.items():
-                    case_varlist = case_dict
-
-                    vars_to_query = [
-                        v for v in self.iter_vars_only(active=True)
-                        if v.stage < diagnostic.VarlistEntryStage.QUERIED
-                        ]
+            vars_to_query = [
+                v for v in self.iter_vars_only(active=True) \
+                if v.stage < diagnostic.VarlistEntryStage.QUERIED
+            ]
             if not vars_to_query:
                 break  # exit: queried everything or nothing active
 
@@ -698,7 +674,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         # Call cleanup method if we're killed
         signal.signal(signal.SIGTERM, self.query_and_fetch_cleanup)
         signal.signal(signal.SIGINT, self.query_and_fetch_cleanup)
-        self.pre_query_and_fetch_hook()  # returns a dataframe (self.df) with arrays of all file paths in caserootdir
+        self.pre_query_and_fetch_hook()
         try:
             self.preprocess_data()
         except Exception as exc:
@@ -709,7 +685,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         for p in self.iter_children():
             for v in p.iter_children():
                 if v.status == core.ObjectStatus.ACTIVE:
-                    v.log.debug('Data request for %s completed successfully.',
+                    v.log.debug('Data request for %s completed succesfully.',
                                 v.full_name)
                     v.status = core.ObjectStatus.SUCCEEDED
                 elif v.failed:
@@ -719,7 +695,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             if p.failed:
                 p.log.debug('Data request for %s failed.', p.full_name)
             else:
-                p.log.debug('Data request for %s completed successfully.',
+                p.log.debug('Data request for %s completed succesfully.',
                             p.full_name)
 
     def query_and_fetch_cleanup(self, signum=None, frame=None):
@@ -764,7 +740,7 @@ class DataFrameDataKey(DataKeyBase):
         return self._parent.df[self._parent.remote_data_col].loc[idxs]
 
 
-class DataFrameQueryColumnGroup:
+class DataFrameQueryColumnGroup():
     """Class wrapping a set of catalog (DataFrame) column names used by
     :class:`DataframeQueryDataSourceBase` in selecting experiment attributes of
     a given scope (case-wide, pod-wide or var-wide).
@@ -888,8 +864,8 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
     col_spec = util.abstract_attribute()  # instance of DataframeQueryColumnSpec
 
 
-    def __init__(self, case_dict, pod, parent):
-        super(DataframeQueryDataSourceBase, self).__init__(case_dict, pod, parent)
+    def __init__(self, case_dict, parent):
+        super(DataframeQueryDataSourceBase, self).__init__(case_dict, parent)
         self.expt_keys = dict()  # Object _id -> expt_key tuple
 
     @property
@@ -1523,9 +1499,9 @@ class LocalFileDataSource(
     several files according to date, with the dates present in their filenames.
     """
 
-    def __init__(self, case_dict, pod, parent):
+    def __init__(self, case_dict, parent):
         self.catalog = None
-        super(LocalFileDataSource, self).__init__(case_dict, pod, parent)
+        super(LocalFileDataSource, self).__init__(case_dict, parent)
 
 
 class SingleLocalFileDataSource(LocalFileDataSource):
@@ -1544,3 +1520,48 @@ class SingleLocalFileDataSource(LocalFileDataSource):
                     "Query found multiple files when one was expected:",
                     d_key, log=var.log
                 )
+
+# MULTIRUN STUFF
+class MultirunDataSourceBase(DataSourceBase):
+    """Base class for handling multirun data needs. Executes query for
+    requested model data against the remote data sources, fetches the required
+    data locally, preprocesses it, and performs cleanup/formatting of the POD's
+    output.
+    """
+
+    def __init__(self, case_dict, parent):
+        super(self).__init__(case_dict, parent)
+        print("MultirunDataSourceBase")
+
+# MRO: [<class '__main__.MultirunDataframeQueryDataSourceBase'>
+# <class '__main__.MultirunDataSourceBase'>
+# <class 'src.data_manager.DataframeQueryDataSourceBase'>
+# <class 'src.data_manager.DataSourceBase'>
+# <class 'src.core.MDTFObjectBase'>
+# <class 'src.util.logs.CaseLoggerMixin'>
+# <class 'src.util.logs._CaseAndPODHandlerMixin'>
+# <class 'src.util.logs.MDTFObjectLoggerMixinBase'>
+# <class 'src.data_manager.AbstractDataSource'>
+# <class 'src.data_manager.AbstractQueryMixin'>
+# <class 'src.data_manager.AbstractFetchMixin'>
+# <class 'abc.ABC'>
+# <class 'object'>]
+class MultirunDataframeQueryDataSourceBase(MultirunDataSourceBase):
+    """DataSource which queries a data catalog made available as a pandas
+    DataFrame, and includes logic for selecting experiment based on column values.
+    """
+
+    def __init__(self, case_dict, parent):
+        # note that in python3, you do NOT need to include the enclosing class as the first argument to super()
+        # e.g., super(MultirunDataframeQueryDataSourceBase,self)
+        # here, the code calls the super class's init method, which is MultiRunDataSourceBase's init method
+        super(self).__init__(case_dict, parent)
+        print("MultirunDataframeQuerySourceBase")
+
+# [<class '__main__.MultirunLocalFileDataSource'>,
+# <class '__main__.MultirunDataframeQueryDataSourceBase'>,
+# <class '__main__.MultirunDataSourceBase'>,
+# <class 'src.data_manager.LocalFileDataSource'>...
+# ]
+class MultirunLocalFileDataSource(MultirunDataframeQueryDataSourceBase):
+    pass

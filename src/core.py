@@ -290,10 +290,8 @@ class PathManager(util.Singleton, util.NameSpace):
         d = util.NameSpace()
         d.POD_CODE_DIR = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
         d.POD_OBS_DATA = os.path.join(self.OBS_DATA_ROOT, pod.name)
-        #d.POD_WK_DIR = os.path.join(case.MODEL_WK_DIR, pod.name)
-        #d.POD_OUT_DIR = os.path.join(case.MODEL_OUT_DIR, pod.name)
-        d.POD_WK_DIR = os.path.join(self.WORKING_DIR, pod.name)
-        d.POD_OUT_DIR = os.path.join(self.OUTPUT_DIR, pod.name)
+        d.POD_WK_DIR = os.path.join(case.MODEL_WK_DIR, pod.name)
+        d.POD_OUT_DIR = os.path.join(case.MODEL_OUT_DIR, pod.name)
         return d
 
 
@@ -1094,43 +1092,40 @@ class MDTFFramework(MDTFObjectBase):
             _log.info("###: Using multi-run mode.")
         else:
             _log.info("###: Using single-run mode.")
-        for pod_name in self.pod_list:
-            _log.info("### %s: initializing POD '%s'.", self.full_name, pod_name)
-            # DataSource instantiated by MTDFFramework._dispatch
-            pod = self.DataSource(self.cases, pod_name, parent=self)
-            pod.setup()
-            new_d[pod_name] = pod
-            if not pod.failed:
-                _log.info("### %s: requesting data for case '%s'.", self.full_name, pod_name)
-                pod.request_data()
-            else:
-                _log.info(("### %s: initialization for case '%s' failed; skipping "
-                           f"data request."), self.full_name, pod_name)
-        self.pods = new_d
+        new_d = dict()
+        for case_name, case_d in self.cases.items():
+            _log.info("### %s: initializing case '%s'.", self.full_name, case_name)
+            case = self.DataSource(case_d, parent=self)
+            case.setup()
+            new_d[case_name] = case
+        self.cases = new_d
         util.transfer_log_cache(close=True)
 
-        for pod in self.pod_list:
-            _log.info("### %s: running POD'%s'.", self.full_name, pod)
-            # TODO reformat RuntimeManager to accept pod instead of case
-            run_mgr = self.RuntimeManager(case, pod, self.EnvironmentManager)
-            run_mgr.setup()
-            # run_mgr.run()
-       # else:
-       #     _log.info(("### %s: Data request for case '%s' failed; skipping "
-       #                "execution."), self.full_name, case_name)
+        for case_name, case in self.cases.items():
+            if not case.failed:
+                _log.info("### %s: requesting data for case '%s'.",
+                          self.full_name, case_name)
+                case.request_data()
+            else:
+                _log.info(("### %s: initialization for case '%s' failed; skipping "
+                           f"data request."), self.full_name, case_name)
 
-            # out_mgr = self.OutputManager(case)
-            # out_mgr.make_output()
-        # run POD just once. This run_mgr and output_mgr instances correspond to the last case/ensemble member
-        # in the case_list
-        run_mgr.run()
-        out_mgr = self.OutputManager(case)
-        out_mgr.make_output()
+            if not case.failed:
+                _log.info("### %s: running case '%s'.", self.full_name, case_name)
+                run_mgr = self.RuntimeManager(case, self.EnvironmentManager)
+                run_mgr.setup()
+                run_mgr.run()
+            else:
+                _log.info(("### %s: Data request for case '%s' failed; skipping "
+                           "execution."), self.full_name, case_name)
+
+            out_mgr = self.OutputManager(case)
+            out_mgr.make_output()
 
         tempdirs = TempDirManager()
         tempdirs.cleanup()
         print_summary(self)
-        return (1 if self.failed else 0)  # exit code
+        return 1 if self.failed else 0  # exit code
 
 
 # --------------------------------------------------------------------

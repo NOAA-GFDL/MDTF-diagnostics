@@ -1,7 +1,6 @@
 """Classes representing configuration and status of individual diagnostic scripts
 (PODs) and variables required by the scripts.
 """
-import copy
 import os
 import dataclasses as dc
 import io
@@ -147,7 +146,7 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         env_var: Name of env var which is set to the variable's name in the
             provided dataset.
         path_variable: Name of env var containing path to local data.
-        dest_path: Path to local data for a case.
+        dest_path: Path to local data.
         alternates: List of lists of VarlistEntries.
         translation: :class:`core.TranslatedVarlistEntry`, populated by DataSource.
         data: dict mapping experiment_keys to DataKeys. Populated by DataSource.
@@ -428,7 +427,6 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
                 d[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
         return d
 
-
 class Varlist(data_model.DMDataSet):
     """Class to perform bookkeeping for the model variables requested by a
     single POD.
@@ -439,7 +437,6 @@ class Varlist(data_model.DMDataSet):
         settings.jsonc file when instantiating a new :class:`Diagnostic` object.
 
         Args:
-            parent: parent class of Varlist
             d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
 
         Returns:
@@ -506,29 +503,6 @@ class Varlist(data_model.DMDataSet):
 
 # ------------------------------------------------------------
 
-
-class CaseVarlist(Varlist):
-    """:class:`CaseVarlist` class to hold Varlist information for multiple
-    cases/
-
-    .. note::
-       Due to implementation, the catalog used by the DataSource must be static.
-       This code could readily be adapted to a dynamic catalog if its schema
-       provided a unique ID number for each row, to take the place of the row
-       index used here.
-    """
-
-    def __init__(self, casename):
-        print(casename)
-        pass
-
-    def add_contents(self, *vars_):
-        pass
-
-    def set_casename(self, d, parent):
-        super().from_struct(d, parent)
-# ------------------------------------------------------------
-
 @util.mdtf_dataclass
 class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     """Class holding configuration for a diagnostic script. Object attributes
@@ -556,7 +530,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
     log_file: io.IOBase = dc.field(default=None, init=False)
     nc_largefile: bool = False
-    case_varlist: CaseVarlist = None
+
     varlist: Varlist = None
     preprocessor: typing.Any = dc.field(default=None, compare=False)
 
@@ -601,13 +575,8 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
         except Exception as exc:
             raise util.PodConfigError("Caught exception while parsing varlist",
                 pod_name) from exc
-        # redefine case_varlist struct with a dictionary of case_list names, and attach varlist atts to each entry
-        pod.case_varlist = CaseVarlist.from_struct(d, parent)
-
         return pod
 
-    # creates a new Diagnostic class instance for a pod with pod_name using info in the POD settings.jsonc
-    # TODO: add methods to Diagnostic to ingest addtl data from pod case_list jsonc for multirun
     @classmethod
     def from_config(cls, pod_name, parent):
         """Usual method of instantiating Diagnostic objects, from the contents
@@ -664,6 +633,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             self.log_file = None
 
     # -------------------------------------
+
     def setup(self, data_source):
         """Configuration set by the DataSource on the POD (after the POD is
         initialized, but before pre-run checks.)
@@ -816,4 +786,3 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
                 self.pod_env_vars.update(var.env_vars)
             except util.WormKeyError:
                 continue
-

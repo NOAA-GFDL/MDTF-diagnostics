@@ -263,7 +263,7 @@ class PathManager(util.Singleton, util.NameSpace):
             )
 
     # TODO: rework to place case_wk_dir in root dir = CASENAME for each multirun case
-    def model_paths(self, case, overwrite=False, multirun=False):
+    def model_paths(self, case, overwrite=False):
         d = util.NameSpace()
         if isinstance(case, dict):
             name = case['CASENAME']
@@ -803,7 +803,8 @@ class MDTFFramework(MDTFObjectBase):
         self.pod_list = []
         self.cases = dict()
         self.global_env_vars = dict()
-        self.multirun = False
+        self.data_type = str
+
         try:
             # load pod data
             pod_info_tuple = mdtf_info.load_pod_settings(self.code_root)
@@ -896,6 +897,11 @@ class MDTFFramework(MDTFObjectBase):
                          cli_obj.config.get('convention', ''),
                          tags=util.ObjectLogTag.BANNER
                          )
+        self.data_type = cli_obj.config.get('data_type')
+        if self.data_type == 'multi_run':
+            _log.info("Running framework in multi-run mode ")
+        else:
+            _log.info("Running framework in single-run mode ")
         # check this here, otherwise error raised about missing caselist is not informative
         try:
             if cli_obj.config.get('CASE_ROOT_DIR', ''):
@@ -1085,42 +1091,46 @@ class MDTFFramework(MDTFObjectBase):
         return False
 
     def main(self):
-        self.cases = dict(list(self.cases.items()))
-        new_d = dict()
-        if len(self.cases) > 1:
-            self.multirun = True
-            _log.info("###: Using multi-run mode.")
+        # single run mode
+        if self.data_type == 'single_run':
+            self.cases = dict(list(self.cases.items()))
+            new_d = dict()
+            if len(self.cases) > 1:
+                _log.info("###: Using multi-run mode.")
+            else:
+                _log.info("###: Using single-run mode.")
+            new_d = dict()
+            for case_name, case_d in self.cases.items():
+                _log.info("### %s: initializing case '%s'.", self.full_name, case_name)
+                case = self.DataSource(case_d, parent=self)
+                case.setup()
+                new_d[case_name] = case
+            self.cases = new_d
+            util.transfer_log_cache(close=True)
+
+            for case_name, case in self.cases.items():
+                if not case.failed:
+                    _log.info("### %s: requesting data for case '%s'.",
+                              self.full_name, case_name)
+                    case.request_data()
+                else:
+                    _log.info(("### %s: initialization for case '%s' failed; skipping "
+                               f"data request."), self.full_name, case_name)
+
+                if not case.failed:
+                    _log.info("### %s: running case '%s'.", self.full_name, case_name)
+                    run_mgr = self.RuntimeManager(case, self.EnvironmentManager)
+                    run_mgr.setup()
+                    run_mgr.run()
+                else:
+                    _log.info(("### %s: Data request for case '%s' failed; skipping "
+                               "execution."), self.full_name, case_name)
+
+                out_mgr = self.OutputManager(case)
+                out_mgr.make_output()
+        # multirun mode
         else:
-            _log.info("###: Using single-run mode.")
-        new_d = dict()
-        for case_name, case_d in self.cases.items():
-            _log.info("### %s: initializing case '%s'.", self.full_name, case_name)
-            case = self.DataSource(case_d, parent=self)
-            case.setup()
-            new_d[case_name] = case
-        self.cases = new_d
-        util.transfer_log_cache(close=True)
-
-        for case_name, case in self.cases.items():
-            if not case.failed:
-                _log.info("### %s: requesting data for case '%s'.",
-                          self.full_name, case_name)
-                case.request_data()
-            else:
-                _log.info(("### %s: initialization for case '%s' failed; skipping "
-                           f"data request."), self.full_name, case_name)
-
-            if not case.failed:
-                _log.info("### %s: running case '%s'.", self.full_name, case_name)
-                run_mgr = self.RuntimeManager(case, self.EnvironmentManager)
-                run_mgr.setup()
-                run_mgr.run()
-            else:
-                _log.info(("### %s: Data request for case '%s' failed; skipping "
-                           "execution."), self.full_name, case_name)
-
-            out_mgr = self.OutputManager(case)
-            out_mgr.make_output()
+            pass
 
         tempdirs = TempDirManager()
         tempdirs.cleanup()

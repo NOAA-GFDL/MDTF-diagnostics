@@ -156,7 +156,7 @@ class DataKeyBase(core.MDTFObjectBase, metaclass=util.MDTFABCMeta):
         pass
 
 @util.mdtf_dataclass
-class DataSourceAttributesBase():
+class DataSourceAttributesBase:
     """Class defining attributes that any DataSource needs to specify:
 
     - *CASENAME*: User-supplied label to identify output of this run of the

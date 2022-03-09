@@ -878,8 +878,13 @@ class MDTFFramework(MDTFObjectBase):
         """
         self.parse_flags(cli_obj)
         self.parse_env_vars(cli_obj)
-        pod_list = cli_obj.config.pop('pod_list', None)  # if separate pod_list not in cli_obj, return None
-        if not pod_list:  # single-run mode
+        if self.data_type == 'multi_run':
+            pod_list = cli_obj.config.pop('pod_list', None)  # if separate pod_list not in cli_obj, return None
+            if not pod_list:
+                _log.fatal(("Empty pod_list for multi_run mode. Check that pod_list entry is defined in config file"
+                           "or pass pod cli argument (--all, --example) when calling mdtf."))
+                util.exit_handler(code=1)
+        else:   # single-run mode
             pod_list = cli_obj.config.pop('pods', [])  # remove pods if present; return empty list if not present
         self.pod_list = self.parse_pod_list(pod_list, pod_info_tuple)
         self.parse_case_list(cli_obj, pod_info_tuple)
@@ -994,7 +999,8 @@ class MDTFFramework(MDTFObjectBase):
                               "skipping."), field, n + 1)
                 return None
         # if pods set from CLI, overwrite pods in case list
-        d['pod_list'] = self.set_case_pod_list(d, cli_obj, pod_info_tuple)
+        if self.data_type == 'single_run':
+            d['pod_list'] = self.set_case_pod_list(d, cli_obj, pod_info_tuple)
         return d
 
     def parse_case_list(self, cli_obj, pod_info_tuple):
@@ -1094,11 +1100,6 @@ class MDTFFramework(MDTFObjectBase):
         # single run mode
         if self.data_type == 'single_run':
             self.cases = dict(list(self.cases.items()))
-            new_d = dict()
-            if len(self.cases) > 1:
-                _log.info("###: Using multi-run mode.")
-            else:
-                _log.info("###: Using single-run mode.")
             new_d = dict()
             for case_name, case_d in self.cases.items():
                 _log.info("### %s: initializing case '%s'.", self.full_name, case_name)

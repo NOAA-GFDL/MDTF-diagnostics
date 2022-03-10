@@ -22,6 +22,17 @@ import logging
 _log = logging.getLogger(__name__)
 
 
+# METHOD RESOLUTION ORDER (MRO): What order will classes inherit in MultirunDataSourceBase
+# (and other classes with multiple base classes)?
+# Python3 uses C3 linearization algorithm (https://en.wikipedia.org/wiki/C3_linearization):
+# L[C] = C + merge of linearization of parents of C and list of parents of C
+# in the order they are inherited from left to right.
+# super() returns proxy objects: objects with the ability to dispatch to methods of other objects via delegation.
+# Technically, super is a class overriding the __getattribute__ method.
+# Instances of super are proxy objects providing access to the methods in the MRO.
+# General format is:
+# super(cls, instance-or-subclass).method(*args, **kw)
+# You can get the MRO of a class by running print(class.mro())
 class MultirunDataSourceBase(data_manager.DataSourceBase, core.MDTFObjectBase, util.CaseLoggerMixin,
                              data_manager.AbstractDataSource, metaclass=util.MDTFABCMeta):
     """Base class for handling multirun data needs. Executes query for
@@ -31,10 +42,22 @@ class MultirunDataSourceBase(data_manager.DataSourceBase, core.MDTFObjectBase, u
     """
 
     def __init__(self, case_dict, parent):
-        super().__init__(case_dict)
-        pass
+        super(self).__init__(case_dict, parent)
+        print("MultirunDataSourceBase")
 
-
+# MRO: [<class '__main__.MultirunDataframeQueryDataSourceBase'>
+# <class '__main__.MultirunDataSourceBase'>
+# <class 'src.data_manager.DataframeQueryDataSourceBase'>
+# <class 'src.data_manager.DataSourceBase'>
+# <class 'src.core.MDTFObjectBase'>
+# <class 'src.util.logs.CaseLoggerMixin'>
+# <class 'src.util.logs._CaseAndPODHandlerMixin'>
+# <class 'src.util.logs.MDTFObjectLoggerMixinBase'>
+# <class 'src.data_manager.AbstractDataSource'>
+# <class 'src.data_manager.AbstractQueryMixin'>
+# <class 'src.data_manager.AbstractFetchMixin'>
+# <class 'abc.ABC'>
+# <class 'object'>]
 class MultirunDataframeQueryDataSourceBase(MultirunDataSourceBase, data_manager.DataframeQueryDataSourceBase,
                                            metaclass=util.MDTFABCMeta):
     """DataSource which queries a data catalog made available as a pandas
@@ -42,5 +65,20 @@ class MultirunDataframeQueryDataSourceBase(MultirunDataSourceBase, data_manager.
     """
 
     def __init__(self, case_dict, parent):
-        super(data_manager.DataframeQueryDataSourceBase, self).__init__(case_dict, parent)
-        pass
+        # note that in python3, you do NOT need to include the enclosing class as the first argument to super()
+        # e.g., super(MultirunDataframeQueryDataSourceBase,self)
+        # here, the code calls the super class's init method, which is MultiRunDataSourceBase's init method
+        super(self).__init__(case_dict, parent)
+        print("MultirunDataframeQuerySourceBase")
+
+# [<class '__main__.MultirunLocalFileDataSource'>,
+# <class '__main__.MultirunDataframeQueryDataSourceBase'>,
+# <class '__main__.MultirunDataSourceBase'>,
+# <class 'src.data_manager.LocalFileDataSource'>...
+# ]
+class MultirunLocalFileDataSource(MultirunDataframeQueryDataSourceBase, data_manager.LocalFileDataSource):
+    pass
+
+
+if __name__ == "__main__":
+    print(MultirunLocalFileDataSource.mro())

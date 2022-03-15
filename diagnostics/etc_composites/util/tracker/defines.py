@@ -184,18 +184,13 @@ else:
     composite_var_list.remove('v10')
 
   #renaming the wap500 to w500 used by the code
-  if ('wap500' in composite_var_list):
-    composite_var_list.remove('wap500')
+  if ('omega' in composite_var_list):
+    composite_var_list.remove('omega')
     composite_var_list.append('w500')
-
-  #renaming the pr to tp used by the code
-  if ('pr' in composite_var_list):
-    composite_var_list.remove('pr')
-    composite_var_list.append('tp')
 
   print(f'Variables to run composites: {composite_var_list}')
 
-  composite_available_var_list = ['tp', 'prw', 'w500', 'uv10', 'clt']
+  composite_available_var_list = ['pr', 'prw', 'w500', 'uv10', 'clt']
 
   composite_hem_list = ['NH', 'SH']
   composite_season_list = ['all', 'djf', 'jja', 'son', 'mam', 'warm']

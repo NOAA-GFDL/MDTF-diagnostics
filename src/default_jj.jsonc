@@ -18,17 +18,18 @@
     {
       // "CASENAME" : "QBOi.EXP1.AMIP.001",
       // "CASENAME" : "LEOC.EXP1.MPM.001",
-      "CASENAME" : "GFDL.EXP1.2PM.001",
+      // "CASENAME" : "GFDL.EXP1.2PM.001",
       // "CASENAME" : "ERAI.EXP1.TEST.001",
       // "CASENAME" : "ERA5.MTPR.DEG10.001",
       // "CASENAME" : "ERA5.MTPR.DEG15.001",
       // "CASENAME" : "ERA5.TP.DEG10.001",
       // "CASENAME" : "ERA5.TP.DEG15.001",
       // "CASENAME" : "ERA5.ALL.DEG15.001",
+      "CASENAME" : "ERA5.NEW.DEG10.001",
       "model" : "GFDL",
       "convention" : "GFDL",
       "FIRSTYR" : 2008,
-      "LASTYR" : 2012,
+      "LASTYR" : 2009,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
           // "Wheeler_Kiladis",
@@ -88,13 +89,13 @@
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned by running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  "conda_root": "",
+  "conda_root": "/home/jj/anaconda3",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in the system default
   // location.
-  "conda_env_root": "",
+  "conda_env_root": "/home/jj/anaconda3/envs",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)

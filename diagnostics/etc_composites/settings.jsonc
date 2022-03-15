@@ -24,7 +24,7 @@
       "units": "hPa",
       "positive": "down",
       "axis": "Z"
-    }, 
+    },
     "altitude": {
       "standard_name": "altitude", 
       "units": "m",
@@ -66,11 +66,11 @@
       "dimensions": ["time", "lat", "lon"],
       "use_exact_name": true
     },
-    "wap500": {
+    "w500": {
       "standard_name" : "lagrangian_tendency_of_air_pressure",
       "units": "Pa s-1",
       "dimensions": ["time", "lat", "lon"],
-      "scalar_coordinates": {"lev": 500} 
+      "scalar_coordinates": {"lev": 500}
     },
     "prw": {
       "standard_name" : "atmosphere_mass_content_of_water_vapor",
@@ -82,12 +82,14 @@
       "standard_name" : "eastward_wind",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"], 
+      "modifier": "atmos_height",
       "use_exact_name": true
     },
     "v10": {
       "standard_name" : "westward_wind",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"], 
+      "modifier": "atmos_height",
       "use_exact_name": true
     }
   }

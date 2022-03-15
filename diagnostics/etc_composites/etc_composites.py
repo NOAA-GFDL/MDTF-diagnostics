@@ -12,7 +12,7 @@ import time as timelib
 sys.path.append(os.environ['POD_HOME']+'/util')
 
 # INFO: The variables provided in the settings.jsonc does not match the variables I use in the code. So be careful with this 
-# ex: 'pr' --> 'tp', 'clt' for modis --> 'modis_cld', 'wap500' --> 'w500'
+# ex: 'pr' --> 'tp', 'clt' for modis --> 'modis_cld', 'omega' --> 'w500'
 
 # getting the starting time
 start_time = timelib.time()
@@ -111,7 +111,7 @@ def plot_empty(out_file):
   ''' Function to plot an empty figure, if composites is not run as part of the POD! '''
   plt.figure()
   plt.plot(0, 0, 'w.')
-  plt.text(0, 0, 'Run Composites part of the POD to generate this Figure!\nInclude the variable to "varlist" in settings.jsonc\nAvailable Options: prw, pr, wap500, clt\nAlso available: 10m Wind Speeds; for which include both u10 & v10', va='center', ha='center')
+  plt.text(0, 0, 'Run Composites part of the POD to generate this Figure!\nInclude the variable to "varlist" in settings.jsonc\nAvailable Options: prw, pr, w500, clt\nAlso available: 10m Wind Speeds; for which include both u10 & v10', va='center', ha='center')
   plt.xticks([])
   plt.yticks([])
   plt.savefig(out_file)
@@ -123,10 +123,10 @@ def plot_empty_single(ax, var):
   ax.plot(0, 0, 'w.')
   if (var == 'uv10'):
     ax.text(0, 0, f'Add details of "u10" & "v10" to "varlist"\nin settings.jsonc!', va='center', ha='center')
-  elif (var == 'tp'):
+  elif (var == 'pr'):
     ax.text(0, 0, f'Add details of "pr" to "varlist"\nin settings.jsonc!', va='center', ha='center')
   elif (var == 'w500'):
-    ax.text(0, 0, f'Add details of "wap500" to "varlist"\nin settings.jsonc!', va='center', ha='center')
+    ax.text(0, 0, f'Add details of "w500" to "varlist"\nin settings.jsonc!', va='center', ha='center')
   else:
     ax.text(0, 0, f'Add details of "{var}" to "varlist"\nin settings.jsonc!', va='center', ha='center')
   ax.set_xticks([])
@@ -156,7 +156,7 @@ def create_empty_figs():
   out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_merra_w500_SH_ocean_WARM.png"
   plot_empty(out_file)
 
-  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_tp_SH_ocean_WARM.png"
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_pr_SH_ocean_WARM.png"
   plot_empty(out_file)
   out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_prw_SH_ocean_WARM.png"
   plot_empty(out_file)
@@ -173,7 +173,7 @@ def create_empty_figs():
   out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_merra_w500_NH_ocean_WARM.png"
   plot_empty(out_file)
 
-  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_tp_NH_ocean_WARM.png"
+  out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_pr_NH_ocean_WARM.png"
   plot_empty(out_file)
   out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_prw_NH_ocean_WARM.png"
   plot_empty(out_file)
@@ -192,7 +192,7 @@ def create_empty_figs():
   out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_modis_vars_SH_ocean_WARM.png"
   plot_empty(out_file)
 
-  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_tp_SH_ocean_WARM.png"
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_pr_SH_ocean_WARM.png"
   plot_empty(out_file)
   out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_prw_SH_ocean_WARM.png"
   plot_empty(out_file)
@@ -201,7 +201,7 @@ def create_empty_figs():
   out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_uv10_SH_ocean_WARM.png"
   plot_empty(out_file)
 
-  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_tp_NH_ocean_WARM.png"
+  out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_pr_NH_ocean_WARM.png"
   plot_empty(out_file)
   out_file = f"{os.environ['WK_DIR']}/model/diff_{os.environ['CASENAME']}_erai_prw_NH_ocean_WARM.png"
   plot_empty(out_file)
@@ -238,7 +238,7 @@ os.environ['slp_var'] = 'psl'
 os.environ['slp_var_scale'] = '0.01'
 os.environ['slp_file'] = '*.'+os.environ['slp_var']+'.6hr.nc'
 
-# tp_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['tp_var'] + '.6hr.nc'
+# pr_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['pr_var'] + '.6hr.nc'
 # prw_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['prw_var'] + '.6hr.nc'
 # u10_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['u10_var'] + '.6hr.nc'
 # v10_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['v10_var'] + '.6hr.nc'
@@ -246,11 +246,11 @@ os.environ['slp_file'] = '*.'+os.environ['slp_var']+'.6hr.nc'
 # clt_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['clt_var'] + '.6hr.nc'
 
 if (os.environ['RUN_COMPOSITES'] == 'True'):
-  if ('tp' in comp_vars):
-    os.environ['tp_var'] = 'pr'
-    os.environ['tp_var_scale'] = '3600.'  
-    os.environ['tp_file'] = '*.'+os.environ['tp_var']+'.6hr.nc'
-    tp_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['tp_var'] + '.6hr.nc'
+  if ('pr' in comp_vars):
+    os.environ['pr_var'] = 'pr'
+    os.environ['pr_var_scale'] = '3600.'  
+    os.environ['pr_file'] = '*.'+os.environ['pr_var']+'.6hr.nc'
+    pr_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['pr_var'] + '.6hr.nc'
 
   if ('prw' in comp_vars):
     os.environ['prw_var'] = 'prw'
@@ -270,7 +270,7 @@ if (os.environ['RUN_COMPOSITES'] == 'True'):
     v10_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['v10_var'] + '.6hr.nc'
 
   if ('w500' in comp_vars):
-    os.environ['w500_var'] = 'wap500'
+    os.environ['w500_var'] = 'w500'
     os.environ['w500_var_scale'] = '1'
     os.environ['w500_file'] = '*.'+os.environ['w500_var']+'.6hr.nc'
     w500_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['w500_var'] + '.6hr.nc'
@@ -306,10 +306,10 @@ in_ds.close()
 # reading in the other variables if the composites pod is run
 
 if (os.environ['RUN_COMPOSITES'] == 'True'):
-  if ('tp' in comp_vars):
+  if ('pr' in comp_vars):
     # Reading in total precipitation
-    in_ds = xr.open_dataset(tp_file)
-    tp = in_ds[os.environ['tp_var']]
+    in_ds = xr.open_dataset(pr_file)
+    pr = in_ds[os.environ['pr_var']]
     in_ds.close()
 
   if ('prw' in comp_vars):
@@ -363,13 +363,13 @@ for year in range(sYear, eYear+1):
 
     # variables run in the composites
     if (os.environ['RUN_COMPOSITES'] == 'True'):
-      if ('tp' in comp_vars):
-        tp_sel = tp[ind, :, :]*float(os.environ['tp_var_scale'])
-        out_tp_file= f"{os.environ['WK_DIR']}/tmp/data_converts/tp.{year:04d}.nc"
-        print(out_tp_file)
+      if ('pr' in comp_vars):
+        pr_sel = pr[ind, :, :]*float(os.environ['pr_var_scale'])
+        out_pr_file= f"{os.environ['WK_DIR']}/tmp/data_converts/{os.environ['pr_var']}.{year:04d}.nc"
+        print(out_pr_file)
       if ('prw' in comp_vars):
         prw_sel = prw[ind, :, :]*float(os.environ['prw_var_scale'])
-        out_prw_file= f"{os.environ['WK_DIR']}/tmp/data_converts/prw.{year:04d}.nc"
+        out_prw_file= f"{os.environ['WK_DIR']}/tmp/data_converts/{os.environ['prw_var']}.{year:04d}.nc"
         print(out_prw_file)
       if ('uv10' in comp_vars):
         u10_sel = u10[ind, :, :]*float(os.environ['u10_var_scale'])
@@ -378,11 +378,11 @@ for year in range(sYear, eYear+1):
         print(out_uv10_file)
       if ('w500' in comp_vars):
         w500_sel = w500[ind, :, :]*float(os.environ['w500_var_scale'])
-        out_w500_file= f"{os.environ['WK_DIR']}/tmp/data_converts/w500.{year:04d}.nc"
+        out_w500_file= f"{os.environ['WK_DIR']}/tmp/data_converts/{os.environ['w500_var']}.{year:04d}.nc"
         print(out_w500_file)
       if ('clt' in comp_vars):
         clt_sel = clt[ind, :, :]*float(os.environ['clt_var_scale'])
-        out_clt_file= f"{os.environ['WK_DIR']}/tmp/data_converts/clt.{year:04d}.nc"
+        out_clt_file= f"{os.environ['WK_DIR']}/tmp/data_converts/{os.environ['clt_var']}.{year:04d}.nc"
         print(out_clt_file)
 
     
@@ -419,34 +419,34 @@ for year in range(sYear, eYear+1):
     
     if (os.environ['RUN_COMPOSITES'] == 'True'):
 
-      if ('tp' in comp_vars):
+      if ('pr' in comp_vars):
         ###### Outputting the total precip file
         # creating the xarray dataset
-        out_tp_ds = xr.Dataset(
-            {'tp': (('time', 'lat', 'lon'), tp_sel)}, 
+        out_pr_ds = xr.Dataset(
+            {'pr': (('time', 'lat', 'lon'), pr_sel)}, 
             coords={
                 'time': time, 
                 'lat': lat, 
                 'lon': lon
             })
         # adding the necessary attributes to the file
-        out_tp_ds.tp.attrs['units'] = 'mm/hr'
-        out_tp_ds.time.attrs['delta_t'] = "0000-00-00 06:00:00";
-        out_tp_ds.time.attrs['units'] = f"hours since {year:04d}-01-01 00:00:00";
+        out_pr_ds.pr.attrs['units'] = 'mm/hr'
+        out_pr_ds.time.attrs['delta_t'] = "0000-00-00 06:00:00";
+        out_pr_ds.time.attrs['units'] = f"hours since {year:04d}-01-01 00:00:00";
         if (calendar == 'noleap'):
-            out_tp_ds.time.attrs['calendar'] = '365_day'
+            out_pr_ds.time.attrs['calendar'] = '365_day'
         else:
-            out_tp_ds.time.attrs['calendar'] = calendar
-        out_tp_ds.lon.attrs['long_name'] = 'longitude'
-        out_tp_ds.lon.attrs['standard_name'] = 'longitude'
-        out_tp_ds.lon.attrs['units'] = 'degrees_east'
-        out_tp_ds.lon.attrs['axis'] = 'X'
-        out_tp_ds.lat.attrs['long_name'] = 'latitude'
-        out_tp_ds.lat.attrs['standard_name'] = 'latitude'
-        out_tp_ds.lat.attrs['units'] = 'degrees_north'
-        out_tp_ds.lat.attrs['axis'] = 'Y'  
+            out_pr_ds.time.attrs['calendar'] = calendar
+        out_pr_ds.lon.attrs['long_name'] = 'longitude'
+        out_pr_ds.lon.attrs['standard_name'] = 'longitude'
+        out_pr_ds.lon.attrs['units'] = 'degrees_east'
+        out_pr_ds.lon.attrs['axis'] = 'X'
+        out_pr_ds.lat.attrs['long_name'] = 'latitude'
+        out_pr_ds.lat.attrs['standard_name'] = 'latitude'
+        out_pr_ds.lat.attrs['units'] = 'degrees_north'
+        out_pr_ds.lat.attrs['axis'] = 'Y'  
         # writing to the netcdf file
-        out_tp_ds.to_netcdf(out_tp_file)
+        out_pr_ds.to_netcdf(out_pr_file)
       
       if ('prw' in comp_vars):
         ###### Outputting the total column water vapor file
@@ -628,9 +628,9 @@ if (os.environ['RUN_COMPOSITES'] == 'True'):
   erai_x_1d = erai_x_grid.flatten()
   erai_y_1d = erai_y_grid.flatten()
 
-  if ('tp' in comp_vars):
-    tp_nh_ocean_warm = ds['tp_nh_ocean_warm'].values
-    tp_sh_ocean_warm = ds['tp_sh_ocean_warm'].values
+  if ('pr' in comp_vars):
+    pr_nh_ocean_warm = ds['tp_nh_ocean_warm'].values
+    pr_sh_ocean_warm = ds['tp_sh_ocean_warm'].values
 
   if ('prw' in comp_vars):
     prw_nh_ocean_warm = ds['prw_nh_ocean_warm'].values
@@ -719,16 +719,16 @@ if (os.environ['RUN_COMPOSITES'] == 'True'):
     plot_area_fig(erai_x,erai_y,w500_nh_ocean_warm,title,out_file)
 
 
-  if ('tp' in comp_vars):
+  if ('pr' in comp_vars):
     # ERA SH - Ocean - WARM
-    out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_tp_SH_ocean_WARM.png"
+    out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_pr_SH_ocean_WARM.png"
     title = 'ERA-Interim TP [SH-OCEAN-WARM]'
-    plot_area_fig(erai_x,erai_y,tp_sh_ocean_warm,title,out_file)
+    plot_area_fig(erai_x,erai_y,pr_sh_ocean_warm,title,out_file)
   
     # ERA NH - Ocean - WARM
-    out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_tp_NH_ocean_WARM.png"
+    out_file = f"{os.environ['WK_DIR']}/obs/{os.environ['CASENAME']}_erai_pr_NH_ocean_WARM.png"
     title = 'ERA-Interim TP [NH-OCEAN-WARM]'
-    plot_area_fig(erai_x,erai_y,tp_nh_ocean_warm,title,out_file)
+    plot_area_fig(erai_x,erai_y,pr_nh_ocean_warm,title,out_file)
 
   if ('uv10' in comp_vars):
     # ERA SH - Ocean - WARM
@@ -791,7 +791,7 @@ if (os.environ['RUN_COMPOSITES'] == 'True'):
     plot_empty_single(ax, var)
   
   ax = plt.subplot(4,3,4)
-  hemis = 'SH'; lo = 'ocean'; season = 'warm'; var = 'tp'
+  hemis = 'SH'; lo = 'ocean'; season = 'warm'; var = 'pr'
   if (var in comp_vars):
     model_val = model_data[hemis][lo][season][var]['area_sum']/model_data[hemis][lo][season][var]['area_cnt']
     plt.pcolormesh(erai_x, erai_y, model_val, cmap='jet', vmin=0, vmax=0.6)
@@ -805,7 +805,7 @@ if (os.environ['RUN_COMPOSITES'] == 'True'):
 
   ax = plt.subplot(4,3,5)
   if (var in comp_vars):
-    plt.pcolormesh(erai_x, erai_y, tp_sh_ocean_warm, cmap='jet', vmin=0, vmax=0.6)
+    plt.pcolormesh(erai_x, erai_y, pr_sh_ocean_warm, cmap='jet', vmin=0, vmax=0.6)
     plt.colorbar()
     plt.title('PR [SH-OCEAN-WARM]')
     plt.ylim(-1500, 1500)
@@ -815,7 +815,7 @@ if (os.environ['RUN_COMPOSITES'] == 'True'):
 
   ax = plt.subplot(4,3,6)
   if (var in comp_vars):
-    diff_val = model_val - tp_sh_ocean_warm
+    diff_val = model_val - pr_sh_ocean_warm
     vmax = np.nanpercentile(np.abs(diff_val).flatten(), 95)
     vmin = -1*vmax
     plt.pcolormesh(erai_x, erai_y, diff_val, vmin=vmin, vmax=vmax, cmap='bwr')
@@ -944,7 +944,7 @@ if (os.environ['RUN_COMPOSITES'] == 'True'):
     plot_empty_single(ax, var)
   
   ax = plt.subplot(4,3,4)
-  hemis = 'NH'; lo = 'ocean'; season = 'warm'; var = 'tp'
+  hemis = 'NH'; lo = 'ocean'; season = 'warm'; var = 'pr'
   if (var in comp_vars):
     model_val = model_data[hemis][lo][season][var]['area_sum']/model_data[hemis][lo][season][var]['area_cnt']
     plt.pcolormesh(erai_x, erai_y, model_val, cmap='jet', vmin=0, vmax=0.6)
@@ -958,7 +958,7 @@ if (os.environ['RUN_COMPOSITES'] == 'True'):
 
   ax = plt.subplot(4,3,5)
   if (var in comp_vars):
-    plt.pcolormesh(erai_x, erai_y, tp_nh_ocean_warm, cmap='jet', vmin=0, vmax=0.6)
+    plt.pcolormesh(erai_x, erai_y, pr_nh_ocean_warm, cmap='jet', vmin=0, vmax=0.6)
     plt.colorbar()
     plt.title('TP [NH-OCEAN-WARM]')
     plt.ylim(-1500, 1500)
@@ -968,7 +968,7 @@ if (os.environ['RUN_COMPOSITES'] == 'True'):
 
   ax = plt.subplot(4,3,6)
   if (var in comp_vars):
-    diff_val = model_val - tp_nh_ocean_warm
+    diff_val = model_val - pr_nh_ocean_warm
     vmax = np.nanpercentile(np.abs(diff_val).flatten(), 95)
     vmin = -1*vmax
     plt.pcolormesh(erai_x, erai_y, diff_val, vmin=vmin, vmax=vmax, cmap='bwr')

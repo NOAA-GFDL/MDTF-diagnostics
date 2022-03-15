@@ -52,7 +52,7 @@ debug_stop_at_flag = False
 ################## COPY/LINK THE FILES OVER #######################################
 ###################################################################################
 
-# var_list = ['tp', 'wap500', 'clt', 'slp', 'cls850']
+# var_list = ['tp', 'w500', 'clt', 'slp', 'cls850']
 var_list = defines.composite_var_list
 to_folder = defines.data_folder
 if (not os.path.exists(to_folder)): 

@@ -53,6 +53,7 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
     name: str = util.MANDATORY
     _parent: typing.Any = dc.field(default=util.MANDATORY, compare=False)
     status: ObjectStatus = dc.field(default=ObjectStatus.NOTSET, compare=False)
+    data_type: str = ""
 
     def __post_init__(self):
         if self._id is None:
@@ -1097,10 +1098,10 @@ class MDTFFramework(MDTFObjectBase):
         return False
 
     def main(self):
+        self.cases = dict(list(self.cases.items()))
+        new_d = dict()
         # single run mode
         if self.data_type == 'single_run':
-            self.cases = dict(list(self.cases.items()))
-            new_d = dict()
             for case_name, case_d in self.cases.items():
                 _log.info("### %s: initializing case '%s'.", self.full_name, case_name)
                 case = self.DataSource(case_d, parent=self)
@@ -1131,7 +1132,16 @@ class MDTFFramework(MDTFObjectBase):
                 out_mgr.make_output()
         # multirun mode
         else:
-            pass
+            for pod in self.pod_list:
+                for case_name, case_d in self.cases.items():
+                    _log.info("### %s: initializing case '%s'.", self.full_name, case_name)
+                    case = self.DataSource(case_d, parent=self)
+                    case.setup()
+                   # case.setup_multirun(pod)
+                    new_d[case_name] = case
+                # use info from last case, since POD data is common to all cases
+                pod_config = case.get_pod_config_multirun(pod)
+                self.cases = new_d
 
         tempdirs = TempDirManager()
         tempdirs.cleanup()

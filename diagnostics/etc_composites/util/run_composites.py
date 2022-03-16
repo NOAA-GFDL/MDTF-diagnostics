@@ -347,9 +347,9 @@ for year in year_list:
     # end i_center
   
 
-    if (debug_stop_at_flag):
-      if (date > dt.datetime(year, 1, 31)):
-        break
+    # if (debug_stop_at_flag):
+    #   if (date > dt.datetime(year, 1, 31)):
+    #     break
 
   # end t_step
 

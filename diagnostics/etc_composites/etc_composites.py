@@ -27,7 +27,6 @@ if not os.path.exists(os.environ['WK_DIR'] + '/tmp/data_converts'):
 ###### Creating the TOPO file used by the code #########
 ########################################################
 # have to setup topo file env var, before initial setup, because defines.py needs this variable
-# os.environ['topo_file'] = os.environ['DATADIR'] + '/topo.nc'
 os.environ['topo_file'] = f"{os.environ['WK_DIR']}/tmp/data_converts/topo.nc"
 
 os.environ['hgt_var'] = 'orog'
@@ -237,13 +236,6 @@ eYear = int(os.environ['LASTYR'])
 os.environ['slp_var'] = 'psl'
 os.environ['slp_var_scale'] = '0.01'
 os.environ['slp_file'] = '*.'+os.environ['slp_var']+'.6hr.nc'
-
-# pr_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['pr_var'] + '.6hr.nc'
-# prw_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['prw_var'] + '.6hr.nc'
-# u10_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['u10_var'] + '.6hr.nc'
-# v10_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['v10_var'] + '.6hr.nc'
-# w500_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['w500_var'] + '.6hr.nc'
-# clt_file =  os.environ['MODEL_OUTPUT_DIR'] + '/' + os.environ['CASENAME'] + '.' + os.environ['clt_var'] + '.6hr.nc'
 
 if (os.environ['RUN_COMPOSITES'] == 'True'):
   if ('pr' in comp_vars):

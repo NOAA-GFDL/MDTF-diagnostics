@@ -162,7 +162,7 @@ def area_avg_one_step(lat, lon, values, centerLat, centerLon, bins=None):
   dist_x = np.sqrt(dist**2 - dist_y**2)
 
   # apply mask distance of 1500 km 
-  dist_mask = (dist_x < 1500) & (dist_y < 1500)
+  # dist_mask = (dist_x < 1500) & (dist_y < 1500)
   dist_mask = (dist < 1500)
 
   valid_mask = (dist_mask) & (~np.isnan(values))
@@ -191,7 +191,6 @@ def area_avg_one_step(lat, lon, values, centerLat, centerLon, bins=None):
     dist_bins = np.arange(-1500, 1700, 100)
   else:
     dist_bins = bins[0]
-    ang_bins = bins[1]
 
   H = custom_hist2d(dist_x[valid_mask], dist_y[valid_mask], values[valid_mask], bins=(dist_bins, dist_bins))
 

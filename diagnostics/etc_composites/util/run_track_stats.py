@@ -78,8 +78,8 @@ def read_tracks(year):
   return tracks['cyc'][0]
 
 def plot_2d(ax, x, y, z): 
-  cf = ax.contourf(x, y, z)
-  cf = ax.colorbar(cax=cax)
+  _ = ax.contourf(x, y, z)
+  _ = ax.colorbar(cax=cax)
 
 def get_data(tracks):
 
@@ -119,7 +119,7 @@ def track_density_2d(lon, lat, ax=None):
     # levels=np.arange(0, 0.004, 0.0001)
     levels=10 # cuz I don't know the range of the colorbar
     cf = ax.contourf(H['lon'], H['lat'], H['cnts']/np.sum(H['cnts']), cmap='jet', levels=levels, extend='max')
-    cb = plt.colorbar(cf, ax=ax, shrink=0.5, extend='max')
+    _ = plt.colorbar(cf, ax=ax, shrink=0.5, extend='max')
   return H
 
 def track_feature_density_2d(lon, lat, ax=None):
@@ -127,7 +127,7 @@ def track_feature_density_2d(lon, lat, ax=None):
   if (ax is not None): 
     levels=np.arange(0, 0.004, 0.0001)
     cf = ax.contourf(H['lon'], H['lat'], H['cnts']/np.sum(H['cnts']), cmap='jet', levels=levels, extend='max')
-    cb = plt.colorbar(cf, ax=ax, shrink=0.5, extend='max')
+    _ = plt.colorbar(cf, ax=ax, shrink=0.5, extend='max')
   return H
 
 ############### main test code #################
@@ -138,18 +138,6 @@ if (not os.path.exists(mat_file)):
   print('No MAT file, create the mat file from tracker output')
   os.system(f"python3 {os.environ['POD_HOME']}/util/run_create_dict.py")
 
-# data = {'genesis': {'lat': [], 'lon': [], 'slp': []}, \
-#       'lysis': {'lat': [], 'lon': [], 'slp': []}, \
-#       'all': {'lat': [], 'lon': [], 'slp': []}}
-# # loop through all the years
-# for year in range(defines.over_write_years[0], defines.over_write_years[1]+1):
-#   tracks = read_tracks(year)
-#   tmp = get_data(tracks)
-#   for key in data.keys():
-#     for inner_key in data[key].keys():
-#       data[key][inner_key].extend(tmp[key][inner_key])
-
-# -- new statistic
 # loop through all the years
 # this part of the code is where I have to keep adding to the histogram
 # because now we only have to count one occurence per grid, not all occurences
@@ -227,8 +215,6 @@ cmap = 'jet'
 fig, axes = plt.subplots(ncols=2, nrows=2, subplot_kw={'projection': cartopy.crs.PlateCarree()}, figsize=(16,8))
 
 ax = global_map(axes[0, 0])
-# levels = np.linspace(0, 0.0025, 10)
-# levels = np.linspace(0, 0.005, 10)
 levels = np.arange(0, 0.011, 0.001)
 ax.set_title(f'Feature Density')
 cf = ax.contourf(lon_mids, lat_mids, stats['all']['feature_density'], cmap=cmap, extend='max', levels=levels)
@@ -237,8 +223,6 @@ ax.set_ylim(-60, 60)
 
 ax = global_map(axes[0, 1])
 ax.set_title(f'Track Density')
-# levels = np.linspace(0, 0.0025, 10)
-# levels = np.linspace(0, 0.005, 10)
 levels = np.arange(0, 0.011, 0.001)
 cf = ax.contourf(lon_mids, lat_mids, stats['all']['track_density'], cmap=cmap, extend='max', levels=levels)
 plt.colorbar(cf, ax=ax, shrink=0.7, ticks=np.arange(0, 0.015, 0.005), orientation='horizontal')
@@ -246,7 +230,6 @@ ax.set_ylim(-60, 60)
 
 ax = global_map(axes[1, 0])
 ax.set_title(f'Genesis')
-# levels = 20
 levels = np.arange(0, 0.011, 0.001)
 cf = ax.contourf(lon_mids, lat_mids, stats['genesis'], cmap=cmap, extend='max', levels=levels)
 plt.colorbar(cf, ax=ax, shrink=0.7, ticks=np.arange(0, 0.015, 0.005), orientation='horizontal')
@@ -254,7 +237,6 @@ ax.set_ylim(-60, 60)
 
 ax = global_map(axes[1, 1])
 ax.set_title(f'Lysis')
-levels = 20
 levels = np.arange(0, 0.011, 0.001)
 cf = ax.contourf(lon_mids, lat_mids, stats['lysis'], cmap=cmap, extend='max', levels=levels)
 plt.colorbar(cf, ax=ax, shrink=0.7, ticks=np.arange(0, 0.015, 0.005), orientation='horizontal')

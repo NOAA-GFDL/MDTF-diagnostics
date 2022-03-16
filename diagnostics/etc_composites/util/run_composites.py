@@ -9,28 +9,14 @@ if not sys.warnoptions:
   warnings.simplefilter("ignore")
 
 import numpy as np 
-import scipy.io as sio
 import matplotlib.pyplot as plt
 import os, glob
-from netCDF4 import Dataset
 
-# # temporarily defines all the enironmental variables to test the codee
-# os.environ['DATADIR'] = '/localdrive/drive10/jj/mdtf/inputdata/model/GFDL.EXP1.2PM.001' 
-# os.environ['obs_lat_distrib_file'] = '/localdrive/drive10/jj/mdtf/inputdata/obs_data/etc_composites/erai_lat_distrib.pkl' 
-# os.environ['FIRSTYR'] = '2008' 
-# os.environ['LASTYR'] = '2012' 
-# os.environ['topo_file'] = '/localdrive/drive10/jj/mdtf/inputdata/model/GFDL.EXP1.2PM.001/topo.nc' 
-# os.environ['POD_HOME'] = '/localdrive/drive10/jj/mdtf/MDTF-diagnostics/diagnostics/etc_composites' 
-# os.environ['WK_DIR'] = '/localdrive/drive10/jj/mdtf/wkdir/MDTF_GFDL.EXP1.2PM.v14.001_2008_2012/etc_composites' 
-# os.environ['CASENAME'] = 'GFDL.EXP1.2PM.001' 
-    
 import defines
 import datetime as dt
 
 import xarray as xr
 import pandas as pd
-
-import pdb
 
 import pickle
 # from tqdm import tqdm

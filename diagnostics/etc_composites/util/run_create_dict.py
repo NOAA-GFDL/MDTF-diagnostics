@@ -4,18 +4,6 @@ import numpy as np
 import os
 import pandas as pd
 
-# # temp stuff
-# os.environ['DATADIR'] = '/localdrive/drive10/jj/mdtf/inputdata/model/ERA5.ALL.DEG15.001'
-# # os.environ['WK_DIR'] = '/localdrive/drive10/jj/mdtf/wkdir/MDTF_ERA5.ALL.DEG15.001_1950_1950/etc_composites'
-# os.environ['WK_DIR'] = '/localdrive/drive10/jj/mdtf/wkdir/MDTF_ERA5.ALL.DEG15.001_1950_2019/etc_composites'
-# os.environ['POD_HOME'] = '/localdrive/drive10/jj/mdtf/MDTF-diagnostics/diagnostics/etc_composites'
-# os.environ['topo_file'] = '/localdrive/drive10/jj/mdtf/inputdata/model/ERA5.ALL.DEG15.001/topo.nc'
-# os.environ['obs_lat_distrib_file'] = '/localdrive/drive10/jj/mdtf/inputdata/obs_data/etc_composites/erai_lat_distrib.pkl'
-# os.environ['FIRSTYR'] = '1950'
-# os.environ['LASTYR'] = '2019'
-# os.environ['RUN_MCMS'] = 'True'
-# os.environ['USE_EXTERNAL_TRACKS'] = 'True'
-
 import defines
 import xarray as xr
 import composites
@@ -43,7 +31,6 @@ def read_in_txt_file(start_year, end_year):
 
   # the input track file has to be provided as track_data.txt in the "inputdata/{model}/6hr" directory, under the model name
   # the tracks are normally tracked on 6 hourly data 
-  # track_file = f"{os.environ['DATADIR']}/6hr/track_output.txt"
   track_file = defines.track_file
 
   main_df = pd.read_csv(track_file, sep='\s+') 

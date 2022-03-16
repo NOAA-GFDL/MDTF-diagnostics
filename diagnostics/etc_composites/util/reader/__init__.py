@@ -29,10 +29,9 @@ def get_date(matlab_datenum):
   return date
 
 def read_center_from_mat_file(in_file):
-
-  # year = 2007
-  # in_file = '/mnt/drive1/processed_data/tracks/merra2_tracks/ERAI_%d_cyc.mat'%(year)
-
+  '''
+  Code to read in the center's matlab file that is created using main_create_dict.py
+  '''
   data = sio.loadmat(in_file)['cyc']
 
   lat = []
@@ -92,18 +91,6 @@ def read_center_from_mat_file(in_file):
   all_select_flag = np.squeeze(np.asarray(all_select_flag))
   obs_select_flag = np.squeeze(np.asarray(obs_select_flag))
 
-  # lon[lon > 180] -= 360.
 
   return dot_dict({'lat': lat, 'lon': lon, 'date': date, 'yy':yy, 'mm':mm, 'dd':dd, 'hh':hh, 'all_select_flag': all_select_flag, 'obs_select_flag': obs_select_flag, 'warm_flag': warm_flag,
       'obs_flag': obs_flag, 'lm_flag': lm_flag})
-
-def read_center_from_txt_file(in_file):
-  '''Read the centers from the output text files from the TRACKER code.'''
-  pass
-
-def create_intermediate_file(lat, lon, time):
-  '''
-  Create a netcdf file that can be accessed by the front detection code.
-  An Alternative method to just getting in the read in files.
-  '''
-  pass

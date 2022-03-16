@@ -53,7 +53,6 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
     name: str = util.MANDATORY
     _parent: typing.Any = dc.field(default=util.MANDATORY, compare=False)
     status: ObjectStatus = dc.field(default=ObjectStatus.NOTSET, compare=False)
-    data_type: str = ""
 
     def __post_init__(self):
         if self._id is None:
@@ -804,7 +803,7 @@ class MDTFFramework(MDTFObjectBase):
         self.pod_list = []
         self.cases = dict()
         self.global_env_vars = dict()
-        self.data_type = str
+        self.multirun = False
 
         try:
             # load pod data
@@ -879,7 +878,7 @@ class MDTFFramework(MDTFObjectBase):
         """
         self.parse_flags(cli_obj)
         self.parse_env_vars(cli_obj)
-        if self.data_type == 'multi_run':
+        if self.multirun:
             pod_list = cli_obj.config.pop('pod_list', None)  # if separate pod_list not in cli_obj, return None
             if not pod_list:
                 _log.fatal(("Empty pod_list for multi_run mode. Check that pod_list entry is defined in config file"
@@ -903,8 +902,8 @@ class MDTFFramework(MDTFObjectBase):
                          cli_obj.config.get('convention', ''),
                          tags=util.ObjectLogTag.BANNER
                          )
-        self.data_type = cli_obj.config.get('data_type')
-        if self.data_type == 'multi_run':
+        if cli_obj.config.get('data_type') == 'multi_run':
+            self.multirun = True
             _log.info("Running framework in multi-run mode ")
         else:
             _log.info("Running framework in single-run mode ")
@@ -1000,7 +999,7 @@ class MDTFFramework(MDTFObjectBase):
                               "skipping."), field, n + 1)
                 return None
         # if pods set from CLI, overwrite pods in case list
-        if self.data_type == 'single_run':
+        if self.multirun:
             d['pod_list'] = self.set_case_pod_list(d, cli_obj, pod_info_tuple)
         return d
 
@@ -1101,7 +1100,7 @@ class MDTFFramework(MDTFObjectBase):
         self.cases = dict(list(self.cases.items()))
         new_d = dict()
         # single run mode
-        if self.data_type == 'single_run':
+        if not self.multirun:
             for case_name, case_d in self.cases.items():
                 _log.info("### %s: initializing case '%s'.", self.full_name, case_name)
                 case = self.DataSource(case_d, parent=self)
@@ -1142,6 +1141,7 @@ class MDTFFramework(MDTFObjectBase):
                 # use info from last case, since POD data is common to all cases
                 pod_config = case.get_pod_config_multirun(pod)
                 self.cases = new_d
+                util.transfer_log_cache(close=True)
 
         tempdirs = TempDirManager()
         tempdirs.cleanup()

@@ -248,8 +248,9 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         self.attrs = util.coerce_to_dataclass(
             case_dict, self._AttributesClass, log=self.log, init=True
         )
-        self.data_type = parent.data_type
-        if self.data_type == 'single_run':
+
+        self.multirun = parent.multirun
+        if not self.multirun:
             self.pods = dict.fromkeys(case_dict.get('pod_list', []))
 
         # set variable name convention
@@ -336,9 +337,9 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
     # -------------------------------------
 
     def setup(self):
-        if self.data_type == "multi_run":
+        if self.multirun:
             pass
-        elif self.data_type == "single_run":
+        else:
             for pod_name in self.pods:
                 self.pods[pod_name] = \
                     self._DiagnosticClass.from_config(pod_name, parent=self)
@@ -360,13 +361,16 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             for v in self.iter_vars_only(active=None):
                 _log.debug("%s", v.debug_str())
             _log.debug('#' * 70)
-        else:
-            raise util.FatalErrorEvent(
-                f"{self.data_type} is not a valid data_type. Must be single_run or multi_run."
-            )
 
     def get_pod_config_multirun(self, pod_name):
         pod = self._DiagnosticClass.from_config(pod_name, parent=self)
+        pod.multirun = True
+        try:
+            pod.setup(self)
+        except Exception as exc:
+            chained_exc = util.chain_exc(exc, "setting up Multirun DataSource",
+                                         util.PodConfigError)
+            pod.deactivate(chained_exc)
         return pod
 
     def setup_pod(self, pod):

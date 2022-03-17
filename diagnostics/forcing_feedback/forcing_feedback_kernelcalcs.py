@@ -53,12 +53,13 @@ varnames = ["ta","ts","hus","rsus","rsds","rsuscs","rsdscs","rsdt","rsut","rsutc
 model_mainvar_pert = {}
 i=0
 for varname in varnames:
-    nc = xr.open_dataset(os.environ["DATADIR"]+"/mon/"+os.environ[varname+"_file"])
+    #nc = xr.open_dataset(os.environ["DATADIR"]+"/mon/"+os.environ[varname+"_file"])
+    nc = xr.open_dataset(os.environ[varname.upper()+"_FILE"])
     model_mainvar_pert[os.environ[varname+"_var"]] = nc[os.environ[varname+"_var"]].values
     if i == 0:
        lat_model = nc[os.environ["lat_coord"]].values
        lon_model = nc[os.environ["lon_coord"]].values
-       lev_model = nc[os.environ["lev_coord"]].values
+       lev_model = nc[os.environ["plev_coord"]].values
        time_model = nc[os.environ["time_coord"]].values
     nc.close()
     i += 1
@@ -93,7 +94,6 @@ swclr_a_kern_TOA = latlonr3_3D4D(swclr_a_kern_TOA,lat_kern,lon_kern,lat_model,lo
 ps_kern_TOA = latlonr3_3D4D(ps_kern_TOA,lat_kern,lon_kern,lat_model,lon_model, \
              model_mainvar_climo[os.environ["ts_var"]])
 
-
 #Kernels have now been regridded to the model/observation grid
 lat_kern = lat_model
 lon_kern = lon_model
@@ -118,6 +118,7 @@ for varname in varnames:
                  f = interp1d(np.log(lev_model), model_mainvar_climo[os.environ[varname+"_var"]], \
                        axis=1,bounds_error=False,fill_value='extrapolate')
                  model_mainvar_climo[os.environ[varname+"_var"]] = f(np.log(lev_kern))
+
 
 
 #Pressure of upper boundary of each vertical layer
@@ -205,7 +206,6 @@ fluxanom_lw_q_tot_TOA[fluxanom_lw_q_tot_TOA==-float('Inf')] = np.nan
 fluxanom_lw_q_clr_TOA[fluxanom_lw_q_clr_TOA==-float('Inf')] = np.nan
 
 
-
 #Compute surface albedo change
 alb_pert_tot = model_mainvar_pert[os.environ["rsus_var"]]/model_mainvar_pert[os.environ["rsds_var"]]
 alb_climo_tot = model_mainvar_climo[os.environ["rsus_var"]]/model_mainvar_climo[os.environ["rsds_var"]]
@@ -249,16 +249,15 @@ Rclr_SW_TOA_climo = model_mainvar_climo[os.environ["rsdt_var"]]-model_mainvar_cl
 fluxanom_Rcre_LW_TOA = fluxanom_Rtot_LW_TOA - fluxanom_Rclr_LW_TOA
 fluxanom_Rcre_SW_TOA = fluxanom_Rtot_SW_TOA - fluxanom_Rclr_SW_TOA
 
-
 #Compute Instantaneous Radiative Forcing as difference between NET Radiative Flux Anomalies and
 #the sum of all indivisual radiative flux anomalies. Total-sky IRF computed as 
 #Clear-Sky IRF divided by cloud masking constant. NOTE, these cloud masking constants may not apply
 #to user's specific model experiment.
 IRF_lw_clr_TOA = fluxanom_Rclr_LW_TOA - fluxanom_pl_clr_TOA - fluxanom_lr_clr_TOA  - \
                      fluxanom_lw_q_clr_TOA - fluxanom_pl_sfc_clr_TOA
-IRF_lw_tot_TOA = IRF_lw_clr_TOA / os.environ["LW_CLOUDMASK"]
+IRF_lw_tot_TOA = IRF_lw_clr_TOA / np.double(os.environ["LW_CLOUDMASK"])
 IRF_sw_clr_TOA = fluxanom_Rclr_SW_TOA - fluxanom_sw_q_clr_TOA - fluxanom_a_sfc_clr_TOA
-IRF_sw_tot_TOA = IRF_sw_clr_TOA / os.environ["SW_CLOUDMASK"]
+IRF_sw_tot_TOA = IRF_sw_clr_TOA / np.double(os.environ["SW_CLOUDMASK"])
 
 #Compute Cloud Radiative Flux Anomalies as dCRE minus correction for cloud masking using
 #kernel-derived IRF and individual flux anomalies (See e.g. Soden et al. 2008)

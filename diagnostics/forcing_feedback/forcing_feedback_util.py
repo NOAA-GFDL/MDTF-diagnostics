@@ -271,9 +271,6 @@ def latlonr3_3D4D(variable, lat_start, lon_start, lat_end, lon_end,kern):
          variable_new = np.empty((shp_start[0],shp_start[1],shp_kern[2],shp_kern[3]))*np.nan
          for ll in range(shp_start[1]):
              for kk in range(shp_start[0]):
-                 #print(ll)
-                 #print(kk)
-                 #print(np.squeeze(variable[kk,ll,:,:]).T.flatten())
                  variable_new[kk,ll,:,:] = griddata((Y_start.flatten(), \
                  X_start.flatten()),np.squeeze(variable[kk,ll,:,:]).T.flatten(), \
                  (Y_kern.flatten(),X_kern.flatten()),fill_value=np.nan).reshape(shp_kern[3],shp_kern[2]).T
@@ -317,7 +314,7 @@ def globemean_3D(var,w):
 
 # ======================================================================
 # fluxanom_nc_create
-#
+# 
 
 def fluxanom_nc_create(variable,lat,lon,fbname):
 
@@ -326,9 +323,8 @@ def fluxanom_nc_create(variable,lat,lon,fbname):
     Saves 2D feedback or forcing variables into a NetCDF
 
     '''
-
     var = xr.DataArray(variable,coords=[lat,lon],dims=['lat','lon'],name=fbname)
-    var.to_netcdf(os.environ['WK_DIR']+'/model/fluxanom2D_'+fbname+'.nc')
+    var.to_netcdf(os.environ['WK_DIR']+'/model/netCDF/fluxanom2D_'+fbname+'.nc')
 
     return None
 
@@ -396,7 +392,7 @@ def bargraph_plotting(model_bar,obs_bar,var_units,var_legnames,var_filename):
     plt.axhline(0,color='black',lw=1)
     plt.ylabel(var_units)
     plt.xticks([r + barWidth for r in range(len(model_bar))],var_legnames)
-    plt.legend(loc = "upper left")
+    plt.legend(loc = "upper right")
     plt.savefig(os.environ['WK_DIR']+'/model/PS/forcing_feedback_globemean_'+var_filename+'.eps')
     plt.close()
 
@@ -409,7 +405,7 @@ def bargraph_plotting(model_bar,obs_bar,var_units,var_legnames,var_filename):
 # forcing_feedback_plots.py
 
 def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
-                       model_origlon,lon_m,lat_m,var1_obs,var2_name, \
+                       model_origlon,lon_m,lat_m,lon_o,lat_o,var1_obs,var2_name, \
                        var2_model,var2_obs,var_units,var_filename):
 
     '''
@@ -422,14 +418,14 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
 
 
     fig,axs = plt.subplots(2, 2,subplot_kw=dict(projection= \
-              ccrs.PlateCarree(central_longitude=0)))
+              ccrs.PlateCarree(central_longitude=180)),figsize=(8,8))
     
     axs[0, 0].set_title(var1_name+' - Model')
     if ((np.max(model_origlon)>300)): #convert 0-360 lon to -180-180 lon for plotting
        start1a = var1_model[...,0:np.int(len(model_origlon)/2)]
        start1b = var1_model[...,np.int(len(model_origlon)/2):]
        var1_model = np.concatenate((start1b,start1a),axis=1)
-    axs[0, 0].set_extent([-180,180,-80,80])
+    #axs[0, 0].set_extent([-180,180,-80,80])
     cs = axs[0, 0].contourf(lon_m,lat_m,var1_model,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs1[0], \
                        vmax=cbar_levs1[-1],levels=cbar_levs1,extend='both')
@@ -439,20 +435,20 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
     g1.ylabels_left = True
     g1.ylocator = mticker.FixedLocator(np.arange(-60,61,30))
     g1.yformatter = LATITUDE_FORMATTER
-    if (cbar_levs1 != cbar_levs2):
-       cbar = plt.colorbar(cs,ax=axs.flat,orientation='horizontal',aspect=25)
+    if np.all(cbar_levs1 == cbar_levs2)==False:
+       cbar = plt.colorbar(cs,ax=axs[0,0],orientation='horizontal',aspect=25)
        cbar.set_label(var_units)
 
     axs[0, 1].set_title(var1_name+' - Obs.')
-    axs[0, 1].set_extent([-180,180,-80,80])
-    cs = axs[0, 1].contourf(lon_m,lat_m,var1_obs,cmap=plt.cm.RdBu_r, \
+    #axs[0, 1].set_extent([-180,180,-80,80])
+    cs = axs[0, 1].contourf(lon_o,lat_o,var1_obs,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs1[0], \
                        vmax=cbar_levs1[-1],levels=cbar_levs1,extend='both')
     axs[0, 1].coastlines()
     g1 = axs[0, 1].gridlines(linestyle=':')
     g1.xlines = False
-    if (cbar_levs1 != cbar_levs2):
-       cbar = plt.colorbar(cs,ax=axs.flat,orientation='horizontal',aspect=25)
+    if np.all(cbar_levs1 == cbar_levs2)==False:
+       cbar = plt.colorbar(cs,ax=axs[0,1],orientation='horizontal',aspect=25)
        cbar.set_label(var_units)
 
     axs[1, 0].set_title(var2_name+' - Model')
@@ -460,7 +456,7 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
        start1a = var2_model[...,0:np.int(len(model_origlon)/2)]
        start1b = var2_model[...,np.int(len(model_origlon)/2):]
        var2_model = np.concatenate((start1b,start1a),axis=1)
-    axs[1, 0].set_extent([-180,180,-80,80])
+    #axs[1, 0].set_extent([-180,180,-80,80])
     cs = axs[1, 0].contourf(lon_m,lat_m,var2_model,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs2[0], \
                        vmax=cbar_levs2[-1],levels=cbar_levs2,extend='both')
@@ -470,21 +466,25 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
     g1.ylabels_left = True
     g1.ylocator = mticker.FixedLocator(np.arange(-60,61,30))
     g1.yformatter = LATITUDE_FORMATTER
-    if (cbar_levs1 != cbar_levs2):
-       cbar = plt.colorbar(cs,ax=axs.flat,orientation='horizontal',aspect=25)
+    if np.all(cbar_levs1 == cbar_levs2)==False:
+       cbar = plt.colorbar(cs,ax=axs[1,0],orientation='horizontal',aspect=25)
        cbar.set_label(var_units)
 
     axs[1, 1].set_title(var2_name+' - Obs.')
-    axs[1, 1].set_extent([-180,180,-80,80])
-    cs = axs[1, 1].contourf(lon_m,lat_m,var2_obs,cmap=plt.cm.RdBu_r, \
+    #axs[1, 1].set_extent([-180,180,-80,80])
+    cs = axs[1, 1].contourf(lon_o,lat_o,var2_obs,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs2[0], \
                        vmax=cbar_levs2[-1],levels=cbar_levs2,extend='both')
     axs[1, 1].coastlines()
     g1 = axs[1, 1].gridlines(linestyle=':')
     g1.xlines = False
-    cbar = plt.colorbar(cs,ax=axs.flat,orientation='horizontal',aspect=25)
-    cbar.set_label(var_units)
+    if np.all(cbar_levs1 == cbar_levs2)==False:
+       cbar = plt.colorbar(cs,ax=axs[1,1],orientation='horizontal',aspect=25)
+       cbar.set_label(var_units)
 
+    if np.all(cbar_levs1 == cbar_levs2)==True:
+       cbar = plt.colorbar(cs,ax=axs.flat,orientation='horizontal',aspect=25)
+       cbar.set_label(var_units)
     plt.savefig(os.environ['WK_DIR']+'/model/PS/forcing_feedback_maps_'+ \
                 var_filename+'.eps',bbox_inches='tight')
     plt.close()
@@ -496,7 +496,7 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
 # forcing_feedback_plots.py
 
 def map_plotting_2subs(cbar_levs,var_name,var_model, \
-                       model_origlon,lon_m,lat_m,var_obs, \
+                       model_origlon,lon_m,lat_m,lon_o,lat_o,var_obs, \
                        var_units,var_filename):
 
     '''
@@ -507,14 +507,14 @@ def map_plotting_2subs(cbar_levs,var_name,var_model, \
     '''
 
     fig,axs = plt.subplots(1, 2,subplot_kw=dict(projection= \
-              ccrs.PlateCarree(central_longitude=0)))
+              ccrs.PlateCarree(central_longitude=180)))
 
     axs[0].set_title(var_name+' - Model')
     if ((np.max(model_origlon)>300)): #convert 0-360 lon to -180-180 lon for plotting
        start1a = var_model[...,0:np.int(len(model_origlon)/2)]
        start1b = var_model[...,np.int(len(model_origlon)/2):]
        var_model = np.concatenate((start1b,start1a),axis=1)
-    axs[0].set_extent([-180,180,-80,80])
+    #axs[0].set_extent([-180,180,-80,80])
     axs[0].contourf(lon_m,lat_m,var_model,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs[0], \
                        vmax=cbar_levs[-1],levels=cbar_levs,extend='both')
@@ -526,8 +526,8 @@ def map_plotting_2subs(cbar_levs,var_name,var_model, \
     g1.yformatter = LATITUDE_FORMATTER
 
     axs[1].set_title(var_name+' - Obs.')
-    axs[1].set_extent([-180,180,-80,80])
-    cs = axs[1].contourf(lon_m,lat_m,var_obs,cmap=plt.cm.RdBu_r, \
+    #axs[1].set_extent([-180,180,-80,80])
+    cs = axs[1].contourf(lon_o,lat_o,var_obs,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs[0], \
                        vmax=cbar_levs[-1],levels=cbar_levs,extend='both')
     axs[1].coastlines()
@@ -536,7 +536,6 @@ def map_plotting_2subs(cbar_levs,var_name,var_model, \
 
     cbar = plt.colorbar(cs,ax=axs.flat,orientation='horizontal',aspect=25)
     cbar.set_label(var_units)
-
     plt.savefig(os.environ['WK_DIR']+'/model/PS/forcing_feedback_maps_'+ \
                 var_filename+'.eps',bbox_inches='tight')
     plt.close()

@@ -17,10 +17,14 @@
 import os
 import numpy as np
 import xarray as xr
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 
 from forcing_feedback_util import globemean_2D
 from forcing_feedback_util import bargraph_plotting
 from forcing_feedback_util import map_plotting_4subs
+from forcing_feedback_util import map_plotting_2subs
 
 # Read in observational data
 nc_obs = xr.open_dataset(os.environ["OBS_DATA"]+"/forcing_feedback_obs.nc")
@@ -30,17 +34,17 @@ llons_obs, llats_obs = np.meshgrid(lon_obs,lat_obs)
 
 #Read in model results
 
-nc_pl = xr.open_dataset(os.environ["WK_DIR"]+"/model/fluxanom2D_Planck.nc")
-nc_lr = xr.open_dataset(os.environ["WK_DIR"]+"/model/fluxanom2D_LapseRate.nc")
-nc_lw_q = xr.open_dataset(os.environ["WK_DIR"]+"/model/fluxanom2D_LW_WaterVapor.nc")
-nc_sw_q = xr.open_dataset(os.environ["WK_DIR"]+"/model/fluxanom2D_SW_WaterVapor.nc")
-nc_alb = xr.open_dataset(os.environ["WK_DIR"]+"/model/fluxanom2D_SfcAlbedo.nc")
-nc_lw_c = xr.open_dataset(os.environ["WK_DIR"]+"/model/fluxanom2D_LW_Cloud.nc")
-nc_sw_c = xr.open_dataset(os.environ["WK_DIR"]+"/model/fluxanom2D_SW_Cloud.nc")
-nc_lw_irf = xr.open_dataset(os.environ["WK_DIR"]+"/model/fluxanom2D_LW_IRF.nc")
-nc_sw_irf = xr.open_dataset(os.environ["WK_DIR"]+"/model/fluxanom2D_SW_IRF.nc")
-nc_lw_netrad = xr.open_dataset(os.environ["WK_DIR"]+"/model/fluxanom2D_LW_Rad.nc")
-nc_sw_netrad = xr.open_dataset(os.environ["WK_DIR"]+"/model/fluxanom2D_SW_Rad.nc")
+nc_pl = xr.open_dataset(os.environ["WK_DIR"]+"/model/netCDF/fluxanom2D_Planck.nc")
+nc_lr = xr.open_dataset(os.environ["WK_DIR"]+"/model/netCDF/fluxanom2D_LapseRate.nc")
+nc_lw_q = xr.open_dataset(os.environ["WK_DIR"]+"/model/netCDF/fluxanom2D_LW_WaterVapor.nc")
+nc_sw_q = xr.open_dataset(os.environ["WK_DIR"]+"/model/netCDF/fluxanom2D_SW_WaterVapor.nc")
+nc_alb = xr.open_dataset(os.environ["WK_DIR"]+"/model/netCDF/fluxanom2D_SfcAlbedo.nc")
+nc_lw_c = xr.open_dataset(os.environ["WK_DIR"]+"/model/netCDF/fluxanom2D_LW_Cloud.nc")
+nc_sw_c = xr.open_dataset(os.environ["WK_DIR"]+"/model/netCDF/fluxanom2D_SW_Cloud.nc")
+nc_lw_irf = xr.open_dataset(os.environ["WK_DIR"]+"/model/netCDF/fluxanom2D_LW_IRF.nc")
+nc_sw_irf = xr.open_dataset(os.environ["WK_DIR"]+"/model/netCDF/fluxanom2D_SW_IRF.nc")
+nc_lw_netrad = xr.open_dataset(os.environ["WK_DIR"]+"/model/netCDF/fluxanom2D_LW_Rad.nc")
+nc_sw_netrad = xr.open_dataset(os.environ["WK_DIR"]+"/model/netCDF/fluxanom2D_SW_Rad.nc")
 
 lat_model = nc_sw_irf.lat.values
 weights_model = np.cos(np.deg2rad(lat_model))
@@ -51,24 +55,28 @@ weights_obs = np.cos(np.deg2rad(lat_obs))
 #Figure 1: Total Radiation
 LW_RA_Model = globemean_2D(nc_lw_netrad.LW_Rad.values,weights_model)
 SW_RA_Model = globemean_2D(nc_sw_netrad.SW_Rad.values,weights_model)
-bars1 = [LW_RA_Model,SW_RA_Model]
+Net_RA_Model = LW_RA_Model + SW_RA_Model
+bars1 = [Net_RA_Model,LW_RA_Model,SW_RA_Model]
 LW_RA_Obs = globemean_2D(nc_obs.LW_Rad.values,weights_obs)
 SW_RA_Obs = globemean_2D(nc_obs.SW_Rad.values,weights_obs)
-bars2 = [LW_RA_Obs,SW_RA_Obs]
+Net_RA_Obs = LW_RA_Obs + SW_RA_Obs
+bars2 = [Net_RA_Obs,LW_RA_Obs,SW_RA_Obs]
 units = 'W/$m^2$/K'
-legendnames = ['LW Rad', 'SW Rad']
+legendnames = ['Net Radiation', 'LW Rad', 'SW Rad']
 filename = 'Rad'
 bargraph_plotting(bars1,bars2,units,legendnames,filename)
 
 #Figure 2: IRF
-LW_IRF_Model = globemean_2D(nc_lw_irf.LW_IRF.values,weights_model)
-SW_IRF_Model = globemean_2D(nc_sw_irf.SW_IRF.values,weights_model)
-bars1 = 12*[LW_IRF_Model,SW_IRF_Model] #converting from per month to per yr
-LW_IRF_Obs = globemean_2D(nc_obs.LW_IRF.values,weights_obs)
-SW_IRF_Obs = globemean_2D(nc_obs.SW_IRF.values,weights_obs)
-bars2 = 12*[LW_IRF_Obs,SW_IRF_Obs] #converting from per month to per yr
+LW_IRF_Model = 12*globemean_2D(nc_lw_irf.LW_IRF.values,weights_model) #converting from W/m2/month to W/m2/yr
+SW_IRF_Model = 12*globemean_2D(nc_sw_irf.SW_IRF.values,weights_model)
+Net_IRF_Model = LW_IRF_Model + SW_IRF_Model
+bars1 = [Net_IRF_Model,LW_IRF_Model,SW_IRF_Model]
+LW_IRF_Obs = 12*globemean_2D(nc_obs.LW_IRF.values,weights_obs)
+SW_IRF_Obs = 12*globemean_2D(nc_obs.SW_IRF.values,weights_obs)
+Net_IRF_Obs = LW_IRF_Obs + SW_IRF_Obs
+bars2 = [Net_IRF_Obs,LW_IRF_Obs,SW_IRF_Obs]
 units = 'W/$m^2/yr$'
-legendnames = ['LW IRF', 'SW IRF']
+legendnames = ['Net IRF', 'LW IRF', 'SW IRF']
 filename = 'IRF'
 bargraph_plotting(bars1,bars2,units,legendnames,filename)
 
@@ -102,6 +110,21 @@ legendnames = ['Sfc. Albedo', 'SW Water Vapor',' SW Cloud']
 filename = 'SWFB'
 bargraph_plotting(bars1,bars2,units,legendnames,filename)
 
+
+nc_obs = xr.open_dataset(os.environ["OBS_DATA"]+"/forcing_feedback_obs.nc")
+CMIP6vals = np.loadtxt(os.environ["OBS_DATA"]+"/CldFB_MDTF.txt")
+
+plt.figure(1)
+plt.scatter(CMIP6vals[:,0],CMIP6vals[:,1],c='k')
+#plt.scatter(CMIP6vals[37,0],CMIP6vals[37,1],s=75,c='r')
+plt.scatter(LWC_Model+SWC_Model,LW_RA_Model+SW_RA_Model,c='r')
+plt.scatter(LWC_Obs+SWC_Obs,LW_RA_Obs+SW_RA_Obs,c='b')
+plt.xlabel('Cloud Feedback (W/$m^2$/K)')
+plt.ylabel('Total TOA Radiative Change (W/$m^2$/K)')
+plt.legend(('CMIP6 Models (Historical)','Your Model','Obs.'))
+plt.savefig(os.environ['WK_DIR']+'/model/PS/forcing_feedback_CMIP6scatter.eps')
+plt.close()
+
 if ((np.max(nc_sw_irf.lon.values)>=300)):   #convert 0-360 lon to -180-180 lon for plotting
    lon1 = np.mod((nc_sw_irf.lon.values+180),360)-180
    lon1a = lon1[0:np.int(len(lon1)/2)]
@@ -127,7 +150,8 @@ obsvariable_2 = nc_obs.LapseRate.values
 units = 'W/$m^2$/K'
 filename = 'Temperature'
 map_plotting_4subs(levels_1,levels_2,variablename_1,modelvariable_1,lon_originalmodel, \
-                   lon_model,lat_model,obsvariable_1,variablename_2,modelvariable_2,obsvariable_2,units,filename)        
+                   lon_model,lat_model,lon_obs,lat_obs,obsvariable_1,variablename_2, \
+                   modelvariable_2,obsvariable_2,units,filename)        
 
 #Water Vapor Feedback
 levels_1 = np.arange(-6,6.0001,1)
@@ -141,7 +165,8 @@ obsvariable_2 = nc_obs.SW_WaterVapor.values
 units = 'W/$m^2$/K'
 filename = 'WaterVapor'
 map_plotting_4subs(levels_1,levels_2,variablename_1,modelvariable_1,lon_originalmodel, \
-                   lon_model,lat_model,obsvariable_1,variablename_2,modelvariable_2,obsvariable_2,units,filename)
+                   lon_model,lat_model,lon_obs,lat_obs,obsvariable_1, \
+                   variablename_2,modelvariable_2,obsvariable_2,units,filename)
 
 #Surface Albedo Feedback
 levels_1 = np.arange(-6,6.0001,1)
@@ -151,7 +176,7 @@ obsvariable_1 = nc_obs.SfcAlbedo.values
 units = 'W/$m^2$/K'
 filename = 'SfcAlbedo'
 map_plotting_2subs(levels_1,variablename_1,modelvariable_1,lon_originalmodel, \
-                   lon_model,lat_model,obsvariable_1,units,filename)
+                   lon_model,lat_model,lon_obs,lat_obs,obsvariable_1,units,filename)
 
 
 #Cloud Feedback
@@ -166,7 +191,8 @@ obsvariable_2 = nc_obs.SW_Cloud.values
 units = 'W/$m^2$/K'
 filename = 'Cloud'
 map_plotting_4subs(levels_1,levels_2,variablename_1,modelvariable_1,lon_originalmodel, \
-                   lon_model,lat_model,obsvariable_1,variablename_2,modelvariable_2,obsvariable_2,units,filename)
+                   lon_model,lat_model,lon_obs,lat_obs,obsvariable_1, \
+                   variablename_2,modelvariable_2,obsvariable_2,units,filename)
 
 
 #Rad Feedback
@@ -181,20 +207,22 @@ obsvariable_2 = nc_obs.SW_Rad.values
 units = 'W/$m^2$/K'
 filename = 'Rad'
 map_plotting_4subs(levels_1,levels_2,variablename_1,modelvariable_1,lon_originalmodel, \
-                   lon_model,lat_model,obsvariable_1,variablename_2,modelvariable_2,obsvariable_2,units,filename)
+                   lon_model,lat_model,lon_obs,lat_obs,obsvariable_1, \
+                   variablename_2,modelvariable_2,obsvariable_2,units,filename)
 
 #IRF Trend
 levels_1 = np.arange(-0.15,0.150001,0.015)
 variablename_1 = 'LW IRF'
-modelvariable_1 = 12*nc_lw_netrad.LW_IRF.values
+modelvariable_1 = 12*nc_lw_irf.LW_IRF.values
 obsvariable_1 = 12*nc_obs.LW_IRF.values
 levels_2 = np.arange(-0.15,0.150001,0.015)
 variablename_2 = 'SW IRF'
-modelvariable_2 = 12*nc_sw_netrad.SW_IRF.values
+modelvariable_2 = 12*nc_sw_irf.SW_IRF.values
 obsvariable_2 = 12*nc_obs.SW_IRF.values
 units = 'W/$m^2$/yr'
 filename = 'IRF'
 map_plotting_4subs(levels_1,levels_2,variablename_1,modelvariable_1,lon_originalmodel, \
-                   lon_model,lat_model,obsvariable_1,variablename_2,modelvariable_2,obsvariable_2,units,filename)
+                   lon_model,lat_model,lon_obs,lat_obs,obsvariable_1, \
+                   variablename_2,modelvariable_2,obsvariable_2,units,filename)
 
 

@@ -22,116 +22,90 @@
     "min_duration": "5yr",
     "max_duration": "any"
   },
-  "dimensions": {
-    "lat": {
-        "standard_name": "latitude",
-        "units": "degrees_N",
-        "range": [-90, 90],
-        "need_bounds": false
-    },
-    "lon": {
-        "standard_name": "longitude",
-        "units": "degrees_E",
-        "range": [-180, 180],
-        "need_bounds": false
-    },
+   "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
     "plev": {
-        "standard_name": "air_pressure",
-        "units": "Pa",
-        "positive": "down",
-        "need_bounds": false
+      "standard_name": "air_pressure",
+      "units": "Pa",
+      "positive": "down",
+      "axis": "Z"
     },
-    "time": {
-        "standard_name": "time",
-        "units": "days",
-        "calendar": "noleap",
-        "need_bounds": false
-    }
+    "time": {"standard_name": "time"}
   },
   "varlist" : {
     "ts": {
       "standard_name": "surface_temperature",
-      "path_variable": "TS_FILE",
       "units": "K",
       "dimensions" : ["time", "lat", "lon"],
-      "requirement": "required"
+         "freq": "mon"
+
     },
     "ta": {
       "standard_name": "air_temperature",
-      "path_variable": "TA_FILE",
       "units": "K",
       "dimensions" : ["time", "plev", "lat", "lon"],
-      "requirement": "required"
+         "freq": "mon"
     },
     "hus": {
       "standard_name": "specific_humidity",
-      "path_variable": "HUS_FILE",
       "units": "1",
       "dimensions" : ["time", "plev", "lat", "lon"],
-      "requirement": "required" 
+         "freq": "mon"
     },
     "rsus": {
       "standard_name": "surface_upwelling_shortwave_flux_in_air",
-      "path_variable": "RSUS_FILE",
       "units": "W m-2",
      "dimensions" : ["time", "lat", "lon"],
-      "requirement": "required"
+         "freq": "mon"
     },
     "rsuscs": {
       "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky",
-      "path_variable": "RSUSCS_FILE",
       "units": "W m-2",
       "dimensions" : ["time", "lat", "lon"],
-      "requirement": "required"
+         "freq": "mon"
     },
     "rsds": {
       "standard_name": "surface_downwelling_shortwave_flux_in_air",
-      "path_variable": "RSDS_FILE",
       "units": "W m-2",
       "dimensions" : ["time", "lat", "lon"],
-      "requirement": "required"
+         "freq": "mon"
     },
     "rsdscs": {
       "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky",
-      "path_variable": "RSDSCS_FILE",
       "units": "W m-2",
       "dimensions" : ["time", "lat", "lon"],
-      "requirement": "required"
+         "freq": "mon"
     },
     "rsdt": {
       "standard_name": "toa_incoming_shortwave_flux",
-      "path_variable": "RSDT_FILE",
       "units": "W m-2",
       "dimensions" : ["time", "lat", "lon"],
-      "requirement": "required"
+         "freq": "mon"
     },
     "rsut": {
       "standard_name": "toa_outgoing_shortwave_flux",
-      "path_variable": "RSUT_FILE",
       "units": "W m-2",
       "dimensions" : ["time", "lat", "lon"],
-      "requirement": "required"
+         "freq": "mon"
     },
     "rsutcs": {
       "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky",
-      "path_variable": "RSUTCS_FILE",
       "units": "W m-2",
       "dimensions" : ["time", "lat", "lon"],
-      "requirement": "required"
+         "freq": "mon"
     },
     "rlut": {
       "standard_name": "toa_outgoing_longwave_flux",
-      "path_variable": "RLUT_FILE",
       "units": "W m-2",
       "dimensions" : ["time", "lat", "lon"],
-      "requirement": "required"
+         "freq": "mon"
     },
     "rlutcs": {
       "standard_name": "toa_outgoing_longwave_flux_assuming_clear_sky",
-      "path_variable": "RLUTCS_FILE",
       "units": "W m-2",
       "dimensions" : ["time", "lat", "lon"],
-      "requirement": "required"
+         "freq": "mon"
     }
   }
 }  

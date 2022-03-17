@@ -373,6 +373,16 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             pod.deactivate(chained_exc)
         return pod
 
+    def setup_varlist_multirun(self, varlist):
+            try:
+                self.setup_var(pod, v)
+            except Exception as exc:
+                chained_exc = util.chain_exc(exc, f"configuring {v.full_name}.",
+                                             util.PodConfigError)
+                v.deactivate(chained_exc)
+                continue
+
+
     def setup_pod(self, pod):
         """Update POD with information that only becomes available after
         DataManager and Diagnostic have been configured (ie, only known at

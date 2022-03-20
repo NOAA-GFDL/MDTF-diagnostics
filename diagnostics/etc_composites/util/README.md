@@ -10,8 +10,6 @@ All needed data is in /localdrive/drive6/.
 the code for the converts are in /localdrive/drive10/mcms\_tracker/data\_preprocessing
 
 
-
-
 # Modules
 
 This code has many parts (the main driver codes for each part is in the main folder):

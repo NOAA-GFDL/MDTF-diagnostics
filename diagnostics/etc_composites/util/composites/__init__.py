@@ -153,26 +153,17 @@ def area_avg_one_step(lat, lon, values, centerLat, centerLon, bins=None):
   get the histogram 2d of count and sum centered at centerLat, centerLon
   '''
 
-  # if (np.any(~np.isnan(values))): 
-  #   import pdb; pdb.set_trace()
-
   # calculate distance from center
   dist = haversine_distance(lat, lon, centerLat, centerLon)
   dist_y = haversine_distance(lat, centerLon, centerLat, centerLon)
   dist_x = np.sqrt(dist**2 - dist_y**2)
 
   # apply mask distance of 1500 km 
-  # dist_mask = (dist_x < 1500) & (dist_y < 1500)
   dist_mask = (dist < 1500)
 
   valid_mask = (dist_mask) & (~np.isnan(values))
 
-  # # taking care of the edges, before creating the new equal area grids 
-  # lon_shift = np.copy(lon) 
-  # lon_shift -= 360. # shift everything to -720 to -180 | -360 to 0
-
   # creating masks to add -ve values 
-  # west_mask = ((lon - centerLon) < 0) | (((lon_shift - centerLon) < 0) & ((lon_shift - centerLon) >- 50))
   if (centerLon < 60):
     west_mask = ((lon - centerLon) < 0) | (lon > 300)
   elif (centerLon > 300):
@@ -194,18 +185,6 @@ def area_avg_one_step(lat, lon, values, centerLat, centerLon, bins=None):
 
   H = custom_hist2d(dist_x[valid_mask], dist_y[valid_mask], values[valid_mask], bins=(dist_bins, dist_bins))
 
-  # if (np.nansum(H.sum)> 0):
-  #   plt.figure(figsize=(8,4))
-  #   ax = plt.subplot(1,2,1)
-  #   pplot(lon, lat, dist, values, ax)
-  #   ax.plot(centerLon, centerLat, 'r*') 
-  #   ax = plt.subplot(1,2,2)
-  #   ax.plot(0, 0, 'r*') 
-  #   plot(H, ax)
-  #   plt.tight_layout()
-  #   plt.savefig(f'/localdrive/drive10/mcms_tracker/RUNDIR/tmp_imgs/etc_pr.png', dpi=300.)
-  #   import pdb; pdb.set_trace()
-
   return H
 
 def test_plot(val, lon=None, lat=None):
@@ -217,19 +196,12 @@ def test_plot(val, lon=None, lat=None):
   else:
     plt.pcolormesh(lon, lat, val, cmap='jet')
   plt.colorbar()
-  # plt.show()
 
 def plot_polar(theta, r, values, type='pcolormesh'): 
   '''
   Plots the figure in polar cordinates given theta and r values
   '''
-  # plt.style.use('ggplot')
   r, theta = np.meshgrid(r,theta)
-
-  # x = r * np.cos(theta)
-  # y = r * np.sin(theta)
-  # breakpoint()
-  # pc = plt.pcolormesh(x, y, values) 
 
   fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
   if (type == 'contourf'):

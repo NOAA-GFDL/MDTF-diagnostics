@@ -1,7 +1,5 @@
 # import netcdftime # Jeyavinoth removed netcdftime
 import netCDF4 as NetCDF
-#import netCDF3 as NetCDF
-import datetime
 import jj_calendar as jjCal
 
 class Save_NetCDF:

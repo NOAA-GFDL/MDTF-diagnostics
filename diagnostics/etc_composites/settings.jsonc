@@ -7,9 +7,9 @@
     "pod_env_vars" : {
       "lat_var": "lat", 
       "lon_var": "lon", 
-      "USE_EXTERNAL_TRACKS": "False", 
-      "EXTERNAL_TRACKS_FILE": "/localdrive/drive10/jj/mdtf/inputdata/model/GFDL.EXP1.2PM.001/6hr/trimmed_track_output.txt",
-      "RUN_COMPOSITES": "True"
+      "USE_EXTERNAL_TRACKS": "True", 
+      "EXTERNAL_TRACKS_FILE": "/localdrive/drive10/jj/etc_push/inputdata/model/ERA5.NEW.DEG10.001/6hr/track_output.txt",
+      "RUN_COMPOSITES": "False"
     },
     "runtime_requirements": {
         "python3": ["matplotlib", "xarray", "netCDF4", "numpy", "cartopy"]

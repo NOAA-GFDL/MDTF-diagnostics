@@ -21,9 +21,6 @@ def get_time_info(the_time_units, times, calendar='standard'):
   # getting the number of timesteps
   tsteps = len(times)
   
-  # getting the range of the times variable
-  the_time_range = [times[0],times[tsteps-1]]
-
   # getting the start date in datetime format
   # first get the date in a string format from netcdf time units
   # then convert it to an acutal datetime
@@ -248,7 +245,6 @@ def adjust_dtimes(dtimes, calendar='365_day'):
       new_dtimes.append(dtime + relativedelta(days=adjust_days))
 
     return new_dtimes
-    raise Exception('jj_calendar.py: have to write this code')
   else:
     raise Exception('jj_calendar.py: Unknown Calendar')
 

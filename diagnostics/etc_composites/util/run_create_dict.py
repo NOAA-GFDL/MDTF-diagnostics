@@ -130,14 +130,6 @@ for i_year in range(start_year, end_year+1):
     # getting the index that match each usi value
     usi_ind = df.index[df.usi == i_usi].tolist()
     
-    # check if the total track time extends atleast 36 hours
-    # we have to account for the detla_t in this case
-    # because we run for hourly and six-hourly
-    # hh = np.asarray(df.hh[usi_ind],dtype=int)
-    # delta_t = 6.0
-    # if (len(hh)*delta_t) < 36: 
-    #   continue
-    
     # creating numpy arrays from dataframe for processing full_date
     yy = np.asarray(df.yy[usi_ind],dtype=int)
     mm = np.asarray(df.mm[usi_ind],dtype=int)
@@ -195,8 +187,6 @@ for i_year in range(start_year, end_year+1):
     temp_warm_flag.append(np.asarray(warm_flag, dtype=int))
     temp_obs_flag.append(np.asarray(obs_flag, dtype=int))
 
-
-    # print ('%d in %d'%(i_ind, uni_usi.shape[0]))
 
   # creating a record to save mat files, like the one jimmy creates using matlab
   out_cyc = fromarrays([temp_uid, temp_uidsingle, temp_fulllon, temp_fulllat, temp_fullslp, temp_fulldate, temp_date1, temp_fullyr, temp_fullmon, temp_fullday, temp_fullhr, temp_mon_mode, temp_yr_mode, temp_lm_flag, temp_warm_flag, temp_obs_flag], names=['UID', 'UIDsingle', 'fulllon', 'fulllat', 'fullslp', 'fulldate', 'date1', 'fullyr', 'fullmon', 'fullday', 'fullhr', 'mon_mode', 'yr_mode', 'lm_flag', 'warm_flag', 'obs_flag'])

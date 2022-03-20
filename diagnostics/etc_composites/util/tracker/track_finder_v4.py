@@ -44,7 +44,6 @@
         2008/10  MB - Added input checks, docstring.
 """
 import sys,os
-import array
 import defines
 
 def process_data(values,outfile,minval,interval,verbose=False,raw=False) :

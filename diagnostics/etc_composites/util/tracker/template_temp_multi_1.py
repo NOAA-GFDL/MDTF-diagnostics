@@ -1,11 +1,4 @@
 import defines
-import sys
-
-# snyear = '%d_%d'%(defines.over_write_years[0], defines.over_write_years[1])
-# snyear = sys.argv[1]
-# snyear = '2000_2029'
-# model = 'temp'
-# rundir = 'out_temp'
 
 if (defines.over_write_years[0] == defines.over_write_years[1]):
   snyear = '%04d'%(defines.over_write_years[0])
@@ -33,9 +26,6 @@ include_stormy = False
 
 detail_tracks= startdir+'read_%s/'%(defines.model)+rundir+'_track_out_'+snyear+'.txt'
 as_tracks = '' 
-#detail_tracks = ''
-#as_tracks = startdir+'READ_CAM6/'+rundir+'_track_out_'+snyear+'.txt'
-
 
 # Name: in_file
 # Description: Full path to the msmc data file you wish to read from.

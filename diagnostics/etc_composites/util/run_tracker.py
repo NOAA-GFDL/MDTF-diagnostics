@@ -5,7 +5,6 @@
 
 import os
 print('Copying over the files to run the tracker...')
-# os.system('cp ./defines.py ./tracker/defines.py')
 cmd = 'cp %s/util/defines.py %s/util/tracker/defines.py'%(os.environ['POD_HOME'], os.environ['POD_HOME'])
 os.system(cmd)
 import defines
@@ -27,5 +26,3 @@ os.system('python3 center_finder_v4.py')
 os.system('python3 track_finder_v4.py')
 os.system('python3 read_mcms_v4.py template_temp_multi_1.py')
 os.system('python3 read_mcms_v4.py template_temp_multi_2.py')
-# if (defines.create_matlab_dictionaries):
-#   os.system('python3 main_create_dict.py')

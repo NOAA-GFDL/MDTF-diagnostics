@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 import os, glob
 
 import defines
-import datetime as dt
 
 import xarray as xr
 import pandas as pd

@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import defines
 import os
+import pickle
 
 def hist_2d(lon, lat, val=None, bins=None):
   ''' 
@@ -247,7 +248,6 @@ plt.tight_layout()
 plt.savefig(out_file, dpi=300.)
 plt.close('all')
 
-import pickle
 out_file = os.path.join(os.environ['WK_DIR'], 'track_stats.pkl')
 out_struct = {'lon': lon_mids, 'lat': lat_mids, 'stats': stats}
 pickle.dump(out_struct, open(out_file, 'wb'))

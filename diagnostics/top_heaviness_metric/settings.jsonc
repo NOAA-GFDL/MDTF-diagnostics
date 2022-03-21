@@ -8,7 +8,6 @@
       "python3": ["netCDF4", "xarray", "numpy", "scipy", "matplotlib", "cartopy"]
     }   
   },  
-  "data": 
   "dimensions" : {
     "lat": {"standard_name": "latitude"},
     "lon": {"standard_name": "longitude"},

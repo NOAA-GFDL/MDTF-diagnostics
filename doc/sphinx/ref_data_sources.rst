@@ -47,7 +47,7 @@ When using this data source, ``-c``/``--convention`` should be set to the conven
 Explicit file data source
 +++++++++++++++++++++++++
 
-Selected via ``--data-manager="ExplicitFile"``.
+Selected via ``--data-manager="Explicit_file"``.
 
 This data source lets the user explicitly assign model data files to each variable requested by a POD using standard shell glob syntax, without needing to move or symlink them to a directory hierarchy (as is needed for, e.g., the :ref:`ref-data-source-localfile`). Files must be on a locally mounted filesystem, and satisfy the requirements in :doc:`ref_data` (with the exception of metadata).
 

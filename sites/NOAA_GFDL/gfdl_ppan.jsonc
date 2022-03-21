@@ -58,7 +58,7 @@
   // PATHS ---------------------------------------------------------------------
   // Location of input and output data. If a relative path is given, it's 
   // resolved relative to the MDTF-diagnostics code directory.
-  "MDTF_TMPDIR": "/net2/$USER/tmp",
+  "MDTF_TMPDIR": "$TMPDIR",
   // Parent directory containing results from different models.
   //"MODEL_DATA_ROOT": "$MDTF_TMPDIR/inputdata/model",
   "MODEL_DATA_ROOT": "/net2/jml/inputdata/model",
@@ -74,8 +74,7 @@
   "WORKING_DIR": "../wkdir",
 
   // Directory to write output files. Defaults to working directory if blank.
-  //"OUTPUT_DIR": "$MDTF_TMPDIR/mdtf_out",
-  "OUTPUT_DIR": "../wkdir",
+  "OUTPUT_DIR": "$MDTF_TMPDIR/mdtf_out",
 
   // GFDL ----------------------------------------------------------------------
   // Settings specific to operation at GFDL.

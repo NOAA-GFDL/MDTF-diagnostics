@@ -17,16 +17,87 @@
 // "config-file": "<path to file name config file"
 //
 {
- "MJO_prop_amp": {
-    "hus": "day/c96L33_am4p0_cmip6Diag.hus.day.nc",
-    "pr": "day/c96L33_am4p0_cmip6Diag.pr.day.nc",
-    "prw": {
-        "files": "day/c96L33_am4p0_cmip6Diag.prw.day.nc",
-        "var_name": "prw",
-        "metadata": {
-            "standard_name": "atmosphere_water_vapor_content",
-            "units": "kg m-2"
-        }
-    }
- }
+// "MJO_prop_amp": {
+ //   "hus": {
+ //       "files" : "atmos/ts/daily/c96L33_am4p0_cmip6Diag.hus.day.nc",
+ //       "var_name" : "hus",
+ //       "metadata": {
+ //           "units" : "1"
+ //       }
+//     },
+//    "pr": "atmos/ts/daily/c96L33_am4p0_cmip6Diag.pr.day.nc",
+//    "prw": {
+//        "files": "atmos/ts/daily/c96L33_am4p0_cmip6Diag.prw.day.nc",
+//        "var_name": "prw",
+//        "metadata": {
+ //           "standard_name": "atmosphere_mass_content_of_water_vapor"
+//        }
+//    }
+ // }//,
+
+//   "EOF_500hPa":{
+ //     "zg":{
+ //        "files":"atmos/ts/monthly/5yr/atmos.198001-198412.zg500.nc",
+ //        "var_name":"hght",
+  //       "metadata":{
+  //          "standard_name":"geopotential_height"
+   //     }
+    //  },
+ //     "ps": "atmos/ts/monthly/5yr/atmos.198001-198412.ps.nc"//,
+ //     "zg_hybrid_sigma":{
+ //        "files":"mon/aerosol_cmip.198001-198412.zg.nc",
+ //        "var_name":"zg_hybrid_sigma",
+ //        "metadata":{
+ //           "standard_name":"geopotential_height",
+  //          "units":"m"
+  //       }
+  //    }
+ //  }
+ // "temp_extremes_distshape":{
+ //     "zg":{
+ //        "files":"atmos/ts/daily/5yr/atmos.19800101-19841231.hght.nc", // path to file in CASE_ROOT_DIR
+ //        "var_name":"hght",
+ //        "metadata":{
+ //           "standard_name":"geopotential_height"
+  //       }
+  //    },
+  //    "psl":{
+  //       "files": "atmos/ts/daily/5yr/atmos.19800101-19841231.psl.nc",
+  //       "metadata:":{
+  //          "standard_name": "air_pressure_at_mean_sea_level"
+  //       }
+  //    },
+  //    "tas":{
+  //       "files":"atmos/ts/daily/5yr/atmos.19800101-19841231.tas.nc",
+   //      "var_name":"tas"  // name of variable in the file (may not match var_name in POD settings file)
+   //   }
+   //}
+   "MJO_suite":{
+      "rlut":"atmos/ts/daily/5yr/atmos.19800101-19841231.rlut.nc",
+      "pr":"atmos/ts/daily/5yr/atmos.19800101-19841231.pr.nc",
+      "u200":{
+          "files": "atmos/ts/daily/5yr/atmos.19800101-19841231.u200.nc",
+          "metadata:":{
+            "standard_name": "eastward_wind"
+         }
+      },
+      "v200":{
+          "files": "atmos/ts/daily/5yr/atmos.19800101-19841231.v200.nc",
+          "metadata:":{
+            "standard_name": "northward_wind"
+         }
+      },
+      "u850":{
+          "files": "atmos/ts/daily/5yr/atmos.19800101-19841231.u850.nc",
+          "metadata:":{
+            "standard_name": "eastward_wind"
+         }
+      },
+      "v850":{
+          "files": "atmos/ts/daily/5yr/atmos.19800101-19841231.v850.nc",
+          "metadata:":{
+            "standard_name": "northward_wind"
+         }
+      }
+   }
 }

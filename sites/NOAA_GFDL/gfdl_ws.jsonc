@@ -37,10 +37,11 @@
       "CASENAME" : "c96L33_am4p0",
       "model" : "GFDL-AM4",
       "convention" : "CMIP",
+      "experiment" : "c96L33_am4p0",
       "FIRSTYR" : 1980,
       "LASTYR" : 1984,
-     // "CASE_ROOT_DIR" : "/archive/Jessica.Liptak/awg/2021.02/c96L33_am4p0_cmip6Diag/gfdl.ncrc3-intel21-prod-openmp/pp",
-      "CASE_ROOT_DIR" : "/net2/jml/inputdata/model/c96L33_am4p0/gfdl.ncrc4-intel-prod-openmp/pp",
+      "CASE_ROOT_DIR" : "/archive/Jessica.Liptak/awg/2021.04/c96L33_am4p0/gfdl.ncrc4-intel-prod-openmp/pp",
+     // "CASE_ROOT_DIR" : "/net2/jml/inputdata/model/c96L33_am4p0/gfdl.ncrc4-intel-prod-openmp/pp",
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
         //  "Wheeler_Kiladis"
@@ -101,10 +102,10 @@
   // Settings affecting the framework's retrieval of model data.
 
   // Method used to fetch model data.
-  //"data_manager": "GFDL_auto",
-  "data_manager": "Explicit_file",
+  "data_manager": "GFDL_PP",
+  //"data_manager": "Explicit_file",
 
-  "config-file": "/net/jml/mdtf/MDTF-diagnostics/sites/NOAA_GFDL/gfdl_file_path_config.jsonc",
+  //"config-file": "/net/jml/mdtf/MDTF-diagnostics/sites/NOAA_GFDL/gfdl_file_path_config.jsonc",
 
   // Method used to preprocess data.
   "preprocessor": "MDTFData",

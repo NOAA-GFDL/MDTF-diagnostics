@@ -22,21 +22,22 @@
       "CASE_ROOT_DIR" : "/archive/oar.gfdl.cmip6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp",
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-          //"Wheeler_Kiladis",
-          "EOF_500hPa"
-         // "convective_transition_diag",
-         // "MJO_suite",
-         // "MJO_teleconnection",
-         // "MJO_prop_amp",
-         // "precip_diurnal_cycle",
-        //  "SM_ET_coupling"
+          "Wheeler_Kiladis",
+          "EOF_500hPa",
+          "convective_transition_diag",
+          "MJO_suite",
+          "MJO_teleconnection",
+          "MJO_prop_amp",
+          "precip_diurnal_cycle",
+          "SM_ET_coupling"
       ]
     }
   ],
   // PATHS ---------------------------------------------------------------------
   // Location of input and output data. If a relative path is given, it's
   // resolved relative to the MDTF-diagnostics code directory.
-  "MDTF_TMPDIR": "/net2/$USER/tmp",
+  // set this to somewhere writeable with sufficient space for copies of input data
+  "MDTF_TMPDIR": "",
   // Parent directory containing results from different models.
   "MODEL_DATA_ROOT": "$MDTF_TMPDIR/inputdata/model",
 
@@ -62,7 +63,7 @@
 
   // If running on a GFDL workstation, set $MDTF_TMPDIR to this location
   // and create temp files here. Must be accessible via gcp.
-  "GFDL_WS_TEMP": "/net2/$USER/tmp",
+  "GFDL_WS_TEMP": "$MDTF_TMPDIR",
 
   // Set flag to run framework in 'online' mode, processing data as part of the
   // FRE pipeline. Normally this is done by calling the mdtf_gfdl.csh wrapper
@@ -77,6 +78,7 @@
   // Settings affecting the framework's retrieval of model data.
 
   // Method used to fetch model data.
+  // set to "GFDL_PP" if model input is located in a post-processing directory (i.e., a directory with the root ending in /pp)
   "data_manager": "GFDL_auto",
 
   // Time (in seconds) to wait before giving up on transferring a data file to

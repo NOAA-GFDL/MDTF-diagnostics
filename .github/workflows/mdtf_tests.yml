@@ -135,6 +135,9 @@ jobs:
         ./mdtf --version
         # run the test PODs
         ./mdtf -v -f ${{matrix.json-file}}
+        # dump POD log to terminal
+        fname="/Users/runner/work/MDTF-diagnostics/wkdir/MDTF_NCAR.Synthetic_1975_1981/EOF_500hPa/EOF_500hPa.log"
+        printf "%s" "$(<$fname)"
     - name: Get observational data for set 2
       run: |
         echo "${PWD}"

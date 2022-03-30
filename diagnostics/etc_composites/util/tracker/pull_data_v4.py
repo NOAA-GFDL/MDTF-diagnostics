@@ -34,7 +34,7 @@ def pull_data(NetCDF,numpy,in_path,file_seperator,read_year,
             2008/10  MB - Fixed error where file_list was unordered...
             2009/11  MB - Updated to version 4.
     """
-    verbose = 0
+    # verbose = 0
 
     read_year = int(read_year)
 
@@ -44,7 +44,7 @@ def pull_data(NetCDF,numpy,in_path,file_seperator,read_year,
     file_list.sort()
 
     # Loop over available files for correct year.
-    found_years = {}
+    # found_years = {}
     found_file = ""
     for infile in file_list:
         if infile.find(".nc") != -1:
@@ -113,7 +113,7 @@ def pull_data(NetCDF,numpy,in_path,file_seperator,read_year,
 
 if __name__=='__main__':
 
-    import os,sys
+    # import os,sys
     import time
 
     def pretty_filesize(bytes,msg=""):
@@ -202,7 +202,8 @@ if __name__=='__main__':
         #        var_slp,var_topo,var_land_sea_mask,file_seperator,no_topo,
         #        no_mask,slp_path,model,out_path,shared_path,lat_edges,lon_edges,
         #        land_gridids,troubled_centers) = fnc_out
-    except:
+    # except: # removed by JJ
+    except Exception as e:
         sys.exit("\n\tWARNING: Error reading or finding %s." % (sf_file))
     del fnc_out # reduces memory footprint by 83464 bytes
     del pickle

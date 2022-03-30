@@ -1226,7 +1226,8 @@ if __name__=='__main__':
         del lat_edges
         del lon_edges
         del fnc_out
-    except:
+    # except: # removed by JJ
+    except Exception as e:
         sys.exit("\n\tWARNING: Error reading or finding %s" % (sf_file))
 
     header = "mcms_%s_%04d" % (model,int(super_years[0]))

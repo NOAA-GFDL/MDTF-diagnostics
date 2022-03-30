@@ -127,11 +127,11 @@ def main(centers_file, defs_set, dumped_centers_file, imports,
         loop_year, exit_on_error, plot_on_error, save_plot, import_read,
         save_stats):
 
-    import os, sys
-
-    months = {1: 'January', 2: 'February', 3: 'March', 4: 'April', 5: 'May',
-              6: 'June', 7: 'July', 8: 'August', 9: 'September', 10: 'October',
-              11: 'November', 12: 'December'}
+    # import os, sys # JJ
+    #
+    # months = {1: 'January', 2: 'February', 3: 'March', 4: 'April', 5: 'May',
+    #           6: 'June', 7: 'July', 8: 'August', 9: 'September', 10: 'October',
+    #           11: 'November', 12: 'December'} # JJ
     
     # --------------------------------------------------------------------------
     # Setup Section
@@ -147,15 +147,15 @@ def main(centers_file, defs_set, dumped_centers_file, imports,
     defs = defs_v4.defs(**defs_set)
     
     # Predefined data storage
-    center_data_type = numpy.dtype(defs.center_data)
+    # center_data_type = numpy.dtype(defs.center_data) # JJ
 
     # Pre-bind for speed
     Tree_Traversal = tree_traversal.tree_traversal
     #Pull_Data = pull_data.pull_data
     GCD = gcd.gcd
     G2L = g2l.g2l
-    IJ2Grid = ij2grid.ij2grid
-    Grid2ij = grid2ij.grid2ij
+    # IJ2Grid = ij2grid.ij2grid # JJ
+    # Grid2ij = grid2ij.grid2ij # JJ
     Rhumb_Line_Nav = rhumb_line_nav.rhumb_line_nav
     Polar_Fix = polar_fix.polar_fix
     if save_plot or plot_on_error:
@@ -189,7 +189,8 @@ def main(centers_file, defs_set, dumped_centers_file, imports,
         del lat_edges
         del lon_edges
         del fnc_out
-    except:
+    # except: # JJ added line below
+    except Exception as ex:
         sys.exit("\n\tWARNING: Error reading or finding %s." % (sf_file))
 
     # Update over_write values
@@ -214,11 +215,15 @@ def main(centers_file, defs_set, dumped_centers_file, imports,
     # Pre-bind object calls for speed.
     N_less = numpy.less; N_greater = numpy.greater
     N_average = numpy.average; N_take = numpy.take
-    N_ones = numpy.ones; N_size = numpy.size; N_array = numpy.array
-    N_multiply = numpy.multiply; N_sometrue = numpy.sometrue
+    N_ones = numpy.ones; N_size = numpy.size; 
+    # N_array = numpy.array # JJ
+    N_multiply = numpy.multiply; 
+    # N_sometrue = numpy.sometrue # JJ
     N_subtract = numpy.subtract; N_add = numpy.add
-    strip_read = strip_read.strip_read
-    stored_centers = []; stored_centers_append = stored_centers.append
+    # strip_read = strip_read.strip_read # JJ
+
+    stored_centers = []; 
+    # stored_centers_append = stored_centers.append # JJ
 
     # Summary Stats: Checks on operation to report and catch oddities.
     known_flags = {0 : "Passed all filters",
@@ -387,7 +392,7 @@ def main(centers_file, defs_set, dumped_centers_file, imports,
         #lap_file = centers_file.replace("centers","laplacian")
         #lap_save =  open(lap_file,"w")
 
-        flag_sum = numpy.zeros((jm*im,nflags),dtype=numpy.float)
+        # flag_sum = numpy.zeros((jm*im,nflags),dtype=numpy.float) # JJ
         flag_cnt = numpy.zeros((jm*im,nflags),dtype=numpy.float)
         ## Uncomment following lines to plot SLP Field to check all is reading
         #splot = Plot_Map(clevs=[960,1040,4],cints=[960.0,1040.0],color_scheme="jet")
@@ -417,7 +422,7 @@ def main(centers_file, defs_set, dumped_centers_file, imports,
 ##CUT
     #tsteps = 2
 
-    last_center_cnt = -1
+    # last_center_cnt = -1 # JJ
     for step in range(0,tsteps):
 
         if plot_on_error or save_plot:
@@ -771,7 +776,7 @@ def main(centers_file, defs_set, dumped_centers_file, imports,
         
         if not kept_centers:
             err_num = 2
-            smsg = "\n\tFail Check %d: No kept centers for this timestep." % (err_num)
+            # smsg = "\n\tFail Check %d: No kept centers for this timestep." % (err_num) # JJ
             msg = "\t\tlen(kept_centers): %d" % (len(kept_centers))
             if plot_on_error:
                 msg1 = "Fail Check %d: No kept centers for this timestep." % (err_num)
@@ -1382,7 +1387,8 @@ if __name__=='__main__':
         super_years = fnc_out[inputs.index("super_years")]
         out_path = fnc_out[inputs.index("out_path")]
         del fnc_out
-    except:
+    # except: # JJ added line below
+    except Exception as ex:
         sys.exit("\n\tWARNING: Error reading or finding %s." % (sf_file))
     if over_write_years:
         super_years = over_write_years
@@ -1428,7 +1434,8 @@ if __name__=='__main__':
     print ("\tCreating",report_file)
     try:
         report_save = open(report_file,"w")
-    except:
+    # except: # JJ added line below
+    except Exception as ex:
         sys.exit("Error opening: %s" % (report_file))
     report_save.writelines("%d--%d\n" % (int(super_years[0]),int(super_years[-1])))
     big_buffer = {}
@@ -1441,7 +1448,8 @@ if __name__=='__main__':
             print ("\tAdding",r_file)
         try:
             r_read = open(r_file,"r")
-        except:
+        # except: # JJ added line below
+        except Exception as ex:
             sys.exit("Error opening: %s" % (r_file))
         for line in r_read:
             r_buffer.append(line)

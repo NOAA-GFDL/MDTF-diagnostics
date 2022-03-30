@@ -19,7 +19,7 @@ def get_time_info(the_time_units, times, calendar='standard'):
     calendar = 'standard'
 
   # getting the number of timesteps
-  tsteps = len(times)
+  # tsteps = len(times)
   
   # getting the start date in datetime format
   # first get the date in a string format from netcdf time units

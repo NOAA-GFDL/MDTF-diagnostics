@@ -25,11 +25,12 @@
       // "CASENAME" : "ERA5.TP.DEG10.001",
       // "CASENAME" : "ERA5.TP.DEG15.001",
       // "CASENAME" : "ERA5.ALL.DEG15.001",
-      "CASENAME" : "ERA5.NEW.DEG10.001",
+      // "CASENAME" : "ERA5.NEW.DEG10.001",
+      "CASENAME" : "ERA5.NEW.DEG15.001",
       "model" : "GFDL",
       "convention" : "GFDL",
-      "FIRSTYR" : 2008,
-      "LASTYR" : 2009,
+      "FIRSTYR" : 2020,
+      "LASTYR" : 2021,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
           // "Wheeler_Kiladis",

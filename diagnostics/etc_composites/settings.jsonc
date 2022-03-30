@@ -7,7 +7,7 @@
     "pod_env_vars" : {
       "lat_var": "lat", 
       "lon_var": "lon", 
-      "USE_EXTERNAL_TRACKS": "True", 
+      "USE_EXTERNAL_TRACKS": "False", 
       "EXTERNAL_TRACKS_FILE": "/localdrive/drive10/jj/etc_push/inputdata/model/ERA5.NEW.DEG10.001/6hr/track_output.txt",
       "RUN_COMPOSITES": "False"
     },

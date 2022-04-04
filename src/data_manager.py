@@ -9,7 +9,7 @@ import glob
 import signal
 import textwrap
 import typing
-from src import util, core, diagnostic, xr_parser, preprocessor
+from src import util, core, diagnostic, xr_parser, preprocessor, multirun
 import pandas as pd
 import intake_esm
 
@@ -336,9 +336,9 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
 
     # -------------------------------------
 
-    def setup(self):
+    def setup(self, pod_name=""):
         if self.multirun:
-            pass
+            self.get_pod_config_multirun(pod_name)
         else:
             for pod_name in self.pods:
                 self.pods[pod_name] = \
@@ -380,7 +380,6 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                 chained_exc = util.chain_exc(exc, f"configuring {v.full_name}.",
                                              util.PodConfigError)
                 v.deactivate(chained_exc)
-                continue
 
 
     def setup_pod(self, pod):

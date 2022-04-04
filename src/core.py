@@ -1135,7 +1135,7 @@ class MDTFFramework(MDTFObjectBase):
                 for case_name, case_d in self.cases.items():
                     _log.info("### %s: initializing case '%s'.", self.full_name, case_name)
                     case = self.DataSource(case_d, parent=self)
-                    case.setup()
+                    case.setup(pod)
                    # case.setup_multirun(pod)
                     new_d[case_name] = case
                 # use info from last case, since POD data is common to all cases

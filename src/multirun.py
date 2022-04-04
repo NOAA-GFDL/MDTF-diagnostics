@@ -13,7 +13,7 @@ import textwrap
 import typing
 from abc import ABC
 
-from src import util, core, diagnostic, xr_parser, preprocessor, data_manager
+from src import util, core, diagnostic, xr_parser, preprocessor, data_manager, data_model
 import pandas as pd
 import intake_esm
 
@@ -79,6 +79,36 @@ class MultirunDataframeQueryDataSourceBase(MultirunDataSourceBase, data_manager.
 class MultirunLocalFileDataSource(MultirunDataframeQueryDataSourceBase, data_manager.LocalFileDataSource):
     pass
 
+class MultirunVarlist(diagnostic.Varlist, data_model.DMDataSet):
+    pass
 
-if __name__ == "__main__":
-    print(MultirunLocalFileDataSource.mro())
+class MultirunDiagnostic(diagnostic.Varlist, diagnostic.diagnostic, core.MDTFObjectBase, util.PODLoggerMixin):
+    # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
+    # name: str
+    # _parent: object
+    # log = util.MDTFObjectLogger
+    # status: ObjectStatus
+    # long_name: str = ""  # fields inherited from diagnostic.diagnostic
+    # description: str = ""
+    # convention: str = "CF"
+    # realm: str = ""
+    # driver: str = ""
+    # program: str = ""
+    # runtime_requirements: dict = dc.field(default_factory=dict)
+    # pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
+    # log_file: io.IOBase = dc.field(default=None, init=False)
+    # nc_largefile: bool = False
+    # varlist: Varlist = None
+    # preprocessor: typing.Any = dc.field(default=None, compare=False)
+    # POD_CODE_DIR = ""
+    # POD_OBS_DATA = ""
+    # POD_WK_DIR = ""
+    # POD_OUT_DIR = ""
+    # _deactivation_log_level = logging.ERROR
+    #  _interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
+    pass
+
+
+
+#if __name__ == "__main__":
+#   print(MultirunLocalFileDataSource.mro())

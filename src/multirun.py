@@ -7,7 +7,7 @@ import os
 import abc
 import collections
 import dataclasses as dc
-import glob
+import copy
 import signal
 import textwrap
 import typing
@@ -33,56 +33,20 @@ _log = logging.getLogger(__name__)
 # General format is:
 # super(cls, instance-or-subclass).method(*args, **kw)
 # You can get the MRO of a class by running print(class.mro())
-class MultirunDataSourceBase(data_manager.DataSourceBase, core.MDTFObjectBase, util.CaseLoggerMixin,
-                             data_manager.AbstractDataSource, metaclass=util.MDTFABCMeta):
-    """Base class for handling multirun data needs. Executes query for
-    requested model data against the remote data sources, fetches the required
-    data locally, preprocesses it, and performs cleanup/formatting of the POD's
-    output.
-    """
 
-    def __init__(self, case_dict, parent):
-        super(self).__init__(case_dict, parent)
-        print("MultirunDataSourceBase")
 
-# MRO: [<class '__main__.MultirunDataframeQueryDataSourceBase'>
-# <class '__main__.MultirunDataSourceBase'>
-# <class 'src.data_manager.DataframeQueryDataSourceBase'>
-# <class 'src.data_manager.DataSourceBase'>
-# <class 'src.core.MDTFObjectBase'>
-# <class 'src.util.logs.CaseLoggerMixin'>
-# <class 'src.util.logs._CaseAndPODHandlerMixin'>
-# <class 'src.util.logs.MDTFObjectLoggerMixinBase'>
-# <class 'src.data_manager.AbstractDataSource'>
-# <class 'src.data_manager.AbstractQueryMixin'>
-# <class 'src.data_manager.AbstractFetchMixin'>
-# <class 'abc.ABC'>
-# <class 'object'>]
-class MultirunDataframeQueryDataSourceBase(MultirunDataSourceBase, data_manager.DataframeQueryDataSourceBase,
-                                           metaclass=util.MDTFABCMeta):
-    """DataSource which queries a data catalog made available as a pandas
-    DataFrame, and includes logic for selecting experiment based on column values.
-    """
-
-    def __init__(self, case_dict, parent):
-        # note that in python3, you do NOT need to include the enclosing class as the first argument to super()
-        # e.g., super(MultirunDataframeQueryDataSourceBase,self)
-        # here, the code calls the super class's init method, which is MultiRunDataSourceBase's init method
-        super(self).__init__(case_dict, parent)
-        print("MultirunDataframeQuerySourceBase")
-
-# [<class '__main__.MultirunLocalFileDataSource'>,
-# <class '__main__.MultirunDataframeQueryDataSourceBase'>,
-# <class '__main__.MultirunDataSourceBase'>,
-# <class 'src.data_manager.LocalFileDataSource'>...
-# ]
-class MultirunLocalFileDataSource(MultirunDataframeQueryDataSourceBase, data_manager.LocalFileDataSource):
+# defining attributes using dc.field default_factory means that all instances have a default type
+# This also ensures that the same attribute object is not reused each time it is called
+# Therefore, you can modify individual values in one dc.field instance without propagating the
+# changes to other object instances
+class MultirunVarlist(diagnostic.Varlist):
+    # contents: dc.InitVar = util.MANDATORY # fields inherited from data_model.DMDataSet
+    # vars: list = dc.field(init=False, default_factory=list)
+    # coord_bounds: list = dc.field(init=False, default_factory=list)
+    # aux_coords: list = dc.field(init=False, default_factory=list)
     pass
 
-class MultirunVarlist(diagnostic.Varlist, data_model.DMDataSet):
-    pass
-
-class MultirunDiagnostic(diagnostic.Varlist, diagnostic.diagnostic, core.MDTFObjectBase, util.PODLoggerMixin):
+class MultirunDiagnostic(diagnostic.Diagnostic):
     # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
     # name: str
     # _parent: object
@@ -106,9 +70,58 @@ class MultirunDiagnostic(diagnostic.Varlist, diagnostic.diagnostic, core.MDTFObj
     # POD_OUT_DIR = ""
     # _deactivation_log_level = logging.ERROR
     #  _interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
+    varlist = MultirunVarlist = None
+    pass
+
+@util.mdtf_dataclass
+class MultirunVarlistEntry(object):
+    # Attributes:
+    #         path_variable: Name of env var containing path to local data.
+    #         dest_path: list of paths to local data
+    # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
+    # name: str
+    # _parent: object
+    # log = util.MDTFObjectLogger
+    # status: ObjectStatus
+    # standard_name: str             # fields inherited from data_model.DMVariable
+    # units: Units
+    # dims: list
+    # scalar_coords: list
+    # modifier: str
+    # use_exact_name: bool = False   # fields inherited from diagnostic.VarlistEntry
+    # env_var: str = dc.field(default="", compare=False)
+    # path_variable: str = dc.field(default="", compare=False)
+    # dest_path: str = ""
+    # requirement: VarlistEntryRequirement = dc.field(default=VarlistEntryRequirement.REQUIRED, compare=False)
+    # alternates: list = dc.field(default_factory=list, compare=False)
+    # translation: typing.Any = dc.field(default=None, compare=False)
+    # data: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict, compare=False)
+    # stage: VarlistEntryStage = dc.field(default=VarlistEntryStage.NOTSET, compare=False)
+    # _deactivation_log_level = logging.INFO
+
+    # NOTE: see <https://stackoverflow.com/questions/26467564/how-to-copy-all-attributes-of-one-python-object-to-another>
+    # for why the from_parent method is used. We want attributes to correspond to an object, not the multrunvarlist
+    # class
+    @classmethod
+    def from_parent(self, parent):
+        skip_atts = ["path_variable", "dest_path"]
+        for k, v in parent.__dict__.items():
+            if k not in skip_atts:
+                #print(k)
+                self.__dict__[k] = copy.deepcopy(v)
+        self.path_variable: list = dc.field(default_factory=list,
+                                            compare=False)  # each variable will have a list of paths to files for
+        # each case don't need compare methods b/c this will be a list of strings, not booleans, ints, etc...
+        self.dest_path: list = dc.field(default_factory=list,
+                                        compare=False)
+
+
+          # each variable will have a list of paths to files for each case
+    # don't need compare methods b/c this will be a list of strings,
+    # not booleans, ints, etc...
     pass
 
 
 
 #if __name__ == "__main__":
-#   print(MultirunLocalFileDataSource.mro())
+#    print(MultirunDiagnostic.mro())

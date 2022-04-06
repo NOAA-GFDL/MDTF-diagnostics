@@ -9,7 +9,7 @@ import glob
 import signal
 import textwrap
 import typing
-from src import util, core, diagnostic, xr_parser, preprocessor, multirun
+from src import util, core, diagnostic, preprocessor, multirun
 import pandas as pd
 import intake_esm
 
@@ -364,6 +364,10 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
 
     def get_pod_config_multirun(self, pod_name):
         pod = self._DiagnosticClass.from_config(pod_name, parent=self)
+        parent_vars = pod.varlist.vars
+        for v in parent_vars:
+            print(v)
+            child = multirun.MultirunVarlistEntry.from_parent(v)
         pod.multirun = True
         try:
             pod.setup(self)
@@ -1483,3 +1487,48 @@ class SingleLocalFileDataSource(LocalFileDataSource):
                     "Query found multiple files when one was expected:",
                     d_key, log=var.log
                 )
+
+# MULTIRUN STUFF
+class MultirunDataSourceBase(DataSourceBase):
+    """Base class for handling multirun data needs. Executes query for
+    requested model data against the remote data sources, fetches the required
+    data locally, preprocesses it, and performs cleanup/formatting of the POD's
+    output.
+    """
+
+    def __init__(self, case_dict, parent):
+        super(self).__init__(case_dict, parent)
+        print("MultirunDataSourceBase")
+
+# MRO: [<class '__main__.MultirunDataframeQueryDataSourceBase'>
+# <class '__main__.MultirunDataSourceBase'>
+# <class 'src.data_manager.DataframeQueryDataSourceBase'>
+# <class 'src.data_manager.DataSourceBase'>
+# <class 'src.core.MDTFObjectBase'>
+# <class 'src.util.logs.CaseLoggerMixin'>
+# <class 'src.util.logs._CaseAndPODHandlerMixin'>
+# <class 'src.util.logs.MDTFObjectLoggerMixinBase'>
+# <class 'src.data_manager.AbstractDataSource'>
+# <class 'src.data_manager.AbstractQueryMixin'>
+# <class 'src.data_manager.AbstractFetchMixin'>
+# <class 'abc.ABC'>
+# <class 'object'>]
+class MultirunDataframeQueryDataSourceBase(MultirunDataSourceBase):
+    """DataSource which queries a data catalog made available as a pandas
+    DataFrame, and includes logic for selecting experiment based on column values.
+    """
+
+    def __init__(self, case_dict, parent):
+        # note that in python3, you do NOT need to include the enclosing class as the first argument to super()
+        # e.g., super(MultirunDataframeQueryDataSourceBase,self)
+        # here, the code calls the super class's init method, which is MultiRunDataSourceBase's init method
+        super(self).__init__(case_dict, parent)
+        print("MultirunDataframeQuerySourceBase")
+
+# [<class '__main__.MultirunLocalFileDataSource'>,
+# <class '__main__.MultirunDataframeQueryDataSourceBase'>,
+# <class '__main__.MultirunDataSourceBase'>,
+# <class 'src.data_manager.LocalFileDataSource'>...
+# ]
+class MultirunLocalFileDataSource(MultirunDataframeQueryDataSourceBase):
+    pass

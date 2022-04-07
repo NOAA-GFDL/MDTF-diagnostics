@@ -3,19 +3,9 @@ Base classes implementing logic for querying, fetching and preprocessing
 model data requested by the PODs for multirun mode
 (i.e., a single POD is associated with multiple data sources)
 """
-import os
-import abc
-import collections
 import dataclasses as dc
 import copy
-import signal
-import textwrap
-import typing
-from abc import ABC
-
-from src import util, core, diagnostic, xr_parser, preprocessor, data_manager, data_model
-import pandas as pd
-import intake_esm
+from src import util, diagnostic, data_model
 
 import logging
 
@@ -71,10 +61,9 @@ class MultirunDiagnostic(diagnostic.Diagnostic):
     # _deactivation_log_level = logging.ERROR
     #  _interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
     varlist = MultirunVarlist = None
-    pass
 
 @util.mdtf_dataclass
-class MultirunVarlistEntry(object):
+class MultirunVarlistEntry(diagnostic.VarlistEntry):
     # Attributes:
     #         path_variable: Name of env var containing path to local data.
     #         dest_path: list of paths to local data
@@ -102,6 +91,13 @@ class MultirunVarlistEntry(object):
     # NOTE: see <https://stackoverflow.com/questions/26467564/how-to-copy-all-attributes-of-one-python-object-to-another>
     # for why the from_parent method is used. We want attributes to correspond to an object, not the multrunvarlist
     # class
+    # init attributes will belong to the instance
+    def __init__(self):
+        self.path_variable: list = dc.field(default_factory=list,
+                                       compare=False)  # each variable will have a list of paths to files for
+        # each case don't need compare methods b/c this will be a list of strings, not booleans, ints, etc...
+        self.dest_path: list = dc.field(default_factory=list,
+                                   compare=False)
     @classmethod
     def from_parent(self, parent):
         skip_atts = ["path_variable", "dest_path"]
@@ -109,11 +105,7 @@ class MultirunVarlistEntry(object):
             if k not in skip_atts:
                 #print(k)
                 self.__dict__[k] = copy.deepcopy(v)
-        self.path_variable: list = dc.field(default_factory=list,
-                                            compare=False)  # each variable will have a list of paths to files for
-        # each case don't need compare methods b/c this will be a list of strings, not booleans, ints, etc...
-        self.dest_path: list = dc.field(default_factory=list,
-                                        compare=False)
+
 
 
           # each variable will have a list of paths to files for each case

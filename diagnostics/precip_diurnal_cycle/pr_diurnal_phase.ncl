@@ -1,4 +1,4 @@
-; This file is part of the precip_diurnal_cycle module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the precip_diurnal_cycle module of the MDTF code package (see LICENSE.txt)
 
 ; This routine is meant to read in CAM (an time resolution from 1hr to 3 or 6? hrs) data
 ; calculate the magnitude of the diurnal and semi0diyrnal cycle and phase
@@ -13,8 +13,14 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$POD_HOME/calc_utils.ncl"
 load "$POD_HOME/evans_plot.ncl"
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 begin
 ; Set variables for two runs.
+
+
+  date_off = getenv("date_int_offset")
+  date_offset = stringtointeger(date_off) ; 1 for native CESM, 0 for GFDL & CMIP
 
   setfileoption("nc", "SuppressClose", False)
 
@@ -405,7 +411,7 @@ ps_name = ps_name0+"_pr."+region_plot+".dc."
         else  ; ************* CAM/CCSM ***********
           print("** model output")
 ;          if  (any(var_name.eq.(/"PRECT","PRECC","PRECL","PRECSH"/))) then
-            vscale = 86400.*1000.*tofloat(getenv("pr_conversion_factor"))*0.001
+            vscale = 86400.0
 ;          end if
           run_years = mrun_years
         end if
@@ -454,7 +460,7 @@ ps_name = ps_name0+"_pr."+region_plot+".dc."
             if (model_fstruc.eq.0) then
 ; 0 = Single file containing data.
 ;           infiles =  getenv("file_path")+"/"+getenv("CASENAME")+"."+getenv("PRECT_var")+".3hr.nc"
-           infiles =  getenv("DATADIR")+"/3hr/"+getenv("CASENAME")+"."+getenv("pr_var")+".3hr.nc"
+           infiles = getenv("PR_FILE")
 ;              infiles = systemfunc("ls -1 "+dir_root+run_name+"/"+rsub_dir+run_name+".cam2.h"+hchan+"."+srun_year+"."+var_name+".nc") ; Single file.
 ;           infiles = systemfunc("ls -1 "+dir_root+run_name+"/"+rsub_dir++run_name+".cam2.h"+hchan+".{"+ym1+","+srun_year+"}-??-??-?????.nc") ; this year+ previous year.
             end if      
@@ -482,7 +488,7 @@ ps_name = ps_name0+"_pr."+region_plot+".dc."
               end if
             end if
             
-            tpert = 0.00001 ; Some temporary fix for incorrect ut_calendar functionality (rounding)
+            tpert = 0.00001 ; Some temporary fix for incorrect cd_calendar functionality (rounding)
             
           end if
           
@@ -507,18 +513,31 @@ ps_name = ps_name0+"_pr."+region_plot+".dc."
           delete(date)
           delete(datesec)
          else
-          t_utc = ut_calendar(time,-3)
+          t_utc = cd_calendar(time,-3)
          end if
  
 ; Requested start time and index in data
-          tstart = toint(run_years(iyear))*1000000+toint(months(imonth))*10000+(1*100) 
-          
-; Adjust for ut_calendar problems in cam/climo runs as the first year is usually 0000 and
-; ut_calendar changes this to 0001 !! So adjust tstart forward by 1 year.
-          if (time@units.eq."days since 0000-01-01 00:00:00") then
-            tstart = tstart + 1000000
-            print("- Adjusting start date for CAM standalone runs which begin 0000 and ut_calendar switches in to 0001")
+          if (date_offset.eq.0) then
+            ; CMIP / GFDL date index
+            tstart = toint(run_years(iyear))*1000000+toint(months(imonth))*10000+(1*101) 
+          else if (date_offset.eq.1) then
+            ; CESM native date index
+            tstart = toint(run_years(iyear))*1000000+toint(months(imonth))*10000+(1*100) 
           end if
+          end if
+          print(tstart)
+
+; TSJ edit 2021-01-12: This step no longer necessary with the replacement of 
+; ut_calendar by cd_calendar. See 
+; https://www.ncl.ucar.edu/Document/Functions/Built-in/cd_calendar.shtml ,
+; in particulare Example 5.
+;
+; ; Adjust for ut_calendar problems in cam/climo runs as the first year is usually 0000 and
+; ; ut_calendar changes this to 0001 !! So adjust tstart forward by 1 year.
+;           if (time@units.eq."days since 0000-01-01 00:00:00") then
+;             tstart = tstart + 1000000
+;             print("- Adjusting start date for CAM standalone runs which begin 0000 and ut_calendar switches in to 0001")
+;           end if
 
          ; print(t_utc)
          ; print(tstart)

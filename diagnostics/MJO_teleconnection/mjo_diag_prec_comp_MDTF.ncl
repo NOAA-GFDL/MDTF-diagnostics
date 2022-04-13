@@ -1,4 +1,4 @@
-; This file is part of the MJO_teleconnection module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_teleconnection module of the MDTF code package (see LICENSE.txt)
 
 ;-------------------------------------------------------------------------------------
 ;Composites of geopotential height for CMIP5 models
@@ -14,6 +14,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl" 
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 begin
 
 ;lag desired for geopotential height plots
@@ -22,8 +24,7 @@ begin
  Mean = False  ;True only for variance calculation for difference of means test
 print("--------------------------------------------------------------------------")  
 
-Model = getenv("CASENAME") 
-pr_conv=stringtointeger(getenv("pr_conversion_mm/day"))
+Model = getenv("CASENAME")
 
 print("Model: " + Model)
 ;-------------------------------------------------------------------------------------
@@ -35,12 +36,10 @@ print("Model: " + Model)
 ;-------------------------------------------------------------------------------------
 ;--directory for output files--
 ;-------------------------------------------------------------------------------------
-diri  = getenv("DATADIR")+"/day/"                               ;Input data directory
 dirobs  = getenv("OBS_DATA")+"/"         ;Output data directory
 diro  = getenv("WK_DIR")+"/model/netCDF/" 
 filpr = getenv("prec_file")                   ; input file
 
-print("Input data path :" + diri)
 print("Output data path :" + diro)
 print("Input data file for Precip :" + filpr)
 
@@ -49,7 +48,7 @@ prvar = getenv("pr_var")
 ;------------------read in geopotential height data --------------------
 
 
-    a = addfile(diri+filpr, "r") 
+    a = addfile(filpr, "r") 
 ;   print(a)
 
 ;--- read in time ---
@@ -70,8 +69,8 @@ prvar = getenv("pr_var")
     pr = a->$prvar$(iStrt:iLast,:,:)     ;time,lat,lon
     pr@_FillValue = -999
 
-     print("convert to mm/day")
-     pr = pr * pr_conv
+    print("convert kg m-2 s-1 flux to mm/day rate")
+    pr = pr * 86400.0
 
     lon = tofloat(a->lon)
     lat = tofloat(a->lat)
@@ -554,7 +553,7 @@ pr_composites&lon = lon
 ;write out a 3D netcdf file
 
 
-  system("/bin/rm -f " + diro + "PR_composites_"+Model+".nc")
+  system("rm -f " + diro + "PR_composites_"+Model+".nc")
   ncdf = addfile(diro + "PR_composites_"+Model+".nc" , "c")
 
 ;make time and unlimited dimension

@@ -3,7 +3,7 @@ import os
 import sys
 import argparse
 import textwrap
-import yaml
+import json
 import shared_test_utils as shared
 
 def checksum_in_subtree_1(rootdir, reference_subdirs, exclude_exts=[]):
@@ -11,7 +11,7 @@ def checksum_in_subtree_1(rootdir, reference_subdirs, exclude_exts=[]):
     checksum_dict = {}
     for d1 in reference_subdirs:
         p1 = os.path.join(rootdir, d1)
-        assert os.path.isdir(p1)   
+        assert os.path.isdir(p1)
         checksum_dict[d1] = shared.checksum_files_in_subtree(p1, exclude_exts)
     return checksum_dict
 
@@ -21,18 +21,18 @@ def make_output_data_dict(rootdir, case_list, exclude_exts=[]):
     for c in case_list:
         d1 = c['dir']
         p1 = os.path.join(rootdir, d1)
-        assert os.path.isdir(p1)   
+        assert os.path.isdir(p1)
         checksum_dict[d1] = {}
         for d2 in c['pod_list']:
             p2 = os.path.join(rootdir, d1, d2)
-            assert os.path.isdir(p2) 
+            assert os.path.isdir(p2)
             checksum_dict[d1][d2] = shared.checksum_files_in_subtree(p2, exclude_exts)
     return checksum_dict
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('config_file', nargs='?', type=str, 
+    parser.add_argument('config_file', nargs='?', type=str,
                         default='', help="Configuration file.")
     args = parser.parse_args()
 
@@ -50,21 +50,21 @@ if __name__ == '__main__':
 
     case_list = shared.get_test_data_configuration()
 
-    print 'Hashing input observational data'
+    print('Hashing input observational data')
     checksum_dict = checksum_in_subtree_1(obs_path, case_list['pods'])
-    with open(os.path.join(md5_path, 'checksum_obs_data.yml'), 'w') as file_obj:
+    with open(os.path.join(md5_path, 'checksum_obs_data.json'), 'w') as file_obj:
         file_obj.write(textwrap.dedent(header))
-        yaml.dump(checksum_dict, file_obj)
+        json.dump(checksum_dict, file_obj)
 
-    print 'Hashing input model data'
+    print('Hashing input model data')
     checksum_dict = checksum_in_subtree_1(model_path, case_list['models'])
-    with open(os.path.join(md5_path, 'checksum_model_data.yml'), 'w') as file_obj:
+    with open(os.path.join(md5_path, 'checksum_model_data.json'), 'w') as file_obj:
         file_obj.write(textwrap.dedent(header))
-        yaml.dump(checksum_dict, file_obj)
+        json.dump(checksum_dict, file_obj)
 
-    print 'Hashing output data'
+    print('Hashing output data')
     checksum_dict = make_output_data_dict(out_path, case_list['case_list'],
-        ['.tar','.tar_old','.log','.yml'])
-    with open(os.path.join(md5_path, 'checksum_output.yml'), 'w') as file_obj:
+        ['.tar','.tar_old','.log','.json'])
+    with open(os.path.join(md5_path, 'checksum_output.json'), 'w') as file_obj:
         file_obj.write(textwrap.dedent(header))
-        yaml.dump(checksum_dict, file_obj)
+        json.dump(checksum_dict, file_obj)

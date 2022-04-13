@@ -1,4 +1,4 @@
-; This file is part of the MJO_teleconnection module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_teleconnection module of the MDTF code package (see LICENSE.txt)
 
 ;-------------------------------------------------------------------------------------
 ;Calculate RMM indices for a given  model data
@@ -23,6 +23,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl" 
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 ;--------------Choose Model--------------
 ;previously used models (already have RMM indices for all of these)
 ;As Multimodel daignostic the RMM following model are already calculated and will be used in diagnostic  
@@ -44,7 +46,6 @@ print("Model: " + Model)
 
 ;------------ Read in zonal wind and olr --------------------
 
-diri    = getenv("DATADIR")+"/day/"     ;Input data directory
 diri1   = getenv("OBS_DATA")+"/"         ;Observed Input data directory
 diro    = getenv("WK_DIR")+"/model/netCDF/" 
 filolr  = getenv("olr_file")          ; input file
@@ -55,13 +56,11 @@ olrvar = getenv("rlut_var")
 u250var = getenv("u250_var")
 u850var = getenv("u850_var")
 
-print("Input data path(Model) :" + diri)
 print("Input data path(obs) :" + diri1)
 print("Output data path :" + diro)
 print("Input data file for OLR :" + filolr)
 print("Input data file for U850:" + filu850)
 print("Input data file for U250:" + filu250)
-print(u250var)
 print("---------------------------------------------------------------------------------")
 
    ymdStrt = tointeger(getenv("strtdy"))                         ; start yyyymmdd
@@ -71,7 +70,7 @@ print("-------------------------------------------------------------------------
 ;---------------------------------------------------------------------------------------
 
 ;-- Reading U250 data --
-    a  = addfile (diri+filu250 , "r")      
+    a  = addfile (filu250 , "r")      
 ;    print(a)
      latt = a->lat
 ;     print(latt)
@@ -97,7 +96,7 @@ print("-------------------------------------------------------------------------
    ;--- read in time ---
    temp_time = a->time
    calend = temp_time@calendar
-;   print(calend)
+   print(calend)
  
   if(temp_time@calendar .ne. "360_day")  ;HadGEM2-CC uses a 360 day calendar
    utc_date = cd_calendar((a->time), 0)
@@ -108,7 +107,9 @@ print("-------------------------------------------------------------------------
 
     iStrt   = ind(ymd.eq.ymdStrt)              ; index start
     iLast   = ind(ymd.eq.ymdLast)              ; index last 
-    
+    print("CALENDAR DEBUG")   
+    printMinMax(ymd,0)
+    print("ymdStrt: "+ymdStrt+" iStrt: "+iStrt+" ymdLast: "+ymdLast+" iLast: "+iLast)
     print("Date range from year "+yeart(iStrt)+" to "+yeart(iLast))
 
     u250t = a->$u250var$(iStrt:iLast,lat_ind,:)     ;time,lev,lat,lon , 15N - 15S
@@ -155,24 +156,24 @@ print("Reading data for 250mb wind")
 
   u250 = u250t(:,:,:); Reading data over the all avaliable time period
   u250@_FillValue = -999
-printVarSummary(u250)
-  delete(u250t)
+
+delete(u250t)
 print("U250 data has been read")
 ;----------- 850mb wind --------------
 print("Reading data for 850mb wind")
 ;-------------------------------------
 
-  b = addfile(diri+filu850,"r")
+  b = addfile(filu850,"r")
  
  ;-check lats, lons, and time -
  
   latt2 = b->lat
   lont2 = b->lon
   time2 = b->time(iStrt:iLast)
-print(dimsizes(time2))
-print(dimsizes(time))
-print(time2(0))
-print(time(0))
+;print(dimsizes(time2))
+;print(dimsizes(time))
+;print(time2(0))
+;print(time(0))
 
   if(latt2(0) .eq. latt(0) .and. (dimsizes(latt2) .eq. dimsizes(latt)))
     print("850mb wind: latitudes match")
@@ -197,8 +198,8 @@ print(time(0))
   delete(time2)
  
  ;-read in data-
-    u850 = b->$u850var$(iStrt:iLast,lat_ind,:)     ;time,lat,lon , 15N - 15S
-    u850@_FillValue = -999
+  u850 = b->$u850var$(iStrt:iLast,lat_ind,:)     ;time,lat,lon , 15N - 15S
+  u850@_FillValue = -999
 print("U850 data has been read")
 print("-------------------------------------------")
 
@@ -256,7 +257,7 @@ print("-------------------------------------------")
 print("Now reading OLR data")
 
   
-  b = addfile(diri+filolr,"r")
+  b = addfile(filolr,"r")
 
  ;-check lats, lons, and time -
  
@@ -299,7 +300,6 @@ print("Now reading OLR data")
   ;clean up
   delete(b)
   delete(lat_ind)
-  delete(diri)
 print("OLR data has been read")
 
 print("-------------------------------------------")

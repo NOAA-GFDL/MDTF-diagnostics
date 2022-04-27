@@ -400,6 +400,28 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
     # convention: str
+<<<<<<< Updated upstream
+=======
+    convention: str = "CMIP"
+    CASE_ROOT_DIR: str = ""
+    component: str = ""
+    chunk_freq: util.DateFrequency = None
+
+    #  This method overrides dataclass.mdtf_dataclass._old_post_init.
+    # _old_post_init has the parms *args, and **kwargs. Excluding these parms
+    # from the super().__post_init__() call, therefore, caused an error that 1
+    # positional argument (self) was specified, but 2 were given during the self.atts definition
+    # in data_manager.DataSourceBase.__init__()
+    # I resolved the problem (I think) using the example here:
+    # https://stackoverflow.com/questions/66995998/how-can-i-take-the-variable-from-the-parent-class-constructor-and-use-it-in-the
+    # after another post stated that an error like this could be caused by class override issues.
+    def __post_init__(self, *args, **kwargs):
+        """Validate user input.
+        """
+        super(PPDataSourceAttributes, self).__post_init__(*args, **kwargs)
+        config = core.ConfigManager()
+
+>>>>>>> Stashed changes
     pass
 
 gfdlppDataManager_any_components_col_spec = data_manager.DataframeQueryColumnSpec(

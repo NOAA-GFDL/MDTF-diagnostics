@@ -1314,6 +1314,9 @@ class OnTheFlyDirectoryHierarchyQueryMixin(
             raise AssertionError('Directory crawl did not find any files.')
         else:
             self.log.info("Directory crawl found %d files.", len(df))
+            df_dir = "/nbhome/jml/mdtf"
+            self.log.info("dumping data frame output to csv in", df_dir)
+            df.to_csv(os.path.join(df_dir, "mdtf_df.csv"))
         return df
 
 FileGlobTuple = collections.namedtuple(

@@ -137,6 +137,11 @@
       "ndim": 3
     },
     "olr": {
+      "standard_name": "outgoing_longwave_radiation",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rlut": {
       "standard_name": "toa_outgoing_longwave_flux",
       "units": "W m-2",
       "ndim": 3

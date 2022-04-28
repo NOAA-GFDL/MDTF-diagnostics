@@ -21,7 +21,6 @@ sample_data_regex = util.RegexPattern(
         (?P<frequency>\w+)/         # subdirectory: data frequency
         # file name = model name + variable name + frequency
         (?P=sample_dataset)\.(?P<variable>\w+)\.(?P=frequency)\.nc
-        #(?i).*(\.?P<variable>).*\.nc # case-insensitive match of any file with the patterns .<variable>. and .nc
     """,
     input_field="remote_path",
     match_error_filter=ignore_non_nc_regex

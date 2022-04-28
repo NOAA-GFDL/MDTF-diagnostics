@@ -400,10 +400,11 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
     # convention: str
-    convention: str = "GFDL"
-    CASE_ROOT_DIR: str = ""
-    component: str = ""
-    chunk_freq: util.DateFrequency = None
+
+    convention: str = "CMIP"
+    #CASE_ROOT_DIR: str = ""
+    #component: str = ""
+    #chunk_freq: util.DateFrequency = None
 
     #  This method overrides dataclass.mdtf_dataclass._old_post_init.
     # _old_post_init has the parms *args, and **kwargs. Excluding these parms
@@ -419,7 +420,6 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
         super(PPDataSourceAttributes, self).__post_init__(*args, **kwargs)
         config = core.ConfigManager()
 
-    pass
 
 gfdlppDataManager_any_components_col_spec = data_manager.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
@@ -436,7 +436,6 @@ gfdlppDataManager_same_components_col_spec = data_manager.DataframeQueryColumnSp
     var_expt_cols = data_manager.DataFrameQueryColumnGroup(['chunk_freq']),
     daterange_col = "date_range"
 )
-
 
 class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
     # extends GFDL_GCP_FileDataSourceBase
@@ -464,18 +463,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         # any_components = True (set to False with --component_only)
         config = core.ConfigManager()
         self.frepp_mode = config.get('frepp', False)
-        # if no model component set, consider data from any components
-        self.any_components = not(self.attrs.component)
-
-    @property
-    def expt_key_cols(self):
-        """Catalog columns whose values must be the same for all data used in
-        this run of the package.
-        """
-        if not self.frepp_mode and not self.any_components:
-            return ('component', )
-        else:
-            return tuple()
+        self.any_components = config.get('any_components', False)
 
     @property
     def pod_expt_key_cols(self):
@@ -483,7 +471,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         differ for different PODs.
         """
         if self.frepp_mode and not self.any_components:
-            return ('component', )
+            return 'component'
         else:
             return tuple()
 
@@ -496,9 +484,9 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         # of frepp_mode. This is the default behavior when called from the FRE
         # wrapper.
         if self.any_components:
-            return ('chunk_freq', 'component')
+            return 'chunk_freq', 'component'
         else:
-            return ('chunk_freq', )
+            return 'chunk_freq'
 
     # these have to be supersets of their *_key_cols counterparts; for this use
     # case they're all just the same set of attributes.
@@ -586,7 +574,6 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             self.log.debug("Selected experiment attribute '%s'='%s' for %s.",
                 col_name, df[col_name].iloc[0], obj.name)
         return df
-
 
 class GfdlautoDataManager(object):
     """Wrapper for dispatching DataManager based on user input. If CASE_ROOT_DIR

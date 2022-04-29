@@ -574,7 +574,7 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
 
     # Do type coercion after dataclass' __init__, but before user __post_init__
     # Do type check after __init__ and __post_init__
-    _old_post_init = cls.__post_init__  # = _dummy_post_init(self, *args. **kwargs)
+    _old_post_init = cls.__post_init__
 
     @functools.wraps(_old_post_init)
     def _new_post_init(self, *args, **kwargs):

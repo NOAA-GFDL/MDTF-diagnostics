@@ -400,6 +400,7 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
     # convention: str
+
     convention: str = "CMIP"
     CASE_ROOT_DIR: str = ""
     component: str = ""

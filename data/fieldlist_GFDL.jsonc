@@ -141,11 +141,6 @@
       "units": "W m-2",
       "ndim": 3
     },
-    "rlut": {
-      "standard_name": "toa_outgoing_longwave_flux",
-      "units": "W m-2",
-      "ndim": 3
-    },
     // Variables for AMOC_3D_Structure module:
     // "uo": {
     // NB: need to perform rotation to get from u,v?

@@ -27,7 +27,7 @@ jobs:
         json-file-set2: ["tests/github_actions_test_ubuntu_set2.jsonc", "tests/github_actions_test_macos_set2.jsonc"]
         json-file-set3: ["tests/github_actions_test_ubuntu_set3.jsonc", "tests/github_actions_test_macos_set3.jsonc"]
         # if experimental is true, other jobs to run if one fails
-        experimental: [true]
+        experimental: [false]
         exclude:
           - os: ubuntu-latest
             conda-root: /Users/runner/miniconda3
@@ -137,9 +137,6 @@ jobs:
         ./mdtf -v -f ${{matrix.json-file}}
     - name: Get observational data for set 2
       run: |
-        # dump POD log to terminal
-        fname="/Users/runner/work/MDTF-diagnostics/wkdir/MDTF_NCAR.Synthetic_1975_1981/EOF_500hPa/EOF_500hPa.log"
-        printf "%s" "$(<$fname)"
         echo "${PWD}"
         # remove data from previous run
         # Actions moves you to the root repo directory in every step, so need to cd again

@@ -806,7 +806,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
 
     def __init__(self, case_dict, parent):
         super(DataframeQueryDataSourceBase, self).__init__(case_dict, parent)
-        self.expt_keys = dict() # Object _id -> expt_key tuple
+        self.expt_keys = dict()  # Object _id -> expt_key tuple
 
     @property
     @abc.abstractmethod

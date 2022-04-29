@@ -28,7 +28,8 @@ set fremodule
 set script_path
 
 ## set paths to site installation
-set REPO_DIR="/home/oar.gfdl.mdtf/mdtfmdtf/MDTF-diagnostics"
+set CONDA_ROOT="/home/oar.gfdl.mdtf/miniconda3"
+set REPO_DIR="/home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics"
 set OBS_DATA_DIR="/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data"
 # output is always written to $out_dir; set a path below to GCP a copy of output
 # for purposes of serving from a website
@@ -144,7 +145,7 @@ wipetmp
 ## run the command
 echo "mdtf_gfdl.csh: conda activate"
 source "${REPO_DIR}/src/conda/conda_init.sh" -q "/home/oar.gfdl.mdtf/miniconda3"
-conda activate "${REPO_DIR}/envs/_MDTF_base"
+conda activate "${CONDA_ROOT}/envs/_MDTF_base"
 
 echo "mdtf_gfdl.csh: MDTF start"
 

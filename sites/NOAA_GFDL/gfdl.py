@@ -401,7 +401,7 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     # CASE_ROOT_DIR: str
     # convention: str
 
-    convention: str = "CMIP"
+    convention: str = "GFDL"
     CASE_ROOT_DIR: str = ""
     component: str = ""
     # chunk_freq: util.DateFrequency = None # THIS IS THE PROBLEM LINE FOPR THE GFDL SITE BUILD!!!

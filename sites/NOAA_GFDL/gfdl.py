@@ -401,9 +401,9 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     # CASE_ROOT_DIR: str
     # convention: str
     convention: str = "CMIP"
-    #CASE_ROOT_DIR: str = ""
-    #component: str = ""
-    #chunk_freq: util.DateFrequency = None
+    CASE_ROOT_DIR: str = ""
+    component: str = ""
+    # chunk_freq: util.DateFrequency = None # THIS IS THE PROBLEM LINE FOPR THE GFDL SITE BUILD!!!
 
     #  This method overrides dataclass.mdtf_dataclass._old_post_init.
     # _old_post_init has the parms *args, and **kwargs. Excluding these parms

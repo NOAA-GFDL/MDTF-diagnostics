@@ -1,0 +1,81 @@
+// Water Mass Transformation POD
+//
+// Authors:
+//    J. E. Tesdal, G. MacGilchrist, S. Griffies, J. Krasting
+//
+
+{
+  "settings" : {
+    "driver" : "wmt_driver.py",
+
+    "long_name" : "Water Mass Transformtation",
+    "description" : "Water Mass Transformation",
+    "realm" : "ocean",
+    "runtime_requirements": {
+        "python3": ["matplotlib", "xarray", "xgcm", "xhistogram", "netCDF4"]
+    }
+
+    // (optional) Any diagnostic-specific environment variables, given as
+    // key:value pairs. The user can't change these at runtime, but they can be
+    // used to set site-specific installation settings for your diagnostic.
+    // "pod_env_vars" : {
+    //   "EXAMPLE_FAV_COLOR": "blue"
+    // },
+
+  },
+
+  // In this section, you define the names and units for the coordinates used by
+  // the variables defined below in the "varlist" section. Names in the
+  // "dimensions" attribute for each variable must correspond to a coordinate
+  // named here.
+  "dimensions": {
+    "yh": {"standard_name": "latitude"},
+    "xh": {"standard_name": "longitude"},
+    "time": {"standard_name": "time"}
+  },
+
+  // commas.
+  "varlist" : {
+
+    "areacello": {
+      "standard_name" : "cell_area",
+      "units": "m2",
+      "dimensions": ["yh", "xh"]
+    },
+
+    "tos": {
+      "standard_name" : "sea_surface_temperature",
+      "units": "degC",
+      "frequency" : "mon",
+      "dimensions": ["time", "yh", "xh"]
+    },
+
+    "sos": {
+      "standard_name" : "sea_surface_salinity",
+      "units": "psu",
+      "frequency" : "mon",
+      "dimensions": ["time", "yh", "xh"]
+    },
+
+    "hfds": {
+      "standard_name" : "surface_downward_heat_flux_in_sea_water",
+      "units": "W m-2",
+      "frequency" : "mon",
+      "dimensions": ["time", "yh", "xh"]
+    },
+
+    "wfo": {
+      "standard_name" : "water_flux_into_sea_water",
+      "units": "kg m-2 s-1",
+      "frequency" : "mon",
+      "dimensions": ["time", "yh", "xh"]
+    },
+
+    "sfdsi": {
+      "standard_name" : "downward_sea_ice_basal_salt_flux",
+      "units": "kg m-2 s-1",
+      "frequency" : "mon",
+      "dimensions": ["time", "yh", "xh"]
+    }
+  }
+}

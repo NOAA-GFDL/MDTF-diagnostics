@@ -273,9 +273,34 @@
       "units": "N m-2",
       "ndim": 3
     },
+    "tos": {
+      "standard_name": "sea_surface_temperature",
+      "units": "degC",
+      "ndim": 3
+    },
+    "sos": {
+      "standard_name": "sea_surface_salinity",
+      "units": "psu",
+      "ndim": 3
+    },
     "zos": {
       "standard_name": "sea_surface_height_above_geoid",
       "units": "m",
+      "ndim": 3
+    },
+    "hfds": {
+      "standard_name" : "surface_downward_heat_flux_in_sea_water",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "wfo": {
+      "standard_name" : "water_flux_into_sea_water",
+      "units": "kg m-2 s-1",
+      "ndim": 3
+    },
+    "sfdsi": {
+      "standard_name" : "downward_sea_ice_basal_salt_flux",
+      "units": "kg m-2 s-1",
       "ndim": 3
     }
   },

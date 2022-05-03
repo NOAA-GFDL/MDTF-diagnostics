@@ -44,7 +44,7 @@ class GFDLMDTFFramework(core.MDTFFramework):
         self.global_env_vars['MDTF_TMPDIR'] = gfdl_tmp_dir
 
     def _post_parse_hook(self, cli_obj, config, paths):
-        ### call parent class method
+        # call parent class method
         super(GFDLMDTFFramework, self)._post_parse_hook(cli_obj, config, paths)
 
         self.reset_case_pod_list(cli_obj, config, paths)
@@ -400,18 +400,26 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
     # convention: str
+
     convention: str = "GFDL"
     CASE_ROOT_DIR: str = ""
     component: str = ""
-    chunk_freq: util.DateFrequency = None
+    # chunk_freq: util.DateFrequency = None # THIS IS THE PROBLEM LINE FOPR THE GFDL SITE BUILD!!!
 
-    def __post_init__(self):
+    #  This method overrides dataclass.mdtf_dataclass._old_post_init.
+    # _old_post_init has the parms *args, and **kwargs. Excluding these parms
+    # from the super().__post_init__() call, therefore, caused an error that 1
+    # positional argument (self) was specified, but 2 were given during the self.atts definition
+    # in data_manager.DataSourceBase.__init__()
+    # I resolved the problem (I think) using the example here:
+    # https://stackoverflow.com/questions/66995998/how-can-i-take-the-variable-from-the-parent-class-constructor-and-use-it-in-the
+    # after another post stated that an error like this could be caused by class override issues.
+    def __post_init__(self, *args, **kwargs):
         """Validate user input.
         """
-        super(PPDataSourceAttributes, self).__post_init__()
+        super(PPDataSourceAttributes, self).__post_init__(*args, **kwargs)
         config = core.ConfigManager()
 
-    pass
 
 gfdlppDataManager_any_components_col_spec = data_manager.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
@@ -430,6 +438,7 @@ gfdlppDataManager_same_components_col_spec = data_manager.DataframeQueryColumnSp
 )
 
 class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
+    # extends GFDL_GCP_FileDataSourceBase
     _FileRegexClass = PPTimeseriesDataFile
     _DirectoryRegex = pp_dir_regex
     _AttributesClass = PPDataSourceAttributes
@@ -454,18 +463,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         # any_components = True (set to False with --component_only)
         config = core.ConfigManager()
         self.frepp_mode = config.get('frepp', False)
-        # if no model component set, consider data from any components
-        self.any_components = not(self.attrs.component)
-
-    @property
-    def expt_key_cols(self):
-        """Catalog columns whose values must be the same for all data used in
-        this run of the package.
-        """
-        if not self.frepp_mode and not self.any_components:
-            return ('component', )
-        else:
-            return tuple()
+        self.any_components = config.get('any_components', False)
 
     @property
     def pod_expt_key_cols(self):
@@ -473,7 +471,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         differ for different PODs.
         """
         if self.frepp_mode and not self.any_components:
-            return ('component', )
+            return 'component'
         else:
             return tuple()
 
@@ -486,9 +484,9 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         # of frepp_mode. This is the default behavior when called from the FRE
         # wrapper.
         if self.any_components:
-            return ('chunk_freq', 'component')
+            return 'chunk_freq', 'component'
         else:
-            return ('chunk_freq', )
+            return 'chunk_freq'
 
     # these have to be supersets of their *_key_cols counterparts; for this use
     # case they're all just the same set of attributes.
@@ -582,7 +580,11 @@ class GfdlautoDataManager(object):
     ends in "pp", use :class:`GfdlppDataManager`, otherwise use CMIP6 data on
     /uda via :class:`Gfdludacmip6DataManager`.
     """
-    def __new__(cls, case_dict, *args, **kwargs):
+    # Note, object is explicitly defined as a parameter for Python 2/3
+    # compatibility reasons; omitting object in Python2 yields "old-style" classes
+    # All classes are "new-style" in Python3 by default.
+    # TODO: Since WE DO NOT SUPPORT PYTHON2, remove object parm and verify that it doesn't destroy everything
+    def __new__(cls, case_dict, parent, *args, **kwargs):
         """Dispatch DataManager instance creation based on the contents of
         case_dict."""
         config = core.ConfigManager()
@@ -597,7 +599,7 @@ class GfdlautoDataManager(object):
         _log.debug("%s: Dispatched DataManager to %s.",
             cls.__name__, dispatched_cls.__name__)
         obj = dispatched_cls.__new__(dispatched_cls)
-        obj.__init__(case_dict)
+        obj.__init__(case_dict, parent)
         return obj
 
     def __init__(self, *args, **kwargs):

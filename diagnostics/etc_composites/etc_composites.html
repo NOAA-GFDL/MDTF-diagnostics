@@ -1,0 +1,197 @@
+<!-- This file is part of the convective_transition_diag module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt) -->
+
+<STYLE>
+table, th, td {border: 1px solid black;}
+</STYLE>
+
+<IMG SRC="../mdtf_diag_banner.png" border=0 usemap="#logo">
+<TITLE>ETC Composites</TITLE>
+<H3>ETC Composite Analysis</h3>
+<p>
+The Extratropical cyclones are identified with the Modeling, Analysis
+and Prediction (MAP) Climatology of Midlatitude
+Storminess (MCMS) algorithm (Bauer et al. 2016)
+which uses 6-hourly gridded sea level pressure fields to
+locate storm centers and then track them through the
+cyclone lifetime. This algorithm has historically been
+used to create a database of cyclone locations using the
+ERA-Interim reanalysis (Dee et al. 2011). The MCMS algorithm
+is also applied to the model and re-analysis
+sea level pressure fields.
+
+We generate cyclone centered composites of cloud cover, 
+as well as other
+atmospheric variables, over multiple instances of the
+same type of atmospheric phenomenon to compare the
+models with observations or reanalysis. 
+The is a plan view as a passive
+instrument would observe.
+This method presents a
+great advantage for model evaluation as they allow
+multiple cases to be included and do not necessitate a
+match in time and space between the free running
+models and observations.
+
+<p>
+<a href="MDTF_Documentation_etc_composites.pdf">Full Documentation and Contact Information</a>
+<P>
+<P>
+<H3>Track Stats: </H3> <A HREF=model/{{CASENAME}}_track_stats.png target="_blank">{{CASENAME}}</A>
+<P>
+<P>
+<H3>Variable Legend</H3> 
+<P>
+<TABLE>
+  <TR>
+    <TH>Variable</TH>
+    <TH>Long Name</TH>
+    <TH>Units</TH>
+  </TR>
+  <TR>
+    <TD>PR</TD>
+    <TD>Total Precipitation</TD>
+    <TD>mm/hr</TD>
+  </TR>
+  <TR>
+    <TD>PRW</TD>
+    <TD>Total Column Water Vapor</TD>
+    <TD>mm/hr</TD>
+  </TR>
+  <TR>
+    <TD>UV10</TD>
+    <TD>10m Wind Speeds [sqrt(U^2 + V^2)]</TD>
+    <TD>m/s</TD>
+  </TR>
+  <TR>
+    <TD>W500</TD>
+    <TD>Vertical Velocity @ 500 hPA</TD>
+    <TD>Pa/s</TD>
+  </TR>
+  <TR>
+    <TD>CLT</TD>
+    <TD>Total Cloud Fraction</TD>
+    <TD>%</TD>
+  </TR>
+</TABLE>
+
+<P>
+<H3>ETC Composites</H3>
+<P>
+
+
+<!-- Figures -->
+<H3>Difference Plots </H3>
+<p>The figures below show the difference of the extra-tropical cyclone composites between the model run ({{CASENAME}}) and ERA-Interim, MERRA and MODIS data. The composites created for ERA, MERRA and MODIS are from the years 2008-2012. The {{CASENAME}} composites are from your selection of years.</p>
+<TABLE>
+  <TR>
+    <TH>{{CASENAME}} - ERA-Interim</TH>
+    <TH>
+      <A HREF=model/diff_{{CASENAME}}_erai_vars_SH_ocean_WARM.png target="_blank">SH</A> .
+      <A HREF=model/diff_{{CASENAME}}_erai_vars_NH_ocean_WARM.png target="_blank">NH</A>
+    </TH>
+  </TR>
+  <TR>
+    <TH>{{CASENAME}} - MERRA</TH>
+    <TH>
+      <A HREF=model/diff_{{CASENAME}}_merra_vars_SH_ocean_WARM.png target="_blank">SH</A>
+    </TH>
+  </TR>
+  <TR>
+    <TH>{{CASENAME}} - MODIS</TH>
+    <TH>
+      <A HREF=model/diff_{{CASENAME}}_modis_vars_SH_ocean_WARM.png target="_blank">SH</A>
+    </TH>
+  </TR>
+</TABLE>
+    
+    
+<P>
+<H3>Individual Composites</H3>
+<p>Composites of extra-tropical cyclone for the listed variables. The composites created for ERA, MERRA and MODIS are from the years 2008-2012. The {{CASENAME}} composites are from your selection of years.</p>
+<TABLE width=100%>
+<TR>
+  <TH>Hemis - Land/Ocean - Season</TH>
+  <TH>{{CASENAME}}</TH>
+  <TH>ERA-Interim (2008-2012)</TH>
+</TR>
+
+<TR>
+  <TH></TH>
+  <TH></TH>
+  <TH></TH>
+</TR>
+<TR>
+  <TH>SH - Ocean - WARM</TH>
+  <TH>
+    <A HREF=model/{{CASENAME}}_area_pr_SH_ocean_WARM.png target="_blank">PR</A> . 
+    <A HREF=model/{{CASENAME}}_area_prw_SH_ocean_WARM.png target="_blank">PRW</A> .
+    <A HREF=model/{{CASENAME}}_area_uv10_SH_ocean_WARM.png target="_blank">UV10</A> .
+    <A HREF=model/{{CASENAME}}_area_w500_SH_ocean_WARM.png target="_blank">W500</A> .
+    <A HREF=model/{{CASENAME}}_area_clt_SH_ocean_WARM.png target="_blank">CLT</A>       
+  </TH>
+  <TH>
+    <A HREF=obs/{{CASENAME}}_erai_pr_SH_ocean_WARM.png target="_blank">PR</A> . 
+    <A HREF=obs/{{CASENAME}}_erai_prw_SH_ocean_WARM.png target="_blank">PRW</A> .
+    <A HREF=obs/{{CASENAME}}_erai_uv10_SH_ocean_WARM.png target="_blank">UV10</A> .
+    <A HREF=obs/{{CASENAME}}_erai_w500_SH_ocean_WARM.png target="_blank">W500</A>
+  </TH>
+</TR>
+
+<TR>
+  <TH>NH - Ocean - WARM</TH>
+  <TH>
+    <A HREF=model/{{CASENAME}}_area_pr_NH_ocean_WARM.png target="_blank">PR</A> .
+    <A HREF=model/{{CASENAME}}_area_prw_NH_ocean_WARM.png target="_blank">PRW</A> .
+    <A HREF=model/{{CASENAME}}_area_uv10_NH_ocean_WARM.png target="_blank">UV10</A> .
+    <A HREF=model/{{CASENAME}}_area_w500_NH_ocean_WARM.png target="_blank">W500</A> .
+    <A HREF=model/{{CASENAME}}_area_clt_NH_ocean_WARM.png target="_blank">CLT</A>
+
+  </TH>
+  <TH>
+    <A HREF=obs/{{CASENAME}}_erai_pr_NH_ocean_WARM.png target="_blank">PR</A> . 
+    <A HREF=obs/{{CASENAME}}_erai_prw_NH_ocean_WARM.png target="_blank">PRW</A> .
+    <A HREF=obs/{{CASENAME}}_erai_uv10_NH_ocean_WARM.png target="_blank">UV10</A> .
+    <A HREF=obs/{{CASENAME}}_erai_w500_NH_ocean_WARM.png target="_blank">W500</A>
+  </TH>
+</TR>
+
+<!-- <TR>
+  <TH></TH>
+  <TH></TH>
+  <TH></TH>
+  <TH></TH>
+  <TH></TH>
+</TR> -->
+
+</TABLE>
+
+<P>
+<H3>Additional Individual Composites</H3>
+<p>Composites of extra-tropical cyclone for the listed variables. The composites created for MERRA and MODIS are from the years 2008-2012. </p>
+<TABLE width=100%>
+<TR>
+  <TH>Hemis - Land/Ocean - Season</TH>
+  <TH>MERRA (2008-2012)</TH>
+  <TH>Observations (2008-2012)</TH>
+</TR>
+
+<TR>
+  <TH></TH>
+  <TH></TH>
+  <TH></TH>
+</TR>
+<TR>
+  <TH>SH - Ocean - WARM</TH>
+  <TH>
+    <A HREF=obs/{{CASENAME}}_merra_prw_SH_ocean_WARM.png target="_blank">PRW</A> . 
+    <A HREF=obs/{{CASENAME}}_merra_w500_SH_ocean_WARM.png target="_blank">W500</A>
+  </TH>
+  <TH>
+    <A HREF=obs/{{CASENAME}}_modis_cld_SH_ocean_WARM.png target="_blank">CLT</A> 
+  </TH>
+</TR>
+
+</TABLE>
+
+<P>
+    

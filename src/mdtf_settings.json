@@ -1,0 +1,142 @@
+{
+  "# Configuration for MDTF-diagnostics driver script.                     ":"",
+  "# All entries starting with '#' are treated as comments and ignored.    ":"",
+  "# (The JSON format does not support comments.)                          ":"",
+
+  "# MODEL INPUT ----------------------------------------------------------":"",
+  "#                                                                       ":"",
+  "# List all cases below with CASE tag at front of line                   ":"",
+  "# CASE casename model-type startyr endyr                                ":"",
+  "# Note that the mdtf package does not yet handle multiple cases.        ":"",
+  "##                                                                      ":"",
+  "# The cases below correspond to the different test data sets.           ":"",
+  "# Uncomment the first entry to run NCAR-CESM and the second             ":"",
+  "# entry to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD.             ":"",
+
+  "case_list" : [
+    {
+      "CASENAME" : "QBOi.EXP1.AMIP.001",
+      "model" : "CESM",
+      "variable_convention" : "CESM",
+      "FIRSTYR" : 1977,
+      "LASTYR" : 1981,
+      "pod_list": [
+          "# Optional: PODs to run for this model only",
+          "# (otherwise use pod_list below)",
+          "Wheeler_Kiladis",
+          "eulerian_storm_track",
+          "#EOF_500hPa",
+          "#cionvective_transition_diag",
+          "#MJO_suite",
+          "#MJO_teleconnection",
+          "#precip_diurnal_cycle #- high memory requirement"
+      ]
+    },
+    {
+      "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
+      "model" : "AM4",
+      "variable_convention" : "AM4",
+      "FIRSTYR" : 1977,
+      "LASTYR" : 1981,
+      "pod_list" : ["eulerian-storm-track"]
+    },
+    {
+      "CASENAME" : "Lmon_GISS-E2-H_historical_r1i1p1",
+      "model" : "CMIP",
+      "variable_convention" : "CMIP",
+      "FIRSTYR" : 1951,
+      "LASTYR" : 2005,
+      "pod_list" : ["#eulerian-storm-track"]
+    }
+  ],
+
+  "# DIAGNOSTICS ----------------------------------------------------------":"",
+  "# List of PODs to run by default, if not specified in caselist above.   ":"",
+  "# Comment out any with # at start of line.                              ":"",
+
+  "pod_list" : [
+    "Wheeler_Kiladis",
+    "EOF_500hPa",
+    "convective_transition_diag",
+    "MJO_suite",
+    "MJO_teleconnection",
+    "MJO_prop_amp",
+    "precip_diurnal_cycle",
+    "SM_ET_coupling", 
+    "eulerian_storm_track"
+  ],
+
+  "# PATHS ----------------------------------------------------------------":"",
+  "# Relative paths are resolved relative to $CODE_ROOT                    ":"",
+  "# (= parent directory of the directory this file is in.)                ":"",
+
+  "paths" : {
+    "# Code installation directory.                                        ":"",
+    "CODE_ROOT" : ".",
+    "# Parent directory containing results from different models.          ":"",
+    "MODEL_DATA_ROOT" : "../inputdata/model/",
+    "# Parent directory containing observational data used by individual PODs.":"",
+    "OBS_DATA_ROOT" : "../inputdata/obs_data/",
+    "# Working directory.                                                  ":"",
+    "WORKING_DIR" : "../wkdir",
+    "# Directory to write output files. Defaults to working directory.     ":"",
+    "OUTPUT_DIR" : "../wkdir"
+  },
+
+  "# SETTINGS -------------------------------------------------------------":"",
+
+  "settings" : {
+    "# Verbosity levels: # 0-minimal,1-normal,2-copious,3-debug            ":"",
+    "verbose" : 2,
+    "# Set to true for framework test:                                     ":"",
+    "# (script just reports what it would do, doesn't call actual packages)":"",
+    "test_mode": false,
+    "# Set to true for dry run: No data is copied. Implies test_mode.      ":"",
+    "dry_run": false,
+
+    "# DATA FETCHING ......................................................":"",
+    "# Specify the method the code uses to fetch model data.               ":"",
+    "# Currently supported options are                                     ":"",
+    "# - 'Localfile': Do not attempt to fetch data; read from pre-existing ":"",
+    "#   files at $MODEL_DATA_ROOT (set above).                            ":"",
+    "data_manager": "Local_File",
+    "# Amount of time (in seconds) to wait before giving up on             ":"",
+    "# transferring a data file to the local filesystem.                   ":"",
+    "# Set to zero to disable.                                             ":"",
+    "file_transfer_timeout": 300,
+
+    "# RUNTIME ENVIRONMENTS................................................":"",
+    "# Specify the method the code uses to manage POD's dependencies.      ":"",
+    "# Supported options are                                               ":"",
+    "# - 'None' (use whatever modules are found in system)                 ":"",
+    "# - 'Conda' (use the Anaconda package manager)                        ":"",
+    "environment_manager" : "None",
+    "# Sets the Anaconda installation. This is only used if                ":"",
+    "# environment_manager is set to 'Conda'.                              ":"",
+    "# Set equal to '' to use conda from your system's $PATH.              ":"",
+    "conda_root" : "",
+    "# Sets the root directory for Anaconda environment installs. This     ":"",
+    "# is only used if environment_manager is set to 'Conda'.              ":"",
+    "# Set this equal to '' to install in your system's default location.  ":"",
+    "conda_env_root" : "./envs/conda",
+    "# Sets the root directory for python virtual environments. This is    ":"",
+    "# only used if environment_manager = 'Virtualenv'.                    ":"",
+    "venv_root" : "./envs/venv",
+    "# Sets the root directory for R packages requested by PODs. This      ":"",
+    "# is only used if environment_manager = 'Virtualenv'.                 ":"",
+    "# Set this equal to '' to install in your system library.             ":"",
+    "r_lib_root" : "./envs/r_libs",
+
+    "# OUTPUT SETTINGS ....................................................":"",
+    "# Set to true to retain output netcdf files:                          ":"",
+    "save_nc" : true,
+    "# Set to true to retain output .ps plots:                             ":"",
+    "save_ps" : false,
+    "# default flags to pass to PS -> bitmap figure conversion:            ":"",
+    "convert_flags": "-crop 0x0+5+5",
+    "# default bitmap figure output (for html)                             ":"",
+    "convert_output_fmt": "png",
+    "# Set to true to save output directory in .tar file:                  ":"",
+    "make_variab_tar": true
+  }
+}

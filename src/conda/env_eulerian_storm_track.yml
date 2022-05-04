@@ -1,0 +1,16 @@
+name: _MDTF_eulerian_storm_track
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.7
+  - matplotlib=3.2.2
+  - cartopy
+  - basemap
+  - numpy 
+  - netCDF4
+  - nco 
+  - xarray
+  - mock
+  - ghostscript

@@ -63,5 +63,6 @@ def main(argv):
         return exit_code
 
 if __name__ == '__main__':
-    exit_code = main(sys.argv)
+    argv = sys.argv[1::] if len(sys.argv[1::]) >= 2 else sys.argv
+    exit_code = main(argv)
     sys.exit(exit_code)

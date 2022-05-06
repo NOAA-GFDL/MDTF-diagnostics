@@ -300,7 +300,7 @@ class PodExceptionBase(MDTFBaseException):
 class PodConfigError(PodExceptionBase):
     """Exception raised if we can't parse info in a POD's settings.jsonc file.
     (Covers issues with the file format/schema; malformed JSONC will raise a
-    :py:class:`~json.JSONDecodeError` when :func:`~util.parse_json` attempts to
+    :py:class:`~json.JSONDecodeError` when :func:`~util._parse_json` attempts to
     parse the file.
     """
     _error_str = "Couldn't parse the settings.jsonc file"

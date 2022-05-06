@@ -109,7 +109,7 @@ class TestBumpVersion(unittest.TestCase):
     #         self.assertEqual(ver, f[2])
 
 class TestJSONC(unittest.TestCase):
-    def test_parse_json_basic(self):
+    def test_parse_serialization_stream(self):
         s = """{
             "a" : "test_string",
             "b" : 3,
@@ -121,7 +121,7 @@ class TestJSONC(unittest.TestCase):
             }
         }
         """
-        d = util.parse_json(s)
+        d = util.parse_serialization_stream(s)
         self.assertEqual(set(d.keys()), set(['a','b','c','d','e']))
         self.assertEqual(d['a'], "test_string")
         self.assertEqual(d['b'], 3)
@@ -149,7 +149,7 @@ class TestJSONC(unittest.TestCase):
         } // comment 7
 
         """
-        d = util.parse_json(s)
+        d = util.parse_serialization_stream(s)
         self.assertEqual(set(d.keys()), set(['a','b // c','e','f']))
         self.assertEqual(d['a'], 1)
         self.assertEqual(d['b // c'], "// d x ////")
@@ -160,7 +160,7 @@ class TestJSONC(unittest.TestCase):
         s = 'SYNTAX_ERROR\n{"a": 1, "e": false}'
         try:
             flag = False
-            _ = util.parse_json(textwrap.dedent(s))
+            _ = util.parse_serialization_stream(textwrap.dedent(s))
         except json.JSONDecodeError as exc:
             flag = True
             self.assertEqual(exc.lineno, 1)
@@ -171,7 +171,7 @@ class TestJSONC(unittest.TestCase):
         # missing ',' triggers on first " in "e"
         try:
             flag = False
-            _ = util.parse_json(textwrap.dedent(s))
+            _ = util.parse_serialization_stream(textwrap.dedent(s))
         except json.JSONDecodeError as exc:
             flag = True
             self.assertEqual(exc.lineno, 1)
@@ -182,7 +182,7 @@ class TestJSONC(unittest.TestCase):
         # missing ',' triggers on first " in "e"
         try:
             flag = False
-            _ = util.parse_json(textwrap.dedent(s))
+            _ = util.parse_serialization_stream(textwrap.dedent(s))
         except json.JSONDecodeError as exc:
             flag = True
             self.assertEqual(exc.lineno, 2)
@@ -201,7 +201,7 @@ class TestJSONC(unittest.TestCase):
         """
         try:
             flag = False
-            _ = util.parse_json(textwrap.dedent(s))
+            _ = util.parse_serialization_stream(textwrap.dedent(s))
         except json.JSONDecodeError as exc:
             flag = True
             self.assertEqual(exc.lineno, 9)
@@ -219,7 +219,7 @@ class TestJSONC(unittest.TestCase):
         # missing ',' triggers on first " in "e"
         try:
             flag = False
-            _ = util.parse_json(textwrap.dedent(s))
+            _ = util.parse_serialization_stream(textwrap.dedent(s))
         except json.JSONDecodeError as exc:
             flag = True
             self.assertEqual(exc.lineno, 6)

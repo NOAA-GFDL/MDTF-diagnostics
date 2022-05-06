@@ -1095,11 +1095,11 @@ class MDTFTopLevelArgParser(MDTFArgParser):
             raise ValueError()
         if not str_:
             return
-        # try to determine if file is json
-        if 'json' in os.path.splitext(path)[1].lower():
-            # assume config_file a JSON dict of option:value pairs.
+        # try to determine if file is json or yml
+        if any(x in os.path.splitext(path)[1].lower() for x in ["json", "yml"]):
+            # assume config_file a JSON or YAML dict of option:value pairs.
             try:
-                d = util.parse_json(str_)
+                d = util.parse_serialization_stream(str_)
                 self.file_case_list = d.pop('case_list', [])
                 d = {canonical_arg_name(k): v for k,v in d.items()}
                 config.user_defaults.update(d)

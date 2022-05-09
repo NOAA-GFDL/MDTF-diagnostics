@@ -580,12 +580,16 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             for pod in self.pods.values():
                 for var in pod.varlist.vars:
                     _component = var.gfdl_component
-                    _component = [] if len(_component) == 0 else str(_component).split(",")
-                    preferred.append(_component)
+                    if len(_component) > 0:
+                        _component = str(_component).split(",")
+                        preferred = preferred + _component
 
             # find the intersection of preferred components
-            preferred = list(set.intersection(*map(set,[x for x in preferred if x])))
-            preferred = preferred if len(preferred) >= 0 else None
+            if len(preferred) > 0:
+                # preserves preference order
+                preferred = list(dict.fromkeys(preferred))
+            else:
+                preferred = None
 
             # filter the dataframe of possible components
             df = self._filter_column(df, 'expt_key', _heuristic_tiebreaker, obj.name, preferred=preferred)

@@ -399,6 +399,9 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         try:
             trans_v = translate.translate(v)
             v.translation = trans_v
+            # copy preferred gfdl post-processing component during translation
+            if hasattr(trans_v, "gfdl_component"):
+                v.gfdl_component = trans_v.gfdl_component
         except KeyError as exc:
             # can happen in normal operation (eg. precip flux vs. rate)
             chained_exc = util.PodConfigEvent((f"Deactivating {v.full_name} due to "
@@ -412,10 +415,6 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             # store but don't deactivate, because preprocessor.edit_request()
             # may supply alternate variables
             v.log.store_exception(chained_exc)
-
-        # copy preferred gfdl post-processing component during translation
-        if hasattr(trans_v,"gfdl_component"):
-            v.gfdl_component = trans_v.gfdl_component
 
         v.stage = diagnostic.VarlistEntryStage.INITED
 

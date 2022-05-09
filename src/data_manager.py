@@ -412,6 +412,11 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             # store but don't deactivate, because preprocessor.edit_request()
             # may supply alternate variables
             v.log.store_exception(chained_exc)
+
+        # copy preferred gfdl post-processing component during translation
+        if hasattr(trans_v,"gfdl_component"):
+            v.gfdl_component = trans_v.gfdl_component
+
         v.stage = diagnostic.VarlistEntryStage.INITED
 
     def variable_dest_path(self, pod, var):

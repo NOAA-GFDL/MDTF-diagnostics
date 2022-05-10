@@ -579,7 +579,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             preferred = []
             for pod in self.pods.values():
                 for var in pod.varlist.vars:
-                    _component = var.gfdl_component
+                    _component = var.component
                     if len(_component) > 0:
                         _component = str(_component).split(",")
                         preferred = preferred + _component

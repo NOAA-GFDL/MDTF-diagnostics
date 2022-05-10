@@ -64,6 +64,8 @@ jobs:
       with:
         miniconda-version: "latest"
         python-version: 3.7
+        auto-activate-base: false
+        condarc-file: ./src/conda/env_base.yml
     - name: Verify miniconda
       run: |
         conda info -a

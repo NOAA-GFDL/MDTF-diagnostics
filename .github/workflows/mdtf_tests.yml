@@ -66,9 +66,6 @@ jobs:
         python-version: 3.7
         mamba-version: "*"
         channels: conda-forge,defaults
-        activate-environment: _MDTF_base
-        auto-activate-base: false
-        condarc-file: ./src/conda/env_base.yml
     - name: Verify miniconda
       run: |
         conda info -a

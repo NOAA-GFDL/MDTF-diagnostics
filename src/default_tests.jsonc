@@ -27,8 +27,12 @@
           "EOF_500hPa",
           "MJO_suite",
           "MJO_teleconnection"
-          // "convective_transition_diag"
-          // "precip_diurnal_cycle"
+          // "convective_transition_diag",
+          // "precip_diurnal_cycle",
+          // "ocn_surf_flux_diag",
+          // "mixed_layer_depth",
+          // "tropical_pacific_sea_level",
+          // "temp_extremes_distshape"
       ]
     }
     // {

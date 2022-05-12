@@ -536,15 +536,13 @@ class Fieldlist():
             entries = tuple(lut1.values())
             if len(entries) > 1:
                 for e in entries:
-                    if e.modifier.strip():
-                        if len(e.dims) == num_dims or has_scalar_coords_att:
-                            empty_mod_count += 1
+                    if not e.modifier.strip():
+                        empty_mod_count += 1  #fieldlist LUT entry has no modifier attribute
+                        if has_scalar_coords_att or num_dims == len(e.dims) or num_dims < 1: # fieldlist lut entry has a blank modifier and 4D; should be ta
                             fl_entry = e
                 if empty_mod_count > 1:
                     raise ValueError((f"Variable name in convention '{self.name}' "
                         f"not uniquely determined by standard name '{standard_name}'."))
-                if not fl_entry:
-                    raise ValueError("fl_entry evaluated as a None Type")
             else:
                 fl_entry = entries[0]
         else:
@@ -554,6 +552,8 @@ class Fieldlist():
                     f"'{self.name}'."))
             fl_entry = lut1[modifier]
 
+        if not fl_entry:
+            raise ValueError("fl_entry evaluated as a None Type")
         return copy.deepcopy(fl_entry)
 
     def from_CF_name(self, var_or_name, modifier=None):

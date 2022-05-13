@@ -399,6 +399,9 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
         try:
             trans_v = translate.translate(v)
             v.translation = trans_v
+            # copy preferred gfdl post-processing component during translation
+            if hasattr(trans_v, "component"):
+                v.component = trans_v.component
         except KeyError as exc:
             # can happen in normal operation (eg. precip flux vs. rate)
             chained_exc = util.PodConfigEvent((f"Deactivating {v.full_name} due to "
@@ -412,6 +415,7 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             # store but don't deactivate, because preprocessor.edit_request()
             # may supply alternate variables
             v.log.store_exception(chained_exc)
+
         v.stage = diagnostic.VarlistEntryStage.INITED
 
     def variable_dest_path(self, pod, var):
@@ -806,7 +810,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
 
     def __init__(self, case_dict, parent):
         super(DataframeQueryDataSourceBase, self).__init__(case_dict, parent)
-        self.expt_keys = dict() # Object _id -> expt_key tuple
+        self.expt_keys = dict()  # Object _id -> expt_key tuple
 
     @property
     @abc.abstractmethod

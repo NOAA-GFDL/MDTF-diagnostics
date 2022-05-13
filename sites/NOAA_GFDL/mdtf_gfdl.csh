@@ -161,8 +161,6 @@ echo "mdtf_gfdl.csh: conda activate"
 source /home/oar.gfdl.mdtf/miniconda3/etc/profile.d/conda.csh
 conda activate _MDTF_base
 
-conda activate "${CONDA_ROOT}/envs/_MDTF_base"
-
 echo "mdtf_gfdl.csh: MDTF start"
 
 ###### workaround to create input json based on a template json and the frepp template variables ####

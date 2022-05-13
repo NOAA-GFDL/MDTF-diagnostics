@@ -514,12 +514,22 @@ class Fieldlist():
         """
         return self.to_CF(var_or_name).standard_name
 
-    def from_CF(self, var_or_name, modifier=None, num_dims=0, has_scalar_coords_att=False):
+    def from_CF(self, var_or_name, modifier=None, num_dims=0,
+                has_scalar_coords_att=False, name_only=False):
         """Look up :class:`FieldlistEntry` corresponding to the given standard
         name, optionally providing a modifier to resolve ambiguity.
 
         TODO: this is a hacky implementation; FieldlistEntry needs to be
         expanded with more ways to uniquely identify variable (eg cell methods).
+        Args:
+            var_or_name: variable or name of the variable
+            modifier:optional string to distinguish a 3-D field from a 4-D field with
+            the same var_or_name value
+            num_dims: number of dimensions of the POD variable corresponding to var_or_name
+            has_scalar_coords_att: boolean indicating that the POD variable has a scalar_coords
+            attribute, and therefore requires a level from a 4-D field
+            name_only: boolean indicating to not return a modifier--hacky way to accommodate
+            a from_CF_name call that does not provide other metadata
         """
         if hasattr(var_or_name, 'standard_name'):
             standard_name = var_or_name.standard_name
@@ -537,8 +547,9 @@ class Fieldlist():
             if len(entries) > 1:
                 for e in entries:
                     if not e.modifier.strip():
-                        empty_mod_count += 1  #fieldlist LUT entry has no modifier attribute
-                        if has_scalar_coords_att or num_dims == len(e.dims) or num_dims < 1: # fieldlist lut entry has a blank modifier and 4D; should be ta
+                        empty_mod_count += 1  # fieldlist LUT entry has no modifier attribute
+                        if has_scalar_coords_att or num_dims == len(e.dims) or name_only:
+                            # fieldlist lut entry has a blank modifier
                             fl_entry = e
                 if empty_mod_count > 1:
                     raise ValueError((f"Variable name in convention '{self.name}' "
@@ -559,8 +570,13 @@ class Fieldlist():
     def from_CF_name(self, var_or_name, modifier=None):
         """Like :meth:`from_CF`, but only return the variable's name in this
         convention.
+
+        Args:
+            var_or_name: variable or name of the variable
+            modifier:optional string to distinguish a 3-D field from a 4-D field with
+            the same var_or_name value
         """
-        return self.from_CF(var_or_name, modifier=modifier).name
+        return self.from_CF(var_or_name, modifier=modifier, name_only=True).name
 
     def translate_coord(self, coord, log=_log):
         """Given a :class:`~data_model.DMCoordinate`, look up the corresponding

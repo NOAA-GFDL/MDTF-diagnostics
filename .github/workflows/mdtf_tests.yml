@@ -18,7 +18,6 @@ defaults:
 jobs:
   build:
     runs-on: ${{matrix.os}}
-    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -64,7 +63,9 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2
       with:
         miniconda-version: "latest"
-        python-version: 3.8
+        python-version: 3.7
+        mamba-version: "*"
+        channels: conda-forge,defaults
     - name: Verify miniconda
       run: |
         conda info -a
@@ -78,15 +79,12 @@ jobs:
         echo "POD_OUTPUT=$(echo $PWD/../wkdir/GFDL.Synthetic)" >> $GITHUB_ENV
     - name: Install Conda Environments
       run: |
-        # install mamba (https://github.com/mamba-org/mamba) for faster dependency resolution
-        echo "Installing Mamba"
-        conda install mamba -n base -c conda-forge
-        # create the synthetic data environment
-        echo "Creating the _MDTF_synthetic_data environment"
-        mamba env create --force -q -f ./src/conda/_env_synthetic_data.yml
         echo "Installing Conda Environments"
         # MDTF-specific setup: install all conda envs
         ./src/conda/conda_env_setup.sh --all --conda_root ${{matrix.conda-root}}
+        # create the synthetic data environment
+        echo "Creating the _MDTF_synthetic_data environment"
+        mamba env create --force -q -f ./src/conda/_env_synthetic_data.yml
     - name: Generate Model Data
       run: |
         cd ../

@@ -504,12 +504,12 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CASE_ROOT_DIR'))
         return self.attrs.CASE_ROOT_DIR
 
-    def _filter_column(self, df, col_name, func, obj_name):
+    def _filter_column(self, df, col_name, func, obj_name, preferred=None):
         values = list(df[col_name].drop_duplicates())
         if len(values) <= 1:
             # unique value, no need to filter
             return df
-        filter_val = func(values)
+        filter_val = func(values, preferred=preferred)
         self.log.debug("Selected experiment attribute %s='%s' for %s (out of %s).",
             col_name, filter_val, obj_name, values)
         return df[df[col_name] == filter_val]
@@ -541,8 +541,11 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             component with the fewest words (separated by '_'), or, failing that,
             the shortest overall name.
         """
-        def _heuristic_tiebreaker(str_list):
+        def _heuristic_tiebreaker(str_list, preferred=None):
+            """Internal function to resolve multiple possible attributes"""
+
             def _heuristic_tiebreaker_sub(strs):
+                """sub-function to selected the shortest attribute"""
                 min_len = min(len(s.split('_')) for s in strs)
                 strs2 = [s for s in strs if (len(s.split('_')) == min_len)]
                 if len(strs2) == 1:
@@ -550,14 +553,47 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
                 else:
                     return min(strs2, key=len)
 
+            # filter by the preferred list if provided
+            if preferred is not None:
+                assert isinstance(preferred, list)
+                str_list = [x for x in preferred if x in str_list]
+
+                # select the first matching value from the preferred list
+                if len(str_list) >= 1:
+                    str_list = [str_list[0]]
+
+            # determine if any of the attributes contain the text `cmip`
             cmip_list = [s for s in str_list if ('cmip' in s.lower())]
+
+            # give preference to attributes that contain the substring `cmip`
             if cmip_list:
                 return _heuristic_tiebreaker_sub(cmip_list)
+
+            # otherwise, select the shortest attribute
             else:
                 return _heuristic_tiebreaker_sub(str_list)
 
         if 'component' in self.col_spec.pod_expt_cols.cols:
-            df = self._filter_column(df, 'component', _heuristic_tiebreaker, obj.name)
+
+            # loop over pods and get the preferred components
+            preferred = []
+            for pod in self.pods.values():
+                for var in pod.varlist.vars:
+                    _component = var.component
+                    if len(_component) > 0:
+                        _component = str(_component).split(",")
+                        preferred = preferred + _component
+
+            # find the intersection of preferred components
+            if len(preferred) > 0:
+                # preserves preference order
+                preferred = list(dict.fromkeys(preferred))
+            else:
+                preferred = None
+
+            # filter the dataframe of possible components
+            df = self._filter_column(df, 'expt_key', _heuristic_tiebreaker, obj.name, preferred=preferred)
+
         # otherwise no-op
         return df
 

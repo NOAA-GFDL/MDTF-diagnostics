@@ -514,12 +514,22 @@ class Fieldlist():
         """
         return self.to_CF(var_or_name).standard_name
 
-    def from_CF(self, var_or_name, modifier=None, num_dims=0):
+    def from_CF(self, var_or_name, modifier=None, num_dims=0,
+                has_scalar_coords_att=False, name_only=False):
         """Look up :class:`FieldlistEntry` corresponding to the given standard
         name, optionally providing a modifier to resolve ambiguity.
 
         TODO: this is a hacky implementation; FieldlistEntry needs to be
         expanded with more ways to uniquely identify variable (eg cell methods).
+        Args:
+            var_or_name: variable or name of the variable
+            modifier:optional string to distinguish a 3-D field from a 4-D field with
+            the same var_or_name value
+            num_dims: number of dimensions of the POD variable corresponding to var_or_name
+            has_scalar_coords_att: boolean indicating that the POD variable has a scalar_coords
+            attribute, and therefore requires a level from a 4-D field
+            name_only: boolean indicating to not return a modifier--hacky way to accommodate
+            a from_CF_name call that does not provide other metadata
         """
         if hasattr(var_or_name, 'standard_name'):
             standard_name = var_or_name.standard_name
@@ -530,16 +540,18 @@ class Fieldlist():
             raise KeyError((f"Standard name '{standard_name}' not defined in "
                   f"convention '{self.name}'."))
         lut1 = self.lut[standard_name]  # abbreviate
-        fl_entry = None
+        fl_entry: FieldlistEntry = None
         empty_mod_count = 0  # counter for modifier attributes that are blank strings in the fieldlist lookup table
         if not modifier:  # empty strings and None types evaluate to False
             entries = tuple(lut1.values())
             if len(entries) > 1:
                 for e in entries:
-                    if e.modifier.strip() == "" and len(e.dims) == num_dims:
-                        fl_entry = e
-                        empty_mod_count += 1
-                if fl_entry is None or empty_mod_count > 1:
+                    if not e.modifier.strip():
+                        empty_mod_count += 1  # fieldlist LUT entry has no modifier attribute
+                        if has_scalar_coords_att or num_dims == len(e.dims) or name_only:
+                            # fieldlist lut entry has a blank modifier
+                            fl_entry = e
+                if empty_mod_count > 1:
                     raise ValueError((f"Variable name in convention '{self.name}' "
                         f"not uniquely determined by standard name '{standard_name}'."))
             else:
@@ -551,13 +563,20 @@ class Fieldlist():
                     f"'{self.name}'."))
             fl_entry = lut1[modifier]
 
+        if not fl_entry:
+            raise ValueError("fl_entry evaluated as a None Type")
         return copy.deepcopy(fl_entry)
 
     def from_CF_name(self, var_or_name, modifier=None):
         """Like :meth:`from_CF`, but only return the variable's name in this
         convention.
+
+        Args:
+            var_or_name: variable or name of the variable
+            modifier:optional string to distinguish a 3-D field from a 4-D field with
+            the same var_or_name value
         """
-        return self.from_CF(var_or_name, modifier=modifier).name
+        return self.from_CF(var_or_name, modifier=modifier, name_only=True).name
 
     def translate_coord(self, coord, log=_log):
         """Given a :class:`~data_model.DMCoordinate`, look up the corresponding
@@ -603,7 +622,9 @@ class Fieldlist():
                 for f in dc.fields(TranslatedVarlistEntry) if hasattr(var, f.name)}
             new_name = var.name
         else:
-            fl_entry = self.from_CF(var.standard_name, var.modifier, var.dims.__len__())
+            has_scalar_coords = bool(var.scalar_coords)
+
+            fl_entry = self.from_CF(var.standard_name, var.modifier, var.dims.__len__(), has_scalar_coords)
             new_name = fl_entry.name
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]

@@ -238,6 +238,7 @@
     "ta": {
       "standard_name": "air_temperature",
       "units": "K",
+      "scalar_coord_templates" : {"plev": "ta{value}"},
       "ndim": 4
     },
     // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)

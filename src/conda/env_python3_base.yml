@@ -25,3 +25,15 @@ dependencies:
 - esmpy=8.2.0
 - gsw=3.3
 - metpy=1.1
+- pcmdi_metrics=2.2.2
+- h5py=3.6.0
+- pip=22.0.4
+- pip:
+    - cmocean
+    - regionmask
+    - git+https://github.com/raphaeldussin/static_downsampler
+    - git+https://github.com/jkrasting/xcompare
+    - git+https://github.com/raphaeldussin/xoverturning
+    - git+https://github.com/jkrasting/xwavelet
+    - git+https://github.com/jetesdal/xwmt
+    - git+https://github.com/raphaeldussin/om4labs

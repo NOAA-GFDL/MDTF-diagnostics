@@ -622,9 +622,7 @@ class Fieldlist():
                 for f in dc.fields(TranslatedVarlistEntry) if hasattr(var, f.name)}
             new_name = var.name
         else:
-            has_scalar_coords = False
-            if len(var.scalar_coords)>0:
-                has_scalar_coords = True
+            has_scalar_coords = bool(var.scalar_coords)
 
             fl_entry = self.from_CF(var.standard_name, var.modifier, var.dims.__len__(), has_scalar_coords)
             new_name = fl_entry.name

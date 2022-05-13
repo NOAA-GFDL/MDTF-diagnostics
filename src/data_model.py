@@ -611,6 +611,7 @@ class DMDependentVariable(_DMDimensionsMixin):
     standard_name: str = util.MANDATORY
     units: src.units.Units = ""  # not MANDATORY since may be set later from var translation
     modifier: str = ""
+    component: str = ""
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
 

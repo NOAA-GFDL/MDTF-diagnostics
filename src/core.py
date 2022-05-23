@@ -888,12 +888,12 @@ class MDTFFramework(MDTFObjectBase):
 
         if cli_obj.config.get('disable_preprocessor', False):
             _log.warning(("User disabled metadata checks and unit conversion in "
-                "preprocessor."), tags=util.ObjectLogTag.BANNER)
+                "preprocessor."),  extra={'tags': {util.ObjectLogTag.BANNER}})
         if cli_obj.config.get('overwrite_file_metadata', False):
             _log.warning(("User chose to overwrite input file metadata with "
                 "framework values (convention = '%s')."),
                 cli_obj.config.get('convention', ''),
-                tags=util.ObjectLogTag.BANNER
+                extra={'tags': {util.ObjectLogTag.BANNER}}
             )
         # check this here, otherwise error raised about missing caselist is not informative
         try:

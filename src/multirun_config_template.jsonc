@@ -1,0 +1,105 @@
+// This a template for configuring MDTF to run PODs that analyze multi-run/ensemble data
+//
+// Copy this file, rename it, and customize the settings as needed
+// Pass your file to the framework using the -f/--input-file flag.
+// Any other explicit command line options will override what's listed here.
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.)
+//
+// Remove your test config file, or any changes you make to this template if you do not rename it,
+// from your remote repository before you submit a PR for review.
+{
+  // Run each ensemble on the example POD.
+  // Add other PODs that work on ensemble datasets to the pod_list as needed
+  "pod_list" : [
+     "example"
+   ],
+   // Each CASENAME corresponds to an ensemble member.
+  "case_list" : [
+     {
+       "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231",
+       "model" : "test",
+       "convention" : "CMIP",
+       "FIRSTYR" : 1980,
+       "LASTYR" : 1984
+     },
+     {
+       "CASENAME": "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231",
+       "model" : "test",
+       "convention" : "CMIP",
+       "FIRSTYR" : 1985,
+       "LASTYR" : 1989
+     }
+  ],
+  // PATHS ---------------------------------------------------------------------
+  // Location of supporting data downloaded when the framework was installed.
+
+  // If a relative path is given, it's resolved relative to the MDTF-diagnostics
+  // code directory. Environment variables (eg, $HOME) can be referenced with a
+  // "$" and will be expended to their current values when the framework runs.
+
+  // Parent directory containing observational data used by individual PODs.
+  "OBS_DATA_ROOT": "../inputdata/obs_data",
+
+  // Parent directory containing results from different models.
+ // "MODEL_DATA_ROOT": "../mdtf_test_data",
+  "MODEL_DATA_ROOT": "~/mdtf_test_data",
+
+  // Working directory.
+  "WORKING_DIR": "../wkdir",
+
+  // Directory to write output. The results of each run of the framework will be
+  // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.
+  "OUTPUT_DIR": "../wkdir",
+
+  // Location of the Anaconda/miniconda installation to use for managing
+  // dependencies (path returned by running `conda info --base`.) If empty,
+  // framework will attempt to determine location of system's conda installation.
+  "conda_root": "~/miniconda3",
+
+  // Directory containing the framework-specific conda environments. This should
+  // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
+  // blank, the framework will look for its environments in the system default
+  // location.
+  "conda_env_root": "~/miniconda3/envs",
+
+  // SETTINGS ------------------------------------------------------------------
+  // Any command-line option recognized by the mdtf script (type `mdtf --help`)
+  // can be set here, in the form "flag name": "desired setting".
+  // Method used to fetch model data.
+  "data_type": "multi_run",
+
+  // Method used to fetch model data.
+  "data_manager": "Local_File",
+
+  // Method used to manage dependencies.
+  "environment_manager": "Conda",
+
+  // Settings affecting what output is generated:
+
+  // Set to true to have PODs save postscript figures in addition to bitmaps.
+  "save_ps": false,
+
+  // Set to true to have PODs save netCDF files of processed data.
+  "save_nc": false,
+
+  // Set to true to save HTML and bitmap plots in a .tar file.
+  "make_variab_tar": false,
+
+  // Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
+  // under a unique name.
+  "overwrite": false,
+
+  // Settings used in debugging:
+
+  // Log verbosity level.
+  "verbose": 1,
+
+  // Set to true for framework test. Data is fetched but PODs are not run.
+  "test_mode": false,
+
+  // Set to true for framework test. No external commands are run and no remote
+  // data is copied. Implies test_mode.
+  "dry_run": false
+}

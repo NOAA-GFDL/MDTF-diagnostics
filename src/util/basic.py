@@ -11,16 +11,13 @@ import uuid
 from . import exceptions
 
 import logging
-
 _log = logging.getLogger(__name__)
-
 
 class _AbstractAttributePlaceholder():
     """Placeholder class used in the definition of the :func:`abstract_attribute`
     decorator.
     """
     pass
-
 
 def abstract_attribute(obj=None):
     """Decorator for abstract attributes in abstract base classes by analogy
@@ -32,13 +29,6 @@ def abstract_attribute(obj=None):
     obj.__is_abstract_attribute__ = True
     return obj
 
-
-# class BLAH(metaclass=MDTFABCMeta) arg will change the class BLAH automatically when the class is created
-# A metaclass does NOT have to be a formal class (not confusing at all, but OK)
-# From this SO post <https://stackoverflow.com/questions/100003/what-are-metaclasses-in-python>:
-# Essentially, all MDTFABCMeta does is modify a class by adding a __call__ method to it
-
-
 class MDTFABCMeta(abc.ABCMeta):
     """Wrap the metaclass for abstract base classes to enable definition of
     abstract attributes via :func:`abstract_attribute`. Based on
@@ -48,13 +38,9 @@ class MDTFABCMeta(abc.ABCMeta):
         NotImplementedError: If a child class doesn't define an
             abstract attribute, by analogy with :py:func:`abc.abstract_method`.
     """
-
-    # THe __call__ method allows the class to be called like a function
-    # >>> ABCM = abcMDTFABCMeta()
-    # >>> ABCM() # invoke the __call__ method on a class cls, and append the abstract_attributes set to ABCM
     def __call__(cls, *args, **kwargs):
         instance = abc.ABCMeta.__call__(cls, *args, **kwargs)
-        abstract_attributes = set([])  # no duplicate values allowed in a set, but can modify values
+        abstract_attributes = set([])
         for attr in dir(instance):
             if isinstance(getattr(cls, attr, None), property):
                 # Don't call properties on instance before it's inited
@@ -63,8 +49,8 @@ class MDTFABCMeta(abc.ABCMeta):
                 abstract_attributes.add(attr)
         if abstract_attributes:
             raise NotImplementedError(("Can't instantiate abstract class {} with "
-                                       "abstract attributes: {}").format(
-                cls.__name__, ', '.join(abstract_attributes)
+                "abstract attributes: {}").format(
+                    cls.__name__, ', '.join(abstract_attributes)
             ))
         return instance
 
@@ -75,19 +61,16 @@ class _Singleton(type):
     and is compatible with Python 2 and 3.
     """
     _instances = {}
-
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
-
 
 class Singleton(_Singleton('SingletonMeta', (object,), {})):
     """Parent class defining the
     `Singleton <https://en.wikipedia.org/wiki/Singleton_pattern>`_ pattern. We
     use this as safer way to pass around global state.
     """
-
     @classmethod
     def _reset(cls):
         """Private method of all :class:`~util.Singleton`-derived classes added
@@ -122,7 +105,6 @@ class MultiMap(collections.defaultdict):
        ['key1', 'key2']
 
     """
-
     def __init__(self, *args, **kwargs):
         """Inherited from :py:class:`collections.defaultdict`. Construct by
         passing an ordinary :py:obj:`dict`.
@@ -162,7 +144,6 @@ class MultiMap(collections.defaultdict):
         inv_lookup = self.inverse()
         return from_iter(inv_lookup[val])
 
-
 class WormDict(collections.UserDict, dict):
     """Dict which raises exceptions when trying to overwrite or delete an
     existing entry. "WORM" is an acronym for "write once, read many."
@@ -171,16 +152,15 @@ class WormDict(collections.UserDict, dict):
         :class:`~src.util.exceptions.WormKeyError`: If code attempts to reassign
             or delete an existing key.
     """
-
     def __setitem__(self, key, value):
         if key in self.data:
             raise exceptions.WormKeyError(("Attempting to overwrite entry for "
-                                           f"'{key}'. Existing value: '{self[key]}', new value: '{value}'."))
+                f"'{key}'. Existing value: '{self[key]}', new value: '{value}'."))
         self.data[key] = value
 
     def __delitem__(self, key):
         raise exceptions.WormKeyError(("Attempting to delete entry for "
-                                       f"'{key}'. Existing value: '{self[key]}'."))
+                f"'{key}'. Existing value: '{self[key]}'."))
 
     @classmethod
     def from_struct(cls, d):
@@ -188,7 +168,6 @@ class WormDict(collections.UserDict, dict):
         type coercion done on fields of a :func:`~src.util.dataclass.mdtf_dataclass`.
         """
         return cls(**d)
-
 
 class ConsistentDict(WormDict):
     """Like :class:`WormDict`, but we only raise
@@ -199,22 +178,19 @@ class ConsistentDict(WormDict):
         :class:`~src.util.exceptions.WormKeyError`: If code attempts to reassign
             an existing key to a value different than the current one.
     """
-
     def __setitem__(self, key, value):
         if key in self.data and self[key] != value:
             raise exceptions.WormKeyError(("Attempting to overwrite entry for "
-                                           f"'{key}'. Existing value: '{self[key]}', new value: '{value}'."))
+                f"'{key}'. Existing value: '{self[key]}', new value: '{value}'."))
         self.data[key] = value
 
     def __delitem__(self, key):
         del self.data[key]
 
-
 class WormDefaultDict(WormDict):
     """:class:`src.util.basic.WormDict` with :py:class:`collections.defaultdict`
     functionality.
     """
-
     def __init__(self, default_factory=None, *args, **kwargs):
         """Inherited from :py:class:`collections.defaultdict` and takes same
         arguments.
@@ -229,9 +205,8 @@ class WormDefaultDict(WormDict):
             return super(WormDefaultDict, self).__getitem__(key)
         except KeyError:
             if self.default_factory is None:
-                raise KeyError(key)  # normal KeyError for missing key
+                raise KeyError(key) # normal KeyError for missing key
             return self.default_factory()
-
 
 class NameSpace(dict):
     """A dictionary that provides attribute-style access.
@@ -297,7 +272,6 @@ class NameSpace(dict):
 
     def __dir__(self):
         return list(self.keys())
-
     __members__ = __dir__  # for python2.x compatibility
 
     def __repr__(self):
@@ -356,7 +330,6 @@ class NameSpace(dict):
 
     def copy(self):
         return type(self).fromDict(self)
-
     __copy__ = copy
 
     def _freeze(self):
@@ -380,11 +353,10 @@ class NameSpace(dict):
             return False
 
     def __ne__(self, other):
-        return (not self.__eq__(other))  # more foolproof
+        return (not self.__eq__(other)) # more foolproof
 
     def __hash__(self):
         return hash(self._freeze())
-
 
 class _MDTFEnumMixin():
     def __str__(self):
@@ -400,7 +372,6 @@ class _MDTFEnumMixin():
             raise ValueError(f"Unrecognized value '{str_}' for '{cls.__name__}'.")
         return cls[str_.upper()]
 
-
 class MDTFEnum(_MDTFEnumMixin, enum.Enum):
     """Customize behavior of :py:class:`~enum.Enum`:
 
@@ -411,7 +382,6 @@ class MDTFEnum(_MDTFEnumMixin, enum.Enum):
        To avoid potential confusion with reserved keywords, we use the Python
        convention that members of the enumeration are all uppercase.
     """
-
     def __new__(cls, *args, **kwargs):
         """AutoNumber recipe from python stdlib docs."""
         value = len(cls.__members__) + 1
@@ -419,12 +389,10 @@ class MDTFEnum(_MDTFEnumMixin, enum.Enum):
         obj._value_ = value
         return obj
 
-
 class MDTFIntEnum(_MDTFEnumMixin, enum.IntEnum):
     """Customize :py:class:`~enum.IntEnum` analogous to :class:`MDTFEnum`.
     """
     pass
-
 
 def sentinel_object_factory(obj_name):
     """Return a unique singleton object/class (same difference for singletons).
@@ -433,13 +401,11 @@ def sentinel_object_factory(obj_name):
     """
     return getattr(unittest.mock.sentinel, obj_name)
 
-
 class MDTF_ID():
     """Class wrapping :py:class:`~uuid.UUID`, to provide unique ID numbers for
     members of the object hierarchy (cases, pods, variables, etc.), so that we
     don't need to require that objects in these classes have unique names.
     """
-
     def __init__(self, id_=None):
         """
         Args:
@@ -457,12 +423,12 @@ class MDTF_ID():
         """
         chars = string.digits + string.ascii_letters
         base = len(chars)
-        num = self._uuid.time_low  # least significant bits
+        num = self._uuid.time_low # least significant bits
         str_ = '0000'
         while num:
             str_ += chars[num % base]
             num //= base
-        return str_[-2:-6:-1]  # reversed so most-significant is 1st
+        return str_[-2:-6:-1] # reversed so most-significant is 1st
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self._uuid})"
@@ -477,8 +443,7 @@ class MDTF_ID():
             return False
 
     def __ne__(self, other):
-        return (not self.__eq__(other))  # more foolproof
-
+        return (not self.__eq__(other)) # more foolproof
 
 # ------------------------------------------------------------------
 
@@ -492,8 +457,7 @@ def is_iterable(obj):
         bool: True if *obj* is an iterable collection and not a string.
     """
     return isinstance(obj, collections.abc.Iterable) \
-           and not isinstance(obj, str)  # py3 strings have __iter__
-
+        and not isinstance(obj, str) # py3 strings have __iter__
 
 def to_iter(obj, coll_type=list):
     """Cast arbitrary object *obj* to an iterable collection. If *obj* is not a
@@ -507,7 +471,7 @@ def to_iter(obj, coll_type=list):
     Returns:
         *obj*, cast to an iterable collection of type *coll_type*.
     """
-    assert coll_type in [list, set, tuple]  # only supported types for now
+    assert coll_type in [list, set, tuple] # only supported types for now
     if obj is None:
         return coll_type([])
     elif isinstance(obj, coll_type):
@@ -516,7 +480,6 @@ def to_iter(obj, coll_type=list):
         return coll_type(obj)
     else:
         return coll_type([obj])
-
 
 def from_iter(obj):
     """Inverse of :func:`to_iter`. If *obj* is a single-element iterable collection,
@@ -530,7 +493,6 @@ def from_iter(obj):
     else:
         return obj
 
-
 def remove_prefix(s1, s2):
     """If string *s1* starts with string *s2*, return *s1* with *s2* removed.
     Otherwise return *s1* unmodified.
@@ -539,7 +501,6 @@ def remove_prefix(s1, s2):
         s1 = s1[len(s2):]
     return s1
 
-
 def remove_suffix(s1, s2):
     """If string *s1* ends with string *s2*, return *s1* with *s2* removed.
     Otherwise return *s1* unmodified.
@@ -547,7 +508,6 @@ def remove_suffix(s1, s2):
     if s1.endswith(s2):
         s1 = s1[:-len(s2)]
     return s1
-
 
 def filter_kwargs(kwarg_dict, function):
     """Given keyword arguments *kwarg_dict*, return only those kwargs accepted
@@ -565,10 +525,9 @@ def filter_kwargs(kwarg_dict, function):
     # if 'kwargs' in named_args:
     #    return kwarg_dict # presumably can handle anything
     return dict((k, kwarg_dict[k]) for k in named_args \
-                if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])
+        if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])
 
-
-def splice_into_list(list_, splice_d, key_fn=None, log=_log):
+def splice_into_list(list_, splice_d,  key_fn=None, log=_log):
     """Splice sub-lists (values of *splice_d*) into list *list\_* after their
     corresponding entries (keys of *slice_d*). Example:
 
@@ -592,7 +551,7 @@ def splice_into_list(list_, splice_d, key_fn=None, log=_log):
         key_fn = lambda x: x
     chunks = [0, len(list_)]
     for k in splice_d:
-        idx = [i + 1 for i, el in enumerate(list_) if key_fn(el) == k]
+        idx = [i + 1 for i,el in enumerate(list_) if key_fn(el) == k]
         if len(idx) > 1:
             log.debug('%s not unique (%s) in %s.', k, idx, list_)
         chunks.extend(idx)
@@ -606,7 +565,6 @@ def splice_into_list(list_, splice_d, key_fn=None, log=_log):
         else:
             spliced_chunks.append(c)
     return list(itertools.chain.from_iterable(spliced_chunks))
-
 
 def deserialize_class(name):
     """Given the name of a currently defined class, return the class itself.
@@ -629,12 +587,12 @@ def deserialize_class(name):
     except AttributeError:
         # _log.debug('%s not found in builtin types.', name)
         pass
-    q = collections.deque([object])  # everything inherits from object
+    q = collections.deque([object]) # everything inherits from object
     while q:
         t = q.popleft()
         if t.__name__ == name:
             return t
-        try:  # keep looking
+        try: # keep looking
             q.extend(t.__subclasses__())
         except TypeError:
             # type.__subclasses__ needs an argument, for whatever reason.

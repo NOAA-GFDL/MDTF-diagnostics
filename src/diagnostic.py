@@ -184,10 +184,6 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
         # set up log (VarlistEntryLoggerMixin)
         self.init_log()
         data_model.DMVariable.__post_init__(self, coords)
-        # NOTE: this doesn't quite work b/c it appends empty fields to each instance. Need another way to specify
-        # so these atts can be overridden
-        #self.path_variable: str = dc.field(default="", compare=False)
-        #self.dest_path: str = ""
 
         # (re)initialize mutable fields here so that if we copy VE (eg with .replace)
         # the fields on the copy won't point to the same object as the fields on
@@ -430,7 +426,6 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
             if trans_dim.has_bounds:
                 d[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
         return d
-
 
 class Varlist(data_model.DMDataSet):
     """Class to perform bookkeeping for the model variables requested by a
@@ -791,3 +786,4 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
                 self.pod_env_vars.update(var.env_vars)
             except util.WormKeyError:
                 continue
+

@@ -66,6 +66,9 @@
   // script from the XML.
   "frepp": false,
 
+// Allow the framework to pull files/variables from multiple components
+"any_components": true,
+
   // Set flag search entire /pp/ directory for model data; default is to
   // restrict to model component passed by FRE. Ignored if --frepp is not set.
   "ignore_component": false,

@@ -190,7 +190,7 @@ end if
 
 if (! -d $PP_DIR) then 
   echo "QUIT if PP_DIR is not valid"
- 
+end if
 echo "Running ${REPO_DIR}/mdtf_framework.py -f ${input_jsonc} --site NOAA_GFDL -v "
 ${REPO_DIR}/mdtf_framework.py -f ${input_jsonc} --site NOAA_GFDL -v
 

@@ -157,11 +157,8 @@ wipetmp
 
 ## run the command
 echo "mdtf_gfdl.csh: conda activate"
-#throws errors source "${REPO_DIR}/src/conda/conda_init.sh" -q "/home/oar.gfdl.mdtf/miniconda3"
 source /home/oar.gfdl.mdtf/miniconda3/etc/profile.d/conda.csh
 conda activate _MDTF_base
-
-conda activate "${CONDA_ROOT}/envs/_MDTF_base"
 
 echo "mdtf_gfdl.csh: MDTF start"
 

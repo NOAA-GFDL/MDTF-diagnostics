@@ -186,6 +186,7 @@ gcp -cd $input_jsonc ${out_dir}/
 
 if (! -d $in_data_dir) then
   echo "QUIT if in_data_dir is not valid"
+end if
 
 if (! -d $PP_DIR) then 
   echo "QUIT if PP_DIR is not valid"

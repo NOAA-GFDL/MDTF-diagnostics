@@ -1,6 +1,7 @@
 """Code specific to the computing environment at NOAA's Geophysical Fluid
 Dynamics Laboratory (Princeton, NJ, USA).
 """
+import abc
 import os
 import io
 import dataclasses
@@ -148,6 +149,10 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
             for var in vars_to_fetch:
                 for d_key in var.iter_data_keys(status=core.ObjectStatus.ACTIVE):
                     paths.update(d_key.remote_data())
+                for d_key in var.iter_associated_files_keys(
+                    status=core.ObjectStatus.ACTIVE
+                ):
+                    paths.update(d_key.remote_data())
 
             self.log.info(f"Start dmget of {len(paths)} files...")
             util.run_command(['dmget','-t','-v'] + list(paths),
@@ -237,6 +242,12 @@ class GFDL_GCP_FileDataSourceBase(
             d = paths.model_paths(self, overwrite=True)
             self.MODEL_WK_DIR = d.MODEL_WK_DIR
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
+
+    @abc.abstractmethod
+    def query_associated_files(self):
+        """abstract method for querying dataframe for associated files"""
+        pass
+
 
 @util.mdtf_dataclass
 class GFDL_UDA_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
@@ -474,6 +485,18 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             return 'component'
         else:
             return tuple()
+
+    def query_associated_files(self, d_key):
+        """Infers static file from variable's component and assigns data key
+        to the associated_files property"""
+        df = self.df
+        component = df.iloc[[d_key.value[0]]]["component"].values[0]
+        group = df.loc[(df["component"] == component) & (df["variable"] == "static")]
+        if len(group) == 1:
+            result = self.data_key(group, expt_key=d_key.expt_key)
+        else:
+            result = None
+        return result
 
     @property
     def var_expt_key_cols(self):

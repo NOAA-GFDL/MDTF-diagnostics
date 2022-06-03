@@ -428,9 +428,17 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
 
         assert self.dest_path
         d = util.ConsistentDict()
+
+        assoc_dict = (
+            {self.name.upper() + "_ASSOC_FILES": self.associated_files}
+            if isinstance(self.associated_files, str)
+            else {}
+        )
+
         d.update({
             self.env_var: self.name_in_model,
-            self.path_variable: self.dest_path
+            self.path_variable: self.dest_path,
+            **assoc_dict
         })
         for ax, dim in self.dim_axes.items():
             trans_dim = self.translation.dim_axes[ax]

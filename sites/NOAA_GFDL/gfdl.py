@@ -244,7 +244,7 @@ class GFDL_GCP_FileDataSourceBase(
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
     @abc.abstractmethod
-    def query_associated_files(self):
+    def query_associated_files(self, d_key):
         """abstract method for querying dataframe for associated files"""
         pass
 

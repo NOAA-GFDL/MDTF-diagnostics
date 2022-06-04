@@ -604,11 +604,24 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             outside of the query date range.
         """
         df = self._filter_column_min(df, obj.name, 'chunk_freq')
+
+        # if a preferred component is specified, select it at the var level
         if 'component' in self.col_spec.var_expt_cols.cols:
             col_name = 'component'
+            if obj.component is not None:
+                preferred = obj.component.split(",")
+                for comp in preferred:
+                    _df = df[df["component"] == comp]
+                    if len(_df) > 0:
+                        df = _df
+                        break
+
+            # select the first entry
             df = df.sort_values(col_name).iloc[[0]]
+
             self.log.debug("Selected experiment attribute '%s'='%s' for %s.",
                 col_name, df[col_name].iloc[0], obj.name)
+
         return df
 
 class GfdlautoDataManager(object):

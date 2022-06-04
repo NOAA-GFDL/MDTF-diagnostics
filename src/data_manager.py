@@ -1183,8 +1183,9 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             d_key.status = core.ObjectStatus.ACTIVE
 
             # set associated variables to active as well
-            if expt_key in v.associated_files.keys():
-                v.associated_files[expt_key].status = core.ObjectStatus.ACTIVE
+            if isinstance(v.associated_files, dict):
+                if expt_key in v.associated_files.keys():
+                    v.associated_files[expt_key].status = core.ObjectStatus.ACTIVE
 
     def resolve_expt(self, expt_df, obj):
         """Tiebreaker logic to resolve redundancies in experiments, to be

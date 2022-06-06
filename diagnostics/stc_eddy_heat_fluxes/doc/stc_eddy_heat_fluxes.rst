@@ -13,22 +13,23 @@ Stratosphere-Troposphere Coupling: Eddy Heat Fluxes
 
 Last update: 2022-05-03
 
-This POD assesses the action of vertically propagating planetary-scale
+This POD assesses the interaction of vertically propagating planetary-scale
 stationary waves on the polar winter/spring stratosphere. The vertical component
-of the Eliassen-Palm Flux is approximately proportional to the eddy heat flux,
-v'T', where v is the meridional wind, and T is the temperature
+of the Eliassen-Palm Flux is approximately proportional to the zonal mean eddy
+heat flux, v'T', where v is the meridional wind, and T is the temperature
 (see Andrews et al., 1987). Thus, this POD uses the eddy heat flux at 100 hPa
 as a proxy for the vertical flux of waves entering the stratosphere.
 
 In general, when the time-integrated eddy heat flux in the lowermost
-stratosphere is above/below normal, the polar stratospheric circulation should
-be weaker/stronger than normal, with warmer/colder temperatures, respectively
-(see Newman, et al., 2001). The eddy heat fluxes entering the stratosphere are
-primarily driven by vertically propagating planetary-scale Rossby waves which
-have both stationary and transient components. This POD calculates eddy heat
-fluxes using monthly mean fields, and thus it primarily measures these
-relationships for stationary waves (since in the monthly mean the transient
-waves will be averaged out).
+stratosphere is above normal, the polar stratospheric circulation should
+be weaker than normal with warmer temperatures; similarly, when the eddy heat
+flux is below normal, the circulation should be stronger than normal with
+colder temperatures (see Newman, et al., 2001). The eddy heat fluxes entering
+the stratosphere are primarily driven by vertically propagating planetary-scale
+Rossby waves which have both stationary and transient components. This POD
+calculates eddy heat fluxes using monthly mean fields, and thus it primarily
+measures these relationships for stationary waves (since in the monthly mean
+the transient waves will be averaged out).
 
 This POD makes two kinds of figures from provided model data:
 
@@ -39,12 +40,14 @@ This POD makes two kinds of figures from provided model data:
 
 These plots are made for both hemispheres; for the Northern Hemisphere, they
 focus on the early (DJF or Dec) and late winter (JFM). For the SH, they focus
-on the early (ASO or Sep) and late spring (SON).
+on the early (ASO or Sep) and late spring (SON). These months are when coupling
+between the stratosphere and troposphere are most active in the respective
+hemispheres. 
 
 
 Version & Contact info
 ----------------------
-- Version/revision information: v1.0 (Apr 2022)
+- Version/revision information: v1.0 (Jun 2022)
 - Project PIs: Amy H. Butler (NOAA CSL) and Zachary D. Lawrence (CIRES / NOAA PSL)
 - Developer/point of contact: Zachary Lawrence (zachary.lawrence@noaa.gov)
 
@@ -61,10 +64,10 @@ The entirety of this POD is contained in the file ``stc_eddy_heat_fluxes.py``.
 This script reads in the model fields, calculates zonal mean eddy heat fluxes
 and polar cap temperatures and geopotential heights, and generates the plots.
 
-The observational data this POD uses is based on ERA5 reanalysis, and includes
-pre-computed zonal mean eddy heat fluxes, temperatures, and geopotential heights
-(i.e., they have dimensions of ``(time,level,lat)``) calculated from
-monthly mean fields.
+The observational data this POD uses is based on ERA5 reanalysis
+(Hersbach, et al., 2020), and includes pre-computed zonal mean eddy
+heat fluxes, temperatures, and geopotential heights (i.e., they have
+dimensions of ``(time,level,lat)``) calculated from monthly mean fields.
 
 
 Required programming language and libraries
@@ -100,6 +103,12 @@ References
     Furtado, J. C., J. L. Cohen, A. H. Butler, E. E. Riddle, and A. Kumar, 2015:
     Eurasian snow cover variability and links to winter climate in the CMIP5
     models. Clim Dyn, 45, 2591–2605, https://doi.org/10.1007/s00382-015-2494-4.
+
+.. _ref-Hersbach:
+
+    Hersbach, H. and coauthors, 2020: The ERA5 global reanalysis. Q J R Meteorol Soc.,
+    146, 1999-2049, https://doi.org/10.1002/qj.3803
+    
 
 .. _ref-Newman:
 

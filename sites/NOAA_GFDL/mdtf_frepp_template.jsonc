@@ -14,35 +14,30 @@
   //
   "case_list" : [
     {
-      "CASENAME" : "ESM4_historical_D1",
-      "model" : "GFDL-ESM4",
-      "convention" : "CMIP",
-      "FIRSTYR" : 2000,
-      "LASTYR" : 2004,
-      "CASE_ROOT_DIR" : "/archive/oar.gfdl.cmip6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp",
+      "CASENAME" : "CASENAME1",
+      "model" : "MODEL1",
+      "convention" : "CONVENTION1",
+      "experiment" : "CASENAME1",
+      "FIRSTYR" : FIRSTYR1,
+      "LASTYR" : LASTYR1,
+      "CASE_ROOT_DIR" : "PPDIR1/",
       "pod_list": [
-          // Optional: PODs to run for this model only (defaults to all)
-          "Wheeler_Kiladis",
-          "EOF_500hPa",
-         // "convective_transition_diag",
-          "MJO_suite",
-          "MJO_teleconnection",
-          //"MJO_prop_amp",
-          "precip_diurnal_cycle"
-         // "SM_ET_coupling"
+              POD_LIST
       ]
     }
   ],
   // PATHS ---------------------------------------------------------------------
   // Location of input and output data. If a relative path is given, it's
   // resolved relative to the MDTF-diagnostics code directory.
-
+  // set this to somewhere writeable with sufficient space for copies of input data
+  //"MDTF_TMPDIR": "/net2/jml/tmp",
   // Parent directory containing results from different models.
   "MODEL_DATA_ROOT": "$MDTF_TMPDIR/inputdata/model",
 
   // Site-specific installation of observational data used by individual PODs.
   // This will be GCP'ed locally if running on PPAN.
-  "OBS_DATA_REMOTE": "/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data",
+  //"OBS_DATA_REMOTE": "/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data",
+  "OBS_DATA_REMOTE": "/archive/wnd/MDTF-GFDL/inputdata/obs_data",
 
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "$MDTF_TMPDIR/inputdata/obs_data",
@@ -51,7 +46,8 @@
   "WORKING_DIR": "$MDTF_TMPDIR/wkdir",
 
   // Directory to write output files. Defaults to working directory if blank.
-  "OUTPUT_DIR": "$MDTF_TMPDIR/mdtf_out",
+  //"OUTPUT_DIR": "$MDTF_TMPDIR/mdtf_out",
+  "OUTPUT_DIR": "OUTPUTDIR1",
 
   // GFDL ----------------------------------------------------------------------
   // Settings specific to operation at GFDL.
@@ -62,12 +58,16 @@
 
   // If running on a GFDL workstation, set $MDTF_TMPDIR to this location
   // and create temp files here. Must be accessible via gcp.
-  "GFDL_WS_TEMP": "/net2/$USER/tmp",
+  //"GFDL_WS_TEMP": "$MDTF_TMPDIR",
+  "GFDL_WS_TEMP": "/archive/$USER/tmp",
 
   // Set flag to run framework in 'online' mode, processing data as part of the
   // FRE pipeline. Normally this is done by calling the mdtf_gfdl.csh wrapper
   // script from the XML.
   "frepp": false,
+
+// Allow the framework to pull files/variables from multiple components
+"any_components": true,
 
   // Set flag search entire /pp/ directory for model data; default is to
   // restrict to model component passed by FRE. Ignored if --frepp is not set.

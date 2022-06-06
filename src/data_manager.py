@@ -6,6 +6,7 @@ import abc
 import collections
 import dataclasses as dc
 import glob
+import itertools
 import signal
 import textwrap
 import typing
@@ -551,7 +552,10 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
                 try:
                     v.log.info("Fetching %s.", v)
                     # fetch on a per-DataKey basis
-                    for d_key in v.iter_data_keys(status=core.ObjectStatus.ACTIVE):
+                    for d_key in itertools.chain(
+                        v.iter_data_keys(status=core.ObjectStatus.ACTIVE),
+                        v.iter_associated_files_keys(status=core.ObjectStatus.ACTIVE),
+                    ):
                         try:
                             if not self.is_fetch_necessary(d_key):
                                 continue
@@ -968,6 +972,21 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                 expt_key, d_key, var.full_name)
             var.data[expt_key] = d_key
 
+            if not isinstance(var.associated_files, dict):
+                var.associated_files = {}
+
+            # Query for associated files - if the object contains a
+            # `query_associated_fields` method, we call it here. This is currently
+            # implemented for the gfdl `GFDL_GCP_FileDataSourceBase`, but any
+            # class that inherits ` DataframeQueryDataSourceBase` can define this
+            # method to populate the `VarlistEntry.associated_files` attribute.
+            # Otherwise this attribute is set to an empty dictionary here.
+            if hasattr(self, "query_associated_files"):
+                try:
+                    var.associated_files[expt_key] = self.query_associated_files(d_key)
+                except Exception as exc:
+                    var.log.debug(f"Unable to query associated files: {exc}")
+
     def _query_error_handler(self, msg, d_key, log=_log):
         """Log debugging message or raise an exception, depending on if we're
         in strict mode.
@@ -1162,6 +1181,11 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             d_key.log.debug("%s selected as part of experiment_key '%s'.",
                 d_key, expt_key)
             d_key.status = core.ObjectStatus.ACTIVE
+
+            # set associated variables to active as well
+            if isinstance(v.associated_files, dict):
+                if expt_key in v.associated_files.keys():
+                    v.associated_files[expt_key].status = core.ObjectStatus.ACTIVE
 
     def resolve_expt(self, expt_df, obj):
         """Tiebreaker logic to resolve redundancies in experiments, to be

@@ -47,6 +47,7 @@ hemispheres.
 
 Version & Contact info
 ----------------------
+
 - Version/revision information: v1.0 (Jun 2022)
 - Project PIs: Amy H. Butler (NOAA CSL) and Zachary D. Lawrence (CIRES / NOAA PSL)
 - Developer/point of contact: Zachary Lawrence (zachary.lawrence@noaa.gov)
@@ -74,6 +75,7 @@ Required programming language and libraries
 -------------------------------------------
 
 This POD requires Python 3, with the following packages:
+
 - numpy
 - scipy
 - xarray
@@ -85,6 +87,7 @@ Required model output variables
 -------------------------------
 
 The following monthly mean fields are required:
+
 - Temperature at 50 hPa, ``t50`` as ``(time,lat,lon)`` (units: K)
 - Temperature at 100 hPa, ``t100`` as ``(time,lat,lon)`` (units: K)
 - Meridional Winds at 100 hPa, ``v100`` as ``(time,lat,lon)`` (units: m/s)
@@ -121,4 +124,5 @@ More about this POD
 --------------------------
 
 TODO: add details about the bootstrapping on scatterplots
+
 TODO: add details about interpretation of heat flux in NH vs SH

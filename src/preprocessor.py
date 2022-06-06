@@ -2,6 +2,7 @@
 once it's been downloaded; see :doc:`fmwk_preprocess`.
 """
 import os
+import shutil
 import abc
 import dataclasses
 import functools
@@ -355,6 +356,51 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
 
         return ds.rename(rename_d)
 
+
+class AssociatedVariablesFunction(PreprocessorFunctionBase):
+    """Preprocessor class to copy associated variables to wkdir"""
+
+    def process(self, var, ds):
+
+        try:
+            # get string labels from variable object
+            pod_wkdir = var._parent.POD_WK_DIR
+            casename = var._parent._parent.name
+
+            # iterate over active associated files and get current local paths
+            associated_files = list(
+                var.iter_associated_files_keys(status=core.ObjectStatus.ACTIVE)
+            )
+            associated_files = [d_key.local_data for d_key in associated_files]
+
+            # flatten a list of nested lists
+            associated_files = [
+                d_key for sublist in associated_files for d_key in sublist
+            ]
+
+            # construct destination paths in wkdir
+            associated_files_dst = [
+                f"{pod_wkdir}/assoc/{casename}.{os.path.basename(x)}"
+                for x in associated_files
+            ]
+
+            # create `assoc` directory and copy files
+            os.makedirs(f"{pod_wkdir}/assoc/", exist_ok=True)
+            _ = [
+                shutil.copy(*x)
+                for x in list(zip(associated_files, associated_files_dst))
+            ]
+
+            # Replace object attribute with CSV list of final paths in wkdir
+            var.associated_files = str(",").join(associated_files_dst)
+
+        except Exception as exc:
+            var.log.debug(
+                f"Error encountered with preprocessing associated files: {exc}"
+            )
+
+        return ds
+
 class ExtractLevelFunction(PreprocessorFunctionBase):
     """Extract a single pressure level from a Dataset. Unit conversions of
     pressure are handled by `cfunits <https://ncas-cms.github.io/cfunits/index.html>`__,
@@ -542,7 +588,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             return (
                 CropDateRangeFunction,
                 PrecipRateToFluxFunction, ConvertUnitsFunction,
-                ExtractLevelFunction, RenameVariablesFunction
+                ExtractLevelFunction, RenameVariablesFunction,
+                AssociatedVariablesFunction
             )
 
     def edit_request(self, data_mgr, pod):

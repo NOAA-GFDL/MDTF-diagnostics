@@ -329,7 +329,7 @@ epub_exclude_files = ['search.html']
 autodoc_member_order = 'bysource'
 autoclass_content = 'class'
 autodoc_default_options = {
-    'special-members': '__post_init__',
+    'special-members': '__init__',# __post_init__',
     'inherited-members': True
 }
 
@@ -474,9 +474,9 @@ napoleon_include_private_with_doc = False
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3.7', None),
-    'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
-    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
-    'xarray': ('http://xarray.pydata.org/en/stable/', None)
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+    'xarray': ('https://xarray.pydata.org/en/stable/', None)
 }
 
 # -- Options for todo extension ----------------------------------------------

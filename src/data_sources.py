@@ -214,7 +214,7 @@ class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
     :class:`ExplicitFileDataSourceConfigEntry` objects in the \config_by_id
     attribute of :class:`ExplicitFileDataSource`.
     """
-    _file_preproc_functions = []
+    file_preproc_functions = []
     _XarrayParserClass = MetadataRewriteParser
 
     @property

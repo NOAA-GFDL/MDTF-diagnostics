@@ -1,8 +1,8 @@
 # Conda environment for development work.
 name: _MDTF_dev
 channels:
-- conda-forge
-- defaults
+- conda-forge/osx-64
+- defaults/osx-64
 dependencies:
 # contents of python3_base
 - python=3.7

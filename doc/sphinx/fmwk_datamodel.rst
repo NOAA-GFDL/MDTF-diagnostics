@@ -1,8 +1,13 @@
 Metadata schema
 ===============
 
-Overview of functionality
--------------------------
+This section describes the :doc:`src.data_model`, which implements classes describing the data model for the CF conventions. 
+
+Overview
+--------
+
+Functionality
++++++++++++++
 
 One of the main goals of the project is to enable seamless use of analysis scripts (PODs) on multiple sources of model data. The MDTF package does this by acting as an intermediary between the POD and the source of model data: when PODs are added to the package, they must list the model data they require in their :doc:`settings file <ref_settings>` in a model-agnostic way. The package then translate these pre-existing requirements 
 

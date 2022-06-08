@@ -22,9 +22,17 @@ and a link to the full documentation for each currently-supported POD.
 | Soil Moisture-Evapotranspiration coupling | Eric Wood (Princeton) |
 | [MJO Propagation and Amplitude ](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_GFDL.CM4.c96L32.am4g10r8/MJO_prop_amp/MJO_prop_amp.html) (example with GFDL CM4 data)  | Xianan Jiang (UCLA)  |
 | [AMOC 3D structure ](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_GFDL-CM2p1/transport_onto_TS/transport_onto_TS.html) (implementation in progress, example with GFDL CM2 model data)  | Xiaobiao Xu (FSU/COAPS)   |
-| [ENSO Moist Static Energy budget](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_CCSM4/MSE_diag/MSE_diag.html) (implementation in progress, example with CCSM4 data)  | Hariharasubramanian Annamalai (U. Hawaii)  |
 | [Warm Rain Microphysics](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/warm_rain_microphysics/documentation) (implementation in progress) | Kentaroh Suzuki (AORI, U. Tokyo)  |
-| [Mixed Layer Depth]([https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/warm_rain_microphysics/documentation](https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/mixed_layer_depth/doc)) | Ceclia Bitz (U. Washington), Lettie Roach  |
+| [Mixed Layer Depth](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/mixed_layer_depth/doc/mixed_layer_depth.rst) | Ceclia Bitz (U. Washington), Lettie Roach  |
+| [Tropical Pacific Sea Level](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/tropical_pacific_sea_level/doc/tropical_pacific_sea_level.rst) | Jianjun Yin (U. Arizona), Chia-Weh Hsu (GFDL)  |
+| [Ocean Surface Flux Diagnostic](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/ocn_surf_flux_diag/doc/ocn_surf_flux_diag.rst) |  Charlotte A. DeMott (Colorado State University), Chia-Weh Hsu (GFDL)  |
+| [Surface Temperature Extremes and Distribution Shape](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/temp_extremes_distshape/doc/temp_extremes_distshape.rst) | J. David Neelin (UCLA), Paul C Loikith (PSU), Arielle Catalano (PSU)  |
+| [Eulerian Storm Track](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/eulerian_storm_track/doc/eulerian_storm_track.rst) | James Booth (CUNY), Jeyavinoth Jeyaratnam  |
+| [Blocking Neale](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/blocking_neale/doc/blocking_neale.rst) | Rich Neale (NCAR), Dani Coleman (NCAR) |
+| [Moist Static Energy Diagnostic Package](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/ENSO_MSE/doc/ENSO_MSE.rst) | H. Annamalai (U. Hawaii), Jan Hafner (U. Hawaii) |
+| [Rossby Wave Sources Diagnostic Package](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/ENSO_RWS/doc/ENSO_RWS.rst) | H. Annamalai (U. Hawaii), Jan Hafner (U. Hawaii) |
+
+
 
 
 ## Example POD Analysis Results

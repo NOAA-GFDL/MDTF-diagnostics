@@ -1,0 +1,45 @@
+case_list:
+- CASENAME: ESM4_historical
+  model: GFDL-ESM4
+  convention: CMIP
+  FIRSTYR: 2000
+  LASTYR: 2004
+  CASE_ROOT_DIR: "/archive/Thomas.Jackson/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp/"
+  pod_list:
+  #- Wheeler_Kiladis
+  - EOF_500hPa
+  #- MJO_suite
+  #- MJO_teleconnection
+  #- precip_diurnal_cycle
+  #- ENSO_RWS
+  #- SM_ET_coupling
+  #- convective_transition_diag
+  #- MJO_prop_amp
+  #- ENSO_MSE
+  #- temp_extremes_distshape
+  #- precip_buoy_diag
+  #- eulerian_storm_track
+MODEL_DATA_ROOT: "$MDTF_TMPDIR/inputdata/model"
+OBS_DATA_REMOTE: "/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data"
+OBS_DATA_ROOT: "$MDTF_TMPDIR/inputdata/obs_data"
+WORKING_DIR: "$MDTF_TMPDIR/wkdir"
+OUTPUT_DIR: "$MDTF_TMPDIR/mdtf_out"
+GFDL_PPAN_TEMP: "$TMPDIR"
+GFDL_WS_TEMP: "/net2/$USER/tmp"
+frepp: false
+ignore_component: false
+data_manager: GFDL_PP
+file_transfer_timeout: 900
+keep_temp: false
+environment_manager: conda
+conda_root: "/home/oar.gfdl.mdtf/miniconda3"
+conda_env_root: "/home/oar.gfdl.mdtf/miniconda3/envs"
+venv_root: "./envs/venv"
+r_lib_root: "./envs/r_libs"
+save_ps: false
+save_nc: false
+make_variab_tar: false
+overwrite: false
+verbose: 1
+test_mode: false
+dry_run: false

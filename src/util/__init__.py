@@ -21,7 +21,7 @@ from .exceptions import *
 from .filesystem import (
     abbreviate_path, resolve_path, recursive_copy,
     check_executable, find_files, check_dir, bump_version, strip_comments,
-    parse_json, read_json, find_json, write_json, pretty_print_json,
+    parse_serialization_stream, read_json, find_json, write_json, pretty_print_json,
     append_html_template
     # is_subpath,
 )

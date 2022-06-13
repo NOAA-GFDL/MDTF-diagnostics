@@ -10,6 +10,7 @@ import json
 import re
 import shutil
 import string
+import yaml
 from . import basic
 from . import exceptions
 
@@ -306,7 +307,23 @@ def strip_comments(str_, delimiter=None):
     new_str = '\n'.join([s for s in lines if (s and not s.isspace())])
     return (new_str, line_nos)
 
-def parse_json(str_):
+
+def parse_serialization_stream(str_):
+    """Top-level wrapper to read either JSON or YAML input stream"""
+    try:
+        result = _parse_yaml(str_)
+    except Exception as _:
+        result = _parse_json(str_)
+
+    return result
+
+
+def _parse_yaml(str_):
+    """Parse YAML file and return as an OrderedDict"""
+    return collections.OrderedDict(yaml.safe_load(str_))
+
+
+def _parse_json(str_):
     """Parse JSONC (JSON with ``//``-comments) string *str\_* into a Python object.
     Comments are discarded. Wraps standard library :py:func:`json.loads`.
 
@@ -333,9 +350,10 @@ def parse_json(str_):
         )
     except UnicodeDecodeError as exc:
         raise json.JSONDecodeError(
-            msg=f"parse_json received UnicodeDecodeError:\n{exc}",
+            msg=f"_parse_json received UnicodeDecodeError:\n{exc}",
             doc=strip_str, pos=0
         )
+
     return parsed_json
 
 def read_json(file_path, log=_log):
@@ -346,7 +364,7 @@ def read_json(file_path, log=_log):
             *file_path*.
 
     Returns:
-        dict: data contained in the file, as parsed by :func:`parse_json`.
+        dict: data contained in the file, as parsed by :func:`_parse_json`.
 
     Execution exits with error code 1 on all other exceptions.
     """
@@ -360,7 +378,7 @@ def read_json(file_path, log=_log):
         # something more serious than missing file
         _log.critical("Caught exception when trying to read %s: %r", file_path, exc)
         exit(1)
-    return parse_json(str_)
+    return _parse_json(str_)
 
 def find_json(dir_, file_name, exit_if_missing=True, log=_log):
     """Reads a JSONC file *file_name* anywhere within the root directory *dir\_*.

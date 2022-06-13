@@ -6,19 +6,19 @@ Internal API documentation
    maintenance of the MDTF framework code. It's not needed for end users to run 
    the package, or for POD developers to develop new diagnostics.
 
-Package design
---------------
+.. Package design
+.. --------------
 
-These sections describe design features of the code that cut across multiple modules.
+.. These sections describe design features of the code that cut across multiple modules.
 
-.. toctree::
-   :maxdepth: 1
+.. .. toctree::
+..    :maxdepth: 1
 
-   fmwk_intro
-   fmwk_plugins
-   fmwk_obj_hierarchy
-   fmwk_datamodel
-   fmwk_provenance
+..    fmwk_intro
+..    fmwk_plugins
+..    fmwk_obj_hierarchy
+..    fmwk_datamodel
+..    fmwk_provenance
 
 Package code and API documentation
 ----------------------------------

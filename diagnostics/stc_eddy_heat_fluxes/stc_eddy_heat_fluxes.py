@@ -230,10 +230,12 @@ def plot_ehf_zcap_lags(ehf, zpcap, hemi):
 
     if (hemi == 'NH'):
         # Need Dec heat flux at 100 hPa
+        mon_origin = 'Dec'
         ehf_early = ehf.where(ehf.time.dt.month == 12, drop=True)
         months = [9, 10, 11, 12, 1, 2, 3]
     elif (hemi == 'SH'):
         # Need Sep heat flux at 100 hPa
+        mon_origin = 'Sep'
         ehf_early = ehf.where(ehf.time.dt.month == 9, drop=True)
         months = [6, 7, 8, 9, 10, 11, 12]
     else:
@@ -264,7 +266,7 @@ def plot_ehf_zcap_lags(ehf, zpcap, hemi):
     plt.xticks(np.arange(7), months)
     plt.xlabel(xlab_str, fontsize=18)
     plt.ylabel(ylab_str, fontsize=18)
-    plt.title('Lag correlation of Polar Cap Z with 100 hPa Eddy Heat Flux')
+    plt.title(f'Lag correlation of Polar Cap Z with {mon_origin} 100 hPa Eddy Heat Flux')
     plt.colorbar(cbp, label='Correlation', ax=[ax], location='bottom')
 
     fig.set_size_inches(10,6)
@@ -379,7 +381,7 @@ for hemi in ['NH','SH']:
     print(f'*** Plotting {hemi} EHF vs polar cap Z lag correlations')
     levcorr_plot = f'{plot_dir}/{CASENAME}_{hemi}_EHF-Zpcap_LagCorr.eps'
     fig,ax = plot_ehf_zcap_lags(ehf_band[hemi], zg_pcap[hemi], hemi)
-    plt.suptitle(f'{CASENAME}, hemi, {FIRSTYR}-{LASTYR}', fontsize=20)
+    plt.suptitle(f'{CASENAME}, {hemi}, {FIRSTYR}-{LASTYR}', fontsize=20)
     fig.savefig(levcorr_plot)
 
 # Output data will have dimensions of [hemi, time, lev], where hemi

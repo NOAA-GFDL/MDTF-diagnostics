@@ -73,8 +73,6 @@
 #       models. Clim Dyn, 45, 2591–2605, https://doi.org/10.1007/s00382-015-2494-4.
 
 import os
-import sys
-import pathlib
 import traceback
 
 import numpy as np
@@ -463,7 +461,6 @@ try:
 except:
     print('*** Unable to create plots from the observational data: ')
     print(traceback.format_exc())
-    pass
 
 print('\n=====================================')
 print('END stc_eddy_heat_fluxes.py ')

@@ -11,7 +11,7 @@
 Stratosphere-Troposphere Coupling: Eddy Heat Fluxes
 ================================
 
-Last update: 2022-05-03
+Last update: 2022-06-14
 
 This POD assesses the interaction of vertically propagating planetary-scale
 stationary waves on the polar winter/spring stratosphere. The vertical component
@@ -38,11 +38,11 @@ This POD makes two kinds of figures from provided model data:
 - Lag-correlation plots of polar cap geopotential heights at different pressure
   levels and months with early-season eddy heat fluxes at 100 hPa
 
-These plots are made for both hemispheres; for the Northern Hemisphere, they
-focus on the early (DJF or Dec) and late winter (JFM). For the SH, they focus
-on the early (ASO or Sep) and late spring (SON). These months are when coupling
-between the stratosphere and troposphere are most active in the respective
-hemispheres. 
+These plots are made for both hemispheres; for the Northern Hemisphere (NH),
+they focus on the early (DJF or Dec) and late winter (JFM). For the Southern
+Hemisphere (SH), they focus on the early (ASO or Sep) and late spring (SON).
+These months are when coupling between the stratosphere and troposphere are
+most active in the respective hemispheres. 
 
 
 Version & Contact info
@@ -123,6 +123,25 @@ References
 More about this POD
 --------------------------
 
-TODO: add details about the bootstrapping on scatterplots
+**Sign of eddy heat fluxes in NH vs SH**
 
-TODO: add details about interpretation of heat flux in NH vs SH
+In the Northern Hemisphere (NH), positive eddy heat fluxes represent 
+poleward and upward wave fluxes. However, in the Southern Hemisphere 
+(SH), the sign is flipped such that negative eddy heat fluxes represent 
+the poleward and upward wave fluxes. This means that the statistical 
+relationships evaluated in this POD will generally be opposite-signed 
+for the SH figures.
+
+**Use of bootstrapping**
+
+The scatterplots provided by this POD show the correlations between the 
+100 hPa eddy heat flux and 50 hPa polar carp temperatures. In these figures, 
+the parentheses next to the correlations contain the 95% bootstrap confidence 
+interval on the correlations from resampling the available years 1000 times. 
+These confidence intervals help to determine whether the correlations are 
+significant; if 0 does not fall within the range of the confidence 
+interval, the correlation can be said to be statistically significant. 
+Furthermore, the bootstrap confidence interval in the observation plots
+give a sense of the sampling variability in the historical record; if 
+the model correlation falls outside the observed bootstrap confidence interval, 
+it is fair to say the model has a too strong or too weak relationship.

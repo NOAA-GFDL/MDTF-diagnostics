@@ -1,16 +1,3 @@
-<!--
-    This file is the HTML output template for the example diagnostic and shows
-    how you should describe and link to the plots your diagnostic generates.
-    The framework will "fill in the blanks" corresponding to environment
-    variables and copy the file to <WK_DIR>.
-
-    EPS or PS files saved by your diagnostic are converted by the framework into
-    bitmaps in the following locations:
-    <WK_DIR>/model/PS/<plot_name>.eps -> <WK_DIR>/model/<plot_name>.png
-    <WK_DIR>/obs/PS/<plot_name>.eps -> <WK_DIR>/obs/<plot_name>.png
-    so the target of each link only needs to be the relative path,
-    eg. "model/<plot_name>.png".
--->
 <title>Stratosphere-Troposphere Coupling: Eddy Heat Fluxes</title>
 <img src="../mdtf_diag_banner.png">
 <h3>Influence of vertically propagating waves on the extratropical stratosphere</h3>
@@ -33,7 +20,12 @@ The eddy heat flux has a close relationship with temperatures in the polar
 stratosphere, and hence the strength of the stratosphere polar vortex.
 Above/below normal wave driving (corresponding to above/below normal eddy heat
 fluxes) should correspond to a warmer/colder polar stratosphere and
-weaker/stronger polar vortex, respectively.
+weaker/stronger polar vortex, respectively. In the Northern Hemisphere,
+positive eddy heat fluxes are poleward, corresponding to upward wave flux.
+On the other hand, negative eddy heat fluxes are poleward in the Southern
+Hemisphere, which means more negative heat fluxes correspond to enhanced wave
+driving (i.e., the aforementioned statistical relationships generally have
+their signs flipped). 
 </p>
 
 <h3>{{CASENAME}}</h3>

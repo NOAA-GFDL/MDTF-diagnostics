@@ -16,56 +16,126 @@ import logging
 _log = logging.getLogger(__name__)
 
 class AbstractEnvironmentManager(abc.ABC):
-    """Abstract interface for EnvironmentManagers.
+    """Abstract interface for EnvironmentManager classes. The EnvironmentManager
+    is responsible for setting up the runtime environment for a POD's third-party
+    software dependencies (language versions, libraries, etc.) before execution
+    and doing any associated cleanup after execution.
     """
     def __init__(self, log=_log):
         self.log = log # log to case's logger
 
-    def setup(self): pass
+    def setup(self):
+        """Performs any initialization tasks common to the EnvironmentManager
+        as a whole (called once.)
+        """
+        pass
 
     @abc.abstractmethod
-    def create_environment(self, env_name): pass
+    def create_environment(self, env_name):
+        """Install or otherwise create the POD runtime environment identified by
+        *env_name*, which can be an arbitrary object describing the environment.
+        """
+        pass
 
     @abc.abstractmethod
-    def get_pod_env(self, pod): pass
+    def get_pod_env(self, pod):
+        """Assign an environment identifier (of the same type as the *env_name*
+        arguments) to a *pod* based on the requirements and other declarative
+        information from its settings.jsonc file.
+
+        Args:
+            var (:class:`~src.diagnostic.Diagnostic`): POD object whose runtime
+                environment needs to be determined.
+
+        Returns:
+            Environment identifier to be passed as *env_name* to other
+            methods of the EnvironmentManager.
+        """
+        pass
 
     @abc.abstractmethod
-    def activate_env_commands(self, env_name): pass
+    def activate_env_commands(self, env_name):
+        """Generate shell commands needed to activate/set up the environment
+        before the POD executes.
+
+        Args:
+            env_name: Identifier corresponding to the environment to activate.
+
+        Returns:
+            List of strings, one per command, corresponding to the shell commands
+            needed to activate or set up the runtime environment within the POD's
+            execution environment (e.g., child subprocess) created by the
+            RuntimeManager.
+        """
+        pass
 
     @abc.abstractmethod
-    def deactivate_env_commands(self, env_name): pass
+    def deactivate_env_commands(self, env_name):
+        """Generate shell commands needed to deactivate/clean up the environment
+        after the POD has finished executing.
+
+        Args:
+            env_name: Identifier corresponding to the environment to deactivate.
+
+        Returns:
+            List of strings, one per command, corresponding to the shell commands
+            needed to deactivate or tear down the runtime environment within the
+            POD's execution environment (e.g., child subprocess) created by the
+            RuntimeManager.
+        """
+        pass
 
     @abc.abstractmethod
-    def destroy_environment(self, env_name): pass
+    def destroy_environment(self, env_name):
+        """Uninstall or otherwise remove the POD runtime environment identified by
+        *env_name*, which can be an arbitrary object describing the environment.
+        """
+        pass
 
-    def tear_down(self): pass
+    def tear_down(self):
+        """Performs any cleanup specific to the EnvironmentManager itself. Called
+        once, after all PODs have executed.
+        """
+        pass
 
 class NullEnvironmentManager(AbstractEnvironmentManager):
-    """EnvironmentManager which performs no environment switching. Useful only
-    as a dummy setting for building framework test harnesses.
+    """EnvironmentManager class which does nothing; intended as a dummy setting
+    for building framework test harnesses.
     """
     def create_environment(self, env_name):
+        """No-op."""
         pass
 
     def destroy_environment(self, env_name):
+        """No-op."""
         pass
 
     def get_pod_env(self, pod):
+        """No-op."""
         pass
 
     def activate_env_commands(self, env_name):
+        """No-op."""
         return []
 
     def deactivate_env_commands(self, env_name):
+        """No-op."""
         return []
 
 class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
-    """:class:`AbstractEnvironmentManager` that manages dependencies assuming
-    that current versions of the scripting language executables are already
-    available on ``$PATH``. For python-based PODs, it uses pip and virtualenvs
-    to install needed libraries. For R-based PODs, it attempts to install needed
-    libraries into the current user's ``$PATH``. For other scripting languages,
-    no library management is performed.
+    """EnvironmentManager class which installs dependencies in python
+    virtualenvs. Specifically,
+
+    - Assumes the needed versions of the scripting language executables are
+      correctly set by default in the ``$PATH`` of the POD's runtime environment;
+    - For python-based PODs, it uses pip and virtualenvs to install libraries
+      requested by each POD. The installation location is set by the CLI flag
+      ``--venv-root``.
+    - For R-based PODs, it attempts to install needed libraries into the current
+      user's ``$PATH``. The installation location is set by the CLI flag
+      ``--r-lib-root``.
+    - For other scripting languages (e.g. NCL), no library management is performed.
+      All dependencies are assumed to have been pre-installed.
     """
     def __init__(self, log=_log):
         super(VirtualenvEnvironmentManager, self).__init__(log=log)
@@ -267,10 +337,14 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
 # ============================================================================
 
 class AbstractRuntimeManager(abc.ABC):
-    """Interface for RuntimeManagers.
+    """Interface for RuntimeManager classes. The RuntimeManager is responsible
+    for managing the actual execution of the PODs.
     """
     @abc.abstractmethod
-    def setup(self): pass
+    def setup(self):
+        """Performs any initialization tasks
+        """
+        pass
 
     @abc.abstractmethod
     def run(self): pass
@@ -370,6 +444,9 @@ class SubprocessRuntimePODWrapper(object):
         return [''.join(command)]
 
     def runtime_exception_handler(self, exc):
+        """Handler which is called if an exception is raised during the POD's
+        execution (including setup and clean up).
+        """
         chained_exc = util.chain_exc(exc, f"running {self.pod.full_name}.",
             util.PodExecutionError)
         self.pod.deactivate(chained_exc)
@@ -410,7 +487,9 @@ class SubprocessRuntimePODWrapper(object):
         # print(pod+" Elapsed time ",elapsed)
 
 class SubprocessRuntimeManager(AbstractRuntimeManager):
-    """RuntimeManager that spawns a separate system subprocess for each POD.
+    """RuntimeManager class that runs each POD in a child subprocess spawned on
+    the local machine. Resource allocation is delegated to the local machine's
+    kernel's scheduler.
     """
     _PodWrapperClass = SubprocessRuntimePODWrapper
 
@@ -427,8 +506,8 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         self.bash_exec = find_executable('bash')
 
     def iter_active_pods(self):
-        """Generator iterating over all wrapped pods which haven't been skipped
-        due to requirement errors.
+        """Generator iterating over all wrapped pods which are currently active,
+        i.e. which haven't been skipped due to requirement errors.
         """
         yield from filter((lambda p: p.pod.active), self.pods)
 
@@ -514,6 +593,9 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         self.env_mgr.tear_down()
 
     def runtime_terminate(self, signum=None, frame=None):
+        """Handler called in the event that POD execution was halted abnormally,
+        by receiving  ``SIGINT`` or ``SIGTERM``.
+        """
         # try to clean up everything
         util.signal_logger(self.__class__.__name__, signum, frame, log=self.case.log)
         for p in self.pods:

@@ -1221,7 +1221,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
             add_help=True,
         )
         self.add_argument(
-            '--version', action="version", version="%(prog)s 3.0 beta 3"
+            '--version', action="version", version="%(prog)s 3.0 beta 4"
         )
         self._optionals.title = 'GENERAL OPTIONS'
         if not self.installed:
@@ -1332,7 +1332,7 @@ class MDTFTopLevelSubcommandArgParser(MDTFTopLevelArgParser):
             """)
         )
         self.add_argument(
-            '--version', action="version", version="%(prog)s 3.0 beta 3"
+            '--version', action="version", version="%(prog)s 3.0 beta 4"
         )
         self._optionals.title = 'GENERAL OPTIONS'
         if not self.installed:

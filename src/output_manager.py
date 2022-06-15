@@ -1,4 +1,4 @@
-"""Implementation of the OutputManager plugin, which templates HTML and organizes
+"""Implementation of the OutputManager plugin, which templates html and organizes
 the PODs' output files.
 """
 import os
@@ -17,7 +17,8 @@ class AbstractOutputManager(abc.ABC):
     def __init__(self, case): pass
 
 def html_templating_dict(pod):
-    """Returns the dict of recognized substitutions to perform in HTML templating.
+    """Returns the dict of recognized substitutions to perform in html templating
+    for *pod*.
     """
     config = core.ConfigManager()
     template = config.global_env_vars.copy()
@@ -28,28 +29,28 @@ def html_templating_dict(pod):
     return d
 
 class HTMLSourceFileMixin():
-    """Convienience method to define location of HTML templates in one place.
+    """Convienience method to define location of html templates in one place.
     """
     @property
     def CASE_TEMP_HTML(self):
-        """Temporary top-level html file for case that gets appended to as PODs
-        finish.
+        """Path to temporary top-level html file for *case* that gets appended
+        to as PODs finish.
         """
         return os.path.join(self.WK_DIR, '_MDTF_pod_output_temp.html')
 
     def html_src_file(self, file_name):
-        """Returns full path to a framework-supplied HTML template *file_name*
+        """Returns full path to a framework-supplied html template *file_name*
         or other part of the output page.
         """
         return os.path.join(self.CODE_ROOT, 'src', 'html', file_name)
 
     @staticmethod
     def pod_html_template_file_name(pod):
-        """Name of the HTML template file for POD *pod*."""
+        """Name of the html template file to use for *pod*."""
         return pod.name+'.html'
 
     def POD_HTML(self, pod):
-        """Path to *pod*\'s HTML output file in the working directory."""
+        """Path to *pod*\'s html output file in the working directory."""
         return os.path.join(pod.POD_WK_DIR, self.pod_html_template_file_name(pod))
 
     def write_data_log_file(self):
@@ -80,15 +81,17 @@ class HTMLSourceFileMixin():
         log_file.close()
 
 class HTMLPodOutputManager(HTMLSourceFileMixin):
-    """Performs cleanup tasks when the POD has finished running.
+    """Performs cleanup tasks specific to a single POD when that POD has
+    finished running.
     """
     def __init__(self, pod, output_mgr):
-        """Copy configuration info from POD object.
+        """Copy configuration info from :class:`~src.diagnostic.Diagnostic`
+        object *pod*.
 
         Args:
-            pod (:class:`~src.diagnostic.Diagnostic): POD which generated the
+            pod (:class:`~src.diagnostic.Diagnostic`): POD which generated the
                 output files being processed.
-            output_mgr: OutputManager plugin handling the overall processing of
+            output_mgr: Parent OutputManager handling the overall processing of
                 output files from all PODs.
         """
         config = core.ConfigManager()
@@ -116,7 +119,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             self.obj.POD_CODE_DIR, self.pod_html_template_file_name(self.obj)
         )
         if not os.path.isfile(test_path):
-            # POD's top-level HTML template needs to exist
+            # POD's top-level html template needs to exist
             raise util.MDTFFileNotFoundError(test_path)
         template_d = html_templating_dict(self.obj)
         # copy and template all .html files, since PODs can make sub-pages
@@ -243,11 +246,11 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         """Top-level method to make POD-specific output, post-init. Split off
         into its own method to make subclassing easier.
 
-        In order, this 1) creates the POD's HTML output page from its included
+        In order, this 1) creates the POD's html output page from its included
         template, replacing ``CASENAME`` and other template variables with their
-        current values, and adds a link to the POD's page from the top-level HTML
+        current values, and adds a link to the POD's page from the top-level html
         report; 2) converts the POD's output plots (in PS or EPS vector format)
-        to a bitmap format for webpage display; 3) Copies all requested files to
+        to a bitmap format for webpage display; 3) copies all requested files to
         the output directory and deletes temporary files.
         """
         self.write_data_log_file()
@@ -258,11 +261,12 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             self.cleanup_pod_files()
 
 class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
-    """OutputManager that collects all the PODs' output as HTML pages. Currently
-    the only value for the OutputManager plugin, selected by default.
+    """OutputManager that collects the output of all PODs run as a part of *case*
+    as html pages. Currently the only value for the OutputManager plugin, so it's
+    selected by default.
 
-    Instantiates :class:`HTMLPodOutputManager` objects to handle output of
-    each POD.
+    Instantiates :class:`HTMLPodOutputManager` objects to handle processing the
+    output of each POD.
     """
     _PodOutputManagerClass = HTMLPodOutputManager
     _html_file_name = 'index.html'
@@ -289,12 +293,12 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         return os.path.join(paths.OUTPUT_DIR, file_name)
 
     def append_result_link(self, pod):
-        """Update the top level index.html page with a link to this POD's results.
+        """Update the top level index.html page with a link to *pod*'s results.
 
         This simply appends one of two html fragments to index.html:
-        ``src/html/pod_result_snippet.html`` if the POD completed successfully,
+        ``src/html/pod_result_snippet.html`` if *pod* completed successfully,
         or ``src/html/pod_error_snippet.html`` if an exception was raised during
-        the POD's setup or execution.
+        *pod*'s setup or execution.
         """
         template_d = html_templating_dict(pod)
         # add a warning banner if needed
@@ -327,7 +331,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         """
         pod.log.info('Checking linked output files for %s.', pod.full_name)
         verifier = verify_links.LinkVerifier(
-            self.POD_HTML(pod),  # root HTML file to start search at
+            self.POD_HTML(pod),  # root html file to start search at
             self.WK_DIR,         # root directory to resolve relative paths
             verbose=False,
             log=pod.log
@@ -341,7 +345,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             pod.log.info('\tNo files are missing.')
 
     def make_html(self, cleanup=True):
-        """Add header and footer to CASE_TEMP_HTML.
+        """Add header and footer to the temporary output file at CASE_TEMP_HTML.
         """
         dest = os.path.join(self.WK_DIR, self._html_file_name)
         if os.path.isfile(dest):
@@ -397,7 +401,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         return out_path
 
     def copy_to_output(self):
-        """Copy all files to the specified output directory.
+        """Copy all files to the user-specified output directory (``$OUTPUT_DIR``).
         """
         if self.WK_DIR == self.OUT_DIR:
             return # no copying needed
@@ -432,7 +436,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             try:
                 self.append_result_link(pod)
             except Exception as exc:
-                # won't go into the HTML output, but will be present in the
+                # won't go into the html output, but will be present in the
                 # summary for the case
                 pod.deactivate(exc)
                 continue

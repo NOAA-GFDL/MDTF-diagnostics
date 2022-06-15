@@ -672,10 +672,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # initialize xarray parser
         self.parser = self._XarrayParserClass(data_mgr, pod)
         # initialize PreprocessorFunctionBase objects
-        self.functions = [cls_(data_mgr, pod) for cls_ in self.functions]
+        self.functions = [cls_(data_mgr, pod) for cls_ in self._functions]
 
     @property
-    def functions(self):
+    def _functions(self):
         """Determine which PreprocessorFunctions are applicable to the current
         package run, defaulting to all of them.
 
@@ -983,7 +983,7 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     variable, using xarray `open_mfdataset()
     <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
     """
-    file_preproc_functions = util.abstract_attribute()
+    _file_preproc_functions = util.abstract_attribute()
     """List of PreprocessorFunctions to be executed on a per-file basis as the
     multi-file Dataset is being loaded, rather than afterwards as part of the
     :meth:`process`. Note that such functions will not be able to rely on the
@@ -993,7 +993,7 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         super(DaskMultiFilePreprocessor, self).__init__(data_mgr, pod)
         # initialize PreprocessorFunctionBase objects
         self.file_preproc_functions = \
-            [cls_(data_mgr, pod) for cls_ in self.file_preproc_functions]
+            [cls_(data_mgr, pod) for cls_ in self._file_preproc_functions]
 
     def edit_request(self, data_mgr, pod):
         """Edit *pod*\'s data request, based on the child class's functionality. If
@@ -1056,4 +1056,4 @@ class DefaultPreprocessor(DaskMultiFilePreprocessor):
     """Implementation class for :class:`MDTFPreprocessorBase` for the general
     use case. Includes all implemented functionality and handles multi-file data.
     """
-    file_preproc_functions = []
+    _file_preproc_functions = []

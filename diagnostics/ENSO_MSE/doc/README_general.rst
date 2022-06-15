@@ -1,5 +1,5 @@
-**Instructions for ENSO Moist Static Energy Process-oriented diagnostics
-(POD)**
+Instructions for ENSO Moist Static Energy Process-oriented diagnostics (POD)
+============================================================================
 
 This POD package consists of four levels. With a focus on identifying
 leading processes that determine ENSO-related precipitation anomalies,

@@ -48,9 +48,13 @@ class PlaceholderScalarCoordinate():
     represented by real netCDF Variables.
     """
     name: str
+    """Scalar coordinate name."""
     axis: str
+    """Axis identifier ('X', 'Y', 'Z', etc.)"""
     standard_name: str = ATTR_NOT_FOUND
+    """CF standard name for the coordinate variable."""
     units: str = ATTR_NOT_FOUND
+    """Units of the coordinate."""
 
 # ========================================================================
 # Customize behavior of cf_xarray accessor
@@ -323,7 +327,7 @@ class MDTFDataArrayAccessorMixin(MDTFCFAccessorMixin):
 
     @property
     def formula_terms(self):
-        """Returns dict of (name in formula: name in dataset) pairs parsed from
+        """Returns dict of (name in formula - name in dataset) pairs parsed from
         formula_terms attribute. If attribute not present, returns empty dict.
         """
         terms = dict()

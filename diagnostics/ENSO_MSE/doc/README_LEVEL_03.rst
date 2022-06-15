@@ -1,4 +1,5 @@
-**Information about Level 3 – MSE variance diagnostics**
+Information about Level 3 – MSE variance diagnostics
+====================================================
 
 At this level the code calculates terms of MSE variance/covariance
 diagnostics.

@@ -673,6 +673,7 @@ class DMDependentVariable(_DMDimensionsMixin):
     modifier: str = ""
     component: str = ""
     associated_files: str = ""
+    rename_coords: bool = True
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
 

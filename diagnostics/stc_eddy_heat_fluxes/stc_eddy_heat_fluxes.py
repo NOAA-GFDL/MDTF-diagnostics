@@ -6,7 +6,7 @@
 # of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
 #
 # STC Eddy Heat Fluxes
-# Last update: 2022-04-27
+# Last update: 2022-06-16
 #
 # This script performs calculations to assess the action of vertically
 # propagating planetary-scale stationary waves on the polar wintertime
@@ -88,6 +88,33 @@ mpl.rcParams['font.size'] = 12
 
 
 def lat_avg(ds, lat_lo, lat_hi):
+    r""" Calculate a meridional average of data. The average is done using 
+        cosine-latitude weighting. 
+
+    Parameters
+    ----------
+    ds : `xarray.DataArray` or `xarray.Dataset`
+        The input DataArray or Dataset for which to calculate a meridional
+        average between the given latitude limits.
+    
+    lat_lo : Numeric quantity 
+        The lower latitude limit (inclusive) for performing the meridional average
+
+    lat_hi : Numeric quantity
+        The upper latitude limit (inclusive) for performing the meridional average
+
+    Returns
+    -------
+    ds_wgt : `xarray.DataArray` or `xarray.Dataset`
+         The cos(lat) weighted average of the data between lat_lo and lat_hi
+
+    Notes
+    -----
+    The input xarray variable ds is assumed to have a dimension named "lat". 
+    E.g., if your data has a dimension named "latitude", use the rename method: 
+        ds.rename({'latitude':'lat'})
+
+    """
 
     # Limit the latitude range without assuming the ordering of lats
     ds_tmp = ds.isel(lat = np.logical_and(ds.lat >= lat_lo, ds.lat <= lat_hi))
@@ -102,6 +129,38 @@ def lat_avg(ds, lat_lo, lat_hi):
 
 
 def compute_total_eddy_heat_flux(v, T):
+    r""" Compute the total zonal mean eddy heat flux from meridonal winds 
+    and temperatures. The eddy heat flux is calculated as: 
+        ehf = zonal_mean( (v - zonal_mean(v)) * (T - zonal_mean(T)))
+
+    Parameters
+    ----------
+    v : `xarray.DataArray`
+        The meridional wind component. Assumed to have the same dimensions as T
+    
+    T : `xarray.DataArray`
+        The air temperature. Assumed to have the same dimensions as v
+
+    Returns
+    -------
+    ehf : `xarray.DataArray`
+        The zonal mean eddy heat flux
+
+    Notes
+    -----
+    The input fields v and T are assumed to have dimensions named "lat" 
+    and "lon". E.g., if your data has dimensions "latitude" and/or "longitude",
+    use the rename method:
+        ds.rename({'latitude':'lat','longitude':'lon'})
+
+    Ideally v and T would be provided on the same latitude/longitude grid. 
+    In practice this is not necessarily the case as some models provide 
+    different variables at cell-centers and cell-edges. If this is found 
+    to be the case, this function will use xesmf to do bilinear regridding 
+    of the meridional wind component to match the grid of the temperatures.
+
+    """
+   
     # Take the zonal means of v and T
     v_zm = v.mean('lon')
     T_zm = T.mean('lon')
@@ -135,6 +194,36 @@ def compute_total_eddy_heat_flux(v, T):
 
 
 def plot_ehf_tcap_corr(ehf, tpcap, hemi):
+    r""" Create a scatterplot showing the relationship between seasonal-
+    mean eddy heat flux and polar cap temperatures in the stratosphere. 
+
+    Parameters
+    ----------
+    ehf : `xarray.DataArray`
+        The 100 hPa eddy heat fluxes with units in K m s-1 
+    
+    tpcap : `xarray.DataArray` 
+        The 50 hPa polar cap temperatures with units in K 
+
+    hemi : string 
+        Should be either 'NH' or 'SH' for the northern/southern 
+        hemisphere, respectively. 
+
+    Returns
+    -------
+    (fig, ax) : tuple
+        The tuple containing the matplotlib figure and axis handles 
+
+    Notes
+    -----
+    Both ehf and tpcap are assumed to have dimensions of time. If 
+    NH is given for hemi, this will do the correlation between DJF 
+    100 hPa eddy heat flux and 50 hPa JFM polar cap temperatures. 
+    If SH is given, this will do it for ASO heat flux and SON 
+    polar cap temperatures.
+
+    """
+    
     fig, ax = plt.subplots()
 
     if (hemi == 'NH'):
@@ -210,9 +299,47 @@ def plot_ehf_tcap_corr(ehf, tpcap, hemi):
 
 
 def plot_ehf_zcap_lags(ehf, zpcap, hemi):
+    r""" Creates a lag-correlation contour plot assessing the relationship 
+    between eddy heat fluxes and polar cap geopotential heights for different 
+    months when strat-trop coupling is most active. 
 
+    Paramaeters
+    -----------
+    ehf : `xarray.DataArray`
+        The 100 hPa eddy heat flux with units of K m s-1
+
+    zpap : `xarray.DataArray` 
+        The polar cap geopotential height across pressure levels
+
+    hemi : string 
+        Should be either 'NH' or 'SH' for northern/southern hemisphere, 
+        respectively
+
+    Returns
+    -------
+    (fig, ax) : tuple
+        A tuple containing the matplotlib figure and axis handles 
+ 
+    Notes
+    -----
+    Assumes that both ehf and zpcap have time dimensions, and that 
+    zpcap additionally has a "lev" dimension for the pressure levels. 
+
+    If NH is chosen, this function will create a plot correlating the 
+    December 100 hPa eddy heat flux with polar cap heights for lags 
+    between September and March. If SH is chosen, it will instead do 
+    it for September 100 hPa eddy heat flux with polar cap heights 
+    for lags between June and December.   
+
+    """
+    
     def _align_month_corrs(ehf, zpc, month, hemi):
-
+        r""" Small utility function for aligning the time series correctly 
+        so that the lag correlations are performed correctly. This is 
+        particularly necessary when hemi is 'NH' because the correlations 
+        span the year-boundary, so things have to be paired correctly.
+        """
+        
         # If the months we're correlating fall within the same year, then
         # we need only align the same years
         if ((hemi == 'NH') and (month in [9,10,11,12])) or (hemi == 'SH'):

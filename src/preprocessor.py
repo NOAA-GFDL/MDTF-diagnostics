@@ -408,8 +408,15 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
             rename_d[tv.name] = var.name
             tv.name = var.name
 
+        # if `rename_coords` is False, only process the time coordinate
+        dim_axes = list(tv.dim_axes.values())
+        if tv.rename_coords is False:
+            dim_axes = [
+                x for x in dim_axes if isinstance(x,diagnostic.VarlistTimeCoordinate)
+            ]
+
         # rename coords
-        for c in tv.dim_axes.values():
+        for c in dim_axes:
             dest_c = var.axes[c.axis]
             if c.name != dest_c.name:
                 var.log.debug("Rename %s axis of %s from '%s' to '%s'.",
@@ -418,7 +425,7 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
                 )
                 rename_d[c.name] = dest_c.name
                 c.name = dest_c.name
-        # TODO: bounds??
+        ## TODO: bounds??
 
         # rename scalar coords
         for c in tv.scalar_coords:

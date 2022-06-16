@@ -403,6 +403,8 @@ class DataSourceBase(core.MDTFObjectBase, util.CaseLoggerMixin,
             # copy preferred gfdl post-processing component during translation
             if hasattr(trans_v, "component"):
                 v.component = trans_v.component
+            if hasattr(trans_v,"rename_coords"):
+                v.rename_coords = trans_v.rename_coords
         except KeyError as exc:
             # can happen in normal operation (eg. precip flux vs. rate)
             chained_exc = util.PodConfigEvent((f"Deactivating {v.full_name} due to "

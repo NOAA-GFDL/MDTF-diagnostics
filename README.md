@@ -8,6 +8,7 @@ The MDTF-diagnostics package is a portable framework for running process-oriente
 ![MDTF_logo](<./doc/img/CPO_MAPP_MDTF_Logo.jpg>)
 Each process-oriented diagnostic [POD; [Maloney et al.(2019)](#citations)] targets a specific physical process or emergent behavior to determine how well one or more models represent the process, ensure that models produce the right answers for the right reasons, and identify gaps in the understanding of phenomena. Each POD is independent of other PODs. PODs generate diagnostic figures that can be viewed as an html file using a web browser.
 
+## Available and Planned Diagnostics
 The links in the table below show sample output, a brief description,
 and a link to the full documentation for each currently-supported POD.
 

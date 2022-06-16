@@ -17,19 +17,22 @@
 # air temperature
 # geopotential (this is post-processed to geopot height by dividing by 9.80665)
 
+import os
+
 import numpy as np
 import xarray as xr
 
-
 ### BEGIN: READ INPUT FIELDS ###
 # The following code/paths will have to be adapted for your own system.
+#
 # On my system, the monthly-mean variables are contained in individual
 # files that span all available years in the reanalysis from 1979 to
-# the ~present.
+# the ~present. I set these as environment variables, but explicitly
+# show the paths in comments as examples 
 
-vwnd_fi = '/Projects/era5/Monthlies/pressure/vwnd.mon.mean.nc'
-air_fi = '/Projects/era5/Monthlies/pressure/air.mon.mean.nc'
-hgt_fi = '/Projects/era5/Monthlies/pressure/hgt.mon.mean.nc'
+vwnd_fi = os.environ['ERA5_MONTHLY_V'] # '/Projects/era5/Monthlies/pressure/vwnd.mon.mean.nc'
+air_fi = os.environ['ERA5_MONTHLY_T']  # '/Projects/era5/Monthlies/pressure/air.mon.mean.nc'
+hgt_fi = os.environ['ERA5_MONTHLY_Z']  # '/Projects/era5/Monthlies/pressure/hgt.mon.mean.nc'
 
 vwnd_ds = xr.open_dataset(vwnd_fi)
 air_ds = xr.open_dataset(air_fi)
@@ -38,9 +41,7 @@ hgt_ds = xr.open_dataset(hgt_fi)
 # By the end of this block of code, the vwnd, air, and hgt variables
 # should each contain all available months of meridional wind,
 # air temperature and geopotential height, respectively. They can be
-# lazily loaded with xarray (e.g., after using open_mfdataset) since
-# the following calculations are done iteratively, for simplicity
-
+# lazily loaded with xarray (e.g., after using open_mfdataset) 
 ### END: READ INPUT FIELDS ###
 
 

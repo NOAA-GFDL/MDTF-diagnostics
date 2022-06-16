@@ -20,10 +20,29 @@
 import numpy as np
 import xarray as xr
 
-# These variables are contained in individual files, across all months
-vwnd = xr.open_dataset('/Projects/era5/Monthlies/pressure/vwnd.mon.mean.nc')
-air = xr.open_dataset('/Projects/era5/Monthlies/pressure/air.mon.mean.nc')
-hgt = xr.open_dataset('/Projects/era5/Monthlies/pressure/hgt.mon.mean.nc')
+
+### BEGIN: READ INPUT FIELDS ###
+# The following code/paths will have to be adapted for your own system.
+# On my system, the monthly-mean variables are contained in individual
+# files that span all available years in the reanalysis from 1979 to
+# the ~present.
+
+vwnd_fi = '/Projects/era5/Monthlies/pressure/vwnd.mon.mean.nc'
+air_fi = '/Projects/era5/Monthlies/pressure/air.mon.mean.nc'
+hgt_fi = '/Projects/era5/Monthlies/pressure/hgt.mon.mean.nc'
+
+vwnd_ds = xr.open_dataset(vwnd_fi)
+air_ds = xr.open_dataset(air_fi)
+hgt_ds = xr.open_dataset(hgt_fi)
+
+# By the end of this block of code, the vwnd, air, and hgt variables
+# should each contain all available months of meridional wind,
+# air temperature and geopotential height, respectively. They can be
+# lazily loaded with xarray (e.g., after using open_mfdataset) since
+# the following calculations are done iteratively, for simplicity
+
+### END: READ INPUT FIELDS ###
+
 
 ehf = []
 zg_zm = []
@@ -35,14 +54,14 @@ ta_zm_50 = []
 for time in hgt.time:
     print(time.values)
 
-    # May need to adjust variable names here to match your own files;
+    # May need to adjust variable names here to match those in your own files.
     # vwnd = v-component of wind
     # air = air temperature
     # hgt = geopotential height
-    v100 = vwnd.vwnd.sel(time=time,level=100).load()
-    t100 = air.air.sel(time=time, level=100).load()
-    t50 = air.air.sel(time=time, level=50).load()
-    zg = hgt.hgt.sel(time=time).load()
+    v100 = vwnd_ds.vwnd.sel(time=time,level=100).load()
+    t100 = air_ds.air.sel(time=time, level=100).load()
+    t50 = air_ds.air.sel(time=time, level=50).load()
+    zg = hgt_ds.hgt.sel(time=time).load()
 
     # Compute zonal mean temperatures
     ta_zm_50_tmp  =  t50.mean('lon')

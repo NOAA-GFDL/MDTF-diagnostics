@@ -28,6 +28,7 @@ dependencies:
 - pcmdi_metrics=2.2.2
 - h5py=3.6.0
 - intake-xarray=0.6.0
+- nc-time-axis=v1.41
 - pip=22.0.4
 - pip:
     - cmocean

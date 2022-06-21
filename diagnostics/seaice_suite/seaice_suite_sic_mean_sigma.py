@@ -28,7 +28,7 @@
 #   Open source copyright agreement
 # 
 #   The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt). 
-#   Unless you've distirbuted your script elsewhere, you don't need to change this.
+#   Unless you've distributed your script elsewhere, you don't need to change this.
 # 
 #   Functionality
 # 
@@ -74,9 +74,9 @@ matplotlib.use('Agg')  # non-X windows backend
 
 def readindata(file, varname='siconc', firstyr='1979', lastyr='2014'):
     ds = xr.open_dataset(file)
-    ds = ds.sel(time=slice(firstyr+'-01-01',lastyr+'-12-31')) # limit to yrs of interest, maybe model dep
-    print('Limit domain to Arctic to match obs') # script would work fine if data were global
-    ds = ds.where(ds.latitude>30.,drop=True) # limit to arctic for now, remove later
+    ds = ds.sel(time=slice(firstyr+'-01-01',lastyr+'-12-31'))  # limit to yrs of interest, maybe model dep
+    print('Limit domain to Arctic to match obs')  # script would work fine if data were global
+    ds = ds.where(ds.latitude>30.,drop=True)  # limit to arctic for now, remove later
     field = ds[varname]
     field.name = varname
 
@@ -91,7 +91,8 @@ input_file = "{DATADIR}/mon/{CASENAME}.{siconc_var}.mon.nc".format(**os.environ)
 obsoutput_dir = "{WK_DIR}/obs/".format(**os.environ)
 modoutput_dir = "{WK_DIR}/model/".format(**os.environ)
 figures_dir = "{WK_DIR}/model/".format(**os.environ)
-obs_file = '{OBS_DATA}/HadISST_ice_1979-2016_grid_nh.nc'.format(**os.environ)
+#obs_file = '{OBS_DATA}/HadISST_ice_1979-2016_grid_nh.nc'.format(**os.environ)
+obs_file = '{OBS_DATA}/HadISST_ice.nc'.format(**os.environ)
 proc_obs_file = obsoutput_dir+'/HadISST_stats_1979-2014.nc'.format(**os.environ)
 proc_mod_file = modoutput_dir+'/seaice_fullfield_stats.nc'
 
@@ -100,13 +101,13 @@ siconc_var = "{siconc_var}".format(**os.environ)
 firstyr = "{FIRSTYR}".format(**os.environ)
 lastyr = "{LASTYR}".format(**os.environ)
 
-processmod= not(os.path.isfile(proc_mod_file)) # check if obs proc file exists
+processmod = not(os.path.isfile(proc_mod_file))  # check if obs proc file exists
 if processmod:
     field = readindata(input_file, 'siconc',firstyr,lastyr)
 
-processobs= not(os.path.isfile(proc_obs_file)) # check if obs proc file exists
-if processobs: # if no proc file then must get obs and process
-    obs = readindata(obs_file, 'sic',firstyr,lastyr)
+processobs = not(os.path.isfile(proc_obs_file)) # check if obs proc file exists
+if processobs:  # if no proc file then must get obs and process
+    obs = readindata(obs_file, 'sic', firstyr,lastyr)
 
 
 def mainmonthlystats(field=None, firstyr=1979, lastyr=2014):

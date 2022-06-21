@@ -11,7 +11,7 @@ dependencies:
 - numpy=1.19
 - scipy=1.5.2
 - netCDF4=1.5.8
-- cftime=1.2
+- cftime>=1.5
 - xarray=0.16
 - matplotlib=3.3
 - pandas<1.3

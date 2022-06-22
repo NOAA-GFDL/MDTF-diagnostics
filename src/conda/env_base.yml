@@ -11,8 +11,8 @@ dependencies:
 - ghostscript
 - numpy=1.19
 # - scipy=1.5.2
-- netCDF4=1.5.8
-- cftime>=1.6
+- netCDF4=1.5.4
+- cftime=1.2
 - xarray=0.16
 - matplotlib=3.3
 # - cartopy=0.18
@@ -20,7 +20,7 @@ dependencies:
 - pint=0.16
 - dask=2.30
 # additions dec 2020
-- cfunits>=3.3.4
+- cfunits=3.3.1
 - intake=0.6
 - intake-esm=2020.11.4
 # bump version 0.3.1 -> 0.4 feb 2021

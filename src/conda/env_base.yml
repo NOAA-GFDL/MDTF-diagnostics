@@ -20,7 +20,7 @@ dependencies:
 - pint=0.16
 - dask=2.30
 # additions dec 2020
-- cfunits=3.3.1
+- cfunits>=3.3.4
 - intake=0.6
 - intake-esm=2020.11.4
 # bump version 0.3.1 -> 0.4 feb 2021

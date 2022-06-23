@@ -532,7 +532,8 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         if len(values) <= 1:
             # unique value, no need to filter
             return df
-        filter_val = func(values, preferred=preferred)
+        args = {"preferred": preferred} if preferred is not None else {}
+        filter_val = func(values, **args)
         self.log.debug("Selected experiment attribute %s='%s' for %s (out of %s).",
             col_name, filter_val, obj_name, values)
         return df[df[col_name] == filter_val]

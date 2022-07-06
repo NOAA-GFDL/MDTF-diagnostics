@@ -1,6 +1,7 @@
 """Code specific to the computing environment at NOAA's Geophysical Fluid
 Dynamics Laboratory (Princeton, NJ, USA).
 """
+import abc
 import os
 import io
 import dataclasses
@@ -148,6 +149,10 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
             for var in vars_to_fetch:
                 for d_key in var.iter_data_keys(status=core.ObjectStatus.ACTIVE):
                     paths.update(d_key.remote_data())
+                for d_key in var.iter_associated_files_keys(
+                    status=core.ObjectStatus.ACTIVE
+                ):
+                    paths.update(d_key.remote_data())
 
             self.log.info(f"Start dmget of {len(paths)} files...")
             util.run_command(['dmget','-t','-v'] + list(paths),
@@ -237,6 +242,12 @@ class GFDL_GCP_FileDataSourceBase(
             d = paths.model_paths(self, overwrite=True)
             self.MODEL_WK_DIR = d.MODEL_WK_DIR
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
+
+    @abc.abstractmethod
+    def query_associated_files(self, d_key):
+        """abstract method for querying dataframe for associated files"""
+        pass
+
 
 @util.mdtf_dataclass
 class GFDL_UDA_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
@@ -475,6 +486,18 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         else:
             return tuple()
 
+    def query_associated_files(self, d_key):
+        """Infers static file from variable's component and assigns data key
+        to the associated_files property"""
+        df = self.df
+        component = df.iloc[[d_key.value[0]]]["component"].values[0]
+        group = df.loc[(df["component"] == component) & (df["variable"] == "static")]
+        if len(group) == 1:
+            result = self.data_key(group, expt_key=d_key.expt_key)
+        else:
+            result = None
+        return result
+
     @property
     def var_expt_key_cols(self):
         """Catalog columns whose values must "be the same for each variable", ie
@@ -509,7 +532,8 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         if len(values) <= 1:
             # unique value, no need to filter
             return df
-        filter_val = func(values, preferred=preferred)
+        args = {"preferred": preferred} if preferred is not None else {}
+        filter_val = func(values, **args)
         self.log.debug("Selected experiment attribute %s='%s' for %s (out of %s).",
             col_name, filter_val, obj_name, values)
         return df[df[col_name] == filter_val]
@@ -604,11 +628,24 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             outside of the query date range.
         """
         df = self._filter_column_min(df, obj.name, 'chunk_freq')
+
+        # if a preferred component is specified, select it at the var level
         if 'component' in self.col_spec.var_expt_cols.cols:
             col_name = 'component'
+            if obj.component is not None:
+                preferred = obj.component.split(",")
+                for comp in preferred:
+                    _df = df[df["component"] == comp]
+                    if len(_df) > 0:
+                        df = _df
+                        break
+
+            # select the first entry
             df = df.sort_values(col_name).iloc[[0]]
+
             self.log.debug("Selected experiment attribute '%s'='%s' for %s.",
                 col_name, df[col_name].iloc[0], obj.name)
+
         return df
 
 class GfdlautoDataManager(object):

@@ -26,7 +26,7 @@ with open("README.md", 'r') as f:
 packages = find_packages()
 setup(
     name='MDTF-diagnostics',
-    version='3.0 beta 3',
+    version='3.0 beta 4',
     description='Process-oriented diagnostics for weather and climate simulations',
     license='LGPLv3',
     long_description=long_description,

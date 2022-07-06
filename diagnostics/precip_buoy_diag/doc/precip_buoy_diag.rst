@@ -1,5 +1,5 @@
 Precipitation Buoyancy Diagnostic Package
-========================================
+=========================================
 
 The precipitation-buoyancy diagnostics POD is used to assess the thermodynamic sensitivity of model precipitation fields. 
 

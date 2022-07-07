@@ -13,6 +13,7 @@ import warnings
 import cftime # believe explict import needed for cf_xarray date parsing?
 import cf_xarray
 import xarray as xr
+import numpy as np
 
 from src import util, units, core
 
@@ -557,13 +558,19 @@ class DefaultDatasetParser():
         """
         def _restore_one(name, attrs_d):
             backup_d = self.attrs_backup.get(name, dict())
-            for k,v in backup_d.items():
+            for k, v in backup_d.items():
                 if v is ATTR_NOT_FOUND:
                     continue
-                if k in attrs_d and v != attrs_d[k]:
-                    # log warning but still update attrs
-                    self.log.warning("%s: discrepancy for attr '%s': '%s' != '%s'.",
-                        name, k, v, attrs_d[k])
+                if k in attrs_d:
+                    if isinstance(v, np.ndarray):
+                        for vv in v:
+                            if vv not in attrs_d[k]:
+                                # log warning but still update attrs
+                                self.log.warning("%s: discrepancy for attr '%s': '%s' != '%s'.",
+                                                 name, k, vv, attrs_d[k])
+                    elif v not in attrs_d[k]:
+                        self.log.warning("%s: discrepancy for attr '%s': '%s' != '%s'.",
+                                         name, k, v, attrs_d[k])
                 attrs_d[k] = v
 
         _restore_one('Dataset', ds.attrs)

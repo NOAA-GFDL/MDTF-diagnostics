@@ -837,7 +837,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             attrs_to_delete.add('_FillValue')
         # mark attrs duplicating values in encoding for deletion
         for k, v in encoding.items():
-            compare_ = bool('false')
+            compare_ = bool(False)
             if k in attrs:
                 if isinstance(attrs[k], str) and isinstance(v, str):
                     compare_ = (attrs[k].lower() != v.lower())
@@ -864,7 +864,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             encoding = getattr(obj, 'encoding', dict())
             attrs = getattr(obj, 'attrs', dict())
             for k, v in encoding.items():
-                compare_ = bool('false')
+                compare_ = bool(False)
                 if k in attrs:
                     if isinstance(attrs[k], str) and isinstance(v, str):
                         compare_ = (attrs[k].lower() != v.lower())

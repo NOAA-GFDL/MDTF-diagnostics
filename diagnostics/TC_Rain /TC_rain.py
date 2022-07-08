@@ -60,7 +60,7 @@
 # 
 #
 
-
+import os
 import xarray as xr                # python library we use to read netcdf files
 import matplotlib.pyplot as plt    # python library we use to make plots
 from scipy.interpolate import interp2d #used to interpolate the output model data
@@ -78,7 +78,8 @@ import numpy as np
 
 
 #load precip netcdf data
-pr_path = '/home/disk/p/gnemlaw/nasa_grant/sample_files/example1/pr_2002-07-12.nc'
+print(os.environ.get("CASE_ROOT_DIR"))
+pr_fname = os.path.join(os.environ.get("CASE_ROOT_DIR"), "ECMWF", "*nc")
 pr = xr.open_dataset(pr_path)
 
 #for the sake of time in this draft I am only including the western pacific. 
@@ -103,7 +104,9 @@ pr_wnp = pr.sel(longitude = lonrange,latitude = latrange )
 # the example data was tracked with the ECMWF tracker and includes a small sample
 # of western north pacific storm tracks from hindecast data of 2002. 
 
-wnptracks = open('/home/disk/p/gnemlaw/nasa_grant/sample_files/example1/wnp')
+
+track_fname =  os.path.join(os.environ.get("MODEL_DATA_ROOT"), "ECMWF", "wnp")
+wnptracks = open(track_fname)
 
 track_dict = {}
 
@@ -259,24 +262,18 @@ fig = plt.figure(num=None, figsize=(12, 8))
 plt.scatter(r, np.nanmean(azaverage_30_40_kt,axis = 0))
 plt.ylim(0, 3)
 
-fname = '/home/disk/p/gnemlaw/mdtf/WorkingDirectory/'+basin+'azimuthal_average_30-40kt.eps'
+fname = basin+'azimuthal_average_30-40kt.eps'
 
-plt.savefig(fname,format = 'eps' )
+output_fname =  os.path.join(os.environ.get("WK_DIR"), fname)
 
-# That is the draft code as is it now.I hope I have explained everything sufficiently.
+plt.savefig(output_fname,format = 'eps' )
+
+# That is the draft code as is it now. I hope I have explained everything sufficiently.
 # I currently do not have any error exeption handles/or any messages. I assume I will 
 # probably need one but I figured I should get the draft code to you as soon as possible. 
 # I'm sure you have lots of comments for how to make the code more general and more effective 
 # for the package. Please don't hesitate to bring anything to my attention. 
 
-# ### 7) Error/Exception-Handling Example ########################################
-# nonexistent_file_path = "{DATADIR}/mon/nonexistent_file.nc".format(**os.environ)
-# try:
-#     nonexistent_dataset = xr.open_dataset(nonexistent_file_path)
-# except IOError as error:
-#     print(error)
-#     print("This message is printed by the example POD because exception-handling is working!")
-
-
+#
 # ### 8) Confirm POD executed sucessfully ########################################
 print("Finished successfully! Azimuthal average plot eps file in working directory.")

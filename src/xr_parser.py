@@ -568,7 +568,8 @@ class DefaultDatasetParser():
                                 # log warning but still update attrs
                                 self.log.warning("%s: discrepancy for attr '%s': '%s' != '%s'.",
                                                  name, k, vv, attrs_d[k])
-                    elif v not in attrs_d[k]:
+                    elif hasattr(v, '__iter__') and not isinstance(v, str) and v.any() not in attrs_d[k]\
+                            or v != attrs_d[k]:
                         self.log.warning("%s: discrepancy for attr '%s': '%s' != '%s'.",
                                          name, k, v, attrs_d[k])
                 attrs_d[k] = v

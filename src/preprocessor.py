@@ -819,14 +819,15 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         encoding = getattr(ds_obj, 'encoding', dict())
         attrs = getattr(ds_obj, 'attrs', dict())
         attrs_to_delete = set([])
-
         # mark attrs with sentinel value for deletion
         for k, v in attrs.items():
-            if not isinstance(v, np.ndarray) and v == xr_parser.ATTR_NOT_FOUND:
-                var.log.debug("Caught unset attribute '%s' of '%s'.", k, name)
+            if isinstance(v, np.ndarray) and v.any() == xr_parser.ATTR_NOT_FOUND:
                 attrs_to_delete.add(k)
-            elif any(v) == xr_parser.ATTR_NOT_FOUND:
-                var.log.debug("Caught unset attribute '%s' of '%s'.", k, name)
+            elif hasattr(v, '__iter__') and not isinstance(v, str) and v.any() == xr_parser.ATTR_NOT_FOUND:
+                attrs_to_delete.add(k)
+            elif not hasattr(v, '__iter__') and v == xr_parser.ATTR_NOT_FOUND:
+                var.log.debug(
+                    "Caught unset attribute '%s' of '%s'.", k, name)
                 attrs_to_delete.add(k)
         # clean up _FillValue
         old_fillvalue = encoding.get('_FillValue', np.nan)
@@ -837,11 +838,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             attrs_to_delete.add('_FillValue')
         # mark attrs duplicating values in encoding for deletion
         for k, v in encoding.items():
-            compare_ = bool(False)
             if k in attrs:
                 if isinstance(attrs[k], str) and isinstance(v, str):
                     compare_ = (attrs[k].lower() != v.lower())
-                elif not isinstance(attrs[k], np.ndarray):
+                elif not isinstance(attrs[k], np.ndarray) and not hasattr(attrs[k], '__iter__'):
+                    compare_ = (attrs[k] != v)
+                elif hasattr(attrs[k], '__iter__') and not isinstance(attrs[k], str):
+                    compare_ = (attrs[k].any() != v)
+                else:
                     compare_ = (attrs[k] != v)
                 if compare_ and k.lower() != 'source':
                     var.log.warning(
@@ -864,11 +868,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             encoding = getattr(obj, 'encoding', dict())
             attrs = getattr(obj, 'attrs', dict())
             for k, v in encoding.items():
-                compare_ = bool(False)
                 if k in attrs:
                     if isinstance(attrs[k], str) and isinstance(v, str):
                         compare_ = (attrs[k].lower() != v.lower())
-                    elif not isinstance(attrs[k], np.ndarray):
+                    elif not isinstance(attrs[k], np.ndarray) and not hasattr(attrs[k], '__iter__'):
+                        compare_ = (attrs[k] != v)
+                    elif hasattr(attrs[k], '__iter__') and not isinstance(attrs[k], str):
+                        compare_ = (attrs[k].any() != v)
+                    else:
                         compare_ = (attrs[k] != v)
                     if compare_ and k.lower() != 'source':
                         _log.warning("Conflict in '%s' attribute of %s: %s != %s.",

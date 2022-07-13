@@ -32,7 +32,8 @@
           // "ocn_surf_flux_diag",
           // "mixed_layer_depth",
           // "tropical_pacific_sea_level",
-          // "temp_extremes_distshape"
+          // "temp_extremes_distshape",
+          // "precip_buoy_diag"
       ]
     }
     // {

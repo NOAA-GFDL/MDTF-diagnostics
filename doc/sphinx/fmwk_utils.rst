@@ -9,7 +9,7 @@ library only.
 
 This section is intended to give an introduction and context for the overall
 code organization, which might be difficult to gain from the complete docstring
-listing at the :doc:`fmwk_autodoc_toc`. In particular, we don't describe every class
+listing at the :doc:`fmwk_toc`. In particular, we don't describe every class
 or function in detail here. 
 
 Modules in the package

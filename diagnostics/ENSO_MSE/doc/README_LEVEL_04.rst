@@ -1,4 +1,5 @@
-**Information about Level 4 – MSE scatter plots (Metric)**
+Information about Level 4 – MSE scatter plots (Metric)
+======================================================
 
 At this level the code produces scatter plots between MSE budget terms
 and precipitation.

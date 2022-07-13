@@ -39,7 +39,7 @@ To install the MDTF package on a local machine, open a terminal and create a dir
   
   1. | :console:`% cd mdtf`, then clone your fork of the MDTF repo on your machine:
      | :console:`% git clone https://github.com/<your GitHub account name>/MDTF-diagnostics`.
-  2. Check out the ``develop`` branch: :console:`% git checkout develop`.
+  2. Check out the ``main`` branch: :console:`% git checkout main`.
   3. Proceed with the installation process described below.
   4. | Check out a new branch for your POD: 
      | :console:`% git checkout -b feature/<Your POD\'s name>`.
@@ -187,7 +187,7 @@ The output should be
 
    === Starting <CODE_ROOT>/mdtf_framework.py
 
-   mdtf 3.0 beta 3
+   mdtf 3.0 beta 4
 
 .. _ref-configure:
 

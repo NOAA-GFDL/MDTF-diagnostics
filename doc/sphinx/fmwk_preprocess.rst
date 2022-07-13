@@ -24,6 +24,9 @@ Each preprocessor is a class inheriting from :class:`~src.preprocessor.MDTFPrepr
 
 To accomplish the goals above, the preprocessor is structured as a miniature data pipeline. The inputs to the pipeline are the xarray `Dataset <http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html>`__ containing the downloaded data, and the :class:`~src.diagnostic.VarlistEntry` object from the POD describing the requested format for that data. The preprocessor operates on the Dataset to bring it in line with the information in the VarlistEntry; if it encounters a problem (e.g. the metadata can't be parsed) that's treated as an error causing the "query-fetch-preprocess" loop to look for possible alternate data.
 
+Methods called
+++++++++++++++
+
 As noted above, the preprocessor has *two* roles: converting the downloaded model data to the format requested by the PODs, and enlarging the scope of the data query to include all formats it's capable of converting between. The latter is executed before the former:
 
 - The datasource creates an instance of its designated ``_PreprocessorClass`` for each POD in :meth:`~src.data_manager.DataSourceBase.setup_pod`; this object is stored in the ``preprocessor`` attribute of the :class:`~src.diagnostic.Diagnostic` object. Even though the data conversion operates on individual variables, the "scope" of the preprocessor is POD-wide because it needs to edit the data request for the POD as a whole. 

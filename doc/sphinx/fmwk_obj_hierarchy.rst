@@ -1,4 +1,0 @@
-Object hierarchy
-================
-
-TBD

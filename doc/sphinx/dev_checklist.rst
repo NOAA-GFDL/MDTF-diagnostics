@@ -12,7 +12,7 @@ The material in this section must be submitted though a `pull request <https://d
 
 The `example POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ should be used as a reference for how each component of the submission should be structured.
 
-The POD feature must be up-to-date with the NOAA-GFDL develop branch, with no outstanding merge conflicts. See :doc:`dev_git_intro` for instructions on syncing your fork with NOAA-GFDL, and pulling updates from the NOAA-GFDL develop branch into your feature branch.
+The POD feature must be up-to-date with the NOAA-GFDL main branch, with no outstanding merge conflicts. See :doc:`dev_git_intro` for instructions on syncing your fork with NOAA-GFDL, and pulling updates from the NOAA-GFDL main branch into your feature branch.
 
 POD source code
 ^^^^^^^^^^^^^^^

@@ -5,7 +5,7 @@ Steps for brand new users:
 ------------------------------
 1. Fork the MDTF-diagnostics branch to your GitHub account (:ref:`ref-fork-code`)
 2. Clone (:ref:`ref-clone`) your fork of the MDTF-diagnostics repository (repo) to your local machine (if you are not using the web interface for development)
-3. Check out a new branch from the local develop branch (:ref:`ref-new-feature`)
+3. Check out a new branch from the local main branch (:ref:`ref-new-feature`)
 4. Start coding
 5. Commit the changes in your feature branch (:ref:`ref-new-feature`)
 6. Push the changes to the copy of the feature branch on your remote fork (:ref:`ref-new-feature`)
@@ -15,13 +15,13 @@ Steps for brand new users:
 Steps for users continuing work on an existing feature branch
 -------------------------------------------------------------
 1. Create a backup copy of the MDTF-Diagnostics repo on your local machine
-2. Pull in updates from the NOAA-GFDL/develop branch to the develop branch in your remote repo (:ref:`ref-update-develop`)
-3. Pull in updates from develop branch in your remote fork into the develop branch in your local repo (:ref:`ref-update-develop`)
-4. Sync your feature branch in your local repository with the local develop branch using an interactive rebase (:ref:`ref-rebase`) or merge (:ref:`ref-merge`). Be sure to make a backup copy of of your local *MDTF-diagnostics* repo first, and test your branch after rebasing/merging as described in the linked instructions before proceeding to the next step.
+2. Pull in updates from the NOAA-GFDL/main branch to the main branch in your remote repo (:ref:`ref-update-main`)
+3. Pull in updates from the main branch in your remote fork into the main branch in your local repo (:ref:`ref-update-main`)
+4. Sync your feature branch in your local repository with the local main branch using an interactive rebase (:ref:`ref-rebase`) or merge (:ref:`ref-merge`). Be sure to make a backup copy of of your local *MDTF-diagnostics* repo first, and test your branch after rebasing/merging as described in the linked instructions before proceeding to the next step.
 5. Continue working on your feature branch
 6. Commit the changes in your feature branch
 7. Push the changes to the copy of the feature branch in your remote fork (:ref:`ref-push`)
-8. Submit a pull request (PR) to NOAA-GFDL/develop branch when your code is ready for review (:ref:`ref-pull-request`)
+8. Submit a pull request (PR) to NOAA-GFDL/main branch when your code is ready for review (:ref:`ref-pull-request`)
 
 .. _ref-fork-code:
 
@@ -48,13 +48,13 @@ Another approach is to create a local repo on your machine and manage the code u
 Working on a brand new feature
 ------------------------------
 Developers can either clone the MDTF-diagnostics repo to their computer, or manage the MDTF package using the GitHub webpage interface.
-Whichever method you choose, remember to create your feature/[POD name] branch from the develop branch, not the main branch.
+Whichever method you choose, remember to create your feature/[POD name] branch from the main branch, not the main branch.
 Since developers commonly work on their own machines, this manual provides command line instructions.
 
-1. Check out a branch for your POD from the develop branch
+1. Check out a branch for your POD
 ::
 
-   git checkout -b feature/[POD name] develop
+   git checkout -b feature/[POD name]
 
 2. Write code, add files, etc...
 
@@ -97,8 +97,8 @@ To submit a PR :
 
 1. Click the *Contribute* link on the main page of your MDTF-diagnostics fork and click the *Open Pull Request* button
 
-2. Verify that your fork is set as the **base** repository, and *develop* is set as the **base branch**,
-that *NOAA-GFDL* is set as the **head repository**, and *develop* is set as the **head** branch
+2. Verify that your fork is set as the **base** repository, and *main* is set as the **base branch**,
+that *NOAA-GFDL* is set as the **head repository**, and *main* is set as the **head** branch
 
 3. Click the *Create Pull Request* button, add a brief description to the PR header, and go through the checklist to
 ensure that your code meets that baseline requirements for review
@@ -117,9 +117,9 @@ and click on your PR
 
 4. Scroll down to the header that states "this pull request is still a work in progress", and click the *ready for review* button to move the PR out of *draft* mode
 
-.. _ref-update-develop:
+.. _ref-update-main:
 
-Updating your remote and local develop branches
+Updating your remote and local main branches
 -----------------------------------------------
 
 Method 1: Web interface+command line
@@ -127,29 +127,29 @@ Method 1: Web interface+command line
 See the `MDTF Best Practices Overview <https://docs.google.com/presentation/d/18jbi50vC9X89vFbL0W1Ska1dKuW_yWY51SomWx_ahYE/edit?usp=sharing>`__  presentation for instructions with figures.
 
 1. Click the *Fetch Upstream* link on the main page of your MDTF-diagnostics fork, then click the *Open Pull Request* button
-2. Verify that your fork is set as the **base** repository, and *develop* is set as the **base branch**,
-   that *NOAA-GFDL* is set as the **head repository**, and *develop* is set as the **head** branch
+2. Verify that your fork is set as the **base** repository, and *main* is set as the **base branch**,
+   that *NOAA-GFDL* is set as the **head repository**, and *main* is set as the **head** branch
 3. Create a title for your PR, add a description if you want, then click *Create pull request*
 4. Click **Merge pull request**
 
-Your remote develop branch is now up-to-date with the NOAA-GFDL/develop branch.
+Your remote main branch is now up-to-date with the NOAA-GFDL/main branch.
 
-5. On your machine, open a terminal and check out the develop branch
+5. On your machine, open a terminal and check out the main branch
 ::
 
-   git checkout develop
+   git checkout main
 
-6. Fetch the updates to the develop branch from your remote fork
+6. Fetch the updates to the main branch from your remote fork
 ::
 
    git fetch
 
-7. Pull in the updates from the remote develop branch.
+7. Pull in the updates from the remote main branch.
 ::
 
    git pull
 
-Your local develop branch is now up-to-date with the NOAA-GFDL/develop branch.
+Your local main branch is now up-to-date with the NOAA-GFDL/main branch.
 
 Method 2: Command line only
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -160,17 +160,17 @@ This method requires adding the *NOAA-GFDL/MDTF-diagnostics* repo to the *.git/c
 
 .. _ref-rebase:
 
-Updating your feature branch by rebasing it onto the develop branch (preferred method)
+Updating your feature branch by rebasing it onto the main branch (preferred method)
 --------------------------------------------------------------------------------------
-Rebasing is procedure to integrate the changes from one branch into another branch. ``git rebase`` differs from ``git merge`` in that it reorders the commit history so that commits from the branch that is being updated are moved to the `tip` of the branch. This makes it easier to isolate changes in the feature branch, and usually results in fewer merge conflicts when the feature branch is merged into the develop branch.
+Rebasing is procedure to integrate the changes from one branch into another branch. ``git rebase`` differs from ``git merge`` in that it reorders the commit history so that commits from the branch that is being updated are moved to the `tip` of the branch. This makes it easier to isolate changes in the feature branch, and usually results in fewer merge conflicts when the feature branch is merged into the main branch.
 1. Create a backup copy of your MDTF-diagnostics repo on your local machine
 
-2. Update the local and remote develop branches on your fork as described in :ref:`ref-update-develop`, then check out your feature branch
+2. Update the local and remote main branches on your fork as described in :ref:`ref-update-main`, then check out your feature branch
 ::
 
    git checkout feature/[POD name]
 
-and launch an interactive rebase of your branch onto the develop branch:: git rebase -i develop
+and launch an interactive rebase of your branch onto the main branch:: git rebase -i main
 3. Your text editor will open in the terminal (Vim by default)
 and display your commit hashes with the oldest commit at the top
 ::
@@ -218,7 +218,7 @@ This will show files with a message that there are merge conflicts, or that a fi
 
 The editor will open with the modified commit history. Simply save the changes and close the editor (``ESC+SHIFT+wq``), and the rebase will continue. If the rebase stops with errors, repeat the merge conflict resolution process, add/remove the files to staging area, type ``git rebase --continue``, and proceed.
 
-If you have not updated your branch in a long time, you'll likely find that you have to keep fixing the same conflicts over and over again (every time your commits collide with the commits on the main branch). This is why we strongly advise POD developers to pull updates into their forks and rebase their branches onto the develop branch frequently.
+If you have not updated your branch in a long time, you'll likely find that you have to keep fixing the same conflicts over and over again (every time your commits collide with the commits on the main branch). This is why we strongly advise POD developers to pull updates into their forks and rebase their branches onto the main branch frequently.
 
 Note that if you want to stop the rebase at any time and revert to the original state of your branch, type
 ::
@@ -236,17 +236,17 @@ The ``--force`` option is necessary because rebasing modified the commit history
 
 .. _ref-merge:
 
-Updating your feature branch by merging in changes from the develop branch
+Updating your feature branch by merging in changes from the main branch
 ---------------------------------------------------------------------------
 1. Create a backup copy of your repo on your machine.
 
-2. Update the local and remote develop branches on your fork as described in :ref:`ref-update-develop`.
+2. Update the local and remote main branches on your fork as described in :ref:`ref-update-main`.
 
-3. Check out your feature branch, and merge the develop branch into your feature branch
+3. Check out your feature branch, and merge the main branch into your feature branch
 ::
 
    git checkout feature/[POD name]
-   git merge develop
+   git merge main
 
 4. Resolve any conflicts that occur from the merge
 

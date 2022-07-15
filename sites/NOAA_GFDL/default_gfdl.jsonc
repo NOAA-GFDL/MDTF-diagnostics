@@ -22,14 +22,19 @@
       "CASE_ROOT_DIR" : "/archive/oar.gfdl.cmip6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp",
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-          "Wheeler_Kiladis",
-          "EOF_500hPa",
-         // "convective_transition_diag",
-          "MJO_suite",
-          "MJO_teleconnection",
+          //"Wheeler_Kiladis",
+          //"EOF_500hPa",
+          //"convective_transition_diag",
+          //"MJO_suite",
+          //"MJO_teleconnection",
           //"MJO_prop_amp",
-          "precip_diurnal_cycle"
-         // "SM_ET_coupling"
+          //"precip_diurnal_cycle"
+          //"SM_ET_coupling"
+          "ENSO_RWS",
+          "ocn_surf_flux_diag",
+          "mixed_layer_depth",
+          "tropical_pacific_sea_level",
+          "temp_extremes_distshape"
       ]
     }
   ],
@@ -51,7 +56,8 @@
   "WORKING_DIR": "$MDTF_TMPDIR/wkdir",
 
   // Directory to write output files. Defaults to working directory if blank.
-  "OUTPUT_DIR": "$MDTF_TMPDIR/mdtf_out",
+  //"OUTPUT_DIR": "$MDTF_TMPDIR/mdtf_out",
+  "OUTPUT_DIR": "/archive/wnd/MDTF-GFDL/wkdir", 
 
   // GFDL ----------------------------------------------------------------------
   // Settings specific to operation at GFDL.
@@ -116,7 +122,7 @@
   "save_ps": false,
 
   // Set flag to have PODs save netCDF files of processed data.
-  "save_nc": false,
+  "save_nc": true,
 
   // Set flag to save HTML and bitmap plots in a .tar file.
   "make_variab_tar": false,

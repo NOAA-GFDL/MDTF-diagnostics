@@ -1,3 +1,7 @@
+"""Currently unused; implements dependency resolution for plug-ins, intended as
+part of a future release.
+"""
+
 from itertools import chain
 from collections import defaultdict
 
@@ -24,7 +28,7 @@ def require_all_same(option_dict, option_fn, tiebreaker_fn=None):
 
 def same_for_subsets(option_dict, subsets, option_fn, tiebreaker_fn=None):
     if set(option_dict) != set(k for k in chain.from_iterable(subsets)):
-        raise AssertionError('Union of subsets is different than set of all keys.')   
+        raise AssertionError('Union of subsets is different than set of all keys.')
 
     choices = dict.fromkeys(option_dict)
     for subset in subsets:
@@ -49,17 +53,18 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
     """Determine experiment component(s) from heuristics.
 
     1. Pick all data from the same component if possible, and from as few
-        components if not. See `<https://en.wikipedia.org/wiki/Set_cover_problem>`__ 
+        components if not. See `<https://en.wikipedia.org/wiki/Set_cover_problem>`__
         and `<http://www.martinbroadhurst.com/greedy-set-cover-in-python.html>`__.
 
-    2. If multiple components satisfy (1) equally well, use a tie-breaking 
-        heuristic (:meth:`~gfdl.GfdlppDataManager._component_tiebreaker`). 
+    2. If multiple components satisfy (1) equally well, use a tie-breaking
+        heuristic (:meth:`~gfdl.GfdlppDataManager._component_tiebreaker`).
 
     Args:
-        datasets (iterable of :class:`~data_manager.DataSetBase`): 
+        datasets (iterable of :class:`~data_manager.DataSetBase`):
             Collection of all variables being requested in this DataManager.
 
-    Returns: :py:obj:`list` of :py:obj:`str`: name(s) of model components to use.
+    Returns:
+        List of :py:obj:`str`: name(s) of model components to use.
 
     Raises: AssertionError if problem is unsatisfiable. This indicates some
         error in the input data.
@@ -96,7 +101,7 @@ def minimum_cover(option_dict, option_fn, tiebreaker_fn=None):
         covered_idx.update(d[elt_to_add])
     assert cover # is not empty
     print("\tDEBUG min_cover:", cover)
-    
+
     choices = dict.fromkeys(option_dict)
     for k in option_dict:
         choices[k] = tiebreaker_fn(

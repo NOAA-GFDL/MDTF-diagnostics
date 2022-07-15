@@ -1,15 +1,17 @@
 """Code to parse CMIP6 controlled vocabularies and elements of the CMIP6 DRS.
 
-Specifications for the above were taken from the planning document 
-`<http://goo.gl/v1drZl>`__, which doesn't seem to have a permanent link. The 
-CMIP6 controlled vocabularies (lists of registered MIPs, modeling centers, etc.)
-are derived from data in the 
-`PCMDI/cmip6-cmor-tables <https://github.com/PCMDI/cmip6-cmor-tables>`__ 
-repo, which is included as a subtree under ``/data``.
+Specifications for the above were taken from the CMIP6 `planning document
+<http://goo.gl/v1drZl>`__. This was accessed at `<http://goo.gl/v1drZl>`__ -- we
+aren't aware of a permanent URL for this information.
+
+The CMIP6 controlled vocabularies (lists of registered MIPs, modeling centers, etc.)
+are derived from data in the
+`PCMDI/cmip6-cmor-tables <https://github.com/PCMDI/cmip6-cmor-tables>`__
+repo, which is included as a git subtree under ``/data``.
 
 .. warning::
-   Functionality here has been added as needed for the project and is incomplete,
-   for example parsing subexperiments is not supported.
+   Functionality here has been added as needed for the project and is incomplete.
+   For example, parsing subexperiments is not supported.
 """
 import os
 import re
@@ -20,22 +22,25 @@ import logging
 _log = logging.getLogger(__name__)
 
 class CMIP6_CVs(util.Singleton):
-    """Interface for looking up information from the CMIP6 CV file.
+    """Interface for looking up information from the CMIP6 controlled vocabulary
+    (CV) file.
 
-    .. note::
-       Lookups are implemented in an ad-hoc way with :class:`util.MultiMap`; a 
-       more robust solution would use sqlite.
+    Lookups are implemented in an ad-hoc way with :class:`util.MultiMap`; a
+    more robust solution would use :py:mod:`sqlite`.
     """
     def __init__(self, unittest=False):
+        """Constructor. Only executed once, since this is a :class:`~src.util.Singleton`.
+        Reads and parses data in CMIP6_CV.json.
+        """
         if unittest:
             # value not used, when we're testing will mock out call to read_json
             # below with actual translation table to use for test
             file_ = 'dummy_filename'
         else:
             paths = core.PathManager()
-            file_ = os.path.join(paths.CODE_ROOT, 'data', 
+            file_ = os.path.join(paths.CODE_ROOT, 'data',
                 'cmip6-cmor-tables','Tables','CMIP6_CV.json')
-        self._contents = util.read_json(file_)
+        self._contents = util.read_json(file_, log=_log)
         self._contents = self._contents['CV']
         for k in ['product','version_metadata','required_global_attributes',
             'further_info_url','Conventions','license']:
@@ -51,7 +56,7 @@ class CMIP6_CVs(util.Singleton):
         self._lookups = dict()
 
     def _make_cv(self):
-        """Populate the *cv* attribute of :class:`CMIP6_CVs` with the tables 
+        """Populate the *cv* attribute of :class:`CMIP6_CVs` with the tables
         read in during __init__().
 
         Do this on-demand rather than in __init__, in case this information isn't
@@ -67,11 +72,12 @@ class CMIP6_CVs(util.Singleton):
         *category*.
 
         Args:
-            category (str): the CV category to use to validate values.
-            items (str or list of str): Entries whose validity we'd like to 
+            category (str): The CV category to use to validate values.
+            items (str or list of str): Entries whose validity we'd like to
                 check.
 
-        Returns: boolean or list of booleans, corresponding to the validity of 
+        Returns:
+            Boolean or list of booleans, corresponding to the validity of
             the entries in *items*.
         """
         self._make_cv()
@@ -87,10 +93,11 @@ class CMIP6_CVs(util.Singleton):
         to values in *dest* (values), generating it if necessary.
 
         Args:
-            source (str): the CV category to use for the keys.
-            dest (str): the CV category to use for the values.
+            source (str): The CV category to use for the keys.
+            dest (str): The CV category to use for the values.
 
-        Returns: :class:`util.MultiMap` providing a dict-like lookup interface,
+        Returns:
+            :class:`util.MultiMap` providing a dict-like lookup interface,
             ie dest_value = d[source_key].
         """
         if (source, dest) in self._lookups:
@@ -114,15 +121,16 @@ class CMIP6_CVs(util.Singleton):
             raise KeyError(f"Neither {source} or {dest} in CV table list.")
 
     def lookup(self, source_items, source, dest):
-        """Lookup the corresponding *dest* values for *source_items* (keys).
+        """Look up the corresponding *dest* values for *source_items* (keys).
 
         Args:
-            source_items (str or list): one or more keys 
-            source (str): the CV category that the items in *source_items*
+            source_items (str or list): One or more keys.
+            source (str): The CV category that the items in *source_items*
                 belong to.
-            dest (str): the CV category we'd like the corresponding values for.
+            dest (str): The CV category we'd like the corresponding values for.
 
-        Returns: list of *dest* values corresponding to each entry in *source_items*.
+        Returns:
+            List of *dest* values corresponding to each entry in *source_items*.
         """
         _lookup = self.get_lookup(source, dest)
         if util.is_iterable(source_items):
@@ -132,7 +140,7 @@ class CMIP6_CVs(util.Singleton):
 
     def lookup_single(self, source_item, source, dest):
         """The same as :meth:`lookup`, but perform lookup for a single
-        *source_item*, and raise KeyError if the number of values returned is 
+        *source_item*, and raise KeyError if the number of values returned is
         != 1.
         """
         _lookup = self.get_lookup(source, dest)
@@ -147,15 +155,16 @@ class CMIP6_CVs(util.Singleton):
     # ----------------------------------
 
     def table_id_from_freq(self, frequency):
-        """Specialized lookup to determine which MIP tables use data at the 
+        """Specialized lookup to determine which MIP tables use data at the
         requested *frequency*.
 
         Should really be handled as a special case of :meth:`lookup`.
 
         Args:
-            frequency (:class:`CMIP6DateFrequency`): DateFrequency 
+            frequency (:class:`CMIP6DateFrequency`): DateFrequency
 
-        Returns: list of MIP table ``table_id`` names, if any, that use data at 
+        Returns:
+            List of MIP table ``table_id`` names, if any, that use data at
             the given *frequency*.
         """
         self._make_cv()
@@ -166,19 +175,19 @@ class CMIP6_CVs(util.Singleton):
 
 
 class CMIP6DateFrequency(util.DateFrequency):
-    """Subclass of :class:`src.util.datelabel.DateFrequency` to parse data frequency
+    """Subclass of :class:`~src.util.datelabel.DateFrequency` to parse data frequency
     information as encoded in MIP tables, DRS filenames, etc.
 
     Extends DateFrequency in that this records if the data is a climatological
     average, although this information is not currently used.
 
-    Reference: `<http://goo.gl/v1drZl>`__, page 16.
+    Reference: CMIP6 `planning document <http://goo.gl/v1drZl>`__ page 16.
     """
     _precision_lookup = {
         'fx': 0, 'yr': 1, 'mo': 2, 'day': 3,
         'hr': 5, # includes minutes
         'min': 6, # = subhr, minutes and seconds
-        }  
+        }
     _regex = re.compile(r"""
         ^
         (?P<quantity>(1|3|6)?)
@@ -187,7 +196,7 @@ class CMIP6DateFrequency(util.DateFrequency):
         $
     """, re.VERBOSE)
 
-    @classmethod    
+    @classmethod
     def _parse_input_string(cls, quantity, unit):
         if not quantity:
             match = re.match(cls._regex, unit)
@@ -212,7 +221,7 @@ class CMIP6DateFrequency(util.DateFrequency):
                 md['quantity'] = 1
             else:
                 md['quantity'] = int(md['quantity'])
-            
+
             if not md['avg']:
                 md['avg'] = 'Mean'
             elif md['avg'] in ['C', 'CM']:
@@ -224,6 +233,9 @@ class CMIP6DateFrequency(util.DateFrequency):
             raise ValueError("Malformed input {} {}".format(quantity, unit))
 
     def format(self):
+        """Return string representation of the object, as used in the
+        CMIP6 DRS.
+        """
         # pylint: disable=maybe-no-member
         if self.unit == 'fx':
             return 'fx'
@@ -246,7 +258,7 @@ class CMIP6DateFrequency(util.DateFrequency):
                 return s + 'CM'
             else:
                 return s + 'C'
-        else: 
+        else:
             raise ValueError("Malformed data {} {}".format(self.quantity, self.unit))
     __str__ = format
 
@@ -267,17 +279,25 @@ variant_label_regex = util.RegexPattern(r"""
     input_field="variant_label"
 )
 @util.regex_dataclass(variant_label_regex)
-@util.mdtf_dataclass
 class CMIP6_VariantLabel():
-    """Dataclass which represents and parses the CMIP6 DRS variant label identifier string.
+    """:class:`~src.util.regex_dataclass` which represents and parses the CMIP6
+    DRS variant label identifier string (e.g., ``r1i1p1f1``.)
 
-    Reference: `<http://goo.gl/v1drZl>`__, note 8 on page 9.
+    References: `<https://earthsystemcog.org/projects/wip/mip_table_about>`__,
+    although this doesn't document all cases used in CMIP6. See also note 8 on
+    page 9 of the CMIP6 `planning document <http://goo.gl/v1drZl>`__.
     """
     variant_label: str = util.MANDATORY
+    """Input to :meth:`~CMIP6_VariantLabel.from_string`. Complete variant label
+    identifier string (e.g., 'r1i1p1f1'.)"""
     realization_index: int = None
+    """Realization index (integer following the letter ``r``.)"""
     initialization_index: int = None
+    """Initialization index (integer following the letter ``i``.)"""
     physics_index: int = None
+    """Physics index (integer following the letter ``p``.)"""
     forcing_index: int = None
+    """Forcing index (integer following the letter ``f``.)"""
 
 mip_table_regex = util.RegexPattern(r"""
         # ^ # start of line
@@ -291,24 +311,40 @@ mip_table_regex = util.RegexPattern(r"""
     input_field="table_id"
 )
 @util.regex_dataclass(mip_table_regex)
-@util.mdtf_dataclass
 class CMIP6_MIPTable():
-    """Dataclass which represents and parses MIP table identifier string.
+    """:class:`~src.util.regex_dataclass` which represents and parses the MIP
+    table identifier string.
 
-    Reference: `https://earthsystemcog.org/projects/wip/mip_table_about`__,
+    Reference: `<https://earthsystemcog.org/projects/wip/mip_table_about>`__,
     although this doesn't document all cases used in CMIP6.
     """
     table_id: str = util.MANDATORY
+    """Input to :meth:`~CMIP6_MIPTable.from_string`. ``table_id`` string as used
+    in the DRS."""
     table_prefix: str = ""
+    """Substring of ``table_id`` specifying modeling realm."""
     table_freq: dc.InitVar = ""
+    """Substring of ``table_id`` specifying sampling frequency."""
     table_suffix: str = ""
+    """Substring of ``table_id`` specifying sampling/averaging methods."""
     table_qualifier: str = ""
+    """Substring of ``table_id`` specifying sampling/averaging methods."""
     frequency: CMIP6DateFrequency = dc.field(init=False)
+    """Frequency at which data for the table is sampled. From ``table_freq``."""
     spatial_avg: str = dc.field(init=False)
+    """Method used for spatial averaging, from ``table_qualifier``. Either
+    'zonal_mean' or None."""
     temporal_avg: str = dc.field(init=False)
+    """Method used for time averaging, from ``table_qualifier``. Either 'point'
+    or 'interval'."""
     region: str = dc.field(init=False)
+    """Geographic region described by the table, from ``table_suffix``. Either
+    'Antarctica', 'Greenland' or None."""
 
     def __post_init__(self, table_freq=None):
+        """Logic to populate all object attributes, based on substrings of
+        ``table_id`` captured by regex.
+        """
         if table_freq is None:
             raise ValueError()
         elif table_freq == 'clim':
@@ -327,7 +363,7 @@ class CMIP6_MIPTable():
             self.region = 'Antarctica'
         elif self.table_suffix == 'g':
             self.region = 'Greenland'
-        else: 
+        else:
             self.region = None
 
 grid_label_regex = util.RegexPattern(r"""
@@ -341,22 +377,38 @@ grid_label_regex = util.RegexPattern(r"""
     input_field="grid_label"
 )
 @util.regex_dataclass(grid_label_regex)
-@util.mdtf_dataclass
 class CMIP6_GridLabel():
-    """Dataclass which represents and parses the CMIP6 DRS grid label identifier string.
+    """:class:`~src.util.regex_dataclass` which represents and parses the CMIP6
+    DRS grid label identifier string.
 
-    Reference: `<http://goo.gl/v1drZl>`__, note 11 on page 11.
+    Reference: CMIP6 `planning document <http://goo.gl/v1drZl>`__, note 11 on
+    page 11.
     """
     grid_label: str = util.MANDATORY
+    """Input to :meth:`~CMIP6_GridLabel.from_string`. ``grid_label`` string as
+    used in the DRS."""
     global_mean: dc.InitVar = ""
+    """Substring of ``grid_label`` for globally-averaged data."""
     regrid: str = ""
+    """Substring of ``grid_label`` for regridded data."""
     grid_number: int = 0
+    """Regridding method used (0 if native grid). As per CMIP6 spec, meaning of
+    each integer is not specified and left to individual modeling centers."""
     region: str = ""
+    """Geographic region described by the grid. Either 'Antarctica', 'Greenland'
+    or None."""
     zonal_mean: dc.InitVar = ""
+    """Substring of ``grid_label`` for zonal mean averaging."""
     spatial_avg: str = dc.field(init=False)
+    """Method used for spatial averaging. Either 'global_mean', 'zonal_mean' or
+    None."""
     native_grid: bool = dc.field(init=False)
+    """Boolean, True if data is on model's native grid."""
 
     def __post_init__(self, global_mean=None, zonal_mean=None):
+        """Logic to populate all object attributes, based on substrings of
+        ``grid_label`` captured by regex.
+        """
         if not self.grid_number:
             self.grid_number = 0
         if global_mean:
@@ -370,7 +422,7 @@ class CMIP6_GridLabel():
             self.region = 'Antarctica'
         elif self.region == 'g':
             self.region = 'Greenland'
-        else: 
+        else:
             self.region = None
 
 drs_directory_regex = util.RegexPattern(r"""
@@ -390,25 +442,34 @@ drs_directory_regex = util.RegexPattern(r"""
     input_field="directory"
 )
 @util.regex_dataclass(drs_directory_regex)
-@util.mdtf_dataclass
 class CMIP6_DRSDirectory(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
-    """Dataclass which represents and parses the DRS directory, using regex 
-    defined above.
+    """:class:`~src.util.regex_dataclass` which represents and parses the DRS
+    directory path.
 
-    Reference: `<http://goo.gl/v1drZl>`__, page 17.
+    Reference: CMIP6 `planning document <http://goo.gl/v1drZl>`__, page 17.
 
     .. warning::
        This regex will fail on paths involving subexperiments.
     """
     directory: str = util.MANDATORY
+    """Input to :meth:`~CMIP6_DRSDirectory.from_string`. Directory path
+    string (excluding filename) as used in the DRS."""
     activity_id: str = ""
+    """Activity ID (MIP) of data, as parsed from ``directory``."""
     institution_id: str = ""
+    """Institution ID of data, as parsed from ``directory``."""
     source_id: str = ""
+    """Source ID (model name) of data, as parsed from ``directory``."""
     experiment_id: str = ""
+    """Experiment ID of data, as parsed from ``directory``."""
     variant_label: CMIP6_VariantLabel = ""
+    """Variant label of data, as parsed from ``directory``."""
     table_id: CMIP6_MIPTable = ""
+    """MIP table of data, as parsed from ``directory``."""
     grid_label: CMIP6_GridLabel = ""
+    """Grid label of data, as parsed from ``directory``."""
     version_date: util.Date = None
+    """Revision date of data, as parsed from ``directory``."""
 
 _drs_dates_filename_regex = util.RegexPattern(r"""
         (?P<variable_id>\w+)_       # field name
@@ -438,28 +499,39 @@ drs_filename_regex = util.ChainedRegexPattern(
     input_field="filename"
 )
 @util.regex_dataclass(drs_filename_regex)
-@util.mdtf_dataclass
 class CMIP6_DRSFilename(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
-    """Dataclass which represents and parses the DRS filename, using regex 
-    defined above.
+    """:class:`~src.util.regex_dataclass` which represents and parses the DRS
+    filename.
 
-    Reference: `<http://goo.gl/v1drZl>`__, page 14-15.
+    Reference: CMIP6 `planning document <http://goo.gl/v1drZl>`__, page 14-15.
     """
     filename: str = util.MANDATORY
+    """Input to :meth:`~CMIP6_DRSFilename.from_string`. Filename as used in the
+    DRS."""
     variable_id: str = ""
+    """Variable name, as parsed from ``filename``."""
     table_id: CMIP6_MIPTable = ""
+    """MIP table of data, as parsed from ``filename``."""
     source_id: str = ""
+    """Source ID (model name) of data, as parsed from ``filename``."""
     experiment_id: str = ""
+    """Experiment ID of data, as parsed from ``filename``."""
     variant_label: CMIP6_VariantLabel = ""
+    """Variant label of data, as parsed from ``filename``."""
     grid_label: CMIP6_GridLabel = ""
+    """Grid label of data, as parsed from ``filename``."""
     start_date: util.Date = None
+    """Start date of data, as parsed from ``filename``."""
     end_date: util.Date = None
+    """End date of data, as parsed from ``filename``."""
     date_range: util.DateRange = dc.field(init=False)
+    """Start and end dates combined into a :class:`~src.util.datelable.DateRange`
+    object."""
 
     def __post_init__(self, *args):
         if self.start_date == util.FXDateMin \
             and self.end_date == util.FXDateMax:
-            # Assume we're dealing with static/fx-frequency data, so use special 
+            # Assume we're dealing with static/fx-frequency data, so use special
             # placeholder values
             self.date_range = util.FXDateRange
             if not self.frequency.is_static: # frequency inferred from table_id
@@ -478,12 +550,13 @@ drs_path_regex = util.RegexPattern(r"""
     input_field="path"
 )
 @util.regex_dataclass(drs_path_regex)
-@util.mdtf_dataclass
 class CMIP6_DRSPath(CMIP6_DRSDirectory, CMIP6_DRSFilename):
-    """Dataclass which represents and parses a full CMIP6 DRS path.
+    """:class:`~src.util.regex_dataclass` which represents and parses a full
+    CMIP6 DRS path.
     """
     path: str = util.MANDATORY
+    """Input to :meth:`~CMIP6_DRSPath.from_string`. Full path to data file as
+    used in the DRS."""
     directory: CMIP6_DRSDirectory = ""
     filename: CMIP6_DRSFilename = ""
 
-    

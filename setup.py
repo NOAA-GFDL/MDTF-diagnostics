@@ -3,8 +3,6 @@
 from setuptools import setup, find_packages
 from setuptools.command.develop import develop
 from setuptools.command.install import install
-import glob
-import subprocess
 
 # Leave option to run commands post-install
 # see https://stackoverflow.com/a/36902139
@@ -28,7 +26,7 @@ with open("README.md", 'r') as f:
 packages = find_packages()
 setup(
     name='MDTF-diagnostics',
-    version='3.0 beta 3',
+    version='3.0 beta 4',
     description='Process-oriented diagnostics for weather and climate simulations',
     license='LGPLv3',
     long_description=long_description,

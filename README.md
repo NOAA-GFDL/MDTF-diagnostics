@@ -39,9 +39,9 @@ and a link to the full documentation for each currently-supported POD.
 
 ## Example POD Analysis Results
 
-- [Historical run of NOAA-GFDL ESM4](https://extranet.gfdl.noaa.gov/~John.Krasting/mdtf/GFDL-ESM4/), 1980-2014 ([Krasting et al. 2018](#citations))
-- [Historical run of NOAA-GFDL CM4](https://extranet.gfdl.noaa.gov/~John.Krasting/mdtf/GFDL-CM4/), 1980-2014 ([Guo et al. 2018](#citations))
-- [Historical run of NCAR CESM2/CAM4](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/) 1977-1981, from an earlier version of the package.
+- [Historical run of NOAA-GFDL ESM4](https://extranet.gfdl.noaa.gov/~oar.gfdl.mdtf/mdtf/diagnostic_output/MDTF_ESM4_historical_D1_1996_1999/), 1980-2014 ([Krasting et al. 2018](#citations))
+- [Historical run of NOAA-GFDL CM4](https://extranet.gfdl.noaa.gov/~oar.gfdl.mdtf/mdtf/diagnostic_output/MDTF_CM4_historical_LONG_1980_2014/), 1980-2014 ([Guo et al. 2018](#citations))
+- [Historical run of NCAR CESM2/CAM4](https://extranet.gfdl.noaa.gov/~oar.gfdl.mdtf/mdtf/diagnostic_output/MDTF_QBOi.EXP1.AMIP.001_1977_1981/), 1977-1981
 
 # Quickstart installation instructions
 

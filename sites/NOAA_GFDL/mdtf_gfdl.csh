@@ -31,7 +31,7 @@ set model = "modelname"
 # Please enter the POD lists below. This gets filled in to the MDTF input json automatically if using frepp
 #this is tested with one POD only at this time
 
-set pod_list = '"EOF_500hPa"'
+set pod_list = '"Wheeler_Kiladis","EOF_500hPa","convective_transition_diag","MJO_suite","MJO_teleconnection","MJO_prop_amp","precip_diurnal_cycle","SM_ET_coupling"' 
 
 set script_path
 

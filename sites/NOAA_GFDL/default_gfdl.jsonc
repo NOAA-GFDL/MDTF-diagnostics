@@ -56,8 +56,7 @@
   "WORKING_DIR": "$MDTF_TMPDIR/wkdir",
 
   // Directory to write output files. Defaults to working directory if blank.
-  //"OUTPUT_DIR": "$MDTF_TMPDIR/mdtf_out",
-  "OUTPUT_DIR": "/archive/wnd/MDTF-GFDL/wkdir", 
+  "OUTPUT_DIR": "$MDTF_TMPDIR/mdtf_out",
 
   // GFDL ----------------------------------------------------------------------
   // Settings specific to operation at GFDL.

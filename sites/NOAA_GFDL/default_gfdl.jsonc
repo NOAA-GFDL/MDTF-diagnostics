@@ -22,14 +22,14 @@
       "CASE_ROOT_DIR" : "/archive/oar.gfdl.cmip6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp",
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-          //"Wheeler_Kiladis",
-          //"EOF_500hPa",
-          //"convective_transition_diag",
-          //"MJO_suite",
-          //"MJO_teleconnection",
-          //"MJO_prop_amp",
-          //"precip_diurnal_cycle"
-          //"SM_ET_coupling"
+          "Wheeler_Kiladis",
+          "EOF_500hPa",
+          "convective_transition_diag",
+          "MJO_suite",
+          "MJO_teleconnection",
+          "MJO_prop_amp",
+          "precip_diurnal_cycle",
+          "SM_ET_coupling",
           "ENSO_RWS",
           "ocn_surf_flux_diag",
           "mixed_layer_depth",

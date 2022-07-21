@@ -38,7 +38,7 @@
 # In this example code, the model output is interpolated and regridded to 0.25 x 0.25 
 # degree arrays and the average is calcuated from 0 to 600 km from the center of the 
 # storm in 25 km discrete sections. Here we only take the avearge of snaphots where the
-# max wind speed is between 50 and 60 kt. The output of this diagnostic is a plot in the
+# max wind speed is between 30 and 40 kt. The output of this diagnostic is a plot in the
 # form of an .eps file with distance from the center of the storm along the horizonal 
 # average and precip rate along the vertical axis.   
 
@@ -70,25 +70,28 @@ import numpy as np
 
 ### 1) Loading model data files: ###############################################
 #
-# Apologies I am very new to collaborating with my code. I have a friend who is 
-# going to help me with how to us os to import data efficently, but currently 
-# I am simly using the paths on my serve. I thought it might be a better use of 
-# our time to simply send the draft pull request to get your comments on the code 
-# as it is, while I figure out os. 
+basin = os.getenv("basin") #specifying the basin of TC Track input data
+windthresh = [np.float(os.getenv("minwindthresh")),np.float(os.getenv("maxwindthresh"))]
+
 
 
 #load precip netcdf data
-pr_fname = os.path.join(os.environ.get("MODEL_DATA_ROOT"), "ECMWF", "*nc")
+pr_path = os.environ["TP_FILE"]
 pr = xr.open_dataset(pr_path)
 
 #for the sake of time in this draft I am only including the western pacific. 
-regions = {'WNP':[[0,31.5],[100.5,181.5]]}
+regions = {"ATL":[[0,30],[260,350]],
+    "EP":[[0,30],[180,280]],
+    "WNP":[[0,30],[100,180]],
+    "IO":[[0,30],[40,100]],
+    "SP":[[-30,0],[130,210]],
+    "SIO":[[-30,0],[40,130]]}
 
 #get only feild of view for basin storm is in
-basin = 'WNP'
-latrange = np.arange(regions[basin][0][0],regions[basin][0][1],1.5)
-lonrange = np.arange(regions[basin][1][0],regions[basin][1][1],1.5)
-pr_wnp = pr.sel(longitude = lonrange,latitude = latrange )
+
+
+pr_basin = pr.where(((pr.latitude >=regions[basin][0][0]) & (pr.latitude <= regions[basin][0][1]) & 
+                 (pr.longitude >= regions[basin][1][0]) & (pr.longitude <= regions[basin][1][1])))
 
 #Organizing Track Data
 # This code does not have a TC tracking mechanism of its own an needs to be fed TC 
@@ -104,14 +107,14 @@ pr_wnp = pr.sel(longitude = lonrange,latitude = latrange )
 # of western north pacific storm tracks from hindecast data of 2002. 
 
 
-track_fname_path =  os.path.join(os.environ.get("OBS_DATA_ROOT"), "TC_Rain", "wnp")
-track_fname_path = os.environ["TP_FILE"]
 
-wnptracks = open(track_fname_path)
+track_fname_path = os.path.join(os.environ["OBS_DATA"],"wnp")
+
+tracks = open(track_fname_path)
 
 track_dict = {}
 
-for line in wnptracks:
+for line in tracks:
     if 'SNBR' in line: #formatting of data.
         n_snap = float(line[19:21]) #number of storm days
         start_line_num = line[0:6]
@@ -164,40 +167,40 @@ def dist(p1,p2,radius):
 #list of all snapshot averages
 allazaverages = []
 #list of snapshot averages with max wind speeds 30-40 knots
-azaverage_30_40_kt = []
+azaverage_plot = []
  
 
 for storm in track_dict:
     for snapshot in track_dict[storm]:
         index = track_dict[storm][snapshot]["index"]
         if index == 0: #getting initial snapshot for calculating rain rate for storm
-            initial_Z = pr_wnp.sel(time = snapshot)
+            initial_Z = pr_basin.sel(time = snapshot)
             initial_Z = initial_Z.tp
         if index > 0:
             #storm center
             latitude = track_dict[storm][snapshot]["lat"]
             longitude = track_dict[storm][snapshot]["lon"]
             #calculating rain rate
-            Z = pr_wnp.sel(time = snapshot)
+            Z = pr.sel(time = snapshot)
             Z = Z['tp']
             Z_anom = Z-initial_Z
             Z_anom = Z_anom/24
             #interpdataset
-            latrange = np.arange(0,31.5,1.5)
-            lonrange = np.arange(100.5,181.5,1.5)
+            latrange = pr_basin.latitude.values
+            lonrange = pr_basin.longitude.values
             x = lonrange
             y = latrange
-            interp_pr_wnp = interp2d(x, y, Z_anom, kind='cubic')
-            lonnew = np.arange(100,180.25,0.25)
-            latnew = np.arange(0,30.25,0.25)
-            pr_wnp25 = interp_pr_wnp(lonnew,latnew)
+            interp_pr_basin = interp2d(x, y, Z_anom, kind='cubic')
+            lonnew = np.arange(regions[basin][0][1],regions[basin][1][1],0.25)
+            latnew = np.arange(regions[basin][0][0],regions[basin][0][1],0.25)
+            pr_basin25 = interp_pr_basin(lonnew,latnew)
             
             initial_Z = Z #updating intial accumulated rate to calculate next snaps rain rate
 
             #putting together new rainrate dataset
             ds_pr_rate_snap = xr.Dataset(
                 data_vars=dict(
-                    p_r=(["lat", "lon"], pr_wnp25)
+                    p_r=(["lat", "lon"], pr_basin25)
                 ),
                 coords=dict(
                     lon=(["lon"], lonnew),
@@ -247,8 +250,8 @@ for storm in track_dict:
             allazaverages.append(azavs)
 
             maxwind = latitude = track_dict[storm][snapshot]["maxwind"]
-            if maxwind>=30 and maxwind <=40:
-                azaverage_30_40_kt.append(azavs)
+            if maxwind>=windthresh[0] and maxwind <=windthresh[1]:
+                azaverage_plot.append(azavs)
 
 
 
@@ -260,12 +263,20 @@ r = [12.5, 37.5, 62.5, 87.5, 112.5, 137.5, 162.5, 187.5, 212.5, 237.5, 262.5, 28
     337.5, 362.5, 387.5, 412.5, 437.5, 462.5, 487.5, 512.5, 537.5, 562.5, 587.5,]
 
 fig = plt.figure(num=None, figsize=(12, 8))
-plt.scatter(r, np.nanmean(azaverage_30_40_kt,axis = 0))
-plt.ylim(0, 3)
+plt.scatter(r, np.nanmean(azaverage_plot,axis = 0))
+ymax = max(np.nanmean(azaverage_plot,axis = 0))+1
+plt.ylim(0, ymax)
+plt.title('Azimuthal Average of Rain Rate (kg m**-2)', fontdict = {'fontsize':16})
+plt.xlabel('Distrace From Storm Center (km)', fontsize = 16)
+plt.ylabel('Rain Rate (kg m**-2)',fontsize = 16)
+plt.xticks(fontsize = 16)
+plt.yticks(fontsize = 16)
 
-fname = basin+'_azimuthal_average_30-40kt.eps'
 
-output_fname =  os.path.join(os.environ.get("WK_DIR"), fname)
+
+fname = 'azimuthalaverage.eps'
+
+output_fname =  os.path.join(os.environ.get("WK_DIR"), "model","PS", fname)
 
 plt.savefig(output_fname, format = 'eps' )
 

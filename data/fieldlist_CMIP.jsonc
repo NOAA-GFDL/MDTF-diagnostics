@@ -9,7 +9,7 @@
     // only used for taking slices, unit conversion
     "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
     "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
-    "time": {"axis": "T", "standard_name": "time", "units": "days"},
+    "time": {"axis": "T", "standard_name": "time", "units": "hours"},
     // eventually want contents of CMIP6.coordinate.json
     "plev": {
       "standard_name": "air_pressure",
@@ -104,6 +104,11 @@
       "units": "K",
       "ndim": 3,
       "modifier": "atmos_height"
+    },
+    "tp": {
+      "standard_name": "total_precipitation",
+      "units": "kg m-2",
+      "ndim": 3
     },
     "tauu": {
       "standard_name": "surface_downward_eastward_stress",

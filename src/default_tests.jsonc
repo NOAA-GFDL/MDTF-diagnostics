@@ -69,7 +69,7 @@
   // "$" and will be expended to their current values when the framework runs.
 
   // Parent directory containing observational data used by individual PODs.
-  "OBS_DATA_ROOT": "../inputdata/obs_data",
+  "OBS_DATA_ROOT": "../inputdata/obs_data/",
 
   // Parent directory containing results from different models.
   "MODEL_DATA_ROOT": "../inputdata/model/",
@@ -84,13 +84,13 @@
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned by running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  "conda_root": "",
+  "conda_root": "/home/disk/p/gnemlaw/anaconda3",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in the system default
   // location.
-  "conda_env_root": "",
+  "conda_env_root": "/home/disk/p/gnemlaw/anaconda3/envs/",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
@@ -105,10 +105,10 @@
   // Settings affecting what output is generated:
 
   // Set to true to have PODs save postscript figures in addition to bitmaps.
-  "save_ps": false,
+  "save_ps": true,
 
   // Set to true to have PODs save netCDF files of processed data.
-  "save_nc": false,
+  "save_nc": true,
 
   // Set to true to save HTML and bitmap plots in a .tar file.
   "make_variab_tar": true,

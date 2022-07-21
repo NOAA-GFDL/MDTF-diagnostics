@@ -223,7 +223,7 @@
       "standard_name": "atmosphere_mass_content_of_water_vapor",
       "units": "kg m-2",
       "ndim": 3
-    },
+    }
     // Variables for SM_ET_coupling module
     // "mrsos": {
     //   "standard_name": "mass_content_of_water_in_soil_layer",
@@ -235,12 +235,6 @@
     //   "units": "kg m-2 s-1",
     //   "ndim": 3
     // }
-    // Variable for TC Rain Module
-    "tp": {
-      "standard_name": "total precipitation",
-      "units": "kg m**-2",
-      "ndim": 3
-    }
   },
   "env_vars" : {
     // 0 for CMIP/GFDL date index start, 1 for CESM native date index start

@@ -87,7 +87,7 @@ regions = {"ATL":[[0,30],[260,350]],
     "SP":[[-30,0],[130,210]],
     "SIO":[[-30,0],[40,130]]}
 
-#get only feild of view for basin storm is in
+#get only field of view for basin storm is in
 
 
 pr_basin = pr.where(((pr.latitude >=regions[basin][0][0]) & (pr.latitude <= regions[basin][0][1]) & 

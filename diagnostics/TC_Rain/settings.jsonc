@@ -21,8 +21,8 @@
     },
     "pod_env_vars" : {
         "basin": "WNP",
-        "minwindthresh": "30",
-        "maxwindthresh": "40"
+        "minthresh": "35",
+        "maxthresh": "45"
     }
   },
 

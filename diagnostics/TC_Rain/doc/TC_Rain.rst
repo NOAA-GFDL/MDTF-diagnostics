@@ -44,7 +44,7 @@ Then the azimuthal average is calulated for a set of discrete radii by measuring
 distance between a data point and the center of the storm for each snapshot. 
 
 A plot showing TC rain rate as a function of radius is made for select snapshopts that 
-reach 30-40 knot max wind speeds.
+reach 35-45 knot max wind speeds.
 
 Required programming language and libraries
 -------------------------------------------
@@ -62,10 +62,32 @@ optional: max windspeed, minimum central surface pressure, sst, etc)
 References
 ----------
 
-Will concult advisor to find what referene would be good to include here. 
+Will consult advisor to find what referene would be good to include here. 
 
 More about this diagnostic
 --------------------------
 
-""
+This POD calculates the azimuthally averaged precipitation rate of tropical cyclones (TCs) as 
+a function of distance from the center of a TC from hourly (1,3,6, or 12 hr)  model 
+precipitation output and model TC track output. 
+
+In its current version the POD requires TC track input and cannot track TCs from model output 
+alone. The track data must provide the latitude and longitude of the storm center and the 
+time of track snapshot and optionally a characteristic of the storm at that snapshot to use
+as a threshold to use the storm in the plotted average (here max wind is used and the default 
+threshold is set to 35-45 knots to capture weak storms which meet the requirements to be 
+considered a tropical cyclone - this threshold can be changed in the setting.jsonc file in the 
+POD directory). 
+
+The POD takes track data separated by basin. The basin longitude regions are determined by the ECMWF 
+TC tracking standards and are as follows:
+Atlantic Ocean (ATL) : 100 - 350 W
+Eastern Central Pacific (EP) : 0 - 100 W
+Western North Pacific (WNP) : 100 - 180 E
+Indian Ocean (IO) : 40 - 100 E
+South Indian Ocean (SIO) : 30 - 90 E
+Australian Ocean (AUS) : 90 - 160 East
+South Pacific Ocean (SP) : 160 E - 120 W
+The latitude range for all basins is 0 - 30 N or S depending on the hemispehre. 
+
 

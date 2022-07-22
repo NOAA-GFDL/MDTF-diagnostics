@@ -38,7 +38,7 @@
 # In this example code, the model output is interpolated and regridded to 0.25 x 0.25 
 # degree arrays and the average is calcuated from 0 to 600 km from the center of the 
 # storm in 25 km discrete sections. Here we only take the avearge of snaphots where the
-# max wind speed is between 30 and 40 kt. The output of this diagnostic is a plot in the
+# max wind speed is between 35 and 45 kt. The output of this diagnostic is a plot in the
 # form of an .eps file with distance from the center of the storm along the horizonal 
 # average and precip rate along the vertical axis.   
 
@@ -71,7 +71,7 @@ import numpy as np
 ### 1) Loading model data files: ###############################################
 #
 basin = os.getenv("basin") #specifying the basin of TC Track input data
-windthresh = [np.float(os.getenv("minwindthresh")),np.float(os.getenv("maxwindthresh"))]
+thresh = [np.float(os.getenv("minthresh")),np.float(os.getenv("maxthresh"))]
 
 
 
@@ -79,17 +79,17 @@ windthresh = [np.float(os.getenv("minwindthresh")),np.float(os.getenv("maxwindth
 pr_path = os.environ["TP_FILE"]
 pr = xr.open_dataset(pr_path)
 
-#for the sake of time in this draft I am only including the western pacific. 
-regions = {"ATL":[[0,30],[260,350]],
-    "EP":[[0,30],[180,280]],
-    "WNP":[[0,30],[100,180]],
-    "IO":[[0,30],[40,100]],
-    "SP":[[-30,0],[130,210]],
-    "SIO":[[-30,0],[40,130]]}
+#basin regions
+regions = {"ATL":[[0,30],[260,350]], #atlantic basin
+    "EP":[[0,30],[180,280]], #eastern central pacific basin
+    "WNP":[[0,30],[100,180]], #western north pacific basin
+    "IO":[[0,30],[40,100]], #indian ocean basin
+    "SIO":[[-30,0],[30,90]], #south indian ocean basin
+    "AUS":[[-30,0],[90,160]], #australian basin
+    "SP":[[-30,0],[160,240]] #south pacific basin
+}
 
-#get only field of view for basin storm is in
-
-
+#get only feild of view for basin storm is in
 pr_basin = pr.where(((pr.latitude >=regions[basin][0][0]) & (pr.latitude <= regions[basin][0][1]) & 
                  (pr.longitude >= regions[basin][1][0]) & (pr.longitude <= regions[basin][1][1])))
 
@@ -133,13 +133,13 @@ for line in tracks:
             #the lat lon center of the storm is between the todays feild and yesterdays feild. 
             lat = float(line[20:23])/10
             lon = float(line[23:27])/10
-            maxwind = float(line[29:31])
+            char = float(line[29:31])
             track_dict[start_line_num][dt64] = {"ID": start_line_num,
                                "date":date,
                                "date64":dt64,
                                "lat":lat,
                                "lon":lon,
-                               "maxwind":maxwind,
+                               "char":char,
                                "index":x
                                }
             x = x+1
@@ -166,7 +166,7 @@ def dist(p1,p2,radius):
 
 #list of all snapshot averages
 allazaverages = []
-#list of snapshot averages with max wind speeds 30-40 knots
+#list of snapshot averages which meet the threshold characteristic 
 azaverage_plot = []
  
 
@@ -249,8 +249,8 @@ for storm in track_dict:
             
             allazaverages.append(azavs)
 
-            maxwind = latitude = track_dict[storm][snapshot]["maxwind"]
-            if maxwind>=windthresh[0] and maxwind <=windthresh[1]:
+            char = latitude = track_dict[storm][snapshot]["char"]
+            if char>=thresh[0] and char <=thresh[1]:
                 azaverage_plot.append(azavs)
 
 
@@ -280,11 +280,6 @@ output_fname =  os.path.join(os.environ.get("WK_DIR"), "model","PS", fname)
 
 plt.savefig(output_fname, format = 'eps' )
 
-# That is the draft code as is it now. I hope I have explained everything sufficiently.
-# I currently do not have any error exeption handles/or any messages. I assume I will 
-# probably need one but I figured I should get the draft code to you as soon as possible. 
-# I'm sure you have lots of comments for how to make the code more general and more effective 
-# for the package. Please don't hesitate to bring anything to my attention. 
 
 #
 # ### 8) Confirm POD executed sucessfully ########################################

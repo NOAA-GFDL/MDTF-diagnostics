@@ -105,11 +105,6 @@
       "ndim": 3,
       "modifier": "atmos_height"
     },
-    "tp": {
-      "standard_name": "total_precipitation",
-      "units": "kg m-2",
-      "ndim": 3
-    },
     "tauu": {
       "standard_name": "surface_downward_eastward_stress",
       "units": "Pa",

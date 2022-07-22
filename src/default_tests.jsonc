@@ -108,7 +108,7 @@
   "save_ps": false,
 
   // Set to true to have PODs save netCDF files of processed data.
-  "save_nc": true,
+  "save_nc": false,
 
   // Set to true to save HTML and bitmap plots in a .tar file.
   "make_variab_tar": true,

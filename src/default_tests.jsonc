@@ -105,7 +105,7 @@
   // Settings affecting what output is generated:
 
   // Set to true to have PODs save postscript figures in addition to bitmaps.
-  "save_ps": true,
+  "save_ps": false,
 
   // Set to true to have PODs save netCDF files of processed data.
   "save_nc": true,

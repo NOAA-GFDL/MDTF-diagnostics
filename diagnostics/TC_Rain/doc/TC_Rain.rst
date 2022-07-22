@@ -37,7 +37,7 @@ Functionality
 -------------
 
 In the current draft code, the data is loaded in first. The netcdf file for the total 
-precipitatin is loaded in through xarray. The TC track data is read in line by line from a 
+precipitation is loaded in through xarray. The TC track data is read in line by line from a 
 txt file. 
 
 Then the azimuthal average is calulated for a set of discrete radii by measuring the 

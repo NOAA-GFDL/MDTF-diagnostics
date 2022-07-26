@@ -56,7 +56,20 @@
 #   optional: max wind, central surface pressure, sst, etc)
 # 
 #   References
-#   I will ask my advisor what an appropriate reference would be to put here. 
+#   1. Kim, D., Y. Moon, S. Camargo, A. Sobel, A. Wing, H. Murakami, G. Vecchi, M. Zhao, 
+#   and E. Page, 2018: Process-oriented diagnosis of tropical cyclones in high-resolution
+#   climate models. J. Climate, 31, 1685–1702, https://doi.org/10.1175/JCLI-D-17-0269.1.
+#   
+#   2. Moon, Y., D. Kim, S. Camargo, A. Wing, A. Sobel, H. Murakami, K. Reed, G. Vecchi, 
+#   M. Wehner, C. Zarzycki, and M. Zhao, 2020: Azimuthally averaged wind and 
+#   thermodynamic structures of tropical cyclones in global climate models and their 
+#   sensitivity to horizontal resolution. J. Climate, 33, 1575–1595, 
+#   https://doi.org/10.1175/JCLI-D-19-0172.1
+#   
+#   3. Moon, Y., D. Kim, A. A. Wing, S. J. Camargo, M. Zhao, L. R. Leung, M. J. Roberts, 
+#   D.-H. Cha, and J. Moon: An evaluation of global climate model-simulated tropical 
+#   cyclone rainfall structures in the HighResMIP against the satellite observations, 
+#   J. Climate, Accepted.
 # 
 #
 

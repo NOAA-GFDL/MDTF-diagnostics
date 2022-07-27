@@ -95,13 +95,13 @@ POD directory).
 
 The POD takes track data separated by basin. The basin longitude regions are determined by the ECMWF 
 TC tracking standards and are as follows:
-Atlantic Ocean (ATL) : 100 - 350 W
-Eastern Central Pacific (EP) : 0 - 100 W
-Western North Pacific (WNP) : 100 - 180 E
-Indian Ocean (IO) : 40 - 100 E
-South Indian Ocean (SIO) : 30 - 90 E
-Australian Ocean (AUS) : 90 - 160 East
-South Pacific Ocean (SP) : 160 E - 120 W
+Atlantic Ocean (atl) : 100 - 350 W
+Eastern Central Pacific (enp) : 0 - 100 W
+Western North Pacific (wnp) : 100 - 180 E
+Indian Ocean (nin : 40 - 100 E
+South Indian Ocean (sin) : 30 - 90 E
+Australian Ocean (aus) : 90 - 160 East
+South Pacific Ocean (spc) : 160 E - 120 W
 The latitude range for all basins is 0 - 30 N or S depending on the hemispehre. 
 
 

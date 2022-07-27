@@ -93,13 +93,13 @@ pr_path = os.environ["TP_FILE"]
 pr = xr.open_dataset(pr_path)
 
 #basin regions
-regions = {"ATL":[[0,30],[260,350]], #atlantic basin
-    "EP":[[0,30],[180,280]], #eastern central pacific basin
-    "WNP":[[0,30],[100,180]], #western north pacific basin
-    "IO":[[0,30],[40,100]], #indian ocean basin
-    "SIO":[[-30,0],[30,90]], #south indian ocean basin
-    "AUS":[[-30,0],[90,160]], #australian basin
-    "SP":[[-30,0],[160,240]] #south pacific basin
+regions = {"atl":[[0,30],[260,350]], #atlantic basin
+    "enp":[[0,30],[180,280]], #eastern central pacific basin
+    "wnp":[[0,30],[100,180]], #western north pacific basin
+    "nin":[[0,30],[40,100]], #indian ocean basin
+    "sin":[[-30,0],[30,90]], #south indian ocean basin
+    "aus":[[-30,0],[90,160]], #australian basin
+    "spc":[[-30,0],[160,240]] #south pacific central basin
 }
 
 #get only feild of view for basin storm is in
@@ -121,7 +121,7 @@ pr_basin = pr.where(((pr.latitude >=regions[basin][0][0]) & (pr.latitude <= regi
 
 
 
-track_fname_path = os.path.join(os.environ["OBS_DATA"],"wnp")
+track_fname_path = os.path.join(os.environ["OBS_DATA"], basin)
 
 tracks = open(track_fname_path)
 

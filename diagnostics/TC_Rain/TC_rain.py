@@ -37,7 +37,7 @@
 
 # In this example code, the model output is interpolated and regridded to 0.25 x 0.25 
 # degree arrays and the average is calcuated from 0 to 600 km from the center of the 
-# storm in 25 km discrete sections. Here we only take the avearge of snaphots where the
+# storm in 25 km discrete sections. Here we only take the average of snaphots where the
 # max wind speed is between 35 and 45 kt. The output of this diagnostic is a plot in the
 # form of an .eps file with distance from the center of the storm along the horizonal 
 # average and precip rate along the vertical axis.   

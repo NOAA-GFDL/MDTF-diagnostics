@@ -93,8 +93,8 @@ threshold is set to 35-45 knots to capture weak storms which meet the requiremen
 considered a tropical cyclone - this threshold can be changed in the setting.jsonc file in the 
 POD directory). 
 
-The POD takes track data separated by basin. The basin longitude regions are determined by the ECMWF 
-TC tracking standards and are as follows:
+The POD takes track data separated by basin. The basin longitude regions are determined by the 
+ECMWF TC tracking standards and are as follows:
 Atlantic Ocean (atl) : 100 - 350 W
 Eastern Central Pacific (enp) : 0 - 100 W
 Western North Pacific (wnp) : 100 - 180 E
@@ -104,4 +104,10 @@ Australian Ocean (aus) : 90 - 160 East
 South Pacific Ocean (spc) : 160 E - 120 W
 The latitude range for all basins is 0 - 30 N or S depending on the hemispehre. 
 
-
+The output of this POD will be a plot of the azimuthally averaged rain rate (vertical axis) as a 
+fuction of distance from the center of the storm (horizontal axis). The result should always be 
+the highest rain rates at or just off center of the storm. Rain rate distributions with greatest 
+inner-core rainfall tend to simulate stronger TCs more often. The distribution will vary greatly 
+depending on model characteristics and threshold to determine snapshops used in average. For 
+example was speculated in Moon et. al, 2020 that low resolution models require more energy to 
+sustain themselves through induced precipitation. 

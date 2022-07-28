@@ -100,7 +100,7 @@ regions = {
     "spc": [[-30, 0], [160, 240]],  # south pacific central basin
 }
 
-# get only feild of view for basin storm is in
+# get only field of view for basin storm is in
 pr_basin = pr.where(
     (
         (pr.latitude >= regions[basin][0][0])

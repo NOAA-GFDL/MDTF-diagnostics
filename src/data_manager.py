@@ -963,7 +963,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             group = self.check_group_daterange(group, expt_key=expt_key, log=var.log)
             if group.empty:
                 var.log.debug('Expt_key %s eliminated by _check_group_daterange',
-                    expt_key)
+                              expt_key)
                 continue
             group = self._query_group_hook(group)
             if group.empty:
@@ -971,7 +971,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
                 continue
             d_key = self.data_key(group, expt_key=expt_key)
             var.log.debug('Query found <expt_key=%s, %s> for %s',
-                expt_key, d_key, var.full_name)
+                          expt_key, d_key, var.full_name)
             var.data[expt_key] = d_key
 
             if not isinstance(var.associated_files, dict):
@@ -983,11 +983,12 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             # class that inherits ` DataframeQueryDataSourceBase` can define this
             # method to populate the `VarlistEntry.associated_files` attribute.
             # Otherwise this attribute is set to an empty dictionary here.
-            if hasattr(self, "query_associated_files"):
-                try:
-                    var.associated_files[expt_key] = self.query_associated_files(d_key)
-                except Exception as exc:
-                    var.log.debug(f"Unable to query associated files: {exc}")
+            if not hasattr(self, "query_associated_files") or not var.associated_files:
+                continue
+            try:
+                var.associated_files[expt_key] = self.query_associated_files(d_key)
+            except Exception as exc:
+                var.log.debug(f"Unable to query associated files: {exc}")
 
     def _query_error_handler(self, msg, d_key, log=_log):
         """Log debugging message or raise an exception, depending on if we're

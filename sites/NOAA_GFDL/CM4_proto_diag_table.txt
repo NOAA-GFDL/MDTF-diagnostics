@@ -58,9 +58,10 @@
 "land_month_cmip",          1, "months",    1,  "days",  "time",
 
 
-"land",        "geolon_t",   "geolon_t",    "land_month_cmip", "all", .false., "none", 1
-"land",        "geolat_t",   "geolat_t",    "land_month_cmip", "all", .false., "none", 1
-"cmor_land",   "mrsos",      "mrsos",       "land_month_cmip",    "all",  .true.,  "none", 2
+"land",        "geolon_t",   "geolon_t",    "land_month_cmip", "all", .false.,  "none", 1
+"land",        "geolat_t",   "geolat_t",    "land_month_cmip", "all", .false.,  "none", 1
+"land",       "area_land",  "land_area",    "land_month_cmip", "all",  .true.,  "none", 2
+"cmor_land",   "mrsos",      "mrsos",       "land_month_cmip", "all",  .true.,  "none", 2
 
 #--------------------------------------------------------------------------------------------------
 #-- Daily Data

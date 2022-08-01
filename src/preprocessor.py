@@ -839,7 +839,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # mark attrs duplicating values in encoding for deletion
         for k, v in encoding.items():
             if k in attrs:
-                if isinstance(attrs[k], str) and isinstance(v, str):
+                if isinstance(attrs[k], bytes):
+                    compare_ = False
+                elif isinstance(attrs[k], str) and isinstance(v, str):
                     compare_ = (attrs[k].lower() != v.lower())
                 elif not isinstance(attrs[k], np.ndarray) and not hasattr(attrs[k], '__iter__'):
                     compare_ = (attrs[k] != v)
@@ -869,11 +871,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             attrs = getattr(obj, 'attrs', dict())
             for k, v in encoding.items():
                 if k in attrs:
-                    if isinstance(attrs[k], str) and isinstance(v, str):
+                    if isinstance(attrs[k], bytes):
+                        compare_ = False
+                    elif isinstance(attrs[k], str) and isinstance(v, str):
                         compare_ = (attrs[k].lower() != v.lower())
                     elif not isinstance(attrs[k], np.ndarray) and not hasattr(attrs[k], '__iter__'):
                         compare_ = (attrs[k] != v)
-                    elif hasattr(attrs[k], '__iter__') and not isinstance(attrs[k], str):
+                    elif hasattr(attrs[k], '__iter__') and not isinstance(attrs[k], str)\
+                            and not isinstance(attrs[k], bytes):
                         compare_ = (attrs[k].any() != v)
                     else:
                         compare_ = (attrs[k] != v)

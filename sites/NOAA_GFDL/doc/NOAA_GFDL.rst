@@ -8,8 +8,6 @@ Site installation
 
 The DET team maintains a site-wide installation of the framework and all supporting data at /home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics. This is kept up-to-date and is accessible from both workstations and PPAN; in particular it is **not** necessary for an end user to set up conda environments or download any supporting data, as described in the installation instructions.
 
-Invoking the package from the site installation's wrapper script automatically prepends ``--site="NOAA_GFDL"`` to the user's command-line flags.
-
 Please contact us if your use case can't be accommodated by this installation.
 
 Additional ways to invoke the package

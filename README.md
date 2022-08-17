@@ -34,6 +34,7 @@ and a link to the full documentation for each currently-supported POD.
 | [Rossby Wave Sources Diagnostic Package](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/ENSO_RWS/doc/ENSO_RWS.rst)                                                                                 | H. Annamalai (U. Hawaii), Jan Hafner (U. Hawaii)                     |
 | [Precipitation Buoyancy Diagnostic](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/precip_buoy_diag/doc/precip_buoy_diag.rst)                                                                      | J. David Neelin (UCLA), Fiaz Ahmed                                   |
 | [Tropical Cyclone Rain Rate Azimuthal Average](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/TC_Rain/doc/TC_Rain.rst)                                                                      | Daehyun Kim (U. Washington), Nelly Emlaw (U.Washington)|
+| [Top Heaviness Metric](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/top_heaviness_metric/doc/top_heaviness_metric.rst)                                                                      | Zhuo Wang (U.Illinois Urbana-Champaign), Jiacheng Ye (U.Illinois Urbana-Champaign)|
 
 
 

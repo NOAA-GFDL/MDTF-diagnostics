@@ -86,7 +86,7 @@ figures_dir = wk_dir+'/model/'
 
 # obs processed files, provided
 kernel_obs_file = obs_dir+'CERES40_surface_albedo_kernel_2000-2018_MJJA.nc' 
-sensitivity_obs_file = obs_dir+'CERES40_ice_sensitivity_MJJA.nc'
+sensitivity_obs_file = obs_dir+'CERES40_surface_sensitivity_MJJA.nc'
 
 # model output file names, to compute next
 kernel_histmod_file=output_dir+'surface_albedo_kernel_'+firstyr+'-'+lastyr+'.nc'    

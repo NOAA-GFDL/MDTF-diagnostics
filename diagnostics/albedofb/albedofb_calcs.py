@@ -150,18 +150,18 @@ def process_data(kernel_file, sensitivity_file):
     # it has been saved to kernel_obs_file
     # and is provided with this POD
 
-    FSDT_var = "{FSDT_var}".format(**os.environ)
-    FSDS_var = "{FSDS_var}".format(**os.environ)
-    FSUT_var = "{FSUT_var}".format(**os.environ)
-    FSUS_var = "{FSUS_var}".format(**os.environ)
-    TAS_var  = "{TAS_var}".format(**os.environ)
+    FSDT_var = "{rsdt_var}".format(**os.environ)
+    FSDS_var = "{rsds_var}".format(**os.environ)
+    FSUT_var = "{rsut_var}".format(**os.environ)
+    FSUS_var = "{rsus_var}".format(**os.environ)
+    TAS_var  = "{tas_var}".format(**os.environ)
     
     # set up files for input data 
-    FSDT_input_file = "{DATADIR}/mon/{CASENAME}.{FSDT_var}.mon.nc".format(**os.environ)
-    FSDS_input_file = "{DATADIR}/mon/{CASENAME}.{FSDS_var}.mon.nc".format(**os.environ)
-    FSUT_input_file = "{DATADIR}/mon/{CASENAME}.{FSUT_var}.mon.nc".format(**os.environ)
-    FSUS_input_file = "{DATADIR}/mon/{CASENAME}.{FSUS_var}.mon.nc".format(**os.environ)
-    TAS_input_file  = "{DATADIR}/mon/{CASENAME}.{TAS_var}.mon.nc".format(**os.environ)
+    FSDT_input_file = "{DATADIR}/mon/{CASENAME}.{rsdt_var}.mon.nc".format(**os.environ)
+    FSDS_input_file = "{DATADIR}/mon/{CASENAME}.{rsds_var}.mon.nc".format(**os.environ)
+    FSUT_input_file = "{DATADIR}/mon/{CASENAME}.{rsut_var}.mon.nc".format(**os.environ)
+    FSUS_input_file = "{DATADIR}/mon/{CASENAME}.{rsus_var}.mon.nc".format(**os.environ)
+    TAS_input_file  = "{DATADIR}/mon/{CASENAME}.{tas_var}.mon.nc".format(**os.environ)
     area_input_file = "{DATADIR}/mon/areacella_fx_{model}_r1i1p1f1_gn.nc".format(**os.environ)
 
     # read in flux data, compute climatoligies
@@ -184,7 +184,7 @@ def process_data(kernel_file, sensitivity_file):
 
     ds = xr.open_dataset(FSDS_input_file)
     us = xr.open_dataset(FSUS_input_file)  
-    # must get rid of cftime since lack of leap day is messes up divide below
+    # must get rid of cftime since lack of leap day messes up divide below
     ds=ds['rsds'].assign_coords(month=('time',ds.time.dt.month)).swap_dims({'time':'month'}).drop('time')
     us=us['rsus'].assign_coords(month=('time',us.time.dt.month)).swap_dims({'time':'month'}).drop('time')
     albedo = us/ds

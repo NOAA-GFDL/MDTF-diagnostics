@@ -11,7 +11,6 @@
     "long_name" : "Surface Albedo Feedback Diagnostics",
     "realm" : "atmos",
     "description" : "Surface Albedo Feedback Diagnostics",
-    "pod_env_vars" : { "TAS_var": "tas"},
     "runtime_requirements": {
         "python3": ["numpy", "scipy", "matplotlib", "xarray", "netCDF4", "cartopy", "pandas", "xesmf","dask"]
     }
@@ -21,22 +20,27 @@
  // know about scenario name
   "varlist" : [
     {
-    "var_name": "FSDT_var",
+    "var_name": "tas_var",
     "freq": "mon",
     "requirement" : "required"
     },
     {
-    "var_name": "FSDS_var",
+    "var_name": "rsdt_var",
     "freq": "mon",
     "requirement" : "required"
     },
     {
-    "var_name": "FSUT_var",
+    "var_name": "rsds_var",
     "freq": "mon",
     "requirement" : "required"
     },
     {
-    "var_name": "FSUS_var",
+    "var_name": "rsut_var",
+    "freq": "mon",
+    "requirement" : "required"
+    },
+    {
+    "var_name": "rsus_var",
     "freq": "mon",
     "requirement" : "required"
     }

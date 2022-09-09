@@ -13,7 +13,7 @@
     {
       "CASENAME" : "SAM0-UNICON_r1i1p1f1_gn",
       "model" : "SAM0-UNICON",
-      "convention" : "SAMUNICON",
+      "convention" : "CMIP",
       "FIRSTYR" : 1996,
       "LASTYR" : 2014,
       "pod_list": ["albedofb"]

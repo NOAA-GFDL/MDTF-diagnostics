@@ -7,7 +7,7 @@
 // 
 {
   "settings" : {
-    "driver" : "surface_albedo_feedback.py",
+    "driver" : "albedofb.py",
     "long_name" : "Surface Albedo Feedback Diagnostics",
     "realm" : "atmos",
     "description" : "Surface Albedo Feedback Diagnostics",

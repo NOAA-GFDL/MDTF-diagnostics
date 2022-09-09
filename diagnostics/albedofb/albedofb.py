@@ -55,7 +55,7 @@ import matplotlib.pyplot as plt    # python library we use to make plots
 import xesmf as xe
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-import surface_albedo_feedback_calcs
+import albdofb_calcs
 
 
 # In[2]:
@@ -64,7 +64,7 @@ import surface_albedo_feedback_calcs
 # In[3]:
 
 
-podname='surface_albedo_feedback'
+podname='albedofb'
 
 model="{model}".format(**os.environ)
 modelname = "{model}".format(**os.environ)

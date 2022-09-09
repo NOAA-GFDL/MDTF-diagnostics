@@ -1,4 +1,4 @@
-name: _MDTF_surface_albedo_feedback
+name: _MDTF_abledofb
 channels:
 - conda-forge # NOTE: critical to give highest priority to conda-forge
 - defaults

@@ -16,10 +16,11 @@
       "convention" : "SAMUNICON",
       "FIRSTYR" : 1996,
       "LASTYR" : 2014,
-      "pod_list": ["surface_albedo_feedback"]
+      "pod_list": ["albedofb"]
     }
   ],
-  //
+  //    "FIRSTYR" : 1979,
+  //      "pod_list": ["seaice_suite"]
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
 

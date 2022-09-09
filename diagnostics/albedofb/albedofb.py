@@ -55,7 +55,7 @@ import matplotlib.pyplot as plt    # python library we use to make plots
 import xesmf as xe
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-import albdofb_calcs
+import albedofb_calcs
 
 
 # In[2]:
@@ -97,7 +97,7 @@ sensitivity_histmod_file=output_dir+'surface_albedo_sensitivity_'+firstyr+'-'+la
 
 
 # the albedo feedback modeling is done here, used same code to process CERES40 that is provided 
-surface_albedo_feedback_calcs.process_data(kernel_histmod_file,sensitivity_histmod_file)
+albedofb_calcs.process_data(kernel_histmod_file,sensitivity_histmod_file)
 
 
 # In[6]:

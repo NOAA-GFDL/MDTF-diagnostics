@@ -1,4 +1,4 @@
-name: _MDTF_abledofb
+name: _MDTF_albedofb
 channels:
 - conda-forge # NOTE: critical to give highest priority to conda-forge
 - defaults

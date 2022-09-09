@@ -1,4 +1,4 @@
-// Example MDTF diagnostic settings file
+// albedofb pod settings for MDTF diagnostic 
 //
 // This should be an ascii text file in JSON format 
 // (https://en.wikipedia.org/wiki/JSON#Data_types_and_syntax), with the addition
@@ -15,9 +15,6 @@
         "python3": ["numpy", "scipy", "matplotlib", "xarray", "netCDF4", "cartopy", "pandas", "xesmf","dask"]
     }
   },
- // the varlist here is only for the historical. this pod also uses some piControl and 4XCO2
- // not sure how to deal with that with the check for data since that check doesn't 
- // know about scenario name
   "varlist" : [
     {
     "var_name": "tas_var",

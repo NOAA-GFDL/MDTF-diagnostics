@@ -192,7 +192,6 @@ def process_data(kernel_file, sensitivity_file):
     albedo_trend=stacked.groupby(('month')).apply(linear_trend) # loses coord to unstack somewhere here
     tmp=stacked.isel(month=slice(0,12))           # use this to put back stack coord
     tmp[:,:]=albedo_trend
-    #tmp = albedo_trend
     albedo_trend = tmp.unstack('allpoints')
     albedo_trend=albedo_trend.fillna(0)
     albedo_per_Tglobtrend=albedo_trend/Tglobtrend

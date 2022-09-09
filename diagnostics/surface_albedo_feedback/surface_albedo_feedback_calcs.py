@@ -9,7 +9,7 @@
 # 
 #   - Version/revision information: version 1 (1/31/2021)
 #   - PI Cecilia Bitz, University of Washington bitz@uw.edu
-#   - Developer/point of contact Aaron Donohoe, U. Washington adonohoe@u.washington.edu
+#   - Developer/point of contact Aaron Donohoe, U. Washington adonohoe@uw.edu
 #   - Other contributors Ed Blanchardd, Lettie Roach, Wei Cheng
 # 
 #   Open source copyright agreement
@@ -49,10 +49,6 @@ import numpy as np
 import pandas as pd
 
 
-# reads in model data and computes stuff
-
-
-
 def xr_reshape(A, dim, newdims, coords):
     """ Reshape DataArray A to convert its dimension dim into sub-dimensions given by
     newdims and the corresponding coords.
@@ -82,7 +78,6 @@ def xr_reshape(A, dim, newdims, coords):
 
     return A1.transpose(*dims)
 
-
 def climatology(field=None):
     """Compute mean, std, trend, std of detrended, residuals
 
@@ -104,7 +99,6 @@ def climatology(field=None):
     return themean
 
 def kernelalbedo(dt, ds, ut, us):
-
     # solve for single layer reflections under Taylor '07 assumptions
 
     alb = us/ds #surface albedo
@@ -127,90 +121,50 @@ def globaltimemean(tas, fx):
     
     return glob
 
-def readandclimo(vname,file):
+def globalmean(tas, fx):
+    glob=tas*fx
+    glob=glob.sum(dim=["lat", "lon"])/fx.sum(dim=["lat", "lon"])
+    glob.name='Tglob'
+    
+    return glob
 
+def readandclimo(vname,file):
     field = xr.open_dataset(file)
     field = field[vname]
     field = climatology(field)
     
     return field
 
+def linear_trend(x):
+    #pf = np.polyfit(x['time.year'], x, 1)
+    yrs=np.arange(0,len(x))
+    pf = np.polyfit(yrs, x, 1)
+    # need to return an xr.DataArray for groupby
+    
+    return xr.DataArray(pf[0])
 
 
-
-def process_data():
+def process_data(kernel_file, sensitivity_file):
+    # the same function was used to compute the kernel and albedo 
+    # from a climatology constructed from 2000-2018 of CERES40
+    # it has been saved to kernel_obs_file
+    # and is provided with this POD
 
     FSDT_var = "{FSDT_var}".format(**os.environ)
     FSDS_var = "{FSDS_var}".format(**os.environ)
     FSUT_var = "{FSUT_var}".format(**os.environ)
     FSUS_var = "{FSUS_var}".format(**os.environ)
     TAS_var  = "{TAS_var}".format(**os.environ)
-
-    wk_dir="{WK_DIR}".format(**os.environ)
     
-    # these yrs only refer to the hist period for comparing kernel of mod to CERES
-    # this pod also uses piControl and 4XCO2 output, the years will differ with model
-    firstyr = "{FIRSTYR}".format(**os.environ)
-    lastyr = "{LASTYR}".format(**os.environ)
-
-    output_dir = wk_dir+'/model/'
-
-    ### model and obs data files and varnames: ###############################################
-
-    # procesed output file names
-    kernel_histmod_file=output_dir+'surface_albedo_kernel_'+firstyr+'-'+lastyr+'.nc'
-    kernel_pimod_file=output_dir+'surface_albedo_kernel_piControl.nc'
-    albedo_abmod_file=output_dir+'surface_albedo_abrupt-4xCO2.nc'
-
-
-    # process model piControl data to compute kerel, albedo, and Tglob
-    TAS_input_file = "{DATADIR}/mon/{CASENAME}.mon.{TAS_var}.piControl.nc".format(**os.environ)
-    area_input_file = "{DATADIR}/mon/areacella_fx_{model}_abrupt-4xCO2_r1i1p1f1_gn.nc".format(**os.environ)
-    tas=xr.open_dataset(TAS_input_file)
-    fx=xr.open_dataset(area_input_file)
-    tas=tas[TAS_var]
-    fx=fx['areacella']
-    Tglob=globaltimemean(tas, fx)
-
-    # process model piControl calc kernel and albedo
-    piFSDT_input_file = "{DATADIR}/mon/{CASENAME}.mon.{FSDT_var}.piControl.nc".format(**os.environ)
-    piFSDS_input_file = "{DATADIR}/mon/{CASENAME}.mon.{FSDS_var}.piControl.nc".format(**os.environ)
-    piFSUT_input_file = "{DATADIR}/mon/{CASENAME}.mon.{FSUT_var}.piControl.nc".format(**os.environ)
-    piFSUS_input_file = "{DATADIR}/mon/{CASENAME}.mon.{FSUS_var}.piControl.nc".format(**os.environ)
-
-    dt = readandclimo(FSDT_var,piFSDT_input_file)
-    ds = readandclimo(FSDS_var,piFSDS_input_file)
-    ut = readandclimo(FSUT_var,piFSUT_input_file)
-    us = readandclimo(FSUS_var,piFSUS_input_file)   
-
-    kernel,albedo=kernelalbedo(dt, ds, ut, us)
-    pimod=xr.merge([kernel,albedo,Tglob])
-    pimod.to_netcdf(kernel_pimod_file)
-
-    # process model abrupt-4xCO2 data to compute albedo, and Tglob
-    TAS_input_file = "{DATADIR}/mon/{CASENAME}.mon.{TAS_var}.abrupt-4xCO2.nc".format(**os.environ)
-    area_input_file = "{DATADIR}/mon/areacella_fx_{model}_abrupt-4xCO2_r1i1p1f1_gn.nc".format(**os.environ)
-    tas=xr.open_dataset(TAS_input_file)
-    fx=xr.open_dataset(area_input_file)
-    tas=tas[TAS_var]
-    fx=fx['areacella']
-    Tglob=globaltimemean(tas, fx)
-
-    abFSDS_input_file = "{DATADIR}/mon/{CASENAME}.mon.{FSDS_var}.abrupt-4xCO2.nc".format(**os.environ)
-    abFSUS_input_file = "{DATADIR}/mon/{CASENAME}.mon.{FSUS_var}.abrupt-4xCO2.nc".format(**os.environ)
-    ds = readandclimo(FSDS_var,abFSDS_input_file)
-    us = readandclimo(FSUS_var,abFSUS_input_file)   
-    albedo = us/ds
-    albedo.name = 'albedo'
-    abmod=xr.merge([albedo,Tglob])
-    abmod.to_netcdf(albedo_abmod_file)
-
-    # historical kernel and albedo from model and CERES
+    # set up files for input data 
     FSDT_input_file = "{DATADIR}/mon/{CASENAME}.{FSDT_var}.mon.nc".format(**os.environ)
     FSDS_input_file = "{DATADIR}/mon/{CASENAME}.{FSDS_var}.mon.nc".format(**os.environ)
     FSUT_input_file = "{DATADIR}/mon/{CASENAME}.{FSUT_var}.mon.nc".format(**os.environ)
     FSUS_input_file = "{DATADIR}/mon/{CASENAME}.{FSUS_var}.mon.nc".format(**os.environ)
+    TAS_input_file  = "{DATADIR}/mon/{CASENAME}.{TAS_var}.mon.nc".format(**os.environ)
+    area_input_file = "{DATADIR}/mon/areacella_fx_{model}_r1i1p1f1_gn.nc".format(**os.environ)
 
+    # read in flux data, compute climatoligies
     dt = readandclimo(FSDT_var,FSDT_input_file)
     ds = readandclimo(FSDS_var,FSDS_input_file)
     ut = readandclimo(FSUT_var,FSUT_input_file)
@@ -218,15 +172,37 @@ def process_data():
 
     kernel,albedo=kernelalbedo(dt, ds, ut, us)
     histmod=xr.merge([kernel,albedo])
-    histmod.to_netcdf(kernel_histmod_file)
+    histmod.to_netcdf(kernel_file)
 
-    # the same function was used to compute the kernel and albedo 
-    # from a climatology constructed from 2000-2018 of CERES40
-    # it has been saved to kernel_obs_file
-    # and is provided with this POD
+    # get timeseries needed to compute trends
+    tas=xr.open_dataset(TAS_input_file)
+    tas=tas[TAS_var]
+    fx=xr.open_dataset(area_input_file)
+    fx=fx['areacella']
+    Tglob=globalmean(tas, fx)
+    Tglobtrend = Tglob.groupby('time.month').apply(linear_trend)
+
+    ds = xr.open_dataset(FSDS_input_file)
+    us = xr.open_dataset(FSUS_input_file)  
+    # must get rid of cftime since lack of leap day is messes up divide below
+    ds=ds['rsds'].assign_coords(month=('time',ds.time.dt.month)).swap_dims({'time':'month'}).drop('time')
+    us=us['rsus'].assign_coords(month=('time',us.time.dt.month)).swap_dims({'time':'month'}).drop('time')
+    albedo = us/ds
+    stacked=albedo.stack(allpoints=['lat','lon']) # reduce to 2D array before computing trend
+    albedo_trend=stacked.groupby(('month')).apply(linear_trend) # loses coord to unstack somewhere here
+    tmp=stacked.isel(month=slice(0,12))           # use this to put back stack coord
+    tmp[:,:]=albedo_trend
+    #tmp = albedo_trend
+    albedo_trend = tmp.unstack('allpoints')
+    albedo_trend=albedo_trend.fillna(0)
+    albedo_per_Tglobtrend=albedo_trend/Tglobtrend
+    albedo_per_Tglobtrend.name = 'sensitivity'
+    albedo_per_Tglobtrend.to_netcdf(sensitivity_file)
+    
+    return
     
 if __name__ == '__main__':
 
-    process_data()
+    process_data(kernel_file, sensitivity_file)
 
 

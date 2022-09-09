@@ -5,7 +5,7 @@
 
 # This file is part of the Surface Albedo Feedback Diagnostic POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
 # 
-#   Last update: 1/25/2021
+#   Last update: 9/1/2022
 # 
 #   - Version/revision information: version 1 (1/31/2021)
 #   - PI Cecilia Bitz, University of Washington bitz@uw.edu

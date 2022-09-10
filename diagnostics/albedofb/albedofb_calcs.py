@@ -79,7 +79,7 @@ def xr_reshape(A, dim, newdims, coords):
     return A1.transpose(*dims)
 
 def climatology(field=None):
-    """Compute mean, std, trend, std of detrended, residuals
+    """Compute climotological mean of residuals
 
     Parameters
     ----------
@@ -136,12 +136,10 @@ def readandclimo(vname,file):
     return field
 
 def linear_trend(x):
-    #pf = np.polyfit(x['time.year'], x, 1)
     yrs=np.arange(0,len(x))
     pf = np.polyfit(yrs, x, 1)
-    # need to return an xr.DataArray for groupby
     
-    return xr.DataArray(pf[0])
+    return xr.DataArray(pf[0])     # need to return an xr.DataArray
 
 
 def process_data(kernel_file, sensitivity_file):

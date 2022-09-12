@@ -1,3 +1,6 @@
+# custom ignore
+diagnostics/etc_composites/
+
 # Output files specific to this project
 envs/
 wkdir/
@@ -95,3 +98,5 @@ pip-delete-this-directory.txt
 
 # Jupyter Notebook
 .ipynb_checkpoints
+my_gfdl
+mdtf_slurm

@@ -13,6 +13,7 @@ import warnings
 import cftime # believe explict import needed for cf_xarray date parsing?
 import cf_xarray
 import xarray as xr
+import numpy as np
 
 from src import util, units, core
 
@@ -48,9 +49,13 @@ class PlaceholderScalarCoordinate():
     represented by real netCDF Variables.
     """
     name: str
+    """Scalar coordinate name."""
     axis: str
+    """Axis identifier ('X', 'Y', 'Z', etc.)"""
     standard_name: str = ATTR_NOT_FOUND
+    """CF standard name for the coordinate variable."""
     units: str = ATTR_NOT_FOUND
+    """Units of the coordinate."""
 
 # ========================================================================
 # Customize behavior of cf_xarray accessor
@@ -323,7 +328,7 @@ class MDTFDataArrayAccessorMixin(MDTFCFAccessorMixin):
 
     @property
     def formula_terms(self):
-        """Returns dict of (name in formula: name in dataset) pairs parsed from
+        """Returns dict of (name in formula - name in dataset) pairs parsed from
         formula_terms attribute. If attribute not present, returns empty dict.
         """
         terms = dict()
@@ -553,13 +558,20 @@ class DefaultDatasetParser():
         """
         def _restore_one(name, attrs_d):
             backup_d = self.attrs_backup.get(name, dict())
-            for k,v in backup_d.items():
+            for k, v in backup_d.items():
                 if v is ATTR_NOT_FOUND:
                     continue
-                if k in attrs_d and v != attrs_d[k]:
-                    # log warning but still update attrs
-                    self.log.warning("%s: discrepancy for attr '%s': '%s' != '%s'.",
-                        name, k, v, attrs_d[k])
+                if k in attrs_d:
+                    if isinstance(v, np.ndarray):
+                        for vv in v:
+                            if vv not in attrs_d[k]:
+                                # log warning but still update attrs
+                                self.log.warning("%s: discrepancy for attr '%s': '%s' != '%s'.",
+                                                 name, k, vv, attrs_d[k])
+                    elif hasattr(v, '__iter__') and not isinstance(v, str) and v.any() not in attrs_d[k]\
+                            or v != attrs_d[k]:
+                        self.log.warning("%s: discrepancy for attr '%s': '%s' != '%s'.",
+                                         name, k, v, attrs_d[k])
                 attrs_d[k] = v
 
         _restore_one('Dataset', ds.attrs)

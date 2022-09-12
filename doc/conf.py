@@ -40,8 +40,7 @@ autodoc_mock_imports = [
 # need to manually mock out explicit patching of cf_xarray.accessor done
 # on import in xr_parser; may be possible to do this with mock.patch() but the
 # following works
-mock_accessor = mock.Mock()
-mock_accessor.configure_mock(**({
+mock_accessor = mock.MagicMock(**({
     '__name__': 'accessor', '__doc__': '', # for functools.wraps
     'CFDatasetAccessor': object, 'CFDataArrayAccessor': object
 }))
@@ -50,22 +49,26 @@ setattr(sys.modules['cf_xarray'], 'accessor', mock_accessor)
 
 # Also necessary to manually mock out cfunits.Units since src.units.Units
 # inherits from it.
-class DummyUnits():
+class Units():
+    ""
     def __init__(self, units=None, calendar=None, formatted=False, names=False,
         definition=False, _ut_unit=None):
+        """Initialization is as in `cfunits.Units
+        <https://ncas-cms.github.io/cfunits/cfunits.Units.html>`__."""
         pass
-mock.patch('src.util.units.cfunits.Units', autospec=DummyUnits)
+sys.modules['cfunits'] = mock.Mock(name='cfunits')
+setattr(sys.modules['cfunits'], 'Units', Units)
 
 # -- Project information -----------------------------------------------------
 
 project = u'MDTF Diagnostics'
-copyright = u'2021, Model Diagnostics Task Force'
+copyright = u'2022, Model Diagnostics Task Force'
 author = u'Model Diagnostics Task Force'
 
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'3.0 beta 3'
+release = u'3.0 beta 4'
 
 # only used for resolving relative links in markdown docs
 # use develop branch because that's what readthedocs is configured to use
@@ -137,7 +140,8 @@ html_theme = 'alabaster'
 # Theme options are theme-specific.
 # See https://alabaster.readthedocs.io/en/latest/customization.html
 html_theme_options = {
-    'page_width': '1024px',
+    'page_width': '1152px',
+    'sidebar_width': '280px',
     'sidebar_collapse': False,
     'fixed_sidebar': False,
     'extra_nav_links' : {
@@ -324,8 +328,9 @@ epub_exclude_files = ['search.html']
 
 # set options, see http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 autodoc_member_order = 'bysource'
+autoclass_content = 'class'
 autodoc_default_options = {
-    'special-members': '__init__, __post_init__',
+    'special-members': '__init__',# __post_init__',
     'inherited-members': True
 }
 
@@ -352,7 +357,8 @@ def abbreviate_logger_in_signature(app, what, name, obj, options, signature,
 def skip_members_handler(app, what, name, obj, skip, options):
     """1) Skip unit test related classes and methods;
     2) Skip all inherited methods from python builtins,
-    3) Skip __init__ on abstract base classes.
+    3) Skip __init__ on abstract base classes, or if it doesn't have its own
+        docstring.
     """
     def _get_class_that_defined_method(meth):
         # https://stackoverflow.com/a/25959545
@@ -383,10 +389,17 @@ def skip_members_handler(app, what, name, obj, skip, options):
         if cls_ is None:
             cls_ = obj
 
-        # Suppress init on abstract classes
+        # Suppress init on abstract classes, or without custom docstrings
         if name == '__init__':
             if inspect.isabstract(cls_) or issubclass(cls_, abc.ABC):
                 return True
+            docstring = getattr(obj, '__doc__', '')
+            if not docstring or docstring == object.__init__.__doc__:
+                return True
+            docstring = getattr(cls_.__init__, '__doc__', '')
+            if not docstring or docstring == object.__init__.__doc__:
+                return True
+            return False
 
         # Resort to manually excluding methods on some builtins
         if issubclass(cls_, tuple) and name in ('count', 'index'):
@@ -462,9 +475,9 @@ napoleon_include_private_with_doc = False
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3.7', None),
-    'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
-    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
-    'xarray': ('http://xarray.pydata.org/en/stable/', None)
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+    'xarray': ('https://xarray.pydata.org/en/stable/', None)
 }
 
 # -- Options for todo extension ----------------------------------------------

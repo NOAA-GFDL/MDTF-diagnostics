@@ -320,6 +320,18 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
             s += f"\n\tAlternate set #{i+1}: {self.alternates_str(altvs)}"
         return s
 
+    def iter_associated_files_keys(self, status=None, status_neq=None):
+        """Yield :class:`~data_manager.DataKeyBase`\s
+        from v's *associated_files* dict, filtering out those DataKeys
+        that have beeneliminated via previous failures in fetching or preprocessing.
+        """
+        iter_ = self.associated_files.values()
+        if status is not None:
+            iter_ = filter((lambda x: x.status == status), iter_)
+        elif status_neq is not None:
+            iter_ = filter((lambda x: x.status != status_neq), iter_)
+        yield from list(iter_)
+
     def iter_data_keys(self, status=None, status_neq=None):
         """Yield :class:`~data_manager.DataKeyBase`\s
         from v's *data* dict, filtering out those DataKeys that have been
@@ -416,9 +428,17 @@ class VarlistEntry(core.MDTFObjectBase, data_model.DMVariable,
 
         assert self.dest_path
         d = util.ConsistentDict()
+
+        assoc_dict = (
+            {self.name.upper() + "_ASSOC_FILES": self.associated_files}
+            if isinstance(self.associated_files, str)
+            else {}
+        )
+
         d.update({
             self.env_var: self.name_in_model,
-            self.path_variable: self.dest_path
+            self.path_variable: self.dest_path,
+            **assoc_dict
         })
         for ax, dim in self.dim_axes.items():
             trans_dim = self.translation.dim_axes[ax]
@@ -776,9 +796,12 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             try:
                 self.pod_env_vars.update(var.env_vars)
             except util.WormKeyError as exc:
-                raise util.WormKeyError((f"{var.full_name} defines coordinate names "
-                    f"that conflict with those previously set. (Tried to update "
-                    f"{self.pod_env_vars} with {var.env_vars}.)")) from exc
+                if var.rename_coords is False:
+                    pass
+                else:
+                    raise util.WormKeyError((f"{var.full_name} defines coordinate names "
+                        f"that conflict with those previously set. (Tried to update "
+                        f"{self.pod_env_vars} with {var.env_vars}.)")) from exc
         for var in self.iter_children(status_neq=core.ObjectStatus.SUCCEEDED):
             # define env vars for varlist entries without data. Name collisions
             # are OK in this case.

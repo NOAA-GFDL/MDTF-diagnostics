@@ -10,57 +10,17 @@
 // as blank lines (JSONC quasi-standard.)
 {
   "case_list" : [
-    // The cases below correspond to the different sample model data sets. Note
-    // that the MDTF package does not currently support analyzing multiple
-    // models in a single invocation. Comment out or delete the first entry and
-    // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
-    // and likewise for the SM_ET_coupling POD.
     {
-      "CASENAME" : "QBOi.EXP1.AMIP.001",
-      "model" : "CESM",
-      "convention" : "CESM",
-      "FIRSTYR" : 1977,
-      "LASTYR" : 1981,
-      "pod_list": [
-          // Optional: PODs to run for this model only (defaults to all)
-          "Wheeler_Kiladis",
-          "EOF_500hPa",
-          "MJO_suite",
-          "MJO_teleconnection"
-          // "convective_transition_diag",
-          // "precip_diurnal_cycle",
-          // "ocn_surf_flux_diag",
-          // "mixed_layer_depth",
-          // "tropical_pacific_sea_level",
-          // "temp_extremes_distshape",
-          // "precip_buoy_diag"
-      ]
+      "CASENAME" : "SAM0-UNICON_r1i1p1f1_gn",
+      "model" : "SAM0-UNICON",
+      "convention" : "CMIP",
+      "FIRSTYR" : 1996,
+      "LASTYR" : 2014,
+      "pod_list": ["albedofb"]
     }
-    // {
-    //   "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
-    //   "model" : "AM4",
-    //   "convention" : "GFDL",
-    //   "FIRSTYR" : 1,
-    //   "LASTYR" : 10,
-    //   "pod_list" : ["MJO_prop_amp"]
-    // }
-    // {
-    //   "CASENAME" : "Lmon_GISS-E2-H_historical_r1i1p1",
-    //   "model" : "CMIP",
-    //   "convention" : "CMIP",
-    //   "FIRSTYR" : 1951,
-    //   "LASTYR" : 2005,
-    //   "pod_list" : ["SM_ET_coupling"]
-    // }
-    // {
-    //   "CASENAME" : "NCAR-CAM5.timeslice",
-    //   "model" : "CESM",
-    //   "convention" : "CMIP",
-    //   "FIRSTYR" : 2000,
-    //   "LASTYR" : 2004,
-    //   "pod_list": ["example"]
-    // }
   ],
+  //    "FIRSTYR" : 1979,
+  //      "pod_list": ["seaice_suite"]
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
 
@@ -69,12 +29,12 @@
   // "$" and will be expended to their current values when the framework runs.
 
   // Parent directory containing observational data used by individual PODs.
-  "OBS_DATA_ROOT": "../inputdata/obs_data/",
+  "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Parent directory containing results from different models.
   "MODEL_DATA_ROOT": "../inputdata/model/",
 
-  // Working directory. Defaults to OUTPUT_DIR if blank.
+  // Working directory. Defaults to working directory if blank.
   "WORKING_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be

@@ -1,0 +1,45 @@
+// albedofb pod settings for MDTF diagnostic 
+//
+// This should be an ascii text file in JSON format 
+// (https://en.wikipedia.org/wiki/JSON#Data_types_and_syntax), with the addition
+// that all text to the  right of a "//" is a comment and ignored (sometimes 
+// called "JSONC" format).
+// 
+{
+  "settings" : {
+    "driver" : "albedofb.py",
+    "long_name" : "Surface Albedo Feedback Diagnostics",
+    "realm" : "atmos",
+    "description" : "Surface Albedo Feedback Diagnostics",
+    "runtime_requirements": {
+        "python3": ["numpy", "scipy", "matplotlib", "xarray", "netCDF4", "cartopy", "pandas", "xesmf","dask"]
+    }
+  },
+  "varlist" : [
+    {
+    "var_name": "tas_var",
+    "freq": "mon",
+    "requirement" : "required"
+    },
+    {
+    "var_name": "rsdt_var",
+    "freq": "mon",
+    "requirement" : "required"
+    },
+    {
+    "var_name": "rsds_var",
+    "freq": "mon",
+    "requirement" : "required"
+    },
+    {
+    "var_name": "rsut_var",
+    "freq": "mon",
+    "requirement" : "required"
+    },
+    {
+    "var_name": "rsus_var",
+    "freq": "mon",
+    "requirement" : "required"
+    }
+  ]
+}

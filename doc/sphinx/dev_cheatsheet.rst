@@ -50,7 +50,7 @@ Notes:
       - variable units
       - variable dimensions (e.g., [time, lat, lon])
       - scalar coordinates for variables defined on a specific atmospheric pressure level (e.g. ``{"lev": 250}`` for a field on the 250-hPa p level).
-   - If your variable is not in the necessary fieldlist file(s), add them to the file(s), or open an issue on GitHub requesting that the framework team add them. Once the files are updated, merge the changes from the develop branch into your POD branch. 
+   - If your variable is not in the necessary fieldlist file(s), add them to the file(s), or open an issue on GitHub requesting that the framework team add them. Once the files are updated, merge the changes from the main branch into your POD branch. 
    - Note that the variable name and the standard name must be unique fieldlist entries
 - Environment variables
    - To define an environment variable specific to your POD, add a ``"pod_env_vars"`` block to the ``"settings"`` block in your POD's ``settings.jsonc`` file and define the desired variables 

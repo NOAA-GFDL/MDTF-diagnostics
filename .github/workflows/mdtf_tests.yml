@@ -7,11 +7,10 @@ on:
   push:
     branches:
       - main
-      - develop
+      - add_albedo_fb_to_ci
   pull_request:
     branches:
       - main
-      - develop
 defaults:
   run:
     shell: bash -l {0}
@@ -175,11 +174,13 @@ jobs:
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/tropical_pacific_sea_level_obs_data.tar.gz --output tropical_pacific_sea_level_obs_data.tar.gz
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/mixed_layer_depth_obs_data.tar --output mixed_layer_depth_obs_data.tar
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/ocn_surf_flux_diag_obs_data.tar --output ocn_surf_flux_diag_obs_data.tar
+        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/albedofb_obs_data.tar --output albedofb_obs_data.tar
         echo "Untarring set 3 test files"
         tar -xvf temp_extremes_distshape_obs_data.tar
         tar -zxvf tropical_pacific_sea_level_obs_data.tar.gz
         tar -xvf mixed_layer_depth_obs_data.tar
         tar -xvf ocn_surf_flux_diag_obs_data.tar
+        tar -xvf albedofb_obs_data.tar
         # clean up tarballs
         rm -f *.tar
         rm -f *.tar.gz

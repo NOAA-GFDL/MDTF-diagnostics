@@ -93,7 +93,7 @@ jobs:
         # generate the data and run unit tests
         mdtf_synthetic.py -c GFDL --startyear 1 --nyears 10 --unittest
         mdtf_synthetic.py -c NCAR --startyear 1975 --nyears 7
-        mdtf_synthetic.py -c CMIP --startyear 1 --nyears 10
+        mdtf_synthetic.py -c CMIP --startyear 1900 --nyears 15
         cd ../
         mkdir wkdir
     - name: Get Observational Data for Set 1

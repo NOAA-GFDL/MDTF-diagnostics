@@ -73,14 +73,19 @@ matplotlib.use('Agg')  # non-X windows backend
 
 
 def readindata(file, varname='siconc', firstyr='1979', lastyr='2014'):
+    print("file ", file)
     ds = xr.open_dataset(file)
-    ds = ds.sel(time=slice(firstyr+'-01-01',lastyr+'-12-31'))  # limit to yrs of interest, maybe model dep
+    ds = ds.sel(time=slice(firstyr.zfill(4)+'-01-01', lastyr.zfill(4)+'-12-31'))  # limit to yrs of interest, maybe model dep
     print('Limit domain to Arctic to match obs')  # script would work fine if data were global
-    ds = ds.where(ds.latitude>30.,drop=True)  # limit to arctic for now, remove later
+    if "latitude" in list(ds.keys()):
+        ds = ds.where(ds.latitude > 30., drop=True)  # limit to arctic for now, remove later
+    elif "lat" in list(ds.keys()):
+        ds = ds.where(ds.lat > 30., drop=True)
     field = ds[varname]
     field.name = varname
-
-    if field.isel(time=0).max().values > 50.0:  # ensure we are [0,1] not [0,100]#
+    print("varname ", varname)
+    print(field.values)
+    if field.values.any() > 50.0:  # ensure we are [0,1] not [0,100]#
         field=field*0.01
     ds.close()
     return field
@@ -91,19 +96,18 @@ input_file = "{DATADIR}/mon/{CASENAME}.{siconc_var}.mon.nc".format(**os.environ)
 obsoutput_dir = "{WK_DIR}/obs/".format(**os.environ)
 modoutput_dir = "{WK_DIR}/model/".format(**os.environ)
 figures_dir = "{WK_DIR}/model/".format(**os.environ)
-#obs_file = '{OBS_DATA}/HadISST_ice_1979-2016_grid_nh.nc'.format(**os.environ)
-obs_file = '{OBS_DATA}/HadISST_ice.nc'.format(**os.environ)
+obs_file = '{OBS_DATA}/HadISST_ice_1979-2016_grid_nh.nc'.format(**os.environ)
 proc_obs_file = obsoutput_dir+'/HadISST_stats_1979-2014.nc'.format(**os.environ)
 proc_mod_file = modoutput_dir+'/seaice_fullfield_stats.nc'
 
-modelname = "{model}".format(**os.environ)
+modelname = "{CASENAME}".format(**os.environ)
 siconc_var = "{siconc_var}".format(**os.environ)
 firstyr = "{FIRSTYR}".format(**os.environ)
 lastyr = "{LASTYR}".format(**os.environ)
 
 processmod = not(os.path.isfile(proc_mod_file))  # check if obs proc file exists
 if processmod:
-    field = readindata(input_file, 'siconc',firstyr,lastyr)
+    field = readindata(input_file, 'siconc', firstyr, lastyr)
 
 processobs = not(os.path.isfile(proc_obs_file)) # check if obs proc file exists
 if processobs:  # if no proc file then must get obs and process

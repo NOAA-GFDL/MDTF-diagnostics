@@ -7,14 +7,15 @@
       "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231",
       "model" : "synthetic",
       "convention" : "CMIP",
-      "FIRSTYR" : 1,
-      "LASTYR" : 10,
+      "FIRSTYR" : 1903,
+      "LASTYR" : 1913,
       "pod_list": [
          "temp_extremes_distshape",
          "tropical_pacific_sea_level",
          "ocn_surf_flux_diag",
          "mixed_layer_depth",
-         "albedofb"
+         "albedofb",
+         "seaice_suite"
       ]
     }
   ],

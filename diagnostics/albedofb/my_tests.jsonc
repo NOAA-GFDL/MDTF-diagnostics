@@ -22,7 +22,7 @@
       "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231",
       "model" : "synthetic",
       "convention" : "CMIP",
-      "FIRSTYR" : 1,
+      "FIRSTYR" : 2,
       "LASTYR" : 10,
       "pod_list": [
           "albedofb"

@@ -37,6 +37,13 @@
 		}
 	},
 	"varlist": {
+	    "areacella": {
+			"standard_name": "cell_area",
+			"dimensions": ["lat", "lon"],
+			"units": "m2",
+			"modifier" : "atmos_realm",
+			"requirement": "required"
+		},
 		"tas": {
 			"standard_name": "air_temperature",
 			"frequency": "mon",

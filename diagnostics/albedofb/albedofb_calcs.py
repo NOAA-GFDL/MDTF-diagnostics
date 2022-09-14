@@ -91,9 +91,9 @@ def climatology(field=None):
     residuals: xarray.DataArray, dims of year, month, space
     """
     
-    NY=int(field['time'].sizes['time']/12)
+    NY = int(field['time'].sizes['time']/12)
 
-    field=xr_reshape(field,'time',['year','month'],[np.arange(NY),np.arange(12)])
+    field = xr_reshape(field,'time',['year','month'],[np.arange(NY),np.arange(12)])
     themean = field.mean(dim='year')
 
     return themean
@@ -152,7 +152,7 @@ def process_data(kernel_file, sensitivity_file):
     FSDS_var = "{rsds_var}".format(**os.environ)
     FSUT_var = "{rsut_var}".format(**os.environ)
     FSUS_var = "{rsus_var}".format(**os.environ)
-    TAS_var  = "{tas_var}".format(**os.environ)
+    TAS_var = "{tas_var}".format(**os.environ)
     
     # set up files for input data 
     FSDT_input_file = "{DATADIR}/mon/{CASENAME}.{rsdt_var}.mon.nc".format(**os.environ)
@@ -160,24 +160,25 @@ def process_data(kernel_file, sensitivity_file):
     FSUT_input_file = "{DATADIR}/mon/{CASENAME}.{rsut_var}.mon.nc".format(**os.environ)
     FSUS_input_file = "{DATADIR}/mon/{CASENAME}.{rsus_var}.mon.nc".format(**os.environ)
     TAS_input_file  = "{DATADIR}/mon/{CASENAME}.{tas_var}.mon.nc".format(**os.environ)
-    area_input_file = "{DATADIR}/mon/areacella_fx_{model}_r1i1p1f1_gn.nc".format(**os.environ)
+    #area_input_file = "{DATADIR}/mon/areacella_fx_{model}_r1i1p1f1_gn.nc".format(**os.environ)
+    area_input_file = "{DATADIR}/{CASENAME}.areacella.static.nc".format(**os.environ)
+    print("area input file", area_input_file)
+    # read in flux data, compute climatologies
+    dt = readandclimo(FSDT_var, FSDT_input_file)
+    ds = readandclimo(FSDS_var, FSDS_input_file)
+    ut = readandclimo(FSUT_var, FSUT_input_file)
+    us = readandclimo(FSUS_var, FSUS_input_file)
 
-    # read in flux data, compute climatoligies
-    dt = readandclimo(FSDT_var,FSDT_input_file)
-    ds = readandclimo(FSDS_var,FSDS_input_file)
-    ut = readandclimo(FSUT_var,FSUT_input_file)
-    us = readandclimo(FSUS_var,FSUS_input_file)   
-
-    kernel,albedo=kernelalbedo(dt, ds, ut, us)
-    histmod=xr.merge([kernel,albedo])
+    kernel, albedo = kernelalbedo(dt, ds, ut, us)
+    histmod = xr.merge([kernel, albedo])
     histmod.to_netcdf(kernel_file)
 
     # get timeseries needed to compute trends
-    tas=xr.open_dataset(TAS_input_file)
-    tas=tas[TAS_var]
-    fx=xr.open_dataset(area_input_file)
-    fx=fx['areacella']
-    Tglob=globalmean(tas, fx)
+    tas = xr.open_dataset(TAS_input_file)
+    tas = tas[TAS_var]
+    fx = xr.open_dataset(area_input_file)
+    fx = fx['areacella']
+    Tglob = globalmean(tas, fx)
     Tglobtrend = Tglob.groupby('time.month').apply(linear_trend)
 
     ds = xr.open_dataset(FSDS_input_file)
@@ -199,7 +200,6 @@ def process_data(kernel_file, sensitivity_file):
     return
     
 if __name__ == '__main__':
-
     process_data(kernel_file, sensitivity_file)
 
 

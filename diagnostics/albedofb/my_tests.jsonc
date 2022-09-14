@@ -10,13 +10,23 @@
 // as blank lines (JSONC quasi-standard.)
 {
   "case_list" : [
-    {
-      "CASENAME" : "SAM0-UNICON_r1i1p1f1_gn",
-      "model" : "SAM0-UNICON",
+   // {
+   //   "CASENAME" : "SAM0-UNICON_r1i1p1f1_gn",
+  //    "model" : "SAM0-UNICON",
+   //   "convention" : "CMIP",
+   //   "FIRSTYR" : 1996,
+   //   "LASTYR" : 2014,
+    //  "pod_list": ["albedofb"]
+    //}
+     {
+      "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231",
+      "model" : "synthetic",
       "convention" : "CMIP",
-      "FIRSTYR" : 1996,
-      "LASTYR" : 2014,
-      "pod_list": ["albedofb"]
+      "FIRSTYR" : 1,
+      "LASTYR" : 10,
+      "pod_list": [
+          "albedofb"
+      ]
     }
   ],
   //    "FIRSTYR" : 1979,
@@ -32,7 +42,7 @@
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "../inputdata/model/",
+  "MODEL_DATA_ROOT": "/net/jml/mdtf_test_data",
 
   // Working directory. Defaults to working directory if blank.
   "WORKING_DIR": "../wkdir",
@@ -44,13 +54,13 @@
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned by running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  "conda_root": "",
+  "conda_root": "/net/jml/miniconda3",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in the system default
   // location.
-  "conda_env_root": "",
+  "conda_env_root": "/net/jml/miniconda3/envs",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
@@ -71,7 +81,7 @@
   "save_nc": false,
 
   // Set to true to save HTML and bitmap plots in a .tar file.
-  "make_variab_tar": true,
+  "make_variab_tar": false,
 
   // Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
   // under a unique name.

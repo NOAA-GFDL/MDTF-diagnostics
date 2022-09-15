@@ -98,9 +98,9 @@ jobs:
         rm -f *.tar
         rm -f *.tar.gz
     - uses: pCYSl5EDgo/cat@master
-      id: cat
-      with:
+      with: 
         path: wkdir/CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231/albedofb/albedofb.log
+      id: cat
     - name: Run diagnostic tests set 3
       continue-on-error: true
       run: |
@@ -108,6 +108,7 @@ jobs:
         # run the test PODs
         echo "${CWD}"
         ./mdtf -v -f ${{matrix.json-file-set3}}
+        ls wkdir/*/*
         echo $TEXT
       env:
         TEXT: ${{ steps.cat.outputs.albedofb.log }}

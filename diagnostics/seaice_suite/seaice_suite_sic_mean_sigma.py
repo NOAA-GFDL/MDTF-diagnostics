@@ -91,14 +91,6 @@ def readindata(file, varname='siconc', firstyr='1979', lastyr='2014'):
 
 
 # 1) Loading model data files:
-#os.environ["DATADIR"] ="/net/jml/mdtf_test_data"
-#os.environ["FIRSTYR"] = "1990"
-#os.environ["LASTYR"] = "2009"
-#os.environ["WK_DIR"] = "/net/jml/mdtf/wkdir/temp"
-#os.environ["CASENAME"] = "CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231"
-#os.environ["OBS_DATA"] = "/net/jml/mdtf/inputdata/obs_data/seaice_suite"
-#os.environ["siconc_var"] = "siconc"
-#input_file = "{DATADIR}/{CASENAME}/mon/{CASENAME}.{siconc_var}.mon.nc".format(**os.environ)
 input_file = "{DATADIR}/mon/{CASENAME}.{siconc_var}.mon.nc".format(**os.environ)
 obsoutput_dir = "{WK_DIR}/obs/".format(**os.environ)
 modoutput_dir = "{WK_DIR}/model/".format(**os.environ)

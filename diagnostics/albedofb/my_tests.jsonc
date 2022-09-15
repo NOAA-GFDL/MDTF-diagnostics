@@ -19,11 +19,11 @@
     //  "pod_list": ["albedofb"]
     //}
      {
-      "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231",
+      "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231",
       "model" : "synthetic",
       "convention" : "CMIP",
-      "FIRSTYR" : 2,
-      "LASTYR" : 10,
+      "FIRSTYR" : 1991,
+      "LASTYR" : 2000,
       "pod_list": [
           "albedofb"
       ]

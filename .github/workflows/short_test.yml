@@ -46,6 +46,10 @@ jobs:
         python-version: 3.7
         mamba-version: "*"
         channels: conda-forge,defaults
+    - uses: pCYSl5EDgo/cat@master
+      id: cat
+      with: 
+        path: wkdir/CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231/albedofb/albedofb.log
     - name: Verify miniconda
       run: |
         conda info -a
@@ -97,10 +101,6 @@ jobs:
         # clean up tarballs
         rm -f *.tar
         rm -f *.tar.gz
-    - uses: pCYSl5EDgo/cat@master
-      with: 
-        path: wkdir/CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231/albedofb/albedofb.log
-      id: cat
     - name: Run diagnostic tests set 3
       continue-on-error: true
       run: |

@@ -6,10 +6,10 @@ name: MDTF_short_test
 on:
   push:
     branches:
-      - add_albedo_fb_to_ci
+      - add_albedofb_to_ci
   pull_request:
     branches:
-      - add_albedo_fb_to_ci
+      - add_albedofb_to_ci
 defaults:
   run:
     shell: bash -l {0}
@@ -39,6 +39,10 @@ jobs:
       max-parallel: 2
     steps:
     - uses: actions/checkout@v2
+    - uses: pCYSl5EDgo/cat@master
+        id: cat
+        with:
+          path: wkdir/CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231/albedofb/albedofb.log
     - name: Download Miniconda 3
       uses: conda-incubator/setup-miniconda@v2
       with:
@@ -105,6 +109,9 @@ jobs:
         echo "${CWD}"
         ./mdtf -v -f ${{matrix.json-file-set3}}
         ls wkdir/*/*
+        echo $TEXT
+      env:
+        TEXT: ${{ steps.cat.outputs.albedofb.log }}
 
         
 

@@ -15,8 +15,8 @@
           "tropical_pacific_sea_level",
           "ocn_surf_flux_diag",
           "mixed_layer_depth",
-          "albedofb",
           "seaice_suite"
+          // "albedofb"
       ]
     }
   ],

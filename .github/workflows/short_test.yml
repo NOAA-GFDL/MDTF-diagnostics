@@ -97,18 +97,17 @@ jobs:
         # clean up tarballs
         rm -f *.tar
         rm -f *.tar.gz
+    - uses: pCYSl5EDgo/cat@master
+      id: cat
+      with:
+        path: wkdir/CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231/albedofb/albedofb.log
     - name: Run diagnostic tests set 3
       continue-on-error: true
-      uses: pCYSl5EDgo/cat@master
-      id: cat
-        with:
-          path: wkdir/CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231/albedofb/albedofb.log
       run: |
         conda activate _MDTF_base
         # run the test PODs
         echo "${CWD}"
         ./mdtf -v -f ${{matrix.json-file-set3}}
-
-    - run: echo $TEXT
-          env:
-            TEXT: ${{ steps.cat.outputs.albedofb.log }}
+        echo $TEXT
+      env:
+        TEXT: ${{ steps.cat.outputs.albedofb.log }}

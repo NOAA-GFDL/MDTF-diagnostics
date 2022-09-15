@@ -1,7 +1,7 @@
 # This file builds and runs a lightweight version of the MDTF test suite.
 # Note that the tests assess functionality of the diagnostics,
 # and do not evaluate data or scientific content.
-name: MDTF_test
+name: MDTF_short_test
 
 on:
   push:

@@ -82,36 +82,46 @@ def readindata(file, varname='siconc', firstyr='1979', lastyr='2014'):
     elif "lat" in list(ds.keys()):
         ds = ds.where(ds.lat > 30., drop=True)
     field = ds[varname]
+    if field.values[:, :, 3].max() > 1.5:  # ensure we are [0,1] not [0,100]#
+        field.values = field.values*0.01
     field.name = varname
     print("varname ", varname)
-    print(field.values)
-    if field.values.any() > 50.0:  # ensure we are [0,1] not [0,100]#
-        field=field*0.01
     ds.close()
     return field
 
 
 # 1) Loading model data files:
+#os.environ["DATADIR"] ="/net/jml/mdtf_test_data"
+#os.environ["FIRSTYR"] = "1990"
+#os.environ["LASTYR"] = "2009"
+#os.environ["WK_DIR"] = "/net/jml/mdtf/wkdir/temp"
+#os.environ["CASENAME"] = "CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231"
+#os.environ["OBS_DATA"] = "/net/jml/mdtf/inputdata/obs_data/seaice_suite"
+#os.environ["siconc_var"] = "siconc"
+#input_file = "{DATADIR}/{CASENAME}/mon/{CASENAME}.{siconc_var}.mon.nc".format(**os.environ)
 input_file = "{DATADIR}/mon/{CASENAME}.{siconc_var}.mon.nc".format(**os.environ)
 obsoutput_dir = "{WK_DIR}/obs/".format(**os.environ)
 modoutput_dir = "{WK_DIR}/model/".format(**os.environ)
 figures_dir = "{WK_DIR}/model/".format(**os.environ)
 obs_file = '{OBS_DATA}/HadISST_ice_1979-2016_grid_nh.nc'.format(**os.environ)
-proc_obs_file = obsoutput_dir+'/HadISST_stats_1979-2014.nc'.format(**os.environ)
-proc_mod_file = modoutput_dir+'/seaice_fullfield_stats.nc'
+proc_obs_file = obsoutput_dir+'HadISST_stats_1979-2014.nc'.format(**os.environ)
+proc_mod_file = modoutput_dir+'seaice_fullfield_stats.nc'
 
 modelname = "{CASENAME}".format(**os.environ)
 siconc_var = "{siconc_var}".format(**os.environ)
 firstyr = "{FIRSTYR}".format(**os.environ)
 lastyr = "{LASTYR}".format(**os.environ)
+# obsfirstyr and obslastyr may be changed in the POD settings.jsonc file
+obsfirstyr = "{obsfirstyr}".format(**os.environ)
+obslastyr = "{obslastyr}".format(**os.environ)
 
 processmod = not(os.path.isfile(proc_mod_file))  # check if obs proc file exists
 if processmod:
-    field = readindata(input_file, 'siconc', firstyr, lastyr)
+    field = readindata(input_file, siconc_var, firstyr, lastyr)
 
 processobs = not(os.path.isfile(proc_obs_file)) # check if obs proc file exists
 if processobs:  # if no proc file then must get obs and process
-    obs = readindata(obs_file, 'sic', firstyr,lastyr)
+    obs = readindata(obs_file, 'sic', firstyr=obsfirstyr, lastyr=obslastyr)
 
 
 def mainmonthlystats(field=None, firstyr=1979, lastyr=2014):
@@ -126,10 +136,10 @@ def mainmonthlystats(field=None, firstyr=1979, lastyr=2014):
     themean, thestd, trend, detrendedstd: xarray.DataArray, dims of month, space
     residuals: xarray.DataArray, dims of year, month, space
     """
-    firstyr=int(firstyr)
-    lastyr=int(lastyr)
+    firstyr = int(firstyr)
+    lastyr = int(lastyr)
     
-    field=xr_reshape(field,'time',['year','month'],[np.arange(firstyr,lastyr+1),np.arange(12)])
+    field = xr_reshape(field,'time',['year','month'],[np.arange(firstyr,lastyr+1),np.arange(12)])
     print('computing trend, this may take a few minutes')
     trend, intercept = xr.apply_ufunc(_lrm, field.year, field,
                            input_core_dims=[['year'], ['year']],
@@ -145,11 +155,11 @@ def mainmonthlystats(field=None, firstyr=1979, lastyr=2014):
     thestd = field.std(dim='year')
     detrendedstd = residuals.std(dim='year')
     
-    themean.name='themean'
-    thestd.name='thestd'
-    trend.name='trend'
-    detrendedstd.name='detrended_std'
-    residuals.name='residuals'
+    themean.name = 'themean'
+    thestd.name = 'thestd'
+    trend.name = 'trend'
+    detrendedstd.name = 'detrended_std'
+    residuals.name = 'residuals'
 
     return themean, thestd, trend, detrendedstd, residuals
 
@@ -187,12 +197,12 @@ def lagcorr(residuals, lag=1):
     return rlag
 
 
-def processandsave(field,file_out,firstyr=1979,lastyr=2014):
+def processandsave(field, file_out, firstyr=1979, lastyr=2014):
     # 2) Doing computations on model or obs:
     # this takes about a few min on data that is already limited to the Arctic
     # recommend using DASK if you decide to compute global metrics
     # residuals are detrended field for each month, effectively making them detrended and deseasonalized
-    themean, thestd, trend, detrendedstd, residuals = mainmonthlystats(field,firstyr,lastyr)
+    themean, thestd, trend, detrendedstd, residuals = mainmonthlystats(field, firstyr, lastyr)
     print('main stats done')
     onemolagcorr=lagcorr(residuals,1) 
     oneyrlagcorr=lagcorr(residuals,12)
@@ -225,7 +235,7 @@ if processmod:
     processandsave(field, proc_mod_file, firstyr, lastyr)
 
 if processobs:
-    processandsave(obs, proc_obs_file, firstyr, lastyr)
+    processandsave(obs, proc_obs_file, obsfirstyr, obslastyr)
 
 # 4) Read processed data, regrid model to obs grid, plot, saving figures:
 

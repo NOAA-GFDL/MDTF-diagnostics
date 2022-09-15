@@ -16,6 +16,10 @@
         "pandas",
         "cartopy"
       ]
+    },
+    "pod_env_vars" : {
+        "obsfirstyr": "1979",
+        "obslastyr": "2014"
     }
   },
   "dimensions": {

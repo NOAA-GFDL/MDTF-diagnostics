@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - add_albedo_fb_to_ci
   pull_request:
     branches:
       - main

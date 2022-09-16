@@ -1,22 +1,31 @@
-// Configuration for MDTF-diagnostics driver script self-test using the macOS github action.
+// Configuration for MDTF-diagnostics driver script self-test.
+//
+// Copy this file and customize the settings as needed to run the framework on
+// your own model output without repeating command-line options. Pass it to the
+// framework at the end of the command line (positionally) or with the
+// -f/--input-file flag. Any other explicit command line options will override
+// what's listed here.
 //
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.)
 {
   "case_list" : [
-    {
+   // {
+   //   "CASENAME" : "SAM0-UNICON_r1i1p1f1_gn",
+  //    "model" : "SAM0-UNICON",
+   //   "convention" : "CMIP",
+   //   "FIRSTYR" : 1996,
+   //   "LASTYR" : 2014,
+    //  "pod_list": ["albedofb"]
+    //}
+     {
       "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231",
       "model" : "synthetic",
       "convention" : "CMIP",
       "FIRSTYR" : 1990,
       "LASTYR" : 2009,
       "pod_list": [
-          "temp_extremes_distshape",
-          "tropical_pacific_sea_level",
-          "ocn_surf_flux_diag",
-          "mixed_layer_depth",
           "seaice_suite"
-          // "albedofb"
       ]
     }
   ],
@@ -31,7 +40,7 @@
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "../mdtf_test_data",
+  "MODEL_DATA_ROOT": "../inputdata/model",
 
   // Working directory. Defaults to working directory if blank.
   "WORKING_DIR": "../wkdir",
@@ -41,15 +50,15 @@
   "OUTPUT_DIR": "../wkdir",
 
   // Location of the Anaconda/miniconda installation to use for managing
-  // dependencies (path returned lsby running `conda info --base`.) If empty,
+  // dependencies (path returned by running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  "conda_root": "/Users/runner/miniconda3",
+  "conda_root": "",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in the system default
   // location.
-  "conda_env_root": "/Users/runner/miniconda3/envs",
+  "conda_env_root": "",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)

@@ -64,19 +64,17 @@ import albedofb_calcs
 # In[3]:
 
 
-podname='albedofb'
-
-model="{model}".format(**os.environ)
-modelname = "{model}".format(**os.environ)
+podname = 'albedofb'
 
 # these yrs only refer to the hist period for comparing kernel of mod to CERES
 firstyr = "{FIRSTYR}".format(**os.environ)
 lastyr = "{LASTYR}".format(**os.environ)
 
-wk_dir="{WK_DIR}".format(**os.environ)
-obs_dir="{OBS_DATA}/".format(**os.environ)
+wk_dir = "{WK_DIR}".format(**os.environ)
+obs_dir = "{OBS_DATA}/".format(**os.environ)
 output_dir = wk_dir+'/model/'
 figures_dir = wk_dir+'/model/'
+modelname = "{CASENAME}".format(**os.environ)
 
 
 # In[4]:
@@ -89,15 +87,15 @@ kernel_obs_file = obs_dir+'CERES40_surface_albedo_kernel_2000-2018_MJJA.nc'
 sensitivity_obs_file = obs_dir+'CERES40_surface_sensitivity_MJJA.nc'
 
 # model output file names, to compute next
-kernel_histmod_file=output_dir+'surface_albedo_kernel_'+firstyr+'-'+lastyr+'.nc'    
-sensitivity_histmod_file=output_dir+'surface_albedo_sensitivity_'+firstyr+'-'+lastyr+'.nc' 
+kernel_histmod_file = output_dir+'surface_albedo_kernel_'+firstyr+'-'+lastyr+'.nc'
+sensitivity_histmod_file = output_dir+'surface_albedo_sensitivity_'+firstyr+'-'+lastyr+'.nc'
 
 
 # In[5]:
 
 
 # the albedo feedback modeling is done here, used same code to process CERES40 that is provided 
-albedofb_calcs.process_data(kernel_histmod_file,sensitivity_histmod_file)
+albedofb_calcs.process_data(kernel_histmod_file, sensitivity_histmod_file)
 
 
 # In[6]:
@@ -116,7 +114,7 @@ histmodalbedo = mod_dataset.albedo
 method = 'nearest_s2d'
 regridder = xe.Regridder(mod_dataset, obs_dataset, method, periodic=False, reuse_weights=False)
 
-modregrid=regridder(mod_dataset)                      # regrid model to obs grid
+modregrid = regridder(mod_dataset)                      # regrid model to obs grid
 histmodregridkernel = modregrid.kernel
 histmodregridalbedo = modregrid.albedo
 
@@ -159,7 +157,7 @@ fig = plt.figure(figsize=figsize)
 fig.suptitle('Surface Albedo Kernel from Isotropic Model MJJA', fontsize=18)
 
 cmap_c = 'plasma'
-pl=pltpanel(histmodkernel.sel(month=slice(4,7)).mean(dim='month'),modelname+' 1996-2014',subs=131,cmap_c = cmap_c)
+pl=pltpanel(histmodkernel.sel(month=slice(4,7)).mean(dim='month'), modelname +' 1996-2014',subs=131,cmap_c = cmap_c)
 pl.set_clim([0,3.1])
 pl=pltpanel(obskernel.sel(month=slice(4,7)).mean(dim='month'),'CERES EBAF 2000-2018',subs=132,cmap_c = cmap_c)
 pl.set_clim([0,3.1])

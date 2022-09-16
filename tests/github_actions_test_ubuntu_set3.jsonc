@@ -4,16 +4,18 @@
 {
   "case_list" : [
     {
-      "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_00010101-00101231",
+      "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231",
       "model" : "synthetic",
       "convention" : "CMIP",
-      "FIRSTYR" : 1,
-      "LASTYR" : 10,
+      "FIRSTYR" : 1990,
+      "LASTYR" : 2009,
       "pod_list": [
          "temp_extremes_distshape",
          "tropical_pacific_sea_level",
          "ocn_surf_flux_diag",
-         "mixed_layer_depth"
+         "mixed_layer_depth",
+         "seaice_suite"
+         // "albedofb"
       ]
     }
   ],

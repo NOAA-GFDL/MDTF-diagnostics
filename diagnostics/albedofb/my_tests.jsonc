@@ -10,13 +10,23 @@
 // as blank lines (JSONC quasi-standard.)
 {
   "case_list" : [
-    {
-      "CASENAME" : "SAM0-UNICON_r1i1p1f1_gn",
-      "model" : "SAM0-UNICON",
+   // {
+   //   "CASENAME" : "SAM0-UNICON_r1i1p1f1_gn",
+  //    "model" : "SAM0-UNICON",
+   //   "convention" : "CMIP",
+   //   "FIRSTYR" : 1996,
+   //   "LASTYR" : 2014,
+    //  "pod_list": ["albedofb"]
+    //}
+     {
+      "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231",
+      "model" : "synthetic",
       "convention" : "CMIP",
-      "FIRSTYR" : 1996,
-      "LASTYR" : 2014,
-      "pod_list": ["albedofb"]
+      "FIRSTYR" : 1991,
+      "LASTYR" : 2000,
+      "pod_list": [
+          "albedofb"
+      ]
     }
   ],
   //    "FIRSTYR" : 1979,
@@ -32,7 +42,7 @@
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "../inputdata/model/",
+  "MODEL_DATA_ROOT": "../inputdata/model",
 
   // Working directory. Defaults to working directory if blank.
   "WORKING_DIR": "../wkdir",
@@ -71,7 +81,7 @@
   "save_nc": false,
 
   // Set to true to save HTML and bitmap plots in a .tar file.
-  "make_variab_tar": true,
+  "make_variab_tar": false,
 
   // Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
   // under a unique name.

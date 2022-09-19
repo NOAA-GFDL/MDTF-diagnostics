@@ -781,7 +781,3 @@ class SingleLocalFileDataSource(LocalFileDataSource, ABC):
                     "Query found multiple files when one was expected:",
                     d_key, log=var.log
                 )
-
-
-
-

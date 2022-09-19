@@ -217,10 +217,6 @@ class VarlistEntryMixin(object):
         # set up log (VarlistEntryLoggerMixin)
         self.init_log()
         data_model.DMVariable.__post_init__(self, coords)
-        # NOTE: this doesn't quite work b/c it appends empty fields to each instance. Need another way to specify
-        # so these atts can be overridden
-        #self.path_variable: str = dc.field(default="", compare=False)
-        #self.dest_path: str = ""
 
         # (re)initialize mutable fields here so that if we copy VE (eg with .replace)
         # the fields on the copy won't point to the same object as the fields on
@@ -899,7 +895,6 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             except util.WormKeyError:
                 continue
 
-
 @util.mdtf_dataclass
 class MultirunVarlistEntry(VarlistEntryMixin, VarlistEntryBase, core.MDTFObjectBase,
                            data_model.DMVariable, _VarlistGlobalSettings,
@@ -1247,4 +1242,3 @@ class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
         """
         config = core.ConfigManager()
         return cls.from_struct(pod_name, config.pod_data[pod_name], parent)
-

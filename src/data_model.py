@@ -44,11 +44,7 @@ class AbstractDMCoordinate(abc.ABC):
     @property
     @abc.abstractmethod
     def bounds(self):
-<<<<<<< HEAD
         """Associated bounds variable for the coordinate, if present (else None.)
-=======
-        """Associated bounds variable for the coordinate.
->>>>>>> f36cb66e (Document internal APIs (#274))
         """
         pass
 
@@ -206,17 +202,10 @@ class _DMCoordinateShared(object):
 
     @property
     def bounds(self):
-<<<<<<< HEAD
         """The *bounds_var* attribute is stored as a pointer to the actual object
         representing the bounds variable for this coordinate, but in order to
         parallel xarray's syntax define 'bounds' to return the name of this
         variable, not the variable itself.
-=======
-        """Store *bounds_var* as a pointer to the actual object representing the
-        bounds variable for this coordinate, but in order to parallel xarray's
-        syntax define 'bounds' to return the name of this variable, not the
-        variable itself.
->>>>>>> f36cb66e (Document internal APIs (#274))
         """
         if not hasattr(self.bounds_var, 'name'):
             return None
@@ -640,11 +629,7 @@ class _DMDimensionsMixin(object):
         them to new classes.
 
         Args:
-<<<<<<< HEAD
             ax_name: Name of the coordinate to modify.
-=======
-            ax_name: Name of the coodinate to modify.
->>>>>>> f36cb66e (Document internal APIs (#274))
             new_class (optional): new class to cast the returned coordinate to.
             kwargs: Set of attribute names and values to replace on the returned
                 copy.
@@ -731,13 +716,8 @@ class DMDependentVariable(_DMDimensionsMixin):
 
     @property
     def axes(self):
-<<<<<<< HEAD
         """Superset of the :meth:`dim_axes` dict (whose values contain coordinate
         dimensions only) that includes axes corresponding to scalar coordinates.
-=======
-        """Superset of the :meth:`dim_axes` dict (whose values contain coordinate dimensions
-        only) that includes axes corresponding to scalar coordinates.
->>>>>>> f36cb66e (Document internal APIs (#274))
         """
         return self.build_axes(self.dims, self.scalar_coords, verify=False)
 
@@ -928,19 +908,11 @@ class DMDataSet(_DMDimensionsMixin):
         raise NotImplementedError()
 
     def change_coord(self, ax_name, new_class=None, **kwargs):
-<<<<<<< HEAD
         """Replace attributes on a given coordinate (*ax_name*), but also
         optionally cast them to new classes.
 
         Args:
             ax_name: Name of the coordinate to modify.
-=======
-        """Replace attributes on a given coordinate, but also optionally cast
-        them to new classes.
-
-        Args:
-            ax_name: Name of the coodinate to modify.
->>>>>>> f36cb66e (Document internal APIs (#274))
             new_class (optional): new class to cast the returned coordinate to.
             kwargs: Set of attribute names and values to replace on the returned
                 copy.
@@ -955,4 +927,3 @@ class DMDataSet(_DMDimensionsMixin):
                     raise
         # time coord for self derived from those for contents
         self.__post_init__(None, None)
-

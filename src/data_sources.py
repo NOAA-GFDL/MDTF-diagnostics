@@ -709,7 +709,3 @@ class MultirunCMIP6LocalFileDataSource(CMIP6LocalFileDataSource):
     """
     _DiagnosticClass = diagnostic.MultirunDiagnostic
     _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
-
-
-
-

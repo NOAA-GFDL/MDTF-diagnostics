@@ -284,7 +284,6 @@ class PathManager(util.Singleton, util.NameSpace):
             d.MODEL_OUT_DIR, _ = util.bump_version(d.MODEL_OUT_DIR, new_v=ver)
         return d
 
-
     def multirun_model_paths(self, pod, case):
         # define directory paths for multirun mode
         # Each case directory is a subdirectory in wk_dir/pod_name
@@ -302,7 +301,6 @@ class PathManager(util.Singleton, util.NameSpace):
         # Cases are located in a common POD directory
         d.MODEL_WK_DIR = os.path.join(pod.POD_WK_DIR, case_wk_dir)
         d.MODEL_OUT_DIR = os.path.join(pod.POD_OUT_DIR, case_wk_dir)
-
         return d
 
     def pod_paths(self, pod, case):
@@ -1248,5 +1246,3 @@ def print_summary(fmwk):
             _log.info(f"Summary for {case_name}:")
             _log.info(f"\tAll PODs exited normally.")
             _log.info(f"\tOutput written to {tup[2]}")
-
-

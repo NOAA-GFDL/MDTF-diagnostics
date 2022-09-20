@@ -9,7 +9,7 @@
    https://docutils.sourceforge.io/docs/user/rst/quickref.html#section-structure
 
 Tropical Pacific Sea Level Diagnostic Documentation 
-
+===================================================
 Last update: 11/16/2020
 
 Sea level rise is closely related to climate variability and change. It has 
@@ -78,7 +78,6 @@ With monthly frequency from the model output. This diagnostic needs
 
 input model variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 
 - tauuo (surface wind stress in the x direction from native model output resolution/grid) 
 - tauvo (surface wind stress in the y direction from native model output resolution/grid) 
@@ -161,4 +160,3 @@ tropical Pacific at seasonal time scale corrects a biased seasonal variability o
 equatorial counter-current in the CORE simulation. Both CORE and JRA55-do generate realistic 
 DSL variation during El Niño. We find an asymmetry in the DSL pattern on two sides of the equator
 is strongly related to wind stress curl that follows the sea level pressure evolution during El Niño.
-

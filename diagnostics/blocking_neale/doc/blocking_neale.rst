@@ -66,6 +66,7 @@ jsonc file:
    ==================  ====================
 
 
+
 2) Variables to control reading or writing of digested data 
 
    - ``MDTF_BLOCKING_READ_DIGESTED (Default True)``
@@ -168,6 +169,7 @@ References
    343-365, `doi:10.3402/tellusa.v42i3.11882 <https://doi.org/10.3402/tellusa.v42i3.11882>`__.
 
 .. _ref-DAndrea:
+
    2. D’Andrea, F., Tibaldi, S., Blackburn, M. et al. (1998): Northern
    Hemisphere atmospheric blocking as simulated by 15 atmospheric general
    circulation models in the period 1979–1988. *Climate Dynamics*, **14**,

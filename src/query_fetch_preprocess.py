@@ -668,10 +668,12 @@ class MultirunDataSourceQFPMixin(DataSourceQFPMixin, ABC):
                 return {'status_neq': core.ObjectStatus.ACTIVE}
         pod_kwargs = _get_kwargs(pod_active)
         var_kwargs = _get_kwargs(active)
-        for p in parent.iter_children(**pod_kwargs):  # _children returns pod values for multirun mode.
+       # for p in parent.iter_children(**pod_kwargs):  # _children returns pod values for multirun mode.
             # Defined in core.MDTFFramework
-            for v in self.iter_children(**var_kwargs):  # _children returns varlist values. Defined in data.sources
-                yield PodVarTuple(pod=p, var=v)
+        p = parent
+        for v in self.iter_children(**var_kwargs):  # _children returns varlist values. Defined in data.sources
+            yield PodVarTuple(pod=p, var=v)
+        print('test')
 
     def iter_vars_only(self, parent, active=None):
         """Convenience wrapper for :meth:`iter_vars` that returns only the
@@ -817,7 +819,8 @@ class MultirunDataSourceQFPMixin(DataSourceQFPMixin, ABC):
             for pv in vars_to_process:
                 try:
                     pv.var.log.info("Preprocessing %s.", pv.var)
-                    pv.pod.preprocessor.process(pv.var, self.name)
+                    parent.preprocessor.process(pv.var, self.name)
+ #                   pv.pod.preprocessor.process(pv.var, self.name)
                     pv.var.stage = diagnostic.VarlistEntryStage.PREPROCESSED
                 except Exception as exc:
                     update = True

@@ -134,7 +134,7 @@ class MultirunLocalFileDataSource(MultirunSampleLocalFileDataSource,
     # _AttributesClass = SampleDataAttributes
     # col_spec = sampleLocalFileDataSource_col_spec
     _DiagnosticClass = diagnostic.MultirunDiagnostic
-    _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
+   # _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
     varlist: diagnostic.MultirunVarlist = None
     # Override data_manager:DataSourceBase init method
 

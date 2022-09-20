@@ -45,6 +45,7 @@ class _VarlistTimeSettings(object):
     min_duration: str = util.NOTSET
     max_duration: str = util.NOTSET
 
+
 @util.mdtf_dataclass
 class VarlistSettings(_VarlistGlobalSettings, _VarlistTimeSettings):
     """Class to describe options affecting all variables requested by this POD.
@@ -58,6 +59,7 @@ class VarlistSettings(_VarlistGlobalSettings, _VarlistTimeSettings):
     def time_settings(self):
         return util.filter_dataclass(self, _VarlistTimeSettings)
 
+
 @util.mdtf_dataclass
 class VarlistCoordinateMixin(object):
     """Base class to describe a single dimension (in the netcdf data model sense)
@@ -65,6 +67,7 @@ class VarlistCoordinateMixin(object):
     "dimensions" section of the POD's settings.jsonc file.
     """
     need_bounds: bool = False
+
 
 @util.mdtf_dataclass
 class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
@@ -79,20 +82,24 @@ class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
     # bounds_in_model: str
     pass
 
+
 @util.mdtf_dataclass
 class VarlistLongitudeCoordinate(data_model.DMLongitudeCoordinate, \
     VarlistCoordinateMixin):
     range: tuple = None
+
 
 @util.mdtf_dataclass
 class VarlistLatitudeCoordinate(data_model.DMLatitudeCoordinate, \
     VarlistCoordinateMixin):
     range: tuple = None
 
+
 @util.mdtf_dataclass
 class VarlistVerticalCoordinate(data_model.DMVerticalCoordinate, \
     VarlistCoordinateMixin):
     pass
+
 
 @util.mdtf_dataclass
 class VarlistPlaceholderTimeCoordinate(data_model.DMGenericTimeCoordinate, \
@@ -864,7 +871,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             self.set_entry_point()
         except Exception as exc:
             raise util.PodRuntimeError("Caught exception during pre_run_setup",
-                self) from exc
+                                       self) from exc
 
     def set_pod_env_vars(self):
         """Sets all environment variables for the POD: paths and names of each

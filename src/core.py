@@ -1198,7 +1198,7 @@ class MDTFFramework(MDTFObjectBase):
                 _log.info(("### %s: Data request for pod '%s' failed; skipping "
                            "execution."), self.full_name, pod)
 
- #               out_mgr = self.OutputManager(pod_dict)
+                out_mgr = self.OutputManager(pod_dict)
  #               out_mgr.make_output()
         tempdirs = TempDirManager()
         tempdirs.cleanup()

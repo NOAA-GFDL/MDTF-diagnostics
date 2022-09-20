@@ -343,7 +343,7 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
                 var_iterator = [obj]
             else:
                 obj_name = "all POD's variables"
-                var_iterator = obj.iter_children(status=core.ObjectStatus.ACTIVE)
+                var_iterator = self.iter_children(status=core.ObjectStatus.ACTIVE)
         else:
             raise TypeError()
         key_col = col_group._expt_key_col  # name of the column for the expt_key
@@ -397,8 +397,9 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
         try:
             # attempt to choose same values for all PODs
             key = self.get_expt_key('pod', self, parent, self._id)
-            for p in parent.iter_children(status=core.ObjectStatus.ACTIVE):  # self._children = pods
-                self.set_expt_key(p, key)
+            #for p in parent.iter_children(status=core.ObjectStatus.ACTIVE):  # self._children = pods
+            p = parent
+            self.set_expt_key(p, key)
         except Exception:  # util.DataExperimentEvent:
             # couldn't do that, so allow different choices for each POD
             for p in parent.iter_children(status=core.ObjectStatus.ACTIVE):

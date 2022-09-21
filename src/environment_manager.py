@@ -11,6 +11,7 @@ import signal
 import typing
 import subprocess
 from src import util, core
+import yaml
 
 import logging
 _log = logging.getLogger(__name__)
@@ -633,9 +634,10 @@ class MultirunSubprocessRuntimePODWrapper(object):
 
         self.pod.log_file.write(self.pod.format_log(children=True))
         self.pod._log_handler.reset_buffer()
-        self.setup_env_vars(self.pod.cases)
+        self.write_case_env_file(self.pod.cases)
+        self.setup_env_vars()
 
-    def setup_env_vars(self, case_list):
+    def setup_env_vars(self):
         def _envvar_format(x):
             # environment variables must be strings
             if isinstance(x, str):
@@ -648,32 +650,38 @@ class MultirunSubprocessRuntimePODWrapper(object):
         skip_items = ['FIRSTYR', 'LASTYR', 'CASENAME']  # Omit per-case environment variables
         self.env_vars = {k: _envvar_format(v)
                          for k, v in self.pod.pod_env_vars.items() if k not in skip_items}
-        case_env_vars = dict()
-
-        for case_name, case in case_list.items():
-            case_env_vars[case_name] = {k: _envvar_format(v)
-                                        for k, v in case.env_vars.items()}
-            # append case environment vars
-            for v in case.iter_vars_only(case, active=True):
-                for kk, vv in v.env_vars.items():
-                    if v.name.lower() + '_var' in kk.lower():
-                        case_env_vars[case_name][kk] = v.name
-                    elif v.name.lower() + '_file' in kk.lower():
-                        case_env_vars[case_name][kk] = v.dest_path
-
-        self.env_vars["CASES"] = str([f"  {k}: {v}" for k, v in case_env_vars.items()])
 
         env_list = [f"  {k}: {v}" for k, v in self.env_vars.items()]
         self.pod.log_file.write("\n")
         self.pod.log_file.write("\n".join(["### Shell env vars: "] + sorted(env_list)))
         self.pod.log_file.write("\n\n")
 
+    def write_case_env_file(self, case_list):
+        out_file = os.path.join(self.pod.POD_WK_DIR, 'meta.yaml')
+        self.pod.pod_env_vars["case_env_file"] = out_file
+        case_info = dict()
+        for case_name, case in case_list.items():
+            case_info[case_name] = {k: v
+                                    for k, v in case.env_vars.items()}
+            # append case environment vars
+            for v in case.iter_vars_only(case, active=True):
+                for kk, vv in v.env_vars.items():
+                    if v.name.lower() + '_var' in kk.lower():
+                        case_info[case_name][kk] = v.name
+                    elif v.name.lower() + '_file' in kk.lower():
+                        case_info[case_name][kk] = v.dest_path
+
+        # case_info_str = str([f"  {k}: {v}" for k, v in case_info.items()])
+        f = open(out_file, 'w+')
+        assert (os.path.isfile(out_file))
+        yaml.dump(case_info, f, allow_unicode=True, default_flow_style=False)
+
     def setup_exception_handler(self, exc):
         chained_exc = util.chain_exc(exc, f"preparing to run {self.pod.full_name}.",
-            util.PodRuntimeError)
+                                     util.PodRuntimeError)
         self.pod.deactivate(chained_exc)
         self.tear_down()
-        raise exc # include in production, or just for debugging?
+        raise exc  # include in production, or just for debugging?
 
     def run_commands(self):
         """Produces the shell command(s) to run the POD.

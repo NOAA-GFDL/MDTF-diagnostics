@@ -1199,7 +1199,7 @@ class MDTFFramework(MDTFObjectBase):
                            "execution."), self.full_name, pod)
 
                 out_mgr = self.OutputManager(pod_dict)
- #               out_mgr.make_output()
+                out_mgr.make_output()
         tempdirs = TempDirManager()
         tempdirs.cleanup()
         print_summary(self)

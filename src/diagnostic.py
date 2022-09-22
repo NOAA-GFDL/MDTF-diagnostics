@@ -1249,3 +1249,62 @@ class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
         """
         config = core.ConfigManager()
         return cls.from_struct(pod_name, config.pod_data[pod_name], parent)
+
+    def pre_run_setup(self):
+        """Perform filesystem operations and checks prior to running the POD.
+
+        In order, this 1) sets environment variables specific to the POD, 2)
+        creates POD-specific working directories, and 3) checks for the existence
+        of the POD's driver script.
+
+        Note:
+            The existence of data files is checked with
+            :meth:`~data_manager.DataManager.fetchData`
+            and the runtime environment is validated separately as a function of
+            :meth:`~environment_manager.EnvironmentManager.run`. This is because
+            each POD is run in a subprocess (due to the necessity of supporting
+            multiple languages) so the validation must take place in that
+            subprocess.
+
+        Raises:
+            :exc:`~diagnostic.PodRuntimeError` if requirements aren't met. This
+                is re-raised from the :meth:`diagnostic.Diagnostic.set_entry_point`
+                and :meth:`diagnostic.Diagnostic._check_for_varlist_files`
+                subroutines.
+        """
+        try:
+            self.set_pod_env_vars()
+            self.set_entry_point()
+        except Exception as exc:
+            raise util.PodRuntimeError("Caught exception during pre_run_setup",
+                                       self) from exc
+
+    def set_pod_env_vars(self):
+        """Sets all environment variables for the POD: paths and names of each
+        variable and coordinate. Raise a :class:`~src.util.exceptions.WormKeyError`
+        if any of these definitions conflict.
+        """
+        self.pod_env_vars.update({
+            "POD_HOME": self.POD_CODE_DIR, # location of POD's code
+            "OBS_DATA": self.POD_OBS_DATA, # POD's observational data
+            "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
+            "DATADIR": self.POD_WK_DIR     # synonym so we don't need to change docs
+        })
+        for case_name, case_dict in self.cases.items():
+            for var in case_dict.iter_children(status=core.ObjectStatus.ACTIVE):  # iterate through case varlist
+                try:
+                    self.pod_env_vars.update(var.env_vars)
+                except util.WormKeyError as exc:
+                    if var.rename_coords is False:
+                        pass
+                    else:
+                        raise util.WormKeyError((f"{var.full_name} defines coordinate names "
+                            f"that conflict with those previously set. (Tried to update "
+                            f"{self.pod_env_vars} with {var.env_vars}.)")) from exc
+            for var in self.iter_children(status_neq=core.ObjectStatus.ACTIVE):
+                # define env vars for varlist entries without data. Name collisions
+                # are OK in this case.
+                try:
+                    self.pod_env_vars.update(var.env_vars)
+                except util.WormKeyError:
+                    continue

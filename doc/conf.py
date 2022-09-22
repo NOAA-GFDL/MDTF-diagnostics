@@ -68,11 +68,11 @@ author = u'Model Diagnostics Task Force'
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'3.0 beta 4'
+release = u'3.0 beta 5'
 
 # only used for resolving relative links in markdown docs
 # use develop branch because that's what readthedocs is configured to use
-_project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/develop/'
+_project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/'
 
 # -- General configuration ---------------------------------------------------
 
@@ -246,15 +246,15 @@ latex_documents = [
         # build process if it finds multiple .tex files, and doesn't affect sphinx.
         'tex_getting_started', 'MDTF_getting_started.tex_',
         u"MDTF Getting Started Guide",
-        r"Thomas Jackson (GFDL) \and Yi-Hung Kuo (UCLA) \and Dani Coleman (NCAR)",
+        r"Jessica Liptak (GFDL) \and Thomas Jackson \and Dani Coleman (NCAR)",
         'manual'
     ),(
         # another secondary PDF.
         'tex_walkthrough', 'MDTF_walkthrough.tex_',
         u"MDTF Developer's Walkthrough",
         (
-        r"Yi-Hung Kuo\textsuperscript{a} \and Dani Coleman\textsuperscript{b} "
-        r"\and Thomas Jackson\textsuperscript{c} \and Chih-Chieh (Jack) Chen\textsuperscript{b} "
+        r"Jessica Liptak\textsuperscript{a} \and Dani Coleman\textsuperscript{b} "
+        r"\and Thomas Jackson \and Aparna Radhakrishnan\textsuperscript{c} "
         r"\and Andrew Gettelman\textsuperscript{b} \and J.~David Neelin\textsuperscript{a} "
         r"\and Eric Maloney\textsuperscript{d} \and John Krasting\textsuperscript{c}"
         r"\\ {\small (a: UCLA; b: NCAR; c: GFDL; d:CSU)}"

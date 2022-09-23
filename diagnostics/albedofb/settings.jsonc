@@ -23,7 +23,11 @@
 				"xesmf",
 				"dask"
 			]
-		}
+		},
+	 	"pod_env_vars" : {
+        		"area_file_path": "/nbhome/jml/mdtf/atmos.static.nc",
+        		"area_var_name": "area"
+    		}
 	},
 	"dimensions": {
 		"lat": {
@@ -42,7 +46,7 @@
 			"dimensions": ["lat", "lon"],
 			"units": "m2",
 			"modifier" : "atmos_realm",
-			"requirement": "required"
+			"requirement": "optional"
 		},
 		"tas": {
 			"standard_name": "air_temperature",

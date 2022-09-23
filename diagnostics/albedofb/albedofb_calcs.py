@@ -203,11 +203,11 @@ def process_data(kernel_file, sensitivity_file):
     us = xr.open_dataset(FSUS_input_file)
     # must get rid of cftime since lack of leap day messes up divide below
     print(type(ds['rsds']))
-    if isinstance(ds['rsds'], "DataArray"):
+    if isinstance(ds['rsds'], xr.core.dataarray.DataArray):
         ds = ds['rsds'].data.assign_coords(month=('time', ds.time.dt.month)).swap_dims({'time': 'month'}).drop('time')
     else:
         ds = ds['rsds'].assign_coords(month=('time', ds.time.dt.month)).swap_dims({'time': 'month'}).drop('time')
-    if isinstance(ds['rsus'], "DataArray"):
+    if isinstance(ds['rsus'], xr.core.dataarray.DataArray):
         us = us['rsus'].data.assign_coords(month=('time', us.time.dt.month)).swap_dims({'time': 'month'})
     else:
         us = us['rsus'].assign_coords(month=('time', us.time.dt.month)).swap_dims({'time': 'month'}).drop('time')

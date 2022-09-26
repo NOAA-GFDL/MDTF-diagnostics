@@ -1,0 +1,84 @@
+// albedofb pod settings for MDTF diagnostic 
+//
+// This should be an ascii text file in JSON format 
+// (https://en.wikipedia.org/wiki/JSON#Data_types_and_syntax), with the addition
+// that all text to the  right of a "//" is a comment and ignored (sometimes 
+// called "JSONC" format).
+// 
+{
+	"settings": {
+		"driver": "albedofb.py",
+		"long_name": "Surface Albedo Feedback Diagnostics",
+		"realm": "atmos",
+		"description": "Surface Albedo Feedback Diagnostics",
+		"runtime_requirements": {
+			"python3": [
+				"numpy",
+				"scipy",
+				"matplotlib",
+				"xarray",
+				"netCDF4",
+				"cartopy",
+				"pandas",
+				"xesmf",
+				"dask"
+			]
+		}
+	},
+	"dimensions": {
+		"lat": {
+			"standard_name": "latitude"
+		},
+		"lon": {
+			"standard_name": "longitude"
+		},
+		"time": {
+			"standard_name": "time"
+		}
+	},
+	"varlist": {
+	    "areacella": {
+			"standard_name": "cell_area",
+			"dimensions": ["lat", "lon"],
+			"units": "m2",
+			"modifier" : "atmos_realm",
+			"requirement": "required"
+		},
+		"tas": {
+			"standard_name": "air_temperature",
+			"frequency": "mon",
+			"dimensions": ["time", "lat", "lon"],
+			"modifier": "atmos_height",
+			"units": "K",
+			"requirement": "required"
+		},
+		"rsdt": {
+			"standard_name": "toa_incoming_shortwave_flux",
+			"frequency": "mon",
+			"units": "W m-2",
+			"dimensions": ["time", "lat", "lon"],
+			"requirement": "required"
+		},
+		"rsds": {
+			"standard_name": "surface_downwelling_shortwave_flux_in_air",
+			"frequency": "mon",
+			"units": "W m-2",
+			"dimensions": ["time", "lat", "lon"],
+			"requirement": "required"
+		},
+		"rsut": {
+			"standard_name": "toa_outgoing_shortwave_flux",
+			"frequency": "mon",
+		    "units": "W m-2",
+			"dimensions": ["time", "lat", "lon"],
+			"requirement": "required"
+		},
+		"rsus": {
+			"standard_name": "surface_upwelling_shortwave_flux_in_air",
+			"frequency": "mon",
+			"units": "W m-2",
+			"dimensions": ["time", "lat", "lon"],
+			"requirement": "required"
+		}
+	}
+}

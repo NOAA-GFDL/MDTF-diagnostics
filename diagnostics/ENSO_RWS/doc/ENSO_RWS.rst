@@ -1,4 +1,5 @@
-**Rossby Wave Sources Diagnostic Package**
+Rossby Wave Sources Diagnostic Package
+======================================
 
 **Last update 04/15/2021**
 

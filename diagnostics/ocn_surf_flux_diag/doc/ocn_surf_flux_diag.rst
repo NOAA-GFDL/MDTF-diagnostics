@@ -1,5 +1,5 @@
 Ocean Surface Latent Heat Flux Diagnostic Documentation 
-================================
+=======================================================
 
 Last update: 12/10/2021
 
@@ -77,13 +77,15 @@ Required programming language and libraries
 
 The programming language is python version 3 or up. The third-party libraries
 include "matplotlib", "xarray", "metpy","numpy","scipy".
+
 Required model output variables
 -------------------------------
 
 With daily frequency from the model output. This diagnostic needs
 
 input atmosphere model variables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
     1. 'huss'    : Surface 2m Humidity (kg kg-1)
     2. 'ts'      : Skin Temperature (SST for open ocean; K)
     3. 'sfcWind' : Near-Surface Wind Speed (10 meter; m s-1)

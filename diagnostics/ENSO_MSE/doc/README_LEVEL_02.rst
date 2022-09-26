@@ -1,4 +1,5 @@
-**Information about Level 2 – MSE budget analysis**
+Information about Level 2 – MSE budget analysis
+===============================================
 
 At this level, the code estimates vertically integrated MSE budget
 terms.

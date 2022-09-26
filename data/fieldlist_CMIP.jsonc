@@ -99,6 +99,11 @@
       "units": "kg m-2 s-1",
       "ndim": 3
     },
+    "tp": {
+      "standard_name": "total_precipitation",
+      "units": "kg m-2",
+      "ndim": 3
+    },
     "tas" : {
       "standard_name": "air_temperature",
       "units": "K",
@@ -117,7 +122,14 @@
     },
     "areacello": {
       "standard_name": "cell_area",
+      "modifier" : "ocean_realm",
       "units": "m2",
+      "ndim": 2
+    },
+    "areacella": {
+      "standard_name": "cell_area",
+      "units": "m2",
+      "modifier" : "atmos_realm",
       "ndim": 2
     },
     "ps": {

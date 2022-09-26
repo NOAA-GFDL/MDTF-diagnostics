@@ -29,9 +29,9 @@ set conv = GFDL
 set model = "modelname"
 
 # Please enter the POD lists below. This gets filled in to the MDTF input json automatically if using frepp
-#this is tested with one POD only at this time
 
-set pod_list = '"EOF_500hPa"'
+#pod_list contains list of all PODS in the framework for reference. Please edit the pod_list as needed for your simulation. 
+set pod_list = '"Wheeler_Kiladis","EOF_500hPa","convective_transition_diag","MJO_suite","MJO_teleconnection","MJO_prop_amp","precip_diurnal_cycle","SM_ET_coupling"' 
 
 set script_path
 
@@ -186,11 +186,11 @@ gcp -cd $input_jsonc ${out_dir}/
 
 if (! -d $in_data_dir) then
   echo "QUIT if in_data_dir is not valid"
-end if
+endif
 
 if (! -d $PP_DIR) then 
   echo "QUIT if PP_DIR is not valid"
-end if
+endif
 echo "Running ${REPO_DIR}/mdtf_framework.py -f ${input_jsonc} --site NOAA_GFDL -v "
 ${REPO_DIR}/mdtf_framework.py -f ${input_jsonc} --site NOAA_GFDL -v
 

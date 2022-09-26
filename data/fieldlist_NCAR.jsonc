@@ -154,6 +154,11 @@
       "units": "W m-2",
       "ndim": 3
     },
+     "FLNT": {
+      "standard_name": "net_upward_longwave_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
     "SHFLX": {
       "standard_name": "surface_upward_sensible_heat_flux",
       "units": "W m-2",
@@ -181,6 +186,7 @@
     },
     "areacello": {
       "standard_name": "cell_area",
+      "modifier": "ocean_realm",
       "units": "m2",
       "ndim": 2
     },

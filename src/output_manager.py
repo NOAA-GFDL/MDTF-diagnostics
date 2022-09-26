@@ -80,6 +80,7 @@ class HTMLSourceFileMixin():
         log_file.write(self.obj._out_file_log.buffer_contents())
         log_file.close()
 
+
 class HTMLPodOutputManager(HTMLSourceFileMixin):
     """Performs cleanup tasks specific to a single POD when that POD has
     finished running.
@@ -353,7 +354,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
                 self._html_file_name, self.obj.name)
             os.remove(dest)
 
-        template_dict = self.obj.env_vars.copy()
+        template_dict = self.obj.env_vars.copy() # FIX THIS
         template_dict['DATE_TIME'] = \
             datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
         util.append_html_template(
@@ -454,3 +455,61 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             and not any(p.failed for p in self.obj.iter_children()):
             self.obj.status = core.ObjectStatus.SUCCEEDED
 
+
+class MultirunHTMLOutputManager(HTMLOutputManager, AbstractOutputManager, HTMLSourceFileMixin):
+    """OutputManager that collects the output of all PODs run in multirun mode
+    as html pages.
+
+    Instantiates :class:`HTMLPodOutputManager` objects to handle processing the
+    output of each POD.
+    """
+    _PodOutputManagerClass = HTMLPodOutputManager
+    _html_file_name = 'index.html'
+
+    def __init__(self, pod):
+        config = core.ConfigManager()
+        try:
+            self.make_variab_tar = config['make_variab_tar']
+            self.dry_run = config['dry_run']
+            self.overwrite = config['overwrite']
+            self.file_overwrite = self.overwrite  # overwrite both config and .tar
+        except KeyError as exc:
+            self.log.exception("Caught %r", exc)
+
+        self.CODE_ROOT = pod.POD_CODE_DIR
+        self.WK_DIR = pod.POD_WK_DIR       # abbreviate
+        self.OUT_DIR = pod.POD_OUT_DIR     # abbreviate
+        self.obj = pod
+
+    def make_output(self, pod):
+        """Top-level method for doing all output activity post-init. Spun into a
+        separate method to make subclassing easier.
+        """
+        # create empty text file for PODs to append to; equivalent of 'touch'
+        open(self.CASE_TEMP_HTML, 'w').close()
+        try:
+            pod_output = self._PodOutputManagerClass(pod, self)
+            pod_output.make_output()
+            if not pod.failed:
+                self.verify_pod_links(pod)
+        except Exception as exc:
+            pod.deactivate(exc)
+        try:
+            self.append_result_link(pod)  # problems here
+        except Exception as exc:
+            # won't go into the html output, but will be present in the
+            # summary for the case
+            pod.deactivate(exc)
+        pod.close_log_file(log=True)
+        if not pod.failed:
+            pod.status = core.ObjectStatus.SUCCEEDED
+
+        self.make_html()
+        self.backup_config_files()
+        self.write_data_log_file()
+        if self.make_variab_tar:
+            _ = self.make_tar_file()
+        self.copy_to_output()
+        if not self.obj.failed \
+            and not any(p.failed for p in self.obj.iter_children()):
+            self.obj.status = core.ObjectStatus.SUCCEEDED

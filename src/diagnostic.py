@@ -252,7 +252,7 @@ class VarlistEntryMixin(object):
     @property
     def _children(self):
         """Iterable of child objects associated with this object."""
-        return [] # leaves of object hierarchy
+        return []  # leaves of object hierarchy
 
     @property
     def name_in_model(self):
@@ -275,18 +275,18 @@ class VarlistEntryMixin(object):
         # validate: check for duplicate coord names
         scalars = kwargs.get('scalar_coordinates', dict())
         seen = set()
-        dupe_names = set(x for x \
-            in itertools.chain(kwargs['dimensions'], scalars.keys()) \
-            if x in seen or seen.add(x))
+        dupe_names = set(x for x
+                         in itertools.chain(kwargs['dimensions'], scalars.keys()) \
+                         if x in seen or seen.add(x))
         if dupe_names:
             raise ValueError((f"Repeated coordinate names {list(dupe_names)} in "
-                    f"varlist entry for {name}."))
+                              f"varlist entry for {name}."))
 
         # add dimensions
         for d_name in kwargs.pop('dimensions'):
             if d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in varlist "
-                    f"entry for {name}."))
+                                  f"entry for {name}."))
             new_kw['coords'].append(dims_d[d_name])
 
         # add scalar coords
@@ -921,7 +921,8 @@ class MultirunVarlistEntry(VarlistEntryMixin, VarlistEntryBase, core.MDTFObjectB
     # modifier: str
     use_exact_name: bool = False
     env_var: str = dc.field(default="", compare=False)
-    # no path_variable for multirun, since each var is associated w/many files
+    path_variable: str = dc.field(default="", compare=False)
+    dest_path: str = ""
     requirement: VarlistEntryRequirement = \
         dc.field(default=VarlistEntryRequirement.REQUIRED, compare=False)
     alternates: list = dc.field(default_factory=list, compare=False)
@@ -941,7 +942,7 @@ class MultirunVarlistEntry(VarlistEntryMixin, VarlistEntryBase, core.MDTFObjectB
               dimensions, if provided by the data.
 
         """
-        if self.status != core.ObjectStatus.SUCCEEDED:
+        if self.status != core.ObjectStatus.ACTIVE:
             # Signal to POD's code that vars are not provided by setting
             # variable to the empty string.
             return {self.env_var: "", self.path_variable: ""}
@@ -956,8 +957,10 @@ class MultirunVarlistEntry(VarlistEntryMixin, VarlistEntryBase, core.MDTFObjectB
 
         d.update({
             self.env_var: self.name_in_model,
+            self.path_variable: self.dest_path,
             **assoc_dict
         })
+
         for ax, dim in self.dim_axes.items():
             trans_dim = self.translation.dim_axes[ax]
             d[dim.name + _coord_env_var_suffix] = trans_dim.name
@@ -1028,6 +1031,68 @@ class MultirunVarlist(Varlist, ABC):
             f_name = f"{self.name}.{var.name}.{freq}.nc"
             return os.path.join(pod.POD_WK_DIR, freq, f_name)
 
+    @classmethod
+    def from_struct(cls, d, parent):
+        """Parse the "dimensions", "data" and "varlist" sections of the POD's
+        settings.jsonc file when instantiating a new :class:`Diagnostic` object.
+
+        Args:
+            parent: instance of the parent class object
+            d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
+
+        Returns:
+            :py:obj:`dict`, keys are names of the dimensions in POD's convention,
+            values are :class:`PodDataDimension` objects.
+        """
+
+        def _pod_dimension_from_struct(name, dd, v_settings):
+            class_dict = {
+                'X': VarlistLongitudeCoordinate,
+                'Y': VarlistLatitudeCoordinate,
+                'Z': VarlistVerticalCoordinate,
+                'T': VarlistPlaceholderTimeCoordinate,
+                'OTHER': VarlistCoordinate
+            }
+            try:
+                return data_model.coordinate_from_struct(
+                    dd, class_dict=class_dict, name=name,
+                    **(v_settings.time_settings)
+                )
+            except Exception:
+                raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
+
+        def _iter_shallow_alternates(var):
+            """Iterator over all VarlistEntries referenced as alternates. Doesn't
+            traverse alternates of alternates, etc.
+            """
+            for alt_vs in var.alternates:
+                yield from alt_vs
+
+        vlist_settings = util.coerce_to_dataclass(
+            d.get('data', dict()), VarlistSettings)
+        globals_d = vlist_settings.global_settings
+
+        assert 'dimensions' in d
+        dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings) \
+                  for k, v in d['dimensions'].items()}
+
+        assert 'varlist' in d
+        vlist_vars = {
+            k: MultirunVarlistEntry.from_struct(globals_d, dims_d, name=k, parent=parent, **v)
+            for k, v in d['varlist'].items()
+        }
+        for v in vlist_vars.values():
+            # validate & replace names of alt vars with references to VE objects
+            for altv_name in _iter_shallow_alternates(v):
+                if altv_name not in vlist_vars:
+                    raise ValueError((f"Unknown variable name {altv_name} listed "
+                                      f"in alternates for varlist entry {v.name}."))
+            linked_alts = []
+            for alts in v.alternates:
+                linked_alts.append([vlist_vars[v_name] for v_name in alts])
+            v.alternates = linked_alts
+        return cls(contents=list(vlist_vars.values()))
+
 
 @util.mdtf_dataclass
 class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
@@ -1096,6 +1161,10 @@ class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
             self.POD_OUT_DIR, _ = util.bump_version(self.POD_OUT_DIR, new_v=ver)
         util.check_dir(self.POD_WK_DIR, 'POD_WK_DIR', create=True)
         util.check_dir(self.POD_OUT_DIR, 'POD_OUT_DIR', create=True)
+        # append obs and model outdirs
+        dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
+        for d in dirs:
+            util.check_dir(os.path.join(self.POD_OUT_DIR, d), create=True)
 
     def configure_cases(self, case_dict, data_source):
         """ Instantiate case objects, set case directories, and define case attributes
@@ -1290,18 +1359,9 @@ class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
             "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
             "DATADIR": self.POD_WK_DIR     # synonym so we don't need to change docs
         })
+
         for case_name, case_dict in self.cases.items():
-            for var in case_dict.iter_children(status=core.ObjectStatus.ACTIVE):  # iterate through case varlist
-                try:
-                    self.pod_env_vars.update(var.env_vars)
-                except util.WormKeyError as exc:
-                    if var.rename_coords is False:
-                        pass
-                    else:
-                        raise util.WormKeyError((f"{var.full_name} defines coordinate names "
-                            f"that conflict with those previously set. (Tried to update "
-                            f"{self.pod_env_vars} with {var.env_vars}.)")) from exc
-            for var in self.iter_children(status_neq=core.ObjectStatus.ACTIVE):
+            for var in case_dict.iter_children(status_neq=core.ObjectStatus.ACTIVE):
                 # define env vars for varlist entries without data. Name collisions
                 # are OK in this case.
                 try:

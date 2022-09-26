@@ -1189,17 +1189,19 @@ class MDTFFramework(MDTFObjectBase):
                     else:
                         _log.info(("### %s: initialization for case '%s' failed; skipping "
                                    f"data request."), self.full_name, case_name)
-            if not any(p.failed for p in pod_dict.values()):
+            self.pods = pod_dict
+            if not any(p.failed for p in self.pods.values()):
                 _log.info("### %s: running pods '%s'.", self.full_name, [p for p in pod_dict.keys()])
-                run_mgr = self.RuntimeManager(pod_dict, self.EnvironmentManager, self)
+                run_mgr = self.RuntimeManager(self.pods, self.EnvironmentManager, self)
                 run_mgr.setup()
                 run_mgr.run()
             else:
                 _log.info(("### %s: Data request for pod '%s' failed; skipping "
                            "execution."), self.full_name, pod)
 
-                out_mgr = self.OutputManager(pod_dict)
-                out_mgr.make_output()
+            for p in self.pods.values():
+                out_mgr = self.OutputManager(p)
+                out_mgr.make_output(p)
         tempdirs = TempDirManager()
         tempdirs.cleanup()
         print_summary(self)

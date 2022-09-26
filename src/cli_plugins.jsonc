@@ -128,7 +128,8 @@
   "output_manager": {
     "HTML": {
       "help": "",
-      "entry_point": "src.output_manager:HTMLOutputManager",
+      "entry_point": ["src.output_manager:HTMLOutputManager",
+                      "src.output_manager:MultirunHTMLOutputManager"],
       "cli": {
         "arguments": [
           {

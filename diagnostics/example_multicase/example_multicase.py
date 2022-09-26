@@ -55,11 +55,10 @@ import matplotlib
 
 matplotlib.use("Agg")  # non-X windows backend
 
-import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
+import numpy as np
 import yaml
-import ast
 import sys
 
 # Part 1: Read in the model data
@@ -73,13 +72,13 @@ case_env_file = os.environ["case_env_file"]
 assert(os.path.isfile(case_env_file))
 with open(case_env_file, 'r') as stream:
     try:
-        parsed_yaml = yaml.safe_load(stream)
+        case_info = yaml.safe_load(stream)
         # print(parsed_yaml)
     except yaml.YAMLError as exc:
         print(exc)
 
-#sys.exit(0)
-#case_info = {
+# Sample case_info template ingested from yaml file ('meta.yaml')
+# case_info = {
 #    "CASENAME": {
 #        "NAME": os.environ["CASENAME"],
 #        "TAS_FILE": os.environ["TAS_FILE"],
@@ -94,24 +93,16 @@ with open(case_env_file, 'r') as stream:
 #        "time_coord": os.environ["time_coord"],
 #        "lon_coord": os.environ["lon_coord"],
 #    },
-#}
+# }
 
 # Loop over cases and load datasets into a separate dict
-print("parsed data type:", type(parsed_yaml))
+print("parsed data type:", type(case_info))
 model_datasets = dict()
-for case_name, case_dict in parsed_yaml.items():
+for case_name, case_dict in case_info.items():
     #print(case_name)
     ds = xr.open_dataset(case_dict["TAS_FILE"], use_cftime=True)
     model_datasets[case_name] = ds
-    #for key, val in case_dict.items():
-    #    print(key, ':', val)
-    print(ds)
-sys.exit(0)
-#model_datasets = {}
-#for k, v in case_info.items():
-#    ds = xr.open_dataset(case_info[k]["TAS_FILE"], use_cftime=True)
-#    model_datasets[k] = ds
-
+    #print(ds)
 
 # Part 2: Do some calculations (time and zonal means)
 # ---------------------------------------------------
@@ -121,7 +112,7 @@ tas_arrays = {}
 # Loop over cases
 
 for k, v in case_info.items():
-
+    print(case_info[k])
     # take the time mean
     arr = model_datasets[k][case_info[k]["tas_var"]]
     arr = arr.mean(dim=case_info[k]["time_coord"])
@@ -163,15 +154,17 @@ plt.title("Zonal Mean Surface Air Temperature Anomaly")
 
 # save the plot in the right location
 work_dir = os.environ["WK_DIR"]
+assert os.path.isdir(f"{work_dir}/model/PS")
 plt.savefig(f"{work_dir}/model/PS/example_model_plot.eps", bbox_inches="tight")
 
 
 # Part 4: Clean up and close open file handles
 # --------------------------------------------
 
-_ = [x.close() for x in model_datsets.values()]
+_ = [x.close() for x in model_datasets.values()]
 
 
 # Part 5: Confirm POD executed sucessfully
 # ----------------------------------------
-print("Last log message by Multicase Example POD: finished successfully!")
+print("Last log message by example_multicase POD: finished successfully!")
+sys.exit(0)

@@ -657,7 +657,7 @@ class MultirunSubprocessRuntimePODWrapper(object):
         self.pod.log_file.write("\n\n")
 
     def write_case_env_file(self, case_list):
-        out_file = os.path.join(self.pod.POD_WK_DIR, 'meta.yaml')
+        out_file = os.path.join(self.pod.POD_WK_DIR, 'case_info.yaml')
         self.pod.pod_env_vars["case_env_file"] = out_file
         case_info = dict()
         for case_name, case in case_list.items():
@@ -670,6 +670,8 @@ class MultirunSubprocessRuntimePODWrapper(object):
                         case_info[case_name][kk] = v.name
                     elif v.name.lower() + '_file' in kk.lower():
                         case_info[case_name][kk] = v.dest_path
+                    else:
+                        case_info[case_name][kk] = vv
 
         # case_info_str = str([f"  {k}: {v}" for k, v in case_info.items()])
         f = open(out_file, 'w+')
@@ -778,7 +780,6 @@ class MultirunSubprocessRuntimeManager(SubprocessRuntimeManager):
         self.pods = [self._PodWrapperClass(pod=p) for p in pod_dict.values()]
         # init object-level logger
         self.env_mgr = EnvMgrClass(log=parent.log)
-        #self.case = case
 
         # Need to run bash explicitly because 'conda activate' sources
         # env vars (can't do that in posix sh). tcsh could also work.

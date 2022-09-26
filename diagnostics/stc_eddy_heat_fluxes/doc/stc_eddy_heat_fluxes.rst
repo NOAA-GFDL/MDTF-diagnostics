@@ -129,6 +129,7 @@ References
     
 
 .. _ref-Kidston:
+
     Kidston, J., A. Scaife, S. C. Hardiman, D. M. Mitchell, N. Butchart, M. P. Baldwin, and L. J. Gray, 2015:
     Stratospheric influence on tropospheric jet streams, storm tracks and surface weather.
     Nature Geosci 8, 433–440. https://doi.org/10.1038/ngeo2424

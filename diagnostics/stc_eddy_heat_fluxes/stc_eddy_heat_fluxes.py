@@ -6,7 +6,7 @@
 # of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
 #
 # STC Eddy Heat Fluxes
-# Last update: 2022-06-16
+# Last update: 2022-09-26
 #
 # This script performs calculations to assess the action of vertically
 # propagating planetary-scale stationary waves on the polar wintertime
@@ -71,6 +71,10 @@
 #   Furtado, J. C., J. L. Cohen, A. H. Butler, E. E. Riddle, and A. Kumar, 2015:
 #       Eurasian snow cover variability and links to winter climate in the CMIP5
 #       models. Clim Dyn, 45, 2591–2605, https://doi.org/10.1007/s00382-015-2494-4.
+#   Kidston, J., A. Scaife, S. C. Hardiman, D. M. Mitchell, N. Butchart,
+#       M. P. Baldwin, and L. J. Gray, 2015: Stratospheric influence on tropospheric
+#       jet streams, storm tracks and surface weather. Nature Geosci 8,
+#       433–440. https://doi.org/10.1038/ngeo2424
 
 import os
 import traceback
@@ -196,6 +200,7 @@ def compute_total_eddy_heat_flux(v, T):
 def plot_ehf_tcap_corr(ehf, tpcap, hemi):
     r""" Create a scatterplot showing the relationship between seasonal-
     mean eddy heat flux and polar cap temperatures in the stratosphere. 
+
 
     Parameters
     ----------

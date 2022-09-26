@@ -11,7 +11,7 @@
 Stratosphere-Troposphere Coupling: Eddy Heat Fluxes
 ================================
 
-Last update: 2022-06-14
+Last update: 2022-09-26
 
 This POD assesses the interaction of vertically propagating planetary-scale
 stationary waves on the polar winter/spring stratosphere. The vertical component
@@ -42,7 +42,22 @@ These plots are made for both hemispheres; for the Northern Hemisphere (NH),
 they focus on the early (DJF or Dec) and late winter (JFM). For the Southern
 Hemisphere (SH), they focus on the early (ASO or Sep) and late spring (SON).
 These months are when coupling between the stratosphere and troposphere are
-most active in the respective hemispheres. 
+most active in the respective hemispheres.
+
+Polar stratospheric circulation variability is known to influence tropospheric
+weather and climate (see Kidston et al., 2015). Different teleconnections, like those
+related to ENSO, are sometimes considered to have stratospheric pathways through
+which they act. These stratospheric teleconnection pathways are generally related
+to how a given phenomenon influences stratospheric circulation variability, and
+the subsequent coupling of the stratospheric state with the troposphere.
+
+In a simple sense, this POD evaluates the "first step" of stratosphere-troposphere
+coupling -- that is, the tropospheric influence on driving stratospheric circulation
+anomalies. If a model underestimates or misrepresents this "upward coupling", they
+can further miss or underestimate the impact of "downward coupling" related to the
+stratosphere. Issues in modeling these processes can be related to model
+characteristics such as vertical resolution, the height of the model lid, and
+the representation of parameterized processes. 
 
 
 Version & Contact info
@@ -113,6 +128,11 @@ References
     146, 1999-2049, https://doi.org/10.1002/qj.3803
     
 
+.. _ref-Kidston:
+    Kidston, J., A. Scaife, S. C. Hardiman, D. M. Mitchell, N. Butchart, M. P. Baldwin, and L. J. Gray, 2015:
+    Stratospheric influence on tropospheric jet streams, storm tracks and surface weather.
+    Nature Geosci 8, 433–440. https://doi.org/10.1038/ngeo2424
+    
 .. _ref-Newman:
 
     Newman, P. A., E. R. Nash, and J. E. Rosenfield, 2001: What controls the

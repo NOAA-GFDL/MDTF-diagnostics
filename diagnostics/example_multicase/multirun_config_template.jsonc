@@ -43,7 +43,6 @@
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Parent directory containing results from different models.
- // "MODEL_DATA_ROOT": "../mdtf_test_data",
   "MODEL_DATA_ROOT": "~/mdtf_test_data",
 
   // Working directory.

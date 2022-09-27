@@ -1175,7 +1175,6 @@ class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
         config = core.ConfigManager()
         paths = core.PathManager()
         translate = core.VariableTranslator()
-        dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
         for case_name, case_d in case_dict.items():
             # Info for each case is initialized in a Multirun data source object
             self.log.info("### %s: initializing case '%s'.", self.full_name, case_name)
@@ -1193,9 +1192,6 @@ class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
             util.check_dir(self.MODEL_DATA_DIR[case_name], 'MODEL_DATA_DIR', create=False)
             util.check_dir(self.MODEL_WK_DIR[case_name], 'MODEL_WK_DIR', create=True)
             util.check_dir(self.MODEL_OUT_DIR[case_name], 'MODEL_OUT_DIR', create=True)
-            # append model and obs subdirs to case wk dir and create them
-            for d in dirs:
-                util.check_dir(os.path.join(self.MODEL_WK_DIR[case_name], d), create=True)
             # set up log(CaseLoggerMixin)
             self.cases[case_name].init_log(log_dir=self.MODEL_WK_DIR[case_name])
             # Set the case attributes. Pass case_d as first parm b/c it contains the

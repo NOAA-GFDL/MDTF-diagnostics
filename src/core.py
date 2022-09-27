@@ -1162,12 +1162,14 @@ class MDTFFramework(MDTFObjectBase):
 
                 out_mgr = self.OutputManager(case)
                 out_mgr.make_output()
+            tempdirs = TempDirManager()
+            tempdirs.cleanup()
+            print_summary(self)
         # multirun mode
         else:
             # Import multirun methods here to avoid circular import problems
             # e.g., multirun.py inherits from diagnostic.py which inherits from core.py
             from src.diagnostic import MultirunDiagnostic
-            #self.pods = dict.fromkeys(self.pod_list, [])
             pod_dict = dict.fromkeys(self.pod_list, [])
             for pod in pod_dict.keys():
                 # Initialize the pod as a MultirunDiagnostic object
@@ -1194,7 +1196,7 @@ class MDTFFramework(MDTFObjectBase):
                 _log.info("### %s: running pods '%s'.", self.full_name, [p for p in pod_dict.keys()])
                 run_mgr = self.RuntimeManager(self.pods, self.EnvironmentManager, self)
                 run_mgr.setup()
-                run_mgr.run()
+                run_mgr.run(self)
             else:
                 _log.info(("### %s: Data request for pod '%s' failed; skipping "
                            "execution."), self.full_name, pod)
@@ -1202,12 +1204,14 @@ class MDTFFramework(MDTFObjectBase):
             for p in self.pods.values():
                 out_mgr = self.OutputManager(p)
                 out_mgr.make_output(p)
-        tempdirs = TempDirManager()
-        tempdirs.cleanup()
-        print_summary(self)
+            tempdirs = TempDirManager()
+            tempdirs.cleanup()
+            print_multirun_summary(self)
+
         return 1 if self.failed else 0  # exit code
 
 # --------------------------------------------------------------------
+
 
 def print_summary(fmwk):
     def summary_info_tuple(case):
@@ -1241,6 +1245,41 @@ def print_summary(fmwk):
                 if tup[0]:
                     _log.info((f"\tThe following PODs raised errors: "
                         f"{', '.join(tup[0])}"))
+            _log.info(f"\tOutput written to {tup[2]}")
+    else:
+        _log.info(f"Exiting normally.")
+        for case_name, tup in d.items():
+            _log.info(f"Summary for {case_name}:")
+            _log.info(f"\tAll PODs exited normally.")
+            _log.info(f"\tOutput written to {tup[2]}")
+
+
+def print_multirun_summary(fmwk):
+    def summary_info_tuple(pod):
+        """Debug information; will clean this up.
+        """
+        return (
+            [p_name for p_name, p in pod.cases.items() if p.failed],
+            [p_name for p_name, p in pod.cases.items() if not p.failed],
+            getattr(pod, 'POD_OUT_DIR', '<ERROR: dir not created.>')
+        )
+
+    d = {p_name: summary_info_tuple(p) for p_name, p in fmwk.pods.items()}
+    failed = any(len(tup[0]) > 0 for tup in d.values())
+    _log.info('\n' + (80 * '-'))
+    if failed:
+        _log.info(f"Exiting with errors.")
+        for case_name, tup in d.items():
+            _log.info(f"Summary for {case_name}:")
+            if tup[0][0] == 'dummy sentinel string':
+                _log.info('\tAn error occurred in setup. No PODs were run.')
+            else:
+                if tup[1]:
+                    _log.info((f"\tThe following PODs exited normally: "
+                               f"{', '.join(tup[1])}"))
+                if tup[0]:
+                    _log.info((f"\tThe following PODs raised errors: "
+                               f"{', '.join(tup[0])}"))
             _log.info(f"\tOutput written to {tup[2]}")
     else:
         _log.info(f"Exiting normally.")

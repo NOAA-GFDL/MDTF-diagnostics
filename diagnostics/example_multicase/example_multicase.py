@@ -96,10 +96,8 @@ with open(case_env_file, 'r') as stream:
 # }
 
 # Loop over cases and load datasets into a separate dict
-print("parsed data type:", type(case_info))
 model_datasets = dict()
 for case_name, case_dict in case_info.items():
-    #print(case_name)
     ds = xr.open_dataset(case_dict["TAS_FILE"], use_cftime=True)
     model_datasets[case_name] = ds
     #print(ds)
@@ -112,7 +110,6 @@ tas_arrays = {}
 # Loop over cases
 
 for k, v in case_info.items():
-    print(case_info[k])
     # take the time mean
     arr = model_datasets[k][case_info[k]["tas_var"]]
     arr = arr.mean(dim=case_info[k]["time_coord"])

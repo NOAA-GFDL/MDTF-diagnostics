@@ -16,6 +16,7 @@ import yaml
 import logging
 _log = logging.getLogger(__name__)
 
+
 class AbstractEnvironmentManager(abc.ABC):
     """Abstract interface for EnvironmentManager classes. The EnvironmentManager
     is responsible for setting up the runtime environment for a POD's third-party
@@ -99,6 +100,7 @@ class AbstractEnvironmentManager(abc.ABC):
         """
         pass
 
+
 class NullEnvironmentManager(AbstractEnvironmentManager):
     """EnvironmentManager class which does nothing; intended as a dummy setting
     for building framework test harnesses.
@@ -122,6 +124,7 @@ class NullEnvironmentManager(AbstractEnvironmentManager):
     def deactivate_env_commands(self, env_name):
         """No-op."""
         return []
+
 
 class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
     """EnvironmentManager class which installs dependencies in python
@@ -213,6 +216,7 @@ class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
                 cmd_list.append('unset R_LIBS_USER')
         return cmd_list
 
+
 class CondaEnvironmentManager(AbstractEnvironmentManager):
     """:class:`AbstractEnvironmentManager` that uses the conda package manager
     to define and switch runtime environments.
@@ -265,7 +269,7 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         conda_prefix = os.path.join(self.conda_env_root, env_name)
         if not os.path.exists(conda_prefix):
             self.log.warning(("Conda env '%s' not found (grepped for '%s'); "
-                "continuing."), env_name, conda_prefix)
+                              "continuing."), env_name, conda_prefix)
             #self._call_conda_create(env_name)
 
     def _call_conda_create(self, env_name):
@@ -388,7 +392,7 @@ class SubprocessRuntimePODWrapper(object):
             if isinstance(x, str):
                 return x
             elif isinstance(x, bool):
-                return ('1' if x else '0')
+                return '1' if x else '0'
             else:
                 return str(x)
 
@@ -399,13 +403,12 @@ class SubprocessRuntimePODWrapper(object):
         self.pod.log_file.write("\n".join(["### Shell env vars: "] + sorted(env_list)))
         self.pod.log_file.write("\n\n")
 
-
     def setup_exception_handler(self, exc):
         chained_exc = util.chain_exc(exc, f"preparing to run {self.pod.full_name}.",
-            util.PodRuntimeError)
+                                     util.PodRuntimeError)
         self.pod.deactivate(chained_exc)
         self.tear_down()
-        raise exc # include in production, or just for debugging?
+        raise exc  # include in production, or just for debugging?
 
     def run_commands(self):
         """Produces the shell command(s) to run the POD.
@@ -416,7 +419,7 @@ class SubprocessRuntimePODWrapper(object):
         """Log message when execution starts.
         """
         return (f"Running {os.path.basename(self.pod.driver)} for "
-            f"{self.pod.full_name}.")
+                f"{self.pod.full_name}.")
 
     def validate_commands(self):
         """Produces the shell command(s) to validate the POD's runtime environment
@@ -430,8 +433,8 @@ class SubprocessRuntimePODWrapper(object):
                 runtime environment.
         """
         paths = core.PathManager()
-        command_path = os.path.join(paths.CODE_ROOT, \
-            'src', 'validate_environment.sh')
+        command_path = os.path.join(paths.CODE_ROOT,
+                                    'src', 'validate_environment.sh')
         reqs = self.pod.runtime_requirements # abbreviate
         command = [
             command_path,
@@ -452,7 +455,7 @@ class SubprocessRuntimePODWrapper(object):
             util.PodExecutionError)
         self.pod.deactivate(chained_exc)
         self.tear_down()
-        raise exc # include in production, or just for debugging?
+        raise exc  # include in production, or just for debugging?
 
     def tear_down(self, retcode=None):
         # just to be safe
@@ -486,6 +489,7 @@ class SubprocessRuntimePODWrapper(object):
             self.pod.status = core.ObjectStatus.INACTIVE
         # elapsed = timeit.default_timer() - start_time
         # print(pod+" Elapsed time ",elapsed)
+
 
 class SubprocessRuntimeManager(AbstractRuntimeManager):
     """RuntimeManager class that runs each POD in a child subprocess spawned on
@@ -556,7 +560,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         test_list = [p for p in self.iter_active_pods()]
         if not test_list:
             self.case.log.error('%s: no PODs met data requirements; returning',
-                self.__class__.__name__)
+                                self.__class__.__name__)
             return
 
         env_vars_base = os.environ.copy()
@@ -632,7 +636,7 @@ class MultirunSubprocessRuntimePODWrapper(object):
         self.pod.log.info("%s will run using '%s' from conda env '%s'.",
                           self.pod.full_name, self.pod.program, self.env)
 
-        self.pod.log_file.write(self.pod.format_log(children=True))
+        self.pod.log.debug("%s", self.pod.format_log(children=True))
         self.pod._log_handler.reset_buffer()
         self.write_case_env_file(self.pod.cases)
         self.setup_env_vars()
@@ -643,7 +647,7 @@ class MultirunSubprocessRuntimePODWrapper(object):
             if isinstance(x, str):
                 return x
             elif isinstance(x, bool):
-                return ('1' if x else '0')
+                return '1' if x else '0'
             else:
                 return str(x)
 
@@ -672,8 +676,7 @@ class MultirunSubprocessRuntimePODWrapper(object):
                         case_info[case_name][kk] = v.dest_path
                     else:
                         case_info[case_name][kk] = vv
-
-        # case_info_str = str([f"  {k}: {v}" for k, v in case_info.items()])
+        # write the case_info env vars to a yaml file that the POD will read
         f = open(out_file, 'w+')
         assert (os.path.isfile(out_file))
         yaml.dump(case_info, f, allow_unicode=True, default_flow_style=False)
@@ -694,7 +697,7 @@ class MultirunSubprocessRuntimePODWrapper(object):
         """Log message when execution starts.
         """
         return (f"Running {os.path.basename(self.pod.driver)} for "
-            f"{self.pod.full_name}.")
+                f"{self.pod.full_name}.")
 
     def validate_commands(self):
         """Produces the shell command(s) to validate the POD's runtime environment
@@ -708,8 +711,8 @@ class MultirunSubprocessRuntimePODWrapper(object):
                 runtime environment.
         """
         paths = core.PathManager()
-        command_path = os.path.join(paths.CODE_ROOT, \
-            'src', 'validate_environment.sh')
+        command_path = os.path.join(paths.CODE_ROOT,
+                                    'src', 'validate_environment.sh')
         reqs = self.pod.runtime_requirements # abbreviate
         command = [
             command_path,
@@ -727,10 +730,10 @@ class MultirunSubprocessRuntimePODWrapper(object):
         execution (including setup and clean up).
         """
         chained_exc = util.chain_exc(exc, f"running {self.pod.full_name}.",
-            util.PodExecutionError)
+                                     util.PodExecutionError)
         self.pod.deactivate(chained_exc)
         self.tear_down()
-        raise exc # include in production, or just for debugging?
+        raise exc  # include in production, or just for debugging?
 
     def tear_down(self, retcode=None):
         # just to be safe
@@ -758,7 +761,7 @@ class MultirunSubprocessRuntimePODWrapper(object):
         if self.pod.log_file is not None:
             self.pod.log_file.write(80 * '-' + '\n')
             self.pod.log_file.write(log_str + '\n')
-            self.pod.log_file.flush() # redundant?
+            self.pod.log_file.flush()  # redundant?
 
         if not self.pod.failed:
             self.pod.status = core.ObjectStatus.INACTIVE
@@ -827,15 +830,15 @@ class MultirunSubprocessRuntimeManager(SubprocessRuntimeManager):
             universal_newlines=True, bufsize=1
         )
 
-    def run(self):
+    def run(self, parent):
         # Call cleanup method if we're killed
         signal.signal(signal.SIGTERM, self.runtime_terminate)
         signal.signal(signal.SIGINT, self.runtime_terminate)
 
         test_list = [p for p in self.iter_active_pods()]
         if not test_list:
-            self.case.log.error('%s: no PODs met data requirements; returning',
-                                self.__class__.__name__)
+            parent.log.error('%s: no PODs met data requirements; returning',
+                             self.__class__.__name__)
             return
 
         env_vars_base = os.environ.copy()

@@ -673,7 +673,6 @@ class MultirunDataSourceQFPMixin(DataSourceQFPMixin, ABC):
         p = parent
         for v in self.iter_children(**var_kwargs):  # _children returns varlist values. Defined in data.sources
             yield PodVarTuple(pod=p, var=v)
-        print('test')
 
     def iter_vars_only(self, parent, active=None):
         """Convenience wrapper for :meth:`iter_vars` that returns only the

@@ -397,7 +397,6 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
         try:
             # attempt to choose same values for all PODs
             key = self.get_expt_key('pod', self, parent, self._id)
-            #for p in parent.iter_children(status=core.ObjectStatus.ACTIVE):  # self._children = pods
             p = parent
             self.set_expt_key(p, key)
         except Exception:  # util.DataExperimentEvent:

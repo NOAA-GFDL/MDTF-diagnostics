@@ -137,3 +137,4 @@ POD-specific options
 --------------------
 
 We don't currently provide a mechanism to pass options directly to individual PODs via the command line. Individual PODs may provide user-configurable options in the settings file which only need to be changed in rare or specific cases. These options are listed in the ``"pod_env_vars"`` section of the ``settings.jsonc`` located in each POD’s source code directory under ``diagnostics/``. Consult the :doc:`documentation <pod_toc>` for the POD in question for details.
+

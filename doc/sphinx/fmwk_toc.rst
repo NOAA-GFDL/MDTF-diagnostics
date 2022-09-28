@@ -26,7 +26,6 @@ Package code and API documentation
 
 These sections provide an overview of specific parts of the code that's more higher-level than the module docstrings.
 
-
 .. toctree::
    :maxdepth: 1
 

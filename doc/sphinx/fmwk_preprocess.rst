@@ -27,7 +27,6 @@ To accomplish the goals above, the preprocessor is structured as a miniature dat
 Methods called
 ++++++++++++++
 
-
 As noted above, the preprocessor has *two* roles: converting the downloaded model data to the format requested by the PODs, and enlarging the scope of the data query to include all formats it's capable of converting between. The latter is executed before the former:
 
 - The datasource creates an instance of its designated ``_PreprocessorClass`` for each POD in :meth:`~src.data_manager.DataSourceBase.setup_pod`; this object is stored in the ``preprocessor`` attribute of the :class:`~src.diagnostic.Diagnostic` object. Even though the data conversion operates on individual variables, the "scope" of the preprocessor is POD-wide because it needs to edit the data request for the POD as a whole. 

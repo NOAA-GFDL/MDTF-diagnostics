@@ -873,4 +873,3 @@ class GFDLHTMLOutputManager(output_manager.HTMLOutputManager):
                 raise # only delete MODEL_WK_DIR if copied successfully
             self.obj.log.debug('Transfer succeeded; deleting directory %s', self.WK_DIR)
             gfdl_util.rmtree_wrapper(self.WK_DIR)
-

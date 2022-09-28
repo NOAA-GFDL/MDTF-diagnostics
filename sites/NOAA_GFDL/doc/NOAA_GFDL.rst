@@ -25,7 +25,6 @@ The site installation provides alternative ways to run the diagnostics within GF
 
       <analysis switch="on" cumulative="no" script="/home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics/sites/NOAA_GFDL/mdtf_gfdl.csh"/>
 
-   The MDTF package behaves as any other analysis script called by FRE from an experiment XML: FRE will populate the wrapper script with the correct paths, date range of the run, etc., so these options don't need to be passed in the XML tag.
 
    The wrapper script calls the site installation of the package with the ``--data-manager="GFDL_PP"`` (see below) option. ``GFDL_PP`` defaults to assuming GFDL variable naming :ref:`conventions<ref-data-conventions>`; data which follows other conventions (e.g. fremetarized runs intended for publication as part of CMIP6) requires the ``--convention`` flag to be set explicitly. In general, the wrapper script passes through any additional options set in the tag's ``script`` attribute, in addition to setting the data attributes provided by FRE. Passing through package flags in the ``<analysis>`` tag can be used to, e.g., only run specific PODs for each ``<component>`` with the ``--pods`` option.
 

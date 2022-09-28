@@ -750,8 +750,13 @@ class MultirunSubprocessRuntimePODWrapper(object):
             if retcode == 0:
                 log_str = f"{self.pod.full_name} exited successfully (code={retcode})."
                 self.pod.log.info(log_str)
-            elif retcode is None or self.pod.failed:
-                log_str = f"{self.pod.full_name} was terminated or exited abnormally."
+            elif retcode is None:
+                log_str = f"{self.pod.full_name} exited without specifying a return code\n (not " \
+                          f"necessarily a failure; this information just wasn't provided\n" \
+                          f"to the subprocess manager when the POD completed).\n"
+                self.pod.log.info(log_str)
+            elif self.pod.failed:
+                log_str = f"{self.pod.full_name} exited abnormally with pod status FAILED."
                 self.pod.log.info(log_str)
             else:
                 log_str = f"{self.pod.full_name} exited abnormally (code={retcode})."

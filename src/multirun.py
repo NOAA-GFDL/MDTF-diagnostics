@@ -6,12 +6,9 @@ model data requested by the PODs for multirun mode
 
 import dataclasses as dc
 from abc import ABC
-
-import intake
 import logging
 import pandas as pd
 import textwrap
-import typing
 from src import util, data_manager, diagnostic, core
 from src import query_fetch_preprocess as qfp
 

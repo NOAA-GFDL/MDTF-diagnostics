@@ -1128,7 +1128,6 @@ class MDTFFramework(MDTFObjectBase):
                 return True
         return False
 
-    @property
     def main(self):
         new_d = dict()
         # single run mode
@@ -1165,6 +1164,7 @@ class MDTFFramework(MDTFObjectBase):
             tempdirs = TempDirManager()
             tempdirs.cleanup()
             print_summary(self)
+            return 1 if self.failed else 0  # exit code
         # multirun mode
         else:
             # Import multirun methods here to avoid circular import problems
@@ -1207,8 +1207,7 @@ class MDTFFramework(MDTFObjectBase):
             tempdirs = TempDirManager()
             tempdirs.cleanup()
             print_multirun_summary(self)
-
-        return (1 if self.failed else 0)  # exit code
+            return 0 if not any(v.failed for v in self.pods.values()) else 1  # exit code
 
 # --------------------------------------------------------------------
 
@@ -1287,3 +1286,4 @@ def print_multirun_summary(fmwk):
             _log.info(f"Summary for {case_name}:")
             _log.info(f"\tAll PODs exited normally.")
             _log.info(f"\tOutput written to {tup[2]}")
+        fmwk.status = ObjectStatus.SUCCEEDED

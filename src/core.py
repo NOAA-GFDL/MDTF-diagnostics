@@ -173,7 +173,7 @@ class ConfigManager(util.Singleton, util.NameSpace):
             # normal code path
             self.pod_data = pod_info_tuple.pod_data
             self.update(cli_obj.config)  # the update method is a Python built-in that adds items from
-            # an iterable or another dictionay to a dictionay
+            # an iterable or another dictionary to a dictionary
             backup_config = self.backup_config(cli_obj, case_d)
             self._configs[backup_config.name] = backup_config
             self._configs['log_config'] = ConfigTuple(
@@ -1208,7 +1208,7 @@ class MDTFFramework(MDTFObjectBase):
             tempdirs.cleanup()
             print_multirun_summary(self)
 
-        return 1 if self.failed else 0  # exit code
+        return (1 if self.failed else 0)  # exit code
 
 # --------------------------------------------------------------------
 

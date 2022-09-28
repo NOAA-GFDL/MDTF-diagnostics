@@ -138,3 +138,4 @@ The following paths are set to more useful default values:
 --WORKING-DIR <WORKING_DIR>    Working directory. Defaults to ``$MDTF_TMPDIR``/wkdir, where the environment variable ``$MDTF_TMPDIR`` is defined as described above.
 -o, --OUTPUT-DIR <OUTPUT_DIR>     Destination for output files. Defaults to ``$MDTF_TMPDIR``/mdtf_out, which will be created if it doesn't exist.
 
+

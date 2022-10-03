@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - stc_eddy_heat_fluxes_ci
   pull_request:
     branches:
       - main

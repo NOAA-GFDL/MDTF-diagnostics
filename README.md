@@ -37,6 +37,7 @@ and a link to the full documentation for each currently-supported POD.
 | [Top Heaviness Metric](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/top_heaviness_metric/doc/top_heaviness_metric.rst)                                                                      | Zhuo Wang (U.Illinois Urbana-Champaign), Jiacheng Ye (U.Illinois Urbana-Champaign)|
 | [Surface Albedo Feedback](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/albedofb/doc/surface_albedo_feedback.rst) | Cecilia Bitz (U. Washington), Aaron Donahoe (U. Washington), Ed Blanchard, Wei Cheng, Lettie Roach|
 | [Sea Ice Suite](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/seaice_suite/doc/seaice_suite.rst) | Cecilia Bitz (U. Washington), Lettie Roach|
+| [Stratosphere-Troposphere Coupling: Eddy Heat Fluxes](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_eddy_heat_fluxes/doc/stc_eddy_heat_fluxes.rst) | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL)|
 
 
 

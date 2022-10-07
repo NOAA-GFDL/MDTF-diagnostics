@@ -24,6 +24,7 @@ dependencies:
 - pylint>=2.4
 - doc8
 - jinja2>=2.10
+- latexmk>=4.76
 # additions dec 2020
 - cfunits=3.3.1
 - intake=0.6

@@ -198,7 +198,7 @@ latex_elements = {
         % RTD uses a texlive installation on linux; apparently xelatex can only
         % find fonts by filename in this situation.
         \setmainfont{texgyretermes-regular.otf}
-        \setsansfont{Heuristica-Bold.otf}
+        \setsansfont{texgyrebonum-bold.otf}
     ''',
     'geometry': r"\usepackage[xetex,letterpaper]{geometry}",
     # chapter style

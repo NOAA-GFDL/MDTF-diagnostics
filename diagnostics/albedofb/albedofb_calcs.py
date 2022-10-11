@@ -155,6 +155,7 @@ def process_data(kernel_file, sensitivity_file):
     # it has been saved to kernel_obs_file
     # and is provided with this POD
 
+
     FSDT_var = "{rsdt_var}".format(**os.environ)
     FSDS_var = "{rsds_var}".format(**os.environ)
     FSUT_var = "{rsut_var}".format(**os.environ)
@@ -199,18 +200,11 @@ def process_data(kernel_file, sensitivity_file):
     Tglob = globalmean(tas, fx)
     Tglobtrend = Tglob.groupby('time.month').apply(linear_trend)
 
-    ds = xr.open_dataset(FSDS_input_file)
-    us = xr.open_dataset(FSUS_input_file)
+    fsds_ds = xr.open_dataset(FSDS_input_file)
+    fsus_ds = xr.open_dataset(FSUS_input_file)
     # must get rid of cftime since lack of leap day messes up divide below
-    print(type(ds['rsds']))
-    if isinstance(ds['rsds'], xr.core.dataarray.DataArray):
-        ds = ds['rsds'].data.assign_coords(month=('time', ds.time.dt.month)).swap_dims({'time': 'month'}).drop('time')
-    else:
-        ds = ds['rsds'].assign_coords(month=('time', ds.time.dt.month)).swap_dims({'time': 'month'}).drop('time')
-    if isinstance(ds['rsus'], xr.core.dataarray.DataArray):
-        us = us['rsus'].data.assign_coords(month=('time', us.time.dt.month)).swap_dims({'time': 'month'})
-    else:
-        us = us['rsus'].assign_coords(month=('time', us.time.dt.month)).swap_dims({'time': 'month'}).drop('time')
+    ds = fsds_ds['rsds'].assign_coords(month=('time', fsds_ds.time.dt.month)).swap_dims({'time': 'month'}).drop('time')
+    us = fsus_ds['rsus'].assign_coords(month=('time', fsus_ds.time.dt.month)).swap_dims({'time': 'month'}).drop('time')
     albedo = us / ds
     stacked = albedo.stack(allpoints=['lat', 'lon'])  # reduce to 2D array before computing trend
     albedo_trend = stacked.groupby('month').apply(linear_trend)  # loses coord to unstack somewhere here

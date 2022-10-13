@@ -24,7 +24,6 @@ The site installation provides alternative ways to run the diagnostics within GF
    .. code-block:: xml
 
       <analysis switch="on" cumulative="no" script="/home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics/sites/NOAA_GFDL/mdtf_gfdl.csh"/>
-      
 
    The MDTF package behaves as any other analysis script called by FRE from an experiment XML: FRE will populate the wrapper script with the correct paths, date range of the run, etc., so these options don't need to be passed in the XML tag. 
    

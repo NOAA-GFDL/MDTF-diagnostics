@@ -37,6 +37,9 @@
 #     * Python >= 3.7
 #     * xarray
 #     * matplotlib
+#     * yaml
+#     * sys
+#     * numpy
 #
 #   Required model output variables
 #

@@ -62,8 +62,24 @@ import albedofb_calcs
 
 
 # In[3]:
-
-
+#os.environ['DATADIR'] = '/nbhome/jml/mdtf/mdtf_out/MDTF_ESM4_historical_D1_1979_2014/albedofb'
+os.environ['DATADIR'] = '/home/oar.gfdl.mdtf/mdtf/inputdata/model/SAM0-UNICON_r1i1p1f1_gn'
+#os.environ['CASENAME'] = 'ESM4_historical_D1'
+os.environ['CASENAME'] = 'SAM0-UNICON_r1i1p1f1_gn'
+os.environ['rsdt_var'] = 'rsdt'
+os.environ['rsds_var'] = 'rsds'
+os.environ['rsut_var'] = 'rsut'
+os.environ['rsus_var'] = 'rsus'
+os.environ['tas_var'] = 'tas'
+os.environ['areacella_var'] = 'areacella'
+#os.environ['area_var_name'] = 'area'
+os.environ['area_var_name'] = 'areacella'
+#os.environ['area_file_path'] = '/nbhome/jml/mdtf/atmos.static.nc'
+os.environ['area_file_path'] = '/home/oar.gfdl.mdtf/mdtf/inputdata/model/SAM0-UNICON_r1i1p1f1_gn/mon/areacella_fx_SAM0-UNICON_r1i1p1f1_gn.nc'
+os.environ['FIRSTYR'] = '1996' #'1979'
+os.environ['LASTYR'] = '2014'
+os.environ['WK_DIR'] = '/nbhome/jml/mdtf/mdtf_out/MDTF_ESM4_historical_D1_1979_2014/albedofb'
+os.environ['OBS_DATA'] = '/nbhome/jml/mdtf/tmp/inputdata/obs_data/albedofb'
 podname = 'albedofb'
 
 # these yrs only refer to the hist period for comparing kernel of mod to CERES
@@ -139,12 +155,13 @@ rightcbarposition=[0.69, 0.15, 0.18, 0.04]
 figsize2=(9,4.5)
 cbarposition=[0.31, 0.15, 0.4, 0.04]
 
-def pltpanel(field,title=None,subs=(1,3,1),cmap_c='plasma'):
-    ax = plt.subplot(subs,projection = ccrs.NorthPolarStereo())
-    ax.add_feature(cfeature.COASTLINE,zorder=100,edgecolor='k')
+
+def pltpanel(field, title=None, subs=(1, 3, 1), cmap_c='plasma'):
+    ax = plt.subplot(subs, projection=ccrs.NorthPolarStereo())
+    ax.add_feature(cfeature.COASTLINE, zorder=100, edgecolor='k')
     ax.set_extent([0.005, 360, 50, 90], crs=ccrs.PlateCarree())
-    pl = field.plot(x='lon', y='lat', transform=ccrs.PlateCarree(),cmap=cmap_c,add_colorbar=False)
-    ax.set_title(title,fontsize=14)
+    pl = field.plot(x='lon', y='lat', transform=ccrs.PlateCarree(), cmap=cmap_c, add_colorbar=False)
+    ax.set_title(title, fontsize=14)
     return pl
 
 
@@ -157,10 +174,10 @@ fig = plt.figure(figsize=figsize)
 fig.suptitle('Surface Albedo Kernel from Isotropic Model MJJA', fontsize=18)
 
 cmap_c = 'plasma'
-pl=pltpanel(histmodkernel.sel(month=slice(4,7)).mean(dim='month'), modelname +' 1996-2014',subs=131,cmap_c = cmap_c)
-pl.set_clim([0,3.1])
-pl=pltpanel(obskernel.sel(month=slice(4,7)).mean(dim='month'),'CERES EBAF 2000-2018',subs=132,cmap_c = cmap_c)
-pl.set_clim([0,3.1])
+pl = pltpanel(histmodkernel.sel(month=slice(4, 7)).mean(dim='month'), modelname +' 1996-2014',subs=131,cmap_c = cmap_c)
+pl.set_clim([0, 3.1])
+pl=pltpanel(obskernel.sel(month=slice(4, 7)).mean(dim='month'),'CERES EBAF 2000-2018',subs=132,cmap_c = cmap_c)
+pl.set_clim([0, 3.1])
 
 cbar_ax = fig.add_axes(leftcbarposition) 
 cbar = fig.colorbar(pl, cax=cbar_ax,  orientation='horizontal')
@@ -169,16 +186,16 @@ cbar.set_label('Radiative Sensitivity (W m$^{-2}$ per 1%)', fontsize=14)
 # their difference
 cmap_c = 'PiYG'
 diff = histmodregridkernel-obskernel
-df=pltpanel(diff.sel(month=slice(4,7)).mean(dim='month'),'Difference',subs=133,cmap_c = cmap_c)
-df.set_clim([-1,1])
+df = pltpanel(diff.sel(month=slice(4, 7)).mean(dim='month'), 'Difference', subs=133, cmap_c=cmap_c)
+df.set_clim([-1, 1])
 
 cbar_ax = fig.add_axes(rightcbarposition) 
 cbar = fig.colorbar(df, cax=cbar_ax,  orientation='horizontal')
 cbar.set_label('Radiative Sensitivity (W m$^{-2}$ per 1%)', fontsize=14)
 
-plt.subplots_adjust(bottom=0.21,top=0.85)
+plt.subplots_adjust(bottom=0.21, top=0.85)
 
-plt.savefig(figures_dir+'historical_albedo_kernel_'+modelname+'.png', format='png',dpi=300)
+plt.savefig(figures_dir+'historical_albedo_kernel_'+modelname+'.png', format='png', dpi=300)
 
 
 # In[9]:
@@ -190,10 +207,11 @@ fig = plt.figure(figsize=figsize)
 fig.suptitle('Surface Albedo MJJA', fontsize=18)
 
 cmap_c = 'PuBu_r'
-pl = pltpanel(100.*obsalbedo.sel(month=slice(4,7)).mean(dim='month'),'Observed 2000-2018',subs=131,cmap_c = cmap_c)
-pl.set_clim([5,85])
-pl = pltpanel(100.*histmodalbedo.sel(month=slice(4,7)).mean(dim='month'),modelname+' 1996-2014',subs=132,cmap_c = cmap_c)
-pl.set_clim([5,85])
+pl = pltpanel(100.*obsalbedo.sel(month=slice(4, 7)).mean(dim='month'), 'Observed 2000-2018', subs=131, cmap_c=cmap_c)
+pl.set_clim([5, 85])
+pl = pltpanel(100.*histmodalbedo.sel(month=slice(4, 7)).mean(dim='month'),
+              modelname + ' ' + firstyr + '-' + lastyr, subs=132, cmap_c=cmap_c)
+pl.set_clim([5, 85])
 
 cbar_ax = fig.add_axes(leftcbarposition)
 cbar = fig.colorbar(pl, cax=cbar_ax,  orientation='horizontal')
@@ -202,14 +220,14 @@ cbar.set_label('Albedo (%)', fontsize=14)
 # their difference
 cmap_c = 'PiYG'
 diff = (histmodregridalbedo-obsalbedo)*100.
-df = pltpanel(diff.sel(month=slice(4,7)).mean(dim='month'),'Difference',subs=133,cmap_c = cmap_c)
-df.set_clim([-30,30])
+df = pltpanel(diff.sel(month=slice(4, 7)).mean(dim='month'), 'Difference', subs=133,cmap_c=cmap_c)
+df.set_clim([-30, 30])
 
 cbar_ax = fig.add_axes(rightcbarposition)
 cbar = fig.colorbar(df, cax=cbar_ax,  orientation='horizontal')
 cbar.set_label('Albedo (%)', fontsize=14)
 
-plt.subplots_adjust(bottom=0.21,top=0.85)
+plt.subplots_adjust(bottom=0.21, top=0.85)
 
 plt.savefig(figures_dir+'historical_surface_albedo_'+modelname+'.png', format='png',dpi=300)
 
@@ -223,17 +241,18 @@ fig = plt.figure(figsize=figsize2)
 fig.suptitle('Albedo Sensitivity MJJA', fontsize=18)
 
 cmap_c = 'PiYG'
-df = pltpanel(obssensitivity,'Observed 2000-2018',subs=121,cmap_c = cmap_c)
-df.set_clim([-15,15])
+df = pltpanel(obssensitivity, 'Observed 2000-2018', subs=121, cmap_c=cmap_c)
+df.set_clim([-15, 15])
 
-df = pltpanel(histmodregridsensitivity.sel(month=slice(4,7)).mean(dim='month'),modelname+' 1996-2014',subs=122,cmap_c = cmap_c)
-df.set_clim([-15,15])
+df = pltpanel(histmodregridsensitivity.sel(month=slice(4, 7)).mean(dim='month').mean(dim='time'), modelname + ' '
+              + firstyr + '-' + lastyr, subs=122, cmap_c=cmap_c)
+df.set_clim([-15, 15])
 
-cbar_ax = fig.add_axes(cbarposition) #[left, bottom, width, height]
+cbar_ax = fig.add_axes(cbarposition)  # [left, bottom, width, height]
 cbar = fig.colorbar(df, cax=cbar_ax,  orientation='horizontal')
 cbar.set_label('Albedo Change (%) per K', fontsize=14)
 
-plt.subplots_adjust(bottom=0.21,top=0.85)
+plt.subplots_adjust(bottom=0.21, top=0.85)
 
 plt.savefig(figures_dir+'historical_albedo_sensitivity_'+modelname+'.png', format='png',dpi=300)
 
@@ -248,20 +267,20 @@ fig.suptitle('Surface Albedo Feedback MJJA', fontsize=18)
 
 cmap_c = 'PiYG'
 
-fb = obskernel.sel(month=slice(4,7)).mean(dim='month')*obssensitivity
-df = pltpanel(fb, 'Observed 2000-2018', subs=121,cmap_c = cmap_c)
-df.set_clim([-30,30])
+fb = obskernel.sel(month=slice(4, 7)).mean(dim='month')*obssensitivity
+df = pltpanel(fb, 'Observed 2000-2018', subs=121, cmap_c=cmap_c)
+df.set_clim([-30, 30])
 
-fb = histmodregridkernel.sel(month=slice(4,7)).mean(dim='month')*histmodregridsensitivity.sel(month=slice(4,7)).mean(dim='month')
-df = pltpanel(fb, modelname+' 1996-2014', subs=122,cmap_c = cmap_c)
-df.set_clim([-30,30])
+fb = histmodregridkernel.sel(month=slice(4, 7)).mean(dim='month')*histmodregridsensitivity.sel(month=slice(4, 7)).mean(dim='month').mean(dim='time')
+df = pltpanel(fb, modelname + '' + firstyr + '' + lastyr, subs=122, cmap_c=cmap_c)
+df.set_clim([-30, 30])
 
 
 cbar_ax = fig.add_axes(cbarposition)
 cbar = fig.colorbar(df, cax=cbar_ax,  orientation='horizontal')
 cbar.set_label('Albedo Sensitivity (W m$^{-2}$ per K)', fontsize=14)
 
-plt.subplots_adjust(bottom=0.21,top=0.85)
+plt.subplots_adjust(bottom=0.21, top=0.85)
 
 plt.savefig(figures_dir+'historical_surface_albedo_FB_'+modelname+'.png', format='png',dpi=300)
 

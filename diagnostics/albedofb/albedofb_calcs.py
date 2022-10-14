@@ -46,6 +46,7 @@ import os
 import xarray as xr  # python library we use to read netcdf files
 import numpy as np
 import pandas as pd
+from xarray.core.dataarray import DataArray
 
 
 def xr_reshape(A, dim, newdims, coords):
@@ -200,15 +201,22 @@ def process_data(kernel_file, sensitivity_file):
     Tglob = globalmean(tas, fx)
     Tglobtrend = Tglob.groupby('time.month').apply(linear_trend)
 
-    fsds_ds = xr.open_dataset(FSDS_input_file)
-    fsus_ds = xr.open_dataset(FSUS_input_file)
+    fsds = xr.open_dataset(FSDS_input_file)
+    fsus = xr.open_dataset(FSUS_input_file)
     # must get rid of cftime since lack of leap day messes up divide below
-    ds = fsds_ds['rsds'].assign_coords(month=('time', fsds_ds.time.dt.month)).swap_dims({'time': 'month'}).drop('time')
-    us = fsus_ds['rsus'].assign_coords(month=('time', fsus_ds.time.dt.month)).swap_dims({'time': 'month'}).drop('time')
+    #tmp1 = fsds['rsds']
+    #tmp1 = tmp1.swap_dims({'time': 'month'}).drop('time')
+    #ds = tmp1.assign_coords(month=tmp1.month.values)
+    #tmp2 = fsus['rsus']
+    #tmp2 = tmp2.swap_dims({'time': 'month'}).drop('time')
+    #us = tmp2.assign_coords(month=tmp2.month.values)
+    ds = fsds['rsds']
+    us = fsus['rsus']
     albedo = us / ds
     stacked = albedo.stack(allpoints=['lat', 'lon'])  # reduce to 2D array before computing trend
-    albedo_trend = stacked.groupby('month').apply(linear_trend)  # loses coord to unstack somewhere here
-    tmp = stacked.isel(month=slice(0, 12))  # use this to put back stack coord
+    #albedo_trend = stacked.groupby('month').apply(linear_trend)  # loses coord to unstack somewhere here
+    albedo_trend = stacked.groupby('time.month').apply(linear_trend)
+    tmp = stacked.isel(time=slice(0, 12))  # use this to put back stack coord
     tmp[:, :] = albedo_trend
     albedo_trend = tmp.unstack('allpoints')
     albedo_trend = albedo_trend.fillna(0)

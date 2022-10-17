@@ -25,7 +25,7 @@
   "pod_list" : [
      "example_multicase"
    ],
-   // Each CASENAME corresponds to an ensemble member.
+   // Each CASENAME corresponds to a different simulation/output dataset
   "case_list" : [
      {
        "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231",
@@ -76,7 +76,11 @@
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
   // can be set here, in the form "flag name": "desired setting".
-  // Method used to fetch model data.
+  //
+  // Type of data for the framework to process: `single_run` (default)
+  // for PODs that compare output from a single simulation to observational data
+  // or `multi_run` for PODs that analyze output from multiple simulations and/or
+  // observational datasets
   "data_type": "multi_run",
 
   // Method used to fetch model data.

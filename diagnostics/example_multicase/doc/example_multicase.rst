@@ -24,9 +24,9 @@ Unless you've distributed your script elsewhere, you don't need to change this.
 
 Functionality
 -------------
-The framework generates yaml file called **case_info.yml** with environment variables
-for the file paths and variable information for each case. The example_multicase POD reads the yaml file
-information into a dictionary, and loops through the dictionary to read near-surface air temperature data
+The framework generates yaml file called *case_info.yml* with environment variables
+for the file paths and variable information for each case. The **example_multicase** POD reads the yaml file
+information into a dictionary, and loops through the dictionary to read near-surface air temperature (TAS) data
 for each case. The POD time averages the data and calculates the anomaly relative to the global mean.
 The anomalies are zonally-averaged and the results from all cases are shown on a single plot.
 

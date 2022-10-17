@@ -8,7 +8,7 @@
 #
 #   Last update: Feb-2022
 #
-#   This example builds upon the single case (i.e. `example`) example POD
+#   This example builds upon the single case `example` POD
 #   and illustrates how to design and implement a POD that uses multiple
 #   model source datasets. These can be the same experiment with different
 #   models, two different experiments from the same model, or two different
@@ -16,7 +16,7 @@
 #
 #   Version & Contact info
 #
-#   - Version/revision information: version 1 (Feb-2022)
+#   - Version/revision information: version 1.1 (Oct-2022)
 #   - Model Development Task Force Framework Team
 #
 #   Open source copyright agreement
@@ -25,11 +25,11 @@
 #
 #   Functionality
 #
-#   Metadata associated with all of the different cases are passed from the
-#   framework to the POD in the form of a dictionary. The POD iterates over the
-#   case list and opens the input datasets.  The `tas` variable is extracted for
-#   each case and the time average is taken over the dataset. Anomalies are calculated
-#   relative to the global mean and then zonally-averaged. The resulting plot
+#   Metadata associated with the different cases are passed from the
+#   framework to the POD via a yaml file (case_info.yaml) that the POD reads into a dictionary.
+#   The POD iterates over the case entries in the dictionary and opens the input datasets.
+#   The `tas` variable is extracted for each case and the time average is taken over the dataset.
+#   Anomalies are calculated relative to the global mean and then zonally-averaged. The resulting plot
 #   contains one line for each case.
 #
 #   Required programming language and libraries
@@ -80,7 +80,7 @@ with open(case_env_file, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
-# Sample case_info template ingested from yaml file ('meta.yaml')
+# Sample case_info template ingested from yaml file ('case_info.yaml')
 # case_info = {
 #    "CASENAME": {
 #        "NAME": os.environ["CASENAME"],

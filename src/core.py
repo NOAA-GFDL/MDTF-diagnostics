@@ -37,6 +37,7 @@ ObjectStatus.__doc__ = """
 - *SUCCEEDED*: Processing finished successfully.
 """
 
+
 @util.mdtf_dataclass
 class MDTFObjectBase(metaclass=util.MDTFABCMeta):
     """Base class providing shared functionality for the object hierarchy, which is:
@@ -60,6 +61,7 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
         # init object-level logger
         self.log = util.MDTFObjectLogger.get_logger(self._log_name)
 
+    # the @property decorator allows us to attach code to designated attribute, such as getter and setter methods
     @property
     def _log_name(self):
         if self._parent is None:
@@ -89,10 +91,13 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
         """Iterable of child objects associated with this object."""
         pass
 
+    # This is a figurative "birth" routine that generates an object full of child objects
     def iter_children(self, child_type=None, status=None, status_neq=None):
         """Generator iterating over child objects associated with this object.
 
         Args:
+            child_type: None or Type `type`; default None. If None, iterates over
+            all child objects regardless of their type
             status: None or :class:`ObjectStatus`, default None. If None,
                 iterates over all child objects, regardless of status. If a
                 :class:`ObjectStatus` value is passed, only iterates over
@@ -102,11 +107,11 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
                 If *status* is set, this setting is ignored.
         """
         iter_ = self._children
-        if child_type is not None:
+        if child_type is not None:  # return the iter_ elements that match a specified child_type
             iter_ = filter((lambda x: isinstance(x, child_type)), iter_)
-        if status is not None:
+        if status is not None:  # return the iter_ elements that match the specified status
             iter_ = filter((lambda x: x.status == status), iter_)
-        elif status_neq is not None:
+        elif status_neq is not None:  # return the iter elements that do NOT match status_neq
             iter_ = filter((lambda x: x.status != status_neq), iter_)
         yield from iter_
 
@@ -167,7 +172,8 @@ class ConfigManager(util.Singleton, util.NameSpace):
         else:
             # normal code path
             self.pod_data = pod_info_tuple.pod_data
-            self.update(cli_obj.config)
+            self.update(cli_obj.config)  # the update method is a Python built-in that adds items from
+            # an iterable or another dictionary to a dictionary
             backup_config = self.backup_config(cli_obj, case_d)
             self._configs[backup_config.name] = backup_config
             self._configs['log_config'] = ConfigTuple(
@@ -193,6 +199,7 @@ class ConfigManager(util.Singleton, util.NameSpace):
             contents=d
         )
 
+
 class PathManager(util.Singleton, util.NameSpace):
     """:class:`~util.Singleton` holding the root directories for all paths used
     by the code.
@@ -201,7 +208,7 @@ class PathManager(util.Singleton, util.NameSpace):
         self._unittest = unittest
         if self._unittest:
             for path in ['CODE_ROOT', 'OBS_DATA_ROOT', 'MODEL_DATA_ROOT',
-                'WORKING_DIR', 'OUTPUT_DIR']:
+                         'WORKING_DIR', 'OUTPUT_DIR']:
                 setattr(self, path, 'TEST_'+path)
             self.TEMP_DIR_ROOT = self.WORKING_DIR
         else:
@@ -224,8 +231,8 @@ class PathManager(util.Singleton, util.NameSpace):
 
             # set as attribute any CLI setting that has "action": "PathAction"
             # in its definition in the .jsonc file
-            cli_paths = [act.dest for act in cli_obj.iter_actions() \
-                if isinstance(act, cli.PathAction)]
+            cli_paths = [act.dest for act in cli_obj.iter_actions()
+                         if isinstance(act, cli.PathAction)]
             if not cli_paths:
                 _log.warning("Didn't get list of paths from CLI.")
             for key in cli_paths:
@@ -275,6 +282,25 @@ class PathManager(util.Singleton, util.NameSpace):
             d.MODEL_WK_DIR, ver = util.bump_version(
                 d.MODEL_WK_DIR, extra_dirs=[self.OUTPUT_DIR])
             d.MODEL_OUT_DIR, _ = util.bump_version(d.MODEL_OUT_DIR, new_v=ver)
+        return d
+
+    def multirun_model_paths(self, pod, case):
+        # define directory paths for multirun mode
+        # Each case directory is a subdirectory in wk_dir/pod_name
+        d = util.NameSpace()
+        if isinstance(case, dict):
+            name = case['CASENAME']
+            yr1 = case['FIRSTYR']
+            yr2 = case['LASTYR']
+        else:
+            name = case.name
+            yr1 = case.attrs.date_range.start.format(precision=1)
+            yr2 = case.attrs.date_range.end.format(precision=1)
+        case_wk_dir = 'MDTF_{}_{}_{}'.format(name, yr1, yr2)
+        d.MODEL_DATA_DIR = os.path.join(self.MODEL_DATA_ROOT, name)
+        # Cases are located in a common POD directory
+        d.MODEL_WK_DIR = os.path.join(pod.POD_WK_DIR, case_wk_dir)
+        d.MODEL_OUT_DIR = os.path.join(pod.POD_OUT_DIR, case_wk_dir)
         return d
 
     def pod_paths(self, pod, case):
@@ -794,6 +820,7 @@ class VariableTranslator(util.Singleton):
 
 # ---------------------------------------------------------------------------
 
+
 class MDTFFramework(MDTFObjectBase):
     def __init__(self, cli_obj):
         super(MDTFFramework, self).__init__(
@@ -805,6 +832,8 @@ class MDTFFramework(MDTFObjectBase):
         self.pod_list = []
         self.cases = dict()
         self.global_env_vars = dict()
+        self.multirun = False
+        self.pods = dict()
         try:
             # load pod data
             pod_info_tuple = mdtf_info.load_pod_settings(self.code_root)
@@ -822,7 +851,10 @@ class MDTFFramework(MDTFObjectBase):
     @property
     def _children(self):
         """Iterable of child objects associated with this object."""
-        return self.cases.values()
+        if self.multirun:
+            return self.pods.values()
+        else:
+            return self.cases.values()
 
     @property
     def full_name(self):
@@ -868,7 +900,7 @@ class MDTFFramework(MDTFObjectBase):
         for arg in cli_obj.iter_group_actions(subcommand=None, group=group_nm):
             key = arg.dest
             val = cli_obj.config.get(key, None)
-            if val: # assign nonempty items only
+            if val:  # assign nonempty items only
                 target_d[key] = val
         return target_d
 
@@ -878,8 +910,17 @@ class MDTFFramework(MDTFObjectBase):
         """
         self.parse_flags(cli_obj)
         self.parse_env_vars(cli_obj)
-        pod_list = cli_obj.config.pop('pods', [])
-        self.pod_list = self.parse_pod_list(pod_list, pod_info_tuple)
+
+        if not cli_obj.config.get('pod_list'):
+            # pod_list is a separate object from the case_list in multirun mode
+            _log.info("pod_list not defined separately from case_list."
+                      "Will parse pod_list from cases case_list if present, or use PODs designated by"
+                      "--all (default) or --example cli args")
+            pod_list = cli_obj.config.pop('pods', [])
+            self.pod_list = self.parse_pod_list(pod_list, pod_info_tuple)
+        else:
+            self.pod_list = cli_obj.config.get('pod_list')
+
         self.parse_case_list(cli_obj, pod_info_tuple)
 
     def parse_flags(self, cli_obj):
@@ -895,6 +936,11 @@ class MDTFFramework(MDTFObjectBase):
                 cli_obj.config.get('convention', ''),
                 extra={'tags': {util.ObjectLogTag.BANNER}}
             )
+        if cli_obj.config.get('data_type') == 'multi_run':
+            self.multirun = True
+            _log.info("Running framework in multi-run mode ")
+        else:
+            _log.info("Running framework in single-run mode ")
         # check this here, otherwise error raised about missing caselist is not informative
         try:
             if cli_obj.config.get('CASE_ROOT_DIR', ''):
@@ -1083,45 +1129,88 @@ class MDTFFramework(MDTFObjectBase):
         return False
 
     def main(self):
-        # only run first case in list until dependence on env vars cleaned up
-        self.cases = dict(list(self.cases.items())[0:1])
-
         new_d = dict()
-        for case_name, case_d in self.cases.items():
-            _log.info("### %s: initializing case '%s'.", self.full_name, case_name)
-            case = self.DataSource(case_d, parent=self)
-            case.setup()
-            new_d[case_name] = case
-        self.cases = new_d
-        util.transfer_log_cache(close=True)
+        # single run mode
+        if not self.multirun:
+            self.cases = dict(list(self.cases.items())[0:1])
+            for case_name, case_d in self.cases.items():
+                _log.info("### %s: initializing case '%s'.", self.full_name, case_name)
+                case = self.DataSource(case_d, parent=self)
+                case.setup()
+                new_d[case_name] = case
+            self.cases = new_d
+            util.transfer_log_cache(close=True)
 
-        for case_name, case in self.cases.items():
-            if not case.failed:
-                _log.info("### %s: requesting data for case '%s'.",
-                    self.full_name, case_name)
-                case.request_data()
-            else:
-                _log.info(("### %s: initialization for case '%s' failed; skipping "
-                    f"data request."), self.full_name, case_name)
+            for case_name, case in self.cases.items():
+                if not case.failed:
+                    _log.info("### %s: requesting data for case '%s'.",
+                              self.full_name, case_name)
+                    case.request_data()
+                else:
+                    _log.info(("### %s: initialization for case '%s' failed; skipping "
+                               f"data request."), self.full_name, case_name)
 
-            if not case.failed:
-                _log.info("### %s: running case '%s'.", self.full_name, case_name)
-                run_mgr = self.RuntimeManager(case, self.EnvironmentManager)
+                if not case.failed:
+                    _log.info("### %s: running case '%s'.", self.full_name, case_name)
+                    run_mgr = self.RuntimeManager(case, self.EnvironmentManager)
+                    run_mgr.setup()
+                    run_mgr.run()
+                else:
+                    _log.info(("### %s: Data request for case '%s' failed; skipping "
+                               "execution."), self.full_name, case_name)
+
+                out_mgr = self.OutputManager(case)
+                out_mgr.make_output()
+            tempdirs = TempDirManager()
+            tempdirs.cleanup()
+            print_summary(self)
+            return 1 if self.failed else 0  # exit code
+        # multirun mode
+        else:
+            # Import multirun methods here to avoid circular import problems
+            # e.g., multirun.py inherits from diagnostic.py which inherits from core.py
+            from src.diagnostic import MultirunDiagnostic
+            pod_dict = dict.fromkeys(self.pod_list, [])
+            for pod in pod_dict.keys():
+                # Initialize the pod as a MultirunDiagnostic object
+                # Attach the caselist dict, and append case-specific attributes to each case object
+                # Set the POD attributes including paths, pod_env_vars, and the convention
+                # Append the varlist and import variable information from the pod settings file
+                pod_dict[pod] = MultirunDiagnostic.from_config(pod, parent=self)
+                # Translate varlist variables and metadata
+                # Perform data preprocessing
+                pod_dict[pod].setup_pod()
+                # query the data
+                # request the data
+                util.transfer_log_cache(close=True)
+                for case_name, case in pod_dict[pod].cases.items():
+                    if not case.failed:
+                        _log.info("### %s: requesting data for case '%s'.",
+                                  self.full_name, case_name)
+                        case.request_data(pod_dict[pod])
+                    else:
+                        _log.info(("### %s: initialization for case '%s' failed; skipping "
+                                   f"data request."), self.full_name, case_name)
+            self.pods = pod_dict
+            if not any(p.failed for p in self.pods.values()):
+                _log.info("### %s: running pods '%s'.", self.full_name, [p for p in pod_dict.keys()])
+                run_mgr = self.RuntimeManager(self.pods, self.EnvironmentManager, self)
                 run_mgr.setup()
-                run_mgr.run()
+                run_mgr.run(self)
             else:
-                _log.info(("### %s: Data request for case '%s' failed; skipping "
-                    "execution."), self.full_name, case_name)
+                _log.info(("### %s: Data request for pod '%s' failed; skipping "
+                           "execution."), self.full_name, pod)
 
-            out_mgr = self.OutputManager(case)
-            out_mgr.make_output()
-
-        tempdirs = TempDirManager()
-        tempdirs.cleanup()
-        print_summary(self)
-        return (1 if self.failed else 0) # exit code
+            for p in self.pods.values():
+                out_mgr = self.OutputManager(p)
+                out_mgr.make_output(p)
+            tempdirs = TempDirManager()
+            tempdirs.cleanup()
+            print_multirun_summary(self)
+            return 0 if not any(v.failed for v in self.pods.values()) else 1  # exit code
 
 # --------------------------------------------------------------------
+
 
 def print_summary(fmwk):
     def summary_info_tuple(case):
@@ -1162,3 +1251,39 @@ def print_summary(fmwk):
             _log.info(f"Summary for {case_name}:")
             _log.info(f"\tAll PODs exited normally.")
             _log.info(f"\tOutput written to {tup[2]}")
+
+
+def print_multirun_summary(fmwk):
+    def summary_info_tuple(pod):
+        """Debug information; will clean this up.
+        """
+        return (
+            [p_name for p_name, p in pod.cases.items() if p.failed],
+            [p_name for p_name, p in pod.cases.items() if not p.failed],
+            getattr(pod, 'POD_OUT_DIR', '<ERROR: dir not created.>')
+        )
+
+    d = {p_name: summary_info_tuple(p) for p_name, p in fmwk.pods.items()}
+    failed = any(len(tup[0]) > 0 for tup in d.values())
+    _log.info('\n' + (80 * '-'))
+    if failed:
+        _log.info(f"Exiting with errors.")
+        for case_name, tup in d.items():
+            _log.info(f"Summary for {case_name}:")
+            if tup[0][0] == 'dummy sentinel string':
+                _log.info('\tAn error occurred in setup. No PODs were run.')
+            else:
+                if tup[1]:
+                    _log.info((f"\tThe following PODs exited normally: "
+                               f"{', '.join(tup[1])}"))
+                if tup[0]:
+                    _log.info((f"\tThe following PODs raised errors: "
+                               f"{', '.join(tup[0])}"))
+            _log.info(f"\tOutput written to {tup[2]}")
+    else:
+        _log.info(f"Exiting normally.")
+        for case_name, tup in d.items():
+            _log.info(f"Summary for {case_name}:")
+            _log.info(f"\tAll PODs exited normally.")
+            _log.info(f"\tOutput written to {tup[2]}")
+        fmwk.status = ObjectStatus.SUCCEEDED

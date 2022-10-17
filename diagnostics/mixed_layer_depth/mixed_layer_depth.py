@@ -368,3 +368,4 @@ monthlyplot(
     cmapname="viridis",
     myname="EN4 reanalysis",
 )
+

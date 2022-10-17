@@ -134,16 +134,16 @@ We recommend using absolute paths in `default_tests.jsonc`, but relative paths a
 - `src/`: source code of the framework itself.
 - `tests/`: unit tests for the framework.
 
-## 4. Execute the MDTF package with default test settings
+## 4. Execute the MDTF package with default test settings in `single_run` mode
 
 The MDTF framework is run via the wrapper script `$CODE_ROOT/mdtf` that is generated conda_env_install.sh. To test the installation, `% $CODE_ROOT/mdtf --help` will print help text on the command-line options. Note that, if your current working directory is `$CODE_ROOT`, you will need to run `% ./mdtf --help`.
 
 This should print the current version of the framework.
 
-To run the code on the test data using the version of default_tests.jsonc you modified:
-```
-% cd $CODE_ROOT
-% ./mdtf -f src/default_tests.jsonc -v
+To run the code in *single_run* mode on the test data using the version of default_tests.jsonc you modified:
+```commandline
+cd $CODE_ROOT
+./mdtf -f src/default_tests.jsonc -v
 ```
 -v is the "verbose" flag, and will print additional information that may help with debugging if you have issues
 
@@ -159,7 +159,26 @@ Run time may be 10-20 minutes, depending on your system.
 
 - If you re-run the above command,  the result will be written to another subdirectory under `$OUTPUT_DIR`, i.e., output files saved previously will not be overwritten unless you change `overwrite` in the configuration file to `true`.
 
-## 5. Next steps
+## 5. Run the framework in *multi_run* mode (under development)
+The framework is ready to test on PODs that analyze multiple model and or observational datasets (cases) using the tag
+*v3.1.alpha.1*. To run the framework on the
+**[example_multicase](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase)** POD,
+modify the example configuration file and run
+```commandline
+./mdtf -f /diagnostics/multirun_config_template.jsonc -v
+``` 
+You can specify your own datasets in the caselist block, or run the example_multicase POD on the same synthetic data
+specified in the configuration file. To generate the synthetic CMIP data, run:
+```commandline
+mamba env create --force -q -f ./src/conda/_env_synthetic_data.yml
+conda activate _MDTF_synthetic_data
+pip install mdtf-test-data
+mkdir mdtf_test_data && cd mdtf_test_data
+mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5
+mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5
+```
+
+## 6. Next steps
 
 For more detailed information, consult the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/). The ["Getting Started"](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/start_toc.html) section has more detailed information on customizing your installation and running the framework on your own data. Users interested in contributing a POD should consult the ["Developer Information"](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/dev_toc.html) section.
 

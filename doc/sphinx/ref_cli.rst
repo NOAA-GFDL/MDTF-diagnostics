@@ -79,7 +79,10 @@ Options that describe the input model data and how it should be obtained.
    | This is a "plug-in setting": Different choices of <*data_manager*> may define additional command-line options, which will be documented below the entry for ``--data-manager`` in the CLI help (run :console:`% mdtf --site <site_name> --data-manager <data_manager> --help`). See the :doc:`ref_data_sources` and site-specific documentation a list of available values for <*data_manager*>, and the command-line options that are specific to each value.
    |
    | Default value is ``"Local_file"``, which looks for sample model data in a local directory <*CASE_ROOT_DIR*>. This assumes you have downloaded this data beforehand, by following the recommended :ref:`installation instructions<ref-conda-install>`.
-
+--data-type <"single_run" | "multi_run">  | Type of data for the framework to process. Use ``"single_run"`` (default) for PODs
+   | that analyze output from a single model simulation and an (optional) observational dataset
+   | Use ``"multi_run"`` for PODs that analyze output from 2 or more model simulations and/or observational datasets (cases).
+   | See the example_multicase POD and config files for an example of a ``multi_run`` type POD.
 Analysis settings
 +++++++++++++++++
 

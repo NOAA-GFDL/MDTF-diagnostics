@@ -30,8 +30,8 @@ set model = "modelname"
 
 # Please enter the POD lists below. This gets filled in to the MDTF input json automatically if using frepp
 
-#pod_list contains list of all PODS in the framework for reference. Please edit the pod_list as needed for your simulation. 
-set pod_list = '"Wheeler_Kiladis","EOF_500hPa","convective_transition_diag","MJO_suite","MJO_teleconnection","MJO_prop_amp","precip_diurnal_cycle","SM_ET_coupling"' 
+#pod_list contains list of all PODS in the framework for reference. Please edit the pod_list as needed for your simulation.
+set pod_list = '"Wheeler_Kiladis","EOF_500hPa","convective_transition_diag","MJO_suite","MJO_teleconnection","MJO_prop_amp","precip_diurnal_cycle","SM_ET_coupling"'
 
 set script_path
 
@@ -40,8 +40,8 @@ set CONDA_ROOT="/home/oar.gfdl.mdtf/miniconda3"
 set REPO_DIR="/home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics"
 
 #YOUR mdtf-frepp template jsonc should be in ${TEMPLATE_DIR}/sites/NOAA_GFDL/mdtf_frepp_template.jsonc
- 
-set TEMPLATE_DIR = $REPO_DIR  
+
+set TEMPLATE_DIR = $REPO_DIR
 
 set OBS_DATA_DIR="/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data"
 # output is always written to $out_dir; set a path below to GCP a copy of output
@@ -188,14 +188,14 @@ if (! -d $in_data_dir) then
   echo "QUIT if in_data_dir is not valid"
 endif
 
-if (! -d $PP_DIR) then 
+if (! -d $PP_DIR) then
   echo "QUIT if PP_DIR is not valid"
 endif
 echo "Running ${REPO_DIR}/mdtf_framework.py -f ${input_jsonc} --site NOAA_GFDL -v "
 ${REPO_DIR}/mdtf_framework.py -f ${input_jsonc} --site NOAA_GFDL -v
 
 
-##workaround ends 
+##workaround ends
 pkg_status=$?
 echo "mdtf_gfdl.csh: MDTF finish; exit={$pkg_status}"
 

@@ -9,7 +9,8 @@ import shutil
 import tempfile
 import pandas as pd
 from src import (util, core, diagnostic, data_manager, data_sources,
-    preprocessor, environment_manager, output_manager, cmip6)
+                 preprocessor, environment_manager, output_manager, cmip6)
+from src import query_fetch_preprocess as qfp
 from sites.NOAA_GFDL import gfdl_util
 
 import logging
@@ -127,7 +128,7 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
 
 # ------------------------------------------------------------------------
 
-class GCPFetchMixin(data_manager.AbstractFetchMixin):
+class GCPFetchMixin(qfp.AbstractFetchMixin):
     """Mixin implementing data fetch for netcdf files on filesystems accessible
     from GFDL via GCP. Remote files are copies to a local temp directory. dmgets
     are issued for remote files on tape filesystems.
@@ -208,7 +209,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
 
 
 class GFDL_GCP_FileDataSourceBase(
-    data_manager.OnTheFlyDirectoryHierarchyQueryMixin,
+    qfp.OnTheFlyDirectoryHierarchyQueryMixin,
     GCPFetchMixin,
     data_manager.DataframeQueryDataSourceBase
 ):
@@ -264,7 +265,7 @@ class Gfdludacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
-    _fetch_method = "cp" # copy locally instead of symlink due to NFS hanging
+    _fetch_method = "cp"  # copy locally instead of symlink due to NFS hanging
 
 
 @util.mdtf_dataclass
@@ -331,9 +332,10 @@ _pp_static_dir_regex = util.RegexPattern(r"""
         /?                      # maybe initial separator
         (?P<component>[a-zA-Z0-9_-]+)     # component name
     """,
-    defaults={
-        'frequency': util.FXDateFrequency, 'chunk_freq': util.FXDateFrequency
-    }
+                                         defaults={
+                                             'frequency': util.FXDateFrequency,
+                                             'chunk_freq': util.FXDateFrequency
+                                         }
 )
 pp_dir_regex = util.ChainedRegexPattern(
     # try the first regex, and if no match, try second
@@ -351,25 +353,27 @@ _pp_ts_regex = util.RegexPattern(r"""
         (?P<variable>[a-zA-Z0-9_-]+)\.       # field name
         nc                      # netCDF file extension
     """
-)
+                                 )
 _pp_static_regex = util.RegexPattern(r"""
         /?                      # maybe initial separator
         (?P<component>[a-zA-Z0-9_-]+)/     # component name
         (?P=component)     # component name (again)
         \.static\.nc             # static frequency, netCDF file extension
     """,
-    defaults={
-        'variable': 'static',
-        'start_date': util.FXDateMin, 'end_date': util.FXDateMax,
-        'frequency': util.FXDateFrequency, 'chunk_freq': util.FXDateFrequency
-    }
-)
+                                     defaults={
+                                         'variable': 'static',
+                                         'start_date': util.FXDateMin, 'end_date': util.FXDateMax,
+                                         'frequency': util.FXDateFrequency, 'chunk_freq': util.FXDateFrequency
+                                     }
+                                     )
 pp_path_regex = util.ChainedRegexPattern(
     # try the first regex, and if no match, try second
     _pp_ts_regex, _pp_static_regex,
     input_field="remote_path",
     match_error_filter=pp_ignore_regex
 )
+
+
 @util.regex_dataclass(pp_path_regex)
 class PPTimeseriesDataFile():
     """Dataclass describing catalog entries for /pp/ directory timeseries data.
@@ -398,7 +402,8 @@ class PPTimeseriesDataFile():
             self.date_range = util.DateRange(self.start_date, self.end_date)
             if self.frequency.is_static:
                 raise util.DataclassParseError(("Inconsistent filename parse: "
-                    f"cannot determine if '{self.remote_path}' represents static data."))
+                                                f"cannot determine if '{self.remote_path}' represents static data."))
+
 
 @util.mdtf_dataclass
 class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
@@ -434,19 +439,20 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
 
 gfdlppDataManager_any_components_col_spec = data_manager.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
-    expt_cols = data_manager.DataFrameQueryColumnGroup([]),
-    pod_expt_cols = data_manager.DataFrameQueryColumnGroup([]),
-    var_expt_cols = data_manager.DataFrameQueryColumnGroup(['chunk_freq', 'component']),
-    daterange_col = "date_range"
+    expt_cols=data_manager.DataFrameQueryColumnGroup([]),
+    pod_expt_cols=data_manager.DataFrameQueryColumnGroup([]),
+    var_expt_cols=data_manager.DataFrameQueryColumnGroup(['chunk_freq', 'component']),
+    daterange_col="date_range"
 )
 
 gfdlppDataManager_same_components_col_spec = data_manager.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
-    expt_cols = data_manager.DataFrameQueryColumnGroup([]),
-    pod_expt_cols = data_manager.DataFrameQueryColumnGroup(['component']),
-    var_expt_cols = data_manager.DataFrameQueryColumnGroup(['chunk_freq']),
-    daterange_col = "date_range"
+    expt_cols=data_manager.DataFrameQueryColumnGroup([]),
+    pod_expt_cols=data_manager.DataFrameQueryColumnGroup(['component']),
+    var_expt_cols=data_manager.DataFrameQueryColumnGroup(['chunk_freq']),
+    daterange_col="date_range"
 )
+
 
 class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
     # extends GFDL_GCP_FileDataSourceBase

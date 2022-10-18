@@ -26,3 +26,4 @@ dependencies:
 # bump version 0.3.1 -> 0.4 feb 2021
 - cf_xarray=0.4.0
 - subprocess32
+- pyyaml >=6.0

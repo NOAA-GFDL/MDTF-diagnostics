@@ -26,7 +26,7 @@ The site installation provides alternative ways to run the diagnostics within GF
       <analysis switch="on" cumulative="no" script="/home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics/sites/NOAA_GFDL/mdtf_gfdl.csh"/>
 
    The MDTF package behaves as any other analysis script called by FRE from an experiment XML: FRE will populate the wrapper script with the correct paths, date range of the run, etc., so these options don't need to be passed in the XML tag. 
-
+   
    The wrapper script calls the site installation of the package with the ``--data-manager="GFDL_PP"`` (see below) option. ``GFDL_PP`` defaults to assuming GFDL variable naming :ref:`conventions<ref-data-conventions>`; data which follows other conventions (e.g. fremetarized runs intended for publication as part of CMIP6) requires the ``--convention`` flag to be set explicitly. In general, the wrapper script passes through any additional options set in the tag's ``script`` attribute, in addition to setting the data attributes provided by FRE. Passing through package flags in the ``<analysis>`` tag can be used to, e.g., only run specific PODs for each ``<component>`` with the ``--pods`` option.
 
    Currently, FRE requires that each analysis script be associated with a single model ``<component>``. This poses difficulties for the MDTF package, which analyzes data from multiple modeling realms/``<component>``\s. We provide two ways to address this issue:
@@ -43,7 +43,7 @@ The ``--run_once`` flag should be used whenever you don't need the incremental u
 Additional data sources
 -----------------------
 
-In addition to the framework's :ref:`built-in data sources<ref-data-sources>`, several data sources are defined that are only accessible to GFDL users. 
+In addition to the framework's :ref:`built-in data sources<ref-data-sources>`, several data sources are defined that are only accessible to GFDL users.
 
 All the data sources in this section use GFDL's in-house General Copy Program (GCP, not to be confused with Google Compute Platform) for all file transfers. If GCP is not present on ``$PATH`` when the package is started, the package will load the appropriate environment module.
 
@@ -92,9 +92,9 @@ This data source implements the following logic to guarantee that all data it pr
 
 * This data source only searches data saved as time series (``/ts/``), rather than time averages, since no POD is currently designed to use time-averaged data.
 * If the same data has been saved in files of varying chronological length (``<chunk_freq>``), the shortest ``<chunk_freq>`` is used, in order to minimize the amount of data that is transferred but not used (because it falls outside of the user's analysis period).
-* By default, any variable can come from model ``<component>``, with the same component used for all variables requested by a POD if possible. This setting is required to enable the execution of PODs that use data from different ``<component>``\s or realms. 
+* By default, any variable can come from model ``<component>``, with the same component used for all variables requested by a POD if possible. This setting is required to enable the execution of PODs that use data from different ``<component>``\s or realms.
 
-  - Specifying a model component with the ``--component`` flag does one of two things, depending on whether the package is being run once or incrementally. 
+  - Specifying a model component with the ``--component`` flag does one of two things, depending on whether the package is being run once or incrementally.
   - If the package is being run once, all data used must come from that component (e.g., multi-realm PODs will not run). In this case we assume the user wants to focus their attention on this component exclusively.
   - If the package is being run incrementally (called from FRE without the ``--run_once`` flag, see above, or called in general with the ``--frepp`` flag), all data for each POD must come from the same component, but different PODs may use data from different components. This is because we're operating according to scenario 3B (above) and are analyzing multiple components, but still want to focus on component-specific diagnostics.
 

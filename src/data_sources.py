@@ -5,8 +5,9 @@ the user via ``--data_manager``; see :doc:`ref_data_sources` and
 import os
 import collections
 import dataclasses
-from src import util, core, diagnostic, xr_parser, preprocessor, cmip6
+from src import util, multirun, core, diagnostic, xr_parser, preprocessor, cmip6
 from src import data_manager as dm
+from src import query_fetch_preprocess as qfp
 import pandas as pd
 
 import logging
@@ -114,6 +115,47 @@ class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
         return self.attrs.CASE_ROOT_DIR
 
 # ----------------------------------------------------------------------------
+
+
+class MultirunSampleLocalFileDataSource(multirun.MultirunSingleLocalFileDataSource, SampleLocalFileDataSource):
+    """DataSource for handling POD sample model data stored on a local filesystem.
+    Duplicate of SampleLocalFileDataSource, but need to route to multirun parent data source classes
+    """
+    # No-op=--just inherit attributes, properties, and route to __init__ methods in parent classes
+    pass
+
+
+class MultirunLocalFileDataSource(MultirunSampleLocalFileDataSource,
+                                  qfp.MultirunDataSourceQFPMixin
+                                  ):
+    """DataSource for handling POD sample model data for multirun cases stored on a local filesystem.
+    """
+    # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
+    # _AttributesClass = SampleDataAttributes
+    # col_spec = sampleLocalFileDataSource_col_spec
+    _DiagnosticClass = diagnostic.MultirunDiagnostic
+    varlist: diagnostic.MultirunVarlist = None
+    # Override data_manager:DataSourceBase init method
+
+    def __init__(self, case_dict, parent):
+        # _id = util.MDTF_ID()        # attrs inherited from core.MDTFObjectBase
+        # name: str
+        # _parent: object
+        # log = util.MDTFObjectLogger
+        # status: ObjectStatus
+        # initialize data source atts and methods from parent classes
+        super(MultirunLocalFileDataSource, self).__init__(case_dict, parent)
+        # borrow MDTFObjectBase initialization from data_manager:~DataSourceBase
+        core.MDTFObjectBase.__init__(
+            self, name=case_dict['CASENAME'], _parent=parent
+        )
+
+    @property
+    def _children(self):
+        """Iterable of the multirun varlist that is associated with the data source object
+        """
+        yield from self.varlist.iter_vars()
+
 
 class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
     """After loading and parsing the metadata on dataset *ds* but before
@@ -309,9 +351,9 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
     # LASTYR: str
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
-    # convention: str
     # log: dataclasses.InitVar = _log
     config_file: str = None
+    convention: str = ""
 
     def __post_init__(self, log=_log):
         """Validate user input.
@@ -339,7 +381,7 @@ explicitFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
 
 
 class ExplicitFileDataSource(
-    dm.OnTheFlyGlobQueryMixin, dm.LocalFetchMixin, dm.DataframeQueryDataSourceBase
+    qfp.OnTheFlyGlobQueryMixin, qfp.LocalFetchMixin, dm.DataframeQueryDataSourceBase
 ):
     """DataSource for dealing data in a regular directory hierarchy on a
     locally mounted filesystem. Assumes data for each variable may be split into
@@ -416,7 +458,15 @@ class ExplicitFileDataSource(
         for entry in self.config_by_id.values():
             yield entry.to_file_glob_tuple()
 
-# ----------------------------------------------------------------------------
+
+class MultirunExplicitFileDataSource(ExplicitFileDataSource):
+    """DataSource to handle multirun data in a regular directory hierarchy on a
+    locally mounted filesystem. Assumes data for each variable may be split into
+    several files according to date, with the dates present in their filenames.
+    Data file paths and metadata modifications are specified in a separate config file.
+    """
+    _DiagnosticClass = diagnostic.MultirunDiagnostic
+    _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
 
 
 @util.mdtf_dataclass
@@ -650,3 +700,11 @@ class CMIP6LocalFileDataSource(CMIP6ExperimentSelectionMixin, dm.LocalFileDataSo
     _DiagnosticClass = diagnostic.Diagnostic
     _PreprocessorClass = preprocessor.DefaultPreprocessor
     col_spec = cmip6LocalFileDataSource_col_spec
+
+
+class MultirunCMIP6LocalFileDataSource(CMIP6LocalFileDataSource):
+    """DataSource for handling multirun model data named following the CMIP6 DRS and
+    stored on a local filesystem.
+    """
+    _DiagnosticClass = diagnostic.MultirunDiagnostic
+    _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor

@@ -32,12 +32,12 @@ Installing dependencies via conda
 Regardless of development language, we strongly recommend that developers use conda to manage their language and library versions. Note that Conda is not Python-specific, but allows coexisting versioned environments of most scripting languages, including, `R <https://anaconda.org/conda-forge/r-base>`__, `NCL <https://anaconda.org/conda-forge/ncl>`__, `Ruby <https://anaconda.org/conda-forge/ruby>`__, `PyFerret <https://anaconda.org/conda-forge/pyferret>`__, and more.
 
 
-Python-based PODs should be written in Python 3.7 or newer. We provide a developer version of the python3_base environment (described below) that includes Jupyter and other developer-specific tools. This is not installed by default, and must be requested by passing the ``-all-dev`` flag to the conda setup script:
+Python-based PODs should be written in Python 3.7 or newer. We provide a developer version of the python3_base environment (described below) that includes Jupyter and other developer-specific tools. This is not installed by default, and must be requested by passing the ``--all`` flag to the conda setup script:
 
 .. code-block:: console
 
    % cd $CODE_ROOT
-   % ./src/conda/conda_env_setup.sh --all-dev --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
+   % ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
 
 
 POD development using existing Conda environments

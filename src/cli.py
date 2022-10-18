@@ -20,9 +20,11 @@ import typing
 from src import util
 
 import logging
+
 _log = logging.getLogger(__name__)
 
-_SCRIPT_NAME = 'mdtf.py' # mimic argparse error message text
+_SCRIPT_NAME = 'mdtf.py'  # mimic argparse error message text
+
 
 def canonical_arg_name(str_):
     """Convert a flag or other specification to a destination variable name.
@@ -33,6 +35,7 @@ def canonical_arg_name(str_):
     """
     return str_.lstrip('-').rstrip().replace('-', '_')
 
+
 def plugin_key(plugin_name):
     """Convert user input for plugin options to string used to lookup plugin
     value from options defined in cli_plugins.jsonc files.
@@ -41,6 +44,7 @@ def plugin_key(plugin_name):
     make matching of plugin names case-insensititve.
     """
     return re.sub(r"[\s_]+", "", plugin_name).lower()
+
 
 def word_wrap(str_):
     """Clean whitespace and perform 80-column word wrapping for multi-line help
@@ -51,6 +55,7 @@ def word_wrap(str_):
     paragraphs = [re.sub(r'\s+', ' ', s).strip() for s in paragraphs]
     paragraphs = [textwrap.fill(s, width=80) for s in paragraphs]
     return '\n\n'.join(paragraphs)
+
 
 def read_config_files(code_root, file_name, site=""):
     """Utility function to read a pair of configuration files: one for the
@@ -72,7 +77,8 @@ def read_config_files(code_root, file_name, site=""):
     site_dir = os.path.join(code_root, 'sites', site)
     site_d = util.find_json(site_dir, file_name, exit_if_missing=False, log=_log)
     fmwk_d = util.find_json(src_dir, file_name, exit_if_missing=True, log=_log)
-    return (site_d, fmwk_d)
+    return site_d, fmwk_d
+
 
 def read_config_file(code_root, file_name, site=""):
     """Return the site's config file if present, else the framework's file. Wraps
@@ -93,16 +99,18 @@ def read_config_file(code_root, file_name, site=""):
         return fmwk_d
     return site_d
 
+
 class CustomHelpFormatter(
-        argparse.RawDescriptionHelpFormatter,
-        argparse.ArgumentDefaultsHelpFormatter
-    ):
+    argparse.RawDescriptionHelpFormatter,
+    argparse.ArgumentDefaultsHelpFormatter
+):
     """Modify help text formatter to only display variable placeholder text
     ("metavar") once, to save space. Taken from
     `<https://stackoverflow.com/a/16969505>`__. Also inherit from
     :py:class:`argparse.RawDescriptionHelpFormatter` in order to preserve line
     breaks in description only (`<https://stackoverflow.com/a/18462760>`__).
     """
+
     def __init__(self, *args, **kwargs):
         # tweak indentation of help strings
         if not kwargs.get('indent_increment', None):
@@ -139,7 +147,7 @@ class CustomHelpFormatter(
             # ignore hidden CLI items
             return help_str
         if action.default not in (None, argparse.SUPPRESS) \
-            and '%(default)' not in help_str:
+                and '%(default)' not in help_str:
             defaulting_nargs = [argparse.OPTIONAL, argparse.ZERO_OR_MORE]
             if action.option_strings or action.nargs in defaulting_nargs:
                 if isinstance(action.default, str):
@@ -168,13 +176,13 @@ class RecordDefaultsAction(argparse.Action):
     default values.
     """
     default_value_suffix = '_is_default_'
-    call_on_defaults = False # call action on default values
+    call_on_defaults = False  # call action on default values
 
     def __init__(self, option_strings, dest, nargs=None, const=None,
-        default=None, type=None, **kwargs):
+                 default=None, type=None, **kwargs):
         if isinstance(default, bool):
-            nargs = 0             # behave like a flag
-            const = (not default) # set flag = store opposite of default
+            nargs = 0  # behave like a flag
+            const = (not default)  # set flag = store opposite of default
         elif (isinstance(default, str) or type == str) and nargs is None:
             # unless nargs given explictly, string-valued options accept 1 argument
             nargs = 1
@@ -192,7 +200,8 @@ class RecordDefaultsAction(argparse.Action):
         else:
             setattr(namespace, self.dest, values)
         # set additional flag to indicate user has set this argument
-        setattr(namespace, self.dest+self.default_value_suffix, False)
+        setattr(namespace, self.dest + self.default_value_suffix, False)
+
 
 class PathAction(RecordDefaultsAction):
     """Argparse :py:class:`~argparse.Action` that performs shell environment
@@ -211,6 +220,7 @@ class PathAction(RecordDefaultsAction):
         # resolve paths, so that's now done later, in core.PathManager.__init__()
         super(PathAction, self).__call__(parser, namespace, path, option_string)
 
+
 class ClassImportAction(RecordDefaultsAction):
     """Argparse :py:class:`~argparse.Action` to import classes on demand. Values
     are looked up from the 'cli_plugins.jsonc' file. This is a placeholder used
@@ -226,13 +236,13 @@ class ClassImportAction(RecordDefaultsAction):
             parser, namespace, p_key, option_string
         )
 
+
 class PluginArgAction(ClassImportAction):
     """Argparse :py:class:`~argparse.Action` to invoke the CLI plugin functionality,
     specificially importing the plugin's entry point via :class:`ClassImportAction`.
     All CLI options which define a plugin should specify this as the action.
     """
     call_on_defaults = False
-
 
 
 # ===========================================================================
@@ -265,21 +275,22 @@ class CLIArgument(object):
     def __post_init__(self):
         """Post-initialization type conversion of attributes.
         """
+
         def _flag_names(_arg_name):
             _arg_flags = [_arg_name]
             if '_' in _arg_name:
                 # recognize both --hyphen_opt and --hyphen-opt (GNU CLI convention)
                 _arg_flags.append(_arg_name.replace('_', '-'))
-            return ['--'+s for s in _arg_flags]
+            return ['--' + s for s in _arg_flags]
 
         # Format flag name(s) and destination variables
         if self.is_positional:
-            assert isinstance(self.name, str) # not a list
+            assert isinstance(self.name, str)  # not a list
             arg_name = canonical_arg_name(self.name)
             self.arg_flags = [arg_name]
             self.name = arg_name
-            self.dest = None # positionals can't specify independent dest
-            self.required = None # positionals always required
+            self.dest = None  # positionals can't specify independent dest
+            self.required = None  # positionals always required
         else:
             # argument is a command-line flag (default)
             # if self.name is a list, recognize all entries as synonyms
@@ -316,8 +327,9 @@ class CLIArgument(object):
         if self.action is None:
             self.action = RecordDefaultsAction
         elif isinstance(self.action, str) and self.action not in ['store',
-            'store_const','store_true','store_false','append','append_const',
-            'count','help','version']:
+                                                                  'store_const', 'store_true', 'store_false', 'append',
+                                                                  'append_const',
+                                                                  'count', 'help', 'version']:
             self.action = util.deserialize_class(self.action)
         if isinstance(self.action, type) and issubclass(self.action, ClassImportAction):
             # Enforce case-insensitive matching on plugin names.
@@ -339,11 +351,12 @@ class CLIArgument(object):
             target_p: Parser object (or argument group, or subparser) to which the
                 argument will be added.
         """
-        kwargs = {k:v for k,v in dataclasses.asdict(self).items() \
-                if v is not None and k not in [
-                'name', 'arg_flags', 'is_positional', 'short_name', 'hidden'
-            ]}
+        kwargs = {k: v for k, v in dataclasses.asdict(self).items() \
+                  if v is not None and k not in [
+                      'name', 'arg_flags', 'is_positional', 'short_name', 'hidden'
+                  ]}
         return target_p.add_argument(*self.arg_flags, **kwargs)
+
 
 @dataclasses.dataclass
 class CLIArgumentGroup(object):
@@ -377,12 +390,13 @@ class CLIArgumentGroup(object):
         """
         if self.arguments:
             # only add group if it has > 0 arguments
-            kwargs = {k:v for k,v in dataclasses.asdict(self).items() \
-                if v is not None and k in ['title', 'description']}
+            kwargs = {k: v for k, v in dataclasses.asdict(self).items() \
+                      if v is not None and k in ['title', 'description']}
             arg_gp = target_p.add_argument_group(**kwargs)
             for arg in self.arguments:
                 _ = arg.add(arg_gp)
             return arg_gp
+
 
 @dataclasses.dataclass
 class CLIParser(object):
@@ -425,6 +439,7 @@ class CLIParser(object):
         parser; if *filter_class* is specified, only iterate over objects having
         (a subclass of) *filter_class* as their ``action``.
         """
+
         def _iter_all_args():
             yield from self.arguments
             for arg_gp in self.argument_groups:
@@ -434,7 +449,7 @@ class CLIParser(object):
             yield from _iter_all_args()
         else:
             filter_fn = (lambda arg: isinstance(arg.action, type) \
-                and issubclass(arg.action, filter_class))
+                                     and issubclass(arg.action, filter_class))
             yield from filter(filter_fn, _iter_all_args())
 
     def configure(self, target_p):
@@ -494,6 +509,7 @@ class CLIParser(object):
                 :class:`.PluginArgAction`), and values are the values assigned
                 to them by preparsing.
         """
+
         def _add_plugins_to_arg_list(arg_list, splice_d):
             # insert plugin args into arg_list
             return util.splice_into_list(
@@ -508,10 +524,10 @@ class CLIParser(object):
             if not plugin:
                 choices = [f"'{x}'" for x in config.get_plugin(flag_name).keys()]
                 _log.critical(("%s: error: argument --%s: invalid choice: '%s' "
-                    "(choose from %s)"),
-                    _SCRIPT_NAME, flag_name, flag_value, ', '.join(choices)
-                )
-                util.exit_handler(code=2) # exit code for  CLI syntax error
+                               "(choose from %s)"),
+                              _SCRIPT_NAME, flag_name, flag_value, ', '.join(choices)
+                              )
+                util.exit_handler(code=2)  # exit code for  CLI syntax error
             d[flag_name] = list(plugin.cli.iter_args())
         self.arguments = _add_plugins_to_arg_list(self.arguments, d)
         for arg_gp in self.argument_groups:
@@ -525,13 +541,14 @@ class CLIParser(object):
             plugin = config.get_plugin(arg.name, flag_value)
             if plugin.help:
                 arg.help = arg.help.strip() + \
-                    f" Selected value = '{flag_value}': {plugin.help.strip()} "
+                           f" Selected value = '{flag_value}': {plugin.help.strip()} "
             else:
                 arg.help = arg.help.strip() + f" Selected value = '{flag_value}'. "
             arg.help = arg.help + word_wrap(f"""
                 NOTE: flags below are specific to this value. Set a different
                 value along with '--help' to see flags for that option.
             """)
+
 
 @dataclasses.dataclass
 class CLICommand(object):
@@ -547,7 +564,7 @@ class CLICommand(object):
     code_root: dataclasses.InitVar = ""
 
     def __post_init__(self, code_root):
-        """Post-initialization type converstion of attributes.
+        """Post-initialization type conversion of attributes.
         """
         if self.cli is None and self.cli_file is not None:
             try:
@@ -556,15 +573,35 @@ class CLICommand(object):
                 )
             except util.MDTFFileNotFoundError:
                 _log.critical("Couldn't find CLI file %s.", self.cli_file)
-                util.exit_handler(code=2) # exit code for  CLI syntax error
+                util.exit_handler(code=2)  # exit code for  CLI syntax error
         if self.cli is not None:
             self.cli = CLIParser.from_dict(self.cli)
 
-    def import_target(self):
+    def import_target(self, data_type=""):
         """Imports the function or class referred to by the ``entry_point``
         attribute.
+
+        Args:
+            data_type: single_run (default), or multi_run. This value is provided at runtime,
+            and the default value is set in src/cli_template.jsonc. data_type is only queried for
+            "_manager" classes (e.g., data_manager) with more than one possible entry point
+            that are defined as lists in cli_plugins.jsonc.
         """
-        mod_name, cls_name = self.entry_point.split(':')
+        # entry_point has more than one possible value that is determined by the data_type
+        if isinstance(self.entry_point, list):
+            dm_match = False
+            for e in self.entry_point:
+                mod_name, cls_name = e.split(':')
+                if ("multi" in data_type.lower() and "multirun" in cls_name.lower()
+                        or "single" in data_type.lower() and "multirun" not in cls_name.lower()):
+                    _log.info('Data type is %s and using data_manager %s', data_type, mod_name)
+                    dm_match = True
+                    break
+            if not dm_match:
+                raise Exception("Data source " + cls_name + " does not correspond to data type " + data_type)
+        else:  # only one entry point defined by a string
+            mod_name, cls_name = self.entry_point.split(':')
+
         try:
             mod_ = importlib.import_module(mod_name)
         except ImportError:
@@ -581,8 +618,9 @@ class CLICommand(object):
         ``entry_point`` attribute, and calls it with the passed arguments.
         """
         cls_ = self.import_target()
-        instance = cls_(*args, **kwargs)
+        instance = cls_(*args, **kwargs)  # call the cls_ instance like function
         return instance
+
 
 DefaultsFileTypes = util.MDTFEnum('DefaultsFileTypes', 'USER SITE GLOBAL')
 DefaultsFileTypes.__doc__ = """
@@ -596,6 +634,7 @@ DefaultsFileTypes.__doc__ = """
        install time.
 """
 
+
 class CLIConfigManager(util.Singleton):
     """:class:`~src.util.Singleton` to handle search, loading and parsing
     of configuration files for the CLI and CLI default values. We encapsulate
@@ -608,6 +647,7 @@ class CLIConfigManager(util.Singleton):
        must be properly initialized before being referenced by the classes in
        this module.
     """
+
     def __init__(self, code_root=None, skip_defaults=False):
         # singleton, so this will only be invoked once
 
@@ -677,14 +717,14 @@ class CLIConfigManager(util.Singleton):
             path = os.path.join(self.site_dir, self.defaults_filename)
             dest_d = self.site_defaults
         elif def_type == DefaultsFileTypes.USER:
-            assert path # is not none
+            assert path  # is not none
             dest_d = self.user_defaults
 
         try:
             d = util.read_json(path, log=_log)
             self.defaults_files[def_type] = path
             # drop values equal to the empty string
-            d = {k:v for k,v in d.items() if (v is not None and v != "")}
+            d = {k: v for k, v in d.items() if (v is not None and v != "")}
             dest_d.update(d)
         except util.MDTFFileNotFoundError:
             _log.debug('Config file %s not found; not updating defaults.', path)
@@ -698,7 +738,7 @@ class CLIConfigManager(util.Singleton):
         files_str = '\n'.join([x for x in files_str if x is not None])
         if files_str:
             return "Default values have been set from the following files:" \
-                + '\n' + files_str
+                   + '\n' + files_str
         else:
             return None
 
@@ -716,9 +756,9 @@ class CLIConfigManager(util.Singleton):
         self.subparser_kwargs.update(site_d)
         self.subcommands = {
             k: CLICommand(name=k, **v, code_root=self.code_root) \
-                for k,v in fmwk_cmds.items()
+            for k, v in fmwk_cmds.items()
         }
-        for k,v in site_cmds.items():
+        for k, v in site_cmds.items():
             if k in self.subcommands:
                 _log.debug("Replacing subcommand '%s' with site-specific version.", k)
             self.subcommands[k] = CLICommand(name=k, **v, code_root=self.code_root)
@@ -727,10 +767,11 @@ class CLIConfigManager(util.Singleton):
         """Populates ``plugins`` attribute with contents of CLI plugin files for
         the framework and site.
         """
+
         def _add_new_plugin_type(plugin_arg, arg_choices):
             self.plugins[plugin_arg] = {
                 plugin_key(k): CLICommand(name=k, **v, code_root=self.code_root) \
-                    for k,v in arg_choices.items()
+                for k, v in arg_choices.items()
             }
 
         (site_d, fmwk_d) = read_config_files(
@@ -768,8 +809,8 @@ class CLIConfigManager(util.Singleton):
         """
         if plugin_name not in self.plugins:
             _log.error('Plugin %s not found (recognized: %s)',
-                plugin_name, str(list(self.plugins.keys()))
-            )
+                       plugin_name, str(list(self.plugins.keys()))
+                       )
             return dict()
         if choice_of_plugin is None:
             # return entire dict
@@ -777,12 +818,13 @@ class CLIConfigManager(util.Singleton):
         p_key = plugin_key(choice_of_plugin)
         if p_key not in self.plugins[plugin_name]:
             _log.critical(("%s: error: argument --%s: invalid choice: '%s' "
-                "(choose from %s)"),
-                _SCRIPT_NAME, plugin_name, choice_of_plugin,
-                str(list(self.plugins[plugin_name].keys()))
-            )
-            util.exit_handler(code=2) # exit code for CLI syntax error
+                           "(choose from %s)"),
+                          _SCRIPT_NAME, plugin_name, choice_of_plugin,
+                          str(list(self.plugins[plugin_name].keys()))
+                          )
+            util.exit_handler(code=2)  # exit code for CLI syntax error
         return self.plugins[plugin_name][p_key]
+
 
 # ===========================================================================
 # CLI parsers
@@ -798,6 +840,7 @@ class MDTFArgParser(argparse.ArgumentParser):
       <https://docs.python.org/3.7/library/argparse.html#argument-groups>`__,
       e.g. which arguments belong to which group.
     """
+
     def __init__(self, *args, **kwargs):
         # Dict to store whether default value was used, for arguments using the
         # RecordDefaultsAction
@@ -821,6 +864,7 @@ class MDTFArgParser(argparse.ArgumentParser):
         all user-defined arguments in parser, as well as those for any
         subcommands.
         """
+
         def _iter_all_actions():
             for act in self._actions:
                 if isinstance(act, argparse._SubParsersAction):
@@ -832,7 +876,7 @@ class MDTFArgParser(argparse.ArgumentParser):
 
         def _pred(act):
             return not isinstance(act,
-                (argparse._HelpAction, argparse._VersionAction))
+                                  (argparse._HelpAction, argparse._VersionAction))
 
         return filter(_pred, _iter_all_actions())
 
@@ -843,7 +887,7 @@ class MDTFArgParser(argparse.ArgumentParser):
         Args:
             parsed_args: dict of args and values returned by initial parsing.
         """
-        self.is_default = dict() # clear in case we parsed previously
+        self.is_default = dict()  # clear in case we parsed previously
         for act in self.iter_actions():
             if isinstance(act, RecordDefaultsAction):
                 default_value_flag = act.dest + act.default_value_suffix
@@ -912,6 +956,7 @@ class MDTFArgParser(argparse.ArgumentParser):
             unrecognized arguments, as with
             :py:meth:`argparse.ArgumentParser.parse_known_args`.
         """
+
         def _to_dict(ns):
             if isinstance(ns, argparse.Namespace):
                 return vars(ns)
@@ -933,8 +978,8 @@ class MDTFArgParser(argparse.ArgumentParser):
         # Highest priority: options that were explicitly set by user on CLI
         # Note that is_default[opt] = None (not True or False) if no default
         # value is defined for that option.
-        user_cli_opts = {k:v for k,v in parsed_args.items() \
-            if not self.is_default.get(k, True)}
+        user_cli_opts = {k: v for k, v in parsed_args.items() \
+                         if not self.is_default.get(k, True)}
         # Lowest priority: set of defaults from running parser on empty input
         try:
             parser_defaults, _ = super(MDTFArgParser, self).parse_known_args(
@@ -952,10 +997,10 @@ class MDTFArgParser(argparse.ArgumentParser):
         if namespace is None:
             namespace = argparse.Namespace(**parsed_args)
         else:
-            for k,v in parsed_args.items():
+            for k, v in parsed_args.items():
                 setattr(namespace, k, v)
         self._call_actions_on_defaults(namespace)
-        return (namespace, remainder)
+        return namespace, remainder
 
     def parse_args(self, args=None, namespace=None):
         """Subclassed implementation of :py:meth:`~argparse.ArgumentParser.parse_args`
@@ -972,6 +1017,7 @@ class MDTFArgPreparser(MDTFArgParser):
     what site and plugin values were set by the user. Plugin selector arguments
     are identified by having their ``action`` set to :class:`.PluginArgAction`.
     """
+
     def __init__(self):
         super(MDTFArgPreparser, self).__init__(add_help=False)
 
@@ -995,7 +1041,7 @@ class MDTFArgPreparser(MDTFArgParser):
         """
         d = vars(self.parse_known_args(argv)[0])
         keys = [act.dest for act in self.iter_actions() \
-            if isinstance(act, PluginArgAction)]
+                if isinstance(act, PluginArgAction)]
         return {k: d.get(k, None) for k in keys}
 
 
@@ -1003,6 +1049,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
     """Class for constructing the command-line interface, parsing the options,
     and handing off execution to the selected subcommand.
     """
+
     def __init__(self, code_root, skip_defaults=False, argv=None):
         _ = CLIConfigManager(code_root, skip_defaults=skip_defaults)
         self.code_root = code_root
@@ -1095,19 +1142,30 @@ class MDTFTopLevelArgParser(MDTFArgParser):
             raise ValueError()
         if not str_:
             return
+        # TODO define variable fname_suffix = os.path.splitext(path)[1].lower()
+        # add to json and yaml checks
         # try to determine if file is json
         if 'json' in os.path.splitext(path)[1].lower():
             # assume config_file a JSON dict of option:value pairs.
             try:
                 d = util.parse_json(str_)
                 self.file_case_list = d.pop('case_list', [])
-                d = {canonical_arg_name(k): v for k,v in d.items()}
+                d = {canonical_arg_name(k): v for k, v in d.items()}
                 config.user_defaults.update(d)
             except json.JSONDecodeError as exc:
                 sys.exit(f"ERROR: JSON syntax error in {path}:\n\t{exc}")
             except Exception:
                 _log.exception('Attempted to parse %s as JSONC; failed.', path)
                 raise ValueError()
+        # TODO Add call to yaml parser here
+        # elif 'yml' in fname_suffix :
+        #    try:
+        #        d = util.parse_yaml(str_)
+        #        self.file_case_list = d.pop('case_list', [])
+        #        d = {canonical_arg_name(k): v for k,v in d.items()}
+        #        config.user_defaults.update(d)
+        #    except IOerror :
+        #       sys.exit(f"ERROR: Unable to parse yaml file in {path}:\n\t{exc}")
         else:
             # assume config_file is a plain text file containing flags, etc.
             # as they would be passed on the command line.
@@ -1148,9 +1206,9 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         config.read_defaults(DefaultsFileTypes.GLOBAL)
         default_site = config.site_defaults.get('site', config.default_site)
 
-        self.sites = [d for d in os.listdir(config.sites_dir) \
-            if os.path.isdir(os.path.join(config.sites_dir, d)) \
-                and not d.startswith(('.','_'))]
+        self.sites = [d for d in os.listdir(config.sites_dir)
+                      if os.path.isdir(os.path.join(config.sites_dir, d))
+                      and not d.startswith(('.', '_'))]
         # TODO: if we're checking to see if installer has been run, only set
         # self.installed = True if default_site in self.sites
         self.installed = True
@@ -1159,10 +1217,10 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         self.add_site_arg(site_p)
         site = util.from_iter(site_p.parse_site(self.argv, default_site))
         if site not in self.sites \
-            and not (site == default_site and not self.installed):
+                and not (site == default_site and not self.installed):
             _log.critical("Requested site %s not found in sites directory %s.",
-                site, config.sites_dir)
-            util.exit_handler(code=2) # exit code for  CLI syntax error
+                          site, config.sites_dir)
+            util.exit_handler(code=2)  # exit code for  CLI syntax error
         config.default_site = default_site
         config.site = site
         self.site = site
@@ -1190,7 +1248,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         self.init_site()
         config.read_subcommands()
         config.subparser_kwargs.update({
-            'required':True, 'dest':'subcommand', 'parser_class': MDTFArgParser
+            'required': True, 'dest': 'subcommand', 'parser_class': MDTFArgParser
         })
         config.read_plugins()
         # preparse arguments to get plugin configuration, and revise CLI
@@ -1211,21 +1269,21 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         configuration file mechanism.
         """
         MDTFArgParser.__init__(self,
-            prog="mdtf",
-            usage="%(prog)s [options] [CASE_ROOT_DIR]",
-            description=word_wrap("""
+                               prog="mdtf",
+                               usage="%(prog)s [options] [CASE_ROOT_DIR]",
+                               description=word_wrap("""
                 Driver script for the NOAA Model Diagnostics Task Force (MDTF)
                 package, which runs process-oriented diagnostics (PODs) on climate
                 model data. See documentation at https://mdtf-diagnostics.rtfd.io.
             """),
-            add_help=True,
-        )
+                               add_help=True,
+                               )
         self.add_argument(
             '--version', action="version", version="%(prog)s 3.0 beta 4"
         )
         self._optionals.title = 'GENERAL OPTIONS'
         if not self.installed:
-            self.epilog=word_wrap("""
+            self.epilog = word_wrap("""
                 Warning: User-customized configuration files not found. Consider
                 running 'mdtf install' to configure your installation.
             """)
@@ -1266,12 +1324,14 @@ class MDTFTopLevelArgParser(MDTFArgParser):
         if defaults_text:
             _log.info(defaults_text)
         # import plugin classes
+
+
         for act in self.iter_actions():
             if isinstance(act, ClassImportAction):
                 key = act.dest
                 assert key in self.config
                 plugin_cmd = config.get_plugin(key, self.config[key])
-                self.imports[key] = plugin_cmd.import_target()
+                self.imports[key] = plugin_cmd.import_target(self.config.get('data_type'))
         # multiple subcommand functionality not being used yet
         assert len(config.subcommands) == 1
         cmd = tuple(config.subcommands.values())[0]
@@ -1322,21 +1382,21 @@ class MDTFTopLevelSubcommandArgParser(MDTFTopLevelArgParser):
         for information on the configuration file mechanism.
         """
         MDTFArgParser.__init__(self,
-            prog="mdtf",
-            usage="%(prog)s [flags] <command> [command-specific options]",
-            description=word_wrap("""
+                               prog="mdtf",
+                               usage="%(prog)s [flags] <command> [command-specific options]",
+                               description=word_wrap("""
                 Driver script for the NOAA Model Diagnostics Task Force (MDTF)
                 package, which runs process-oriented diagnostics (PODs) on
                 climate model data. See documentation at
                 https://mdtf-diagnostics.rtfd.io.
             """)
-        )
+                               )
         self.add_argument(
             '--version', action="version", version="%(prog)s 3.0 beta 4"
         )
         self._optionals.title = 'GENERAL OPTIONS'
         if not self.installed:
-            self.epilog=word_wrap("""
+            self.epilog = word_wrap("""
                 Warning: User-customized configuration files not found. Consider
                 running 'mdtf install' to configure your installation.
             """)

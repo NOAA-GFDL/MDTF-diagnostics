@@ -7,7 +7,7 @@
   "data_manager": {
     "Local_file": {
       "help": "DataManager for working with input model data files that are already present on a local filesystem, for example the PODs' sample model data.",
-      "entry_point": "src.data_sources:SampleLocalFileDataSource",
+      "entry_point": ["src.data_sources:SampleLocalFileDataSource", "src.data_sources:MultirunLocalFileDataSource"],
       "cli": {
         "arguments": [
           {
@@ -21,7 +21,7 @@
     },
     "Explicit_file": {
       "help": "DataManager which allows the user to explicitly specify what data files should be used to supply each variable in the PODs' data request.",
-      "entry_point": "src.data_sources:ExplicitFileDataSource",
+      "entry_point": ["src.data_sources:ExplicitFileDataSource","src.data_sources:MultirunExplicitFileDataSource"],
       "cli": {
         "arguments": [
           {
@@ -36,7 +36,7 @@
     },
     "CMIP6": {
       "help": "DataManager for working with input model data files that are already present on a local filesystem, for example the PODs' sample model data.",
-      "entry_point": "src.data_sources:CMIP6LocalFileDataSource",
+      "entry_point": ["src.data_sources:CMIP6LocalFileDataSource", "MultirunCMIP6LocalFileDataSource"],
       "cli": {
         "arguments": [
           {
@@ -121,13 +121,15 @@
   "runtime_manager": {
     "Subprocess": {
       "help": "Run PODs in local subprocesses.",
-      "entry_point": "src.environment_manager:SubprocessRuntimeManager"
+      "entry_point": ["src.environment_manager:SubprocessRuntimeManager",
+                      "src.environment_manager:MultirunSubprocessRuntimeManager"]
     }
   },
   "output_manager": {
     "HTML": {
       "help": "",
-      "entry_point": "src.output_manager:HTMLOutputManager",
+      "entry_point": ["src.output_manager:HTMLOutputManager",
+                      "src.output_manager:MultirunHTMLOutputManager"],
       "cli": {
         "arguments": [
           {

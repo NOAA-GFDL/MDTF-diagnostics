@@ -142,5 +142,5 @@ a simple assessment of model latent heat flux biases arising either from biases 
 water vapor or surface wind speed as well as other empirical coefficients in the model. 
 Sample POD result shows that, compared to ''observed'' fluxes also estimated from 
 water vapor and surface wind speed measured at tropical moorings, tropical latent heat 
-fluxes in the NCAR CEMS2 models are significantly overestimated when extreme water vapor 
+fluxes in the NCAR CEMS2 models are significantly overestimated when extreme water vapor
 or surface wind speed happens.

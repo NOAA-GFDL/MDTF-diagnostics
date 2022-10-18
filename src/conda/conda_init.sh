@@ -9,7 +9,7 @@
 # NOTE this has only been tested with conda 4.7.10 and later; I know earlier
 # versions had things in different places.
 
-# parse aruments manually
+# parse arguments manually
 _TEMP_CONDA_ROOT=""
 _TEMP_CONDA_EXE=""
 _v=1

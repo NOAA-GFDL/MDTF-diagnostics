@@ -24,7 +24,7 @@ and a link to the full documentation for each currently-supported POD.
 | [MJO Propagation and Amplitude ](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_GFDL.CM4.c96L32.am4g10r8/MJO_prop_amp/MJO_prop_amp.html)| Xianan Jiang (UCLA)                                                  |
 | [AMOC 3D structure ](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_GFDL-CM2p1/transport_onto_TS/transport_onto_TS.html) (implementation in progress) | Xiaobiao Xu (FSU/COAPS)                                              |
 | [Warm Rain Microphysics](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/warm_rain_microphysics/documentation) (implementation in progress)                      | Kentaroh Suzuki (AORI, U. Tokyo)                                     |
-| [Mixed Layer Depth](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/mixed_layer_depth/doc/mixed_layer_depth.rst)                                                                                    | Ceclia Bitz (U. Washington), Lettie Roach                            |
+| [Mixed Layer Depth](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/mixed_layer_depth/doc/mixed_layer_depth.rst)                                                                                    | Cecilia Bitz (U. Washington), Lettie Roach                            |
 | [Tropical Pacific Sea Level](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/tropical_pacific_sea_level/doc/tropical_pacific_sea_level.rst)                                                         | Jianjun Yin (U. Arizona), Chia-Weh Hsu (GFDL)|
 | [Ocean Surface Flux Diagnostic](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/ocn_surf_flux_diag/doc/ocn_surf_flux_diag.rst)                                                                      | Charlotte A. DeMott (Colorado State University), Chia-Weh Hsu (GFDL) |
 | [Surface Temperature Extremes and Distribution Shape](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/temp_extremes_distshape/doc/temp_extremes_distshape.rst)                                      | J. David Neelin (UCLA), Paul C Loikith (PSU), Arielle Catalano (PSU) |
@@ -34,6 +34,10 @@ and a link to the full documentation for each currently-supported POD.
 | [Rossby Wave Sources Diagnostic Package](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/ENSO_RWS/doc/ENSO_RWS.rst)                                                                                 | H. Annamalai (U. Hawaii), Jan Hafner (U. Hawaii)                     |
 | [Precipitation Buoyancy Diagnostic](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/precip_buoy_diag/doc/precip_buoy_diag.rst)                                                                      | J. David Neelin (UCLA), Fiaz Ahmed                                   |
 | [Tropical Cyclone Rain Rate Azimuthal Average](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/TC_Rain/doc/TC_Rain.rst)                                                                      | Daehyun Kim (U. Washington), Nelly Emlaw (U.Washington)|
+| [Top Heaviness Metric](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/top_heaviness_metric/doc/top_heaviness_metric.rst)                                                                      | Zhuo Wang (U.Illinois Urbana-Champaign), Jiacheng Ye (U.Illinois Urbana-Champaign)|
+| [Surface Albedo Feedback](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/albedofb/doc/surface_albedo_feedback.rst) | Cecilia Bitz (U. Washington), Aaron Donahoe (U. Washington), Ed Blanchard, Wei Cheng, Lettie Roach|
+| [Sea Ice Suite](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/seaice_suite/doc/seaice_suite.rst) | Cecilia Bitz (U. Washington), Lettie Roach|
+| [Stratosphere-Troposphere Coupling: Eddy Heat Fluxes](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_eddy_heat_fluxes/doc/stc_eddy_heat_fluxes.rst) | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL)|
 
 
 
@@ -76,9 +80,9 @@ and a link to the full documentation for each currently-supported POD.
 ## 2. Download the sample data
 
 Supporting observational data and sample model data are available via anonymous FTP at [ftp://ftp.cgd.ucar.edu/archive/mdtf](ftp://ftp.cgd.ucar.edu/archive/mdtf).
-- Digested observational data (159 Mb): MDTF_v2.1.a.obs_data.tar (ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.obs_data.tar).
-- NCAR-CESM-CAM sample data (12.3 Gb): model.QBOi.EXP1.AMIP.001.tar (ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar).
-- NOAA-GFDL-CM4 sample data (4.8 Gb): model.GFDL.CM4.c96L32.am4g10r8.tar (ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar).
+- Digested observational data: run ` wget ftp://ftp.cgd.ucar.edu/archive/mdtf/obs_data_latest/\*` or download the collection "NCAR CGD Anon" from [Globus](https://www.globus.org/)
+- NCAR-CESM-CAM sample data (12.3 Gb): model.QBOi.EXP1.AMIP.001.tar (ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar)
+- NOAA-GFDL-CM4 sample data (4.8 Gb): model.GFDL.CM4.c96L32.am4g10r8.tar (ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar)
 
 Note that the above paths are symlinks to the most recent versions of the data and will be reported as zero bytes in an FTP client.
 
@@ -130,16 +134,16 @@ We recommend using absolute paths in `default_tests.jsonc`, but relative paths a
 - `src/`: source code of the framework itself.
 - `tests/`: unit tests for the framework.
 
-## 4. Execute the MDTF package with default test settings
+## 4. Execute the MDTF package with default test settings in `single_run` mode
 
 The MDTF framework is run via the wrapper script `$CODE_ROOT/mdtf` that is generated conda_env_install.sh. To test the installation, `% $CODE_ROOT/mdtf --help` will print help text on the command-line options. Note that, if your current working directory is `$CODE_ROOT`, you will need to run `% ./mdtf --help`.
 
 This should print the current version of the framework.
 
-To run the code on the test data using the version of default_tests.jsonc you modified:
-```
-% cd $CODE_ROOT
-% ./mdtf -f src/default_tests.jsonc -v
+To run the code in *single_run* mode on the test data using the version of default_tests.jsonc you modified:
+```commandline
+cd $CODE_ROOT
+./mdtf -f src/default_tests.jsonc -v
 ```
 -v is the "verbose" flag, and will print additional information that may help with debugging if you have issues
 
@@ -155,7 +159,26 @@ Run time may be 10-20 minutes, depending on your system.
 
 - If you re-run the above command,  the result will be written to another subdirectory under `$OUTPUT_DIR`, i.e., output files saved previously will not be overwritten unless you change `overwrite` in the configuration file to `true`.
 
-## 5. Next steps
+## 5. Run the framework in *multi_run* mode (under development)
+The framework is ready to test on PODs that analyze multiple model and or observational datasets (cases) using the tag
+*v3.1.alpha.1*. To run the framework on the
+**[example_multicase](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase)** POD,
+modify the example configuration file and run
+```commandline
+./mdtf -f /diagnostics/multirun_config_template.jsonc -v
+``` 
+You can specify your own datasets in the caselist block, or run the example_multicase POD on the same synthetic data
+specified in the configuration file. To generate the synthetic CMIP data, run:
+```commandline
+mamba env create --force -q -f ./src/conda/_env_synthetic_data.yml
+conda activate _MDTF_synthetic_data
+pip install mdtf-test-data
+mkdir mdtf_test_data && cd mdtf_test_data
+mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5
+mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5
+```
+
+## 6. Next steps
 
 For more detailed information, consult the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/). The ["Getting Started"](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/start_toc.html) section has more detailed information on customizing your installation and running the framework on your own data. Users interested in contributing a POD should consult the ["Developer Information"](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/dev_toc.html) section.
 

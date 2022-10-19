@@ -122,7 +122,14 @@
     },
     "areacello": {
       "standard_name": "cell_area",
+      "modifier" : "ocean_realm",
       "units": "m2",
+      "ndim": 2
+    },
+    "areacella": {
+      "standard_name": "cell_area",
+      "units": "m2",
+      "modifier" : "atmos_realm",
       "ndim": 2
     },
     "ps": {

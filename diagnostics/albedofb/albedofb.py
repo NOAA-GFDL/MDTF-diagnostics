@@ -62,24 +62,7 @@ import albedofb_calcs
 
 
 # In[3]:
-#os.environ['DATADIR'] = '/nbhome/jml/mdtf/mdtf_out/MDTF_ESM4_historical_D1_1979_2014/albedofb'
-os.environ['DATADIR'] = '/home/oar.gfdl.mdtf/mdtf/inputdata/model/SAM0-UNICON_r1i1p1f1_gn'
-#os.environ['CASENAME'] = 'ESM4_historical_D1'
-os.environ['CASENAME'] = 'SAM0-UNICON_r1i1p1f1_gn'
-os.environ['rsdt_var'] = 'rsdt'
-os.environ['rsds_var'] = 'rsds'
-os.environ['rsut_var'] = 'rsut'
-os.environ['rsus_var'] = 'rsus'
-os.environ['tas_var'] = 'tas'
-os.environ['areacella_var'] = 'areacella'
-#os.environ['area_var_name'] = 'area'
-os.environ['area_var_name'] = 'areacella'
-#os.environ['area_file_path'] = '/nbhome/jml/mdtf/atmos.static.nc'
-os.environ['area_file_path'] = '/home/oar.gfdl.mdtf/mdtf/inputdata/model/SAM0-UNICON_r1i1p1f1_gn/mon/areacella_fx_SAM0-UNICON_r1i1p1f1_gn.nc'
-os.environ['FIRSTYR'] = '1996' #'1979'
-os.environ['LASTYR'] = '2014'
-os.environ['WK_DIR'] = '/nbhome/jml/mdtf/mdtf_out/MDTF_ESM4_historical_D1_1979_2014/albedofb'
-os.environ['OBS_DATA'] = '/nbhome/jml/mdtf/tmp/inputdata/obs_data/albedofb'
+
 podname = 'albedofb'
 
 # these yrs only refer to the hist period for comparing kernel of mod to CERES
@@ -136,24 +119,24 @@ histmodregridalbedo = modregrid.albedo
 
 # read in sensitivity, which is albedo trend per global mean temperature trend 
 obs_dataset2 = xr.open_dataset(sensitivity_obs_file)
-obssensitivity=100.*obs_dataset2.OBS_ice_sensitivity   # convert to percent per K
+obssensitivity = 100.*obs_dataset2.OBS_ice_sensitivity   # convert to percent per K
 
 mod_dataset2 = xr.open_dataset(sensitivity_histmod_file)
-modregrid2=regridder(mod_dataset2)                     # regrid model to obs grid
-histmodregridsensitivity=100.*modregrid2.sensitivity   # convert to percent per K
+modregrid2 = regridder(mod_dataset2)                     # regrid model to obs grid
+histmodregridsensitivity = 100.*modregrid2.sensitivity   # convert to percent per K
 
 
 # In[7]:
 
 
 # info about the 3 panel figs
-figsize=(12,4.5)
-leftcbarposition=[0.18, 0.15, 0.4, 0.04]                #[left, bottom, width, height]
-rightcbarposition=[0.69, 0.15, 0.18, 0.04]
+figsize = (12, 4.5)
+leftcbarposition = [0.18, 0.15, 0.4, 0.04]  # [left, bottom, width, height]
+rightcbarposition = [0.69, 0.15, 0.18, 0.04]
 
 # info about the 2 panel figs
-figsize2=(9,4.5)
-cbarposition=[0.31, 0.15, 0.4, 0.04]
+figsize2 = (9, 4.5)
+cbarposition = [0.31, 0.15, 0.4, 0.04]
 
 
 def pltpanel(field, title=None, subs=(1, 3, 1), cmap_c='plasma'):
@@ -176,7 +159,7 @@ fig.suptitle('Surface Albedo Kernel from Isotropic Model MJJA', fontsize=18)
 cmap_c = 'plasma'
 pl = pltpanel(histmodkernel.sel(month=slice(4, 7)).mean(dim='month'), modelname +' 1996-2014',subs=131,cmap_c = cmap_c)
 pl.set_clim([0, 3.1])
-pl=pltpanel(obskernel.sel(month=slice(4, 7)).mean(dim='month'),'CERES EBAF 2000-2018',subs=132,cmap_c = cmap_c)
+pl = pltpanel(obskernel.sel(month=slice(4, 7)).mean(dim='month'),'CERES EBAF 2000-2018',subs=132,cmap_c = cmap_c)
 pl.set_clim([0, 3.1])
 
 cbar_ax = fig.add_axes(leftcbarposition) 

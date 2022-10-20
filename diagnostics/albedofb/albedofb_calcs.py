@@ -2,7 +2,8 @@
 # coding: utf-8
 
 
-# This file is part of the Surface Albedo Feedback Diagnostic POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
+# This file is part of the Surface Albedo Feedback Diagnostic POD of the MDTF code package
+# (see mdtf/MDTF-diagnostics/LICENSE.txt)
 # 
 #   Last update: 9/1/2022
 # 
@@ -13,8 +14,7 @@
 # 
 #   Open source copyright agreement
 # 
-#   The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt). 
-#   Unless you've distirbuted your script elsewhere, you don't need to change this.
+#   The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt).
 # 
 #   Functionality
 # 
@@ -168,7 +168,7 @@ def process_data(kernel_file, sensitivity_file):
     FSUS_input_file = "{DATADIR}/mon/{CASENAME}.{rsus_var}.mon.nc".format(**os.environ)
     TAS_input_file = "{DATADIR}/mon/{CASENAME}.{tas_var}.mon.nc".format(**os.environ)
     area_var = "{areacella_var}".format(**os.environ)
-    # area_input_file = "{DATADIR}/mon/areacella_fx_{model}_r1i1p1f1_gn.nc".format(**os.environ)
+    #area_input_file = "{DATADIR}/mon/areacella_fx_SAM0-UNICON_r1i1p1f1_gn.nc".format(**os.environ)
     area_input_file = "{DATADIR}/{CASENAME}.{areacella_var}.static.nc".format(**os.environ)
 
     if not os.path.isfile(area_input_file):  # try using the area file and area variable name
@@ -200,15 +200,15 @@ def process_data(kernel_file, sensitivity_file):
     Tglob = globalmean(tas, fx)
     Tglobtrend = Tglob.groupby('time.month').apply(linear_trend)
 
-    fsds = xr.open_dataset(FSDS_input_file)
-    fsus = xr.open_dataset(FSUS_input_file)
+    ds = xr.open_dataset(FSDS_input_file)
+    us = xr.open_dataset(FSUS_input_file)
 
-    ds = fsds['rsds']
-    us = fsus['rsus']
+    ds = ds[FSDS_var].assign_coords(month=('time', ds.time.dt.month.data)).swap_dims({'time': 'month'}).drop('time')
+    us = us[FSUS_var].assign_coords(month=('time', us.time.dt.month.data)).swap_dims({'time': 'month'}).drop('time')
     albedo = us / ds
     stacked = albedo.stack(allpoints=['lat', 'lon'])  # reduce to 2D array before computing trend
-    albedo_trend = stacked.groupby('time.month').apply(linear_trend)
-    tmp = stacked.isel(time=slice(0, 12))  # use this to put back stack coord
+    albedo_trend = stacked.groupby('month').apply(linear_trend)
+    tmp = stacked.isel(month=slice(0, 12))  # use this to put back stack coord
     tmp[:, :] = albedo_trend
     albedo_trend = tmp.unstack('allpoints')
     albedo_trend = albedo_trend.fillna(0)

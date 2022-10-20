@@ -57,10 +57,6 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import albedofb_calcs
 
-
-# In[2]:
-
-
 # In[3]:
 
 podname = 'albedofb'
@@ -79,7 +75,7 @@ modelname = "{CASENAME}".format(**os.environ)
 # In[4]:
 
 
-### model and obs data files and varnames: ###############################################
+# model and obs data files and varnames: ###############################################
 
 # obs processed files, provided
 kernel_obs_file = obs_dir+'CERES40_surface_albedo_kernel_2000-2018_MJJA.nc' 
@@ -227,7 +223,7 @@ cmap_c = 'PiYG'
 df = pltpanel(obssensitivity, 'Observed 2000-2018', subs=121, cmap_c=cmap_c)
 df.set_clim([-15, 15])
 
-df = pltpanel(histmodregridsensitivity.sel(month=slice(4, 7)).mean(dim='month').mean(dim='time'), modelname + ' '
+df = pltpanel(histmodregridsensitivity.sel(month=slice(4, 7)).mean(dim='month'), modelname + ' '
               + firstyr + '-' + lastyr, subs=122, cmap_c=cmap_c)
 df.set_clim([-15, 15])
 
@@ -254,7 +250,7 @@ fb = obskernel.sel(month=slice(4, 7)).mean(dim='month')*obssensitivity
 df = pltpanel(fb, 'Observed 2000-2018', subs=121, cmap_c=cmap_c)
 df.set_clim([-30, 30])
 
-fb = histmodregridkernel.sel(month=slice(4, 7)).mean(dim='month')*histmodregridsensitivity.sel(month=slice(4, 7)).mean(dim='month').mean(dim='time')
+fb = histmodregridkernel.sel(month=slice(4, 7)).mean(dim='month')*histmodregridsensitivity.sel(month=slice(4, 7)).mean(dim='month')
 df = pltpanel(fb, modelname + '' + firstyr + '' + lastyr, subs=122, cmap_c=cmap_c)
 df.set_clim([-30, 30])
 

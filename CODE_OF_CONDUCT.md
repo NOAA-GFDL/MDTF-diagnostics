@@ -23,7 +23,7 @@ Furthermore, our community members are expected to adhere to the following:
 
 * **2. Be considerate and respectful**.    
    Your work will be used by other people, and you in turn
-   will depend on the work of others. Any decision you take will affect users
+   will depend on the work of others. Any decision you make will affect users
    and colleagues, and you should take those consequences into account when
    making decisions.    
    Remember that we're a growing community with diverse members, and that you may be

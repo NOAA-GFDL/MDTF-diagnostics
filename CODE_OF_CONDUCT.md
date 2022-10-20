@@ -36,7 +36,7 @@ Furthermore, our community members are expected to adhere to the following:
    
 * **3. Consider Impact vs. Intent**.    
    Disagreements, both social and
-   technical, happen all the time and Pangeo is no exception. 
+   technical, happen all the time and this is no exception. 
    People perceive their own behaviors very differently than others perceive them. 
    What motivates one person may cause stress for another. 
    A few steps worth remembering include the following:

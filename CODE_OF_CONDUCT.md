@@ -86,7 +86,7 @@ Forms of harrassment include, but is not limited to:
 
 ## How to Report Harassment and Discrimination
 
-<To be provided> 
+TBA
 
 ##  Review
 
@@ -94,7 +94,7 @@ This code of conduct document will be reviewed periodically annually by the Mode
 
 ## Your contributions 
    
-Our community values every contribution to this open-source repository. Please follow the contributorship guidelines to see how you can contribute.
+Our community values every contribution to this open-source repository. Please follow the contributorship guidelines [in the works] to see how you can contribute.
 We encourage you to pitch in and join our growing community! 
 
 ### References

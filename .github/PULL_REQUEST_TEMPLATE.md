@@ -14,7 +14,7 @@ operating system(s) you ran your tests on.
 **Checklist:**
 - [ ] I have reviewed my own code to ensure that if follows the [POD development guidelines](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/dev_guidelines.html)
 - [ ] My branch is up-to-date with the NOAA-GFDL main branch, and all merge conflicts are resolved
-- [ ] The scripts are written in Python 3.7 or above (preferred; required if funded by a CPO grant), NCL, or R
+- [ ] The scripts are written in Python 3.8 or above (preferred; required if funded by a CPO grant), NCL, or R
 - [ ] All of my scripts are in the diagnostics/[POD short name] subdirectory, and include a main_driver script, template html, and settings.jsonc file
 - [ ] I have made corresponding changes to the documentation in the POD's doc/ subdirectory
 - [ ] I have requested that the framework developers add packages required by my POD to the python3, NCL, or R environment yaml file if necessary, and my environment builds with `conda_env_setup.sh` 

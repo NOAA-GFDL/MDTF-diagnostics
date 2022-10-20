@@ -5,9 +5,9 @@ channels:
 - defaults
 dependencies:
 # contents of python3_base
-- python=3.7
+- python=3.8
 - numpy=1.19
-- scipy=1.5.2
+- scipy=1.5.3
 - netCDF4=1.5.4
 - cftime=1.2
 - xarray=0.16

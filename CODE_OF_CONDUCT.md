@@ -104,4 +104,5 @@ This Code of Conduct has been adapted from:
      Attribution*](http://creativecommons.org/licenses/by/3.0/) license.
    * Pangeo (https://github.com/pangeo-data/.github/blob/main/CODE_OF_CONDUCT.md)
    * The chemical professionals code of conduct (https://www.acs.org/content/acs/en/careers/career-services/ethics/the-chemical-professionals-code-of-conduct.html)
+   * GFDL DEIAC forum
 We are grateful to these projects for contributing these materials for us to easily reuse.

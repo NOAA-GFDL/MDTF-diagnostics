@@ -169,8 +169,8 @@ def process_data(kernel_file, sensitivity_file):
     TAS_input_file = "{DATADIR}/mon/{CASENAME}.{tas_var}.mon.nc".format(**os.environ)
     area_var = "{areacella_var}".format(**os.environ)
     #area_input_file = "{DATADIR}/mon/areacella_fx_SAM0-UNICON_r1i1p1f1_gn.nc".format(**os.environ)
-    area_input_file = "{DATADIR}/{CASENAME}.{areacella_var}.static.nc".format(**os.environ)
-
+    #area_input_file = "{DATADIR}/{CASENAME}.{areacella_var}.static.nc".format(**os.environ)
+    area_input_file = "{AREACELLA_FILE}".format(**os.environ)
     if not os.path.isfile(area_input_file):  # try using the area file and area variable name
         # defined in pod_env_vars in settings file
         area_input_file = "{area_file_path}".format(**os.environ)

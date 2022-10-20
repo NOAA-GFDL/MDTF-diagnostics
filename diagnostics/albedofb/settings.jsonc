@@ -25,7 +25,7 @@
 			]
 		},
 	 	"pod_env_vars" : {
-        		"area_file_path": "/nbhome/${USER}/atmos_static.nc",
+        		"area_file_path": "/nbhome/jml/mdtf/atmos.static.nc",
         		"area_var_name": "area"
     		}
 	},

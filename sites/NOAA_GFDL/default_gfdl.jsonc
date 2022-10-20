@@ -33,6 +33,8 @@
           "ENSO_RWS",
           "ocn_surf_flux_diag",
           "mixed_layer_depth",
+          "seaice_suite",
+          "albedofb",
           "tropical_pacific_sea_level",
           "temp_extremes_distshape"
       ]
@@ -83,6 +85,10 @@
 
   // Method used to fetch model data.
   "data_manager": "GFDL_PP",
+   
+  // Data type that PODs will run
+  // "single_run" (default) or "multi_run"
+  "data_type": "single_run",
 
   // Time (in seconds) to wait before giving up on transferring a data file to
   // the local filesystem. Set to zero to disable.

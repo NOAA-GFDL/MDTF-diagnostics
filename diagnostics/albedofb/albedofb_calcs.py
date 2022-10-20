@@ -46,7 +46,6 @@ import os
 import xarray as xr  # python library we use to read netcdf files
 import numpy as np
 import pandas as pd
-from xarray.core.dataarray import DataArray
 
 
 def xr_reshape(A, dim, newdims, coords):

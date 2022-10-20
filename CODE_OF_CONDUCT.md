@@ -45,7 +45,7 @@ Furthermore, our community members are expected to adhere to the following:
    do not feel the same as you, or interpret the world the way you do. 
    Consider different people’s perspectives on things like change, 
    drive, structure, process, big picture, and small details.
-   * Ask for feedback and listen to them. 
+   * Ask for and listen to feedback. 
    * Blaming each other doesn’t get us anywhere, while we can learn from mistakes to find better solutions. 
 
 * **4. Moderate your expectations**.    

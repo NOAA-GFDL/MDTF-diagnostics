@@ -37,7 +37,7 @@ Model climatological albedo and radiative sensitivity is calculated from the pre
 Model ice sensitivity is calculated from the ratio of trends in the historical monthly mean spatial fields of surface albedo (ratio of upwelling to downwelling surface shortwave fluxes) and global mean surface temperature. Observational ice sensitivity estimates are from a developer provided file and are a blended product of historical trends in sea ice concentrations provided by the National Snow and surface albedo provided by the Advanced Very High Resolution Radiometer (AVHRR) Polar Pathfinder (APP-X).
 
 The radiative sensitivity is the local product of the radiative sensitivity and surface sensitivity. 
-    
+
 
 Required programming language and libraries
 -------------------------------------------
@@ -49,6 +49,13 @@ Required model output variables
 -------------------------------
 
 Monthly mean shortwave radiative fluxes at the top of atmosphere and surface (rsdt, rsut, rsds, rsus) and surface air temperature (tas) from historical (1996-2014) integrations.
+
+**IMPORTANT NOTE**
+
+If the model dataset does not include a cell area file with the CMIP standard name `areacella`, or the
+cell area file name does not have the format **{CASENAME}.{VARIABLE NAME}.{OUTPUT FREQUENCY}.nc**,
+the user must define the pod_env_vars ``area_file_path`` with the **full path** to a file with a cell area,
+and the ``area_var_name`` with the cell area variable name in the albedofb settings.jsonc file.
 
 References
 ----------

@@ -168,7 +168,9 @@ def process_data(kernel_file, sensitivity_file):
     FSUS_input_file = "{DATADIR}/mon/{CASENAME}.{rsus_var}.mon.nc".format(**os.environ)
     TAS_input_file = "{DATADIR}/mon/{CASENAME}.{tas_var}.mon.nc".format(**os.environ)
     area_var = "{areacella_var}".format(**os.environ)
+    # Original cell area file used with SAM0-UNICON test data
     #area_input_file = "{DATADIR}/mon/areacella_fx_SAM0-UNICON_r1i1p1f1_gn.nc".format(**os.environ)
+    # Location and naming format of processed cell area file that adheres to framework file name convention
     #area_input_file = "{DATADIR}/{CASENAME}.{areacella_var}.static.nc".format(**os.environ)
     area_input_file = "{AREACELLA_FILE}".format(**os.environ)
     if not os.path.isfile(area_input_file):  # try using the area file and area variable name
@@ -178,7 +180,7 @@ def process_data(kernel_file, sensitivity_file):
         try:
             os.path.isfile(area_input_file)
         except FileExistsError:
-            print("Could not find input file ", area_input_file)
+            print("Could not find cell area input file ", area_input_file)
 
     print("reading ", area_var, " from ", area_input_file)
 
@@ -202,7 +204,7 @@ def process_data(kernel_file, sensitivity_file):
 
     ds = xr.open_dataset(FSDS_input_file)
     us = xr.open_dataset(FSUS_input_file)
-
+    # must get rid of cftime since lack of leap day messes up divide below
     ds = ds[FSDS_var].assign_coords(month=('time', ds.time.dt.month.data)).swap_dims({'time': 'month'}).drop('time')
     us = us[FSUS_var].assign_coords(month=('time', us.time.dt.month.data)).swap_dims({'time': 'month'}).drop('time')
     albedo = us / ds

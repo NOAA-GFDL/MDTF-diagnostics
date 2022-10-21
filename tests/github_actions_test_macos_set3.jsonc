@@ -16,8 +16,8 @@
           "ocn_surf_flux_diag",
           "mixed_layer_depth",
           "seaice_suite",
-          "stc_eddy_heat_fluxes",
-          "albedofb"
+          "stc_eddy_heat_fluxes"
+          // "albedofb"
       ]
     }
   ],

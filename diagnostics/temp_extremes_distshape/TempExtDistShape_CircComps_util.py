@@ -20,19 +20,15 @@
 # ======================================================================
 
 # Import standard Python packages
-import os
 import numpy
 from netCDF4 import Dataset,num2date
 from datetime import datetime, timedelta
 import cftime
-import matplotlib
 import matplotlib.pyplot as mplt
 from matplotlib import cm
 import matplotlib.colors as mcolors
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import cartopy
-import cartopy.crs as ccrs
 from scipy import signal
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -253,11 +249,12 @@ def Plot_Circ_Comp_Lags(model_netcdf_filename,lon_var,figstep,plotcol,lon,lat,ta
     else:
         axes[figstep,plotcol].text(0.92, 0.92,'t=-'+str(lag), bbox=dict(facecolor='white', alpha=0.8),fontsize=14,style='italic',transform=axes[figstep,plotcol].transAxes,zorder=6)
 
-    ### Adjust for inserting colorbar
+    # Adjust for inserting colorbar
     divider2 = make_axes_locatable(axes[figstep,plotcol])
-    cax2 = divider2.append_axes(position="bottom",size="3%",pad=0.1,map_projection=cartopy.crs.PlateCarree())
-    cax2.outline_patch.set_visible(False)
-    axes[figstep,plotcol].set_aspect('equal')
+    cax2 = divider2.append_axes(position="bottom", size="3%", pad=0.1, map_projection=cartopy.crs.PlateCarree())
+    #cax2.outline_patch.set_visible(False) # deprecated, but not sure how to replace.
+    # Omission doesn't seem to affect plot
+    axes[figstep, plotcol].set_aspect('equal')
     return t1
 
 

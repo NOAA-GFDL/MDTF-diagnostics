@@ -7,7 +7,7 @@ dependencies:
 - cython>=0.29
 - xarray>=0.20
 - numpy=1.22.3
-- scipy=1.5.3
+- scipy>=1.9
 - matplotlib>=3.6
 - numba=0.52
 - pandas>=1.5

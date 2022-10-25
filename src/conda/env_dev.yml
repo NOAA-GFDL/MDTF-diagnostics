@@ -15,7 +15,7 @@ dependencies:
 - cartopy=0.20.0
 - pandas>=1.5
 - pint=0.16
-- dask=2021.03.0
+- dask=2022.10
 # additional development tools
 - jupyter
 - jupyterlab>=3.4

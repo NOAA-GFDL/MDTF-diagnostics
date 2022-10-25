@@ -11,4 +11,4 @@ dependencies:
 - matplotlib>=3.6
 - numba=0.52
 - pandas>=1.5
-- dask=2021.03.0
+- dask=2022.10

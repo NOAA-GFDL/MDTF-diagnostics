@@ -16,7 +16,7 @@ dependencies:
 - matplotlib>=3.6
 - pandas>=1.5
 - pint=0.16
-- dask=2.30
+- dask=2022.10
 # additions dec 2020
 - cfunits=3.3.1
 - intake=0.6

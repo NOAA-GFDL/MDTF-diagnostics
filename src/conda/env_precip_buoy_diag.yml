@@ -9,6 +9,6 @@ dependencies:
 - numpy=1.22.3
 - scipy>=1.9
 - matplotlib>=3.6
-- numba=0.52
+- numba=0.56.3
 - pandas>=1.5
 - dask=2022.10.0

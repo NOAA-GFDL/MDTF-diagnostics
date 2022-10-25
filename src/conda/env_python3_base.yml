@@ -24,7 +24,7 @@ dependencies:
 - xesmf=0.6.2
 - esmf=8.2.0
 - esmpy=8.2.0
-- gsw=3.3
+- gsw>=3.6
 - metpy=1.1
 - pcmdi_metrics=2.2.2
 - h5py=3.6.0

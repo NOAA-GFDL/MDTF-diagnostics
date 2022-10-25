@@ -160,8 +160,8 @@ Run time may be 10-20 minutes, depending on your system.
 - If you re-run the above command,  the result will be written to another subdirectory under `$OUTPUT_DIR`, i.e., output files saved previously will not be overwritten unless you change `overwrite` in the configuration file to `true`.
 
 ## 5. Run the framework in *multi_run* mode (under development)
-The framework is ready to test on PODs that analyze multiple model and or observational datasets (cases) using the tag
-*v3.1.alpha.1*. To run the framework on the
+The framework is ready to test on PODs that analyze multiple model and or observational datasets (cases) using the latest
+version of the main branch. To run the framework on the
 **[example_multicase](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase)** POD,
 modify the example configuration file and run
 ```commandline

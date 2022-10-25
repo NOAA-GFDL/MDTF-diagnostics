@@ -68,7 +68,7 @@ author = u'Model Diagnostics Task Force'
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'3.0 beta 5'
+release = u'3.0'
 
 # only used for resolving relative links in markdown docs
 # use develop branch because that's what readthedocs is configured to use
@@ -474,7 +474,7 @@ napoleon_include_private_with_doc = False
 # -- Options for intersphinx extension -----------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3.8', None),
+    'python': ('https://docs.python.org/3.10', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'xarray': ('https://xarray.pydata.org/en/stable/', None)
@@ -495,7 +495,7 @@ def setup(app):
     app.connect('autodoc-skip-member', skip_members_handler)
 
     # AutoStructify for recommonmark
-    # see eg https://stackoverflow.com/a/52430829
+    # see e.g., https://stackoverflow.com/a/52430829
     app.add_config_value('recommonmark_config', {
         'url_resolver': lambda url: _project_github_url + url,
         'enable_auto_toc_tree': False,

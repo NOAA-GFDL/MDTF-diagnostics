@@ -7,7 +7,7 @@ dependencies:
 # versions are current as of Jul 2020
 # see https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/pkg-specs.
 
-- python=3.8
+- python=3.10
 - numpy=1.19
 - scipy=1.5.3
 - netCDF4=1.5.8

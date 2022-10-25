@@ -25,8 +25,8 @@ To install the MDTF package on a local machine, open a terminal and create a dir
   1. | :console:`% cd mdtf`, then clone your fork of the MDTF repo on your machine:
      | :console:`% git clone https://github.com/<your GitHub account name>/MDTF-diagnostics`.
   2. Verify that you are on the main branch: :console:`% git branch`. This is the default, but it never hurts to get in the habit of running git branch before you start working.
-  3. | Check out the `latest official release <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0-beta.3>`__:
-     | :console:`% git checkout tags/v3.0-beta.3`.
+  3. | Check out the `latest official release <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0>`__:
+     | :console:`% git checkout tags/v3.0`.
   4. Proceed with the installation process described below.
   5. | Check out a new branch that will contain your edited config files: 
      | :console:`% git checkout -b <branch name>`.

@@ -3,7 +3,7 @@ channels:
 - conda-forge
 - defaults
 dependencies:
-- python=3.8
+- python=3.10
 - cython>=0.29
 - xarray>=0.20
 - numpy=1.22.3

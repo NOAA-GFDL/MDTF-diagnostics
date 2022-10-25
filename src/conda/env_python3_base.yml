@@ -8,7 +8,7 @@ dependencies:
 # see https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/pkg-specs.
 
 - python=3.10
-- numpy=1.19
+- numpy=1.22.3
 - scipy=1.5.3
 - netCDF4=1.5.8
 - cftime>=1.6

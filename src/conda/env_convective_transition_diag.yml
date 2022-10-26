@@ -8,7 +8,7 @@ dependencies:
 - scipy>=1.9
 - netCDF4=1.5.8
 - cftime>=1.6
-- xarray>=0.20
+- xarray=0.21.0
 - matplotlib>=3.6
 - pandas>=1.5
 - cartopy=0.21.0

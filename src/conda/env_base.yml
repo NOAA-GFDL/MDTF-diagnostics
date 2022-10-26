@@ -12,7 +12,7 @@ dependencies:
 - numpy=1.22.3
 - netCDF4=1.5.8
 - cftime>=1.6
-- xarray=0.16
+- xarray=2022.10.0
 - matplotlib>=3.6
 - pandas>=1.5
 - pint=0.16
@@ -23,4 +23,4 @@ dependencies:
 - intake-esm=2020.11.4
 - cf_xarray=0.4.0
 - subprocess32
-- pyyaml >=6.0
+- pyyaml>=6.0

@@ -31,6 +31,8 @@ dependencies:
 - intake-xarray=0.6.0
 - nc-time-axis=1.4.1
 - pyyaml=6.0
+- networkx=2.3
+- jupyterlab=3.5.0
 - pip=22.0.4
 - pip:
     - cmocean

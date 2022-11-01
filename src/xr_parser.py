@@ -549,6 +549,9 @@ class DefaultDatasetParser():
             self.normalize_calendar(d)
             self.attrs_backup[var] = d.copy()
             self.attrs_backup[var].update(new_d)
+            # update the variable attributes with the normalized
+            # values before decode_cf is called on the dataset
+            ds[var].attrs.update(self.attrs_backup[var])
         self.attrs_backup['Dataset'] = ds.attrs.copy()
 
     def restore_attrs_backup(self, ds):

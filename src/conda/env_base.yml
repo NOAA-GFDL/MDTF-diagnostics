@@ -27,4 +27,4 @@ dependencies:
 - intake=0.6
 - intake-esm=2021.8.17
 - subprocess32=3.5.4
-- pyyaml>=6.0
+- pyyaml=6.0

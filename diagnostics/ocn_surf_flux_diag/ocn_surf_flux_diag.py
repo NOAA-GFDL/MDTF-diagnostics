@@ -320,10 +320,9 @@ fig.savefig(
     facecolor="w",
     edgecolor="w",
     orientation="portrait",
-    papertype=None,
     format=None,
     transparent=False,
     bbox_inches="tight",
     pad_inches=None,
-    frameon=None,
+    facecolor=None
 )

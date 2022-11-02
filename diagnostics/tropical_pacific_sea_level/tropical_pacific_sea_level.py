@@ -860,7 +860,6 @@ fig.savefig(
     transparent=False,
     bbox_inches="tight",
     pad_inches=None,
-    facecolor=None
 )
 fig.savefig(
     os.getenv("WK_DIR") + "/obs/PS/example_obs_plot.eps",
@@ -871,5 +870,4 @@ fig.savefig(
     transparent=False,
     bbox_inches="tight",
     pad_inches=None,
-    facecolor=None
 )

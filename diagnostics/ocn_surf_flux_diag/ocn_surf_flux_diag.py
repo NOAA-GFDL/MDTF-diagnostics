@@ -324,5 +324,4 @@ fig.savefig(
     transparent=False,
     bbox_inches="tight",
     pad_inches=None,
-    facecolor=None
 )

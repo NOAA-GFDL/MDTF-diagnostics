@@ -9,8 +9,8 @@
 
 import sys
 # do version check before anything else
-if sys.version_info.major != 3 or sys.version_info.minor < 7:
-    sys.exit("ERROR: The MDTF package requires python >= 3.7. Please check "
+if sys.version_info.major != 3 or sys.version_info.minor < 8:
+    sys.exit("ERROR: The MDTF package requires python >= 3.8. Please check "
         "which version of python is on your $PATH (e.g. with `which python`.)\n"
         f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports

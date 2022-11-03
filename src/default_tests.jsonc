@@ -98,6 +98,10 @@
 
   // Method used to fetch model data.
   "data_manager": "Local_File",
+    
+  // Type of data that POD(s) will analyze
+  // "single_run" (default) or "multi_run"
+  "data_type": "single_run",
 
   // Method used to manage dependencies.
   "environment_manager": "Conda",

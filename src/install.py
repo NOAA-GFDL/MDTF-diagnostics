@@ -5,10 +5,10 @@ conda environments and supporting data.
 
 import sys
 # do version check before importing other stuff
-if sys.version_info[0] != 3 or sys.version_info[1] < 8:
-    sys.exit("ERROR: MDTF currently only supports python >= 3.8.*. Please check "
-    "which version is on your $PATH (e.g. with `which python`.)\n"
-    f"Attempted to run with following python version:\n{sys.version}")
+if sys.version_info[0] != 3 or sys.version_info[1] < 10:
+    sys.exit("ERROR: MDTF currently only supports python >= 3.10.*. Please check "
+             "which version is on your $PATH (e.g. with `which python`.)\n"
+             f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports
 import os
 import io

@@ -17,13 +17,13 @@ dependencies:
 - pint=0.16
 - dask=2022.10.0
 # additional development tools
-- jupyter=4.11.1
+- jupyter_core=4.11.1
 - jupyterlab=3.5.0
 - sphinx=5.2
 - recommonmark=0.7
-- pylint=2.4
+- pylint=2.14.5
 - doc8=0.8.0
-- jinja2=2.10
+- jinja2=3.1.2
 - latexmk=4.76
 # additions dec 2020
 - cfunits=3.3.1

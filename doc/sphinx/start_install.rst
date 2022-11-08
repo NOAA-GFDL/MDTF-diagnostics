@@ -187,7 +187,7 @@ The output should be
 
    === Starting <CODE_ROOT>/mdtf_framework.py
 
-   mdtf 3.0 beta 4
+   mdtf 3.0
 
 .. _ref-configure:
 

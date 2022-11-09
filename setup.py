@@ -32,7 +32,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='MDTF Collaboration',
-    author_email='thomas.jackson@noaa.gov',
+    author_email='20195932+wrongkindofdoctor@users.noreply.github.com',
     url="https://github.com/NOAA-GFDL/MDTF-diagnostics",
     classifiers=[
             # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers

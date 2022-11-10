@@ -1,6 +1,6 @@
 # MDTF-diagnostics: A Portable Framework for Weather and Climate Model Data Analysis
 
-[![Documentation Status](https://readthedocs.org/projects/mdtf-diagnostics/badge/?version=latest)](https://mdtf-diagnostics.readthedocs.io/en/latest/?badge=latest) [![Build Status](https://travis-ci.com/NOAA-GFDL/MDTF-diagnostics.svg?branch=main)](https://travis-ci.com/NOAA-GFDL/MDTF-diagnostics) [![Total alerts](https://img.shields.io/lgtm/alerts/g/NOAA-GFDL/MDTF-diagnostics.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/NOAA-GFDL/MDTF-diagnostics/alerts/) [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/NOAA-GFDL/MDTF-diagnostics.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/NOAA-GFDL/MDTF-diagnostics/context:python)
+[![MDTF_test](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/mdtf_tests.yml/badge.svg)](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/mdtf_tests.yml) [![CodeQL](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/codeql.yml/badge.svg)](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/codeql.yml) [![Documentation Status](https://readthedocs.org/projects/mdtf-diagnostics/badge/?version=main)](https://mdtf-diagnostics.readthedocs.io/en/main/?badge=main) [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/NOAA-GFDL/MDTF-diagnostics.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/NOAA-GFDL/MDTF-diagnostics/context:python)
 
 The MDTF-diagnostics package is a portable framework for running process-oriented diagnostics (PODs) on weather and climate model data.
 
@@ -50,7 +50,7 @@ and a link to the full documentation for each currently-supported POD.
 
 # Quickstart installation instructions
 
-#### See the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/) for all other information, including more in-depth installation instructions.
+#### See the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/main/) for all other information, including more in-depth installation instructions.
 
 #### Visit the [GFDL Youtube Channel](https://www.youtube.com/channel/UCCVFLbjYix7RCz1GgKG2QxA) for tutorials on package installation and other MDTF-diagnostics-related topics
 
@@ -59,7 +59,7 @@ and a link to the full documentation for each currently-supported POD.
 - MDTF-diagnositics is developed for macOS and Linux systems. The package has been tested on, but is not fully supported for, the Windows Subsystem for Linux.
 ## Notes
 - `$` indicates strings to be substituted, e.g., the string `$CODE_ROOT` should be substituted by the actual path to the MDTF-diagnostics directory.
-- Consult the [Getting started](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/start_toc.html) section to learn how to run the framework on your own data and configure general settings.
+- Consult the [Getting started](https://mdtf-diagnostics.readthedocs.io/en/main/sphinx/start_toc.html) section to learn how to run the framework on your own data and configure general settings.
 - POD contributors can consult the **[Developer Cheatsheet](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/doc/sphinx/dev_cheatsheet.rst)** for brief instructions and useful tips
 
 
@@ -180,7 +180,7 @@ mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5
 
 ## 6. Next steps
 
-For more detailed information, consult the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/latest/). The ["Getting Started"](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/start_toc.html) section has more detailed information on customizing your installation and running the framework on your own data. Users interested in contributing a POD should consult the ["Developer Information"](https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/dev_toc.html) section.
+For more detailed information, consult the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/main/). The ["Getting Started"](https://mdtf-diagnostics.readthedocs.io/en/main/sphinx/start_toc.html) section has more detailed information on customizing your installation and running the framework on your own data. Users interested in contributing a POD should consult the ["Developer Information"](https://mdtf-diagnostics.readthedocs.io/en/main/sphinx/dev_toc.html) section.
 
 # Acknowledgements
 

@@ -3,7 +3,9 @@
 Model data sources
 ==================
 
-This section details how to select the input model data for the package to analyze. The command-line option for this functionality is the ``--data-manager`` flag, which selects a "data source": a code plug-in that implements all functionality needed to obtain model data needed by the PODs, based on user input:
+This section details how to select the input model data for the package to analyze.
+The command-line option for this functionality is the ``--data-manager`` flag, which selects a "data source":
+a code plug-in that implements all functionality needed to obtain model data needed by the PODs, based on user input:
 
 * An interface to query the remote store of data for the variables requested by the PODs, whether in the form of a file naming convention or an organized data catalog/database;
 * (Optional) heuristics for refining the query results in order to guarantee that all data selected came from the same model run;
@@ -11,9 +13,17 @@ This section details how to select the input model data for the package to analy
 
 Each data source may define its own specific command-line options, which are documented here. 
 
-The choice of data source determines where and how the data needed by the diagnostics is obtained, but doesn't specify anything about the data's contents. For that purpose we allow the user to specify a "variable naming :ref:`convention<ref-data-conventions>`" with the ``--convention`` flag. Also consult the :doc:`requirements<ref_data>` that input model data must satisfy in terms of file formats.
+The choice of data source determines where and how the data needed by the diagnostics is obtained,
+but doesn't specify anything about the data's contents. For that purpose we allow the user to specify a
+"variable naming :ref:`convention<ref-data-conventions>`" with the ``--convention`` flag.
+Also consult the :doc:`requirements<ref_data>` that input model data must satisfy in terms of file formats.
 
-There are currently three data sources implemented in the package, described below. If you're using site-specific functionality (via the ``--site`` flag), additional options may be available; see the :doc:`site-specific documentation<site_toc>` for your site. If you would like the package to support obtaining data from a source that hasn't currently been implemented, please make a request in the appropriate GitHub `discussion thread <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/175>`__.
+There are currently three data sources implemented in the package, described below.
+If you're using site-specific functionality (via the ``--site`` flag), additional options may be available;
+see the :doc:`site-specific documentation<site_toc>` for your site.
+If you would like the package to support obtaining data from a source that hasn't currently been implemented,
+please make a request in the appropriate GitHub
+`discussion thread <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/175>`__.
 
 .. _ref-data-source-localfile:
 
@@ -22,7 +32,10 @@ Sample model data source
 
 Selected via ``--data-manager="LocalFile"``. This is the default value for <*data-manager*>.
 
-This data source lets the package run on the sample model data provided with the package and installed by the user at <*MODEL_DATA_ROOT*>. Any additional data added by the user to this location (either by copying files, or through symlinks) will also be recognized, provided that it takes the form of one netCDF file per variable and that it follows the following file and subdirectory naming convention :
+This data source lets the package run on the sample model data provided with the package and installed by the user
+at <*MODEL_DATA_ROOT*>. Any additional data added by the user to this location
+(either by copying files, or through symlinks) will also be recognized, provided that it takes the form of one netCDF
+file per variable and that it follows the following file and subdirectory naming convention :
 
 <*MODEL_DATA_ROOT*>/<*dataset_name*>/<*frequency*>/<*dataset_name*>.<*variable_name*>.<*frequency*>.nc,
 

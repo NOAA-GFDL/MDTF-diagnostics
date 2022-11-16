@@ -8,9 +8,16 @@ Command-line options
 Running the package
 -------------------
 
-If you followed the :ref:`recommended installation method<ref-conda-install>` for installing the framework with the `conda <https://docs.conda.io/en/latest/>`__ package manager, the installation process will have created a driver script named ``mdtf`` in the top level of the code directory. This script should always be used as the entry point for running the package.
+If you followed the :ref:`recommended installation method<ref-conda-install>` for installing the framework
+the `conda <https://docs.conda.io/en/latest/>`__ package manager, the installation process will have created
+a driver script named ``mdtf`` in the top level of the code directory.
+This script should always be used as the entry point for running the package.
 
-This script is minimal and shouldn't conflict with customized shell environments: it only sets the conda environment for the framework and calls `mdtf_framework.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/mdtf_framework.py>`__, the python script which should be used as the entry point if a different installation method was used. In all cases the command-line options are as described here.
+This script is minimal and shouldn't conflict with customized shell environments:
+it only sets the conda environment for the framework and calls
+`mdtf_framework.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/mdtf_framework.py>`__,
+the python script which should be used as the entry point if a different installation method was used. In all cases
+the command-line options are as described here.
 
 Usage
 -----
@@ -20,9 +27,13 @@ Usage
     mdtf [options] [CASE_ROOT_DIR]
     mdtf info [TOPIC]
 
-The first form of the command runs the package's diagnostics on model data files in the directory ``CASE_ROOT_DIR``. The options, described below, can be set on the command line or in an input file specified with the ``-f``/``--input-file`` flag. An example of such an input file is provided at `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/default_tests.jsonc>`__.
+The first form of the command runs the package's diagnostics on model data files in the directory ``CASE_ROOT_DIR``.
+The options, described below, can be set on the command line or in an input file specified with the
+``-f``/``--input-file`` flag. An example of such an input file is provided at
+`src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/default_tests.jsonc>`__.
 
-The second form of the command prints information about the installed diagnostics. To get a list of topics recognized by the command, run :console:`% mdtf info`.
+The second form of the command prints information about the installed diagnostics.
+To get a list of topics recognized by the command, run :console:`% mdtf info`.
 
 
 .. _ref-cli-options:
@@ -30,9 +41,14 @@ The second form of the command prints information about the installed diagnostic
 Command-line options
 --------------------
 
-For long command line flags, words may be separated with hyphens (GNU standard) or with underscores (python variable name convention). For example, ``--file-transfer-timeout`` and ``--file_transfer_timeout`` are both recognized by the package as synonyms for the same setting.
+For long command line flags, words may be separated with hyphens (GNU standard) or with underscores
+(python variable name convention). For example, ``--file-transfer-timeout`` and ``--file_transfer_timeout``
+are both recognized by the package as synonyms for the same setting.
 
-If you're using site-specific functionality (via the ``--site`` flag, described below), additional options may be available beyond what is listed here: see the :doc:`site-specific documentation<site_toc>` for your site. In addition, your choice of site may set default values for these options; the default values and the location of the configuration file defining them are listed as part of running :console:`% mdtf --site <site_name> --help`.
+If you're using site-specific functionality (via the ``--site`` flag, described below),
+additional options may be available beyond what is listed here: see the :doc:`site-specific documentation<site_toc>`
+for your site. In addition, your choice of site may set default values for these options; the default values and the
+location of the configuration file defining them are listed as part of running :console:`% mdtf --site <site_name> --help`.
 
 General options
 +++++++++++++++

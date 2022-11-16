@@ -967,10 +967,13 @@ class MDTFFramework(MDTFObjectBase):
         for arg in args:
             if arg == 'all':
                 # add all PODs except example PODs
-                pods.extend([p for p in pod_data if not p.startswith('example')])
+                pods.extend([p for p in pod_data if not p.lower().startswith('example')])
             elif arg == 'example' or arg == 'examples':
                 # add example PODs
-                pods.extend([p for p in pod_data if p.startswith('example')])
+                if self.multirun:
+                    pods.extend([p for p in pod_data if p.lower() == 'example_multicase'])
+                else:
+                    pods.extend([p for p in pod_data if p.lower() == 'example'])
             elif arg in pod_info_tuple.realm_data:
                 # realm_data: realm name -> list of POD names
                 # add all PODs for this realm

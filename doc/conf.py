@@ -35,7 +35,7 @@ from recommonmark.transform import AutoStructify
 # we build docs on readthedocs
 autodoc_mock_imports = [
     'numpy', 'xarray', 'cftime', 'cfunits', 'cf_xarray',
-    'pandas', 'intake', 'intake_esm'
+    'pandas', 'intake', 'intake_esm', "yaml"
 ]
 # need to manually mock out explicit patching of cf_xarray.accessor done
 # on import in xr_parser; may be possible to do this with mock.patch() but the
@@ -49,13 +49,18 @@ setattr(sys.modules['cf_xarray'], 'accessor', mock_accessor)
 
 # Also necessary to manually mock out cfunits.Units since src.units.Units
 # inherits from it.
-class Units():
-    ""
+
+
+class Units:
+
     def __init__(self, units=None, calendar=None, formatted=False, names=False,
-        definition=False, _ut_unit=None):
+                 definition=False, _ut_unit=None):
+
         """Initialization is as in `cfunits.Units
         <https://ncas-cms.github.io/cfunits/cfunits.Units.html>`__."""
         pass
+
+
 sys.modules['cfunits'] = mock.Mock(name='cfunits')
 setattr(sys.modules['cfunits'], 'Units', Units)
 
@@ -68,7 +73,7 @@ author = u'Model Diagnostics Task Force'
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'3.0 beta 5'
+release = u'3.0'
 
 # only used for resolving relative links in markdown docs
 # use develop branch because that's what readthedocs is configured to use
@@ -78,7 +83,7 @@ _project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/'
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-# needs_sphinx = '1.0'
+# needs_sphinx = '5.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -123,9 +128,7 @@ language = None
 # This pattern also affects html_static_path and html_extra_path.
 # NB: this is *only* applied to built .rst files, not to the imports done
 # by sphinx-apidoc.
-exclude_patterns = [u'_build', 'Thumbs.db',
-    '**/test*'
-]
+exclude_patterns = [u'_build', 'Thumbs.db', '**/test*']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'default'
@@ -144,9 +147,7 @@ html_theme_options = {
     'sidebar_width': '280px',
     'sidebar_collapse': False,
     'fixed_sidebar': False,
-    'extra_nav_links' : {
-        "Getting Started [PDF]": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_getting_started.pdf",
-        "Developer's Walkthough [PDF]": "https://mdtf-diagnostics.readthedocs.io/en/latest/_static/MDTF_walkthrough.pdf",
+    'extra_nav_links': {
         "Full documentation [PDF]": "https://mdtf-diagnostics.readthedocs.io/_/downloads/en/latest/pdf/"
     }
 }
@@ -192,17 +193,7 @@ latex_elements = {
     'papersize': 'letterpaper',
     # The font size ('10pt', '11pt' or '12pt').
     'pointsize': '11pt',
-    # fonts
-    'fontpkg': r'''
-        \RequirePackage{fontspec}
-        % RTD uses a texlive installation on linux; apparently xelatex can only
-        % find fonts by filename in this situation.
-        \setmainfont{texgyretermes-regular.otf}
-        \setsansfont{texgyrebonum-bold.otf}
-    ''',
     'geometry': r"\usepackage[xetex,letterpaper]{geometry}",
-    # chapter style
-    'fncychap': r"\usepackage[Bjarne]{fncychap}",
     # Latex figure (float) alignment
     'figure_align': 'H',
     # Additional stuff for the LaTeX preamble.
@@ -238,28 +229,6 @@ latex_documents = [
         # ReadTheDocs (filename is fixed by the RTD account name).
         'tex_all', 'mdtf-diagnostics.tex',
         u'MDTF Diagnostics Documentation', author, 'manual'
-    ),(
-        # Secondary PDF. Sphinx will build multiple PDFs, but as far as I can
-        # tell, ReadTheDocs won't (linked open issues in prior commits to this
-        # file?). Instead these are currently built manually and checked into
-        # /docs/static_. The ".tex_" extension is to prevent an error in RTD's
-        # build process if it finds multiple .tex files, and doesn't affect sphinx.
-        'tex_getting_started', 'MDTF_getting_started.tex_',
-        u"MDTF Getting Started Guide",
-        r"Jessica Liptak (GFDL) \and Thomas Jackson \and Dani Coleman (NCAR)",
-        'manual'
-    ),(
-        # another secondary PDF.
-        'tex_walkthrough', 'MDTF_walkthrough.tex_',
-        u"MDTF Developer's Walkthrough",
-        (
-        r"Jessica Liptak\textsuperscript{a} \and Dani Coleman\textsuperscript{b} "
-        r"\and Thomas Jackson \and Aparna Radhakrishnan\textsuperscript{c} "
-        r"\and Andrew Gettelman\textsuperscript{b} \and J.~David Neelin\textsuperscript{a} "
-        r"\and Eric Maloney\textsuperscript{d} \and John Krasting\textsuperscript{c}"
-        r"\\ {\small (a: UCLA; b: NCAR; c: GFDL; d:CSU)}"
-        ),
-        'manual'
     )
 ]
 
@@ -334,6 +303,7 @@ autodoc_default_options = {
     'inherited-members': True
 }
 
+
 def no_namedtuple_attrib_docstring(app, what, name, obj, options, lines):
     """Remove duplicated doc info in namedtuples.
     https://chrisdown.name/2015/09/20/removing-namedtuple-docstrings-from-sphinx.html
@@ -346,13 +316,14 @@ def no_namedtuple_attrib_docstring(app, what, name, obj, options, lines):
         # We don't return, so we need to purge in-place
         del lines[:]
 
-def abbreviate_logger_in_signature(app, what, name, obj, options, signature,
-    return_annotation):
+
+def abbreviate_logger_in_signature(app, what, name, obj, options, signature, return_annotation):
     """Abbreviate logger arguments in function/method signatures.
     """
     if isinstance(signature, str):
         signature = re.sub(r'log=<Logger[^>]+>', r'log=<Logger>', signature)
     return (signature, return_annotation)
+
 
 def skip_members_handler(app, what, name, obj, skip, options):
     """1) Skip unit test related classes and methods;
@@ -450,22 +421,34 @@ from sphinx.ext.napoleon.docstring import GoogleDocstring
 # first, we define new methods for any new sections and add them to the class
 def parse_keys_section(self, section):
     return self._format_fields('Keys', self._consume_fields())
+
+
 GoogleDocstring._parse_keys_section = parse_keys_section
+
 
 def parse_attributes_section(self, section):
     return self._format_fields('Attributes', self._consume_fields())
+
+
 GoogleDocstring._parse_attributes_section = parse_attributes_section
+
 
 def parse_class_attributes_section(self, section):
     return self._format_fields('Class Attributes', self._consume_fields())
+
+
 GoogleDocstring._parse_class_attributes_section = parse_class_attributes_section
 
-# we now patch the parse method to guarantee that the the above methods are
+# we now patch the parse method to guarantee that the above methods are
 # assigned to the _section dict
+
+
 def patched_parse(self):
     self._sections['keys'] = self._parse_keys_section
     self._sections['class attributes'] = self._parse_class_attributes_section
     self._unpatched_parse()
+
+
 GoogleDocstring._unpatched_parse = GoogleDocstring._parse
 GoogleDocstring._parse = patched_parse
 
@@ -473,8 +456,9 @@ napoleon_include_private_with_doc = False
 
 # -- Options for intersphinx extension -----------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
+
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3.8', None),
+    'python': ('https://docs.python.org/3.10', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'xarray': ('https://xarray.pydata.org/en/stable/', None)
@@ -487,6 +471,7 @@ todo_include_todos = True
 
 # == Overall Sphinx app setup hook =============================================
 
+
 def setup(app):
     # register autodoc events
     app.connect('builder-inited', run_apidoc)
@@ -495,7 +480,7 @@ def setup(app):
     app.connect('autodoc-skip-member', skip_members_handler)
 
     # AutoStructify for recommonmark
-    # see eg https://stackoverflow.com/a/52430829
+    # see e.g., https://stackoverflow.com/a/52430829
     app.add_config_value('recommonmark_config', {
         'url_resolver': lambda url: _project_github_url + url,
         'enable_auto_toc_tree': False,

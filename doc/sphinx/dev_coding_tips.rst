@@ -36,25 +36,25 @@ Python: General
      * - Task
        - Recommended function
      * - Construct a path from *dir1*, *dir2*, ..., *filename*
-       - `os.path.join <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path#os.path.join>`__\(*dir1*, *dir2*, ..., *filename*)
+       - `os.path.join <https://docs.python.org/3.10/library/os.path.html?highlight=os%20path#os.path.join>`__\(*dir1*, *dir2*, ..., *filename*)
      * - Split a *path* into directory and filename
-       - `os.path.split <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path#os.path.split>`__\(*path*) and related functions in `os.path <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path>`__
+       - `os.path.split <https://docs.python.org/3.10/library/os.path.html?highlight=os%20path#os.path.split>`__\(*path*) and related functions in `os.path <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path>`__
      * - List files in directory *dir*
-       - `os.scandir <https://docs.python.org/3.7/library/os.html#os.scandir>`__\(*dir*)
+       - `os.scandir <https://docs.python.org/3.10/library/os.html#os.scandir>`__\(*dir*)
      * - Move or rename a file or directory from *old_path* to *new_path*
-       - `shutil.move <https://docs.python.org/3.7/library/shutil.html#shutil.move>`__\(*old_path*, *new_path*)
+       - `shutil.move <https://docs.python.org/3.10/library/shutil.html#shutil.move>`__\(*old_path*, *new_path*)
      * - Create a directory or sequence of directories *dir*
-       - `os.makedirs <https://docs.python.org/3.7/library/os.html#os.makedirs>`__\(*dir*)
+       - `os.makedirs <https://docs.python.org/3.10/library/os.html#os.makedirs>`__\(*dir*)
      * - Copy a file from *path* to *new_path*
-       - `shutil.copy2 <https://docs.python.org/3.7/library/shutil.html#shutil.copy2>`__\(*path*, *new_path*)
+       - `shutil.copy2 <https://docs.python.org/3.10/library/shutil.html#shutil.copy2>`__\(*path*, *new_path*)
      * - Copy a directory *dir*, and everything inside it, to *new_dir*
-       - `shutil.copytree <https://docs.python.org/3.7/library/shutil.html#shutil.copytree>`__\(*dir*, *new_dir*)
+       - `shutil.copytree <https://docs.python.org/3.10/library/shutil.html#shutil.copytree>`__\(*dir*, *new_dir*)
      * - Delete a single file at *path*
-       - `os.remove <https://docs.python.org/3.7/library/os.html#os.remove>`__\(*path*)
+       - `os.remove <https://docs.python.org/3.10/library/os.html#os.remove>`__\(*path*)
      * - Delete a directory *dir* and everything inside it
-       - `shutil.rmtree <https://docs.python.org/3.7/library/shutil.html#shutil.rmtree>`__\(*dir*)
+       - `shutil.rmtree <https://docs.python.org/3.10/library/shutil.html#shutil.rmtree>`__\(*dir*)
 
-  In particular, using `os.path.join <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path#os.path.join>`__ is more verbose than joining strings but eliminates bugs arising from missing or redundant directory separators.
+  In particular, using `os.path.join <https://docs.python.org/3.10/library/os.path.html?highlight=os%20path#os.path.join>`__ is more verbose than joining strings but eliminates bugs arising from missing or redundant directory separators.
 
 Python: Arrays
 --------------

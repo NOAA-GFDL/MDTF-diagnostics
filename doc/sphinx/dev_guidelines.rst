@@ -10,11 +10,11 @@ The framework itself is written in Python, and can call PODs written in any scri
 
 - To achieve portability, the MDTF **cannot** accept PODs written in closed-source languages (e.g., MATLAB and IDL; try `Octave <https://www.gnu.org/software/octave/>`__ and `GDL <https://github.com/gnudatalanguage/gdl>`__ if possible). We also **cannot** accept PODs written in compiled languages (e.g., C or Fortran): installation would rapidly become impractical if users had to check compilation options for each POD.
 
-- Python is strongly encouraged for new PODs; PODs funded through the CPO grant are requested to be developed in Python. Python version >= 3.8 is required. Official support for Python 2 was discontinued as of January 2020.
+- Python is strongly encouraged for new PODs; PODs funded through the CPO grant are requested to be developed in Python. Python version >= 3.10 is required.
 
 - If your POD was previously developed in NCL or R (and development is *not* funded through a CPO grant), you do not need to re-write existing scripts in Python 3 if doing so is likely to introduce new bugs into stable code, especially if you’re unfamiliar with Python.
 
-- If scripts were written in closed-source languages, translation to Python 3.8 or above is required.
+- If scripts were written in closed-source languages, translation to Python 3.10 or above is required.
 
 Preparation for POD implementation
 ----------------------------------
@@ -63,7 +63,7 @@ The environment variables most relevant for a POD's operation are:
 
 - ``DATADIR``: Path to directory containing model data files for one case/experiment, e.g., ``inputdata/model/QBOi.EXP1.AMIP.001/``.
 
-- ``WK_DIR``: Path to directory for POD to output files. Note that **this is the only directory a POD is allowed to write its output**. E.g., ``wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/convective_transition_diag/``.
+- ``WK_DIR``: Path to directory for POD to output files. Note that **this is the only directory a POD is allowed to write its output**. e.g., ``wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/convective_transition_diag/``.
 
    1. Output figures to ``$WK_DIR/obs/`` and ``$WK_DIR/model/`` respectively.
 
@@ -105,7 +105,7 @@ Other tips on implementation
 
 #. Handle large model data: The spatial resolution and temporal frequency of climate model output have increased in recent years. As such, developers should take into account the size of model data compared with the available memory. For instance, the example POD precip_diurnal_cycle and Wheeler_Kiladis only analyze part of the available model output for a period specified by the environment variables ``FIRSTYR`` and ``LASTYR``, and the convective_transition_diag module reads in data in segments.
 
-#. Basic vs. advanced diagnostics (within a POD): Separate parts of diagnostics, e.g, those might need adjustment when model performance out of obs range.
+#. Basic vs. advanced diagnostics (within a POD): Separate parts of diagnostics, e.g., those might need adjustment when model performance out of obs range.
 
 #. Avoid special characters (``!@#$%^&*``) in file/script names.
 

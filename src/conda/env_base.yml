@@ -28,3 +28,4 @@ dependencies:
 - intake-esm=2021.8.17
 - subprocess32=3.5.4
 - pyyaml=6.0
+- click=8.0.4

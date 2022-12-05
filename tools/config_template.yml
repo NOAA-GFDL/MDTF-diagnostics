@@ -1,0 +1,32 @@
+# Configuration file template for rename_input_files
+parameters:
+    # Define the casename and output frequency to substitute in the file names and output directories
+    # Define other parameters if needed
+    # assign an anchor name using the `&`
+    casename: &casename test case
+    frequency: &frequency day
+
+CASENAME: *casename
+# Define the path to the directory containing the file(s) to rename
+origFilePath: /home/jessica.liptak/test_input/
+# Define the path where the renamed files will be linked
+outputFilePath: /home/jessica.liptak/mdtf/inputdata/model
+# Define the target file(s) and variable name(s) to substitute in each file (1 variable per file)
+files:
+  -
+     name: bhist.e213cosp217.f09_g17.mdtf_v3.1993.FLNT.nc
+     var: flnt
+     freq: *frequency
+  -
+    name: bhist.e213cosp217.f09_g17.mdtf_v3.1993.PRECT.day.nc
+    var: prect
+    freq: *frequency
+  -
+    name: bhist.e213cosp217.f09_g17.mdtf_v3.1993.U200.day.nc
+    var: u200
+    freq: *frequency
+  -
+    name: bhist.e213cosp217.f09_g17.mdtf_v3.1993.U850.day.nc
+    var: u850
+    freq: *frequency
+

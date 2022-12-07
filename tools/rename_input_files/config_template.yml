@@ -3,30 +3,21 @@ parameters:
     # Define the casename and output frequency to substitute in the file names and output directories
     # Define other parameters if needed
     # assign an anchor name using the `&`
-    casename: &casename test case
-    frequency: &frequency day
+    casename: &casename SAM0-UNICON
+    frequency: &frequency mon
 
 CASENAME: *casename
 # Define the path to the directory containing the file(s) to rename
-origFilePath: /home/jessica.liptak/test_input/
+inputPath: /home/jessica.liptak/mdtf/inputdata/model/SAM0-UNICON_r1i1p1f1_gn/mon
 # Define the path where the renamed files will be linked
-outputFilePath: /home/jessica.liptak/mdtf/inputdata/model
+outputPath: /home/jessica.liptak/test_input
 # Define the target file(s) and variable name(s) to substitute in each file (1 variable per file)
 files:
   -
-     name: bhist.e213cosp217.f09_g17.mdtf_v3.1993.FLNT.nc
-     var: flnt
+     name: SAM0-UNICON_r1i1p1f1_gn.so.mon.nc
+     var: siconc
      freq: *frequency
   -
-    name: bhist.e213cosp217.f09_g17.mdtf_v3.1993.PRECT.day.nc
+    name: SAM0-UNICON_r1i1p1f1_gn.tas.mon.nc
     var: prect
     freq: *frequency
-  -
-    name: bhist.e213cosp217.f09_g17.mdtf_v3.1993.U200.day.nc
-    var: u200
-    freq: *frequency
-  -
-    name: bhist.e213cosp217.f09_g17.mdtf_v3.1993.U850.day.nc
-    var: u850
-    freq: *frequency
-

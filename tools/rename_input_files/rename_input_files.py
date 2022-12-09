@@ -45,8 +45,7 @@ def main(config_file: str):
     try:
         _ = (e for e in case_info['files'])
     except TypeError:
-        print
-        case_info['files'], 'is not iterable'
+        print('case_info file list is not iterable')
 
     append_new_filenames(case_info['files'], casename)
     link_files(in_path, out_path, case_info['files'])

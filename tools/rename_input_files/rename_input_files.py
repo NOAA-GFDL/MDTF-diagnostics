@@ -34,7 +34,7 @@ def main(config_file: str):
     with open(config_file, 'r') as stream:
         try:
             case_info = yaml.safe_load(stream)
-            print(case_info)
+            # print(case_info)
         except yaml.YAMLError as exc:
             print(exc)
 
@@ -42,6 +42,12 @@ def main(config_file: str):
     in_path = case_info['inputPath']
     assert (os.path.isdir(in_path)), f"Input directory {in_path} not found."
     out_path = os.path.join(case_info['outputPath'], casename)
+    try:
+        _ = (e for e in case_info['files'])
+    except TypeError:
+        print
+        case_info['files'], 'is not iterable'
+
     append_new_filenames(case_info['files'], casename)
     link_files(in_path, out_path, case_info['files'])
     sys.exit(0)
@@ -51,12 +57,13 @@ def main(config_file: str):
 # with the format <CASENAME>.<frequency>.<variable name>.nc
 def append_new_filenames(file_list=list, casename=str):
     for f in file_list:
-        print(f)
+        # print(f)
         f['new_name'] = '.'.join([casename, f['var'], f['freq'], 'nc'])
 
 
 # symlink files in inputFilePath to LocalFile-formatted outputFilePath
 def link_files(input_dir_path=str, output_dir_path=str, file_list=list):
+
     for f in file_list:
         f['inpath'] = os.path.join(input_dir_path, f['name'])
         assert os.path.isfile(f['inpath']), f['inpath'] + " not found. Check file name and path for errors."

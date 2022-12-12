@@ -1146,9 +1146,13 @@ class MDTFFramework(MDTFObjectBase):
 
             for case_name, case in self.cases.items():
                 if not case.failed:
-                    _log.info("### %s: requesting data for case '%s'.",
-                              self.full_name, case_name)
-                    case.request_data()
+                    if type(case).__name__ is 'NoPPDataSource':
+                        _log.info("### %s: Skipping Data Preprocessing for case '%s'.",
+                                  self.full_name, case_name)
+                    else:
+                        _log.info("### %s: requesting data for case '%s'.",
+                                  self.full_name, case_name)
+                        case.request_data()
                 else:
                     _log.info(("### %s: initialization for case '%s' failed; skipping "
                                f"data request."), self.full_name, case_name)

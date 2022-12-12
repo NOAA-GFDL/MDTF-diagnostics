@@ -117,6 +117,18 @@ class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
 # ----------------------------------------------------------------------------
 
 
+class NoPPDataSource(SampleLocalFileDataSource):
+    """DataSource for handling POD sample model data stored on a local filesystem.
+    """
+    #_FileRegexClass = SampleDataFile
+    #_AttributesClass = SampleDataAttributes
+    #_DiagnosticClass = diagnostic.Diagnostic
+    _PreprocessorClass = preprocessor.NullPreprocessor
+    #col_spec = sampleLocalFileDataSource_col_spec
+
+
+# ----------------------------------------------------------------------------
+
 class MultirunSampleLocalFileDataSource(multirun.MultirunSingleLocalFileDataSource, SampleLocalFileDataSource):
     """DataSource for handling POD sample model data stored on a local filesystem.
     Duplicate of SampleLocalFileDataSource, but need to route to multirun parent data source classes
@@ -155,6 +167,15 @@ class MultirunLocalFileDataSource(MultirunSampleLocalFileDataSource,
         """Iterable of the multirun varlist that is associated with the data source object
         """
         yield from self.varlist.iter_vars()
+
+
+class MultirunNoPPDataSource(MultirunSampleLocalFileDataSource):
+    """DataSource for handling Multirun POD data that won't be preprocessed
+    """
+    # No-op=--just inherit attributes, properties, and route to __init__ methods in parent classes
+    # TODO: implement later
+    _PreprocessorClass = preprocessor.NullPreprocessor
+    pass
 
 
 class MetadataRewriteParser(xr_parser.DefaultDatasetParser):

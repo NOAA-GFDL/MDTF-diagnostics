@@ -121,6 +121,10 @@
   // under a unique name.
   "overwrite": false,
 
+  // Set to true to bypass the preprocessor entirely and skip reading/writing input files
+  // Input data are symlinked to WORKING_DIR/[CASENAME]/[POD_NAME]/[model|obs]/mon
+  "no_pp": false,
+
   // Settings used in debugging:
 
   // Log verbosity level.

@@ -566,7 +566,7 @@ class DataSourceQFPMixin(core.MDTFObjectBase, util.CaseLoggerMixin,
                 pod.preprocessor.setup(self, pod)
             for pv in vars_to_process:
                 try:
-                    pv.var.log.info("Preprocessing %s.", pv.var)
+                    #pv.var.log.info("Preprocessing %s.", pv.var)
                     pv.pod.preprocessor.process(pv.var)
                     pv.var.stage = diagnostic.VarlistEntryStage.PREPROCESSED
                 except Exception as exc:
@@ -600,7 +600,7 @@ class DataSourceQFPMixin(core.MDTFObjectBase, util.CaseLoggerMixin,
         for p in self.iter_children():
             for v in p.iter_children():
                 if v.status == core.ObjectStatus.ACTIVE:
-                    v.log.debug('Data request for %s completed succesfully.',
+                    v.log.debug('Data request for %s completed successfully.',
                                 v.full_name)
                     v.status = core.ObjectStatus.SUCCEEDED
                 elif v.failed:

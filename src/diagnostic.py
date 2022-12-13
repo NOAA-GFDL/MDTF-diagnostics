@@ -902,6 +902,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
             except util.WormKeyError:
                 continue
 
+
 @util.mdtf_dataclass
 class MultirunVarlistEntry(VarlistEntryMixin, VarlistEntryBase, core.MDTFObjectBase,
                            data_model.DMVariable, _VarlistGlobalSettings,
@@ -1092,6 +1093,182 @@ class MultirunVarlist(Varlist, ABC):
                 linked_alts.append([vlist_vars[v_name] for v_name in alts])
             v.alternates = linked_alts
         return cls(contents=list(vlist_vars.values()))
+
+
+class NoPPVarlist(Varlist):
+    @classmethod
+    def from_struct(cls, d, parent):
+        """Parse the "dimensions", "data" and "varlist" sections of the POD's
+        settings.jsonc file when instantiating a new :class:`Diagnostic` object.
+
+        Args:
+            parent: instance of the parent class object
+            d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
+
+        Returns:
+            :py:obj:`dict`, keys are names of the dimensions in POD's convention,
+            values are :class:`PodDataDimension` objects.
+        """
+
+        def _pod_dimension_from_struct(name, dd, v_settings):
+            class_dict = {
+                'X': VarlistLongitudeCoordinate,
+                'Y': VarlistLatitudeCoordinate,
+                'Z': VarlistVerticalCoordinate,
+                'T': VarlistPlaceholderTimeCoordinate,
+                'OTHER': VarlistCoordinate
+            }
+            try:
+                return data_model.coordinate_from_struct(
+                    dd, class_dict=class_dict, name=name,
+                    **v_settings.time_settings
+                )
+            except Exception:
+                raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
+
+        def _iter_shallow_alternates(var):
+            """Iterator over all VarlistEntries referenced as alternates. Doesn't
+            traverse alternates of alternates, etc.
+            """
+            for alt_vs in var.alternates:
+                yield from alt_vs
+
+        vlist_settings = util.coerce_to_dataclass(
+            d.get('data', dict()), VarlistSettings)
+        globals_d = vlist_settings.global_settings
+
+        assert 'dimensions' in d
+        dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings)
+                  for k, v in d['dimensions'].items()}
+
+        assert 'varlist' in d
+        vlist_vars = {
+            k: NoPPVarlistEntry.from_struct(globals_d, dims_d, name=k, parent=parent, **v)
+            for k, v in d['varlist'].items()
+        }
+        for v in vlist_vars.values():
+            # validate & replace names of alt vars with references to VE objects
+            for altv_name in _iter_shallow_alternates(v):
+                if altv_name not in vlist_vars:
+                    raise ValueError((f"Unknown variable name {altv_name} listed "
+                                      f"in alternates for varlist entry {v.name}."))
+            linked_alts = []
+            for alts in v.alternates:
+                linked_alts.append([vlist_vars[v_name] for v_name in alts])
+            v.alternates = linked_alts
+        return cls(contents=list(vlist_vars.values()))
+
+
+class NoPPVarlistEntry(VarlistEntry, VarlistEntryMixin):
+    use_exact_name: bool = False
+    env_var: str = dc.field(default="", compare=False)
+    path_variable: str = dc.field(default="", compare=False)
+    dest_path: str = ""
+    requirement: VarlistEntryRequirement = dc.field(
+        default=VarlistEntryRequirement.REQUIRED, compare=False
+    )
+    alternates: list = dc.field(default_factory=list, compare=False)
+    translation: typing.Any = dc.field(default=None, compare=False)
+    data: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict,
+                                         compare=False)
+    stage: VarlistEntryStage = dc.field(
+        default=VarlistEntryStage.NOTSET, compare=False
+    )
+
+    _deactivation_log_level = logging.INFO  # default log level for failure
+    @property
+    def env_vars(self):
+        """Get env var definitions for:
+            - The path to the raw data file for this variable,
+            - The name for this variable in that data file,
+            - The names for all of this variable's coordinate axes in that file,
+            - The names of the bounds variables for all of those coordinate
+              dimensions, if provided by the data.
+
+        """
+
+        assert self.dest_path
+        d = util.ConsistentDict()
+
+        assoc_dict = (
+            {self.name.upper() + "_ASSOC_FILES": self.associated_files}
+            if isinstance(self.associated_files, str)
+            else {}
+        )
+
+        d.update({
+            self.env_var: self.name_in_model,
+            self.path_variable: self.dest_path,
+            **assoc_dict
+        })
+        for ax, dim in self.dim_axes.items():
+            trans_dim = self.translation.dim_axes[ax]
+            d[dim.name + _coord_env_var_suffix] = trans_dim.name
+            if trans_dim.has_bounds:
+                d[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
+        return d
+
+
+@util.mdtf_dataclass
+class NoPPDiagnostic(Diagnostic):
+    """Class holding configuration for a diagnostic with non-preprocessed variables
+    Identical to Diagnostic, but varlist attribute is set to the NoPPVarlist
+    """
+    varlist: NoPPVarlist = None
+
+    @classmethod
+    def from_struct(cls, pod_name, d, parent, **kwargs):
+        """Instantiate a Diagnostic object from the JSON format used in its
+        settings.jsonc file.
+        """
+        try:
+            kwargs.update(d.get('settings', dict()))
+            pod = cls(name=pod_name, _parent=parent, **kwargs)
+        except Exception as exc:
+            raise util.PodConfigError("Caught exception while parsing settings",
+                                      pod_name) from exc
+        try:
+            pod.varlist = NoPPVarlist.from_struct(d, parent=pod)
+        except Exception as exc:
+            raise util.PodConfigError("Caught exception while parsing varlist",
+                                      pod_name) from exc
+        return pod
+
+    def pre_run_setup(self):
+        """Perform filesystem operations and checks prior to running the POD.
+
+        In order, this 1) sets environment variables specific to the POD, 2)
+        creates POD-specific working directories, and 3) checks for the existence
+        of the POD's driver script.
+
+        Raises:
+            :exc:`~NoPPdiagnostic.PodRuntimeError` if requirements aren't met. This
+                is re-raised from the :meth:`diagnostic.Diagnostic.set_entry_point`
+                and :meth:`diagnostic.NoPPDiagnostic._check_for_varlist_files`
+                subroutines.
+        """
+        try:
+            self.set_pod_env_vars()
+            self.set_entry_point()
+            self.link_input_data_to_wkdir()
+        except Exception as exc:
+            raise util.PodRuntimeError("Caught exception during pre_run_setup",
+                                       self) from exc
+
+    def link_input_data_to_wkdir(self):
+        if os.path.isdir(self.POD_OBS_DATA) and os.listdir(self.POD_OBS_DATA):
+            for f in os.listdir(self.POD_OBS_DATA):
+                os.symlink(os.path.join(self.POD_OBS_DATA, f), os.path.join(self.POD_WK_DIR, 'obs', f))
+
+        for v in self.varlist.iter_vars():
+            for kk, vv in v.env_vars.items():
+                if v.name.lower() + '_file' in kk.lower():
+                    path_components = os.path.split(vv)
+                    path_split_again = os.path.split(path_components[0])
+                    freq = path_split_again[1]
+                    os.symlink(os.path.join(self._parent.MODEL_DATA_DIR, freq, path_components[1]), vv)
+
+
 
 
 @util.mdtf_dataclass

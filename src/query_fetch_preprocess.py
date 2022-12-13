@@ -566,7 +566,6 @@ class DataSourceQFPMixin(core.MDTFObjectBase, util.CaseLoggerMixin,
                 pod.preprocessor.setup(self, pod)
             for pv in vars_to_process:
                 try:
-                    #pv.var.log.info("Preprocessing %s.", pv.var)
                     pv.pod.preprocessor.process(pv.var)
                     pv.var.stage = diagnostic.VarlistEntryStage.PREPROCESSED
                 except Exception as exc:

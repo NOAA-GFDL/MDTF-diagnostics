@@ -1024,6 +1024,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with the POD variable *var*.
         """
+        var.log.info("Preprocessing %s.", var)
         ds = self.load_ds(var)
         ds = self.process_ds(var, ds)
         self.write_ds(var, ds)
@@ -1254,6 +1255,7 @@ class MultirunDefaultPreprocessor(SampleDataPreprocessor):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with the POD variable *var*.
         """
+        var.log.info("Preprocessing %s.", var)
         ds = self.load_ds(var)
         ds = self.process_ds(var, ds, casename)
         self.write_ds(var, ds)

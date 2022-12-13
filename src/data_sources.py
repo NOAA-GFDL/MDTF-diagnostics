@@ -122,7 +122,7 @@ class NoPPDataSource(SampleLocalFileDataSource):
     """
     #_FileRegexClass = SampleDataFile
     #_AttributesClass = SampleDataAttributes
-    #_DiagnosticClass = diagnostic.Diagnostic
+    _DiagnosticClass = diagnostic.NoPPDiagnostic
     _PreprocessorClass = preprocessor.NullPreprocessor
     #col_spec = sampleLocalFileDataSource_col_spec
 

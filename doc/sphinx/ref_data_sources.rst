@@ -150,3 +150,25 @@ This data source implements the following logic to guarantee that all data it pr
 
 * Variables that don't have global coverage (e.g., are restricted to the Greenland or Antarctic regions) or are zonally or otherwise spatially averaged are excluded from the search, as no POD is currently designed to use these types of data.
 
+.. _ref-data-source-nopp:
+
+No preprocessor
+++++++++++++++++++++++++++++
+.. Important:: The ``No_pp`` data source is a development feature intended to simplify POD debugging. Finalized PODs must function with preprocessor enabled in the framework.
+
+Selected via ``--data-manager="No_pp"``.
+
+This datasource bypasses the preprocessor entirely, and symbolically links files in the input data directories
+to the working directory. Model input data must adhere to the `Local_File` naming convention
+``<CASENAME>.<frequency>.<variable name>.nc`` be located in the directory
+``[Input directory root]/[CASENAME]/[output frequency]``.
+
+Data must have the variable names, units, convention, and dimensionality specified in the POD settings file.
+Users can use the :ref:`rename_input_files.py<ref-rename-input-files>` tool to create copies of files in the Local_file format
+
+The ``No_pp`` data source differs from passing the ``--disable-preprocessor`` option, which still renames variables
+to match the desired convention, crops the date range to match the ``FIRSTYR``  and ``LASTYR specified
+in the runtime configuration file, and writes copies of the modified files to the working directory.
+
+
+

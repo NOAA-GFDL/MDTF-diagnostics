@@ -1,3 +1,5 @@
+.. _ref-rename-input-files:
+
 rename_input_files.py
 =====================
 

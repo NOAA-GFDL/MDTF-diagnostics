@@ -1147,7 +1147,9 @@ class MDTFFramework(MDTFObjectBase):
             for case_name, case in self.cases.items():
                 if not case.failed:
                     if type(case).__name__ is 'NoPPDataSource':
-                        _log.info("### %s: Skipping Data Preprocessing for case '%s'.",
+                        _log.info("### %s: Skipping Data Preprocessing for case '%s'."
+                                  "Variables will not be renamed, and level extraction,"
+                                  "will not be done on 4-D fields.",
                                   self.full_name, case_name)
                     else:
                         _log.info("### %s: requesting data for case '%s'.",

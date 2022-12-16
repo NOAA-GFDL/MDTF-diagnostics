@@ -1517,3 +1517,45 @@ class MultirunAssociatedVariablesFunction(AssociatedVariablesFunction):
             )
 
         return ds
+
+class MultirunNullPreprocessor(MultirunDefaultPreprocessor):
+    """A class that skips preprocessing and just symlinks files from the input dir to the wkdir
+    """
+
+    _XarrayParserClass = xr_parser.MultirunDefaultDatasetParser
+
+    def __init__(self, data_mgr):
+        config = core.ConfigManager()
+        self.overwrite_ds = config.get('overwrite_file_metadata', False)
+
+        self.WK_DIR = data_mgr.MODEL_WK_DIR
+        self.convention = data_mgr.convention
+        self.pod_convention = self.convention
+
+        if not data_mgr.nc_largefile:
+            self.nc_format = "NETCDF4_CLASSIC"
+        else:
+            self.nc_format = "NETCDF4"
+        # HACK only used for _FillValue workaround in clean_output_encoding
+        self.output_to_ncl = ('ncl' in data_mgr.runtime_requirements)
+
+        # initialize xarray parser
+        self.parser = self._XarrayParserClass(data_mgr)
+        # Empty set since there's nothing to preprocess
+        self.functions = []
+
+    def edit_request(self, data_mgr, pod):
+        """Dummy implementation of edit_request to meet abstract base class requirements
+        """
+        pass
+
+    def read_dataset(self, var):
+        """Dummy implementation of read_dataset to meet abstract base class requirements
+        """
+        pass
+
+    def process(self, var):
+        """Top-level wrapper method for doing all preprocessing of data files
+        associated with the POD variable *var*.
+        """
+        var.log.debug("Skipping preprocessing for %s.", var)

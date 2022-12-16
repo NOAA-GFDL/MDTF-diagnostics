@@ -173,9 +173,21 @@ class MultirunNoPPDataSource(MultirunSampleLocalFileDataSource):
     """DataSource for handling Multirun POD data that won't be preprocessed
     """
     # No-op=--just inherit attributes, properties, and route to __init__ methods in parent classes
-    # TODO: implement later
     _PreprocessorClass = preprocessor.NullPreprocessor
-    pass
+    varlist: diagnostic.MultirunNoPPVarlist = None
+
+    def __init__(self, case_dict, parent):
+        # _id = util.MDTF_ID()        # attrs inherited from core.MDTFObjectBase
+        # name: str
+        # _parent: object
+        # log = util.MDTFObjectLogger
+        # status: ObjectStatus
+        # initialize data source atts and methods from parent classes
+        super(MultirunNoPPDataSource, self).__init__(case_dict, parent)
+
+        core.MDTFObjectBase.__init__(
+            self, name=case_dict['CASENAME'], _parent=parent
+        )
 
 
 class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
@@ -727,5 +739,5 @@ class MultirunCMIP6LocalFileDataSource(CMIP6LocalFileDataSource):
     """DataSource for handling multirun model data named following the CMIP6 DRS and
     stored on a local filesystem.
     """
-    _DiagnosticClass = diagnostic.MultirunDiagnostic
-    _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
+    _DiagnosticClass = diagnostic.MultirunNoPPDiagnostic
+    _PreprocessorClass = preprocessor.MultirunNullPreprocessor

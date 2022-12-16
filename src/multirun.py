@@ -396,7 +396,7 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
             key = self.get_expt_key('pod', self, parent, self._id)
             p = parent
             self.set_expt_key(p, key)
-        except Exception:  # util.DataExperimentEvent:
+        except Exception as exc:  # util.DataExperimentEvent:
             # couldn't do that, so allow different choices for each POD
             for p in parent.iter_children(status=core.ObjectStatus.ACTIVE):
                 try:
@@ -415,7 +415,7 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
             for pv in self.iter_vars(parent, active=True):  # varlist is a self (Multirun data source) attribute
                 key = self.get_expt_key('var', pv.pod, parent, pv.pod._id)
                 self.set_expt_key(pv.var, key)
-        except Exception:  # util.DataExperimentEvent:
+        except Exception as exc:  # util.DataExperimentEvent:
             # couldn't do that, so allow different choices for each variable
             for pv in self.iter_vars(parent, active=True):
                 try:

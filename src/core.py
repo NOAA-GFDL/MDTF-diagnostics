@@ -1146,7 +1146,7 @@ class MDTFFramework(MDTFObjectBase):
 
             for case_name, case in self.cases.items():
                 if not case.failed:
-                    if type(case).__name__ is 'NoPPDataSource':
+                    if type(case).__name__ ==  'NoPPDataSource':
                         _log.info("### %s: Skipping Data Preprocessing for case '%s'."
                                   "Variables will not be renamed, and level extraction,"
                                   "will not be done on 4-D fields.",
@@ -1178,21 +1178,24 @@ class MDTFFramework(MDTFObjectBase):
         else:
             # Import multirun methods here to avoid circular import problems
             # e.g., multirun.py inherits from diagnostic.py which inherits from core.py
-            from src.diagnostic import MultirunDiagnostic
+            from src.diagnostic import MultirunDiagnostic, MultirunNoPPDiagnostic
             pod_dict = dict.fromkeys(self.pod_list, [])
             for pod in pod_dict.keys():
+                if self.DataSource._PreprocessorClass.__name__ != 'MultirunNullPreprocessor':
+                    pod_dict[pod] = MultirunDiagnostic.from_config(pod, parent=self)
                 # Initialize the pod as a MultirunDiagnostic object
                 # Attach the caselist dict, and append case-specific attributes to each case object
                 # Set the POD attributes including paths, pod_env_vars, and the convention
                 # Append the varlist and import variable information from the pod settings file
-                pod_dict[pod] = MultirunDiagnostic.from_config(pod, parent=self)
+                else:  # initialize noPP object
+                    pod_dict[pod] = MultirunNoPPDiagnostic.from_config(pod, parent=self)
                 # Translate varlist variables and metadata
                 # Perform data preprocessing
                 pod_dict[pod].setup_pod()
                 # query the data
                 # request the data
                 util.transfer_log_cache(close=True)
-                if type(pod_dict[pod]).__name__ is 'MultirunNoPPDataSource':
+                if type(pod_dict[pod]).__name__ == 'MultirunNoPPDiagnostic':
                     _log.info("### %s: Skipping Data Preprocessing for POD '%s'."
                               "Variables will not be renamed, and level extraction,"
                               "will not be done on 4-D fields.",

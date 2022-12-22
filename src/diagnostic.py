@@ -617,6 +617,7 @@ class Varlist(data_model.DMDataSet, ABC):
 
 # ------------------------------------------------------------
 
+
 @util.mdtf_dataclass
 class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     """Class holding configuration for a diagnostic script. Object attributes
@@ -1585,28 +1586,29 @@ class MultirunNoPPDiagnostic(MultirunDiagnostic):
                                        self) from exc
 
     def link_input_data_to_wkdir(self):
-
-        for v in self.varlist.iter_vars():
-            for kk, vv in v.env_vars.items():
-                if v.name.lower() + '_file' in kk.lower():
-                    path_components = os.path.split(vv)
-                    path_split_again = os.path.split(path_components[0])
-                    freq = path_split_again[1]
-                    # Note--assume that file names adhere to local file convention with variable names
-                    # that match those in the POD settings file
-                    inpath = os.path.join(self._parent.MODEL_DATA_DIR, freq, path_components[1])
-                    Path(path_components[0]).mkdir(parents=True, exist_ok=True)
-                    try:
-                        os.path.isfile(inpath)
-                        os.symlink(os.path.join(self._parent.MODEL_DATA_DIR, freq, path_components[1]), vv)
-                    except FileNotFoundError:
-                        print("Can't find file", inpath, ". Continuing with run setup. POD may not complete")
-                        continue
+        for case_name, case_dict in self.cases.items():
+            for v in case_dict.varlist.iter_vars():
+                for kk, vv in v.env_vars.items():
+                    if v.name.lower() + '_file' in kk.lower():
+                        path_components = os.path.split(vv)
+                        path_split_again = os.path.split(path_components[0])
+                        freq = path_split_again[1]
+                        # Note--assume that file names adhere to local file convention with variable names
+                        # that match those in the POD settings file
+                        inpath = os.path.join(v._parent.MODEL_DATA_DIR[case_name], freq, path_components[1])
+    #                    Path(path_components[0]).mkdir(parents=True, exist_ok=True)
+                        try:
+                            os.path.isfile(inpath)
+                            v.env_vars[kk].replace(vv, inpath)
+                        except FileNotFoundError:
+                            print("Can't find file", inpath, ". Continuing with run setup. POD may not complete")
+                            continue
 
 
 class MultirunNoPPVarlist(MultirunVarlist, ABC):
     """Class to perform bookkeeping for the model variables requested by a
-        single POD for multiple cases/ensemble members
+        single POD for multiple cases/ensemble members. Same as MultirunVarlist
+        but used by data source that bypasses the preprocessor.
     """
 
     @classmethod

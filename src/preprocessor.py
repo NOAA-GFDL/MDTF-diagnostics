@@ -1518,6 +1518,7 @@ class MultirunAssociatedVariablesFunction(AssociatedVariablesFunction):
 
         return ds
 
+
 class MultirunNullPreprocessor(MultirunDefaultPreprocessor):
     """A class that skips preprocessing and just symlinks files from the input dir to the wkdir
     """
@@ -1544,7 +1545,7 @@ class MultirunNullPreprocessor(MultirunDefaultPreprocessor):
         # Empty set since there's nothing to preprocess
         self.functions = []
 
-    def edit_request(self, data_mgr, pod):
+    def edit_request(self, data_mgr, *args):
         """Dummy implementation of edit_request to meet abstract base class requirements
         """
         pass

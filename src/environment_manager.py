@@ -852,7 +852,7 @@ class MultirunSubprocessRuntimeManager(SubprocessRuntimeManager):
             try:
                 p.pre_run_setup()
             except Exception as exc:
-                p.setup_exception_handler(exc)
+                p.setup_exception_handler(exc)  # TODO getting multiple active values for iter_vars_only. Needs work
                 continue
             try:
                 p.pod.log_file.write(f"### Start execution of {p.pod.full_name}\n")

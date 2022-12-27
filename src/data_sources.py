@@ -174,7 +174,7 @@ class MultirunNoPPDataSource(MultirunSampleLocalFileDataSource, qfp.MultirunData
     """
     # No-op=--just inherit attributes, properties, and route to __init__ methods in parent classes
     _PreprocessorClass = preprocessor.MultirunNullPreprocessor
-    varlist: diagnostic.MultirunNoPPVarlist = None
+    varlist: diagnostic.MultirunVarlist = None
 
     def __init__(self, case_dict, parent):
         # _id = util.MDTF_ID()        # attrs inherited from core.MDTFObjectBase

@@ -169,7 +169,7 @@ class MultirunLocalFileDataSource(MultirunSampleLocalFileDataSource,
         yield from self.varlist.iter_vars()
 
 
-class MultirunNoPPDataSource(MultirunSampleLocalFileDataSource):
+class MultirunNoPPDataSource(MultirunSampleLocalFileDataSource, qfp.MultirunDataSourceQFPMixin):
     """DataSource for handling Multirun POD data that won't be preprocessed
     """
     # No-op=--just inherit attributes, properties, and route to __init__ methods in parent classes

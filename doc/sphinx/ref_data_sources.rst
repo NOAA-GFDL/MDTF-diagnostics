@@ -158,10 +158,13 @@ No preprocessor
 
 Selected via ``--data-manager="No_pp"``.
 
-This datasource bypasses the preprocessor entirely, and symbolically links files in the input data directories
-to the working directory. Model input data must adhere to the `Local_File` naming convention
-``<CASENAME>.<frequency>.<variable name>.nc`` be located in the directory
-``[Input directory root]/[CASENAME]/[output frequency]``.
+This datasource bypasses the preprocessor entirely.  Model input data must adhere to the `Local_File` naming convention
+``<CASENAME>.<frequency>.<variable name>.nc`` and be located in the directory
+``[Input directory root]/[CASENAME]/[output frequency]``. If ``data_type=single_run``, files in the input data directories
+are symbolically linked to the working directory. If ``data_type=multi_run``, the data file paths point directly to the
+input data location because symbolic linking breaks the framework. Thus, for the ``multi_run`` configuration, the `index.html`
+file generated in the POD output directory will not work. However, the `[POD_NAME].html` file in the POD output directory
+will properly display the output.
 
 Data must have the variable names, units, convention, and dimensionality specified in the POD settings file.
 Users can use the :ref:`rename_input_files.py<ref-rename-input-files>` tool to create copies of files in the Local_file format

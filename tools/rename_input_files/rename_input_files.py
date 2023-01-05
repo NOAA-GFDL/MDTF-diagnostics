@@ -15,17 +15,15 @@
 # the directory where the output will be written, the CASENAME to use for the output file names,
 # the file names that will be linked,
 # and the frequencies and variable names to use in the new symlinked file names
-# Output: Copies renamed files to the directory [outputDir]/[CASENAME]/[freq]
+# Output: symlinks to the desired files in the directory [outputDir]/[CASENAME]/[freq]
 # with the format <CASENAME>.<freq>.<variable name>.nc
 
 
 import os
-import shutil
 import sys
 import yaml
 import click
 from pathlib import Path
-
 
 
 @click.command()
@@ -62,7 +60,7 @@ def append_new_filenames(file_list=list, casename=str):
         f['new_name'] = '.'.join([casename, f['var'], f['freq'], 'nc'])
 
 
-# Copy in inputFilePath to LocalFile-formatted outputFilePath
+# symlink files in inputFilePath to LocalFile-formatted outputFilePath
 def link_files(input_dir_path=str, output_dir_path=str, file_list=list):
 
     for f in file_list:
@@ -70,11 +68,11 @@ def link_files(input_dir_path=str, output_dir_path=str, file_list=list):
         assert os.path.isfile(f['inpath']), f['inpath'] + " not found. Check file name and path for errors."
         f['outpath'] = os.path.join(output_dir_path, f['freq'])
         Path(f['outpath']).mkdir(parents=True, exist_ok=True)
-        # Copy renamed file to destination
+        # Create a symbolic link pointing inpath to outpath
         newfilepath = os.path.join(f['outpath'], f['new_name'])
         if not os.path.isfile(newfilepath):
-            shutil.copy(f['inpath'], newfilepath)
-        assert os.path.isfile(newfilepath),  f'Unable to copy {newfilepath}.' \
+            os.symlink(f['inpath'], newfilepath)
+        assert os.path.isfile(newfilepath),  f'Unable to symlink {newfilepath}.' \
                                              f' Check to ensure that you have write permission to' + f['outpath']
 
 

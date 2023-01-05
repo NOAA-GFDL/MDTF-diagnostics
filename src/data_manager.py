@@ -11,7 +11,7 @@ import typing
 from abc import ABC
 import pandas as pd
 
-from src import util, core, diagnostic, preprocessor, pod_setup
+from src import util, core, diagnostic, pod_setup, preprocessor
 from src import query_fetch_preprocess as qfp
 _log = logging.getLogger(__name__)
 

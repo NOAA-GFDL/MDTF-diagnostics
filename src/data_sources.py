@@ -5,7 +5,7 @@ the user via ``--data_manager``; see :doc:`ref_data_sources` and
 import os
 import collections
 import dataclasses
-from src import util, multirun, core, preprocessor, diagnostic, xr_parser, cmip6
+from src import util, multirun, core, diagnostic, preprocessor, xr_parser, cmip6
 from src import data_manager as dm
 from src import query_fetch_preprocess as qfp
 import pandas as pd

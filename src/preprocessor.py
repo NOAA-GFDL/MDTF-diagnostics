@@ -6,7 +6,7 @@ import shutil
 import abc
 import dataclasses
 import functools
-from src import util, core, diagnostic, xr_parser, units
+from src import util, core, varlistentry_util, diagnostic, xr_parser, units
 import cftime
 import numpy as np
 import xarray as xr
@@ -26,10 +26,10 @@ def copy_as_alternate(old_v, data_mgr, **kwargs):
         kwargs['coords'] = (old_v.dims + old_v.scalar_coords)
     new_v = dataclasses.replace(
         old_v,
-        _id = util.MDTF_ID(),                           # assign distinct ID
-        stage = diagnostic.VarlistEntryStage.INITED,    # reset state from old_v
-        status = core.ObjectStatus.INACTIVE,      # new VE meant as an alternate
-        requirement = diagnostic.VarlistEntryRequirement.ALTERNATE,
+        _id=util.MDTF_ID(),                           # assign distinct ID
+        stage=varlistentry_util.VarlistEntryStage.INITED,    # reset state from old_v
+        status=core.ObjectStatus.INACTIVE,      # new VE meant as an alternate
+        requirement=varlistentry_util.VarlistEntryRequirement.ALTERNATE,
         # plus the specific replacements we want to make:
         **kwargs
     )
@@ -129,7 +129,7 @@ def multirun_edit_request_wrapper(multirun_wrapped_edit_request_func):
                     v_t_name = (str(v.translation) if getattr(v, 'translation', None)
                                                       is not None else "(not translated)")
                     case_d.log.debug("%s for %s: add translated %s as alternate for %s.",
-                                  self.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
+                                     self.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
                     new_varlist.append(v)
                     new_varlist.append(new_v)
             case_d.varlist = diagnostic.MultirunVarlist(contents=new_varlist)
@@ -695,6 +695,7 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
         return ds
 
 # ==================================================
+
 
 class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     """Base class for preprocessing data after it's been fetched, in order to
@@ -1364,8 +1365,8 @@ class MultirunPrecipRateToFluxFunction(PrecipRateToFluxFunction):
             # requested flux, so add alternate for rate
             v_to_translate = copy_as_alternate(
                 v, data_mgr,
-                standard_name = self._flux_d[std_name],
-                units = units.to_cfunits(v.units) / self._liquid_water_density
+                standard_name=self._flux_d[std_name],
+                units=units.to_cfunits(v.units) / self._liquid_water_density
             )
 
         translate = core.VariableTranslator()
@@ -1374,7 +1375,7 @@ class MultirunPrecipRateToFluxFunction(PrecipRateToFluxFunction):
         except KeyError as exc:
             self.log.debug(('%s edit_request on %s: caught %r when trying to '
                            'translate \'%s\'; varlist unaltered.'), self.__class__.__name__,
-                          v.full_name, exc, v_to_translate.standard_name)
+                           v.full_name, exc, v_to_translate.standard_name)
             return None
         new_v = copy_as_alternate(v, data_mgr)
         new_v.translation = new_tv
@@ -1447,7 +1448,7 @@ class MultirunExtractLevelFunction(ExtractLevelFunction):
             )
         new_tv = tv.remove_scalar(
             tv.scalar_coords[0].axis,
-            name = new_tv_name
+            name=new_tv_name
         )
         new_v = copy_as_alternate(v, data_mgr)
         new_v.translation = new_tv

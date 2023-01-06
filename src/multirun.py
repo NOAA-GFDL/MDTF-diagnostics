@@ -9,7 +9,7 @@ from abc import ABC
 import logging
 import pandas as pd
 import textwrap
-from src import util, data_manager, diagnostic, core
+from src import util, varlistentry_util, data_manager, diagnostic, core
 from src import query_fetch_preprocess as qfp
 
 
@@ -272,7 +272,7 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
             obj_name = obj.name
 
         for v in var_iterator:
-            if v.stage < diagnostic.VarlistEntryStage.QUERIED:
+            if v.stage < varlistentry_util.VarlistEntryStage.QUERIED:
                 continue
             rows = set([])
             for d_key in v.iter_data_keys():

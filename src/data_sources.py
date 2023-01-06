@@ -29,7 +29,7 @@ sample_data_regex = util.RegexPattern(
 
 
 @util.regex_dataclass(sample_data_regex)
-class SampleDataFile():
+class SampleDataFile:
     """Dataclass describing catalog entries for sample model data files.
     """
     sample_dataset: str = util.MANDATORY
@@ -120,11 +120,11 @@ class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
 class NoPPDataSource(SampleLocalFileDataSource):
     """DataSource for handling POD sample model data stored on a local filesystem.
     """
-    #_FileRegexClass = SampleDataFile
-    #_AttributesClass = SampleDataAttributes
+    # _FileRegexClass = SampleDataFile
+    # _AttributesClass = SampleDataAttributes
+    # col_spec = sampleLocalFileDataSource_col_spec
     _DiagnosticClass = diagnostic.NoPPDiagnostic
     _PreprocessorClass = preprocessor.NullPreprocessor
-    #col_spec = sampleLocalFileDataSource_col_spec
 
 
 # ----------------------------------------------------------------------------
@@ -136,7 +136,6 @@ class MultirunSampleLocalFileDataSource(multirun.MultirunSingleLocalFileDataSour
     # No-op=--just inherit attributes, properties, and route to __init__ methods in parent classes
     pass
 
-
 class MultirunLocalFileDataSource(MultirunSampleLocalFileDataSource,
                                   qfp.MultirunDataSourceQFPMixin
                                   ):
@@ -145,8 +144,8 @@ class MultirunLocalFileDataSource(MultirunSampleLocalFileDataSource,
     # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
     # _AttributesClass = SampleDataAttributes
     # col_spec = sampleLocalFileDataSource_col_spec
-    _DiagnosticClass = diagnostic.MultirunDiagnostic
     varlist: diagnostic.MultirunVarlist = None
+    _DiagnosticClass = diagnostic.MultirunDiagnostic
     # Override data_manager:DataSourceBase init method
 
     def __init__(self, case_dict, parent):
@@ -725,7 +724,7 @@ class CMIP6ExperimentSelectionMixin():
         # NB need to pass list to iloc to get a pd.DataFrame instead of pd.Series
         df = df.sort_values(col_name).iloc[[0]]
         obj.log.debug("Selected experiment attribute '%s'='%s' for %s.",
-            col_name, df[col_name].iloc[0], obj.name)
+                      col_name, df[col_name].iloc[0], obj.name)
         return df
 
 

@@ -19,6 +19,20 @@
         ]
       }
     },
+    "No_pp": {
+      "help": "DataManager for working with input model data files that are already present on a local filesystem, for example the PODs' sample model data.",
+      "entry_point": ["src.data_sources:NoPPDataSource", "src.data_sources:MultirunNoPPDataSource"],
+      "cli": {
+        "arguments": [
+          {
+            "name": ["sample_dataset", "experiment"],
+            "short_name" : "e",
+            "help": "Name of sample model data source.",
+            "default" : ""
+          }
+        ]
+      }
+    },
     "Explicit_file": {
       "help": "DataManager which allows the user to explicitly specify what data files should be used to supply each variable in the PODs' data request.",
       "entry_point": ["src.data_sources:ExplicitFileDataSource","src.data_sources:MultirunExplicitFileDataSource"],

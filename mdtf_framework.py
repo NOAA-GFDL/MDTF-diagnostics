@@ -62,6 +62,7 @@ def main(argv):
         exit_code = framework.main()
         return exit_code
 
+
 if __name__ == '__main__':
     argv = sys.argv[1::] if len(sys.argv[1::]) >= 2 else sys.argv
     exit_code = main(argv)

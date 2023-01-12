@@ -9,7 +9,7 @@ from abc import ABC
 import logging
 import pandas as pd
 import textwrap
-from src import util, data_manager, diagnostic, core
+from src import util, varlistentry_util, data_manager, diagnostic, core
 from src import query_fetch_preprocess as qfp
 
 
@@ -272,7 +272,7 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
             obj_name = obj.name
 
         for v in var_iterator:
-            if v.stage < diagnostic.VarlistEntryStage.QUERIED:
+            if v.stage < varlistentry_util.VarlistEntryStage.QUERIED:
                 continue
             rows = set([])
             for d_key in v.iter_data_keys():
@@ -396,7 +396,7 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
             key = self.get_expt_key('pod', self, parent, self._id)
             p = parent
             self.set_expt_key(p, key)
-        except Exception:  # util.DataExperimentEvent:
+        except Exception as exc:  # util.DataExperimentEvent:
             # couldn't do that, so allow different choices for each POD
             for p in parent.iter_children(status=core.ObjectStatus.ACTIVE):
                 try:
@@ -415,7 +415,7 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
             for pv in self.iter_vars(parent, active=True):  # varlist is a self (Multirun data source) attribute
                 key = self.get_expt_key('var', pv.pod, parent, pv.pod._id)
                 self.set_expt_key(pv.var, key)
-        except Exception:  # util.DataExperimentEvent:
+        except Exception as exc:  # util.DataExperimentEvent:
             # couldn't do that, so allow different choices for each variable
             for pv in self.iter_vars(parent, active=True):
                 try:

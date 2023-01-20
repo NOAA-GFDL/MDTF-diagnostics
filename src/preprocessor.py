@@ -6,7 +6,7 @@ import shutil
 import abc
 import dataclasses
 import functools
-from src import util, core, diagnostic, xr_parser, units
+from src import util, core, varlistentry_util, diagnostic, xr_parser, units
 import cftime
 import numpy as np
 import xarray as xr
@@ -26,10 +26,10 @@ def copy_as_alternate(old_v, data_mgr, **kwargs):
         kwargs['coords'] = (old_v.dims + old_v.scalar_coords)
     new_v = dataclasses.replace(
         old_v,
-        _id = util.MDTF_ID(),                           # assign distinct ID
-        stage = diagnostic.VarlistEntryStage.INITED,    # reset state from old_v
-        status = core.ObjectStatus.INACTIVE,      # new VE meant as an alternate
-        requirement = diagnostic.VarlistEntryRequirement.ALTERNATE,
+        _id=util.MDTF_ID(),                           # assign distinct ID
+        stage=varlistentry_util.VarlistEntryStage.INITED,    # reset state from old_v
+        status=core.ObjectStatus.INACTIVE,      # new VE meant as an alternate
+        requirement=varlistentry_util.VarlistEntryRequirement.ALTERNATE,
         # plus the specific replacements we want to make:
         **kwargs
     )
@@ -129,7 +129,7 @@ def multirun_edit_request_wrapper(multirun_wrapped_edit_request_func):
                     v_t_name = (str(v.translation) if getattr(v, 'translation', None)
                                                       is not None else "(not translated)")
                     case_d.log.debug("%s for %s: add translated %s as alternate for %s.",
-                                  self.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
+                                     self.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
                     new_varlist.append(v)
                     new_varlist.append(new_v)
             case_d.varlist = diagnostic.MultirunVarlist(contents=new_varlist)
@@ -696,6 +696,7 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
 
 # ==================================================
 
+
 class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     """Base class for preprocessing data after it's been fetched, in order to
     convert it into a format expected by PODs.
@@ -1024,6 +1025,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with the POD variable *var*.
         """
+        var.log.info("Preprocessing %s.", var)
         ds = self.load_ds(var)
         ds = self.process_ds(var, ds)
         self.write_ds(var, ds)
@@ -1042,6 +1044,46 @@ class SingleFilePreprocessor(MDTFPreprocessorBase):
         *var*, using :meth:`read_one_file`.
         """
         return self.read_one_file(var, var.local_data)
+
+
+class NullPreprocessor(MDTFPreprocessorBase):
+    """A class that skips preprocessing and just symlinks files from the input dir to the wkdir
+    """
+    def __init__(self, data_mgr, pod):
+        config = core.ConfigManager()
+        self.overwrite_ds = config.get('overwrite_file_metadata', False)
+
+        self.WK_DIR = data_mgr.MODEL_WK_DIR
+        self.convention = data_mgr.attrs.convention
+        self.pod_convention = pod.convention
+
+        if getattr(pod, 'nc_largefile', False):
+            self.nc_format = "NETCDF4_CLASSIC"
+        else:
+            self.nc_format = "NETCDF4"
+        # HACK only used for _FillValue workaround in clean_output_encoding
+        self.output_to_ncl = ('ncl' in pod.runtime_requirements)
+
+        # initialize xarray parser
+        self.parser = self._XarrayParserClass(data_mgr, pod)
+        # dummy attribute--no pp functions to perform
+        self.functions = []
+
+    def edit_request(self, data_mgr, pod):
+        """Dummy implementation of edit_request to meet abstract base class requirements
+        """
+        pass
+
+    def read_dataset(self, var):
+        """Dummy implementation of read_dataset to meet abstract base class requirements
+        """
+        pass
+
+    def process(self, var):
+        """Top-level wrapper method for doing all preprocessing of data files
+        associated with the POD variable *var*.
+        """
+        var.log.debug("Skipping preprocessing for %s.", var)
 
 
 class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
@@ -1150,7 +1192,7 @@ class MultirunDaskMultiFilePreprocessor(DaskMultiFilePreprocessor):
 
 
 class MultirunDefaultPreprocessor(SampleDataPreprocessor):
-    """mplementation class for :class:`MDTFPreprocessorBase` intended for use
+    """Implementation class for :class:`MDTFPreprocessorBase` intended for use
     on sample model data distributed with the package. Assumes all data for each
     multirun case is in one netCDF file.
     """
@@ -1214,6 +1256,7 @@ class MultirunDefaultPreprocessor(SampleDataPreprocessor):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with the POD variable *var*.
         """
+        var.log.info("Preprocessing %s.", var)
         ds = self.load_ds(var)
         ds = self.process_ds(var, ds, casename)
         self.write_ds(var, ds)
@@ -1322,8 +1365,8 @@ class MultirunPrecipRateToFluxFunction(PrecipRateToFluxFunction):
             # requested flux, so add alternate for rate
             v_to_translate = copy_as_alternate(
                 v, data_mgr,
-                standard_name = self._flux_d[std_name],
-                units = units.to_cfunits(v.units) / self._liquid_water_density
+                standard_name=self._flux_d[std_name],
+                units=units.to_cfunits(v.units) / self._liquid_water_density
             )
 
         translate = core.VariableTranslator()
@@ -1332,7 +1375,7 @@ class MultirunPrecipRateToFluxFunction(PrecipRateToFluxFunction):
         except KeyError as exc:
             self.log.debug(('%s edit_request on %s: caught %r when trying to '
                            'translate \'%s\'; varlist unaltered.'), self.__class__.__name__,
-                          v.full_name, exc, v_to_translate.standard_name)
+                           v.full_name, exc, v_to_translate.standard_name)
             return None
         new_v = copy_as_alternate(v, data_mgr)
         new_v.translation = new_tv
@@ -1405,7 +1448,7 @@ class MultirunExtractLevelFunction(ExtractLevelFunction):
             )
         new_tv = tv.remove_scalar(
             tv.scalar_coords[0].axis,
-            name = new_tv_name
+            name=new_tv_name
         )
         new_v = copy_as_alternate(v, data_mgr)
         new_v.translation = new_tv
@@ -1475,3 +1518,46 @@ class MultirunAssociatedVariablesFunction(AssociatedVariablesFunction):
             )
 
         return ds
+
+
+class MultirunNullPreprocessor(MultirunDefaultPreprocessor):
+    """A class that skips preprocessing and just symlinks files from the input dir to the wkdir
+    """
+
+    _XarrayParserClass = xr_parser.MultirunDefaultDatasetParser
+
+    def __init__(self, data_mgr):
+        config = core.ConfigManager()
+        self.overwrite_ds = config.get('overwrite_file_metadata', False)
+
+        self.WK_DIR = data_mgr.MODEL_WK_DIR
+        self.convention = data_mgr.convention
+        self.pod_convention = self.convention
+
+        if not data_mgr.nc_largefile:
+            self.nc_format = "NETCDF4_CLASSIC"
+        else:
+            self.nc_format = "NETCDF4"
+        # HACK only used for _FillValue workaround in clean_output_encoding
+        self.output_to_ncl = ('ncl' in data_mgr.runtime_requirements)
+
+        # initialize xarray parser
+        self.parser = self._XarrayParserClass(data_mgr)
+        # Empty set since there's nothing to preprocess
+        self.functions = []
+
+    def edit_request(self, data_mgr, *args):
+        """Dummy implementation of edit_request to meet abstract base class requirements
+        """
+        pass
+
+    def read_dataset(self, var):
+        """Dummy implementation of read_dataset to meet abstract base class requirements
+        """
+        pass
+
+    def process(self, var):
+        """Top-level wrapper method for doing all preprocessing of data files
+        associated with the POD variable *var*.
+        """
+        var.log.debug("Skipping preprocessing for %s.", var)

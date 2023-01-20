@@ -11,7 +11,7 @@ import typing
 from abc import ABC
 import pandas as pd
 
-from src import util, core, diagnostic, preprocessor, pod_setup
+from src import util, core, varlistentry_util, diagnostic, pod_setup, preprocessor
 from src import query_fetch_preprocess as qfp
 _log = logging.getLogger(__name__)
 
@@ -562,7 +562,7 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             obj_name = obj.name
 
         for v in var_iterator:
-            if v.stage < diagnostic.VarlistEntryStage.QUERIED:
+            if v.stage < varlistentry_util.VarlistEntryStage.QUERIED:
                 continue
             rows = set([])
             for d_key in v.iter_data_keys():

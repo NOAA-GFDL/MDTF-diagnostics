@@ -457,7 +457,9 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             self.obj.status = core.ObjectStatus.SUCCEEDED
 
 
-class MultirunHTMLOutputManager(HTMLOutputManager, AbstractOutputManager, HTMLSourceFileMixin):
+class MultirunHTMLOutputManager(HTMLOutputManager,
+                                AbstractOutputManager,
+                                HTMLSourceFileMixin):
     """OutputManager that collects the output of all PODs run in multirun mode
     as html pages.
 

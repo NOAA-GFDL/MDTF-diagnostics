@@ -69,6 +69,7 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
 
        TODO: integrate better with general Intake API.
     """
+    log: dc.InitVar = _log
 
     def __init__(self, parent, case_dict):
         # parent and case_dict are required by parent init method

@@ -1,9 +1,10 @@
 """Code specific to the computing environment at NOAA's Geophysical Fluid
 Dynamics Laboratory (Princeton, NJ, USA).
 """
+import io
 import os
 from abc import ABC
-from src import util, multirun, core, diagnostic, preprocessor
+from src import util, multirun, core, diagnostic, preprocessor, output_manager
 from sites.NOAA_GFDL import gfdl_util, gfdl
 
 import logging
@@ -41,6 +42,17 @@ class MultirunGfdlDiagnostic(diagnostic.MultirunDiagnostic,
                 self.deactivate(chained_exc)
 
 
+class MultirunGfdlarchivecmip6DataManager(multirun.MultirunDataframeQueryDataSourceBase,
+                                          gfdl.Gfdlarchivecmip6DataManager, ABC):
+    """DataSource for accessing more extensive set of CMIP6 data on DMF tape-backed
+    storage at /archive/pcmdi/repo/CMIP6.
+    """
+    #_FileRegexClass = cmip6.CMIP6_DRSPath
+    #_DirectoryRegex = cmip6.drs_directory_regex
+    #_AttributesClass = GFDL_archive_CMIP6DataSourceAttributes
+    # _fetch_method = "gcp"
+
+
 class MultirunGfdludacmip6DataManager(multirun.MultirunDataframeQueryDataSourceBase,
                                       gfdl.Gfdludacmip6DataManager, ABC
                                       ):
@@ -67,7 +79,7 @@ class MultirunGfdldatacmip6DataManager(multirun.MultirunDataframeQueryDataSource
     _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
 
 
-class MultirunGfdlAutoDataManager(gfdl.GfdlautoDataManager):
+class MultirunGfdlAutoDataManager(gfdl.GfdlAutoDataManager):
     """Wrapper for dispatching DataManager based on user input. If CASE_ROOT_DIR
     ends in "pp", use :class:`MultirunGfdlppDataManager`, otherwise use CMIP6 data on
     /uda via :class:`MultirunGfdludacmip6DataManager`.
@@ -82,7 +94,7 @@ class MultirunGfdlAutoDataManager(gfdl.GfdlautoDataManager):
         config = core.ConfigManager()
         dir_ = case_dict.get('CASE_ROOT_DIR', config.CASE_ROOT_DIR)
         if 'pp' in os.path.basename(os.path.normpath(dir_)):
-            dispatched_cls = MultirunGfdlAutoDataManager
+            dispatched_cls = MultirunGfdlppDataManager
         else:
             dispatched_cls = MultirunGfdludacmip6DataManager
             # could use more careful logic here, but for now assume CMIP6 on
@@ -119,3 +131,44 @@ class MultirunGfdlppDataManager(multirun.MultirunDataframeQueryDataSourceBase,
         config = core.ConfigManager()
         self.frepp_mode = config.get('frepp', False)
         self.any_components = config.get('any_components', False)
+
+
+class MultirunGFDLHTMLOutputManager(output_manager.MultirunHTMLOutputManager,
+                                    gfdl.GFDLHTMLOutputManager):
+    _PodOutputManagerClass = gfdl.GFDLHTMLPodOutputManager
+
+    def __init__(self, pod):
+        config = core.ConfigManager()
+        try:
+            self.frepp_mode = config.get('frepp', False)
+            self.dry_run = config.get('dry_run', False)
+            self.timeout = config.get('file_transfer_timeout', 0)
+        except (AttributeError, KeyError) as exc:
+            pod.log.store_exception(exc)
+
+        super(MultirunGFDLHTMLOutputManager, self).__init__(pod)
+
+    def make_html(self, cleanup=False):
+        """Never cleanup html if we're in frepp_mode, since framework may run
+        later when another component finishes. Instead just append current
+        progress to CASE_TEMP_HTML.
+        """
+        prev_html = os.path.join(self.OUT_DIR, self._html_file_name)
+        if self.frepp_mode and os.path.exists(prev_html):
+            self.obj.log.debug("Found previous HTML at %s; appending.", self.OUT_DIR)
+            with io.open(prev_html, 'r', encoding='utf-8') as f1:
+                contents = f1.read()
+            contents = contents.split('<!--CUT-->')
+            assert len(contents) == 3
+            contents = contents[1]
+
+            if os.path.exists(self.CASE_TEMP_HTML):
+                mode = 'a'
+            else:
+                self.obj.log.warning("No file at %s.", self.CASE_TEMP_HTML)
+                mode = 'w'
+            with io.open(self.CASE_TEMP_HTML, mode, encoding='utf-8') as f2:
+                f2.write(contents)
+        super(MultirunGFDLHTMLOutputManager, self).make_html(
+            cleanup=(not self.frepp_mode)
+        )

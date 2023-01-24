@@ -650,11 +650,12 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             df = df.sort_values(col_name).iloc[[0]]
 
             self.log.debug("Selected experiment attribute '%s'='%s' for %s.",
-                col_name, df[col_name].iloc[0], obj.name)
+                           col_name, df[col_name].iloc[0], obj.name)
 
         return df
 
-class GfdlautoDataManager(object):
+
+class GfdlAutoDataManager(object):
     """Wrapper for dispatching DataManager based on user input. If CASE_ROOT_DIR
     ends in "pp", use :class:`GfdlppDataManager`, otherwise use CMIP6 data on
     /uda via :class:`Gfdludacmip6DataManager`.
@@ -676,7 +677,7 @@ class GfdlautoDataManager(object):
             # /uda as a fallback
 
         _log.debug("%s: Dispatched DataManager to %s.",
-            cls.__name__, dispatched_cls.__name__)
+                   cls.__name__, dispatched_cls.__name__)
         obj = dispatched_cls.__new__(dispatched_cls)
         obj.__init__(case_dict, parent)
         return obj

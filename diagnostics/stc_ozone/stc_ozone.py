@@ -6,7 +6,7 @@
 # POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
 #
 # STC Stratospheric Ozone and Circulation
-# Last update: 2022-12-01
+# Last update: 2023-01-24
 #
 # This script performs calculations to assess relationships between stratospheric
 # ozone and the large-scale circulation. This POD uses monthly-mean zonal mean 
@@ -29,7 +29,7 @@
 # ==============================================================================
 #   Version, Contact Info, and License
 # ==============================================================================
-#   - Version/revision information: v1.0 (2022-12-01)
+#   - Version/revision information: v1.0 (2023-01-24)
 #   - PI: Amy H. Butler, NOAA CSL
 #   - Developer/point of contact: Amy H. Butler, amy.butler@noaa.gov
 #   - Other contributors: Zachary D. Lawrence, CIRES + CU Boulder / NOAA PSL, 
@@ -758,29 +758,28 @@ ua = ua.close()
 
 # Create the POD figures for both NH and SH cases
 plot_dir = f'{WK_DIR}/model/PS'
-os.makedirs(plot_dir, exist_ok=True)
 for hemi in ['NH','SH']:
     print(f'*** Plotting {hemi} UZM vs polar cap O3 scatter plot')
-    scatter_plot = f'{plot_dir}/{CASENAME}_{hemi}_UZM-O3cap_Scatter.png'
+    scatter_plot = f'{plot_dir}/{CASENAME}_{hemi}_UZM-O3cap_Scatter.eps'
     fig,ax = plot_o3_ustrat_corr(uzm_band[hemi], o3_pcap[hemi], hemi)
     ax.set_title(f'{CASENAME}\n{hemi}, {FIRSTYR}-{LASTYR}', fontsize=20)
     fig.savefig(scatter_plot)
         
     print(f'*** Plotting {hemi} FSW vs polar cap O3 scatter plot')
-    scatter_FSW = f'{plot_dir}/{CASENAME}_{hemi}_FSW-O3cap_Scatter.png'
+    scatter_FSW = f'{plot_dir}/{CASENAME}_{hemi}_FSW-O3cap_Scatter.eps'
     filepath = f'{WK_DIR}/model/netCDF/{CASENAME}_{hemi}_fsw.txt'
     fig,ax = plot_o3_fsw_corr(uzm_50, o3_pcap[hemi], hemi,filepath)
     ax.set_title(f'{CASENAME}\n{hemi}, {FIRSTYR}-{LASTYR}', fontsize=20)
     fig.savefig(scatter_FSW)
         
     print(f'*** Plotting {hemi} UZM vs polar cap O3 lag correlations')
-    levcorr_plot = f'{plot_dir}/{CASENAME}_{hemi}_UZM-O3cap_LagCorr_Lev.png'
+    levcorr_plot = f'{plot_dir}/{CASENAME}_{hemi}_UZM-O3cap_LagCorr_Lev.eps'
     fig,ax = plot_o3_uwnd_lev_lags(uzm_band[hemi], o3_pcap[hemi], hemi)
     plt.suptitle(f'{CASENAME}, {hemi}, {FIRSTYR}-{LASTYR}', fontsize=20)
     fig.savefig(levcorr_plot)
         
     print(f'*** Plotting {hemi} trends in o3, temp, and UZM')
-    trends_plot = f'{plot_dir}/{CASENAME}_{hemi}_Trends.png'
+    trends_plot = f'{plot_dir}/{CASENAME}_{hemi}_Trends.eps'
     fig,axs = plot_o3_seas_trends(uzm_band[hemi], o3_pcap[hemi], t_pcap[hemi])
     fig.suptitle(f'{CASENAME}, {hemi}', fontsize=20)
     fig.savefig(trends_plot)
@@ -855,26 +854,26 @@ try:
     plot_dir = f'{WK_DIR}/obs/PS'
     for hemi in ['NH','SH']:
         print(f'*** Plotting {hemi} UZM vs polar cap O3 scatter plot from rean')
-        scatter_plot = f'{plot_dir}/obs_{hemi}_UZM-O3cap_Scatter.png'
+        scatter_plot = f'{plot_dir}/obs_{hemi}_UZM-O3cap_Scatter.eps'
         fig,ax = plot_o3_ustrat_corr(uzm_band[hemi], o3_pcap[hemi], hemi)
         ax.set_title(f'{rean}\n{hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
         fig.savefig(scatter_plot)
         
         print(f'*** Plotting {hemi} FSW vs polar cap O3 scatter plot from rean')
         filepath = f'{WK_DIR}/obs/netCDF/{rean}_{hemi}_fsw.txt'
-        scatter_FSW = f'{plot_dir}/obs_{hemi}_FSW-O3cap_Scatter.png'
+        scatter_FSW = f'{plot_dir}/obs_{hemi}_FSW-O3cap_Scatter.eps'
         fig,ax = plot_o3_fsw_corr(uzm_50, o3_pcap[hemi], hemi,filepath)
         ax.set_title(f'{rean}\n{hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
         fig.savefig(scatter_FSW)
         
         print(f'*** Plotting {hemi} UZM vs polar cap O3 lag correlations from rean')
-        levcorr_plot = f'{plot_dir}/obs_{hemi}_UZM-O3cap_LagCorr_Lev.png'
+        levcorr_plot = f'{plot_dir}/obs_{hemi}_UZM-O3cap_LagCorr_Lev.eps'
         fig,ax = plot_o3_uwnd_lev_lags(uzm_band[hemi], o3_pcap[hemi], hemi)
         plt.suptitle(f'{rean}, {hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
         fig.savefig(levcorr_plot)
         
         print(f'*** Plotting {hemi} trends in o3, temp, and UZM from rean')
-        trends_plot = f'{plot_dir}/obs_{hemi}_Trends.png'
+        trends_plot = f'{plot_dir}/obs_{hemi}_Trends.eps'
         fig,axs = plot_o3_seas_trends(uzm_band[hemi], o3_pcap[hemi], t_pcap[hemi])
         fig.suptitle(f'{rean}, {hemi}', fontsize=20)
         fig.savefig(trends_plot)

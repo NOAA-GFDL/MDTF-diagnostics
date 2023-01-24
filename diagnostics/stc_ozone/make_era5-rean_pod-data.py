@@ -22,7 +22,6 @@ from glob import glob
 
 import numpy as np
 import xarray as xr
-#import dask
 
 ### BEGIN: READ INPUT FIELDS ###
 # The following code/paths will have to be adapted for your own system.
@@ -136,8 +135,7 @@ encoding = {'o3_zm':       {'dtype':'float32', 'zlib':True, 'complevel':7},
             'temp_zm':     {'dtype':'float32', 'zlib':True, 'complevel':7}}
 
 # Save the output file
-#OBS_DATA = os.environ['OBS_DATA_ROOT'] # "/Users/abutler/earth-analytics/mdtf/inputdata/obs_data/"
-OBS_DATA = "/Users/abutler/earth-analytics/mdtf/inputdata/obs_data/stc_ozone/"
+OBS_DATA = os.environ['OBS_DATA'] 
 filename = OBS_DATA+'stc_ozone_obs-data.nc'
 out_ds.rename({'level':'lev'}).rename({'latitude':'lat'}).to_netcdf(filename, encoding=encoding)
 

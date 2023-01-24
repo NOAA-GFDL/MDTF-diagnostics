@@ -758,6 +758,7 @@ ua = ua.close()
 
 # Create the POD figures for both NH and SH cases
 plot_dir = f'{WK_DIR}/model/PS'
+os.makedirs(plot_dir, exist_ok=True)
 for hemi in ['NH','SH']:
     print(f'*** Plotting {hemi} UZM vs polar cap O3 scatter plot')
     scatter_plot = f'{plot_dir}/{CASENAME}_{hemi}_UZM-O3cap_Scatter.png'
@@ -854,26 +855,26 @@ try:
     plot_dir = f'{WK_DIR}/obs/PS'
     for hemi in ['NH','SH']:
         print(f'*** Plotting {hemi} UZM vs polar cap O3 scatter plot from rean')
-        scatter_plot = f'{plot_dir}/obs_{hemi}_UZM-O3cap_Scatter.eps'
+        scatter_plot = f'{plot_dir}/obs_{hemi}_UZM-O3cap_Scatter.png'
         fig,ax = plot_o3_ustrat_corr(uzm_band[hemi], o3_pcap[hemi], hemi)
         ax.set_title(f'{rean}\n{hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
         fig.savefig(scatter_plot)
         
         print(f'*** Plotting {hemi} FSW vs polar cap O3 scatter plot from rean')
         filepath = f'{WK_DIR}/obs/netCDF/{rean}_{hemi}_fsw.txt'
-        scatter_FSW = f'{plot_dir}/obs_{hemi}_FSW-O3cap_Scatter.eps'
+        scatter_FSW = f'{plot_dir}/obs_{hemi}_FSW-O3cap_Scatter.png'
         fig,ax = plot_o3_fsw_corr(uzm_50, o3_pcap[hemi], hemi,filepath)
         ax.set_title(f'{rean}\n{hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
         fig.savefig(scatter_FSW)
         
         print(f'*** Plotting {hemi} UZM vs polar cap O3 lag correlations from rean')
-        levcorr_plot = f'{plot_dir}/obs_{hemi}_UZM-O3cap_LagCorr_Lev.eps'
+        levcorr_plot = f'{plot_dir}/obs_{hemi}_UZM-O3cap_LagCorr_Lev.png'
         fig,ax = plot_o3_uwnd_lev_lags(uzm_band[hemi], o3_pcap[hemi], hemi)
         plt.suptitle(f'{rean}, {hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
         fig.savefig(levcorr_plot)
         
         print(f'*** Plotting {hemi} trends in o3, temp, and UZM from rean')
-        trends_plot = f'{plot_dir}/obs_{hemi}_Trends.eps'
+        trends_plot = f'{plot_dir}/obs_{hemi}_Trends.png'
         fig,axs = plot_o3_seas_trends(uzm_band[hemi], o3_pcap[hemi], t_pcap[hemi])
         fig.suptitle(f'{rean}, {hemi}', fontsize=20)
         fig.savefig(trends_plot)

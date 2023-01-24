@@ -662,7 +662,6 @@ FIRSTYR = int(os.environ['FIRSTYR'])
 LASTYR = int(os.environ['LASTYR'])
 WK_DIR = os.environ['WK_DIR']
 OBS_DIR = os.environ['OBS_DATA']
-print(OBS_DIR)
 
 o3fi = os.environ['O3_FILE']
 tfi = os.environ['TA_FILE']

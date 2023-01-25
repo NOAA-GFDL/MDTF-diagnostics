@@ -249,6 +249,9 @@ def l_trend(var,start_yr,end_yr,sig=True):
         
         for i in range(nlev):
             v=tmp[:,i]
+            #note: intercept, r_value, and std_err are unused variables but
+            #we retain them here as dummy variables to serve as a reference
+            #for what is available from linregress
             vart[i], intercept, r_value, varp[i], std_err=linregress(N,v)
         
         ind = A_trend["month"]==j

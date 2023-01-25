@@ -5,6 +5,7 @@ import io
 import os
 from abc import ABC
 from src import util, multirun, core, diagnostic, preprocessor, output_manager
+from src import query_fetch_preprocess as qfp
 from sites.NOAA_GFDL import gfdl_util, gfdl
 
 import logging
@@ -43,6 +44,7 @@ class MultirunGfdlDiagnostic(diagnostic.MultirunDiagnostic,
 
 
 class MultirunGfdlarchivecmip6DataManager(multirun.MultirunDataframeQueryDataSourceBase,
+                                          qfp.MultirunDataSourceQFPMixin,
                                           gfdl.Gfdlarchivecmip6DataManager, ABC):
     """DataSource for accessing more extensive set of CMIP6 data on DMF tape-backed
     storage at /archive/pcmdi/repo/CMIP6.
@@ -52,8 +54,15 @@ class MultirunGfdlarchivecmip6DataManager(multirun.MultirunDataframeQueryDataSou
     #_AttributesClass = GFDL_archive_CMIP6DataSourceAttributes
     # _fetch_method = "gcp"
 
+    @property
+    def _children(self):
+        """Iterable of the multirun varlist that is associated with the data source object
+        """
+        yield from self.varlist.iter_vars()
+
 
 class MultirunGfdludacmip6DataManager(multirun.MultirunDataframeQueryDataSourceBase,
+                                      qfp.MultirunDataSourceQFPMixin,
                                       gfdl.Gfdludacmip6DataManager, ABC
                                       ):
     """DataSource for accessing CMIP6 data stored on spinning disk at /uda/CMIP6.
@@ -65,8 +74,15 @@ class MultirunGfdludacmip6DataManager(multirun.MultirunDataframeQueryDataSourceB
     _DiagnosticClass = MultirunGfdlDiagnostic
     _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
 
+    @property
+    def _children(self):
+        """Iterable of the multirun varlist that is associated with the data source object
+        """
+        yield from self.varlist.iter_vars()
+
 
 class MultirunGfdldatacmip6DataManager(multirun.MultirunDataframeQueryDataSourceBase,
+                                       qfp.MultirunDataSourceQFPMixin,
                                        gfdl.Gfdldatacmip6DataManager, ABC
                                        ):
     """DataSource for accessing pre-publication CMIP6 data on /data_cmip6.
@@ -77,6 +93,12 @@ class MultirunGfdldatacmip6DataManager(multirun.MultirunDataframeQueryDataSource
     # _fetch_method = "gcp"
     _DiagnosticClass = MultirunGfdlDiagnostic
     _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
+
+    @property
+    def _children(self):
+        """Iterable of the multirun varlist that is associated with the data source object
+        """
+        yield from self.varlist.iter_vars()
 
 
 class MultirunGfdlAutoDataManager(gfdl.GfdlAutoDataManager):
@@ -108,6 +130,7 @@ class MultirunGfdlAutoDataManager(gfdl.GfdlAutoDataManager):
 
 
 class MultirunGfdlppDataManager(multirun.MultirunDataframeQueryDataSourceBase,
+                                qfp.MultirunDataSourceQFPMixin,
                                 gfdl.GfdlppDataManager):
     # _FileRegexClass = PPTimeseriesDataFile
     # _DirectoryRegex = pp_dir_regex
@@ -131,6 +154,12 @@ class MultirunGfdlppDataManager(multirun.MultirunDataframeQueryDataSourceBase,
         config = core.ConfigManager()
         self.frepp_mode = config.get('frepp', False)
         self.any_components = config.get('any_components', False)
+
+    @property
+    def _children(self):
+        """Iterable of the multirun varlist that is associated with the data source object
+        """
+        yield from self.varlist.iter_vars()
 
 
 class MultirunGFDLHTMLOutputManager(output_manager.MultirunHTMLOutputManager,

@@ -125,7 +125,7 @@ class MultiRunPod(PodSetupBaseClass, ABC):
         for case_name, case_dict in self.cases.items():
             for v in case_dict.iter_children():
                 try:
-                    self.setup_var(v, case_dict.attrs.date_range, case_dict.name)
+                    self.setup_var(v, case_dict.attrs.date_range, case_name)
                 except Exception as exc:
                     chained_exc = util.chain_exc(exc, f"configuring {v.full_name} in multirun mode.",
                                                  util.PodConfigError)

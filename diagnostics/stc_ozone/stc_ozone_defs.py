@@ -14,7 +14,6 @@ import numpy as np
 import xarray as xr
 import scipy
 from scipy.stats import linregress
-import datetime
 from cftime import DatetimeNoLeap
 
 #************************************************************************************
@@ -227,7 +226,6 @@ def l_trend(var,start_yr,end_yr,sig=True):
     SCALE = 10.
     
     lev = var.lev.values
-    time = var.time.values
     
     A_trend = xr.DataArray(dims=["month","lev"],coords=dict(
         month=(["month"], np.arange(1,13)),

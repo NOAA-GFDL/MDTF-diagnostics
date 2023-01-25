@@ -1260,7 +1260,7 @@ class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
             self.MODEL_DATA_DIR[case_name] = d.MODEL_DATA_DIR
             self.MODEL_WK_DIR[case_name] = d.MODEL_WK_DIR
             self.MODEL_OUT_DIR[case_name] = d.MODEL_OUT_DIR
-            util.check_dir(self.MODEL_DATA_DIR[case_name], 'MODEL_DATA_DIR', create=False)
+            util.check_dir(self.MODEL_DATA_DIR[case_name], 'MODEL_DATA_DIR', create=True)
             util.check_dir(self.MODEL_WK_DIR[case_name], 'MODEL_WK_DIR', create=True)
             util.check_dir(self.MODEL_OUT_DIR[case_name], 'MODEL_OUT_DIR', create=True)
             # set up log(CaseLoggerMixin)

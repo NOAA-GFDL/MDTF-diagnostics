@@ -79,13 +79,6 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
     def all_columns(self):
         return tuple(self.df.columns)
 
-    @property
-    def remote_data_col(self):
-        col_name = self.col_spec.remote_data_col
-        if col_name is None:
-            raise ValueError
-        return col_name
-
     def _query_clause(self, col_name, query_attr_name, query_attr_val):
         """Translate a single field value into a logical clause in the dataframe
         catalog query. All queryable field values are assumed to be attribute

@@ -53,7 +53,13 @@ class MultirunGfdlarchivecmip6DataManager(multirun.MultirunDataframeQueryDataSou
     #_DirectoryRegex = cmip6.drs_directory_regex
     #_AttributesClass = GFDL_archive_CMIP6DataSourceAttributes
     # _fetch_method = "gcp"
+    # borrow MDTFObjectBase initialization from data_manager:~DataSourceBase
 
+    def __init__(self, case_dict, parent):
+        # borrow MDTFObjectBase initialization from data_manager:~DataSourceBase
+        core.MDTFObjectBase.__init__(
+            self, name=case_dict['CASENAME'], _parent=parent
+        )
     @property
     def _children(self):
         """Iterable of the multirun varlist that is associated with the data source object
@@ -74,6 +80,13 @@ class MultirunGfdludacmip6DataManager(multirun.MultirunDataframeQueryDataSourceB
     _DiagnosticClass = MultirunGfdlDiagnostic
     _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
 
+    def __init__(self, case_dict, parent):
+        # borrow MDTFObjectBase initialization from data_manager:~DataSourceBase
+        core.MDTFObjectBase.__init__(
+            self, name=case_dict['CASENAME'], _parent=parent
+        )
+        self.timeout = config.get('file_transfer_timeout', 0)
+
     @property
     def _children(self):
         """Iterable of the multirun varlist that is associated with the data source object
@@ -93,6 +106,13 @@ class MultirunGfdldatacmip6DataManager(multirun.MultirunDataframeQueryDataSource
     # _fetch_method = "gcp"
     _DiagnosticClass = MultirunGfdlDiagnostic
     _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
+
+    def __init__(self, case_dict, parent):
+        # borrow MDTFObjectBase initialization from data_manager:~DataSourceBase
+        core.MDTFObjectBase.__init__(
+            self, name=case_dict['CASENAME'], _parent=parent
+        )
+        self.timeout = config.get('file_transfer_timeout', 0)
 
     @property
     def _children(self):
@@ -146,6 +166,10 @@ class MultirunGfdlppDataManager(multirun.MultirunDataframeQueryDataSourceBase,
 
     def __init__(self, case_dict, parent):
         super(MultirunGfdlppDataManager, self).__init__(case_dict, parent)
+        # borrow MDTFObjectBase initialization from data_manager:~DataSourceBase
+        core.MDTFObjectBase.__init__(
+            self, name=case_dict['CASENAME'], _parent=parent
+        )
         # default behavior when run interactively:
         # frepp_mode = False, any_components = True
         # default behavior when invoked by FRE wrapper:
@@ -153,8 +177,20 @@ class MultirunGfdlppDataManager(multirun.MultirunDataframeQueryDataSourceBase,
         # any_components = True (set to False with --component_only)
         config = core.ConfigManager()
         self.frepp_mode = config.get('frepp', False)
+        self.dry_run = config.get('dry_run', False)
         self.any_components = config.get('any_components', False)
+        self.timeout = config.get('file_transfer_timeout', 0)
 
+        if self.frepp_mode:
+            paths = core.PathManager()
+            self.overwrite = True
+            # flag to not overwrite config and .tar: want overwrite for frepp
+            self.file_overwrite = True
+            # if overwrite=False, WK_DIR & OUT_DIR will have been set to a
+            # unique name in parent's init. Set it back so it will be overwritten.
+            d = paths.model_paths(self, overwrite=True)
+            self.MODEL_WK_DIR = d.MODEL_WK_DIR
+            self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
     @property
     def _children(self):
         """Iterable of the multirun varlist that is associated with the data source object

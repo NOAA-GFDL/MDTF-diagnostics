@@ -1235,7 +1235,7 @@ class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
         # append obs and model outdirs
         dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
         for d in dirs:
-            util.check_dir(os.path.join(self.POD_OUT_DIR, d), create=True)
+            util.check_dir(os.path.join(self.POD_WK_DIR, d), create=True)
 
     def configure_cases(self, case_dict, data_source):
         """ Instantiate case objects, set case directories, and define case attributes

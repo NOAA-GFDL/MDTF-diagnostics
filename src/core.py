@@ -1189,6 +1189,7 @@ class MDTFFramework(MDTFObjectBase):
             # e.g., multirun.py inherits from diagnostic.py which inherits from core.py
             from src.diagnostic import MultirunDiagnostic, MultirunNoPPDiagnostic
             pod_dict = dict.fromkeys(self.pod_list, [])
+            self.pods = pod_dict
             for pod in pod_dict.keys():
                 if self.preprocess_data:
                     pod_dict[pod] = MultirunDiagnostic.from_config(pod, parent=self)
@@ -1218,7 +1219,7 @@ class MDTFFramework(MDTFObjectBase):
                         else:
                             _log.info(("### %s: initialization for case '%s' failed; skipping "
                                        f"data request."), self.full_name, case_name)
-            self.pods = pod_dict
+
             if not any(p.failed for p in self.pods.values()):
                 _log.info("### %s: running pods '%s'.", self.full_name, [p for p in pod_dict.keys()])
                 run_mgr = self.RuntimeManager(self.pods, self.EnvironmentManager, self)

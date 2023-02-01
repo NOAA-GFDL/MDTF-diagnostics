@@ -38,6 +38,7 @@ class HTMLSourceFileMixin():
         """
         return os.path.join(self.WK_DIR, '_MDTF_pod_output_temp.html')
 
+
     def html_src_file(self, file_name):
         """Returns full path to a framework-supplied html template *file_name*
         or other part of the output page.
@@ -530,9 +531,9 @@ class MultirunHTMLOutputManager(HTMLOutputManager,
         template_dict['DATE_TIME'] = \
             datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
         util.append_html_template(
-            self.html_src_file('mdtf_header.html'), dest, template_dict
+            self.html_src_file('mdtf_multirun_header.html'), dest, template_dict
         )
-        util.append_html_template(self.CASE_TEMP_HTML, dest, {})
+        util.append_html_template(self.POD_HTML, dest, {})
         util.append_html_template(
             self.html_src_file('mdtf_footer.html'), dest, template_dict
         )

@@ -1175,11 +1175,13 @@ class MultirunDaskMultiFilePreprocessor(DaskMultiFilePreprocessor):
     variable, using xarray `open_mfdataset()
     <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
     """
+    _file_preproc_functions = []
 
     def __init__(self, data_mgr):
         # initialize PreprocessorFunctionBase objects
         self.file_preproc_functions = \
             [cls_(data_mgr) for cls_ in self._file_preproc_functions]
+
 
     def edit_request(self, data_mgr, *args):
         """Edit *pod*\'s data request, based on the child class's functionality. If
@@ -1191,7 +1193,7 @@ class MultirunDaskMultiFilePreprocessor(DaskMultiFilePreprocessor):
             func.edit_request(data_mgr, *args)
 
 
-class MultirunDefaultPreprocessor(SampleDataPreprocessor):
+class MultirunDefaultPreprocessor(MultirunDaskMultiFilePreprocessor):
     """Implementation class for :class:`MDTFPreprocessorBase` intended for use
     on sample model data distributed with the package. Assumes all data for each
     multirun case is in one netCDF file.
@@ -1199,6 +1201,7 @@ class MultirunDefaultPreprocessor(SampleDataPreprocessor):
     _XarrayParserClass = xr_parser.MultirunDefaultDatasetParser
 
     def __init__(self, data_mgr):
+        super(MultirunDefaultPreprocessor, self).__init__(data_mgr)
         config = core.ConfigManager()
         self.overwrite_ds = config.get('overwrite_file_metadata', False)
 

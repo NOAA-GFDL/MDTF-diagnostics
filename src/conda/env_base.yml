@@ -12,7 +12,7 @@ dependencies:
 - numpy=1.22.3
 - netCDF4=1.5.8
 - cftime=1.6
-- xarray=0.21.0
+- xarray=2022.11.0
 # Note: newer versions of cf_xarray are causing issues with missing
 # xarray dataset attributes. There seem to be modifications where
 # ds.cf attributes are defined later in the process, and this clashes
@@ -22,10 +22,10 @@ dependencies:
 - pandas=1.5
 - pint=0.16
 - dask=2022.10.0
-# additions dec 2020
+- ecgtools=2022.10.7
 - cfunits=3.3.5
 - intake=0.6
-- intake-esm=2021.8.17
+- intake-esm=2022.9.18
 - subprocess32=3.5.4
 - pyyaml=6.0
 - click=8.0.4

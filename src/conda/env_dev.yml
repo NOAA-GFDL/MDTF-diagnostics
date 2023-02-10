@@ -30,4 +30,4 @@ dependencies:
 - intake=0.6
 - intake-esm=2022.9.18
 # bump version 0.3.1 -> 0.4 feb 2021
-- cf_xarray=0.4.0
+- cf_xarray=0.8.0

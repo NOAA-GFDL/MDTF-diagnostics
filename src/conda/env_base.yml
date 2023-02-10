@@ -17,7 +17,7 @@ dependencies:
 # xarray dataset attributes. There seem to be modifications where
 # ds.cf attributes are defined later in the process, and this clashes
 # with the preprocessing procedures
-- cf_xarray=0.5.0
+- cf_xarray=0.8.0
 - matplotlib=3.5.3
 - pandas=1.5
 - pint=0.16

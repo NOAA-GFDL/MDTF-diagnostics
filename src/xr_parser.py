@@ -257,7 +257,7 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
                 return c
         return None
 
-    def axes(self, var_name=None, filter_set=None):
+    def axes_values(self, var_name=None, filter_set=None):
         """Override cf_xarray accessor behavior
         (from :meth:`~MDTFCFAccessorMixin._old_axes_dict`).
 
@@ -305,7 +305,7 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
         """Override cf_xarray accessor behavior by having values of the 'axes'
         dict be the Dataset variables themselves, instead of their names.
         """
-        return self.axes(var_name=var_name, filter_set=self._obj.dims)
+        return self.axes_values(var_name=var_name, filter_set=self._obj.dims)
 
 class MDTFDataArrayAccessorMixin(MDTFCFAccessorMixin):
     """Methods we add for xarray DataArray objects via the accessor
@@ -317,14 +317,14 @@ class MDTFDataArrayAccessorMixin(MDTFCFAccessorMixin):
         instead of a list of names as in cf_xarray. Filter on dimension coordinates
         only (eliminating any scalar coordinates.)
         """
-        return {k:v for k,v in self._obj.cf.axes().items() if v in self._obj.dims}
+        return {k: v for k, v in self._obj.cf.axes().items() if v in self._obj.dims}
 
     def axes(self):
         """Map axes labels to the (unique) coordinate variable name,
         instead of a list of names as in cf_xarray.
         """
         d = self._obj.cf._old_axes_dict()
-        return {k: v[0] for k,v in d.items()}
+        return {k: v[0] for k, v in d.items()}
 
     @property
     def formula_terms(self):
@@ -338,6 +338,7 @@ class MDTFDataArrayAccessorMixin(MDTFCFAccessorMixin):
             key, value = mapping.split(":")
             terms[key] = value
         return terms
+
 
 with warnings.catch_warnings():
     # cf_xarray registered its accessors under "cf". Re-registering our versions
@@ -1005,8 +1006,8 @@ class DefaultDatasetParser():
                 of the dataset variable, according to the data request.
             ds: xarray Dataset.
         """
-        for coord in ds.cf.axes(our_var.name).values():
-            # .axes() will have thrown TypeError if XYZT axes not all uniquely defined
+        for coord in ds.cf.axes_values(our_var.name).values():
+            # .axes_values() will have thrown TypeError if XYZT axes not all uniquely defined
             assert isinstance(coord, xr.core.dataarray.DataArray)
 
         # check set of dimension coordinates (array dimensionality) agrees
@@ -1122,9 +1123,9 @@ class DefaultDatasetParser():
             self.normalize_calendar(d)
             return d.get('calendar', None)
 
-        t_coords = ds.cf.axes().get('T', [])
+        t_coords = ds.cf.axes_values().get('T', [])
         if not t_coords:
-            return # assume static data
+            return  # assume static data
         elif len(t_coords) > 1:
             self.log.error("Found multiple time axes. Ignoring all but '%s'.",
                 t_coords[0].name)
@@ -1215,10 +1216,10 @@ class DefaultDatasetParser():
             self.log = var.log
         self.normalize_pre_decode(ds)
         ds = xr.decode_cf(ds,
-            decode_coords=True, # parse coords attr
-            decode_times=True,
-            use_cftime=True     # use cftime instead of np.datetime64
-        )
+                          decode_coords=True,  # parse coords attr
+                          decode_times=True,
+                          use_cftime=True  # use cftime instead of np.datetime64
+                          )
         ds = ds.cf.guess_coord_axis()
         self.restore_attrs_backup(ds)
         self.normalize_metadata(var, ds)
@@ -1226,7 +1227,7 @@ class DefaultDatasetParser():
         self._post_normalize_hook(var, ds)
 
         if self.disable:
-            return ds # stop here; don't attempt to reconcile
+            return ds  # stop here; don't attempt to reconcile
         if var is not None:
             self.reconcile_variable(var, ds)
             self.check_ds_attrs(var, ds)

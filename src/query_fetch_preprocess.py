@@ -169,7 +169,10 @@ class OnTheFlyFilesystemQueryMixin(metaclass=util.MDTFABCMeta):
                 "column_name": self.remote_data_col,
                 "format": self._asset_file_format
             },
-            "last_updated": "2020-12-06"
+            "last_updated": "2020-12-06",
+            'aggregation_control': {
+                'variable_column_name': 'variable', 'groupby_attrs': []
+            }
         }
 
     @abc.abstractmethod
@@ -193,9 +196,10 @@ class OnTheFlyFilesystemQueryMixin(metaclass=util.MDTFABCMeta):
         # sep: str = '.', delimiter to use when constructing key for a query
         # **kwargs: Any
 
-        self.catalog = intake_esm.core.esm_datastore.from_df(
-            self.generate_catalog(),
-            esmcol_data=self._dummy_esmcol_spec(),
+        obj = {'df': self.generate_catalog(), 'esmcat': self._dummy_esmcol_spec()}
+
+        self.catalog = intake_esm.core.esm_datastore(
+            obj,
             progressbar=False, sep='|'
         )
 

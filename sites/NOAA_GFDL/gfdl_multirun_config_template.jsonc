@@ -1,43 +1,62 @@
-// Configuration for MDTF-diagnostics driver script.
+// This a template for configuring MDTF to run PODs that analyze multi-run/ensemble data
+// stored on GFDL file systems
+// Copy this file, rename it, and customize the settings as needed
+// Pass your file to the framework using the -f/--input-file flag, and use --site NOAA_GFDL
+// Any other explicit command line options will override what's listed here.
 //
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.)
 //
-// Copy this file and customize the setting values as needed. Pass it to the
-// framework at the end of the command line (positionally) or with the
-// -f/--config-file flag.
-//
+// Remove your test config file, or any changes you make to this template if you do not rename it,
+// from your remote repository before you submit a PR for review.
+// To generate CMIP synthetic data in the example dataset, run the following:
+// > mamba env create --force -q -f ./src/conda/_env_synthetic_data.yml
+// > conda activate _MDTF_synthetic_data
+// > pip install mdtf-test-data
+// > cd <root directory>/mdtf
+// > mkdir mdtf_test_data && cd mdtf_test_data
+// > mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5
+// > mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5
+// Note that MODEL_DATA_ROOT assumes that mdtf_test_data is one directory above MDTF-diagnostics
+// in this sample config file
 {
-  // The cases below correspond to the different test data sets.
-  //
-  // Note that the mdtf package does not yet handle multiple cases.
-  //
+  // Run each ensemble on the example POD.
+  // Add other PODs that work on ensemble datasets to the pod_list as needed
+  "pod_list" : [
+     "example_multicase"
+   ],
+   // Each CASENAME corresponds to a different simulation/output dataset
   "case_list" : [
-    {
-      "CASENAME" : "CASENAME1",
-      "model" : "MODEL1",
-      "convention" : "CONVENTION1",
-      "experiment" : "CASENAME1",
-      "FIRSTYR" : FIRSTYR1,
-      "LASTYR" : LASTYR1,
-      "CASE_ROOT_DIR" : "PPDIR1/",
-      "pod_list": [
-              POD_LIST
-      ]
-    }
+     {
+      "CASENAME" : "ESM4_historical_D1",
+      "model" : "GFDL-ESM4",
+      "convention" : "CMIP",
+      "FIRSTYR" : 1990,
+      "LASTYR" : 1999,
+      "CASE_ROOT_DIR" : "/archive/oar.gfdl.cmip6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp"
+     },
+     {
+      "CASENAME" : "ESM4_piControl_D",
+      "model" : "GFDL-ESM4",
+      "convention" : "CMIP",
+      "FIRSTYR" : 600,
+      "LASTYR" : 609,
+      "CASE_ROOT_DIR" : "/archive/oar.gfdl.cmip6/ESM4/DECK/ESM4_piControl_D/gfdl.ncrc4-intel16-prod-openmp/pp"
+     }
   ],
   // PATHS ---------------------------------------------------------------------
-  // Location of input and output data. If a relative path is given, it's
-  // resolved relative to the MDTF-diagnostics code directory.
-  // set this to somewhere writeable with sufficient space for copies of input data
-  //"MDTF_TMPDIR": "/net2/jml/tmp",
+  // Location of supporting data downloaded when the framework was installed.
+
+  // If a relative path is given, it's resolved relative to the MDTF-diagnostics
+  // code directory. Environment variables (eg, $HOME) can be referenced with a
+  // "$" and will be expended to their current values when the framework runs.
+
   // Parent directory containing results from different models.
   "MODEL_DATA_ROOT": "$MDTF_TMPDIR/inputdata/model",
 
   // Site-specific installation of observational data used by individual PODs.
   // This will be GCP'ed locally if running on PPAN.
-  //"OBS_DATA_REMOTE": "/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data",
-  "OBS_DATA_REMOTE": "/archive/wnd/MDTF-GFDL/inputdata/obs_data",
+  "OBS_DATA_REMOTE": "/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data",
 
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "$MDTF_TMPDIR/inputdata/obs_data",
@@ -46,8 +65,7 @@
   "WORKING_DIR": "$MDTF_TMPDIR/wkdir",
 
   // Directory to write output files. Defaults to working directory if blank.
-  //"OUTPUT_DIR": "$MDTF_TMPDIR/mdtf_out",
-  "OUTPUT_DIR": "OUTPUTDIR1",
+  "OUTPUT_DIR": "$MDTF_TMPDIR/mdtf_out",
 
   // GFDL ----------------------------------------------------------------------
   // Settings specific to operation at GFDL.
@@ -58,16 +76,12 @@
 
   // If running on a GFDL workstation, set $MDTF_TMPDIR to this location
   // and create temp files here. Must be accessible via gcp.
-  //"GFDL_WS_TEMP": "$MDTF_TMPDIR",
-  "GFDL_WS_TEMP": "/archive/$USER/tmp",
+  "GFDL_WS_TEMP": "/$MDTF_TMPDIR",
 
   // Set flag to run framework in 'online' mode, processing data as part of the
   // FRE pipeline. Normally this is done by calling the mdtf_gfdl.csh wrapper
   // script from the XML.
   "frepp": false,
-
-// Allow the framework to pull files/variables from multiple components
-"any_components": true,
 
   // Set flag search entire /pp/ directory for model data; default is to
   // restrict to model component passed by FRE. Ignored if --frepp is not set.
@@ -77,11 +91,11 @@
   // Settings affecting the framework's retrieval of model data.
 
   // Method used to fetch model data.
-  "data_manager": "GFDL_PP",
-  
+  "data_manager": "GFDL_auto",
+
   // Data type that PODs will run
   // "single_run" (default) or "multi_run"
-  "data_type": "single_run",
+  "data_type": "multi_run",
 
   // Time (in seconds) to wait before giving up on transferring a data file to
   // the local filesystem. Set to zero to disable.
@@ -142,3 +156,4 @@
   // data is copied. Implies test_mode.
   "dry_run": false
 }
+

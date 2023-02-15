@@ -38,6 +38,7 @@ class HTMLSourceFileMixin():
         """
         return os.path.join(self.WK_DIR, '_MDTF_pod_output_temp.html')
 
+
     def html_src_file(self, file_name):
         """Returns full path to a framework-supplied html template *file_name*
         or other part of the output page.
@@ -457,7 +458,9 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             self.obj.status = core.ObjectStatus.SUCCEEDED
 
 
-class MultirunHTMLOutputManager(HTMLOutputManager, AbstractOutputManager, HTMLSourceFileMixin):
+class MultirunHTMLOutputManager(HTMLOutputManager,
+                                AbstractOutputManager,
+                                HTMLSourceFileMixin):
     """OutputManager that collects the output of all PODs run in multirun mode
     as html pages.
 
@@ -481,6 +484,34 @@ class MultirunHTMLOutputManager(HTMLOutputManager, AbstractOutputManager, HTMLSo
         self.WK_DIR = pod.POD_WK_DIR       # abbreviate
         self.OUT_DIR = pod.POD_OUT_DIR     # abbreviate
         self.obj = pod
+
+    def append_result_link(self, pod):
+        """Update the top level index.html page with a link to *pod*'s results.
+
+        This simply appends one of two html fragments to index.html:
+        ``src/html/pod_result_snippet.html`` if *pod* completed successfully,
+        or ``src/html/pod_error_snippet.html`` if an exception was raised during
+        *pod*'s setup or execution.
+        """
+        template_d = html_templating_dict(pod)
+        # add a warning banner if needed
+        assert(hasattr(pod, '_banner_log'))
+        banner_str = pod._banner_log.buffer_contents()
+        if banner_str:
+            banner_str = banner_str.replace('\n', '<br>\n')
+            src = self.html_src_file('warning_snippet.html')
+            template_d['MDTF_WARNING_BANNER_TEXT'] = banner_str
+            util.append_html_template(src, self.CASE_TEMP_HTML, template_d)
+
+        # put in the link to results
+        if pod.failed:
+            # report error
+            src = self.html_src_file('pod_error_snippet.html')
+            # template_d['error_text'] = pod.format_log(children=True)
+        else:
+            # normal exit
+            src = self.html_src_file('multirun_pod_result_snippet.html')
+        util.append_html_template(src, self.CASE_TEMP_HTML, template_d)
 
     def make_output(self, pod):
         """Top-level method for doing all output activity post-init. Spun into a
@@ -527,8 +558,9 @@ class MultirunHTMLOutputManager(HTMLOutputManager, AbstractOutputManager, HTMLSo
         template_dict = self.obj.pod_env_vars.copy()
         template_dict['DATE_TIME'] = \
             datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
+        template_dict['PODNAME'] = self.obj.name
         util.append_html_template(
-            self.html_src_file('mdtf_header.html'), dest, template_dict
+            self.html_src_file('mdtf_multirun_header.html'), dest, template_dict
         )
         util.append_html_template(self.CASE_TEMP_HTML, dest, {})
         util.append_html_template(

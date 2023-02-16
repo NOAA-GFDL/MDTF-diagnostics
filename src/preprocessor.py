@@ -245,12 +245,12 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
 
         if t_start > dt_start_upper:
             err_str = (f"Error: dataset start ({t_start}) is after "
-                f"requested date range start ({dt_start_upper}).")
+                       f"requested date range start ({dt_start_upper}).")
             var.log.error(err_str)
             raise IndexError(err_str)
         if t_end < dt_end_lower:
             err_str = (f"Error: dataset end ({t_end}) is before "
-                f"requested date range end ({dt_end_lower}).")
+                       f"requested date range end ({dt_end_lower}).")
             var.log.error(err_str)
             raise IndexError(err_str)
 
@@ -258,11 +258,11 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         new_t = ds.cf.dim_axes(tv_name).get('T')
         if t_size == new_t.size:
             var.log.info(("Requested dates for %s coincide with range of dataset "
-                "'%s -- %s'; left unmodified."),
-                var.full_name,
-                new_t.values[0].strftime('%Y-%m-%d'),
-                new_t.values[-1].strftime('%Y-%m-%d'),
-            )
+                          "'%s -- %s'; left unmodified."),
+                         var.full_name,
+                         new_t.values[0].strftime('%Y-%m-%d'),
+                         new_t.values[-1].strftime('%Y-%m-%d'),
+                         )
         else:
             var.log.info("Cropped date range of %s from '%s -- %s' to '%s -- %s'.",
                          var.full_name,

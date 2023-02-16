@@ -560,7 +560,7 @@ class DataSourceQFPMixin(core.MDTFObjectBase, util.CaseLoggerMixin,
                 self.fetch_data()
                 update = False
             vars_to_process = [
-                pv for pv in self.iter_vars(active=True) \
+                pv for pv in self.iter_vars(active=True)
                 if pv.var.stage < varlistentry_util.VarlistEntryStage.PREPROCESSED
             ]
             if not vars_to_process:
@@ -613,7 +613,7 @@ class DataSourceQFPMixin(core.MDTFObjectBase, util.CaseLoggerMixin,
             if p.failed:
                 p.log.debug('Data request for %s failed.', p.full_name)
             else:
-                p.log.debug('Data request for %s completed succesfully.',
+                p.log.debug('Data request for %s completed successfully.',
                             p.full_name)
 
     def query_and_fetch_cleanup(self, signum=None, frame=None):
@@ -855,7 +855,7 @@ class MultirunDataSourceQFPMixin(DataSourceQFPMixin, ABC):
         for p in self.iter_children():
             for v in p.iter_children():
                 if v.status == core.ObjectStatus.ACTIVE:
-                    v.log.debug('Data request for %s completed succesfully.',
+                    v.log.debug('Data request for %s completed successfully.',
                                 v.full_name)
                     v.status = core.ObjectStatus.SUCCEEDED
                 elif v.failed:

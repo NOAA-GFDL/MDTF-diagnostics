@@ -64,7 +64,7 @@ desired. The user may comment out any of the plotting functions that are called 
 Required programming language and libraries
 -------------------------------------------
 
-Written using conda version 4.10.1 and python version 3.9.13
+Written using conda version 4.10.1 and python version 3.10
 
 matplotlib, numpy, pandas, xarray, scipy, sys
 

@@ -11,18 +11,16 @@
 TC MSE Variance Budget Analysis
 ===============================
 
-Last Update: 2/16/2023
+Last Update: 2/22/2023
 
-This POD computes the column-integrated mosit static energy (MSE) and its variance budget for
-TC snapshots which are generated using track data. These model snapshots are then composited and compared 
-to 5 reanalysis datasets which the same above computations have also been completed prior.
+This POD computes the column-integrated moist static energy (MSE) and terms in the budget for its spatial variance for tropical cyclones (TCs). The budget terms are computed along the tracks of individual simulated TCs and them composited as a function of the TC intensity (maximum near-surface wind speed) of each snapshot. The results are compared to equivalent calculations from 5 reanalysis datasets.
 
 .. Underline with '-'s to make a second-level heading.
 
 Version & Contact info
 ----------------------
 
-- Version/revision information: version 1 (2/16/2023)
+- Version/revision information: version 1 (2/22/2023)
 - PI: Allison Wing, Florida State University, awing@fsu.edu
 - Developer/point of contact: Jarrett Starr, Florida State University, jstarr2@fsu.edu
 - Other Contributors: Caitlin Dirkes, Suzana Camargo, Daehyun Kim
@@ -33,32 +31,22 @@ Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt). 
-Unless you've distributed your script elsewhere, you don't need to change this.
+.. Unless you've distributed your script elsewhere, you don't need to change this.
 
 Functionality
 -------------
 
-Track data is read in as a .txt file to gather the center latitude and longitude position, maximum velocity (vmax), minimum sea leavel pressure, 
-and the date at each timestep. Once the track data is read in, it is then used to create tropical cyclone (TC) snapshots following the storm in 
-a 10 degree by 10 degree box. Each snapshot then has the column-integrated moist static energy (MSE) calculated as well as the longwave, shortwave,
-and surface flux feedbacks in the MSE variance budget equation. Then, the snapshots are trimmed to only account for times where the TC is intensifying
-and is equatorward of 30 degrees. The remaining snapshots are then binned by vmax in 3 meter per second bins and box-averaged values of each snapshot are 
-calculated. These binned snapshots and their box averages are composited across the bins. The composites are then used for analysis comparing to 5 reanalysis 
-datasets (ERA-5, ERA-Interim, MERRA-2, CFSR, JRA-55) which have already been run through the above framework. Plots of the composite spatial view of feedback 
-terms and anomaly of MSE for select bins are made for each reanalysis and model. The composite spatial views are azimuthally-averaged and plotted comparing across 
-different bins for each feedback term. The bin composites of box-averaged feedbacks are compared across the various vmax bins, which a feedback-normalized 
-version of this plot is made as well. The bin composites of box-averaged feedbacks are also scattered by percent of storms intensifying from one bin to another,
-which again a feedback-normalized version of this plot is also created.
+In the current implementation of the POD, pre-calcluated tropical cyclone (TC) track data is also required as an input to the POD as obs data. The POD is currently written to accept track data as a formatted .txt file. The code extracts the TC center latitude and longitude, maximum near surface wind speed (vmax), and minimum sea level pressure at each time along the track of each storm. The code then extracts the necessary variables to compute the column-integrated moist static energy (MSE) and the longwave, shortwave, and surface flux feedbacks in the budget for the spatial variance of column-integrated MSE, in 10 x 10 degree boxes along the tracks of each TC. Then, the snapshots are trimmed to only account for times where the TC is intensifying (snapshots prior to each storms lifetime maximum intensity) and is equatorward of 30 degrees. The remaining TC snapshots are then binned by vmax in 3 m/s increment, and then composited over each bin. The model composites are then compared to 5 reanalysis 
+datasets (ERA-5, ERA-Interim, MERRA-2, CFSR, JRA-55) which have already been processed through the above framework. The plots include composite TC-relative spatial maps of the feedback terms and MSE anomaly for select bins, azimuthal averages of the feedback terms for select bins, and box-averages of the feedback terms for all bins. A normalized version of the box-average plot is also included, in which the feedbacks at each grid point are normalized by the value of the box-average MSE variance for that snapshot. The normalization is performed prior to compositing. Finally, the box-averaged feedbacks and normalized box-averaged feedbacks in select bins are plotted against the percent of storms intensifying from one bin to another.
 
 When and how each of the scripts are utilized in the driver script (TC_MSE_Driver.py) is as follows:
 
-1. TC_snapshot_MSE_calc.py is called which is where the snapshotting of each TC timestep is done along with the afromentioned calculations
-and files are created and saved by year.
+1. TC_snapshot_MSE_calc.py is called first to extract the data and compute the MSE varaince budget along the tracks of all the TCs. The resulting data is saved into a file for each year. 
 
 2. Binning_and_compositing.py is called which takes all of the files that were created in step 1, concatenates them, and then bins as well as composites each
 of the snapshots and its variables by vmax. The budget variables are also box-averaged and normalized in this step as well.
 
-3. Plotting.py is called which imports all of the plotting functions that are in the Plotting_Functions.py script and generates then saves the plots that are 
+3. Plotting.py is called which imports all of the plotting functions that are in the Plotting_Functions.py script and generates and saves the plots that are 
 desired. The user may comment out any of the plotting functions that are called in the Plotting.py script they do not want. 
 
 Required programming language and libraries
@@ -75,21 +63,25 @@ The following 3-D (time-lat-lon) and 4-D (time-plev-lat-lon) variables are requi
 
 3-D Variables:
 
-Surface Downwelling LW Flux in Air, Units: W m-2, Frequency: 6-hourly
-Surface Downwelling SW Flux in Air, Units: W m-2, Frequency: 6-hourly
-Surface Upwelling LW Flux in Air, Units: W m-2, Frequency: 6-hourly
-Surface Upwelling SW Flux in Air, Units: W m-2, Frequency: 6-hourly
+Surface Downwelling Longwave Flux in Air, Units: W m-2, Frequency: 6-hourly 
+Surface Downwelling Shortwave Flux in Air, Units: W m-2, Frequency: 6-hourly
+Surface Upwelling Longwave Flux in Air, Units: W m-2, Frequency: 6-hourly
+Surface Upwelling Shortwave Flux in Air, Units: W m-2, Frequency: 6-hourly
 Surface Upward Latent Heat Flux, Units: W m-2, Frequency: 6-hourly
 Surface Upward Sensible Heat Flux, Units: W m-2, Frequency: 6-hourly
-Top of Atmosphere Outgoing LW Flux, Units: W m-2, Frequency: 6-hourly
-Top of Atmosphere Outgoing SW Flux, Units: W m-2, Frequency: 6-hourly
-Top of Atmosphere Incoming SW Flux, Units: W m-2, Frequency: 6-hourly
+Top of Atmosphere Outgoing Longwave Flux, Units: W m-2, Frequency: 6-hourly
+Top of Atmosphere Outgoing Shortwave Flux, Units: W m-2, Frequency: 6-hourly
+Top of Atmosphere Incoming Shortwave Flux, Units: W m-2, Frequency: 6-hourly
 
 4-D Variables:
 
-Air Temperature, Units: K, Frequency: 6-hourly
-Geopotential Height, Units: m, Frequency: 6-hourly
-Specific Humidity, Units: 1.0, Frequency: 6-hourly
+Air Temperature, Units: K, Frequency: 6-hourly instantaneous
+Geopotential Height, Units: m, Frequency: 6-hourly instantaneous
+Specific Humidity, Units: g g-1, Frequency: 6-hourly instantaneous
+
+In order to have sufficient samples, we recommend enough years of data to have at least 100 TCs, which is typically 2-5 years of simulation time depending on the resolution of the model.
+
+In the current implementation of the POD, pre-calcluated TC track data is also required as an input to the POD as obs data. If future versions incorporate TC tracking directly, additional model output variables will be required.
 
 References
 ----------
@@ -104,45 +96,23 @@ energy variance budget, Journal of Climate (In review).
 More about this diagnostic
 --------------------------
 
-The MSE variance budget has been shown in Wing et al. (2019) to play an important role in the development of TCs. The MSE variance budget equation is shown below:
+The MSE variance budget has been shown to capture the role of important physical processes in the development of TCs (Wing et al. 2016; Wing et al. 2019; Wing 2022). A budget for the spatial variance of column-integated MSE is given by:
 
 .. math::
 
    \frac{1}{2}\frac{\partial \hat{h}'^2}{\partial t} = \hat{h}' F'_{k} + \hat{h}' N'_{L} + \hat{h}' N'_{S} - \hat{h}'(\widehat{\vec{u}\cdot \nabla  h})'.
 
-There are three diabatic feedback terms (on the RHS) which from left to right are the surface flux, longwave, and shortwave feedback respectively. The far right 
-feedback is the advective term which we do not calculate in the framework as we focus on the three diabatic terms only. Each of the feedback terms are considered 
-sources and sinks of MSE variance. The prime notation indicates the anomaly from the box average value of the given variable. For example, each 10 by 10 degree 
-snapshot has column-integrated MSE (:math:`\hat{h}`) calculated at each grid box in the snapshot. To get the anomaly you take the box average of the snapshot and 
-take the difference between the snapshot's box average value of column-integrated MSE and the column-integrated MSE at each grid box. Anomalies are also computed 
-for the surface enthalpy flux (:math:`F'_{k}`), column longwave radiative flux convergence (:math:`N'_{L}`), and the column shortwave radiative flux 
-convergence (:math:`N'_{S}`). When these flux anomalies are multiplied by the column-integrated MSE anomaly, we then have our full diabatic feedback terms which 
-tell us the sources and sinks of MSE variance. 
+The hat notation indicates a mass-weighted column integral. There are three diabatic feedback terms (on the RHS) which from left to right are the surface flux, longwave, and shortwave feedback respectively. The far right feedback is the advective term which we do not calculate in this POD as we focus on the three diabatic terms only. Each of the feedback terms are considered sources and sinks of MSE variance. The prime notation indicates the anomaly from the average value of the given variable over a box centered on the TC. For example, for each snapshot along the track of each TC, the column-integrated MSE (:math:`\hat{h}`) is calculated as the anomaly of the column-integrated MSE at each grid point within a 10 x 10 degree box centered on the TC from its cosine-latitude weighted mean over that box. Anomalies are also computed for each of the diabatic sources and sinks of column-integrated MSE: surface enthalpy flux (:math:`F'_{k}`), column longwave radiative flux convergence (:math:`N'_{L}`), and the column shortwave radiative flux convergence (:math:`N'_{S}`).  
 
-Sources of MSE variance are seen when a feedback term is positive, or when the moist regions get more moist and dry regions get more dry. Sinks of MSE variance 
-are seen when a feedback term is negative, or in the case where dry regions are being moistened and moist regions are being dried. In the areas closest to the TC 
-center, anomalies of column-integrated MSE will tend to be above the box average value giving a positive value of :math:`\hat{h}'`. In the event that a model or 
-reanalysis has the ability to detect an eye-like feature for a TC, the winds will be more calm in the center giving rise to a smaller surface enthalpy flux and a 
-negative value of :math:`F'_{k}`. Therefore, in this scenario we would observe the surface flux feedback term being a sink of MSE variance. This can be observed in 
-the spatial composite plots of the finer horizontal resolution reanalyses that pick up on the eye-like features which we typically observe in TCs. It has been shown 
-in Wing et al. (2019) and Dirkes et al. (2022) that sources of MSE variance play an important role in TC development and its intensification to its lifetime maximum
-intensity (LMI).
+Sources of MSE variance are seen when a feedback term is positive, which occurs when an individual grid point has anomalies of column-interated MSE and anomalies of its source/sink of the same sign. That is, if there is an anomalous source of column-integrated MSE at the same place where the column-integrated MSE is already anomalously large, this will amplify the MSE anomaly and act to increase the MSE variance. Since the spatial variability of MSE in the tropical atmosphere (even in TCs) is dominated by moisture variability, an increase in MSE spatial variance reflects that the moist regions get moister and the dry regions get drier. Conversely, sinks of MSE variance are termed negative feedbacks, where dry regions are being moistened and moist regions are being dried. 
 
-The binning of these snapshots are done based on vmax so we can keep the snapshot compositing consistent across different storms. Wing et al. (2019) notes that
-if we composite based on time leading up to LMI, the strength of the feedbacks will vary in a given snapshot as the LMI and preceding vmax for each storm can be 
-vastly different between any given storm. Therefore, by binning in 3 m/s bins we maintain a consistency between snapshots in each storm which allows us to 
-composite feedbacks that do not vary greatly in strength or magnitude in a given bin.
+As an example, in the areas closest to the TC center, column-integrated MSE will tend to be above the box average value giving a positive value of :math:`\hat{h}'`. In the event that a model or reanalysis has the ability to detect an eye-like feature for a TC, the winds will be more calm in the center giving rise to a smaller surface enthalpy flux and a 
+negative value of :math:`F'_{k}`. Therefore, in this scenario we would observe the surface flux feedback term being a sink of MSE variance in that location. This can be observed in the spatial composite plots of the finer horizontal resolution reanalyses that pick up on the eye-like features in TCs. Since MSE variance increases with TC intensity, sources of MSE variance play can be interpreted as contributing to TC development (Wing et al. 2019; Dirkes et al. 2022).
 
-Prior work done in Wing et al. (2019) and Dirkes et al. (2022) note the importance of the various plots generated in this POD. The spatial composite panel plotting
-allows one to see a given model's spatial representation of the three diabatic feedback terms in comparison with the 5 reanalyses used in this POD for a given bin.
-The azimuthal mean plotting gives another vantage point as to how the composited snapshots vary with radial distance from the center by intensity bin. This shows a line plot
-of the afromentioned spatial composite plots and calculates the azimuthal average value radially outward from the center to show how the feedback changes as you distance
-from the center. What can be noted is that as you distance farther from the center, all the feedbacks tend to approach zero which results from being too far from
-the influence of the TC. Using the box-averaged values of the snapshot feedbacks, we can see how those values after being averaged across each bin vary as you increase in 
-intensity. It can be noted that as a storm increases in intensity, the areas nearest the TC become more moist so the variance of column-integrated MSE increases as you 
-increase in intensity. The three diabatic feedbacks also tend to increase as you increase in intensity. Each bin also has spread between box-averaged values used in the compositing, 
-to account for this error bars noting the 5 to 95% confidence interval are calculated and plotted for each feedback in each bin. The starting point for these box-averaged plots is 
-the 6 to 9 m/s bin and for a bin to be plotted there must be sufficient sample size (at least two) in the bins used for adequate error bars. An example of this plot can be noted below.
+In order to compare across TC snapshots of similar intensity, we bin the MSE variance and its diabatic feedbacks based on the maximum near surface wind speed of the TC (vmax). 
+Wing et al. (2019) noted that if we composite based on time leading up to LMI, the strength of the feedbacks will vary in a given snapshot as the LMI and preceding vmax for each storm can be vastly different between any given storm, and across models or reanalyses. Therefore, by binning in 3 m/s bins we can compare the feedback representation at a given intensity across different mdels or between models and reanalyses. 
+
+The plots provided as part of this POD follow those from Wing et al. (2019) and Dirkes et al. (2022). The spatial composite panel plotting allows one to see a given model's spatial representation of the three diabatic feedback terms in comparison with 5 modern reanalyses, for one intensity bin. The azimuthal mean plots reduce the dimensionality and reveal how the feedbacks vary with radial distance from the TC center in each intensity bin. What can be noted is that as the distance from the TC center increases, all the feedbacks tend to approach zero which results from being too far from the influence of the TC. Further reducing the dimensionality, the box-averaged feedback intensity bin composites show how the average of the feedback over the entire TC-centered box depend on TC intensity, and for a given intensity, the model can becompared to the reanalyses.  It can be noted that as a storm increases in intensity, the areas nearest the TC become warmer and moister, and thus the variance of column-integrated MSE increases. The three diabatic feedbacks also tend to increase with intensity. Error bars indicate the 5-95% confidence interval for the box-average feedback. The values are only plotted if there are at least two samples in that bin, though in practice more than 50 samples must be present for the error bars to be small. Thus, the first bin that is plotted is the 6 to 9 m/s bin but the models and reanalyses are best compared between intensities of 10 and 30 m/s. An example of this plot is shown below.
 
 .. _my-figure-tag:
 
@@ -150,8 +120,13 @@ the 6 to 9 m/s bin and for a bin to be plotted there must be sufficient sample s
    :align: left
    :width: 75 %
 
-The normalized version of these box-averaged feedbacks are also calculated which is done by dividing each grid point by the column-integrated MSE variance. This is done to remove 
-the effect of column-integrated MSE anomalies increasing as a storm is intensifying. This allows one to look at the feedbacks as a growth rate of column-integrated MSE per day. 
-The last plots are looking at the percent of storms that intensify from one bin to the next as a function of feedback value. This is done to try and attribute some of the TC 
-climatological differences seen in modeling and the reanalyses used to their physical processes represented. These plots also use the same error bars as the previous plots for each of 
-the normalized and non-normalized feedbacks.
+The normalized version of these box-averaged feedbacks are also calculated which is done by dividing the feedback at each grid point by the box-averaged column-integrated MSE variance, prior to doing the intensity bin composites. This is done to remove the effect of column-integrated MSE anomalies increasing as a storm is intensifying, as well as account for different baseline representations of MSE variability across different models/reanalyses. The normalized feedbacks can be interprted as a growth rate of MSE variance per day. 
+
+The final plot relates the percentage of storms that intensify from one intensity bin to the next to the value of the diabatic feedbacks at the starting intensity. This can be used to help attribute intermodel variability in TC intensification to process representation as quantified by the MSE variance budget feedbacks. For example, Wing et al. 2019 showed that models that had a larger surface flux feedback at a given intensity produced more intense TCs on average. Across reanalyses, Dirkes et al. 2022 showed that reanalyses that had a larger longwave feedback at a given intensity produced a greater fraction of TCs that intensified further. 
+
+
+Additional References
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1. Wing, A.A., S.J. Camargo, and A.H. Sobel (2016), Role of radiative-convective feedbacks in spontaneous tropical cyclogenesis in idealized numerical simulations, J. Atmos. Sci., 73, 2633-2642, doi:10.1175/JAS-D-15-0380.1.
+
+2. Wing, A.A. (2022): Acceleration of tropical cyclone development by cloud-radiative feedbacks, J. Atmos. Sci., 79, 2285–2305, doi:10.1175/JAS-D-21-0227.1.

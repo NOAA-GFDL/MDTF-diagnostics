@@ -568,6 +568,8 @@ def BoxAvLinePlotting():
             ax.set_title(titlevar, fontweight='bold', fontsize=25)
             ax.set_ylabel(units,fontweight='bold',fontsize=25)
             ax.set_xlabel('Mean Wind Speed [m/s]',fontweight='bold', fontsize=25)
+            if(titlevar=="Variance of h"):
+                ax.set_ylim(0,1.5e+15)
             ax.tick_params(labelsize=25)
             ax.yaxis.get_offset_text().set_fontsize(25)
 

@@ -74,7 +74,6 @@ for var in Model_vars:
 
 #Loop through all model storms and find the LMI, then tag each storm with its LMI for binning later
 for s in range(len(maxwinds)):
-    print(s)
     windmax = float(max(maxwinds[s][:]))
     windmaxindex = np.squeeze(np.where(maxwinds[s]==windmax))
     #Check if there are more than one maximum wind speed
@@ -124,7 +123,6 @@ bins_count = np.zeros(len(bins))
 vmax2 = model_updated.vmax.copy(deep=True)
 onedvmax = model_updated.new_maxwind.copy(deep=True)
 for b, bin in enumerate(bins):
-    print(bin)
     upperbin = bin+3
     #Variable to get the number of samples for the current bin (divide by the resolution dims multiplied together)
     count = (len(np.where((model_updated.vmax>=bin)&(model_updated.vmax<upperbin))[0])/count_denom)
@@ -145,7 +143,6 @@ dsnewbins = ds['newbins'].values
 binmeans = {}
 binboxavstdevs = {}
 for var_name,values in ds.items():
-    print(var_name)
     dvar = ds[var_name].values
     if(len(np.shape(dvar))==4):
         avg_bin_list = []

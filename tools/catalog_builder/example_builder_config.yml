@@ -1,0 +1,14 @@
+# Configuration file template for catalog_builder
+# DRS convention to use cmip | gfdl | cesm
+convention: cmip
+# Path(s) to the root directory with the target dataset
+data_root_dirs:
+  - /uda/cmip6/CMIP/IPSL/IPSL-CM6A-LR/amip/r6i1p1f1
+
+dir_depth: 4
+exclude_patterns:
+  - Eday
+  - fx
+  - 6hrLev
+output_dir: ./
+output_filename: test_catalog.csv

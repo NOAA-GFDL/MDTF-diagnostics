@@ -16,11 +16,13 @@ import click
 import glob
 import intake
 import os
+import sys
 import pathlib
 import traceback
 import xarray as xr
 import yaml
-from datetime import datetime
+import time
+from datetime import datetime, timedelta
 from ecgtools import Builder
 from ecgtools.builder import INVALID_ASSET, TRACEBACK
 from ecgtools.parsers.cesm import parse_cesm_timeseries
@@ -120,9 +122,11 @@ class CatalogBase(object):
                     "type": "join_existing",
                     "attribute_name": "time_range",
                     "options": {"dim": "time", "coords": "minimal", "compat": "override"},
-                },
-            ],
+                }
+            ]
         self.data_format = "netcdf" # netcdf or zarr
+        self.variable_col_name = "variable_id"
+        self.path_col_name = "path"
         self.cb = None
 
     def cat_builder(self, data_paths: list,
@@ -139,15 +143,18 @@ class CatalogBase(object):
                           extension='.nc'  # extension of target files
                           )
 
-    def cat_save(self, output_dir: str,
+    def call_save(self, output_dir: str,
                  output_filename: str
                  ):
         self.cb.save(
-            os.path.join(output_dir, output_filename),
+            # name of the catalog
+            name=output_filename,
+            # directory where catalog will be written
+            #directory=output_dir,
             # Column name including filepath
-            path_column_name='path',
+            path_column_name=self.path_col_name,
             # Column name including variables
-            variable_column_name='variable',
+            variable_column_name=self.variable_col_name,
             # Data file format - could be netcdf or zarr (in this case, netcdf)
             data_format=self.data_format,
             # Which attributes to group by when reading in variables using intake-esm
@@ -169,15 +176,19 @@ class CatalogCMIP(CatalogBase):
             'institution_id',
             'source_id',
             'experiment_id',
+            'member_id',
             'table_id',
-            'grid_label'
-        ],
+            'grid_label',
+            'realm',
+            'variant_label',
+            'time_range'
+        ]
         self.xarray_aggregations = [
             {'type': 'union', 'attribute_name': 'variable_id'},
             {
                 'type': 'join_existing',
-                'attribute_name': 'date_range',
-                'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'},
+                'attribute_name': 'time_range',
+                'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'}
             }
         ]
 
@@ -186,7 +197,7 @@ class CatalogCMIP(CatalogBase):
                     dir_depth=1
                     ):
 
-        self.cb = Builder(paths=data_paths, depth=dir_depth, njobs=4)
+        self.cb = Builder(paths=data_paths, depth=dir_depth, njobs=6)
 
     def call_build(self, file_parse_method=None):
         if file_parse_method is None:
@@ -194,7 +205,7 @@ class CatalogCMIP(CatalogBase):
         # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cmip6.py
         # for more parsing methods
         self.cb = self.cb.build(parsing_func=file_parse_method)
-        print('RRR')
+        print('Build complete')
 
 
 @catalog_class.maker
@@ -253,12 +264,19 @@ def main(config: str):
                         )
     # build the catalog
     print('Building the catalog')
+    start_time = time.monotonic()
+
     cat_obj.call_build()
+
+    end_time = time.monotonic()
+
+    print("Time to build catalog:", timedelta(seconds=end_time - start_time))
     # save the catalog
-    print('Saving catalog to', conf['output_filename'])
-    cat_obj.save(output_dir=conf['output_dir'],
+    print('Saving catalog to', conf['output_filename'] + ".csv")
+    cat_obj.call_save(output_dir=conf['output_dir'],
                  output_filename=conf['output_filename']
                  )
-
+    print('Catalog builder has completed successfully. BYEEEEE.')
+    sys.exit(0)
 if __name__ == '__main__':
     main(prog_name='ESM-Intake Catalog Maker')

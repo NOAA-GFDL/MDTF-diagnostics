@@ -3,12 +3,10 @@
 convention: cmip
 # Path(s) to the root directory with the target dataset
 data_root_dirs:
-  - /uda/cmip6/CMIP/IPSL/IPSL-CM6A-LR/amip/r6i1p1f1
+  - /uda/cmip6/CMIP/IPSL/IPSL-CM6A-LR-INCA/historical/r1i1p1f1/CFsubhr/rlut
 
-dir_depth: 4
+dir_depth: 3
 exclude_patterns:
-  - Eday
-  - fx
-  - 6hrLev
-output_dir: ./
-output_filename: test_catalog.csv
+  - none
+output_dir: /net2/jml
+output_filename: test_catalog

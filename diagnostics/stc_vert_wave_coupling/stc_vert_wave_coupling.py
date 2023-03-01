@@ -38,6 +38,7 @@ obs_plot_dir = f'{WK_DIR}/obs/PS/'
 
 # Parse POD-specific environment variables
 print('*** Parsing POD-specific environment variables')
+SAVE_DERIVED_DATA = bool(os.environ['SAVE_DERIVED_DATA'])
 USE_MODEL_THRESH = bool(os.environ['USE_MODEL_EHF_THRESH'])
 USE_CONSISTENT_YEARS = bool(os.environ['USE_CONSISTENT_YEARS'])
 OBS_FIRSTYR = int(os.environ['OBS_FIRSTYR'])
@@ -151,24 +152,25 @@ for lat in [60, -60]:
     finame = amp_finames.format(CASENAME, hs[lat])
     fig.savefig(plot_dir+finame, facecolor='white', dpi=150, bbox_inches='tight')
 
-print('*** Saving the model FFT coefficients for +/- 60 lat')
-tmp = z_k.interp(lat=[-60,60])
+if SAVE_DERIVED_DATA is True:
+    print('*** Saving the model FFT coefficients for +/- 60 lat')
+    tmp = z_k.interp(lat=[-60,60])
 
-z_k_real = np.real(tmp)
-z_k_real.name = 'z_k_real'
-z_k_real.attrs['long_name'] = 'Real part of longitudinal Fourier Transform of Geopot. Height'
-z_k_real.attrs['units'] = 'm'
+    z_k_real = np.real(tmp)
+    z_k_real.name = 'z_k_real'
+    z_k_real.attrs['long_name'] = 'Real part of longitudinal Fourier Transform of Geopot. Height'
+    z_k_real.attrs['units'] = 'm'
 
-z_k_imag = np.imag(tmp)
-z_k_imag.name = 'z_k_imag'
-z_k_imag.attrs['long_name'] = 'Imaginary part of longitudinal Fourier Transform of Geopot. Height'
-z_k_imag.attrs['units'] = 'm'
+    z_k_imag = np.imag(tmp)
+    z_k_imag.name = 'z_k_imag'
+    z_k_imag.attrs['long_name'] = 'Imaginary part of longitudinal Fourier Transform of Geopot. Height'
+    z_k_imag.attrs['units'] = 'm'
 
-outfile = f'{data_dir}/{CASENAME}_60-lat_hgt-zonal-fourier-coeffs.nc'
-encoding = {'z_k_real': {'dtype': 'float32'},
-            'z_k_imag': {'dtype': 'float32'}}
-dat2save = xr.merge([z_k_real, z_k_imag])
-dat2save.to_netcdf(outfile, encoding=encoding)
+    outfile = f'{data_dir}/{CASENAME}_60-lat_hgt-zonal-fourier-coeffs.nc'
+    encoding = {'z_k_real': {'dtype': 'float32'},
+                'z_k_imag': {'dtype': 'float32'}}
+    dat2save = xr.merge([z_k_real, z_k_imag])
+    dat2save.to_netcdf(outfile, encoding=encoding)
 ### END WAVE AMP CLIMO CODEBLOCK ### 
 
 
@@ -203,15 +205,16 @@ for hemi in [1, -1]:
     finame = ehf_finames.format(CASENAME, hs[hemi])
     fig.savefig(plot_dir+finame, facecolor='white', dpi=150, bbox_inches='tight')
 
-print('*** Saving the model polar cap eddy heat fluxes')
-vt50_k_pcap.name = 'ehf_pcap_50'
-vt50_k_pcap.attrs['long_name'] = '50 hPa 60-90 lat polar cap eddy heat flux'
-vt50_k_pcap.attrs['units'] = 'K m s-1'
-vt50_k_pcap.hemi.attrs['long_name'] = 'hemisphere (-1 for SH, 1 for NH)'
+if SAVE_DERIVED_DATA is True:
+    print('*** Saving the model polar cap eddy heat fluxes')
+    vt50_k_pcap.name = 'ehf_pcap_50'
+    vt50_k_pcap.attrs['long_name'] = '50 hPa 60-90 lat polar cap eddy heat flux'
+    vt50_k_pcap.attrs['units'] = 'K m s-1'
+    vt50_k_pcap.hemi.attrs['long_name'] = 'hemisphere (-1 for SH, 1 for NH)'
 
-outfile = f'{data_dir}/{CASENAME}_50hPa_pcap_eddy-heat-flux.nc'
-encoding = {'ehf_pcap_50': {'dtype': 'float32'}}
-vt50_k_pcap.to_netcdf(outfile, encoding=encoding)
+    outfile = f'{data_dir}/{CASENAME}_50hPa_pcap_eddy-heat-flux.nc'
+    encoding = {'ehf_pcap_50': {'dtype': 'float32'}}
+    vt50_k_pcap.to_netcdf(outfile, encoding=encoding)
 ### END EDDY HEAT FLUX HISTO CODEBLOCK ### 
 
 
@@ -309,25 +312,26 @@ for hemi in [1, -1]:
     finame = cc_finames.format(CASENAME, hs[hemi])
     fig.savefig(plot_dir+finame, facecolor='white', dpi=150, bbox_inches='tight')
 
-print('*** Saving the model FFT coefficients for 45-80 lat bands')
-z_k_real = np.real(z_k_4580)
-z_k_real.name = 'z_k_real'
-z_k_real.attrs['long_name'] = 'Real part of 45-80 lat band average of ' +\
-                              'longitudinal Fourier Transform of Geopot. Height'
-z_k_real.attrs['units'] = 'm'
+if SAVE_DERIVED_DATA is True:
+    print('*** Saving the model FFT coefficients for 45-80 lat bands')
+    z_k_real = np.real(z_k_4580)
+    z_k_real.name = 'z_k_real'
+    z_k_real.attrs['long_name'] = 'Real part of 45-80 lat band average of ' +\
+                                'longitudinal Fourier Transform of Geopot. Height'
+    z_k_real.attrs['units'] = 'm'
 
-z_k_imag = np.imag(z_k_4580)
-z_k_imag.name = 'z_k_imag'
-z_k_imag.attrs['long_name'] = 'Imag part of 45-80 lat band average of ' +\
-                              'longitudinal Fourier Transform of Geopot. Height'
-z_k_imag.attrs['units'] = 'm'
+    z_k_imag = np.imag(z_k_4580)
+    z_k_imag.name = 'z_k_imag'
+    z_k_imag.attrs['long_name'] = 'Imag part of 45-80 lat band average of ' +\
+                                'longitudinal Fourier Transform of Geopot. Height'
+    z_k_imag.attrs['units'] = 'm'
 
-outfile = f'{data_dir}/{CASENAME}_45-80-lat_hgt-zonal-fourier-coeffs.nc'
-encoding = {'z_k_real': {'dtype': 'float32'},
-            'z_k_imag': {'dtype': 'float32'}}
-dat2save = xr.merge([z_k_real, z_k_imag])
-dat2save.hemi.attrs['long_name'] = 'hemisphere (-1 for SH, 1 for NH)'
-dat2save.to_netcdf(outfile, encoding=encoding)
+    outfile = f'{data_dir}/{CASENAME}_45-80-lat_hgt-zonal-fourier-coeffs.nc'
+    encoding = {'z_k_real': {'dtype': 'float32'},
+                'z_k_imag': {'dtype': 'float32'}}
+    dat2save = xr.merge([z_k_real, z_k_imag])
+    dat2save.hemi.attrs['long_name'] = 'hemisphere (-1 for SH, 1 for NH)'
+    dat2save.to_netcdf(outfile, encoding=encoding)
 ### END CORRELATION COHERENCE CODEBLOCK ###
 
 print('\n=====================================')

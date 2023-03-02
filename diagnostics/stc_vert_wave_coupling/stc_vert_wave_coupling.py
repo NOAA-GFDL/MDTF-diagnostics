@@ -38,9 +38,10 @@ obs_plot_dir = f'{WK_DIR}/obs/PS/'
 
 # Parse POD-specific environment variables
 print('*** Parsing POD-specific environment variables')
-SAVE_DERIVED_DATA = bool(os.environ['SAVE_DERIVED_DATA'])
-USE_MODEL_THRESH = bool(os.environ['USE_MODEL_EHF_THRESH'])
-USE_CONSISTENT_YEARS = bool(os.environ['USE_CONSISTENT_YEARS'])
+
+SAVE_DERIVED_DATA = bool(int(os.environ['SAVE_DERIVED_DATA']))
+USE_MODEL_THRESH = bool(int(os.environ['USE_MODEL_EHF_THRESH']))
+USE_CONSISTENT_YEARS = bool(int(os.environ['USE_CONSISTENT_YEARS']))
 OBS_FIRSTYR = int(os.environ['OBS_FIRSTYR'])
 OBS_LASTYR = int(os.environ['OBS_LASTYR'])
 
@@ -275,7 +276,7 @@ for hemi in [1, -1]:
     lo_dates = model_vt.where(model_vt < lo_thresh, drop=True).time
     hi_dates = model_vt.where(model_vt > hi_thresh, drop=True).time
 
-    print(f'*** Making model heat flux event composite maps for {hs[hemi]} {mons[hemi]}')
+    print(f'*** Making model heat flux event composite maps for {hs[hemi]} {seas[hemi]}')
     fig = eddy_hgt_hfevents(z_eddy_10, z_eddy_500, hi_dates, lo_dates, hemi)
 
     title = ehc_titles.format(CASENAME, hs[hemi], seas[hemi], FIRSTYR, LASTYR)

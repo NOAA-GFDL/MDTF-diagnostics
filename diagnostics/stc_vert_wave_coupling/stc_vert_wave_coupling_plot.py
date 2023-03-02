@@ -214,7 +214,7 @@ def heatflux_histo_plot(vt_k, months, hemi, obs=None):
                     histtype='step', color='#FF8C00', linewidth=1, label='Obs')
             plt.axvline(obs_percs[0], color='#FF8C00', linestyle='--', linewidth=0.7)
             plt.axvline(obs_percs[1], color='#FF8C00', linestyle='--', linewidth=0.7)
-            plt.text(0.85,0.85,percstring,transform=ax.transAxes,color='red', fontsize=12, ha='center', va='center')
+            plt.text(0.85,0.85,percstring,transform=ax.transAxes,color='#FF8C00', fontsize=12, ha='center', va='center')
         
         plt.xlim((bins[wavenum].min(), bins[wavenum].max()))
         x0,x1 = ax.get_xlim()
@@ -383,7 +383,8 @@ def corrcoh_seasons(z_fc, hemi):
 
         # Do the correlation coherence computations and plot the lines
         for j,mos in enumerate(months):
-            coh,phas = cross_spectral_corr(z_fc.sel(zonal_wavenum=wavenum), z_fc.nlons, mos, 500, 10)
+            coh,phas = cross_spectral_corr(z_fc.sel(zonal_wavenum=wavenum), z_fc.nlons, 
+                                           mos, 500, 10, np.arange(-10,11))
             ax.plot(coh.lag, coh.values, linewidth=1.5, label=labels[j])
         
         # Customize the plots

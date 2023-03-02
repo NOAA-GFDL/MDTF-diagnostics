@@ -17,7 +17,7 @@ from stc_vert_wave_coupling_plot import wave_ampl_climo_plot, \
 ########################
 print('\n=======================================')
 print('BEGIN stc_vert_wave_coupling.py ')
-print('=======================================\n')
+print('=======================================')
 
 # Parse MDTF-set environment variables
 print('*** Parse MDTF-set environment variables ...')
@@ -32,7 +32,7 @@ z500fi = os.environ['ZG500_FILE']
 v50fi = os.environ['VA50_FILE']
 t50fi = os.environ['TA50_FILE']
 
-data_dir = f'{WK_DIR}/model/model/netCDF'
+data_dir = f'{WK_DIR}/model/netCDF'
 plot_dir = f'{WK_DIR}/model/PS/'
 obs_plot_dir = f'{WK_DIR}/obs/PS/'
 
@@ -54,20 +54,20 @@ if (OBS_FIRSTYR < 1979) or (OBS_LASTYR > 2019):
     msg = 'OBS_FIRSTYR and OBS_LASTYR must be between 1979-2019'
     raise ValueError(msg)
 
-print('(SETTINGS) Will use {FIRSTYR}-{LASTYR} for {CASENAME}')
-print('(SETTINGS) Will use {OBS_FIRSTYR}-{OBS_LASTYR} for obs')
+print(f'(SETTINGS) Will use {FIRSTYR}-{LASTYR} for {CASENAME}')
+print(f'(SETTINGS) Will use {OBS_FIRSTYR}-{OBS_LASTYR} for obs')
 
 # Read the input model data
 print(f'*** Now starting work on {CASENAME}\n------------------------------')
 print('*** Reading model variables ...')
-print('    z10')
-z10 = xr.open_dataset(z10fi)['z10']
-print('    z500')
-z500 = xr.open_dataset(z500fi)['z500']
-print('    v50')
-v50 = xr.open_dataset(v50fi)['v50']
-print('    t50')
-t50 = xr.open_dataset(t50fi)['t50']
+print('    zg10')
+z10 = xr.open_dataset(z10fi)['zg10']
+print('    zg500')
+z500 = xr.open_dataset(z500fi)['zg500']
+print('    va50')
+v50 = xr.open_dataset(v50fi)['va50']
+print('    ta50')
+t50 = xr.open_dataset(t50fi)['ta50']
 
 # Read in the pre-digested obs data and subset the times
 print('*** Now reading in pre-digested ERA5 data')
@@ -75,23 +75,25 @@ try:
     # geohgt fourier coefficients for +/- 60lat   
     tmp_zk60 = xr.open_dataset(f'{OBS_DATA}/era5_60-lat_hgt-zonal-fourier-coeffs.nc')
     obs_z_k_60 = tmp_zk60.z_k_real + 1j*tmp_zk60.z_k_imag
+    obs_z_k_60.attrs['nlons'] = tmp_zk60.nlons
     obs_z_k_60 = obs_z_k_60.sel(time=slice(f'{OBS_FIRSTYR}',f'{OBS_LASTYR}'))
 
     # geohgt fourier coefficients averaged for 45-80 lat bands
     tmp_zk4580 = xr.open_dataset(f'{OBS_DATA}/era5_45-80-lat_hgt-zonal-fourier-coeffs.nc')
     obs_z_k_4580 = tmp_zk4580.z_k_real + 1j*tmp_zk4580.z_k_imag
+    obs_z_k_4580.attrs['nlons'] = tmp_zk4580.nlons
     obs_z_k_4580 = obs_z_k_4580.sel(time=slice(f'{OBS_FIRSTYR}',f'{OBS_LASTYR}'))
 
     # 50 hPa 60-90 lat polar cap eddy heat flux
-    obs_vt50_k_pcap = xr.open_dataset(f'{OBS_DATA}/era5_50hPa_pcap_eddy-heat-flux.nc')
+    obs_vt50_k_pcap = xr.open_dataarray(f'{OBS_DATA}/era5_50hPa_pcap_eddy-heat-flux.nc')
     obs_vt50_k_pcap = obs_vt50_k_pcap.sel(time=slice(f'{OBS_FIRSTYR}',f'{OBS_LASTYR}'))
 
     # northern hemisphere eddy geohgts
-    obs_nh_zg_eddy = xr.open_dataset(f'{OBS_DATA}/era5_zg-eddy_NH-JFM-only_2p5.nc')
+    obs_nh_zg_eddy = xr.open_dataarray(f'{OBS_DATA}/era5_zg-eddy_NH-JFM-only_2p5.nc')
     obs_nh_zg_eddy = obs_nh_zg_eddy.sel(time=slice(f'{OBS_FIRSTYR}',f'{OBS_LASTYR}'))
 
     # southern hemisphere eddy geohgts
-    obs_sh_zg_eddy = xr.open_dataset(f'{OBS_DATA}/era5_zg-eddy_SH-SON-only_2p5.nc')
+    obs_sh_zg_eddy = xr.open_dataarray(f'{OBS_DATA}/era5_zg-eddy_SH-SON-only_2p5.nc')
     obs_sh_zg_eddy = obs_sh_zg_eddy.sel(time=slice(f'{OBS_FIRSTYR}',f'{OBS_LASTYR}'))
                                         
     can_plot_obs = True
@@ -108,15 +110,15 @@ z_k = xr.concat((zonal_wave_coeffs(z10, keep_waves=[1,2,3]).assign_coords({'lev'
                  zonal_wave_coeffs(z500, keep_waves=[1,2,3]).assign_coords({'lev':500})), dim='lev')
 
 print('*** Computing the 45-80 latitude band averages of the Fourier coefficients')
-z_k_4580 = xr.concat(lat_avg(z_k, -80, -45).assign_coords({'hemi': -1}),
-                     lat_avg(z_k, 45, 80).assign_coords({'hemi': 1}), dim='hemi')
+z_k_4580 = xr.concat((lat_avg(z_k, -80, -45).assign_coords({'hemi': -1}),
+                     lat_avg(z_k, 45, 80).assign_coords({'hemi': 1})), dim='hemi')
 
 print('*** Computing the 50 hPa eddy heat flux as a function of zonal wavenumber')
 vt50_k = zonal_wave_covariance(v50,t50, keep_waves=[1,2,3])
 
 print('*** Computing polar cap averages of eddy heat fluxes')
-vt50_k_pcap = xr.concat(lat_avg(vt50_k, -90, -60).assign_coords({'hemi': -1}),
-                        lat_avg(vt50_k, 60,   90).assign_coords({'hemi': 1}), dim='hemi')
+vt50_k_pcap = xr.concat((lat_avg(vt50_k, -90, -60).assign_coords({'hemi': -1}),
+                        lat_avg(vt50_k, 60,   90).assign_coords({'hemi': 1})), dim='hemi')
 
 print('*** Computing the 10 and 500 hPa eddy height fields')
 z_eddy_10 = z10 - z10.mean('lon')
@@ -193,13 +195,13 @@ for hemi in [1, -1]:
         plt.suptitle(title, fontweight='semibold', fontsize=21, y=0.93)
 
         finame = ehf_finames.format('ERA5', hs[hemi])
-        fig.savefig(finame, facecolor='white', dpi=150, bbox_inches='tight')
+        fig.savefig(obs_plot_dir+finame, facecolor='white', dpi=150, bbox_inches='tight')
     else:
         obs2plot = None
     print(f'*** Plotting the model {hs[hemi]} heat flux histos for {seas[hemi]}')
     fig = heatflux_histo_plot(vt50_k_pcap.sel(hemi=hemi), mons[hemi], hemi, obs=obs2plot)
 
-    title = ehf_titles[hemi].format(CASENAME, hs[hemi][0], seas[hemi], FIRSTYR, LASTYR)
+    title = ehf_titles.format(CASENAME, hs[hemi][0], seas[hemi], FIRSTYR, LASTYR)
     plt.suptitle(title, fontweight='semibold', fontsize=21, y=0.93)
 
     finame = ehf_finames.format(CASENAME, hs[hemi])
@@ -229,7 +231,7 @@ obs_zg_eddy = {
 for hemi in [1, -1]:
     if can_plot_obs is True:
         obs_vt = obs_vt50_k_pcap.sel(hemi=hemi, zonal_wavenum=1)
-        obs_vt = obs_vt.where(obs_vt['time.month'].isin(seas[hemi]), drop=True)
+        obs_vt = obs_vt.where(obs_vt['time.month'].isin(mons[hemi]), drop=True)
 
         print(f'*** Computing 10th/90th percentiles of obs 50 hPa polar '+\
               f'cap heat fluxes for {hs[hemi]} {seas[hemi]}')

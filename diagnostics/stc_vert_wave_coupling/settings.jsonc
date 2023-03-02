@@ -44,7 +44,7 @@
       "time": {"standard_name": "time"}
     },
     "varlist": {
-      "v50": {
+      "va50": {
         "standard_name": "northward_wind",
         "units": "m s-1",
         "frequency": "day",
@@ -52,7 +52,7 @@
         "scalar_coordinates": {"lev": 50}
         //"alternates" : ["va"]
       },
-      "t50": {
+      "ta50": {
         "standard_name": "air_temperature",
         "units": "K",
         "frequency": "day",

@@ -27,10 +27,10 @@ LASTYR = int(os.environ['LASTYR'])
 WK_DIR = os.environ['WK_DIR']
 OBS_DATA = os.environ['OBS_DATA']
 
-z10fi = os.environ['Z10_FILE']
-z500fi = os.environ['Z500_FILE']
-v50fi = os.environ['V50_FILE']
-t50fi = os.environ['T50_FILE']
+z10fi = os.environ['ZG10_FILE']
+z500fi = os.environ['ZG500_FILE']
+v50fi = os.environ['VA50_FILE']
+t50fi = os.environ['TA50_FILE']
 
 data_dir = f'{WK_DIR}/model/model/netCDF'
 plot_dir = f'{WK_DIR}/model/PS/'

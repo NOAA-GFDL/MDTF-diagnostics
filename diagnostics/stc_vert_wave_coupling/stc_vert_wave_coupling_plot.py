@@ -6,7 +6,7 @@ import matplotlib.ticker as ticker
 from cartopy.util import add_cyclic_point
 from matplotlib import pyplot as plt
 
-from stc_vert_wave_coupling_calc import corr_coherence
+from stc_vert_wave_coupling_calc import cross_spectral_corr
 
 mpl.rcParams['font.family'] = 'sans-serif'
 mpl.rcParams['font.sans-serif'] = 'Roboto'
@@ -383,7 +383,7 @@ def corrcoh_seasons(z_fc, hemi):
 
         # Do the correlation coherence computations and plot the lines
         for j,mos in enumerate(months):
-            coh,phas = corr_coherence(z_fc.sel(zonal_wavenum=wavenum), z_fc.nlons, mos, 500, 10)
+            coh,phas = cross_spectral_corr(z_fc.sel(zonal_wavenum=wavenum), z_fc.nlons, mos, 500, 10)
             ax.plot(coh.lag, coh.values, linewidth=1.5, label=labels[j])
         
         # Customize the plots

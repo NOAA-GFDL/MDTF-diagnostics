@@ -1,3 +1,12 @@
+# ==============================================================================
+# MDTF Strat-Trop Coupling: Vertical Planetary Wave Coupling POD
+# ==============================================================================
+#
+# This file is part of the Strat-Trop Coupling: Vertical Wave Coupling POD
+# of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt). It defines
+# the plotting functions used by the main driver script.
+
+
 import numpy as np
 import matplotlib as mpl
 import cartopy.crs as ccrs
@@ -202,7 +211,7 @@ def heatflux_histo_plot(vt_k, months, hemi, obs=None):
         plt.axvline(percs[0], color='grey')
         plt.axvline(percs[1], color='grey')
         ax.hist(vt_to_plot.sel(zonal_wavenum=wavenum), bins=bins[wavenum], density=True, 
-                histtype='step', color='black', linewidth=2, label='Model')
+                histtype='step', color='black', linewidth=2, label='Input')
         plt.text(0.85,0.93,percstring,transform=ax.transAxes, fontsize=12, ha='center', va='center')
         
         # handle the obs if given; overplot similar step-histos and percentile vertical lines
@@ -225,7 +234,7 @@ def heatflux_histo_plot(vt_k, months, hemi, obs=None):
         plt.title(f'Wave {wavenum}', fontsize=18)
         
         if (wavenum == 1):
-            ax.legend(loc='upper left', frameon=False)
+            ax.legend(loc='center right', frameon=False)
             plt.ylabel('Normalized Frequency', fontsize=16)
         if (wavenum == 2):
             plt.xlabel('Eddy Heat Flux due to wave-k [K m/s]', fontsize=16)
@@ -304,7 +313,7 @@ def eddy_hgt_hfevents(z10_eddy, z500_eddy, pos_dates, neg_dates, hemi):
                        np.arange(50,501,50))
             clevs500 = (np.arange(-500,0,10),
                         np.arange(10,501,10))
-            title = '+EHF50 Days'
+            title = f'+EHF50 Days ({len(pos_dates)})'
         elif (i == 2):
             q2p_10 = z10_anom.sel(time=neg_dates).mean('time')
             q2p_500 = z500_anom.sel(time=neg_dates).mean('time')
@@ -313,7 +322,7 @@ def eddy_hgt_hfevents(z10_eddy, z500_eddy, pos_dates, neg_dates, hemi):
                        np.arange(50,501,50))
             clevs500 = (np.arange(-500,0,10),
                         np.arange(10,501,10))
-            title = '-EHF50 Days'
+            title = f'-EHF50 Days ({len(neg_dates)})'
         
         # Get coordinates that we'll use for the maps
         lats = q2p_10.lat

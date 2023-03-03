@@ -1,3 +1,12 @@
+# ==============================================================================
+# MDTF Strat-Trop Coupling: Vertical Planetary Wave Coupling POD
+# ==============================================================================
+#
+# This file is part of the Strat-Trop Coupling: Vertical Wave Coupling POD
+# of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt). It defines
+# the diagnostic computation functions used by the main driver script.
+
+
 import scipy
 import numpy as np
 import xarray as xr

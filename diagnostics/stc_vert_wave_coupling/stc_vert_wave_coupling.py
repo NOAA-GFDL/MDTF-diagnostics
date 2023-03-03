@@ -1,3 +1,89 @@
+# ==============================================================================
+# MDTF Strat-Trop Coupling: Vertical Planetary Wave Coupling POD
+# ==============================================================================
+#
+# This file is part of the Strat-Trop Coupling: Vertical Wave Coupling POD
+# of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
+#
+# STC Vert Wave Coupling
+# Last update: 2023-03-03
+#
+# This script performs calculations to assess the seasonality and statistical
+# extremes in planetary wave coupling between the stratosphere and troposphere.
+# It uses Fourier decomposition to break fields of geopotential height
+# and eddy heat fluxes into zonal wavenumbers for the largest planetary-scale
+# waves (zonal waves 1-3). Using these, the POD compiles climatologies of 
+# wave amplitudes, distributions of wave-decomposed eddy heat fluxes, composite
+# maps of eddy heights during extreme heat flux events, and lagged correlation
+# coherences between the stratosphere and troposphere. Please see the POD
+# documentation, and the references for the scientific foundations of this POD.
+#
+# ==============================================================================
+#   Version, Contact Info, and License
+# ==============================================================================
+#   - Version/revision information: v1.0 (2023-03-01)
+#   - PI: Zachary D. Lawrence, CIRES + CU Boulder / NOAA PSL
+#   - Developer/point of contact: Zachary D. Lawrence, zachary.lawrence@noaa.gov
+#   - Other contributors: Amy H. Butler, NOAA CSL, amy.butler@noaa.gov
+#
+#  The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt).
+#
+# ==============================================================================
+#   Functionality
+# ==============================================================================
+#   This POD is composed of three files, including the main driver script
+#   (stc_vert_wave_coupling.py), functions that perform computations 
+#   (stc_vert_wave_coupling_calc.py), and functions that compile the specific
+#   POD plots (stc_vert_wave_coupling_plot.py). The basic outline of how this 
+#   POD operates is as follows:
+#   (1) Driver script parses environment variables, and reads in data
+#   (2) Driver script calls calc functions to perform the Fourier decompositions
+#       of input fields.
+#   (3) For each set of plots (4 in total), the driver script calls the 
+#       necessary plotting functions with obs and model data, for both the
+#       northern and southern hemispheres.
+#   (4) Outputs the digested model fields into netcdf files.
+#
+# ==============================================================================
+#   Required programming language and libraries
+# ==============================================================================
+#   This POD is done fully in python, and primarily makes use of numpy, xarray,
+#   and pandas to read, subset, and transform the data. Plotting is done with
+#   matplotlib.
+#
+# ==============================================================================
+#   Required model input variables
+# ==============================================================================
+#   This POD requires daily mean fields of
+#   - meridional wind velocity at 50 hPa (va50)
+#   - air temperature at 50 hPa (ta50)
+#   - geopotential heights at 10 hPa (zg10)
+#   - geopotential heights at 500 hPa (zg500)
+#
+# ==============================================================================
+#   References
+# ==============================================================================
+#   Randel, W. J., 1987: A Study of Planetary Waves in the Southern Winter 
+#       Troposphere and Stratosphere. Part I: Wave Structure and Vertical 
+#       Propagation. J. Atmos. Sci., 44, 917–935, 
+#       https://doi.org/10.1175/1520-0469(1987)044<0917:ASOPWI>2.0.CO;2.
+#   Shaw, T. A., J. Perlwitz, and N. Harnik, 2010: Downward Wave Coupling between 
+#       the Stratosphere and Troposphere: The Importance of Meridional Wave Guiding 
+#       and Comparison with Zonal-Mean Coupling. J. Climate, 23, 6365–6381,
+#       https://doi.org/10.1175/2010JCLI3804.1.
+#   Shaw, T. A., J. Perlwitz, and O. Weiner, 2014: Troposphere-stratosphere
+#       coupling: Links to North Atlantic weather and climate, including their 
+#       representation in CMIP5 models. Journal of Geophysical Research: Atmospheres, 
+#       119, 5864–5880, https://doi.org/10.1002/2013JD021191.
+#   Dunn-Sigouin, E., and T. A. Shaw, 2015: Comparing and contrasting extreme 
+#       stratospheric events, including their coupling to the tropospheric circulation. 
+#       J. Geophys. Res. Atmos., 120: 1374– 1390. doi: 10.1002/2014JD022116.
+#   England, M. R., T. A. Shaw, and L. M. Polvani, 2016: Troposphere-stratosphere 
+#       dynamical coupling in the southern high latitudes and its linkage to the 
+#       Amundsen Sea. Journal of Geophysical Research: Atmospheres, 121, 3776–3789,
+#       https://doi.org/10.1002/2015JD024254.
+
+
 import os
 import traceback
 
@@ -125,12 +211,16 @@ print('*** Computing the 10 and 500 hPa eddy height fields')
 z_eddy_10 = z10 - z10.mean('lon')
 z_eddy_500 = z500 - z500.mean('lon')
 
-
+# From here, things are broken into 4 distinct blocks of code, which each handle 
+# different sets of plots. Each block will iterate over making plots for the NH
+# and SH, and then saving the digested model data (if requested by the user)
+#
 ### BEGIN WAVE AMP CLIMO CODEBLOCK ###
 hs = {60: 'N', -60: 'S'}
 amp_titles = '{} 60°{} GeoHgt Wave Amplitudes ({}-{})'
 amp_finames = '{}-60{}-wave-amps.eps'
 
+# Iterate over NH and SH; in this case we use the latitudes we'll be plotting
 for lat in [60, -60]:
     if can_plot_obs is True:
         obs2plot = obs_z_k_60.convert_calendar('noleap', use_cftime=True)
@@ -155,6 +245,7 @@ for lat in [60, -60]:
     finame = amp_finames.format(CASENAME, hs[lat])
     fig.savefig(plot_dir+finame, facecolor='white', dpi=150, bbox_inches='tight')
 
+# Save the relevant digested data
 if SAVE_DERIVED_DATA is True:
     print('*** Saving the model FFT coefficients for +/- 60 lat')
     tmp = z_k.interp(lat=[-60,60])
@@ -185,6 +276,7 @@ mons = {1:  [1,2,3], -1: [9,10,11]}
 ehf_titles = '{} Eddy Heat Flux Distributions\n50 hPa, 60-90°{} ({}, {}-{})'
 ehf_finames = '{}-vt-histos-{}.eps'
 
+# Iterate over the NH/SH, specified by 1/-1
 for hemi in [1, -1]:
     if can_plot_obs is True:
         obs2plot = obs_vt50_k_pcap.sel(hemi=hemi)
@@ -208,6 +300,7 @@ for hemi in [1, -1]:
     finame = ehf_finames.format(CASENAME, hs[hemi])
     fig.savefig(plot_dir+finame, facecolor='white', dpi=150, bbox_inches='tight')
 
+# Save the relevant digested heat flux data
 if SAVE_DERIVED_DATA is True:
     print('*** Saving the model polar cap eddy heat fluxes')
     vt50_k_pcap.name = 'ehf_pcap_50'
@@ -229,6 +322,9 @@ obs_zg_eddy = {
     1: obs_nh_zg_eddy,
     -1: obs_sh_zg_eddy
 }
+
+# Iterate over the NH/SH, specified by 1/-1
+# Will use some of the param dictionaries defined prior
 for hemi in [1, -1]:
     if can_plot_obs is True:
         obs_vt = obs_vt50_k_pcap.sel(hemi=hemi, zonal_wavenum=1)
@@ -288,13 +384,11 @@ for hemi in [1, -1]:
 
 
 ### BEGIN CORRELATION COHERENCE CODEBLOCK ### 
-hs = {1: 'NH', -1: 'SH'}
 cc_titles = '{} {} Winter Seasons ({}-{})'
 cc_finames = '{}-corr-coh-{}.eps'
-ehf_seas = {
-    1:  [1,2,3],
-    -1: [9,10,11]
-}
+
+# Iterate over the NH/SH, specified by 1/-1
+# Will use some of the param dictionaries defined prior
 for hemi in [1, -1]:
     if can_plot_obs is True:
         print(f'*** Plotting the obs {hs[hemi]} correlation coherence bimonthly composites')
@@ -315,6 +409,7 @@ for hemi in [1, -1]:
     finame = cc_finames.format(CASENAME, hs[hemi])
     fig.savefig(plot_dir+finame, facecolor='white', dpi=150, bbox_inches='tight')
 
+# Save the relevant digested geohgt data
 if SAVE_DERIVED_DATA is True:
     print('*** Saving the model FFT coefficients for 45-80 lat bands')
     z_k_real = np.real(z_k_4580)

@@ -974,11 +974,13 @@ class DefaultDatasetParser:
                     our_var.value, new_units = getattr(our_var, attr_name)
                     our_var.units = units.to_cfunits(new_units)
                     self.log.debug("Updated (value, units) of '%s' to (%s, %s).",
-                        our_var.name, our_var.value, our_var.units)
+                                   our_var.name, our_var.value, our_var.units)
                     delattr(our_var, attr_name)
 
-        assert (hasattr(our_var, 'is_scalar') and our_var.is_scalar)
-        assert ds_var.size == 1
+        assert (hasattr(our_var, 'is_scalar') and our_var.is_scalar), \
+            self.log.error('is_scalar att missing and/or is_scalar is false for ', our_var)
+        assert ds_var.size == 1, \
+            self.log.error('size neq 1 for ', our_var)
         # Check equivalence of units: if units inequivalent, raises MetadataEvent
         try:
             _compare_value_and_units(
@@ -1117,9 +1119,9 @@ class DefaultDatasetParser:
                 # size 1.
                 if ds[ds_coord_name].size != 1:
                     self.log.error("Dataset has scalar coordinate '%s' of size %d != 1.",
-                        ds_coord_name, ds[ds_coord_name].size)
+                                   ds_coord_name, ds[ds_coord_name].size)
                 self.reconcile_names(coord, ds, ds_coord_name, overwrite_ours=True)
-                self.reconcile_scalar_value_and_units(our_var, ds[ds_coord_name])
+                self.reconcile_scalar_value_and_units(coord, ds[ds_coord_name])
             else:
                 # scalar coord has presumably been read from Dataset attribute.
                 # At any rate, we only have a PlaceholderScalarCoordinate object,

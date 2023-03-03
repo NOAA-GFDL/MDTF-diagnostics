@@ -30,16 +30,16 @@ All figures are made for both hemispheres. The plots from (2) and (3) focus
 primarily on the JFM and SON periods for the NH and SH, respectively, as 
 these are generally the seasons with the greatest variability/extremes in 
 heat fluxes. The plots from (1) and (4) show full-season perspectives. 
-The figures from (1) and (2) together evaluate statistical characteristics 
-of the planetary waves as a function of day of year and season.
 
-The figures from (3) show composite maps during extreme heat flux events 
+The figures from (1) and (2) together evaluate statistical characteristics 
+of the planetary waves as a function of day of year and season. The figures 
+from (3) show composite maps during extreme heat flux events 
 relative to climatological stationary wave patterns, which help to assess 
 the vertically-deep wave patterns associated with upward/downward propagation.
-The figures from (4) demonstrate, for different bi-monthly periods, the 
-lag times at which planetary waves in the stratosphere and troposphere are
-most coherent, with positive lag times indicative of upward propagation 
-and negative lag times indicative of downward propagation.
+The figures from (4) demonstrate the lag times at which planetary waves in 
+the stratosphere and troposphere are most coherent, with positive lag 
+times indicative of upward propagation and negative lag times indicative 
+of downward propagation.
 
 
 Version & Contact info

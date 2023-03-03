@@ -3,9 +3,6 @@ import os
 import numpy as np
 import pandas as pd
 import xarray as xr
-import matplotlib.pyplot as plt
-from scipy import interpolate
-import sys
 
 ######################## MATH FUNCTION(S) ############################################
 def boxavg(thing,lat,lon):
@@ -73,7 +70,7 @@ def ReadTrackData(trackdata,start_year,end_year):
        if(int(times[0]) < start_year and int(times[-1]) < start_year) or (\
        int(times[0]) > end_year and int(times[-1]) > end_year):
            continue
-       second_part_flag = False	
+	
        tracks_by_year[int(times[0])].append(storm) #Append list of storms to start year
 
    return df, tracks_by_year

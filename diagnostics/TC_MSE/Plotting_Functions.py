@@ -1,11 +1,10 @@
 #Import modules
 import os
 import numpy as np
-import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
 from scipy import interpolate
-import sys
+
 
 #Input of the specific model's lat/lon resolution or grid spacing (degrees) and name of model being run
 modelname = str(os.getenv("modelname"))
@@ -252,9 +251,6 @@ def azmean(xord,yord,data,xcen,ycen,r):
     nslice = 1000 # Number of theta slices
 
     #pre allocate the data
-    azmean = np.zeros(nr)
-    xcircle = np.zeros((nslice,nr))
-    ycircle = np.zeros((nslice,nr))
     datai=np.empty((nslice,nr)) #Create empty array for the second function
     
     # 360 degrees around the circle 
@@ -334,17 +330,14 @@ def AzmeanPlotting():
             Reanalysis_var = 'hSEF_concat'
             model_var = 'hanom_SEFanom'
             title_var = "h'SEF'"
-            savenamevar = 'hSEF'
         elif(r == 2):
             Reanalysis_var = 'hSW_concat'
             model_var = 'hanom_SWanom'
             title_var = "h'SW'"
-            savenamevar = 'hSW'
         elif(r == 1):
             Reanalysis_var = 'hLW_concat'
             model_var = 'hanom_LWanom'
             title_var = "h'LW'"
-            savenamevar = 'hLW'
         #Take the different bin azmeans
         # az0 is 15-18 m/s bin
         Model_azmean0 = azmean(Modellons,Modellats,Model_mean_binned_data[model_var].sel(bin=16.5),0,0,Modelrr)

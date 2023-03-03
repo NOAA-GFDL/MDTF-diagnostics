@@ -1,12 +1,13 @@
 # Configuration file template for catalog_builder
 # DRS convention to use cmip | gfdl | cesm
-convention: cmip
+convention: gfdl
 # Path(s) to the root directory with the target dataset
 data_root_dirs:
-  - /uda/cmip6/CMIP/IPSL/IPSL-CM6A-LR-INCA/historical/r1i1p1f1/CFsubhr/rlut
+  #- /uda/cmip6/CMIP/IPSL/IPSL-CM6A-LR-INCA/historical/r1i1p1f1/CFsubhr/rlut
+  - /archive/oar.gfdl.cmip6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp/atmos/ts/monthly/5yr
 
-dir_depth: 3
+dir_depth: 1
 exclude_patterns:
-  - none
+  - DO_NOT_USE
 output_dir: /net2/jml
 output_filename: test_catalog

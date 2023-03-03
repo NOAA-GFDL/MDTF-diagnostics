@@ -57,49 +57,59 @@ catalog_class = ClassMaker()
 
 # custom parser for data stored on GFDL uda
 # TODO: move to separate module and submit PR to ecg-tools repo
-def parse_gfdl_uda(file_name: str):
-    #files = sorted(glob.glob(os.path.join(root_dir,'*/*/*/*/*/*/*.nc')))
-    #file = pathlib.Path(files[0])
-    file = pathlib.Path(file_name[0])
+def parse_gfdl_pp_ts(file_name: str):
+    files = sorted(glob.glob(os.path.join(file_name,'*.nc')))  #debug comment when ready to run
+    file = pathlib.Path(files[0]) # debug comment when ready to run
+    #file = pathlib.Path(file_name)  # uncomment when ready to run
     info = dict()
 
     try:
         # isolate file from rest of path
         stem = file.stem
         # split the file name into components based on _
-        split = stem.split('_')
-        variable_id = split[0]
-        table_id = split[1]
-        source_id = split[2]
-        experiment_id = split[3]
-        variant_label = split[4]
-        grid_label = split[5]
-        date_range = split[6]
-        if 'mon' in table_id.lower():
+        split = stem.split('.')
+        realm = split[0]
+        time_range = split[1]
+        variable_id = split[2]
+        source_type = file.parts[3]
+        member_id = file.parts[4]
+        experiment_id = file.parts[5]
+        source_id = file.parts[6]
+        freq = file.parts[10]
+        chunk_freq = file.parts[11]
+        variant_label = ""
+        grid_label = ""
+        table_id = ""
+        if 'mon' in freq.lower():
             output_frequency = 'mon'
-        elif 'day' in table_id.lower():
+        elif 'day' in freq.lower():
             output_frequency = 'day'
-        elif '6hr' in table_id.lower():
+        elif '6hr' in freq.lower():
             output_frequency = '6hr'
-        elif 'subhr' in table_id.lower():
+        elif 'subhr' in freq.lower():
             output_frequency = 'subhr'
 
         with xr.open_dataset(file, chunks={}, decode_times=False) as ds:
             variable_list = [var for var in ds if 'standard_name' in ds[var].attrs]
 
             info = {
-                'sample_dataset': source_id,
+                'activity_id': source_id,
+                'institution_id': "GFDL",
+                'member_id': member_id,
+                'realm': realm,
                 'variable_id': variable_id,
                 'table_id': table_id,
                 'source_id': source_id,
+                'source_type': source_type,
                 'experiment_id': experiment_id,
                 'variant_label': variant_label,
                 'grid_label': grid_label,
-                'date_range': date_range,
+                'time_range': time_range,
+                'chunk_freq': chunk_freq,
                 'frequency': output_frequency,
                 'variable': variable_list[0],
                 'file_name': stem,
-                'path': str(file),
+                'path': str(file)
             }
 
         return info
@@ -114,16 +124,28 @@ class CatalogBase(object):
 
     def __init__(self):
         self.joblib_parallel_kwargs = {'n_jobs': -1}  # default parallel jobs
-        self.groupby_attrs = ["component", "stream", "case"]  # attributes to group by when reading
+        self.groupby_attrs = [
+            'activity_id',
+            'institution_id',
+            'source_id',
+            'experiment_id',
+            'frequency',
+            'member_id',
+            'table_id',
+            'grid_label',
+            'realm',
+            'variant_label',
+            'time_range'
+        ]  # attributes to group by when reading
         # in variables using intake-esm
         self.xarray_aggregations = [
-                {'type': 'union', 'attribute_name': 'variable'},
-                {
-                    "type": "join_existing",
-                    "attribute_name": "time_range",
-                    "options": {"dim": "time", "coords": "minimal", "compat": "override"},
-                }
-            ]
+            {'type': 'union', 'attribute_name': 'variable_id'},
+            {
+                'type': 'join_existing',
+                'attribute_name': 'time_range',
+                'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'}
+            }
+        ]
         self.data_format = "netcdf" # netcdf or zarr
         self.variable_col_name = "variable_id"
         self.path_col_name = "path"
@@ -150,7 +172,7 @@ class CatalogBase(object):
             # name of the catalog
             name=output_filename,
             # directory where catalog will be written
-            #directory=output_dir,
+            directory=os.path.join(output_dir),
             # Column name including filepath
             path_column_name=self.path_col_name,
             # Column name including variables
@@ -171,26 +193,6 @@ class CatalogCMIP(CatalogBase):
 
     def __init__(self):
         super().__init__()
-        self.groupby_attrs = [
-            'activity_id',
-            'institution_id',
-            'source_id',
-            'experiment_id',
-            'member_id',
-            'table_id',
-            'grid_label',
-            'realm',
-            'variant_label',
-            'time_range'
-        ]
-        self.xarray_aggregations = [
-            {'type': 'union', 'attribute_name': 'variable_id'},
-            {
-                'type': 'join_existing',
-                'attribute_name': 'time_range',
-                'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'}
-            }
-        ]
 
     def cat_builder(self, data_paths: list,
                     exclude_patterns=None,
@@ -213,11 +215,13 @@ class CatalogGFDL(CatalogBase):
     """Class to generate GFDL data catalogs\n
     """
 
-    def call_build(self):
-        pass
-        # TODO create parse_gfdl_timeseries module and
-        # submit PR to ecgtools
-        # return self.build(parse_gfdl_timeseries)
+    def call_build(self, file_parse_method=None):
+        if file_parse_method is None:
+            file_parse_method = parse_gfdl_pp_ts
+        # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cmip6.py
+        # for more parsing methods
+        self.cb = self.cb.build(parsing_func=file_parse_method)
+        print('Build complete')
 
 
 @catalog_class.maker
@@ -250,7 +254,7 @@ def main(config: str):
             os.path.isdir(p)
         except FileNotFoundError:
             print("{p} not found. Check data_root_dirs for typos.")
-        data_obj = parse_gfdl_uda(p)  # debug custom parser
+        data_obj = parse_gfdl_pp_ts(p)  # debug custom parser
 
 
     # instantiate the builder class instance for the specified convention

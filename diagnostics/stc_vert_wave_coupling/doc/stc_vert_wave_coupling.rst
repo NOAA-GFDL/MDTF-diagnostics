@@ -14,36 +14,8 @@ Stratosphere-Troposphere Coupling: Vertical Wave Coupling
 Last update: 2023-03-03
 
 This POD assesses the seasonality and extremes of vertical planetary wave 
-coupling between the extratropical troposphere and stratosphere. Wave motions
-in the polar stratosphere are primarily dominated by vertically propagating 
-Rossby waves from the troposphere. Because of so-called "Charney-Drazin 
-filtering", only the largest planetary scale waves are able to propagate 
-into the stratosphere when there are westerly mean winds 
-(Charney & Drazin, 1961; Andrews et al., 1987). As a result, vertical wave
-coupling between the troposphere and stratosphere follows a distinct seasonal
-cycle organized around the formation of the westerly stratospheric polar vortex 
-in autumn (when waves can enter the stratosphere), and its breakdown in 
-spring/early summer (when easterly winds prevent propagation).
-
-The propagation characteristics of planetary waves are strongly dependent on 
-the background mean flow, which can influence where/how these waves propagate. 
-In some cases these can lead to events in which waves are reflected from the 
-stratosphere back into the troposphere, which tend to occur most often in late 
-winter in the NH and spring in the SH (Shaw et al., 2010). These reflected 
-waves can directly influence the tropospheric circulation. 
-
-Wave events in the stratosphere are associated with meridional fluxes of heat
-that can be characterized by "eddy heat fluxes" (v'T', where v is the 
-meridional wind, and T is the temperature, and primes denote deviations from
-the zonal mean), which are proportional to the wave vertical group velocity
-under linear wave theory (Andrews et al., 1987). Statistically extreme heat 
-flux events thus represent extremes in wave propagation with vertically deep
-planetary wave structures (Dunn-Sigouin and Shaw, 2015); extraordinarily high 
-heat fluxes weaken and warm the polar vortex, whereas negative heat fluxes are 
-generally associated with wave reflection that can dynamically cool and 
-strengthen the vortex. 
-
-This POD makes four kinds of figures from provided model data:
+coupling between the extratropical troposphere and stratosphere. It makes four 
+kinds of figures from provided model data:
 
 1. Climatological time series of planetary wave amplitudes in the 
    troposphere (500 hPa) and stratosphere (10 hPa)
@@ -53,27 +25,21 @@ This POD makes four kinds of figures from provided model data:
    extreme heat flux days (Shaw et al., 2014; England et al., 2016)
 4. Correlation coherence of planetary waves between 10 and 500 hPa
    (Randel 1987; Shaw et al., 2014)
-
+   
 All figures are made for both hemispheres. The plots from (2) and (3) focus 
 primarily on the JFM and SON periods for the NH and SH, respectively, as 
 these are generally the seasons with the greatest variability/extremes in 
 heat fluxes. The plots from (1) and (4) show full-season perspectives. 
 The figures from (1) and (2) together evaluate statistical characteristics 
-of the planetary waves as a function of day of year and season. The figures
-from (3) show composite maps during extreme heat flux events relative to
-the climatological stationary wave patterns, which help to assess the 
-vertically-deep wave patterns associated with upward/downward propagation.
+of the planetary waves as a function of day of year and season.
+
+The figures from (3) show composite maps during extreme heat flux events 
+relative to climatological stationary wave patterns, which help to assess 
+the vertically-deep wave patterns associated with upward/downward propagation.
 The figures from (4) demonstrate, for different bi-monthly periods, the 
 lag times at which planetary waves in the stratosphere and troposphere are
 most coherent, with positive lag times indicative of upward propagation 
 and negative lag times indicative of downward propagation.
-
-A mismatch between modeled and observed planetary wave characteristics could 
-point to issues related to their sources in the troposphere (Shaw et al., 2014b, 
-England et al., 2016), and/or biases in the stratospheric circulation that affect 
-how such waves propagate. These waves can also be affected by model characteristics 
-such as the height of  the model top, and the implementation of sponge layers near 
-the model top (Shaw & Perlwitz, 2010).
 
 
 Version & Contact info
@@ -105,7 +71,7 @@ zonal wave decomposed polar cap (60-90 degrees lat) eddy heat fluxes at
 50 hPa. 
 
 The observational data this POD uses is based on ERA5 reanalysis
-(Hersbach, et al., 2020), and includes the same aformentioned diagnostics. 
+(Hersbach, et al., 2020), and includes the same diagnostics described above. 
 The observational data also includes eddy geoopotential height fields for 
 the NH JFM seasons, and SH SON seasons, which are used to plot composite
 maps during extreme heat flux events. 
@@ -132,6 +98,69 @@ The following daily mean fields are required:
 - Meridional wind at 50 hPa, ``va50`` as ``(time,lat,lon)`` (units: m/s)
 - Geopotential Height at 10 hPa, ``zg10`` as ``(time,lat,lon)`` (units: m)
 - Geopotential Height at 500 hPa, ``zg500`` as ``(time,lat,lon)`` (units: m)
+
+
+Scientific background 
+---------------------
+Wave motions in the polar stratosphere are primarily dominated by 
+vertically propagating Rossby waves from the troposphere. Because of 
+so-called "Charney-Drazin filtering", only the largest planetary scale 
+waves are able to propagate into the stratosphere when there are westerly 
+mean winds (Charney & Drazin, 1961; Andrews et al., 1987). As a result, 
+vertical wave coupling between the troposphere and stratosphere follows a 
+distinct seasonal cycle organized around the formation of the westerly 
+stratospheric polar vortex in autumn (when waves can enter the stratosphere), 
+and its breakdown in spring/early summer (when easterly winds prevent propagation).
+
+The propagation characteristics of planetary waves are strongly dependent on 
+the background mean flow, which can influence where/how these waves propagate. 
+In some cases these can lead to events in which waves are reflected from the 
+stratosphere back into the troposphere, which tend to occur most often in late 
+winter in the NH and spring in the SH (Shaw et al., 2010). These reflected 
+waves can directly influence the tropospheric circulation. 
+
+Wave events in the stratosphere are associated with meridional fluxes of heat
+that can be characterized by "eddy heat fluxes" (v'T', where v is the 
+meridional wind, and T is the temperature, and primes denote deviations from
+the zonal mean), which are proportional to the wave vertical group velocity
+under linear wave theory (Andrews et al., 1987). Statistically extreme heat 
+flux events thus represent extremes in wave propagation with vertically deep
+planetary wave structures (Dunn-Sigouin and Shaw, 2015); extraordinarily high 
+heat fluxes weaken and warm the polar vortex, whereas negative heat fluxes are 
+generally associated with wave reflection that can dynamically cool and 
+strengthen the vortex. 
+
+Mismatches between modeled and observed planetary wave characteristics can
+be tied to issues/biases related to their sources in the troposphere 
+(Shaw et al., 2014b, England et al., 2016), as well as biases in the 
+stratospheric circulation that affect how such waves propagate. These 
+waves can also be affected by model characteristics such as the height of  
+the model top, and the implementation of sponge layers near the model top 
+(Shaw & Perlwitz, 2010).
+
+
+More about this POD
+--------------------------
+
+**Sign of eddy heat fluxes in NH vs SH**
+
+In the Northern Hemisphere (NH), positive eddy heat fluxes represent 
+poleward and upward wave fluxes. However, in the Southern Hemisphere 
+(SH), the sign is flipped such that negative eddy heat fluxes represent 
+the poleward and upward wave fluxes. This means that the SH polar cap 
+eddy heat flux distributions will appear "flipped" compared to those 
+for the NH. This also means that the extreme positive/negative heat 
+flux events are in the opposite sense of those in the NH (i.e., 
+extreme negative SH heat flux events are akin to extreme positive 
+NH heat flux events).
+
+**Tip about horizontal resolution of data**
+
+Since this POD is primarily concerned with planetary scale waves, 
+data with high horizontal resolution can be usefully downsampled 
+without affecting results too much. This can speed up the MDTF data 
+preprocessing and POD operation, while also decreasing the memory 
+footprint.
 
 
 References
@@ -192,27 +221,3 @@ References
     coupling: Links to North Atlantic weather and climate, including their 
     representation in CMIP5 models. J. Geophys. Res.: Atmospheres, 
     119, 5864–5880, https://doi.org/10.1002/2013JD021191.
-
-
-More about this POD
---------------------------
-
-**Sign of eddy heat fluxes in NH vs SH**
-
-In the Northern Hemisphere (NH), positive eddy heat fluxes represent 
-poleward and upward wave fluxes. However, in the Southern Hemisphere 
-(SH), the sign is flipped such that negative eddy heat fluxes represent 
-the poleward and upward wave fluxes. This means that the SH polar cap 
-eddy heat flux distributions will appear "flipped" compared to those 
-for the NH. This also means that the extreme positive/negative heat 
-flux events are in the opposite sense of those in the NH (i.e., 
-extreme negative SH heat flux events are akin to extreme positive 
-NH heat flux events).
-
-** Tip about horizontal resolution of data**
-
-Since this POD is primarily concerned with planetary scale waves, 
-data with high horizontal resolution can be usefully downsampled 
-without affecting results too much. This can speed up the MDTF data 
-preprocessing and POD operation, while also decreasing the memory 
-footprint.

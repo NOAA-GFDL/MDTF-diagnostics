@@ -1,11 +1,7 @@
 #Import modules
 import os
 import numpy as np
-import pandas as pd
 import xarray as xr
-import matplotlib.pyplot as plt
-from scipy import interpolate
-import sys
 
 ##########  BINNING/COMPOSITING MODEL DATA #############################################################
 
@@ -23,29 +19,25 @@ latres = np.float(os.getenv("latres"))
 lonres = np.float(os.getenv("lonres"))
 lats = np.arange(-5,5+latres,latres)
 lons = np.arange(-5,5+lonres,lonres)
+#Gather the years that were inputted by user
+FIRST_YR = np.int(os.getenv("FIRSTYR"))
+LAST_YR = np.int(os.getenv("LASTYR"))
+ds_all = []
 
-#Open up all the data files with model TC snapshots (regular and budget variables)
-ds1979_reg = xr.open_dataset(os.environ['WK_DIR']+'/model/Model_Regular_Variables_1979.nc')
-ds1980_reg = xr.open_dataset(os.environ['WK_DIR']+'/model/Model_Regular_Variables_1980.nc')
-ds1981_reg = xr.open_dataset(os.environ['WK_DIR']+'/model/Model_Regular_Variables_1981.nc')
-ds1982_reg = xr.open_dataset(os.environ['WK_DIR']+'/model/Model_Regular_Variables_1982.nc')
-ds1983_reg = xr.open_dataset(os.environ['WK_DIR']+'/model/Model_Regular_Variables_1983.nc')
+for y in range(FIRST_YR,LAST_YR+1):
+    #Open all the yearly snapshot (budget and regular variable) files
+    ds_reg = xr.open_dataset(os.environ['WK_DIR']+'/model/Model_Regular_Variables_'+str(y)+'.nc')
+    ds_budg = xr.open_dataset(os.environ['WK_DIR']+'/model/Model_Budget_Variables_'+str(y)+'.nc')
+    #Merge the budget and regular variable files by year
+    ds_merge = xr.merge([ds_reg,ds_budg])
+    ds_reg.close()
+    ds_budg.close()
+    #Get all the merged files together so that once all are collected they can be concatenated
+    ds_all.append(ds_merge)
+    ds_merge.close()
 
-ds1979_budg = xr.open_dataset(os.environ['WK_DIR']+'/model/Model_Budget_Variables_1979.nc')
-ds1980_budg = xr.open_dataset(os.environ['WK_DIR']+'/model/Model_Budget_Variables_1980.nc')
-ds1981_budg = xr.open_dataset(os.environ['WK_DIR']+'/model/Model_Budget_Variables_1981.nc')
-ds1982_budg = xr.open_dataset(os.environ['WK_DIR']+'/model/Model_Budget_Variables_1982.nc')
-ds1983_budg = xr.open_dataset(os.environ['WK_DIR']+'/model/Model_Budget_Variables_1983.nc')
-
-#Merge the budget and regular variable files by year
-ds1979 = xr.merge([ds1979_reg,ds1979_budg])
-ds1980 = xr.merge([ds1980_reg,ds1980_budg])
-ds1981 = xr.merge([ds1981_reg,ds1981_budg])
-ds1982 = xr.merge([ds1982_reg,ds1982_budg])
-ds1983 = xr.merge([ds1983_reg,ds1983_budg])
-
-#Concatenate the year files together so all variables are combined across all storms from 1979-1983
-data = xr.concat([ds1979,ds1980,ds1981,ds1982,ds1983], dim='numstorms')
+#Concatenate the year files together so all variables are combined across all storms
+data = xr.concat(ds_all,dim='numstorms')
 
 #Get a list of the data variables in data to trim the data after lifetime maximum intensity (LMI)
 Model_vars = list(data.keys())

@@ -41,7 +41,7 @@ datasets (ERA-5, ERA-Interim, MERRA-2, CFSR, JRA-55) which have already been pro
 
 When and how each of the scripts are utilized in the driver script (TC_MSE_Driver.py) is as follows:
 
-1. TC_snapshot_MSE_calc.py is called first to extract the data and compute the MSE varaince budget along the tracks of all the TCs. The resulting data is saved into a file for each year. 
+1. TC_snapshot_MSE_calc.py is called first to extract the data and compute the MSE variance budget along the tracks of all the TCs. The resulting data is saved into a file for each year. 
 
 2. Binning_and_compositing.py is called which takes all of the files that were created in step 1, concatenates them, and then bins as well as composites each
 of the snapshots and its variables by vmax. The budget variables are also box-averaged and normalized in this step as well.

@@ -8,26 +8,22 @@
 .. Underline with '='s to set top-level heading:
    https://docutils.sourceforge.io/docs/user/rst/quickref.html#section-structure
 
-Stratosphere-Troposphere Coupling: Stratospheric Ozone and Circulation
+Stratosphere-Troposphere Coupling: Stratospheric Polar Vortex Extremes
 ================================
 
-Last update: 2023-01-31
+Last update: 2023-03-06
 
-This POD assesses coupling between stratospheric ozone and the large-scale 
-circulation. Ozone-circulation coupling occurs during spring when sunlight 
-returns to the polar region and the radiative influence of ozone anomalies 
-drives changes to meridional temperature gradients and thus zonal winds, which
-can then dynamically drive temperatures changes, which feedback onto ozone 
-chemistry. For example, in years when the Antarctic ozone hole is larger (more
-ozone loss) in early spring, the polar vortex stays stronger and persists 
-later, leading to a later transition of the vortex at 50 mb to its summertime
-state, here defined zonal-mean zonal winds at 60 degLat as less than 5 (15) 
-m/s in the NH (SH). This seasonal transition of the polar vortex is called 
-the "final stratospheric warming". Because the Arctic rarely gets cold enough
-for severe chemical ozone loss, ozone-circulation coupling is primarily observed
-in the Southern Hemisphere, but this POD allows application to both hemispheres, 
-as similar relationships may still occur in the Northern Hemisphere during extreme 
-polar conditions. 
+This POD assesses stratospheric polar vortex extremes, the tropospheric circulation
+patters that precede them, and the surface impacts that follow. Extremes in the 
+stratospheric polar vortex are closely linked to the tropospheric
+circulation and surface climate both before and after the event. The occurrence of 
+polar stratospheric circulation extremes in the Northern Hemisphere (NH), such
+as sudden stratospheric warmings (SSWs) and polar vortex intensifications, are important
+aspects of stratospheric variability that rely on realistic representations of the 
+stratosphere and the troposphere. Extremes in the strength of the Arctic polar 
+stratospheric circulation are often preceded by known near-surface circulation 
+patterns, and then subsequently followed by shifts in the storm tracks (sometimes
+for weeks).
 
 This POD makes four kinds of figures from provided model data:
 
@@ -64,7 +60,7 @@ response in both hemispheres (Haase et al., 2020, Friedel et al. 2022).
 Version & Contact info
 ----------------------
 
-- Version/revision information: v1.0 (Jan 2023)
+- Version/revision information: v1.0 (Mar 2023)
 - Project PIs: Amy H. Butler (NOAA CSL) and Zachary D. Lawrence (CIRES/NOAA PSL)
 - Developer/point of contact: Amy Butler (amy.butler@noaa.gov)
 
@@ -77,8 +73,8 @@ The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt).
 Functionality
 -------------
 
-This POD is driven by the file ``stc_ozone.py``, with a helper script of
-``stc_ozone_defs.py``.
+This POD is driven by the file ``stc_spv_extremes.py``, with a helper script of
+``stc_spv_extremes_defs.py``.
 The driver script reads in the model fields, calculates zonal mean zonal winds
 for user-defined latitude bands, and polar cap ozone and temperature, and
 generates the plots. It also estimates the final warming DOY using 
@@ -105,11 +101,10 @@ This POD requires Python 3, with the following packages:
 Required model output variables
 -------------------------------
 
-The following monthly mean fields are required:
+The following daily-mean fields are required:
 
-- Temperature, ``ta`` as ``(time,lev,lat,lon)`` (units: K)
 - Zonal Winds, ``ua`` as ``(time,lev,lat,lon)`` (units: m/s)
-- Ozone, ``o3`` as ``(time,lev,lat,lon)`` (units: mol mol-1)
+- Geopotential Heights, ``zg`` as ``(time,lev,lat,lon)`` (units: m)
 
 References
 ----------

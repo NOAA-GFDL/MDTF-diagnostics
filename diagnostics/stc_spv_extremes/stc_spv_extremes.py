@@ -35,10 +35,10 @@
 # ==============================================================================
 #   Functionality
 # ==============================================================================
-#   This POD contains two scripts. The primary script is stc_spv_extremes_pod.py. There
+#   This POD contains two scripts. The primary script is stc_spv_extremes.py. There
 #   is a helper script with functions used by the primary script called 
 #   stc_spv_extremes_defs.py.
-#   The primary script stc_spv_extremes_pod.py goes through these basic steps:
+#   The primary script stc_spv_extremes.py goes through these basic steps:
 #   (1) Loads in the data and restricts the time period to 1979-2014 for comparison
 #       of the ozone depletion period with reanalysis. The 1979-2014 period is the 
 #       default period, but the FIRSTYR and LASTYR are all able to be specified in 

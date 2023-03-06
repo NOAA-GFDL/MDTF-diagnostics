@@ -12,7 +12,7 @@
 # extremes in planetary wave coupling between the stratosphere and troposphere.
 # It uses Fourier decomposition to break fields of geopotential height
 # and eddy heat fluxes into zonal wavenumbers for the largest planetary-scale
-# waves (zonal waves 1-3). Using these, the POD compiles climatologies of 
+# waves (zonal waves 1-3). Using these, the POD compiles climatologies of
 # wave amplitudes, distributions of wave-decomposed eddy heat fluxes, composite
 # maps of eddy heights during extreme heat flux events, and lagged correlation
 # coherences between the stratosphere and troposphere. Please see the POD
@@ -32,14 +32,14 @@
 #   Functionality
 # ==============================================================================
 #   This POD is composed of three files, including the main driver script
-#   (stc_vert_wave_coupling.py), functions that perform computations 
+#   (stc_vert_wave_coupling.py), functions that perform computations
 #   (stc_vert_wave_coupling_calc.py), and functions that compile the specific
-#   POD plots (stc_vert_wave_coupling_plot.py). The basic outline of how this 
+#   POD plots (stc_vert_wave_coupling_plot.py). The basic outline of how this
 #   POD operates is as follows:
 #   (1) Driver script parses environment variables, and reads in data
 #   (2) Driver script calls calc functions to perform the Fourier decompositions
 #       of input fields.
-#   (3) For each set of plots (4 in total), the driver script calls the 
+#   (3) For each set of plots (4 in total), the driver script calls the
 #       necessary plotting functions with obs and model data, for both the
 #       northern and southern hemispheres.
 #   (4) Outputs the digested model fields into netcdf files.
@@ -63,23 +63,23 @@
 # ==============================================================================
 #   References
 # ==============================================================================
-#   Randel, W. J., 1987: A Study of Planetary Waves in the Southern Winter 
-#       Troposphere and Stratosphere. Part I: Wave Structure and Vertical 
-#       Propagation. J. Atmos. Sci., 44, 917–935, 
+#   Randel, W. J., 1987: A Study of Planetary Waves in the Southern Winter
+#       Troposphere and Stratosphere. Part I: Wave Structure and Vertical
+#       Propagation. J. Atmos. Sci., 44, 917–935,
 #       https://doi.org/10.1175/1520-0469(1987)044<0917:ASOPWI>2.0.CO;2.
-#   Shaw, T. A., J. Perlwitz, and N. Harnik, 2010: Downward Wave Coupling between 
-#       the Stratosphere and Troposphere: The Importance of Meridional Wave Guiding 
+#   Shaw, T. A., J. Perlwitz, and N. Harnik, 2010: Downward Wave Coupling between
+#       the Stratosphere and Troposphere: The Importance of Meridional Wave Guiding
 #       and Comparison with Zonal-Mean Coupling. J. Climate, 23, 6365–6381,
 #       https://doi.org/10.1175/2010JCLI3804.1.
 #   Shaw, T. A., J. Perlwitz, and O. Weiner, 2014: Troposphere-stratosphere
-#       coupling: Links to North Atlantic weather and climate, including their 
-#       representation in CMIP5 models. Journal of Geophysical Research: Atmospheres, 
+#       coupling: Links to North Atlantic weather and climate, including their
+#       representation in CMIP5 models. Journal of Geophysical Research: Atmospheres,
 #       119, 5864–5880, https://doi.org/10.1002/2013JD021191.
-#   Dunn-Sigouin, E., and T. A. Shaw, 2015: Comparing and contrasting extreme 
-#       stratospheric events, including their coupling to the tropospheric circulation. 
+#   Dunn-Sigouin, E., and T. A. Shaw, 2015: Comparing and contrasting extreme
+#       stratospheric events, including their coupling to the tropospheric circulation.
 #       J. Geophys. Res. Atmos., 120: 1374– 1390. doi: 10.1002/2014JD022116.
-#   England, M. R., T. A. Shaw, and L. M. Polvani, 2016: Troposphere-stratosphere 
-#       dynamical coupling in the southern high latitudes and its linkage to the 
+#   England, M. R., T. A. Shaw, and L. M. Polvani, 2016: Troposphere-stratosphere
+#       dynamical coupling in the southern high latitudes and its linkage to the
 #       Amundsen Sea. Journal of Geophysical Research: Atmospheres, 121, 3776–3789,
 #       https://doi.org/10.1002/2015JD024254.
 
@@ -87,7 +87,6 @@
 import os
 import traceback
 
-import pandas as pd 
 import xarray as xr
 import numpy as np
 from matplotlib import pyplot as plt
@@ -132,12 +131,12 @@ OBS_FIRSTYR = int(os.environ['OBS_FIRSTYR'])
 OBS_LASTYR = int(os.environ['OBS_LASTYR'])
 
 # user wishes to use same years as model inputdata
-if USE_CONSISTENT_YEARS is True: 
+if USE_CONSISTENT_YEARS is True:
     OBS_FIRSTYR = FIRSTYR
     OBS_LASTYR = LASTYR
 
 # data provided with POD only spans from 1979-2019
-if (OBS_FIRSTYR < 1979) or (OBS_LASTYR > 2019): 
+if (OBS_FIRSTYR < 1979) or (OBS_LASTYR > 2019):
     msg = 'OBS_FIRSTYR and OBS_LASTYR must be between 1979-2019'
     raise ValueError(msg)
 
@@ -159,49 +158,50 @@ t50 = xr.open_dataset(t50fi)['ta50']
 # Read in the pre-digested obs data and subset the times
 print('*** Now reading in pre-digested ERA5 data')
 try:
-    # geohgt fourier coefficients for +/- 60lat   
+    # geohgt fourier coefficients for +/- 60lat
     tmp_zk60 = xr.open_dataset(f'{OBS_DATA}/era5_60-lat_hgt-zonal-fourier-coeffs.nc')
     obs_z_k_60 = tmp_zk60.z_k_real + 1j*tmp_zk60.z_k_imag
     obs_z_k_60.attrs['nlons'] = tmp_zk60.nlons
-    obs_z_k_60 = obs_z_k_60.sel(time=slice(f'{OBS_FIRSTYR}',f'{OBS_LASTYR}'))
+    obs_z_k_60 = obs_z_k_60.sel(time=slice(f'{OBS_FIRSTYR}', f'{OBS_LASTYR}'))
 
     # geohgt fourier coefficients averaged for 45-80 lat bands
     tmp_zk4580 = xr.open_dataset(f'{OBS_DATA}/era5_45-80-lat_hgt-zonal-fourier-coeffs.nc')
     obs_z_k_4580 = tmp_zk4580.z_k_real + 1j*tmp_zk4580.z_k_imag
     obs_z_k_4580.attrs['nlons'] = tmp_zk4580.nlons
-    obs_z_k_4580 = obs_z_k_4580.sel(time=slice(f'{OBS_FIRSTYR}',f'{OBS_LASTYR}'))
+    obs_z_k_4580 = obs_z_k_4580.sel(time=slice(f'{OBS_FIRSTYR}', f'{OBS_LASTYR}'))
 
     # 50 hPa 60-90 lat polar cap eddy heat flux
     obs_vt50_k_pcap = xr.open_dataarray(f'{OBS_DATA}/era5_50hPa_pcap_eddy-heat-flux.nc')
-    obs_vt50_k_pcap = obs_vt50_k_pcap.sel(time=slice(f'{OBS_FIRSTYR}',f'{OBS_LASTYR}'))
+    obs_vt50_k_pcap = obs_vt50_k_pcap.sel(time=slice(f'{OBS_FIRSTYR}', f'{OBS_LASTYR}'))
 
     # northern hemisphere eddy geohgts
     obs_nh_zg_eddy = xr.open_dataarray(f'{OBS_DATA}/era5_zg-eddy_NH-JFM-only_2p5.nc')
-    obs_nh_zg_eddy = obs_nh_zg_eddy.sel(time=slice(f'{OBS_FIRSTYR}',f'{OBS_LASTYR}'))
+    obs_nh_zg_eddy = obs_nh_zg_eddy.sel(time=slice(f'{OBS_FIRSTYR}', f'{OBS_LASTYR}'))
 
     # southern hemisphere eddy geohgts
     obs_sh_zg_eddy = xr.open_dataarray(f'{OBS_DATA}/era5_zg-eddy_SH-SON-only_2p5.nc')
-    obs_sh_zg_eddy = obs_sh_zg_eddy.sel(time=slice(f'{OBS_FIRSTYR}',f'{OBS_LASTYR}'))
-                                        
+    obs_sh_zg_eddy = obs_sh_zg_eddy.sel(time=slice(f'{OBS_FIRSTYR}', f'{OBS_LASTYR}'))
+
     can_plot_obs = True
-except:
-    msg = f'*** Unable to read all of the pre-digested ERA5 data. ' +\
-            'Please check that you have the pre-digested data in {OBS_DATA}'
+
+except Exception:
+    msg = '*** Unable to read all of the pre-digested ERA5 data. ' +\
+          f'Please check that you have the pre-digested data in {OBS_DATA}'
     print(msg)
     print(traceback.format_exc())
     can_plot_obs = False
 
 # Begin computing the necessary diagnostics
 print('*** Computing 10 and 500 hPa zonal Fourier coefficients')
-z_k = xr.concat((zonal_wave_coeffs(z10, keep_waves=[1,2,3]).assign_coords({'lev':10}),
-                 zonal_wave_coeffs(z500, keep_waves=[1,2,3]).assign_coords({'lev':500})), dim='lev')
+z_k = xr.concat((zonal_wave_coeffs(z10, keep_waves=[1, 2, 3]).assign_coords({'lev': 10}),
+                 zonal_wave_coeffs(z500, keep_waves=[1, 2, 3]).assign_coords({'lev': 500})), dim='lev')
 
 print('*** Computing the 45-80 latitude band averages of the Fourier coefficients')
 z_k_4580 = xr.concat((lat_avg(z_k, -80, -45).assign_coords({'hemi': -1}),
                      lat_avg(z_k, 45, 80).assign_coords({'hemi': 1})), dim='hemi')
 
 print('*** Computing the 50 hPa eddy heat flux as a function of zonal wavenumber')
-vt50_k = zonal_wave_covariance(v50,t50, keep_waves=[1,2,3])
+vt50_k = zonal_wave_covariance(v50, t50, keep_waves=[1, 2, 3])
 
 print('*** Computing polar cap averages of eddy heat fluxes')
 vt50_k_pcap = xr.concat((lat_avg(vt50_k, -90, -60).assign_coords({'hemi': -1}),
@@ -211,7 +211,7 @@ print('*** Computing the 10 and 500 hPa eddy height fields')
 z_eddy_10 = z10 - z10.mean('lon')
 z_eddy_500 = z500 - z500.mean('lon')
 
-# From here, things are broken into 4 distinct blocks of code, which each handle 
+# From here, things are broken into 4 distinct blocks of code, which each handle
 # different sets of plots. Each block will iterate over making plots for the NH
 # and SH, and then saving the digested model data (if requested by the user)
 #
@@ -248,7 +248,7 @@ for lat in [60, -60]:
 # Save the relevant digested data
 if SAVE_DERIVED_DATA is True:
     print('*** Saving the model FFT coefficients for +/- 60 lat')
-    tmp = z_k.interp(lat=[-60,60])
+    tmp = z_k.interp(lat=[-60, 60])
 
     z_k_real = np.real(tmp)
     z_k_real.name = 'z_k_real'
@@ -265,13 +265,13 @@ if SAVE_DERIVED_DATA is True:
                 'z_k_imag': {'dtype': 'float32'}}
     dat2save = xr.merge([z_k_real, z_k_imag])
     dat2save.to_netcdf(outfile, encoding=encoding)
-### END WAVE AMP CLIMO CODEBLOCK ### 
+### END WAVE AMP CLIMO CODEBLOCK ###
 
 
-### BEGIN EDDY HEAT FLUX HISTO CODEBLOCK ### 
+### BEGIN EDDY HEAT FLUX HISTO CODEBLOCK ###
 hs = {1: 'NH', -1: 'SH'}
 seas = {1: 'JFM', -1: 'SON'}
-mons = {1:  [1,2,3], -1: [9,10,11]}
+mons = {1:  [1, 2, 3], -1: [9, 10, 11]}
 
 ehf_titles = '{} Eddy Heat Flux Distributions\n50 hPa, 60-90°{} ({}, {}-{})'
 ehf_finames = '{}-vt-histos-{}.eps'
@@ -311,7 +311,7 @@ if SAVE_DERIVED_DATA is True:
     outfile = f'{data_dir}/{CASENAME}_50hPa_pcap_eddy-heat-flux.nc'
     encoding = {'ehf_pcap_50': {'dtype': 'float32'}}
     vt50_k_pcap.to_netcdf(outfile, encoding=encoding)
-### END EDDY HEAT FLUX HISTO CODEBLOCK ### 
+### END EDDY HEAT FLUX HISTO CODEBLOCK ###
 
 
 ### BEGIN EDDY HEIGHT COMPOSITE CODEBLOCK ###
@@ -330,7 +330,7 @@ for hemi in [1, -1]:
         obs_vt = obs_vt50_k_pcap.sel(hemi=hemi, zonal_wavenum=1)
         obs_vt = obs_vt.where(obs_vt['time.month'].isin(mons[hemi]), drop=True)
 
-        print(f'*** Computing 10th/90th percentiles of obs 50 hPa polar '+\
+        print('*** Computing 10th/90th percentiles of obs 50 hPa polar ' +
               f'cap heat fluxes for {hs[hemi]} {seas[hemi]}')
         obs_lo_thresh = np.percentile(obs_vt, 10)
         obs_hi_thresh = np.percentile(obs_vt, 90)
@@ -338,12 +338,12 @@ for hemi in [1, -1]:
         print(f'*** Finding obs dates of extreme pos/neg heat flux events for {hs[hemi]} {seas[hemi]}')
         lo_dates = obs_vt.where(obs_vt < obs_lo_thresh, drop=True).time
         hi_dates = obs_vt.where(obs_vt > obs_hi_thresh, drop=True).time
-    
+
         print(f'*** Making obs heat flux event composite maps for {hs[hemi]} {seas[hemi]}')
-        fig = eddy_hgt_hfevents(obs_zg_eddy[hemi].sel(lev=10), 
-                                obs_zg_eddy[hemi].sel(lev=500), 
+        fig = eddy_hgt_hfevents(obs_zg_eddy[hemi].sel(lev=10),
+                                obs_zg_eddy[hemi].sel(lev=500),
                                 hi_dates, lo_dates, hemi)
-        
+
         title = ehc_titles.format('ERA5', hs[hemi], seas[hemi], OBS_FIRSTYR, OBS_LASTYR)
         plt.suptitle(title, fontweight='semibold', fontsize=21)
 
@@ -351,14 +351,14 @@ for hemi in [1, -1]:
         fig.savefig(obs_plot_dir+finame, facecolor='white', dpi=150, bbox_inches='tight')
 
     else:
-        obs_lo_thresh = None 
+        obs_lo_thresh = None
         obs_hi_thresh = None
-    
+
     model_vt = vt50_k_pcap.sel(hemi=hemi, zonal_wavenum=1)
     model_vt = model_vt.where(model_vt['time.month'].isin(mons[hemi]), drop=True)
 
     if (obs_lo_thresh is None) or (USE_MODEL_THRESH is True):
-        print(f'*** Using model derived heat flux thresholds to find event dates')
+        print('*** Using model derived heat flux thresholds to find event dates')
         lo_thresh = np.percentile(model_vt, 10)
         hi_thresh = np.percentile(model_vt, 90)
     else:
@@ -366,8 +366,8 @@ for hemi in [1, -1]:
         hi_thresh = obs_hi_thresh
 
     if (lo_thresh > 0):
-        print(f'*** (WARNING) The lower heat flux threshold exceeds 0! Interpret results with caution!')
-    print(f'*** Finding model dates of extreme pos/neg heat flux events '+\
+        print('*** (WARNING) The lower heat flux threshold exceeds 0! Interpret results with caution!')
+    print('*** Finding model dates of extreme pos/neg heat flux events ' +
           f'for {hs[hemi]} {seas[hemi]}')
     lo_dates = model_vt.where(model_vt < lo_thresh, drop=True).time
     hi_dates = model_vt.where(model_vt > hi_thresh, drop=True).time
@@ -383,7 +383,7 @@ for hemi in [1, -1]:
 ### END EDDY HEIGHT COMPOSITE CODEBLOCK ###
 
 
-### BEGIN CORRELATION COHERENCE CODEBLOCK ### 
+### BEGIN CORRELATION COHERENCE CODEBLOCK ###
 cc_titles = '{} {} Winter Seasons ({}-{})'
 cc_finames = '{}-corr-coh-{}.eps'
 
@@ -415,13 +415,13 @@ if SAVE_DERIVED_DATA is True:
     z_k_real = np.real(z_k_4580)
     z_k_real.name = 'z_k_real'
     z_k_real.attrs['long_name'] = 'Real part of 45-80 lat band average of ' +\
-                                'longitudinal Fourier Transform of Geopot. Height'
+                                  'longitudinal Fourier Transform of Geopot. Height'
     z_k_real.attrs['units'] = 'm'
 
     z_k_imag = np.imag(z_k_4580)
     z_k_imag.name = 'z_k_imag'
     z_k_imag.attrs['long_name'] = 'Imag part of 45-80 lat band average of ' +\
-                                'longitudinal Fourier Transform of Geopot. Height'
+                                  'longitudinal Fourier Transform of Geopot. Height'
     z_k_imag.attrs['units'] = 'm'
 
     outfile = f'{data_dir}/{CASENAME}_45-80-lat_hgt-zonal-fourier-coeffs.nc'

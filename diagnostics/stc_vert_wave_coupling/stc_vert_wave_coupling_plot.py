@@ -85,6 +85,9 @@ def wave_ampl_climo_plot(z_k, lat, obs=None):
         roll_to = 0
         xticks = np.array([1, 31, 61, 91, 121, 151, 181, 211, 241, 271, 301, 331, 360])
         xlabels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+    else: 
+        msg = "Unable to determine plot params from given input data"
+        raise ValueError(msg)
     xlab_pos = (np.diff(xticks)*0.5)+xticks[0:-1]
 
     # Handle the obs if given. Compute amplitudes and climo line.
@@ -200,6 +203,9 @@ def heatflux_histo_plot(vt_k, months, hemi, obs=None):
         bins = {1: np.linspace(-140, 80, 25),
                 2: np.linspace(-100, 50, 25),
                 3: np.linspace(-30, 30, 25)}
+    else:
+        msg = "hemi must be -1 or 1!"
+        raise ValueError(msg)
 
     # Begin plotting
     fig = plt.figure()

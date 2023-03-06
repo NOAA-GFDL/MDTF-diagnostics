@@ -1,15 +1,13 @@
-// Strat-Trop Coupling: Stratospheric Ozone
+// Strat-Trop Coupling: Stratospheric Polar Vortex Extremes
 //
-// This POD requires monthly-frequency zonal winds and 
-// ozone mole fraction with pressure levels in the troposphere
-// and stratosphere.
-//
+// This POD requires daily-frequency zonal winds, geopotential heights, and 
+// mean sea level pressures.
 {
   "settings" : {
-    "driver" : "stc_ozone.py",
-    "long_name" : "Stratospheric Ozone and Circulation",
+    "driver" : "stc_spv_extremes.py",
+    "long_name" : "Stratospheric Polar Vortex Extremes",
     "realm" : "atmos",
-    "description" : "Assess the relationships between spring stratospheric ozone and circulation",
+    "description" : "Detecting extreme polar vortex events and their surface impacts",
     "pod_env_vars" : {
       // Lower latitude limit for zonal wind lat band avgs (defaults to 50)
       // Should be positive (values will also be calculated for southern hemi)
@@ -42,22 +40,14 @@
     "ua": {
       "standard_name" : "eastward_wind",
       "units" : "m s-1",
-      "frequency": "mon",
+      "frequency": "day",
       "dimensions": ["time", "lev", "lat", "lon"],
       "requirement": "required"
     },
-    "ta": {
-      "standard_name" : "air_temperature",
-      "units" : "K",
-      "frequency": "mon",
-      "dimensions": ["time", "lev", "lat", "lon"],
-      "requirement": "required"
-    },
-    "o3": {
-      "standard_name" : "mole_fraction_of_ozone_in_air",
-      "use_exact_name": true,
-      "units" : "mol mol-1",
-      "frequency": "mon",
+    "zg": {
+      "standard_name" : "geopotential_height",
+      "units" : "m",
+      "frequency": "day",
       "dimensions": ["time", "lev", "lat", "lon"],
       "requirement": "required"
     }

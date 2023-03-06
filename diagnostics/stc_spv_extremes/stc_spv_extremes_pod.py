@@ -1,35 +1,29 @@
 # ==============================================================================
-# MDTF Strat-Trop Coupling: Stratospheric Ozone and Circulation POD
+# MDTF Strat-Trop Coupling: Stratospheric Polar Vortex Extremes
 # ==============================================================================
 #
-# This file is part of the Strat-Trop Coupling: Stratospheric Ozone and Circulation
+# This file is part of the Strat-Trop Coupling: Stratospheric Polar Vortex Extremes
 # POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
 #
-# STC Stratospheric Ozone and Circulation
-# Last update: 2023-01-24
+# STC Stratospheric Polar Vortex Extremes
+# Last update: 2023-03-06
 #
-# This script performs calculations to assess relationships between stratospheric
-# ozone and the large-scale circulation. This POD uses monthly-mean zonal mean 
-# winds, temperatures, and ozone. Ozone-circulation coupling occurs during spring
-# when sunlight returns to the polar region and the radiative influence of ozone
-# anomalies drives changes to meridional temperature gradients and thus zonal winds, 
-# which can then dynamically drive temperatures changes, which feedback onto 
-# ozone chemistry. For example, in years when the Antarctic ozone hole is larger
-# (more ozone loss) in early spring, the polar vortex stays stronger and persists
-# later, leading to a later transition of the vortex at 50mb to its summertime state, 
-# here defined as less than 5 (15) m/s in the NH (SH). This seasonal transition of 
-# the polar vortex is called the "final stratospheric warming". Because 
-# the Arctic rarely gets cold enough for severe chemical ozone loss, 
-# ozone-circulation coupling is primarily observed in the Southern Hemisphere,
-# but this POD allows application to both hemispheres, as similar
-# relationships may still occur in the Northern Hemisphere during extreme polar
-# conditions.
+# This script performs calculations to detect stratospheric polar vortex extremes. 
+# Extremes in the stratospheric polar vortex are closely linked to the tropospheric
+# circulation and surface climate both before and after the event. The occurrence of 
+# polar stratospheric circulation extremes in the Northern Hemisphere (NH), such
+# as sudden stratospheric warmings (SSWs) and polar vortex intensifications, are important
+# aspects of stratospheric variability that rely on realistic representations of the 
+# stratosphere and the troposphere. Extremes in the strength of the Arctic polar 
+# stratospheric circulation are often preceded by known near-surface circulation 
+# patterns, and then subsequently followed by shifts in the storm tracks (sometimes
+# for weeks).
 # Please see the references for the scientific foundations of this POD.
 #
 # ==============================================================================
 #   Version, Contact Info, and License
 # ==============================================================================
-#   - Version/revision information: v1.0 (2023-01-24)
+#   - Version/revision information: v1.0 (2023-03-06)
 #   - PI: Amy H. Butler, NOAA CSL
 #   - Developer/point of contact: Amy H. Butler, amy.butler@noaa.gov
 #   - Other contributors: Zachary D. Lawrence, CIRES + CU Boulder / NOAA PSL, 
@@ -41,10 +35,10 @@
 # ==============================================================================
 #   Functionality
 # ==============================================================================
-#   This POD contains two scripts. The primary script is stc_ozone.py. There
+#   This POD contains two scripts. The primary script is stc_spv_extremes_pod.py. There
 #   is a helper script with functions used by the primary script called 
-#   stc_ozone_defs.py.
-#   The primary script stc_ozone_pod.py goes through these basic steps:
+#   stc_spv_extremes_defs.py.
+#   The primary script stc_spv_extremes_pod.py goes through these basic steps:
 #   (1) Loads in the data and restricts the time period to 1979-2014 for comparison
 #       of the ozone depletion period with reanalysis. The 1979-2014 period is the 
 #       default period, but the FIRSTYR and LASTYR are all able to be specified in 
@@ -83,10 +77,10 @@
 # ==============================================================================
 #   Required model input variables
 # ==============================================================================
-#   This POD requires monthly-mean fields of
+#   This POD requires daily-mean fields of
 #   - zonal wind velocity (ua)
-#   - mole fraction of ozone (o3)
-#   - air temperature (ta)
+#   - geopotential heights (zg)
+#   - near-surface air temperature (tas)
 #   which should all be provided with dimensions of (time, lev, lat, lon)
 #
 # ==============================================================================

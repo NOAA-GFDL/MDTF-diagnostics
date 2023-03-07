@@ -646,7 +646,7 @@ def plot_o3_seas_trends(uzm_bnd, o3_pcap, t_pcap, start_year1='1979',
 # --- BEGIN SCRIPT --- #
 ##########################################################################
 print('\n=======================================')
-print('BEGIN stc_ozone.py ')
+print('BEGIN stc_spv_extremes.py ')
 print('=======================================\n')
 
 ##### Parse MDTF-set environment variables
@@ -814,7 +814,7 @@ out_ds.to_netcdf(outfile, encoding=encoding)
 ## Loading obs data files & plotting obs figures: ##########################
 
 print(f'*** Now working on obs data\n------------------------------')
-obs_file = OBS_DIR + '/stc_ozone_obs-data.nc'
+obs_file = OBS_DIR + '/stc_spv_extremes_obs-data.nc'
 
 try:
     print(f'*** Reading reanalysis data from {obs_file}')
@@ -823,25 +823,17 @@ try:
     obs_firstyr = obs.time.dt.year.values[0]
     obs_lastyr = obs.time.dt.year.values[-1]
     
-    print(f'*** Computing {UZM_LO_LAT}-{UZM_HI_LAT}N and '+\
-          f'{UZM_LO_LAT}-{UZM_HI_LAT}S lat averages of zonal-mean zonal winds')
-    uzm_50 = obs.uwnd_zm.sel(lev=50)
-    uzm_band = {}
-    uzm_band['NH'] = lat_avg(obs.uwnd_zm,  UZM_LO_LAT,  UZM_HI_LAT)
-    uzm_band['SH'] = lat_avg(obs.uwnd_zm, -UZM_HI_LAT, -UZM_LO_LAT)
+    #NOTE FOR UPDATE: could pull only 10 mb uwnds in make_era5 code, to make file smaller
+    print(f'*** Selecting 60N and 60S zonal-mean zonal winds at 10 hPa')
+    uzm_10 = obs.uwnd_zm.sel(lev=10)
+    uzm_lat = {}
+    uzm_lat['NH'] = uzm_10.sel(lat=60)
+    uzm_lat['SH'] = uzm_10.sel(lat=-60)
     
-    print('*** Computing polar cap averages of ozone in ppmv')
-    # Multiply by 1e6 to get mol/mol (volume mixing ratio) to ppmv 
-    o3_new = obs.o3_zm * 1e6
-    
-    o3_pcap = {}
-    o3_pcap['NH'] = lat_avg(o3_new,  PCAP_LO_LAT,  90)
-    o3_pcap['SH'] = lat_avg(o3_new, -90, -PCAP_LO_LAT)
-    
-    print('*** Computing polar cap averages of air temperature')
-    t_pcap = {}
-    t_pcap['NH'] = lat_avg(obs.temp_zm,  PCAP_LO_LAT,  90)
-    t_pcap['SH'] = lat_avg(obs.temp_zm, -90, -PCAP_LO_LAT)
+    print('*** Computing polar cap averages of zonal-mean geopotential height')    
+    zg_pcap = {}
+    zg_pcap['NH'] = lat_avg(obs.zg_zm,  PCAP_LO_LAT,  90)
+    zg_pcap['SH'] = lat_avg(obs.zg_zm, -90, -PCAP_LO_LAT)
 
     # Create the POD figures for both NH and SH cases
     plot_dir = f'{WK_DIR}/obs/PS'
@@ -852,29 +844,18 @@ try:
         ax.set_title(f'{rean}\n{hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
         fig.savefig(scatter_plot)
         
-        print(f'*** Plotting {hemi} FSW vs polar cap O3 scatter plot from rean')
-        filepath = f'{WK_DIR}/obs/netCDF/{rean}_{hemi}_fsw.txt'
-        scatter_FSW = f'{plot_dir}/obs_{hemi}_FSW-O3cap_Scatter.eps'
-        fig,ax = plot_o3_fsw_corr(uzm_50, o3_pcap[hemi], hemi,filepath)
-        ax.set_title(f'{rean}\n{hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
-        fig.savefig(scatter_FSW)
-        
-        print(f'*** Plotting {hemi} UZM vs polar cap O3 lag correlations from rean')
-        levcorr_plot = f'{plot_dir}/obs_{hemi}_UZM-O3cap_LagCorr_Lev.eps'
-        fig,ax = plot_o3_uwnd_lev_lags(uzm_band[hemi], o3_pcap[hemi], hemi)
-        plt.suptitle(f'{rean}, {hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
-        fig.savefig(levcorr_plot)
-        
-        print(f'*** Plotting {hemi} trends in o3, temp, and UZM from rean')
-        trends_plot = f'{plot_dir}/obs_{hemi}_Trends.eps'
-        fig,axs = plot_o3_seas_trends(uzm_band[hemi], o3_pcap[hemi], t_pcap[hemi])
-        fig.suptitle(f'{rean}, {hemi}', fontsize=20)
-        fig.savefig(trends_plot)
+        print(f'*** Calculating {hemi} SSWs and plotting seasonality')
+        #filepath = f'{WK_DIR}/obs/netCDF/{rean}_{hemi}_fsw.txt'
+        filepath = f'/{OBS_DIR}'
+        #scatter_plot = f'{plot_dir}/obs_{hemi}_UZM-O3cap_Scatter.eps'
+        fig,ax = plot_ssw_hist(uzm_10, hemi, filepath)
+        #ax.set_title(f'{rean}\n{hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
+        #fig.savefig(scatter_plot)
         
 except:
     print('*** Unable to create plots from the observational data: ')
     print(traceback.format_exc())
     
 print('\n=====================================')
-print('END stc_ozone_pod.py ')
+print('END stc_spv_extremes.py ')
 print('=====================================\n')

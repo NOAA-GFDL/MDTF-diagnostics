@@ -1,3 +1,61 @@
+'''
+This module contains functions used in the Stratospheric Polar Vortex
+Extremes POD.
+
+Contains:
+    lat_avg (cosine-weighted averages over latitudes)
+    getConsecutiveValues
+    ssw_cp07
+              
+'''
+
+import numpy as np
+import xarray as xr
+
+#************************************************************************************
+
+def lat_avg(ds, lat_lo, lat_hi):
+    r""" Calculate a meridional average of data. The average is done using 
+        cosine-latitude weighting. 
+
+    Parameters
+    ----------
+    ds : `xarray.DataArray` or `xarray.Dataset`
+        The input DataArray or Dataset for which to calculate a meridional
+        average between the given latitude limits.
+    
+    lat_lo : Numeric quantity 
+        The lower latitude limit (inclusive) for performing the meridional average
+
+    lat_hi : Numeric quantity
+        The upper latitude limit (inclusive) for performing the meridional average
+
+    Returns
+    -------
+    ds_wgt : `xarray.DataArray` or `xarray.Dataset`
+         The cos(lat) weighted average of the data between lat_lo and lat_hi
+
+    Notes
+    -----
+    The input xarray variable ds is assumed to have a dimension named "lat". 
+    E.g., if your data has a dimension named "latitude", use the rename method: 
+        ds.rename({'latitude':'lat'})
+
+    """
+
+    # Limit the latitude range without assuming the ordering of lats
+    ds_tmp = ds.isel(lat = np.logical_and(ds.lat >= lat_lo, ds.lat <= lat_hi))
+
+    # Define the cos(lat) weights
+    wgts = np.cos(np.deg2rad(ds_tmp.lat))
+    wgts.name = "weights"
+
+    # Apply weighting and take average
+    ds_wgt_avg = ds_tmp.weighted(wgts).mean('lat')
+    return ds_wgt_avg
+
+#*****************************************************************************
+
 def getConsecutiveValues(arr): 
     
     """
@@ -25,6 +83,8 @@ def getConsecutiveValues(arr):
                 else:
                     final.append(arr[start:end+1])
     return final
+
+#**************************************************************************
 
 def ssw_cp07(variable,threshold=0, consec_days=20, hem="NH"):
     
@@ -71,13 +131,13 @@ def ssw_cp07(variable,threshold=0, consec_days=20, hem="NH"):
         if hem == "NH":
             s_str = str(y)+"-11-01"
             e_str = str(y+1)+"-03-31"
-            print("Calculating NH SSWs for "+s_str+" to "+e_str)
+            #print("Calculating NH SSWs for "+s_str+" to "+e_str)
             var = variable.sel(time=slice(s_str,e_str))
             var_chk = variable.sel(time=slice(s_str,str(y+1)+"-04-30")) #this variable enables check for final warming
         if hem == "SH":
             s_str = str(y)+"-06-01"
             e_str = str(y)+"-10-31"
-            print("Calculating SH SSWs for "+s_str+" to "+e_str)
+            #print("Calculating SH SSWs for "+s_str+" to "+e_str)
             var = variable.sel(time=slice(s_str,e_str))
             var_chk = variable.sel(time=slice(s_str,str(y)+"-11-30")) #this variable enables check for final warming
         
@@ -105,8 +165,10 @@ def ssw_cp07(variable,threshold=0, consec_days=20, hem="NH"):
                 westerlygroupslength = [len(group) for group in westerlygroups]
                 maxlength = np.nanmax(westerlygroupslength)
                 if maxlength > 9:
-                    ssw_dates.append([var.dayofwinter[firstvalue].time.dt.day.values, var.dayofwinter[firstvalue].time.dt.month.values,
-                                 var.dayofwinter[firstvalue].time.dt.year.values])
+                    #ssw_dates.append([var.dayofwinter[firstvalue].time.dt.day.values,                       
+                    #                  var.dayofwinter[firstvalue].time.dt.month.values,
+                    #             var.dayofwinter[firstvalue].time.dt.year.values])
+                    ssw_dates.append(var.dayofwinter[firstvalue].time.dt.strftime("%Y-%m-%d").values.tolist())
         
         # if there are multiple 'groups,' first append the first central date using the exact same code as above #  
         # then, search for additional central dates that are not final warmings #
@@ -122,8 +184,10 @@ def ssw_cp07(variable,threshold=0, consec_days=20, hem="NH"):
                 westerlygroupslength = [len(group) for group in westerlygroups]
                 maxlength = np.nanmax(westerlygroupslength)
                 if maxlength > 9:
-                    ssw_dates.append([var.dayofwinter[firstvalue].time.dt.day.values, var.dayofwinter[firstvalue].time.dt.month.values,
-                                 var.dayofwinter[firstvalue].time.dt.year.values])
+                    #ssw_dates.append([var.dayofwinter[firstvalue].time.dt.day.values, 
+                    #                  var.dayofwinter[firstvalue].time.dt.month.values,
+                    #             var.dayofwinter[firstvalue].time.dt.year.values])
+                    ssw_dates.append(var.dayofwinter[firstvalue].time.dt.strftime("%Y-%m-%d").values.tolist())
         
         # search for multiple SSWs by looping over 'groups' #
         
@@ -155,8 +219,9 @@ def ssw_cp07(variable,threshold=0, consec_days=20, hem="NH"):
                     westerlygroupslength = [len(group) for group in westerlygroups]
                     maxlength = np.nanmax(westerlygroupslength)
                     if maxlength > 9:
-                        ssw_dates.append([var.dayofwinter[first_nextgroup].time.dt.day.values, 
-                                 var.dayofwinter[first_nextgroup].time.dt.month.values,
-                                 var.dayofwinter[first_nextgroup].time.dt.year.values])
+                        #ssw_dates.append([var.dayofwinter[first_nextgroup].time.dt.day.values, 
+                        #         var.dayofwinter[first_nextgroup].time.dt.month.values,
+                        #         var.dayofwinter[first_nextgroup].time.dt.year.values])
+                        ssw_dates.append(var.dayofwinter[firstvalue].time.dt.strftime("%Y-%m-%d").values.tolist())
  
     return ssw_dates

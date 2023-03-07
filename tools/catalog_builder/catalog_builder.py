@@ -22,6 +22,7 @@ import traceback
 import xarray as xr
 import yaml
 import time
+import typing
 from datetime import datetime, timedelta
 from ecgtools import Builder
 from ecgtools.builder import INVALID_ASSET, TRACEBACK
@@ -58,9 +59,9 @@ catalog_class = ClassMaker()
 # custom parser for data stored on GFDL uda
 # TODO: move to separate module and submit PR to ecg-tools repo
 def parse_gfdl_pp_ts(file_name: str):
-    files = sorted(glob.glob(os.path.join(file_name,'*.nc')))  #debug comment when ready to run
-    file = pathlib.Path(files[0]) # debug comment when ready to run
-    #file = pathlib.Path(file_name)  # uncomment when ready to run
+    #files = sorted(glob.glob(os.path.join(file_name,'*.nc')))  # debug comment when ready to run
+    #file = pathlib.Path(files[0])  # debug comment when ready to run
+    file = pathlib.Path(file_name)  # uncomment when ready to run
     info = dict()
 
     try:
@@ -90,8 +91,10 @@ def parse_gfdl_pp_ts(file_name: str):
             output_frequency = 'subhr'
 
         with xr.open_dataset(file, chunks={}, decode_times=False) as ds:
-            variable_list = [var for var in ds if 'standard_name' in ds[var].attrs]
-
+            variable_list = [var for var in ds if 'standard_name' in ds[var].attrs or 'long_name' in ds[var].attrs]
+            assert(variable_id in variable_list), \
+                "Did not find variable with standard_name or long_name {variable_id}" \
+                "in {file}"
             info = {
                 'activity_id': source_id,
                 'institution_id': "GFDL",
@@ -107,7 +110,7 @@ def parse_gfdl_pp_ts(file_name: str):
                 'time_range': time_range,
                 'chunk_freq': chunk_freq,
                 'frequency': output_frequency,
-                'variable': variable_list[0],
+                'variable': variable_id,
                 'file_name': stem,
                 'path': str(file)
             }
@@ -123,7 +126,6 @@ class CatalogBase(object):
     """
 
     def __init__(self):
-        self.joblib_parallel_kwargs = {'n_jobs': -1}  # default parallel jobs
         self.groupby_attrs = [
             'activity_id',
             'institution_id',
@@ -153,14 +155,19 @@ class CatalogBase(object):
 
     def cat_builder(self, data_paths: list,
                     exclude_patterns=None,
-                    dir_depth=1
+                    include_patterns=None,
+                    dir_depth=1,
+                    nthreads=-1
                     ):
         if exclude_patterns is None:
-            exclude_patterns = ["DO_NOT_USE"]
+            exclude_patterns: typing.List[str] = None
+        if include_patterns is None:
+            include_patterns: typing.List[str] = None
         self.cb = Builder(paths=data_paths,
                           depth=dir_depth,
                           exclude_patterns=exclude_patterns,  # Exclude the following directories
-                          joblib_parallel_kwargs=self.joblib_parallel_kwargs,  # Number of jobs to execute -
+                          include_patterns=include_patterns,
+                          joblib_parallel_kwargs={'n_jobs': nthreads},  # Number of jobs to execute -
                           # should be equal to # threads you are using
                           extension='.nc'  # extension of target files
                           )
@@ -194,13 +201,6 @@ class CatalogCMIP(CatalogBase):
     def __init__(self):
         super().__init__()
 
-    def cat_builder(self, data_paths: list,
-                    exclude_patterns=None,
-                    dir_depth=1
-                    ):
-
-        self.cb = Builder(paths=data_paths, depth=dir_depth, njobs=6)
-
     def call_build(self, file_parse_method=None):
         if file_parse_method is None:
             file_parse_method = parse_cmip6
@@ -214,7 +214,17 @@ class CatalogCMIP(CatalogBase):
 class CatalogGFDL(CatalogBase):
     """Class to generate GFDL data catalogs\n
     """
-
+    def __init__(self):
+        super().__init__()
+        self.groupby_attrs = [
+            'activity_id',
+            'institution_id',
+            'experiment_id',
+            'frequency',
+            'member_id',
+            'realm',
+            'time_range'
+        ]
     def call_build(self, file_parse_method=None):
         if file_parse_method is None:
             file_parse_method = parse_gfdl_pp_ts
@@ -227,7 +237,26 @@ class CatalogGFDL(CatalogBase):
 @catalog_class.maker
 class CatalogCESM(CatalogBase):
     """Class to generate CESM data catalogs\n
+    Note that class attributes are defined based on the example for
+    building catalogs for CESM timeseries data provided by ecgtools.
     """
+    def __init__(self):
+        super().__init__()
+        self.groupby_attrs = [
+            'component',
+            'stream',
+            'case',
+            'frequency'
+        ]
+
+        self.xarray_aggregations = [
+            {'type': 'union', 'attribute_name': 'variable_id'},
+            {
+                'type': 'join_existing',
+                'attribute_name': 'date',
+                'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'}
+            }
+        ]
     def call_build(self, file_parse_method=None):
         if file_parse_method is None:
             file_parse_method = parse_cesm_timeseries
@@ -254,7 +283,7 @@ def main(config: str):
             os.path.isdir(p)
         except FileNotFoundError:
             print("{p} not found. Check data_root_dirs for typos.")
-        data_obj = parse_gfdl_pp_ts(p)  # debug custom parser
+        #data_obj = parse_gfdl_pp_ts(p)  # debug custom parser
 
 
     # instantiate the builder class instance for the specified convention
@@ -262,9 +291,16 @@ def main(config: str):
     # initialize the catalog object
     cat_obj = cat_cls()
     # instantiate the esm catalog builder
+    opt_keys = ['include_patterns', 'exclude_patterns']
+    for k in opt_keys:
+        if k not in conf:
+            conf[k] = None
+
     cat_obj.cat_builder(data_paths=conf['data_root_dirs'],
                         exclude_patterns=conf['exclude_patterns'],
-                        dir_depth=conf['dir_depth']
+                        include_patterns=conf['include_patterns'],
+                        dir_depth=conf['dir_depth'],
+                        nthreads=conf['num_threads']
                         )
     # build the catalog
     print('Building the catalog')

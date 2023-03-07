@@ -7,7 +7,15 @@ data_root_dirs:
   - /archive/oar.gfdl.cmip6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp/atmos/ts/monthly/5yr
 
 dir_depth: 1
-exclude_patterns:
-  - DO_NOT_USE
+#exclude_patterns:
+#  - "DO_NOT_USE"
 output_dir: /net2/jml
-output_filename: test_catalog
+output_filename: test_catalog_gfdl
+num_threads: 14
+# optional list of patterns to include in file and directory search
+include_patterns:
+  - "*193501-193912*"
+  - "*193001-193412*"
+# optional list of patterns to exclude from file and directory search
+#exclude_patterns:
+#  - "DO_NOT_USE"

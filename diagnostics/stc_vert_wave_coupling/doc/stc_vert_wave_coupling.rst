@@ -11,7 +11,7 @@
 Stratosphere-Troposphere Coupling: Vertical Wave Coupling
 ================================
 
-Last update: 2023-03-03
+Last update: 2023-03-10
 
 This POD assesses the seasonality and extremes of vertical planetary wave 
 coupling between the extratropical troposphere and stratosphere. It makes four 
@@ -130,13 +130,18 @@ heat fluxes weaken and warm the polar vortex, whereas negative heat fluxes are
 generally associated with wave reflection that can dynamically cool and 
 strengthen the vortex. 
 
-Mismatches between modeled and observed planetary wave characteristics can
-be tied to issues/biases related to their sources in the troposphere 
-(Shaw et al., 2014b, England et al., 2016), as well as biases in the 
-stratospheric circulation that affect how such waves propagate. These 
-waves can also be affected by model characteristics such as the height of  
-the model top, and the implementation of sponge layers near the model top 
-(Shaw & Perlwitz, 2010).
+Improper representation of the wave coupling between the troposphere and 
+stratosphere can significantly influence the tropospheric stationary wave 
+pattern, and be tied to climatological biases in the positions of
+the tropospheric jets (Shaw et al., 2014b, England et al., 2016). Biases 
+in the stratospheric circulation that can arise from, e.g., too little 
+parameterized gravity wave drag can also affect how planetary waves 
+propagate in the stratosphere and affect the occurrence of extreme heat 
+flux events. Model characteristics such as the height of the model top, 
+and the implementation (or lack of) sponge layers near the model top 
+can additionally lead to unphysical excessive damping or reflection of waves,
+which can subsequently influence biases in the tropospheric stationary wave
+patterns, blocking frequencies, and annular mode timescales (Shaw & Perlwitz, 2010).
 
 
 More about this POD

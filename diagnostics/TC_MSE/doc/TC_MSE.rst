@@ -63,21 +63,21 @@ The following 3-D (time-lat-lon) and 4-D (time-plev-lat-lon) variables are requi
 
 3-D Variables:
 
-Surface Downwelling Longwave Flux in Air, Units: W m-2, Frequency: 6-hourly 
-Surface Downwelling Shortwave Flux in Air, Units: W m-2, Frequency: 6-hourly
-Surface Upwelling Longwave Flux in Air, Units: W m-2, Frequency: 6-hourly
-Surface Upwelling Shortwave Flux in Air, Units: W m-2, Frequency: 6-hourly
-Surface Upward Latent Heat Flux, Units: W m-2, Frequency: 6-hourly
-Surface Upward Sensible Heat Flux, Units: W m-2, Frequency: 6-hourly
-Top of Atmosphere Outgoing Longwave Flux, Units: W m-2, Frequency: 6-hourly
-Top of Atmosphere Outgoing Shortwave Flux, Units: W m-2, Frequency: 6-hourly
-Top of Atmosphere Incoming Shortwave Flux, Units: W m-2, Frequency: 6-hourly
+Surface Downwelling Longwave Flux in Air (rlds), Units: W m-2, Frequency: 6-hourly 
+Surface Downwelling Shortwave Flux in Air (rsds), Units: W m-2, Frequency: 6-hourly
+Surface Upwelling Longwave Flux in Air (rlus), Units: W m-2, Frequency: 6-hourly
+Surface Upwelling Shortwave Flux in Air (rsus), Units: W m-2, Frequency: 6-hourly
+Surface Upward Latent Heat Flux (hfls), Units: W m-2, Frequency: 6-hourly
+Surface Upward Sensible Heat Flux (hfss), Units: W m-2, Frequency: 6-hourly
+Top of Atmosphere Outgoing Longwave Flux (rlut), Units: W m-2, Frequency: 6-hourly
+Top of Atmosphere Outgoing Shortwave Flux (rsut), Units: W m-2, Frequency: 6-hourly
+Top of Atmosphere Incoming Shortwave Flux (rsdt), Units: W m-2, Frequency: 6-hourly
 
 4-D Variables:
 
-Air Temperature, Units: K, Frequency: 6-hourly instantaneous
-Geopotential Height, Units: m, Frequency: 6-hourly instantaneous
-Specific Humidity, Units: g g-1, Frequency: 6-hourly instantaneous
+Air Temperature (ta), Units: K, Frequency: 6-hourly instantaneous
+Geopotential Height (zg), Units: m, Frequency: 6-hourly instantaneous
+Specific Humidity (hus), Units: g g-1, Frequency: 6-hourly instantaneous
 
 In order to have sufficient samples, we recommend enough years of data to have at least 100 TCs, which is typically 2-5 years of simulation time depending on the resolution of the model.
 

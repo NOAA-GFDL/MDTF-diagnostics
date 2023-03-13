@@ -13,7 +13,6 @@
 # for the preprocessor and the MDTF-diagnostics framework
 
 import click
-import glob
 import intake
 import os
 import pathlib

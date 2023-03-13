@@ -16,18 +16,18 @@ import click
 import glob
 import intake
 import os
-import sys
 import pathlib
+import sys
+import time
 import traceback
+import typing
 import xarray as xr
 import yaml
-import time
-import typing
 from datetime import datetime, timedelta
 from ecgtools import Builder
 from ecgtools.builder import INVALID_ASSET, TRACEBACK
-from ecgtools.parsers.cesm import parse_cesm_timeseries
 from ecgtools.parsers import parse_cmip6
+from ecgtools.parsers.cesm import parse_cesm_timeseries
 
 
 # The ClassMaker is cribbed from SO
@@ -56,13 +56,11 @@ class ClassMaker:
 # instantiate the class maker
 catalog_class = ClassMaker()
 
-# custom parser for data stored on GFDL uda
-# TODO: move to separate module and submit PR to ecg-tools repo
+# custom parser for pp data stored on GFDL archive filesystem
 def parse_gfdl_pp_ts(file_name: str):
     #files = sorted(glob.glob(os.path.join(file_name,'*.nc')))  # debug comment when ready to run
     #file = pathlib.Path(files[0])  # debug comment when ready to run
     file = pathlib.Path(file_name)  # uncomment when ready to run
-    info = dict()
 
     try:
         # isolate file from rest of path
@@ -90,11 +88,12 @@ def parse_gfdl_pp_ts(file_name: str):
         elif 'subhr' in freq.lower():
             output_frequency = 'subhr'
 
+        # call to xr.open_dataset required by ecgtoos.builder.Builder
         with xr.open_dataset(file, chunks={}, decode_times=False) as ds:
-            variable_list = [var for var in ds if 'standard_name' in ds[var].attrs or 'long_name' in ds[var].attrs]
-            assert(variable_id in variable_list), \
-                "Did not find variable with standard_name or long_name {variable_id}" \
-                "in {file}"
+            #variable_list = [var for var in ds if 'standard_name' in ds[var].attrs or 'long_name' in ds[var].attrs]
+            #assert(variable_id in variable_list), \
+            # "Did not find variable with standard_name or long_name {variable_id}" \
+            #"in {file}"
             info = {
                 'activity_id': source_id,
                 'institution_id': "GFDL",
@@ -115,7 +114,7 @@ def parse_gfdl_pp_ts(file_name: str):
                 'path': str(file)
             }
 
-        return info
+            return info
 
     except Exception:
         return {INVALID_ASSET: file, TRACEBACK: traceback.format_exc()}
@@ -225,7 +224,9 @@ class CatalogGFDL(CatalogBase):
             'realm',
             'time_range'
         ]
-    def call_build(self, file_parse_method=None):
+    def call_build(self,
+                   file_parse_method=None):
+
         if file_parse_method is None:
             file_parse_method = parse_gfdl_pp_ts
         # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cmip6.py
@@ -316,7 +317,7 @@ def main(config: str):
     cat_obj.call_save(output_dir=conf['output_dir'],
                  output_filename=conf['output_filename']
                  )
-    print('Catalog builder has completed successfully. BYEEEEE.')
+    print('Catalog builder has completed successfully.')
     sys.exit(0)
 if __name__ == '__main__':
     main(prog_name='ESM-Intake Catalog Maker')

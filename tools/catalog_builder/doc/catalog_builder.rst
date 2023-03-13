@@ -41,7 +41,6 @@ environment:
 - dask
 - datetime
 - ecgtools
-- glob
 - intake
 - os
 - pathlib

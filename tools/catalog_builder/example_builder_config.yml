@@ -1,5 +1,6 @@
 # Configuration file template for catalog_builder
 # DRS convention to use cmip | gfdl | cesm
+convention: cmip
 # IMPORTANT: Attempting to build a catalog of the entire contents of a pp directory will likely max out available PPAN resources (i.e., it takes longer than 12 hours to build a catalog for atmos/ts/monthly/5yr one node w/16 threads). It is strongly recommended to use include_patterns and/or exclude_patterns to target a specific subset of variables and dates to improve the performance of the catalog builder.
 # Path(s) to the root directory with the target dataset
 data_root_dirs:

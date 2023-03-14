@@ -55,10 +55,11 @@ class ClassMaker:
 # instantiate the class maker
 catalog_class = ClassMaker()
 
+
 # custom parser for pp data stored on GFDL archive filesystem
 def parse_gfdl_pp_ts(file_name: str):
-    #files = sorted(glob.glob(os.path.join(file_name,'*.nc')))  # debug comment when ready to run
-    #file = pathlib.Path(files[0])  # debug comment when ready to run
+    # files = sorted(glob.glob(os.path.join(file_name,'*.nc')))  # debug comment when ready to run
+    # file = pathlib.Path(files[0])  # debug comment when ready to run
     file = pathlib.Path(file_name)  # uncomment when ready to run
 
     try:
@@ -89,10 +90,10 @@ def parse_gfdl_pp_ts(file_name: str):
 
         # call to xr.open_dataset required by ecgtoos.builder.Builder
         with xr.open_dataset(file, chunks={}, decode_times=False) as ds:
-            #variable_list = [var for var in ds if 'standard_name' in ds[var].attrs or 'long_name' in ds[var].attrs]
-            #assert(variable_id in variable_list), \
+            # variable_list = [var for var in ds if 'standard_name' in ds[var].attrs or 'long_name' in ds[var].attrs]
+            # assert(variable_id in variable_list), \
             # "Did not find variable with standard_name or long_name {variable_id}" \
-            #"in {file}"
+            # "in {file}"
             info = {
                 'activity_id': source_id,
                 'institution_id': "GFDL",
@@ -171,8 +172,8 @@ class CatalogBase(object):
                           )
 
     def call_save(self, output_dir: str,
-                 output_filename: str
-                 ):
+                  output_filename: str
+                  ):
         self.cb.save(
             # name of the catalog
             name=output_filename,
@@ -257,12 +258,14 @@ class CatalogCESM(CatalogBase):
                 'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'}
             }
         ]
+
     def call_build(self, file_parse_method=None):
         if file_parse_method is None:
             file_parse_method = parse_cesm_timeseries
         # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cesm.py
         # for more parsing methods
         self.cb.build(file_parse_method)
+
 
 def load_config(config):
     if os.path.exists(config):
@@ -283,8 +286,7 @@ def main(config: str):
             os.path.isdir(p)
         except FileNotFoundError:
             print("{p} not found. Check data_root_dirs for typos.")
-        #data_obj = parse_gfdl_pp_ts(p)  # debug custom parser
-
+        # data_obj = parse_gfdl_pp_ts(p)  # debug custom parser
 
     # instantiate the builder class instance for the specified convention
     cat_cls = catalog_class["Catalog" + conf['convention'].upper()]
@@ -314,9 +316,11 @@ def main(config: str):
     # save the catalog
     print('Saving catalog to', conf['output_filename'] + ".csv")
     cat_obj.call_save(output_dir=conf['output_dir'],
-                 output_filename=conf['output_filename']
-                 )
+                      output_filename=conf['output_filename']
+                      )
     print('Catalog builder has completed successfully.')
     sys.exit(0)
+
+
 if __name__ == '__main__':
     main(prog_name='ESM-Intake Catalog Maker')

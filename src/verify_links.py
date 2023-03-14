@@ -10,8 +10,8 @@ Based on test_website by Dani Coleman, bundy@ucar.edu.
 """
 import sys
 # do version check before importing other stuff
-if sys.version_info[0] != 3 or sys.version_info[1] < 7:
-    sys.exit("ERROR: MDTF currently only supports python >= 3.7.*. Please check "
+if sys.version_info[0] != 3 or sys.version_info[1] < 10:
+    sys.exit("ERROR: MDTF currently only supports python >= 3.10.*. Please check "
     "which version is on your $PATH (e.g. with `which python`.)\n"
     f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports

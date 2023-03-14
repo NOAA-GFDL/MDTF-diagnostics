@@ -3,7 +3,7 @@
 from abc import ABC
 import logging
 import os
-from src import util, core, diagnostic
+from src import util, core, varlistentry_util, varlist_util
 
 _log = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class SingleRunPod(PodSetupBaseClass, ABC):
             v.change_coord(
                 'T',
                 new_class={
-                    'self': diagnostic.VarlistTimeCoordinate,
+                    'self': varlist_util.VarlistTimeCoordinate,
                     'range': util.DateRange,
                     'frequency': util.DateFrequency
                 },
@@ -97,7 +97,7 @@ class SingleRunPod(PodSetupBaseClass, ABC):
             # may supply alternate variables
             v.log.store_exception(chained_exc)
 
-        v.stage = diagnostic.VarlistEntryStage.INITED
+        v.stage = varlistentry_util.VarlistEntryStage.INITED
 
     def variable_dest_path(self, pod, var):
         """Returns the absolute path of the POD's preprocessed, local copy of
@@ -125,7 +125,7 @@ class MultiRunPod(PodSetupBaseClass, ABC):
         for case_name, case_dict in self.cases.items():
             for v in case_dict.iter_children():
                 try:
-                    self.setup_var(v, case_dict.attrs.date_range, case_dict.name)
+                    self.setup_var(v, case_dict.attrs.date_range, case_name)
                 except Exception as exc:
                     chained_exc = util.chain_exc(exc, f"configuring {v.full_name} in multirun mode.",
                                                  util.PodConfigError)
@@ -165,7 +165,7 @@ class MultiRunPod(PodSetupBaseClass, ABC):
             v.change_coord(
                 'T',
                 new_class={
-                    'self': diagnostic.VarlistTimeCoordinate,
+                    'self': varlist_util.VarlistTimeCoordinate,
                     'range': util.DateRange,
                     'frequency': util.DateFrequency
                 },
@@ -197,7 +197,7 @@ class MultiRunPod(PodSetupBaseClass, ABC):
             # may supply alternate variables
             v.log.store_exception(chained_exc)
 
-        v.stage = diagnostic.VarlistEntryStage.INITED
+        v.stage = varlistentry_util.VarlistEntryStage.INITED
 
     def variable_dest_path(self, var, case_name):
         """Returns the absolute path of the POD's preprocessed, local copy of

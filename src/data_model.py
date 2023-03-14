@@ -9,7 +9,7 @@ import dataclasses as dc
 import itertools
 import typing
 from src import util
-import src.units # fully qualify name to reduce confusion with "units" attributes
+import src.units  # fully qualify name to reduce confusion with "units" attributes
 import src.core
 import logging
 _log = logging.getLogger(__name__)

@@ -9,8 +9,8 @@
 
 import sys
 # do version check before anything else
-if sys.version_info.major != 3 or sys.version_info.minor < 8:
-    sys.exit("ERROR: The MDTF package requires python >= 3.8. Please check "
+if sys.version_info.major != 3 or sys.version_info.minor < 10:
+    sys.exit("ERROR: The MDTF package requires python >= 3.10. Please check "
         "which version of python is on your $PATH (e.g. with `which python`.)\n"
         f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports
@@ -61,6 +61,7 @@ def main(argv):
         framework = cli_obj.dispatch()
         exit_code = framework.main()
         return exit_code
+
 
 if __name__ == '__main__':
     argv = sys.argv[1::] if len(sys.argv[1::]) >= 2 else sys.argv

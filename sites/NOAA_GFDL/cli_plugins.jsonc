@@ -7,7 +7,8 @@
   "data_manager": {
     "GFDL_auto": {
       "help": "DataSource for accessing CMIP6 data stored on spinning disk at /uda/CMIP6.",
-      "entry_point": "sites.NOAA_GFDL.gfdl:GfdlautoDataManager",
+      "entry_point": ["sites.NOAA_GFDL.gfdl:GfdlAutoDataManager",
+                      "sites.NOAA_GFDL.gfdl_multirun:MultirunGfdlAutoDataManager"],
       "cli": {
         "arguments": [
           {
@@ -50,7 +51,8 @@
     },
     "GFDL_PP": {
       "help": "DataSource for using timeseries data post-processed by GFDL's in-house FREPP tool, in structured /pp/ directory hierarchies. Data can be on any locally mounted filesystem.",
-      "entry_point": "sites.NOAA_GFDL.gfdl:GfdlppDataManager",
+      "entry_point": ["sites.NOAA_GFDL.gfdl:GfdlppDataManager",
+                      "sites.NOAA_GFDL.gfdl_multirun:MultirunGfdlppDataManager"],
       "cli": {
         "arguments": [
           {
@@ -67,7 +69,8 @@
     },
     "CMIP6_UDA": {
       "help": "DataSource for accessing CMIP6 data stored on spinning disk at /uda/CMIP6.",
-      "entry_point": "sites.NOAA_GFDL.gfdl:Gfdludacmip6DataManager",
+      "entry_point": ["sites.NOAA_GFDL.gfdl:Gfdludacmip6DataManager",
+                      "sites.NOAA_GFDL.gfdl_multirun:MultirunGfdludacmip6DataManager"],
       "cli": {
         "arguments": [
           {
@@ -106,7 +109,8 @@
     },
     "CMIP6_archive": {
       "help": "DataSource for accessing more extensive set of CMIP6 data on DMF tape-backed storage at /archive/pcmdi/repo/CMIP6.",
-      "entry_point": "sites.NOAA_GFDL.gfdl:Gfdlarchivecmip6DataManager",
+      "entry_point": ["sites.NOAA_GFDL.gfdl:Gfdlarchivecmip6DataManager",
+                      "sites.NOAA_GFDL.gfdl_multirun:MultirunGfdlarchivecmip6DataManager"],
       "cli": {
         "arguments": [
           {
@@ -145,7 +149,8 @@
     },
     "CMIP6_data_cmip6": {
       "help": "DataSource for accessing pre-publication CMIP6 data on /data_cmip6.",
-      "entry_point": "sites.NOAA_GFDL.gfdl:Gfdldatacmip6DataManager",
+      "entry_point": ["sites.NOAA_GFDL.gfdl:Gfdldatacmip6DataManager",
+                      "sites.NOAA_GFDL.gfdl_multirun:MultirunGfdldatacmip6DataManager"],
       "cli": {
         "arguments": [
           {
@@ -252,7 +257,8 @@
   "output_manager": {
     "HTML": {
       "help": "",
-      "entry_point": "sites.NOAA_GFDL.gfdl:GFDLHTMLOutputManager",
+      "entry_point": ["sites.NOAA_GFDL.gfdl:GFDLHTMLOutputManager",
+                      "sites.NOAA_GFDL.gfdl_multirun:MultirunGFDLHTMLOutputManager"],
       "cli": {
         "arguments": [
           {

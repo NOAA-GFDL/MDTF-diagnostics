@@ -13,7 +13,7 @@ Creating and submitting a POD
 2. Link your POD code into the framework  
 
    - Modify your POD's driver script (e.g, ``driver.py``) to interface with your code
-   - Modify pod's ``settings.jsonc`` to specifiy variables that will be passed to the framework
+   - Modify pod's ``settings.jsonc`` to specify variables that will be passed to the framework
    - Modify your code to use ``ENV_VARS`` provided by the framework (see the *Notes* for descriptions of the available environment variables)
       - Input files:
          - model input data: ``MDTF-diagnostics/../inputdata/model/[dataset name]/[output frequency]``

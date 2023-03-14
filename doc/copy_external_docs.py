@@ -37,6 +37,15 @@ Site-specific documentation
 
 """
 
+# generate tools toc source file on-the-fly
+_tools_toc_header = """
+Tools documentation
+---------------------------
+.. toctree::
+   :maxdepth: 1
+
+"""
+
 def find_copy_make_toc(type_, docs_dir, search_root, header):
     """Look for documentation files, copy them to the build directory, and
     generate toc file linking to pod/site documentation.
@@ -111,6 +120,10 @@ def config_inited(app, config):
     # Process site docs: find, copy, make toc
     site_root = os.path.abspath(os.path.join(cwd, '..', 'sites'))
     find_copy_make_toc("site", cwd, site_root, _site_toc_header)
+
+    # Process tools docs: find, copy, make toc
+    tools_root = os.path.abspath(os.path.join(cwd, '..', 'tools'))
+    find_copy_make_toc("tools", cwd, tools_root, _tools_toc_header)
 
 
 def setup(app):

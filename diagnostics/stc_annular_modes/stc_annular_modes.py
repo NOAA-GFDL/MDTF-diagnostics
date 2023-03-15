@@ -155,7 +155,7 @@ try:
     # geohgt fourier coefficients for +/- 60lat
     obs_am = xr.open_dataset(f"{OBS_DATA}/era5_annmodes_1979-2021.nc")
     obs_nam_struc = xr.open_dataset(f"{OBS_DATA}/era5_nam_lat-struc_1979-2021.nc")
-    obs_sam_struc = xr.open_dataset("f{OBS_DATA}/era5_sam_lat-struc_1979-2021.nc")
+    obs_sam_struc = xr.open_dataset(f"{OBS_DATA}/era5_sam_lat-struc_1979-2021.nc")
     can_plot_obs = True
     obs_name = 'ERA5'
 

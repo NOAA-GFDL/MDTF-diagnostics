@@ -30,7 +30,9 @@ Output
 ------
 A csv file with ESM-intake catalog entries for the target
 root directory(ies) in the configuration file, and a json file
-with the catalog column headers
+with the catalog column headers. Example catalog and header files
+for CMIP6 dataset stored on the GFDL uda file system are located in
+the examples/cmip subdirectory.
 
 Required packages:
 ------------------
@@ -68,3 +70,6 @@ The configuration file defines the following parameters to generate the ESM-inta
 - num_threads (required): number of cpu threads to run with
 - include_patterns (optional): list of patterns to include in search; supports wildcards
 - exclude_patterns (optional): list of patterns to exclude from search; supports wildcards
+
+Templates for the configuration file and a slurm batch submission script for GFDL PPAN are
+located in the examples/templates subdirectory.

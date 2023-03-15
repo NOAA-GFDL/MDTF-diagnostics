@@ -15,7 +15,7 @@ output_dir: /nbhome/[INSERT USERNAME HERE]
 # name of catalog (.csv and .json will be appended to catalog and 
 # header files)
 output_filename: esm_catalog_IPSL-CM6A-LR-INCA_historica_r1i1p1f1
-# number of threads: 16 = 1 analysis node, 2 threads per task
+# number of threads: 16 (for job running on one analysis node)
 # The example catalog for the UDA directory takes a little over 5 min to build
 num_threads: 16
 # optional list of patterns to include in file and directory search

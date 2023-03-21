@@ -2,7 +2,7 @@
 export REPO_PATH=${1:-"${HOME}/cmip6-cmor-tables"}
 echo ${REPO_PATH}
 cd ${REPO_PATH}
-git remote add cmor_tables 
+git remote ad cmor_tables 
 git fetch -u cmor_tables
 git pull
 cd scripts
@@ -13,3 +13,4 @@ echo $msg
 cd ../../
 git commit -am "$msg"
 git push
+git remote rm cmor_tables

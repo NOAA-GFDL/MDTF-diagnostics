@@ -367,9 +367,13 @@ def eof_annular_mode(z_anom):
             # In other words, we need enough good data spanning enough latitudes
             # for the EOF analysis/annular modes to be meaningful
             start,end = longest_chain_zeros(np.isnan(eof1_struc.values))
-            start_lat = eof1_struc.lat.isel(lat=start)
-            end_lat = eof1_struc.lat.isel(lat=end)
-            
+            if (start is None) and (end is None):
+                start_lat = 0
+                end_lat = 0
+            else:
+                start_lat = eof1_struc.lat.isel(lat=start)
+                end_lat = eof1_struc.lat.isel(lat=end)
+
             if (np.abs(end_lat-start_lat) < 52.5) or (np.maximum(np.abs(start_lat), np.abs(end_lat)) < 82.5):
                 flag = np.nan
             else:

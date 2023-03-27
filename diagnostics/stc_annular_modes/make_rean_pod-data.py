@@ -6,7 +6,7 @@ import xarray as xr
 from stc_annular_modes_calc import eof_annular_mode, anomalize_geohgt
 
 
-out_dir = os.environ['DATA_OUTPUT_DIR']
+out_dir = '/home/zlawrence/mdtf/inputdata/obs_data/stc_annular_modes' #os.environ['DATA_OUTPUT_DIR']
 
 ### BEGIN: READ INPUT FIELDS ###
 # The following code/paths will have to be adapted for your own system.
@@ -14,8 +14,10 @@ out_dir = os.environ['DATA_OUTPUT_DIR']
 # derived from ERA5 reanalysis zonal mean geopotential heights
 
 print('*** Reading in zonal mean geopotential heights')
-zzm_fi = os.environ['REAN_ZZM']
-zzm = xr.open_dataarray(zzm_fi)
+#zzm_fi = os.environ['REAN_ZZM']
+#zzm = xr.open_dataarray(zzm_fi)
+zzm = xr.open_mfdataset('/Projects/S2SCESM2/misc/zmd/reanalysis/ERA5*')['Z'].load()
+zzm = zzm.convert_calendar('noleap', use_cftime=True)
 
 # Compute the reanalysis NAM and SAM indices
 print('*** Computing the reanalysis NAM and SAM loading patterns and PC time series')
@@ -28,6 +30,7 @@ am = xr.concat((sam.assign_coords({'hemi': -1}),
                 nam.assign_coords({'hemi': 1})), dim='hemi')
 am.name = 'pc1'
 am.attrs['long_name'] = 'PC1 time series of Zonal Mean Geohgt Anomalies'
+am.attrs['units'] = 'unitless'
 am.hemi.attrs['long_name'] = 'hemisphere (-1 for SH, 1 for NH)'
 
 outfile = f'{out_dir}/era5_annmodes_1979-2021.nc'

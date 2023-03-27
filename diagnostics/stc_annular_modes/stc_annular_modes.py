@@ -20,6 +20,7 @@ mpl.rcParams["font.family"] = "sans-serif"
 mpl.rcParams["font.sans-serif"] = "Roboto"
 mpl.rcParams["font.size"] = 12
 
+
 def make_tseries(am, which, data_name, out_dir, first, last):
     r""" A convenience function for running through the logic
     of the POD for each hemisphere given both NAM/SAM indices
@@ -61,7 +62,7 @@ def make_tseries(am, which, data_name, out_dir, first, last):
         tscales = efolding_tscales(acfs)
         print(f"*** Plotting the {which} {hemi}AM e-folding timescales")
         title_str = f"{data_name}\n{hemi}AM Timescales ({first}-{last})"
-        finame = f"{data_name}_{hemi}AM_{first}-{last}_efolding-timescales.eps"
+        finame = f"{data_name}_{hemi}AM_efolding-timescales.eps"
         fig = plot_doy_timeseries(tscales, "eftscale", title=title_str)
         fig.savefig(out_dir + finame, facecolor="white", dpi=150, bbox_inches="tight")
 
@@ -73,7 +74,7 @@ def make_tseries(am, which, data_name, out_dir, first, last):
         )
         print(f"*** Plotting the {which} {hemi}AM interannual std dev")
         title_str = f"{data_name}\n{hemi}AM Std. Deviation ({first}-{last})"
-        finame = f"{data_name}_{hemi}AM_{first}-{last}_interann-stdv.eps"
+        finame = f"{data_name}_{hemi}AM_interann-stdv.eps"
         fig = plot_doy_timeseries(int_std, "interannstdv", title=title_str)
         fig.savefig(out_dir + finame, facecolor="white", dpi=150, bbox_inches="tight")
 
@@ -87,7 +88,7 @@ def make_tseries(am, which, data_name, out_dir, first, last):
         title_str = (
             f"{data_name}\n{PRED_LEV} hPa {hemi}AM Predictability ({first}-{last})"
         )
-        finame = f"{data_name}_{hemi}AM_{first}-{last}_predictability.eps"
+        finame = f"{data_name}_{hemi}AM_predictability.eps"
         fig = plot_doy_timeseries(pred, "predictability", title=title_str)
         fig.savefig(out_dir + finame, facecolor="white", dpi=150, bbox_inches="tight")
 
@@ -133,9 +134,7 @@ if (OBS_FIRSTYR < 1979) or (OBS_LASTYR > 2021):
     msg = "OBS_FIRSTYR and OBS_LASTYR must be between 1979-2021"
     raise ValueError(msg)
 
-print(
-    f"(SETTINGS) Will compute the annular mode predictability of the {PRED_LEV} hPa level"
-)
+print(f"(SETTINGS) Will compute the annular mode predictability of the {PRED_LEV} hPa level")
 print(f"(SETTINGS) Will use {FIRSTYR}-{LASTYR} for {CASENAME}")
 print(f"(SETTINGS) Will use {OBS_FIRSTYR}-{OBS_LASTYR} for obs")
 
@@ -149,13 +148,19 @@ print("*** Reading model variables ...")
 print("    zonal mean geohgts")
 zzm = xr.open_dataset(zfi)["zg"]
 
+max_doy = int(zzm['time.dayofyear'].max())
+if (max_doy == 366):
+    print("*** Removing leapdays from data")
+    zzm = zzm.convert_calendar('noleap', use_cftime=True)
+
 # Read in the pre-digested obs data and subset the times
 print("*** Now reading in pre-digested obs data")
 try:
     # geohgt fourier coefficients for +/- 60lat
-    obs_am = xr.open_dataset(f"{OBS_DATA}/era5_annmodes_1979-2021.nc")
-    obs_nam_struc = xr.open_dataset(f"{OBS_DATA}/era5_nam_lat-struc_1979-2021.nc")
-    obs_sam_struc = xr.open_dataset(f"{OBS_DATA}/era5_sam_lat-struc_1979-2021.nc")
+    obs_am = xr.open_dataarray(f"{OBS_DATA}/era5_annmodes_1979-2021.nc")
+    obs_am = obs_am.sel(time=slice(f'{OBS_FIRSTYR}', f'{OBS_LASTYR}'))
+    obs_nam_struc = xr.open_dataarray(f"{OBS_DATA}/era5_nam_lat-struc_1979-2021.nc")
+    obs_sam_struc = xr.open_dataarray(f"{OBS_DATA}/era5_sam_lat-struc_1979-2021.nc")
     can_plot_obs = True
     obs_name = 'ERA5'
 
@@ -174,35 +179,41 @@ nam, nam_struc = eof_annular_mode(anomalize_geohgt(zzm, "NH", anom=ANOM_METHOD))
 sam, sam_struc = eof_annular_mode(anomalize_geohgt(zzm, "SH", anom=ANOM_METHOD))
 
 # Plot the latitudinal structures
-print("*** Plotting the model annular mode EOF structures")
+print("*** Plotting the model annular mode EOF1 structures")
 title_str = (
     f"{CASENAME} EOF1 Patterns of\n Zonal Mean Height Anoms ({FIRSTYR}-{LASTYR})"
 )
 fig = plot_annmode_eof_structure(sam_struc, nam_struc, title=title_str)
-finame = f"{CASENAME}_{FIRSTYR}-{LASTYR}_annmode_structures.eps"
+finame = f"{CASENAME}_annmode_structures.eps"
 fig.savefig(plot_dir + finame, facecolor="white", dpi=150, bbox_inches="tight")
 
-nam.name = 'annular_mode'
-sam.name = 'annular_mode'
-annmodes = xr.concat(
-    (sam.assign_coords({"hemi": -1}), nam.assign_coords({"hemi": 1})), dim="hemi"
-)
+
+annmodes = xr.concat((sam.assign_coords({"hemi": -1}), 
+                      nam.assign_coords({"hemi": 1})), dim="hemi")
 
 # Save the relevant digested data
 if SAVE_DERIVED_DATA is True:
-    print('*** Saving the model annular modes')
-    annmodes.attrs['long_name'] = 'Annular mode principal component time series'
+    print('*** Saving the model PC1 time series')
+    annmodes.name = 'pc1'
+    annmodes.attrs['long_name'] = 'PC1 time series of Zonal Mean Geohgt Anomalies'
     annmodes.attrs['units'] = 'unitless'
+    annmodes.hemi.attrs['long_name'] = 'hemisphere (-1 for SH, 1 for NH)'
 
     outfile = f'{data_dir}/{CASENAME}_annmodes_{FIRSTYR}-{LASTYR}.nc'
-    encoding = {'annular_mode': {'dtype': 'float32'}}
+    encoding = {'pc1': {'dtype': 'float32'}}
     annmodes.to_netcdf(outfile, encoding=encoding)
 
+    print('*** Saving the model EOF1 structures for NH and SH')
+    nam_struc.name = 'eof1'
+    nam_struc.attrs['long_name'] = 'EOF1 of NH Zonal Mean Geohgt Anomalies'
+    encoding = {'eof1': {'dtype': 'float32'}}
     outfile = f'{data_dir}/{CASENAME}_nam_lat-struc_{FIRSTYR}-{LASTYR}.nc'
-    nam_struc.to_netcdf(outfile)
+    nam_struc.to_netcdf(outfile, encoding=encoding)
 
+    sam_struc.name = 'eof1'
+    sam_struc.attrs['long_name'] = 'EOF1 of SH Zonal Mean Geohgt Anomalies'
     outfile = f'{data_dir}/{CASENAME}_sam_lat-struc_{FIRSTYR}-{LASTYR}.nc'
-    sam_struc.to_netcdf(outfile)
+    sam_struc.to_netcdf(outfile, encoding=encoding)
 
 
 # Compute and plot the diagnostics for the model
@@ -215,7 +226,7 @@ if can_plot_obs is True:
         f"{obs_name} EOF1 Patterns of\n Zonal Mean Height Anoms ({OBS_FIRSTYR}-{OBS_LASTYR})"
     )
     fig = plot_annmode_eof_structure(obs_sam_struc, obs_nam_struc, title=title_str)
-    finame = f"{obs_name}_{OBS_FIRSTYR}-{OBS_LASTYR}_annmode_structures.eps"
+    finame = f"{obs_name}_annmode_structures.eps"
     fig.savefig(obs_plot_dir + finame, facecolor="white", dpi=150, bbox_inches="tight")
 
     make_tseries(obs_am, 'obs', obs_name, obs_plot_dir, OBS_FIRSTYR, OBS_LASTYR)

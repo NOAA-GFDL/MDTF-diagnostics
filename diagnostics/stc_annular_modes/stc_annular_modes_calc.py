@@ -16,6 +16,58 @@ from scipy import optimize
 from eofs.xarray import Eof
 
 
+def longest_chain_zeros(arr):
+    r""" A utility function for finding the indices that
+    span the longest chain of zeros in a 1D input array.
+    Below, it is used to determine whether there is enough 
+    good data following the EOF analysis for the PC time 
+    series (meant to represent the annular modes) to be
+    meaningful.
+
+    Parameters
+    ----------
+    arr : `np.array`
+        A 1D numpy array
+    
+    Returns
+    -------
+    (start, end)
+        A tuple containing the indices start and end, which
+        bracket the longest chain of zeros (Falses) in arr.
+        Function will return None,None if there are no 
+        zeros in arr.
+
+    """
+    
+    if len(arr) == 0:
+        raise ValueError("Input array is empty")
+    
+    # Turn input into boolean array
+    bool_arr = arr.astype('bool')
+    
+    # Bracket the beginning and ending with Trues to handle 
+    # edge cases in which we have Falses at beginning or end
+    # of array, so these get properly bracketed
+    bool_arr = np.concatenate(([True], bool_arr, [True]))
+    
+    # Locate indices where bool_arr switches between True/False
+    nonzero_diff_ixs = np.where(np.diff(bool_arr))[0]
+    if len(nonzero_diff_ixs) == 0:
+        return None,None
+    
+    # Calculate the lengths of these spans
+    lengths = nonzero_diff_ixs[1::2] - nonzero_diff_ixs[:-1:2]
+    
+    # Get the index of the max length span
+    max_len_idx = np.argmax(lengths)
+    
+    # Compute the start/end indices that bracket these
+    start = nonzero_diff_ixs[2*max_len_idx]
+    end = nonzero_diff_ixs[2*max_len_idx+1] - 1
+    
+    return start, end
+
+
 def detrend_xr(da):
     r"""A small utility function for linearly detrending an xarray
     DataArray across a "GroupBy" dimension. Uses the scipy detrend
@@ -294,6 +346,11 @@ def eof_annular_mode(z_anom):
         r"""An internal nested function to rebuild the output from
         dictionaries of Eof solvers into xarray DataArrays for the
         principal component time series, and EOF latitude profiles.
+        
+        This function will also flag bad data if the latitudinal 
+        span of the output EOF data doesn't cover enough (this 
+        can sometimes be the case for pressure levels that intersect
+        the surface in the polar regions).
 
         """
         pc1 = []
@@ -302,19 +359,31 @@ def eof_annular_mode(z_anom):
         # Iterate over the pressure levels
         plevs = sorted(list(solvers.keys()))[::-1]
         for i, p in enumerate(plevs):
-            # Get PC1 time series for pressure level
+            # Get EOF1 structure for pressure level
+            eof1_struc = solvers[p].eofs(neofs=1, eofscaling=2).sel(mode=0)
+            
+            # Require there be a continuous span of good data (isnan -> False)
+            # spanning at least 52.5 degrees with a high latitude boundary of 82.5.
+            # In other words, we need enough good data spanning enough latitudes
+            # for the EOF analysis/annular modes to be meaningful
+            start,end = longest_chain_zeros(np.isnan(eof1_struc.values))
+            start_lat = eof1_struc.lat.isel(lat=start)
+            end_lat = eof1_struc.lat.isel(lat=end)
+            
+            if (np.abs(end_lat-start_lat) < 52.5) or (np.maximum(np.abs(start_lat), np.abs(end_lat)) < 82.5):
+                flag = np.nan
+            else:
+                flag = 1
+            
+            # Append the EOF1 structure multiplied by the flag 
+            eof1.append(eof1_struc.assign_coords({"lev": float(p)})*flag)
+            
+            # Get PC1 time series for pressure level, multiplied by the flag
             pc1.append(
                 solvers[p]
                 .pcs(npcs=1, pcscaling=1)
                 .sel(mode=0)
-                .assign_coords({"lev": float(p)})
-            )
-            # Get EOF1 structure for pressure level
-            eof1.append(
-                solvers[p]
-                .eofs(neofs=1, eofscaling=2)
-                .sel(mode=0)
-                .assign_coords({"lev": float(p)})
+                .assign_coords({"lev": float(p)}) * flag
             )
 
         # concat these across the pressure levels and return them
@@ -336,7 +405,7 @@ def eof_annular_mode(z_anom):
     # Iterate over pressure levels
     solvers = {}
     for p in z_anom.lev:
-        solver = Eof(z_anom.sel(plev=p), weights=wgts)
+        solver = Eof(z_anom.sel(lev=p), weights=wgts)
         # Since the sign of the eigenvectors in the EOF analysis are arbitrary,
         # the signs of the EOF1/PC1-timeseries for each pressure level may be
         # inconsistent from one another. We try to correct this by using the
@@ -344,10 +413,10 @@ def eof_annular_mode(z_anom):
         # poleward of 45 degrees, and the min of the EOF1 pattern occurs EQward
         # of 45 degrees, then we need to multiply internal matrices by -1
         # *** This strategy is specific to the annular modes! ***
-        eof_1lev = solver.eofs(neofs=1, eofscaling=1).isel(mode=0)
+        eof_1lev = solver.eofs(neofs=1, eofscaling=2).isel(mode=0)
         lat_max = eof_1lev.idxmax()
         lat_min = eof_1lev.idxmin()
-        if (np.abs(lat_max) >= 45.0) and (np.abs(lat_min) <= 45.0):
+        if (np.abs(lat_max) >= 55.0) and (np.abs(lat_min) <= 55.0):
             solver._solver._P *= -1
             solver._solver._flatE *= -1
         solvers[int(p.values)] = solver
@@ -415,7 +484,7 @@ def acf(ts, max_lag=50):
             if lag_doy == 0:
                 lag_doy = doy_max
 
-            # The following bit of code does some "weird" indexing
+            # The following bit of code does some weird indexing
             # to assure the sample sizes for every lag are equal
             # and that year-crossovers are handled correctly
             #
@@ -474,6 +543,10 @@ def efolding_tscales(acf):
     lags = np.arange(acf.lag.size)
     for i, doy in enumerate(acf.dayofyear):
         for j, lev in enumerate(acf.lev):
+            
+            if np.any(np.isnan(acf.sel(dayofyear=doy, lev=lev))):
+                tscales[i,j] = np.nan
+                continue
 
             # Use the scipy optimize.curve_fit function to
             # fit an exponential and find the
@@ -551,7 +624,7 @@ def annmode_predictability(am, pred_lev=850):
         # all levels, and the time-averaged data at the
         # given level.
         inst_lag = am.isel(time=i)
-        tavg_lead = am.sel(plev=pred_lev).isel(time=raw_inds).mean("time")
+        tavg_lead = am.sel(lev=pred_lev).isel(time=raw_inds).mean("time")
 
         # Store the samples in the dictionary with keys
         # that are days of year
@@ -570,7 +643,7 @@ def annmode_predictability(am, pred_lev=850):
         samples_lead[doy] = np.array(samples_lead[doy])
 
         pred = []
-        for j, lev in enumerate(am.plev):
+        for j, lev in enumerate(am.lev):
             r = np.corrcoef(samples_lag[doy][:, j], samples_lead[doy])[0, 1]
             pred.append(r**2)
         pred_all_levs.append(np.array(pred)[np.newaxis, :])
@@ -578,7 +651,7 @@ def annmode_predictability(am, pred_lev=850):
     # Collect the results into a DataArray
     pred_all_levs = np.concatenate(pred_all_levs, axis=0)
     pred_all_levs = xr.DataArray(
-        pred_all_levs, dims=["dayofyear", "plev"], coords=[doys, am.plev]
+        pred_all_levs, dims=["dayofyear", "lev"], coords=[doys, am.lev]
     )
 
     return pred_all_levs

@@ -215,3 +215,8 @@ References
     Pithan, F., T. G. Shepherd, G. Zappa, and I. Sandu 2016: Climate model biases in 
     jet streams, blocking and storm tracks resulting from missing orographic drag, 
     Geophys. Res. Lett., 43, 7231–7240, https://doi.org/10.1002/2016GL069551.
+
+.. _ref-Hersbach2020:
+
+    Hersbach, H. and coauthors, 2020: The ERA5 global reanalysis. Q J R Meteorol Soc.,
+    146, 1999-2049, https://doi.org/10.1002/qj.3803

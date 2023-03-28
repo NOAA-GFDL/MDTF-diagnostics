@@ -75,16 +75,16 @@ global mean geopotential height is removed, and then a 60 day low-pass
 filter is applied across the daily data before a 30 year low-pass filter 
 is applied across the days of year. This process is intended to remove 
 a slowly varying climatology that helps to remove trends, such 
-that the anomalies represent ``true'' variations. The annular modes are 
+that the anomalies represent "true" variations. The annular modes are 
 then assumed to be the 1st EOF of these daily anomalies between 20-90 
 degrees latitude (for the Northern and Southern hemispheres). 
 
 Note: Users can opt to adjust this POD's settings.jsonc file to instead 
-compute the annular modes using a ``simple'' method, which computes 
+compute the annular modes using a "simple" method, which computes 
 anomalies by removing the global mean heights, removing a standard 
 climatology, and linearly detrending the anomalies across the days of year. 
 However, the pre-digested observational data provided with this POD are 
-computed using the ``gerber'' method. 
+computed using the "gerber" method. 
 
 Required programming language and libraries
 -------------------------------------------

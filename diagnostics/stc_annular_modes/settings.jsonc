@@ -56,7 +56,7 @@
         "standard_name" : "geopotential_height",
         "units" : "m",
         "frequency": "day",
-        "dimensions": ["time", "lev", "lat"]
+        "dimensions": ["time", "lev", "lat"] // note the lack of "lon" -- this should be zonal mean data!
       }
     }
   }

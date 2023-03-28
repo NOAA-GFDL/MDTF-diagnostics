@@ -453,11 +453,6 @@ def acf(ts, max_lag=50):
         The autocorrelation function with dimensions of (time, lev, lag)
 
     """
-
-    # yr_max = ts["time.year"].values.max()
-    # yr_min = ts["time.year"].values.min()
-    # yrs = np.arange(yr_min + 1, yr_max)
-
     # Get the max day of year. If we have leap
     # days, we will ignore them.
     doy_max = ts["time.dayofyear"].values.max()
@@ -598,6 +593,10 @@ def annmode_predictability(am, pred_lev=850):
         D00M06, doi:10.1029/2009JD013770.
 
     """
+    
+    if pred_lev not in am.lev:
+        msg = f"The lev dimension of input does not contain {pred_lev}"
+        raise ValueError(msg)
 
     years = am["time.year"]
     yr_range = np.arange(years.min(), years.max() + 1)

@@ -1,3 +1,83 @@
+# ==============================================================================
+# MDTF Strat-Trop Coupling: Annular Modes POD
+# ==============================================================================
+#
+# This file is part of the Strat-Trop Coupling: Annular Modes POD
+# of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
+#
+# STC Annular Mode Coupling
+# Last update: 2023-03-27
+#
+# This script computes annular mode indices and examines their interannual
+# variability, persistence, and predictability as a function of day of year. 
+# It uses EOF analsis on zonal mean geopotential height anomalies to 
+# define the annular modes (assumed to be EOF1) and their PC time series. 
+# Please see the POD documentation, as well as the references for the 
+# scientific foundations of this POD.
+#
+# ==============================================================================
+#   Version, Contact Info, and License
+# ==============================================================================
+#   - Version/revision information: v1.0 (2023-03-24)
+#   - PI: Zachary D. Lawrence, CIRES + CU Boulder / NOAA PSL
+#   - Developer/point of contact: Zachary D. Lawrence, zachary.lawrence@noaa.gov
+#   - Other contributors: Amy H. Butler, NOAA CSL, amy.butler@noaa.gov
+#
+#  The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt).
+#
+# ==============================================================================
+#   Functionality
+# ==============================================================================
+#   This POD is composed of three files, including the main driver script
+#   (stc_annular_modes.py), functions that perform computations
+#   (stc_annular_modes_calc.py), and functions that compile the specific
+#   POD plots (stc_annular_modes_plot.py). The basic outline of how this
+#   POD operates is as follows:
+#   (1) Driver script parses environment variables, and reads in data
+#   (2) Driver script calls calc functions to perform the EOF analysis
+#       on the input zonal mean geopotential height fields.
+#   (3) Driver script calls calc functions to derive further annular mode 
+#       diagnostics, and sends these to the plotting functions
+#   (4) Outputs the digested model fields into netcdf files.
+#
+# ==============================================================================
+#   Required programming language and libraries
+# ==============================================================================
+#   This POD is done fully in python, and primarily makes use of numpy, xarray,
+#   and pandas to read, subset, and transform the data. It also uses the eofs 
+#   package to perform the EOF analysis. Plotting is done with matplotlib.
+#
+# ==============================================================================
+#   Required model input variables
+# ==============================================================================
+#   This POD requires daily mean fields of
+#   - zonal mean geopotential heights (time, lev, lat), ideally with pressure 
+#     levels spanning between 1000 and 1 hPa. 
+#   - nothing else!
+#
+# ==============================================================================
+#   References
+# ==============================================================================
+#   Thompson, D. W. J., and J. M. Wallace, 2000: Annular Modes in the Extratropical 
+#       Circulation. Part I: Month-to-Month Variability. J. Climate, 13, 
+#       1000–1016, https://doi.org/10.1175/1520-0442(2000)013<1000:AMITEC>2.0.CO;2.
+#   Baldwin, M.P. and Thompson, D.W.J. (2009), A critical comparison of 
+#      stratosphere–troposphere coupling indices. Q.J.R. Meteorol. Soc., 
+#      135: 1661-1672. https://doi.org/10.1002/qj.479
+#   Gerber, E. P., et al. (2010), Stratosphere-troposphere coupling and annular mode 
+#       variability in chemistry-climate models, J. Geophys. Res., 115, D00M06, 
+#       doi:10.1029/2009JD013770.
+#   Simpson, I. R., Hitchcock, P., Shepherd, T. G., and Scinocca, J. F. (2011), 
+#      Stratospheric variability and tropospheric annular-mode timescales, 
+#      Geophys. Res. Lett., 38, L20806, doi:10.1029/2011GL049304.
+#   Kidston, J., Scaife, A., Hardiman, S. et al. Stratospheric influence on tropospheric 
+#      jet streams, storm tracks and surface weather. Nature Geosci 8, 433–440 (2015). 
+#      https://doi.org/10.1038/ngeo2424
+#   Schenzinger, V., and Osprey, S. M. (2015), Interpreting the nature of Northern 
+#      and Southern Annular Mode variability in CMIP5 Models, J. Geophys. Res. Atmos., 
+#      120, 11,203– 11,214, doi:10.1002/2014JD022989.
+
+
 import os
 import traceback
 
@@ -110,6 +190,7 @@ LASTYR = int(os.environ["LASTYR"])
 WK_DIR = os.environ["WK_DIR"]
 OBS_DATA = os.environ["OBS_DATA"]
 
+# Input and output files/directories
 zfi = os.environ["ZG_FILE"]
 data_dir = f"{WK_DIR}/model/netCDF"
 plot_dir = f"{WK_DIR}/model/PS/"
@@ -134,13 +215,15 @@ if (OBS_FIRSTYR < 1979) or (OBS_LASTYR > 2021):
     msg = "OBS_FIRSTYR and OBS_LASTYR must be between 1979-2021"
     raise ValueError(msg)
 
-print(f"(SETTINGS) Will compute the annular mode predictability of the {PRED_LEV} hPa level")
-print(f"(SETTINGS) Will use {FIRSTYR}-{LASTYR} for {CASENAME}")
-print(f"(SETTINGS) Will use {OBS_FIRSTYR}-{OBS_LASTYR} for obs")
-
+# how anomalies in the zonal mean geohgts will be found
 if ANOM_METHOD not in ["gerber", "simple"]:
     msg = 'The anomaly method specified by the ANOM_METHOD env var must be either "gerber" or "simple"'
     raise ValueError(msg)
+
+print(f"(SETTINGS) Will compute annular modes using the '{ANOM_METHOD}' method")
+print(f"(SETTINGS) Will compute the annular mode predictability of the {PRED_LEV} hPa level")
+print(f"(SETTINGS) Will use {FIRSTYR}-{LASTYR} for {CASENAME}")
+print(f"(SETTINGS) Will use {OBS_FIRSTYR}-{OBS_LASTYR} for obs")
 
 # Read the input model data
 print(f"*** Now starting work on {CASENAME}\n------------------------------")
@@ -148,6 +231,7 @@ print("*** Reading model variables ...")
 print("    zonal mean geohgts")
 zzm = xr.open_dataset(zfi)["zg"]
 
+# Check if the data has leapyears, and get rid of them if so
 max_doy = int(zzm['time.dayofyear'].max())
 if (max_doy == 366):
     print("*** Removing leapdays from data")
@@ -156,7 +240,6 @@ if (max_doy == 366):
 # Read in the pre-digested obs data and subset the times
 print("*** Now reading in pre-digested obs data")
 try:
-    # geohgt fourier coefficients for +/- 60lat
     obs_am = xr.open_dataarray(f"{OBS_DATA}/era5_annmodes_1979-2021.nc")
     obs_am = obs_am.sel(time=slice(f'{OBS_FIRSTYR}', f'{OBS_LASTYR}'))
     obs_nam_struc = xr.open_dataarray(f"{OBS_DATA}/era5_nam_lat-struc_1979-2021.nc")
@@ -187,7 +270,7 @@ fig = plot_annmode_eof_structure(sam_struc, nam_struc, title=title_str)
 finame = f"{CASENAME}_annmode_structures.eps"
 fig.savefig(plot_dir + finame, facecolor="white", dpi=150, bbox_inches="tight")
 
-
+# Combine the annular mode PC time series into a single dataarray
 annmodes = xr.concat((sam.assign_coords({"hemi": -1}), 
                       nam.assign_coords({"hemi": 1})), dim="hemi")
 

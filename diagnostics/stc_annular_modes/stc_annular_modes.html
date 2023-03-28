@@ -3,19 +3,21 @@
 <h3>Seasonality and extremes of vertically propagating planetary waves</h3>
 
 <p>
-This POD does an EOF analysis on zonal mean geopotential heights to determine 
-the annular modes (assumed to be EOF1) and their associated principal component 
-time series. This POD assesses the annular mode EOF structures, and computes several 
-annular mode diagnostics related to coupling with the stratospheric annular mode 
-state.
+This POD computes annular mode indices and diagnostics relating to coupling with
+the stratosphere. The annular modes are assumed to be the first EOF of daily 
+zonal mean geopotential height anomalies. Please see the POD documentation for
+how anomalies are computed.
 </p>
 
-<p>
-</p>
 
 <h3>{{CASENAME}}</h3>
 <font color=navy><b>EOF1 Vertical Structure</b></font>
-<p> </p>
+<p> These plots show the latitudinal structure of the 1st EOF of the zonal mean 
+    geopotential height anomalies. The latitude "profiles" are only plotted for
+    a limited set of standard pressure levels to aid comparison between model 
+    and reanalysis datasets. They are intended to be qualitative depictions 
+    of the annular mode structures; the vertical scale of the plots and magnitude 
+    of displacements of the profiles are not necessarily meaningful.</p>
 <TABLE>
 <TR>
     <TH align=left>Model
@@ -29,8 +31,31 @@ state.
 </TABLE>
 <p></p>
 
+<font color=navy><b>Annular Mode Interannual Variability</b></font>
+<p>These plots show the interannual standard deviation of the annular mode indices
+   as a function of day of year.</p>
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Observations
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_NAM_interann-stdv.png>NH Model Timeseries</A>
+    <TH align=center><A href=obs/ERA5_NAM_interann-stdv.png>NH Reanalysis Timeseries</A>
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_SAM_interann-stdv.png>SH Model Timeseries</A>
+    <TH align=center><A href=obs/ERA5_SAM_interann-stdv.png>SH Reanalysis Timeseries</A>
+</TR>
+</TABLE>
+<p></p>
+    
 <font color=navy><b>Annular Mode e-folding timescales</b></font>
-<p> </p>
+<p>These plots show the e-folding timescales (in number of days) of the annular modes
+   as a function of day of year. Higher/lower values indicate higher/lower persistence
+   of the annular mode at the given pressure level.</p>
 <TABLE>
 <TR>
     <TH align=left>Model
@@ -49,28 +74,12 @@ state.
 </TABLE>
 <p></p>
 
-<font color=navy><b>Annular Mode Interannual Variability</b></font>
-<p></p>
-<TABLE>
-<TR>
-    <TH align=left>Model
-    <TH align=left>Observations
-</TR>
-
-<TR>
-    <TH align=center><A href=model/{{CASENAME}}_NAM_interann-stdv.png>NH Model Timeseries</A>
-    <TH align=center><A href=obs/ERA5_NAM_interann-stdv.png>NH Reanalysis Timeseries</A>
-</TR>
-
-<TR>
-    <TH align=center><A href=model/{{CASENAME}}_SAM_interann-stdv.png>SH Model Timeseries</A>
-    <TH align=center><A href=obs/ERA5_SAM_interann-stdv.png>SH Reanalysis Timeseries</A>
-</TR>
-</TABLE>
-<p></p>
-
 <font color=navy><b>Annular Mode Predictability</b></font>
-<p></p>
+<p>These plots show the predictability of the annular mode at a tropospheric pressure level 
+   (by default 850 hPa, but this value is configurable in the POD settings.jsonc file). They 
+   depict the fraction of the variance of the 10-40 days ahead mean annular mode index for 
+   the given pressure level that can be "predicted" from a persistence forecast using the 
+   instantaneous annular mode index at other levels.</p>
 <TABLE>
 <TR>
     <TH align=left>Model

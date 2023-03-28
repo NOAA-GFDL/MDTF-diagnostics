@@ -2,9 +2,9 @@
 # MDTF Strat-Trop Coupling: Annular Modes POD
 # ==============================================================================
 #
-# This file is part of the Strat-Trop Coupling: Annular Modes POD
-# of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt). It defines
-# the plotting functions used by the main driver script.
+# This file is part of the Strat-Trop Coupling: Annular Modes POD of the MDTF 
+# code package (see mdtf/MDTF-diagnostics/LICENSE.txt). It defines the plotting 
+# functions used by the main driver script.
 
 import numpy as np
 import matplotlib as mpl

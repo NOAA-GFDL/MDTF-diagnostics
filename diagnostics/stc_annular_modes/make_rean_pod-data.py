@@ -1,6 +1,5 @@
 import os
 
-import numpy as np
 import xarray as xr
 
 from stc_annular_modes_calc import eof_annular_mode, anomalize_geohgt

@@ -23,7 +23,7 @@ def plot_doy_timeseries(dat, diag, title=''):
     ----------
     dat : `xarray.DataArray`
         The input annular mode diagnostic data. Should have only dimensions
-        of (dayofyear, lev).
+        of (dayofyear, lev), with the max dayofyear being either 360 or 365.
 
     diag : str
         The string specifying the annular mode diagnostic in question.
@@ -108,6 +108,9 @@ def plot_doy_timeseries(dat, diag, title=''):
         roll_to = -180
         xticks = np.array([1, 31, 61, 91, 121, 151, 181,
                           211, 241, 271, 301, 331, 360])
+    else:
+        msg = "The maximum dayofyear in the input data should only be 360 or 365"
+        raise ValueError(msg)
 
     # Set the xtick positions and labels
     xlab_pos = (np.diff(xticks)*0.5)+xticks[0:-1]

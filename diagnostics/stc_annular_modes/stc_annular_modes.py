@@ -81,10 +81,8 @@
 import os
 import traceback
 
-import numpy as np
 import xarray as xr
 import matplotlib as mpl
-from matplotlib import pyplot as plt
 
 from stc_annular_modes_calc import (
     eof_annular_mode,

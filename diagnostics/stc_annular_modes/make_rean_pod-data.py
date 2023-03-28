@@ -6,18 +6,15 @@ import xarray as xr
 from stc_annular_modes_calc import eof_annular_mode, anomalize_geohgt
 
 
-out_dir = '/home/zlawrence/mdtf/inputdata/obs_data/stc_annular_modes' #os.environ['DATA_OUTPUT_DIR']
+out_dir = os.environ['DATA_OUTPUT_DIR']
 
 ### BEGIN: READ INPUT FIELDS ###
 # The following code/paths will have to be adapted for your own system.
 # Data provided for the stc_annular_modes POD of MDTF was originally
 # derived from ERA5 reanalysis zonal mean geopotential heights
-
 print('*** Reading in zonal mean geopotential heights')
-#zzm_fi = os.environ['REAN_ZZM']
-#zzm = xr.open_dataarray(zzm_fi)
-zzm = xr.open_mfdataset('/Projects/S2SCESM2/misc/zmd/reanalysis/ERA5*')['Z'].load()
-zzm = zzm.convert_calendar('noleap', use_cftime=True)
+zzm_fi = os.environ['REAN_ZZM']
+zzm = xr.open_dataarray(zzm_fi)
 
 # Compute the reanalysis NAM and SAM indices
 print('*** Computing the reanalysis NAM and SAM loading patterns and PC time series')

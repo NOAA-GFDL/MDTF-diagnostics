@@ -23,7 +23,7 @@ import matplotlib.pyplot as mp
 import matplotlib.dates as mdates
 from matplotlib.dates import DateFormatter
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
-                               AutoMinorLocator)
+							   AutoMinorLocator)
 import matplotlib.patches as mpatches
 
 
@@ -43,19 +43,21 @@ import subprocess as sp
 import os 
 
 
-
-
-
 #####################################################
 
 
 
+
+
+
+
+
 """
-        Nino/Nina SST information
-        
-        Input: Timseries of SST over global region
-        Output: Timseries of SST-anomalies for different nino regions.
-                Classification of nino/neutral/nina based on SST anomalies
+		Nino/Nina SST information
+
+		Input: Timseries of SST over global region
+		Output: Timseries of SST-anomalies for different nino regions.
+				Classification of nino/neutral/nina based on SST anomalies
 
 """
 
@@ -66,50 +68,50 @@ def nino_sst_anom(run_case,sst_data,nino,dir_proot):
 
 	# Nino regions (S/N/W/E) 
 	nino_reg = {}
-    
+
 	nino_reg['nino12']  = [-10.,0.,270.,280.]
 	nino_reg['nino3']   = [-5.,5.,210.,270.]
 	nino_reg['nino34']  = [-5.,5.,190.,240.]   
 	nino_reg['nino4']   = [-5.,5.,160.,210.]
 	nino_reg['nino5']   = [-5.,5.,120.,140.]
 	nino_reg['nino6']   = [8.,16.,140.,160.]
-    
+
 
 	print('    > Calculating for SST anomalies ',nino,' region')
 
-    
+
 # Set nino averaging domain
 	nino_s = nino_reg[nino][0] ; nino_n = nino_reg[nino][1]
 	nino_w = nino_reg[nino][2] ; nino_e = nino_reg[nino][3]
 
- 
-    
+
+
 ## Be careful as the time a coordinate is 1 month off FEB actually = JAN as detrmined by the cftime coordinate.
-    
+
 # Read in TS (SSTs) from inputdata HadISST for now.  
 
 	sst_ts = sst_data.loc[:,nino_s:nino_n,nino_w:nino_e].mean(dim=['lat','lon']) 
 #    print(sst_ts.resample())
 	sst_ts = sst_ts.compute()
-   
+
 #    sst_ts = h0_month_fix(sst_ts)
-   
+
 
 ## If TS/SST data comes from history files may need to check that first file should be Jan and Not Feb    
 ## Remove average for each month of year (annual cycle)
 #    sst_data.time = sst_data.time + dt.timedelta(month=1)
 #    sst_sata.time = sst_data.time + relativedelta(-1)
 
-    
+
 	mnames_all = sst_ts.time.dt.strftime("%b") 
 	year_all = sst_ts.time.dt.strftime("%Y") 
 	time_axis = np.arange(0,year_all.size)
-    
+
 
 	if mnames_all[0] != 'Jan':
 		print('First month is ',mnames_all[0],' not Jan: Exiting - should check it is not the h0 time stamp problem if CAM data')
-       
-    
+
+
 # Find unique months for removal of annual cycle.
 
 	mnames = np.unique(mnames_all)
@@ -127,7 +129,9 @@ def nino_sst_anom(run_case,sst_data,nino,dir_proot):
 
 	''' SET INDICES OF NINO/NINA MONTHS BASED ON SPECIFIED CRITERIA AND THE SEASON '''
 
-	ssta_thresh = np.std(sst_ts)    
+#	ssta_thresh = np.std(sst_ts)    
+	ssta_thresh = 1.
+	
 	lclimo_months = np.in1d(mnames_all, ['Dec','Jan','Feb'])
 	# Find the indices of those months
 	iclimo_months = np.where(lclimo_months)[0]
@@ -136,13 +140,13 @@ def nino_sst_anom(run_case,sst_data,nino,dir_proot):
 	inino_mons = np.where((sst_ts > ssta_thresh) & lclimo_months)
 	inina_mons = np.where((sst_ts < -ssta_thresh) & lclimo_months)
 
-    
-	 
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
 
 
 	lplot_sst = True
@@ -154,7 +158,7 @@ def nino_sst_anom(run_case,sst_data,nino,dir_proot):
 		print('    > Setup SST Plotting --')
 
 		mp.figure(1)
-		
+
 		tcart_proj = ccrs.PlateCarree(central_longitude=180)
 		cart_proj = ccrs.PlateCarree()
 
@@ -208,7 +212,7 @@ def nino_sst_anom(run_case,sst_data,nino,dir_proot):
 		''' PLOT REGIONAL DISTRIBUTION OF SSTA '''    
 
 		print('    > Calculating local plotting arrays --')
-		
+
 
 		nino_sst_plot = sst_data[inino_mons[0],:,:].mean(dim=['time'])
 		nina_sst_plot = sst_data[inina_mons[0],:,:].mean(dim=['time'])
@@ -318,12 +322,12 @@ def nino_sst_anom(run_case,sst_data,nino,dir_proot):
 
 		axs2.add_patch(nbox)
 		axs3.add_patch(nbox1)
-    
-    
-    
+
+
+
 		print('    > Saving figure --')
 
-		
+
 		fig.savefig(dir_proot+run_case+'_'+nino+'_ssta.png', dpi=100)
 
 	return inino_mons[0],inina_mons[0]
@@ -345,15 +349,18 @@ def nino_sst_anom(run_case,sst_data,nino,dir_proot):
 '''
 
 def h0_month_fix(hist_tseries_var):
-    
-    year = hist_tseries_var.time.dt.year
-    month = hist_tseries_var.time.dt.month
-    
-    print(hist_tseries_var.time.time)
-    
-    hist_tseries_var.time.dt.year[0] = cftime.DatetimeNoLeap(1979, 1, 1, 0, 0, 0, 0)
-    
-    return hist_tseries_var
+
+	year = hist_tseries_var.time.dt.year
+	month = hist_tseries_var.time.dt.month
+
+	print(hist_tseries_var.time.time)
+
+	hist_tseries_var.time.dt.year[0] = cftime.DatetimeNoLeap(1979, 1, 1, 0, 0, 0, 0)
+
+	return hist_tseries_var
+
+
+
 
 
 
@@ -372,42 +379,42 @@ def cam_tend_var_get(files_ptr,var_name):
 
 # Determining CAM5/CAM6 based on levels.
 
-    nlevs = files_ptr.lev.size
-    fvers = files_ptr.variables
+	nlevs = files_ptr.lev.size
+	fvers = files_ptr.variables
 #
 
 #    if var_name not in ['STEND_CLUBB','RVMTEND_CLUBB']
 #    if var_name in fvers: print
 #    if nlevs in [32,30]: 
-        
-        
-    print(np.any(np.isin(files_ptr.variables,var_name)))
+
+
+	print(np.any(np.isin(files_ptr.variables,var_name)))
 # Variable read in and time averaging (with special cases).
 
 #    if var_name == 'DTCOND' and : 
 #            var_in = files_ptr['DTCOND'].mean(dim=['time'])+files_ptr['DTV'].mean(dim=['time'])
 
-    if var_name == 'DCQ' and case in ['rC5','rUW']: 
-            var_in = files_ptr['DCQ'].mean(dim=['time'])+files_ptr['VD01'].mean(dim=['time'])
-    
-    if var_name == 'STEND_CLUBB':
-       
-            var_in = 1005.*(files_ptr['DTV'].mean(dim=['time'])
-            +files_ptr['MACPDT'].mean(dim=['time'])/1000.
-            +files_ptr['CMFDT'].mean(dim=['time']))
-    else :
-            var_in = files_ptr[var_name].mean(dim=['time'])           
-    
-    if var_name == 'DIV':  
-            var_in = -files_ptr['OMEGA'].mean(dim=['time']).differentiate("lev")
-   
-    if var_name in ['OMEGA','ZMDT','ZMDQ']:
-            var_in = files_ptr[var_name].mean(dim=['time'])
+	if var_name == 'DCQ' and case in ['rC5','rUW']: 
+			var_in = files_ptr['DCQ'].mean(dim=['time'])+files_ptr['VD01'].mean(dim=['time'])
 
-    return var_in
-            
-    
-  
+	if var_name == 'STEND_CLUBB':
+
+			var_in = 1005.*(files_ptr['DTV'].mean(dim=['time'])
+			+files_ptr['MACPDT'].mean(dim=['time'])/1000.
+			+files_ptr['CMFDT'].mean(dim=['time']))
+	else :
+			var_in = files_ptr[var_name].mean(dim=['time'])           
+
+	if var_name == 'DIV':  
+			var_in = -files_ptr['OMEGA'].mean(dim=['time']).differentiate("lev")
+
+	if var_name in ['OMEGA','ZMDT','ZMDQ']:
+			var_in = files_ptr[var_name].mean(dim=['time'])
+
+	return var_in
+
+
+
 
 
 
@@ -419,7 +426,7 @@ def cam_tend_var_get(files_ptr,var_name):
 
 '''
 #########################################################
-    COMMON ROUTINE FOR SETTING UP FILES (CAM/Analyses)
+	COMMON ROUTINE FOR SETTING UP FILES (CAM/Analyses)
 #########################################################
 '''
 
@@ -432,184 +439,181 @@ def cam_tend_var_get(files_ptr,var_name):
 ##
 ## >JRA-55 CISL-RDA ds628.9 : /glade/collections/rda/data/ds628.9/
 ##
-    
-def get_files_tseries(case_name,case_type,var_cam,years) :
 
-    
-    type_desc = {}
-    type_desc['cam'] = ['/glade/p/rneale']
+def get_files_tseries(case_name,case_type,var_cam,lats_in,p_levs,years) :
 
 
-    allowed_types = ['cam','reanal','lens1','lens2','cam6_revert']
+	type_desc = {}
+	type_desc['cam'] = ['/glade/p/rneale']
 
-    if case_type not in allowed_types : print('-- case_type'+ ' files - type not allowed')
-    if case_type     in allowed_types : print('-- case_type'+ ' files - type allowed') 
 
-    print('    -- Grabbing data type/case -- '+case_type+' '+case_name)
- 
+	allowed_types = ['cam','reanal','lens1','lens2','lense2','cam6_revert']
 
-    yr0 = years[0]
-    yr1 = years[1]
-    
+	if case_type not in allowed_types : print('-- case_type'+ ' files - type not allowed')
+	if case_type     in allowed_types : print('-- case_type'+ ' files - type allowed') 
 
-   
-    
+	print('    -- Grabbing data type/case -- '+case_type+' '+case_name)
+
+
+	yr0 = years[0]
+	yr1 = years[1]
+
+
+
+
 ## GRAB ANALYSIS ##
 
-    lat_rev = False
-    lcoord_names = False
+	lat_rev = False
+	lcoord_names = False
 
-    
+
 ## Decode times: Start off = True, set to False if single avarge files)
 
-    decode_times = True
-
-        
-    ''' ANALYSIS/OBSERVED '''
-        
-        
-    if case_type=='reanal' :
-            
-            
-        if var_cam != 'TS':
-            
-            
-            # FILES on RDA CISL files
-            dir_rda = '/glade/collections/rda/data/'
-                
-            # FILES on my work dir.
-            dir_mydata = '/glade/work/rneale/data/'
-            
-            # Select correct root directory.
-            lfiles_rda = True if case_name in ['ERA5','ERAI','CFSR','ERAI','MERRA2','JRA25'] else False
-            
-            
-         
-            
-            
-            if case_name == 'ERA5' :    # This works but is incredibly slow because it is 0.25 deg.
+	decode_times = True
 
 
-
-                rda_cat = 'ds633.1'
-
-                var_anal_fmap = {'T': '130_t',   'Q':'133_q',  'OMEGA':'135_w'}
-                var_anal_vmap = {'T': 'T',       'Q':'Q',  'OMEGA':'W'}
-
-                var_vname = var_anal_vmap[var_cam] ; var_fname = var_anal_fmap[var_cam] 
-
-                var_ftype = 'uv' if var_cam in ['U','V'] else 'sc' 
+	''' ANALYSIS/OBSERVED '''
 
 
-                dir_glade = dir_rda+rda_cat+'/'
-                files_glade  = np.array([dir_rda+rda_cat+"/e5.moda.an.pl/%03d/e5.moda.an.pl.128_%s.ll025%s.%03d010100_%03d120100.nc"%(y,var_fname,var_ftype,y,y) for y in range(yr0,yr1+1)])
+	if case_type=='reanal' :
 
-                lat_rev = True
-                lcoord_names = True
+
+		if var_cam != 'TS':
+
+
+			# FILES on RDA CISL files
+			dir_rda = '/glade/collections/rda/data/'
+
+			# FILES on my work dir.
+			dir_mydata = '/glade/work/rneale/data/'
+
+			# Select correct root directory.
+			lfiles_rda = True if case_name in ['ERA5','ERAI','CFSR','ERAI','MERRA2','JRA25'] else False
 
 
 
 
-            if case_name=='ERAI' :  ## UNFINSHED FOR RDA
+
+			if case_name == 'ERA5' :    # This works but is incredibly slow because it is 0.25 deg.
 
 
-                var_anal_fmap = {'T': 't',   'Q':'q' , 'OMEGA':'w'}
-                var_anal_vmap = {'T': 'T',   'Q':'Q',  'OMEGA':'w'}
-                var_vname = var_anal_vmap[var_cam] ; var_fname = var_anal_fmap[var_cam] 
+
+				rda_cat = 'ds633.1'
+
+				var_anal_fmap = {'T': '130_t',   'Q':'133_q',  'OMEGA':'135_w'}
+				var_anal_vmap = {'T': 'T',       'Q':'Q',  'OMEGA':'W'}
+
+				var_vname = var_anal_vmap[var_cam] ; var_fname = var_anal_fmap[var_cam] 
+
+				var_ftype = 'uv' if var_cam in ['U','V'] else 'sc' 
 
 
-                if lfiles_rda :
+				dir_glade = dir_rda+rda_cat+'/'
+				files_glade  = np.array([dir_rda+rda_cat+"/e5.moda.an.pl/%03d/e5.moda.an.pl.128_%s.ll025%s.%03d010100_%03d120100.nc"%(y,var_fname,var_ftype,y,y) for y in range(yr0,yr1+1)])
 
-                    rda_cat = 'ds627.1'
-
-
-                    if var_cam in ['T'] : var_fname = 'sc'
-                    if var_cam in ['U','V','OMEGA'] : var_fname = 'uv' 
+				lat_rev = True
+				lcoord_names = True
 
 
-                    dir_glade = dir_rda+rda_cat+'/'
-                    files_glade  = np.array([dir_rda+rda_cat+"/ei.moda.an.pl/ei.moda.an.pl.regn128%s.%03d%02d0100.nc"%(var_fname,y,m) for y in range(yr0,yr1+1) for m in range(1,12)])
-
-                    
-                else :
-
-                    files_glade  = np.array([dir_mydata+case_name+"/"+var_fname+".mon.mean.nc"])
-                    print(files_glade)
-                  
-
-            if case_name=='ERA40' :  ## UNFINSHED
-                var_anal_fmap = {'T': 't',   'Q':'q'}
-                var_anal_vmap = {'T': 'T',   'Q':'Q'}
-                var_vname = var_anal_vmap[var_cam] ; var_fname = var_anal_fmap[var_cam] 
-                if var_cam in ['T'] : var_fname = 'sc'
-                if var_cam in ['U','V'] : var_fname = 'uv' 
-                rda_cat = 'ds627.1'
-
-                dir_glade = dir_rda+rda_cat+'/'
-                files_glade  = np.array([dir_rda+rda_cat+"/ei.moda.an.pl/ei.moda.an.pl.regn128%s.%03d%02d0100.nc"%(var_fname,y,m) for y in range(yr0,yr1+1) for m in range(1,12)])
-                print(files_glade)
 
 
-            if case_name=='MERRA2' : #### NOT CLEAR MMEAN DATA AVAILABLE FROM RDA
-                resn = '1.9x2.5'
+			if case_name=='ERAI' :  ## UNFINSHED FOR RDA
+
+
+				var_anal_fmap = {'T': 't',   'Q':'q' , 'OMEGA':'w'}
+				var_anal_vmap = {'T': 'T',   'Q':'Q',  'OMEGA':'w'}
+				var_vname = var_anal_vmap[var_cam] ; var_fname = var_anal_fmap[var_cam] 
+
+
+				if lfiles_rda :
+
+					rda_cat = 'ds627.1'
+
+
+					if var_cam in ['T'] : var_fname = 'sc'
+					if var_cam in ['U','V','OMEGA'] : var_fname = 'uv' 
+
+
+					dir_glade = dir_rda+rda_cat+'/'
+					files_glade  = np.array([dir_rda+rda_cat+"/ei.moda.an.pl/ei.moda.an.pl.regn128%s.%03d%02d0100.nc"%(var_fname,y,m) for y in range(yr0,yr1+1) for m in range(1,12)])
+
+
+				else :
+
+					files_glade  = np.array([dir_mydata+case_name+"/"+var_fname+".mon.mean.nc"])
+					print(files_glade)
+
+
+			if case_name=='ERA40' :  ## UNFINSHED
+				var_anal_fmap = {'T': 't',   'Q':'q'}
+				var_anal_vmap = {'T': 'T',   'Q':'Q'}
+				var_vname = var_anal_vmap[var_cam] ; var_fname = var_anal_fmap[var_cam] 
+				if var_cam in ['T'] : var_fname = 'sc'
+				if var_cam in ['U','V'] : var_fname = 'uv' 
+				rda_cat = 'ds627.1'
+
+				dir_glade = dir_rda+rda_cat+'/'
+				files_glade  = np.array([dir_rda+rda_cat+"/ei.moda.an.pl/ei.moda.an.pl.regn128%s.%03d%02d0100.nc"%(var_fname,y,m) for y in range(yr0,yr1+1) for m in range(1,12)])
+				print(files_glade)
+
+
+			if case_name=='MERRA2' : #### NOT CLEAR MMEAN DATA AVAILABLE FROM RDA
+				resn = '1.9x2.5'
 #            var_anal_fmap = {'T': '',   'Q':'q'}
-                var_anal_vmap = {'T': 'T',   'Q':'Q'}
-                var_vname = var_anal_vmap[var_cam] 
-                rda_cat = 'ds313.3'
+				var_anal_vmap = {'T': 'T',   'Q':'Q'}
+				var_vname = var_anal_vmap[var_cam] 
+				rda_cat = 'ds313.3'
 
-                dir_glade = dir_rda+rda_cat+'/'
-                files_glade  = np.array([dir_rda+rda_cat+"/%s/%03d/MERRA2%03d010100_%03d120100.nc"%(resn,y,y,y) for y in range(yr0,yr1+1)])
-                print(files_glade)
+				dir_glade = dir_rda+rda_cat+'/'
+				files_glade  = np.array([dir_rda+rda_cat+"/%s/%03d/MERRA2%03d010100_%03d120100.nc"%(resn,y,y,y) for y in range(yr0,yr1+1)])
+				print(files_glade)
 
 
-            if case_name=='JRA55' : #### NOT CLEAR MMEAN DATA AVAILABLE FROM RDA
-                resn = '1.9x2.5'
+			if case_name=='JRA55' : #### NOT CLEAR MMEAN DATA AVAILABLE FROM RDA
+				resn = '1.9x2.5'
 #            var_anal_fmap = {'T': '',   'Q':'q'}
-                var_anal_vmap = {'T': 'T', 'Q':'Q'}
-                var_vname = var_anal_vmap[var_cam] 
-                rda_cat = 'ds628.3'
+				var_anal_vmap = {'T': 'T', 'Q':'Q'}
+				var_vname = var_anal_vmap[var_cam] 
+				rda_cat = 'ds628.3'
 
-                dir_glade = dir_rda+rda_cat+'/'
-                files_glade  = np.array([dir_rda+rda_cat+"/anl_p25/%03d/anl_p25.%03d0.nc"%(y,var_fname,y,y) for y in range(yr0,yr1+1) for m in range(1,12)])
-                print(files_glade)
+				dir_glade = dir_rda+rda_cat+'/'
+				files_glade  = np.array([dir_rda+rda_cat+"/anl_p25/%03d/anl_p25.%03d0.nc"%(y,var_fname,y,y) for y in range(yr0,yr1+1) for m in range(1,12)])
+				print(files_glade)
 
-            if case_name=='JRA25' : #### Old but nc monthly data available from RDA (1979-2005)
-                resn = '1.9x2.5'
+			if case_name=='JRA25' : #### Old but nc monthly data available from RDA (1979-2005)
+				resn = '1.9x2.5'
 #            var_anal_fmap = {'T': '',   'Q':'q'}
-                var_anal_vmap = {'T': 'TMP_PRS',   'Q':'Q', 'OMEGA':'W'}
+				var_anal_vmap = {'T': 'TMP_PRS',   'Q':'Q', 'OMEGA':'W'}
 
 
-                var_vname = var_anal_vmap[var_cam] 
-                rda_cat = 'ds625.1'
+				var_vname = var_anal_vmap[var_cam] 
+				rda_cat = 'ds625.1'
 
-                dir_glade = dir_rda+rda_cat+'/'
-                files_glade  = np.array([dir_rda+rda_cat+"/anl_p25/anl_p25.%03d%02d.nc"%(y,m) for y in range(yr0,yr1+1) for m in range(1,12)])
-
-
- 
+				dir_glade = dir_rda+rda_cat+'/'
+				files_glade  = np.array([dir_rda+rda_cat+"/anl_p25/anl_p25.%03d%02d.nc"%(y,m) for y in range(yr0,yr1+1) for m in range(1,12)])
 
 
 
-                
-        
+
+
+
+
+
 #### GRAB CAM SST AMIP DATASET FOR NOW FOR ANALYSES
-       
-        if (var_cam=='TS') :
-            print('-- Grabbing SST file(s) for AMIP and REANALYSES from CESM inputdata -')
-            dir_inputdata = '/glade/p/cesmdata/cseg/inputdata/atm/cam/sst/'
-            hadisst_file = 'sst_HadOIBl_bc_0.9x1.25_1850_2020_c210521.nc'
-            files_glade = dir_inputdata+hadisst_file
-            var_vname = 'SST_cpl'
 
-   
-    ''' MODEL OUTPUT '''
+		if (var_cam=='TS') :
+			print('-- Grabbing SST file(s) for AMIP and REANALYSES from CESM inputdata -')
+			dir_inputdata = '/glade/p/cesmdata/cseg/inputdata/atm/cam/sst/'
+			hadisst_file = 'sst_HadOIBl_bc_0.9x1.25_1850_2020_c210521.nc'
+			files_glade = dir_inputdata+hadisst_file
+			var_vname = 'SST_cpl'
+
+
+	''' MODEL OUTPUT '''
 
 #### Common CAM->CF variable mapping
 
-    vars_cf = {'TS' : 'ts', 'T': 'ta',   'Q':'hus' , 'Z3': 'hgt',   'U':'ua', 'V':'va',  'OMEGA':'wap'}
-   
-    
-   
+	vars_cf = {'TS' : 'ts', 'T': 'ta',   'Q':'hus' , 'Z3': 'hgt',   'U':'ua', 'V':'va',  'OMEGA':'wap'}
 
 
 
@@ -618,173 +622,200 @@ def get_files_tseries(case_name,case_type,var_cam,years) :
 
 
 
-    if case_type =='lens1': ## LARGE ENSEMBLE WITH CESM1 ##
- 
-        dir_lens = '/glade/campaign/cesm/collections/cesmLE/CESM-CAM5-BGC-LE/atm/proc/tseries/monthly/'
- 
-        print('    -- Grabbing file(s) for LENS1(CESM1) - Variable = ',var_cam)
 
-        dir_files_stub = dir_lens+var_cam+'/'+case_name+'.cam.h0' # Need OS call here
-        
-        files_glade = sp.getoutput('ls '+dir_files_stub+'*nc')
-       
-        var_vname = var_cam
 
-        
-        
-   
-        
-        
-    
-    if case_type =='lens2':   ## LARGE ENSEMBLE WITH CESM2 ##
-        
+
+	if case_type =='lens1': ## LARGE ENSEMBLE WITH CESM1 ##
+
+		dir_lens = '/glade/campaign/cesm/collections/cesmLE/CESM-CAM5-BGC-LE/atm/proc/tseries/monthly/'
+
+		print('    -- Grabbing file(s) for LENS1(CESM1) - Variable = ',var_cam)
+
+		dir_files_stub = dir_lens+var_cam+'/'+case_name+'.cam.h0' # Need OS call here
+
+		files_glade = sp.getoutput('ls '+dir_files_stub+'*nc')
+
+		var_vname = var_cam
+
+
+
+
+
+
+
+	if case_type =='lens2':   ## LARGE ENSEMBLE WITH CESM2 ##
+
 # Complex ensembles structures. Multiple files need to be trimmed forom directory listing.
-        
- 
-        dir_lens = '/glade/campaign/cgd/cesm/CESM2-LE/timeseries/atm/proc/tseries/month_1/'
-        
-        print('    -- Grabbing file(s) for LENS2(CESM2) - Variable = ',var_cam)
 
-        # Directory with input files.
-        dir_files = dir_lens+var_cam+"/"
-        
-        # Iritated os call, cannot do wild cards and it does a local list and not an absolute path!!!
-        files_glade_all = np.array(os.listdir(dir_lens+var_cam))  # List all files in variable directory
-             
 
-        # Have to trim file list according to the case_name
-        files_in_list = np.array([case_name in each_file for each_file in files_glade_all])
+		dir_lens = '/glade/campaign/cgd/cesm/CESM2-LE/timeseries/atm/proc/tseries/month_1/'
 
-        # Now I have to sort to get the numerical ordering of years right.
-        files_glade = np.array(files_glade_all[files_in_list])
-        files_glade = np.sort(files_glade)
+		print('    -- Grabbing file(s) for LENS2(CESM2) - Variable = ',var_cam)
 
-        # Add the absolute path 
-        files_glade = np.array([dir_files+file_string for file_string in files_glade])
-     
-                               
-        var_vname = var_cam
-  
+		# Directory with input files.
+		dir_files = dir_lens+var_cam+"/"
 
+		# Iritated os call, cannot do wild cards and it does a local list and not an absolute path!!!
+		files_glade_all = np.array(os.listdir(dir_lens+var_cam))  # List all files in variable directory
+
+
+		# Have to trim file list according to the case_name
+		files_in_list = np.array([case_name in each_file for each_file in files_glade_all])
+
+		# Now I have to sort to get the numerical ordering of years right.
+		files_glade = np.array(files_glade_all[files_in_list])
+		files_glade = np.sort(files_glade)
+
+		# Add the absolute path 
+		files_glade = np.array([dir_files+file_string for file_string in files_glade])
+
+
+		var_vname = var_cam
 
 
 
 
+	if case_type =='e3smv2_lens':   ## LARGE ENSEMBLE WITH E3SMv2 ##
+
+# Complex ensembles structures. Multiple files need to be trimmed forom directory listing.
 
 
-        
-    if case_type =='c6_amip':     ## ENSEMBLE OF AMIP CAM6 RUNS FROM CMIP6 ##
-       
-        dir_lens = '/glade/collections/cdg/data/CMIP6/CMIP/NCAR/CESM2/amip/'
-        var_cf = vars_cf[var_cam]
+		dir_lens = '/glade/campaign/cgd/ccr/E3SMv2/FV_regridded/'
 
-        print('    -- Grabbing file(s) for CAM5-AMIP - Variable = ',var_cam)
+		print('    -- Grabbing file(s) for LENS2(E3SMv2) - Variable = ',var_cam)
 
-        dir_files_stub = dir_lens+case_name+'/Amon/'+var_cf+'/gn/latest/' 
-        
-        
-        files_glade = np.array(os.listdir(dir_files_stub))  # List all files in variable directory
+		dir_files_stub = dir_lens+case_name+'/atm/proc/tseries/month_1/'+case_name+'.eam.h0.'+var_cam+'.' # Need OS call here
+
+		files_glade = sp.getoutput('ls '+dir_files_stub+'*nc')
+
+		var_vname = var_cam
+
+
+
+
+	if case_type =='c6_amip':     ## ENSEMBLE OF AMIP CAM6 RUNS FROM CMIP6 ##
+
+		dir_lens = '/glade/collections/cdg/data/CMIP6/CMIP/NCAR/CESM2/amip/'
+		var_cf = vars_cf[var_cam]
+
+		print('    -- Grabbing file(s) for CAM5-AMIP - Variable = ',var_cam)
+
+		dir_files_stub = dir_lens+case_name+'/Amon/'+var_cf+'/gn/latest/' 
+
+
+		files_glade = np.array(os.listdir(dir_files_stub))  # List all files in variable directory
 #        files_glade = sp.getoutput('ls '+dir_files_stub+'*nc')
-        files_glade = np.array([dir_files_stub+file_string for file_string in files_glade])
-        var_vname = var_cf   
-        
-        lcoord_names = True
-        
-        
-        
+		files_glade = np.array([dir_files_stub+file_string for file_string in files_glade])
+		var_vname = var_cf   
 
-        
-    if case_type =='cam6_revert': # Complex ensembles structures
-    
-    
-        dir2_cam = '/glade/campaign/cgd/amp/rneale/revert/' # Some output is here
-        dir_cam = '/glade/p/cgd/amp/amwg/runs/' # Run firectories with history files  	
-	
-        
-        dir_files = dir_cam+case_name+'/atm/hist/'
+		lcoord_names = True
+
+
+
+
+
+	if case_type =='cam6_revert': # Complex ensembles structures
+
+
+		dir2_cam = '/glade/campaign/cgd/amp/rneale/revert/' # Some output is here
+		dir_cam = '/glade/p/cgd/amp/amwg/runs/' # Run firectories with history files  	
+
+
+		dir_files = dir_cam+case_name+'/atm/hist/'
 
 #		# If directory empty, try location #
 #		if len(os.listdir(dir_files)) == 0:	dir_files = dir_cam2+case_name+'/atm/hist/'
 
 
-        files_stub = case_name+''+'.cam.h0.'
-        
-        
-        # Iritated os call, cannot do wild cards and it does a local list and not an absolute path!!!
-        files_glade_all = np.array(os.listdir(dir_files))  # List all files in variable directory
-        
-        # Have to trim file list according to the case_name
-        files_in_list = np.array([files_stub in each_file for each_file in files_glade_all])
-        
-         # Now I have to sort to get the numerical ordering of years right.
-        files_glade = np.array(files_glade_all[files_in_list])
-     
-        files_glade = np.sort(files_glade)
-    
-        
-        # Grab yr0 to yr1 range (by finding Jan y0 file and Dec yr1 files - now that they are sorted.
-        iyr0_jan = list(files_glade).index(files_stub+str(yr0)+'-01.nc')
-        iyr1_dec = list(files_glade).index(files_stub+str(yr1)+'-12.nc')
-        
-     
-        
-        # Subset files for required yearly/month range
-        # NOT SURE WHY THIS NEEDS TO BE +1 BUT IT DOES OTHERWIS EWE MISS THE LAST DECEMBER
-        files_glade = files_glade[iyr0_jan:iyr1_dec+1]
-     
-        
-        # Add the absolute path 
-        files_glade = np.array([dir_files+file_string for file_string in files_glade])
-        
-        var_vname = var_cam
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-    print('    -- PROCESSING FILE(S) ->>')
+		files_stub = case_name+''+'.cam.h0.'
+
+
+		# Iritated os call, cannot do wild cards and it does a local list and not an absolute path!!!
+		files_glade_all = np.array(os.listdir(dir_files))  # List all files in variable directory
+
+		# Have to trim file list according to the case_name
+		files_in_list = np.array([files_stub in each_file for each_file in files_glade_all])
+
+		 # Now I have to sort to get the numerical ordering of years right.
+		files_glade = np.array(files_glade_all[files_in_list])
+
+		files_glade = np.sort(files_glade)
+
+
+		# Grab yr0 to yr1 range (by finding Jan y0 file and Dec yr1 files - now that they are sorted.
+		iyr0_jan = list(files_glade).index(files_stub+str(yr0)+'-01.nc')
+		iyr1_dec = list(files_glade).index(files_stub+str(yr1)+'-12.nc')
+
+
+
+		# Subset files for required yearly/month range
+		# NOT SURE WHY THIS NEEDS TO BE +1 BUT IT DOES OTHERWIS EWE MISS THE LAST DECEMBER
+		files_glade = files_glade[iyr0_jan:iyr1_dec+1]
+
+
+		# Add the absolute path 
+		files_glade = np.array([dir_files+file_string for file_string in files_glade])
+
+		var_vname = var_cam
+
+
+
+
+
+
+
+
+
+
+	print('    -- PROCESSING FILE(S) ->>')
 
 #    if  not isinstance(files_glade,(str,list)) :   
 #        files_glade = list(files_glade)
-        
-    
-    if not isinstance(files_glade,(str,list)) :
-        print('    --> First/Last (',len(files_glade),' total number of files)')
-        print('    -',files_glade[0])
-        print('    -',files_glade[-1])
-    else:
-        print('    --> Single file')
-        print('    -',files_glade)
 
-   
-            
+
+	if not isinstance(files_glade,(str,list)) :
+		print('    --> First/Last (',len(files_glade),' total number of files)')
+		print('    -',files_glade[0])
+		print('    -',files_glade[-1])
+	else:
+		print('    --> Single file')
+		print('    -',files_glade)
+
+
+
 ## POINT TO FILES ##
 
-  
-#    data_files = xr.open_mfdataset(files_glade,parallel=True,chunks={"time": 100})  ; 2.52mins (ERA5: 1979-1990)
-    data_files = xr.open_mfdataset(files_glade, decode_cf=True, decode_times=True, parallel=True,chunks={"time": 12}) # 3 mins ERA5: 1979-1990
-    
 
-    if lcoord_names : data_files = change_coords(data_files,var_cam,case_type,case_name)
+#    data_files = xr.open_mfdataset(files_glade,parallel=True,chunks={"time": 100})  ; 2.52mins (ERA5: 1979-1990)
+	data_files = xr.open_mfdataset(files_glade, decode_cf=True, decode_times=True, parallel=True,chunks={"time": 12}) # 3 mins ERA5: 1979-1990
+
+
+	if lcoord_names : data_files = change_coords(data_files,var_cam,case_type,case_name)
 
 #    if lcoord_names : data_files = data_files.rename({'latitude':'lat', 'longitude':'lon', 'level':'lev'})
-    
+
 # Reverse lat array to get S->N if needed
-    if lat_rev : data_files = data_files.reindex(lat=list(reversed(data_files.lat)))
+	if lat_rev : data_files = data_files.reindex(lat=list(reversed(data_files.lat)))
+
+	
+# Finally trim years.
 
 
-# Datset info.
-  
-    print('    -- FILE(S) AVAILABLE TIME RANGE - > ',min(data_files.time.dt.year.values),' to' ,max(data_files.time.dt.year.values))
-    print('')
-    print('Dataset required memory =',data_files.nbytes)        
-    
-    return data_files,var_vname
+	data_files = data_files.sel(lat=slice(lats_in[0],lats_in[1]),time=slice(str(yr0), str(yr1)))
+	
+	if var_cam != 'TS':
+		data_files = data_files.sel(lev=slice(min(p_levs),max(p_levs)))
+
+	
+	
+								
+# Dataset info.
+
+	print('    -- FILE(S) AVAILABLE TIME RANGE - > ',min(data_files.time.dt.year.values),' to' ,max(data_files.time.dt.year.values))
+	print('')
+	print('Dataset required memory =',data_files.nbytes)        
+
+	return data_files,var_vname
 
 
 
@@ -801,9 +832,9 @@ def get_files_tseries(case_name,case_type,var_cam,years) :
 
 
 ''' 
-#########################################################
-    CHANGE COORD NAMES IF NEEDED 
-#########################################################
+	#########################################################
+		CHANGE COORD NAMES IF NEEDED 
+	#########################################################
 
 -Read in data files and change coord names if needed
 
@@ -811,22 +842,22 @@ def get_files_tseries(case_name,case_type,var_cam,years) :
 '''
 
 def change_coords(data_files_in,var_cam_in,case_type_in,case_name_in) :
-    
-    data_files_out = data_files_in
-    
-      
-    if var_cam_in != 'TS' :
-        if case_name_in in ['ERA5'] :
-            data_files_out = data_files_in.rename({'latitude':'lat', 'longitude':'lon', 'level':'lev'})
-    
-        if case_type_in in ['c6_amip'] :
-            data_files_out = data_files_in.rename({'plev':'lev'})
-            data_files_out['lev'] = 0.01*data_files_out.lev  # pa->mb
-            
 
-                
+	data_files_out = data_files_in
+
+
+	if var_cam_in != 'TS' :
+		if case_name_in in ['ERA5'] :
+			data_files_out = data_files_in.rename({'latitude':'lat', 'longitude':'lon', 'level':'lev'})
+
+		if case_type_in in ['c6_amip'] :
+			data_files_out = data_files_in.rename({'plev':'lev'})
+			data_files_out['lev'] = 0.01*data_files_out.lev  # pa->mb
+
+
+
 # Return modified files with new coord. names.
-    return data_files_out
+	return data_files_out
 
 
 
@@ -847,18 +878,18 @@ def change_coords(data_files_in,var_cam_in,case_type_in,case_name_in) :
 
 
 '''
-#########################################################
-    GRAB CLIMOS OF TIME MEAN NINO AND NINA
-#########################################################
+	#########################################################
+		GRAB CLIMOS OF TIME MEAN NINO AND NINA
+	#########################################################
 '''
 
 
 
-def get_files_climo(case_name,case_type,var_cam,years) :
+def get_files_climo(case_name,case_type,var_cam,lats_in,p_levs,years) :
 
 
 #### Just GRAB the single files for climo, nino and nina.
-           
+
 	print('-- File time type is climatological --')
 
 	# FILES on my work dir.
@@ -876,6 +907,16 @@ def get_files_climo(case_name,case_type,var_cam,years) :
 	print('    -- CLIMO FILE SET')
 	print(files_glade)
 	data_files = xr.open_mfdataset(files_glade, decode_cf=True, decode_times = False,concat_dim='time', combine='nested') # 3 mins ERA5: 1979-1990
+
+#  Slice according to latitude and pressure.
+	
+	lev_in = data_files.lev
+	ilevs = np.where(lev_in >= min(p_levs))
+
+	lev = lev_in[ilevs]
+								
+	data_files = data_files.sel(lat=slice(lats_in[0],lats_in[1]))					
+								
 #	data_files = data_files.isel(time=slice([1,2,12])).mean(dim='time')
 
 
@@ -890,27 +931,169 @@ def get_files_climo(case_name,case_type,var_cam,years) :
 
 
 
+'''
+	####################################################################
+		SELECTING TO USE CLIMO, TS or HO FILES DEPENDING ON AVAILIBILITY
+	####################################################################
+'''
+
+	
+
+def derive_nino_vars(lclimo,var_name,var_cam,p_levs,files_ptr,pfiles_ptr,case_type,var_df,inino_mons,inina_mons,seas_mons):
+	
+	
+
+	if not lclimo:
+
+		''' Trim datasets for lev/lat/time for simplicity '''
+
+	# Grab time/lev coord.
+
+		lev = files_ptr['lev']
+
+
+	# Grab variables
+		var_in = files_ptr[var_name]
+		ps_in = pfiles_ptr['PS']
+		time_in = files_ptr.time
+
+	# Calculate dp        
+		dp_lev = np.diff(lev)
+
+
+	# Array accessing based on type of case.    
+		if case_type[icase] in ['lens1','lens2','c6_amip']:
+			print('-- "Compute" the variable array now (bring it up from lazy array) if != ANALYSES')
+	#            %time var_in = var_in.compute()
 
 
 
+
+
+
+	# Check SST size with Variable size
+
+		if sst_data.time.size != time_in.size : print('SST and VARIABLE sizes DO NOT MATCH - ',sst_data.time.size,' and ',time_in.size) 
+
+		month_nums = time_in.dt.month   
+		hmonths = time_in.dt.strftime("%b")
+
+
+
+		lmon_seas = np.isin(hmonths,seas_mons) # Logical for season months in all months
+		imon_seas = np.argwhere(lmon_seas)[:,0] # Indices
+		hmon_seas = hmonths[imon_seas] # Subsetting full months.
+
+
+
+	## Much easier than above but doing the intersections of months and nino months.
+		inino_seas,inino_ind,imon_nino_ind = np.intersect1d(inino_mons, imon_seas, return_indices=True)
+		inina_seas,inina_ind,imon_nina_ind = np.intersect1d(inina_mons, imon_seas, return_indices=True)
+
+
+	## Could speed up below by reading in var_in for the season months then subsetting that for nino/nina    
+	## Remember: It is reading in a subset of seaonal months and then nino/nina are a subset of those. 
+
+		var_in_inseas = var_df.loc[var_cam]['vscale']*var_in[imon_seas,:,:,:] # Pull only the months we need
+		var_ps_inseas = ps_in[imon_seas,:,:] 
+
+		if case_type[icase] in ['reanal','cam6_revert']:
+			print('-- "Compute" the variable array now (bring it up front lazy array) if == ANALYSES')
+#				%time var_in_inseas = var_in_inseas.compute()
+
+		var_in_seas = var_in_inseas.mean(dim=['time'])  # Perform seasonal average
+		var_ps_seas = var_ps_inseas.mean(dim=['time'])  # 
+
+	# Nino/nina averages
+		var_in_nino = var_in_inseas[imon_nino_ind,:,:,:].mean(dim=['time'])  # Take nino/nina months from the seasonal timeseries months
+		var_in_nina = var_in_inseas[imon_nina_ind,:,:,:].mean(dim=['time']) 
+
+	# Nino/nina anomalies
+		var_in_nino = var_in_nino-var_in_seas
+		var_in_nina = var_in_nina-var_in_seas
+
+		var_ps_nino = var_ps_inseas[imon_nino_ind,:,:].mean(dim=['time'])  # Take nino/nina months from the seasonal timeseries months
+		var_ps_nina = var_ps_inseas[imon_nina_ind,:,:].mean(dim=['time']) 
+
+		varp_in_ps = (var_ps_seas,var_ps_nino,var_ps_nina) 
+
+
+
+	else :    ### Just grab separate data from climo, nino and nina files.
+
+		var_in_seas =  files_ptr[var_name].isel(time=0)
+		var_in_nino =  files_ptr[var_name].isel(time=1)
+		var_in_nina =  files_ptr[var_name].isel(time=2)
+
+		var_in_seas =  var_df.loc[var_cam]['ovscale']*var_in_seas.loc[max(p_levs):min(p_levs)]
+		var_in_nino =  var_df.loc[var_cam]['ovscale']*var_in_nino.loc[max(p_levs):min(p_levs)]
+		var_in_nina =  var_df.loc[var_cam]['ovscale']*var_in_nina.loc[max(p_levs):min(p_levs)]
+
+		print("Before and after...")
+		print(var_in_seas)
+
+		
+		varp_in_ps = None
+
+
+	var_in_lev = (var_in_seas,var_in_nino,var_in_nina) # Put in tuple for looping.
+		
+		
+	return var_in_lev,varp_in_ps
+
+
+
+
+'''
+	####################################################################
+		SELECT REGIONS AND SUBSET DATA FOR VERTICAL PROFILES
+	####################################################################
+'''
+
 	
+def vprof_set_region(ireg,reg_df,varp_in):
+
+
+	reg = reg_df.index[0] 
+	reg_name = reg_df.loc[reg]['long_name'] 
 	
+
+	reg_s = reg_df.loc[reg]['lat_s'] ; reg_n = reg_df.loc[reg]['lat_n']
+	reg_w = reg_df.loc[reg]['lon_w'] ; reg_e = reg_df.loc[reg]['lon_e']
+
+	print()
+	print('-- Region = ',reg_name,' - ',reg_s,reg_n,reg_w,reg_e)
+
+	reg_a_str = '%d-%d\u00b0E %.1f-%d\u00b0N' % (reg_w,reg_e,reg_s,reg_n)
+	reg_a_out = '%d-%dE_%.1f-%dN' % (reg_w,reg_e,reg_s,reg_n)  
+
+	print('-- Averaging for region - ',reg_a_str)
+
+
+
+
+### Compute Seasonal/El Nino/La Nina time averaging ###
+
+
+	varp_seas = varp_in[0].loc[:,reg_s:reg_n,reg_w:reg_e]
+	varp_nino = varp_in[1].loc[:,reg_s:reg_n,reg_w:reg_e]
+	varp_nina = varp_in[2].loc[:,reg_s:reg_n,reg_w:reg_e]
+
+
+	varp_reg = (varp_seas,varp_nino,varp_nina) # Put in tuple for looping back in the main code.
 
 
 	
 
+	return varp_in,reg_name,reg_w,reg_e,reg_s,reg_n
 
 
 
 
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
 
 
 

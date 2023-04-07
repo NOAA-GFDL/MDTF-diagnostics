@@ -3,6 +3,7 @@
 	Level 1: Mean profiles of states and tendencies during ENSO phase (seasons: monthly means)
 	Level 2: Time varying profiles during a season or seasonal transtion
 	Level 3: Statistical reltiosnhips between vertical processes and ENSO/forcing/dynamical strength
+	Level 4:
 '''
 
 
@@ -24,7 +25,6 @@ import warnings
 warnings.filterwarnings("ignore", message="FutureWarning")
 
 
-
 # To Import My Functions ###
 import vproc_func as mypy
 import vproc_figs as myfigs
@@ -32,6 +32,9 @@ import vproc_case_desc as mycases
 import vproc_setup as mysetup
 
 import importlib
+
+
+#from distributed import Client
 
 ''' Bring in function routines '''
 
@@ -55,7 +58,8 @@ importlib.reload(mysetup)
 
 def main():
 
-
+#	client = Client(cluster)
+#	client
 
 	''''' Which case(S) to use '''''
 
@@ -75,12 +79,12 @@ def main():
 
 	''''' Years for the analysis '''''
 
-	years_data = (1979,1983) # Year range of history files to read AND either 'climo' one file or 'tseries' many files
+	years_data = (1979,2005) # Year range of history files to read AND either 'climo' one file or 'tseries' many files
 
 
 	''' REGIONAL SPECS (LAT/LON/LEV) '''
 
-	lats_in = -45. ; latn_in = 45.
+	lats_in = -45,45
 	lonw_in = 0. ; lone_in = 360.
 	ppmin = 50. ; ppmax = 1050.
 
@@ -89,10 +93,11 @@ def main():
 	''''' Variable description '''''
 
 	var_cam = 'OMEGA'
-	ldiv = True # Calculate divergence from OMEGA if var_Cam = OMEGA
-	l_pminmax_plev = False # PLot lat lon plot of climo/nino/nina ma/min levels of occurrence.
+	ldiv = False # Calculate divergence from OMEGA if var_Cam = OMEGA
+	l_pminmax_plev = True # PLot lat lon plot of climo/nino/nina ma/min levels of occurrence.
 	l_pscatt_2d = True # Scatter plot of 2 2D fields.
-
+	l_vprof = True
+	
 	''''' Named Regions '''''
 
 	reg_df = mysetup.vprof_set_regions()
@@ -136,11 +141,6 @@ def main():
 	reg = reg_df.index.values.tolist()[0]
 
 	print(reg)
-	
-#	reg_s = reg_df.loc[reg]['lat_s'] ; reg_n = reg_df.loc[reg]['lat_n']
-#	reg_w = reg_df.loc[reg]['lon_w'] ; reg_e = reg_df.loc[reg]['lon_e']
-
-#	sys.exit("Test exit")
 
 	nmnths = seas_mons.size
 	ncases = case_desc.size
@@ -176,17 +176,6 @@ def main():
 
 
 
-	''''' Set Figures '''''
-	
-	mp.figure(3)
-	
-	fign, axn = mp.subplots(1,3,figsize=(26, 11))  
-	fign.patch.set_facecolor('white') # Sets the plot background outside the data area to be white. Remove to make it transparent.
-
-
-	
-	
-	
 	
 	
 	
@@ -227,33 +216,36 @@ def main():
 		print('-- Grabbing variable files --')
 
 		if lclimo:  # Read in tseries based files here for the analysis variable
-			files_ptr,var_name   = mypy.get_files_climo(sim_name,case_type[icase],var_cam,years_data) # Grab variable
+			files_ptr,var_name   = mypy.get_files_climo(sim_name,case_type[icase],var_cam,lats_in,p_levs,years_data) # Grab variable
 		else :
-			files_ptr,var_name   = mypy.get_files_tseries(sim_name,case_type[icase],var_cam,years_data) # Grab variable
+			files_ptr,var_name   = mypy.get_files_tseries(sim_name,case_type[icase],var_cam,lats_in,p_levs,years_data) # Grab variable
+			
 
 
 
 		## TS FROM HISTORY FILES (just copy for h0 files if they are already read in)
 		## Can still do this for lclimo as it will take observed if reanal
 
-		print('-- Grabbing SST files --')
+		print('-- Grabbing Sea Surface Temperature (SST) files --')
 
 		if case_type[icase] in ['cam6_revert']: # I think this effectively acts as a pointer, I hope!
 			tfiles_ptr = files_ptr 
 			tvar_name = 'TS'
 		else :   
-			tfiles_ptr,tvar_name = mypy.get_files_tseries(sim_name,case_type[icase],'TS',years_data) # Grab TS for nino timeseries
+			tfiles_ptr,tvar_name = mypy.get_files_tseries(sim_name,case_type[icase],'TS',lats_in,p_levs,years_data) # Grab TS for nino timeseries
 
 
 		# Grabbing PS if needed
 
-		print('-- Grabbing PS files --')
+		print('-- Grabbing Surface Pressure (PS) files --')
 
-		if case_type[icase] in ['cam6_revert']: # Grab the LENS time series or just use existing file_ptr from h0 type output.
+		if case_type[icase] in ['cam6_revert']: # Grab the LENS time series or just use existing filse_ptr from h0 type output.
 			pfiles_ptr = files_ptr 
 		else:
 			if not lclimo: # Don't need to read in PS for climos.
-				pfiles_ptr,pvar_name = mypy.get_files_tseries(sim_name,case_type[icase],'PS',years_data) # Grab TS for nino timeseries
+				pfiles_ptr,pvar_name = mypy.get_files_tseries(sim_name,case_type[icase],'PS',lats_in,p_levyears_data) # Grab TS for nino timeseries
+			else :
+				pfiles_ptr=None
 
 
 
@@ -262,7 +254,7 @@ def main():
 
 		print('-- Calculating and plotting nino SST anomalies - this will never be climo currently')
 
-		sst_data = tfiles_ptr[tvar_name].sel(lat=slice(lats_in,latn_in),time=slice(str(yr0), str(yr1)))
+		sst_data = tfiles_ptr[tvar_name]
 
 
 
@@ -278,114 +270,14 @@ def main():
 
 
 
-		''''' FORK FOR CLIMO VERSUS h0/TSREIS INPUT FILE FORMAT '''''
+		
+		'''
+			#############################################################    
+			### FORK FOR CLIMO VERSUS h0/TSREIS INPUT FILE FORMAT ?
+			#############################################################    
+		'''     
 
-
-		if not lclimo:
-
-
-
-			''' Trim datasets for lev/lat/time for simplicity '''
-
-		# Grab time/lev coord.
-
-			lev = files_ptr['lev'].sel(lev=slice(min(p_levs),max(p_levs)))
-
-		# Trimming as much as possible time/lat/lev        
-
-			files_ptr=files_ptr.sel(lat=slice(lats_in,latn_in),time=slice(str(yr0),str(yr1)),lev=slice(min(p_levs),max(p_levs)))
-			pfiles_ptr=pfiles_ptr.sel(lat=slice(lats_in,latn_in),time=slice(str(yr0),str(yr1)))       
-
-
-		# Grab variables
-			var_in = files_ptr[var_name]
-			ps_in = pfiles_ptr['PS']
-			time_in = files_ptr.time
-
-		# Calculate dp        
-			dp_lev = np.diff(lev)
-
-
-		# Array accessing based on type of case.    
-			if case_type[icase] in ['lens1','lens2','c6_amip']:
-				print('-- "Compute" the variable array now (bring it up from lazy array) if != ANALYSES')
-		#            %time var_in = var_in.compute()
-
-
-
-
-
-
-		# Check SST size with Variable size
-
-			if sst_data.time.size != time_in.size : print('SST and VARIABLE sizes DO NOT MATCH - ',sst_data.time.size,' and ',time_in.size) 
-
-			month_nums = time_in.dt.month   
-			hmonths = time_in.dt.strftime("%b")
-
-
-
-			lmon_seas = np.isin(hmonths,seas_mons) # Logical for season months in all months
-			imon_seas = np.argwhere(lmon_seas)[:,0] # Indices
-			hmon_seas = hmonths[imon_seas] # Subsetting full months.
-
-
-
-		## Much easier than above but doing the intersections of months and nino months.
-			inino_seas,inino_ind,imon_nino_ind = np.intersect1d(inino_mons, imon_seas, return_indices=True)
-			inina_seas,inina_ind,imon_nina_ind = np.intersect1d(inina_mons, imon_seas, return_indices=True)
-
-
-		## Could speed up below by reading in var_in for the season months then subsetting that for nino/nina    
-		## Remember: It is reading in a subset of seaonal months and then nino/nina are a subset of those. 
-
-			var_in_inseas = var_df.loc[var_cam]['vscale']*var_in[imon_seas,:,:,:] # Pull only the months we need
-			var_ps_inseas = ps_in[imon_seas,:,:] 
-
-			if case_type[icase] in ['reanal','cam6_revert']:
-				print('-- "Compute" the variable array now (bring it up front lazy array) if == ANALYSES')
-#				%time var_in_inseas = var_in_inseas.compute()
-
-			var_in_seas = var_in_inseas.mean(dim=['time'])  # Perform seasonal average
-			var_ps_seas = var_ps_inseas.mean(dim=['time'])  # 
-
-		# Nino/nina averages
-			var_in_nino = var_in_inseas[imon_nino_ind,:,:,:].mean(dim=['time'])  # Take nino/nina months from the seasonal timeseries months
-			var_in_nina = var_in_inseas[imon_nina_ind,:,:,:].mean(dim=['time']) 
-
-		# Nino/nina anomalies
-			var_in_nino = var_in_nino-var_in_seas
-			var_in_nina = var_in_nina-var_in_seas
-
-			var_ps_nino = var_ps_inseas[imon_nino_ind,:,:].mean(dim=['time'])  # Take nino/nina months from the seasonal timeseries months
-			var_ps_nina = var_ps_inseas[imon_nina_ind,:,:].mean(dim=['time']) 
-
-			varp_in_ps = (var_ps_seas,var_ps_nino,var_ps_nina) 
-
-
-
-		else :    ### Just grab separate data from climo, nino and nina files.
-
-			var_in_seas =  files_ptr[var_name].isel(time=0).sel(lat=slice(lats_in,latn_in))
-			var_in_nino =  files_ptr[var_name].isel(time=1).sel(lat=slice(lats_in,latn_in))
-			var_in_nina =  files_ptr[var_name].isel(time=2).sel(lat=slice(lats_in,latn_in))
-
-
-			lev_in = var_in_seas.lev
-			ilevs = np.where(lev_in >= min(p_levs))
-
-			lev = lev_in[ilevs]
-
-
-			var_in_seas =  var_df.loc[var_cam]['ovscale']*var_in_seas.loc[lev[0]:lev[-1]]
-			var_in_nino =  var_df.loc[var_cam]['ovscale']*var_in_nino.loc[lev[0]:lev[-1]]
-			var_in_nina =  var_df.loc[var_cam]['ovscale']*var_in_nina.loc[lev[0]:lev[-1]]
-
-
-			varp_in_ps = None
-
-
-
+		varp_in_lev,var_in_ps = mypy.derive_nino_vars(lclimo,var_name,var_cam,p_levs,files_ptr,pfiles_ptr,case_type,var_df,inino_mons,inina_mons,seas_mons)
 
 
 
@@ -396,11 +288,11 @@ def main():
 		'''     
 
 		if l_pminmax_plev:
-			
+
 			print('-- Plotting max/min pressure level of field --')
-			mp.figure(2)
-			varp_in_lev = (var_in_seas,var_in_nino,var_in_nina) # Put in tuple for looping.
-			pdiv_lev = myfigs.plot_div_pres(case_type[icase],case,var_cam,varp_in_lev,varp_in_ps,files_ptr,dir_proot,ldiv)
+			
+#			varp_in_lev = (var_in_seas,var_in_nino,var_in_nina) # Put in tuple for looping.
+			pdiv_lev = myfigs.plot_div_pres(case_type[icase],case,var_cam,varp_in_lev,var_in_ps,files_ptr,dir_proot,ldiv)
 
 
 
@@ -413,58 +305,38 @@ def main():
 		if l_pscatt_2d:
 			
 			print('-- Scatter Plots of ... ---')
-#			myfigs.scat_plot(case_type[icase],case,var_in_seas,varp_in_ps,reg_df,files_ptr)
-#			myfigs.scat_plot(case_type[icase],case,var_in_nino,varp_in_ps,reg_df,files_ptr)
-			myfigs.scat_plot(case_type[icase],case,var_in_nino,varp_in_ps,reg_df,files_ptr)
+			
+#			myfigs.scat_plot(case_type[icase],case,var_in_seas,var_in_ps,reg_df,files_ptr,dir_proot)
+#			myfigs.scat_plot(case_type[icase],case,var_in_nino,var_in_ps,reg_df,files_ptr,dir_proot)
+			myfigs.scat_plot(case_type[icase],case,varp_in_lev,var_in_ps,reg_df,files_ptr,dir_proot)
 	
 
+	
 		'''
-			########################    
-			### Now Loop Regions ###
-			########################
+			################################################    
+			### Now Loop Regions For Vertical Profiles ###
+			################################################ 
 		''' 
 
-		mp.figure(3)
-
+		
+		
+		
+		
 		for ireg,reg in enumerate(reg_df.index):  ## 4 regions let's assume ##
 
+		
 		### Assign lat/lon region domain ###
 
-			reg_name = reg_df.loc[reg]['long_name'] 
+			'''
+				### Set regeion info and subset data ###
+			'''
+			
+			varp_tavs,reg_name,reg_s,reg_n,reg_w,reg_e = mypy.vprof_set_region(ireg,reg_df,varp_in_lev)
+				
 
-			reg_s = reg_df.loc[reg]['lat_s'] ; reg_n = reg_df.loc[reg]['lat_n']
-			reg_w = reg_df.loc[reg]['lon_w'] ; reg_e = reg_df.loc[reg]['lon_e']
-
-			print()
-			print('-- Region = ',reg_name,' - ',reg_s,reg_n,reg_w,reg_e)
 
 			reg_a_str = '%d-%d\u00b0E %.1f-%d\u00b0N' % (reg_w,reg_e,reg_s,reg_n)
 			reg_a_out = '%d-%dE_%.1f-%dN' % (reg_w,reg_e,reg_s,reg_n)  
-
-			print('-- Averaging for region - ',reg_a_str)
-
-
-
-
-		### Compute Seasonal/El Nino/La Nina profiles ###
-
-			varp_seas = var_in_seas.loc[:,reg_s:reg_n,reg_w:reg_e]
-
-		#        if lclimo :
-
-			varp_nino = var_in_nino.loc[:,reg_s:reg_n,reg_w:reg_e]
-			varp_nina = var_in_nina.loc[:,reg_s:reg_n,reg_w:reg_e]
-
-		#        else :
-
-		#         varp_nino = var_in_nino.loc[:,reg_s:reg_n,reg_w:reg_e]-varp_seas
-		#         varp_nina = var_in_nina.loc[:,reg_s:reg_n,reg_w:reg_e]-varp_seas
-
-			varp_all = (varp_seas,varp_nino,varp_nina) # Put in tuple for looping.
-
-
-
-
 
 
 			'''
@@ -476,44 +348,56 @@ def main():
 		## LOOP: Seasonal/El Nino/La Nina plots for this region.
 
 
-			for iplot,var_plot in enumerate(varp_all):
+			for iplot,var_plot in enumerate(varp_tavs):
 
 				print('    -- Period = '+nino_names[iplot])
 				pxmin = xmin if iplot == 0 else axmin
 				pxmax = xmax if iplot == 0 else axmax
 
-		# Regional average
+		## Regional average (need to add guassian weights here).
 				var_fig = var_plot.mean(dim=['lat','lon'],skipna = True)   
 
-
-
-
+			# Differentiate for divergence, probably need to do tis for each GP then average.
 				if ldiv and var_cam == 'OMEGA':
 					var_fig = var_fig.differentiate("lev")
 
-
-				axn[iplot].plot(var_fig,lev,lw=lwidth[icase],markersize=9,marker=pmark[icase],color=lcolor[icase],linestyle=lstyle[icase])  
+										
+					
+				''''' Set Figures '''''
+		
+				if iplot == 0 and icase == 0 and ireg == 0:
+#					mp.figure(2)
+					fign, axn = mp.subplots(nregions,3,figsize=(26, 26))  
+					fign.patch.set_facecolor('white') # Sets the plot background outside the data area to be white. Remove to make it transparent.	
+	
+#				mp.figure(2)
+			
+				axn[ireg,iplot].plot(var_fig,var_fig.lev,lw=lwidth[icase],markersize=9,marker=pmark[icase],color=lcolor[icase],linestyle=lstyle[icase])  
 
 
 
 				if (icase==0) :
-					axn[iplot].set_title(nino_names[iplot],fontsize=20,color=nino_colors[iplot])
-					axn[iplot].set_xlim([pxmin,pxmax])
-					axn[iplot].set_ylim([ppmax,ppmin])
-					axn[iplot].set_ylabel('mb',fontsize=16) 
-					axn[iplot].set_xlabel(vunits,fontsize=16)      
-					axn[iplot].set_yticks(p_levs)
-					axn[iplot].set_yticklabels(p_levs,fontsize=14)
+					axn[ireg,iplot].set_title(nino_names[iplot],fontsize=20,color=nino_colors[iplot])
+					axn[ireg,iplot].set_xlim([pxmin,pxmax])
+					axn[ireg,iplot].set_ylim([ppmax,ppmin])
+					axn[ireg,iplot].set_ylabel('mb',fontsize=16) 
+					axn[ireg,iplot].set_xlabel(vunits,fontsize=16)      
+					axn[ireg,iplot].set_yticks(p_levs)
+					axn[ireg,iplot].set_yticklabels(p_levs,fontsize=14)
 		###                axn[iplot].set_xticklabels(np.arange(xmin,xmax,0.1*(xmax-xmin)),fontsize=12)
-					axn[iplot].tick_params(axis='both', which='major', labelsize=14)
+					axn[ireg,iplot].tick_params(axis='both', which='major', labelsize=14)
 
-					axn[iplot].grid(linestyle='--')  
+					axn[ireg,iplot].grid(linestyle='--')  
 
 
 				if ((pxmin < 0) and (pxmax > 0)) :
-					axn[iplot].vlines(0., ppmax, ppmin, linestyle="--",lw=1, color='black')
+					axn[ireg,iplot].vlines(0., ppmax, ppmin, linestyle="--",lw=1, color='black')
 
-
+					
+	# Plot regions
+	
+					
+					
 
 	# Legend ### Perform a bit of logic for the  
 	#rtypes, counts = np.unique(case_type, return_counts=True)
@@ -521,8 +405,9 @@ def main():
 
 	lloc = 'lower right' if var_name in ['ZMDQ','STEND_CLUBB'] else 'lower left' 
 	#axn[0].legend(leg_cases,fontsize=15,loc = lloc)
-
-	axn[0].legend(leg_elements,leg_labels,fontsize=15,loc = lloc)
+	
+	mp.figure(2)
+	axn[0,0].legend(leg_elements,leg_labels,fontsize=15,loc = lloc)
 
 	# Main title
 	fign.suptitle('ENSO Anomalies - '+reg_name+' -- '+reg_a_str+' - '+var_text,fontsize=20)

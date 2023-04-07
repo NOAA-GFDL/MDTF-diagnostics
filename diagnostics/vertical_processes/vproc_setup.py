@@ -56,13 +56,15 @@ def vprof_setup() :
 		
 		if 'lens' in case_types:
 		
-			pref_out = 'lens2_divlev_test'    
+			pref_out = 'lense2_divlev_test'    
 
-			lens_set = 'lens1' ; lens_suff = 'CE1' # lens1, lens2, c6_amip
-			#lens_set = 'lens2' ; lens_suff = 'CE2'
+#			lens_set = 'lens1' ; lens_suff = 'CE1' # lens1, lens2, c6_amip
+#			lens_set = 'lens2' ; lens_suff = 'CE2'
+			lens_set = 'lense2' ; lens_suff = 'E3SM2'
+			
 			#	lens_set = 'c6_amip' ; lens_suff = 'C6'
 
-			nens = 1
+			nens = 3
 		####
 
 			case_desc = [lens_suff+'.E%01d'%(itt) for itt in range(1,nens+1)]
@@ -79,8 +81,8 @@ def vprof_setup() :
 			#	case_reanal = ['ERA5','ERAI','CFSR','MERRA2','JRA25'] 
 			#	type_reanal = ['reanal','reanal','reanal','reanal','reanal']
 
-				case_reanal = ['ERA5','ERAI','CFSR','MERRA2','JRA25'] 
-				type_reanal = ['reanal','reanal','reanal','reanal','reanal']
+				case_reanal = ['ERAI','JRA25'] 
+				type_reanal = ['reanal','reanal']
 
 
 		reanal_climo = True # Grab climo. values for mean, Nino and nina events for reanalysis only

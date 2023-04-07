@@ -1,9 +1,9 @@
 '''
-***********************************************************
-***********************************************************
-	PLOTTING ROUTINES
-***********************************************************
-***********************************************************
+	***********************************************************
+	***********************************************************
+		PLOTTING ROUTINES
+	***********************************************************
+	***********************************************************
 '''
 import sys
 
@@ -21,9 +21,9 @@ from scipy.ndimage.filters import gaussian_filter
 
 
 ''' 
-#########################################################
-   SET OF REFERENCE P LEVELS
-#########################################################
+	#########################################################
+	   SET OF REFERENCE P LEVELS
+	#########################################################
 '''
 
 def clevs_ref():
@@ -36,17 +36,19 @@ def clevs_ref():
 
 
 '''
-#########################################################
-    PLOT DIV AND OMEGA MAX/MIN LEVELS
-#########################################################
+	#########################################################
+		PLOT DIV AND OMEGA MAX/MIN LEVELS
+	#########################################################
 '''
 
-def plot_div_pres(case_type,case,var_plt,varp_lev,var_ps,fls_ptr,dir_proot,ldiv):
+def plot_div_pres(case_type,case,var_plt,varp_lev,da_in_ps,fls_ptr,dir_proot,ldiv):
 	
 	'''
 		Input Data Info
 	'''
 
+
+	
 	print('-- Plotting pressure of minimum/maximum for ',var_plt)
 	
 
@@ -59,7 +61,6 @@ def plot_div_pres(case_type,case,var_plt,varp_lev,var_ps,fls_ptr,dir_proot,ldiv)
 	ncols = 2
 	
 	mp.figure(1)
-
 	fig,axl =  mp.subplots(ncols=ncols,nrows=nrows,
                         subplot_kw={'projection': cc_pc},
                         figsize=(38,20))
@@ -140,7 +141,6 @@ def plot_div_pres(case_type,case,var_plt,varp_lev,var_ps,fls_ptr,dir_proot,ldiv)
 					
 # Max/min level plotting
 
-
 			axl[iplot].coastlines(color='black',linewidth=3)
 
 			im = da_plot.plot.pcolormesh(ax=axl[iplot], transform=tcc_pc,levels=clevsp,cmap=cmap,rasterized=True,add_colorbar=False)
@@ -185,7 +185,7 @@ def plot_div_pres(case_type,case,var_plt,varp_lev,var_ps,fls_ptr,dir_proot,ldiv)
 	#########################################################
 	'''
 	
-def scat_plot(case_type,case,da_in,da_in_ps,reg_df,fls_ptr):
+def scat_plot(case_type,case,da_in_all,da_in_ps,reg_df,fls_ptr,dir_proot):
 
 	import seaborn as sb
 	
@@ -197,63 +197,70 @@ def scat_plot(case_type,case,da_in,da_in_ps,reg_df,fls_ptr):
 	var_df = pd.DataFrame()
 	
 	# Lev coordinate change
+
+	tav_names = ['Seasonal','Nino34','Nina34']
 	
-	if case_type != 'reanal':   
-		da_in = cam_lev2plev(da_in,da_in_ps[0],fls_ptr)	
-		
-		
-	for ireg,reg in enumerate(reg_df.index):  ## 4 regions let's assume ##
 	
-		reg_name = reg_df.loc[reg]['long_name'] 
+	for itav, da_tav in enumerate(da_in_all): 
+	
+		da_in = da_in_all[itav]
+	
+		if case_type != 'reanal':   
+			da_in = cam_lev2plev(da_in,da_in_ps[0],fls_ptr)	
 		
-		reg_s = reg_df.loc[reg]['lat_s'] ; reg_n = reg_df.loc[reg]['lat_n']
-		reg_w = reg_df.loc[reg]['lon_w'] ; reg_e = reg_df.loc[reg]['lon_e']
+			
+		for ireg,reg in enumerate(reg_df.index):  ## 4 regions let's assume ##
+	
+			reg_name = reg_df.loc[reg]['long_name'] 
+		
+			reg_s = reg_df.loc[reg]['lat_s'] ; reg_n = reg_df.loc[reg]['lat_n']
+			reg_w = reg_df.loc[reg]['lon_w'] ; reg_e = reg_df.loc[reg]['lon_e']
 
 		
-		print('  > Construct scatter plot for -- ',reg_name)
+			print('  > Construct scatter plot for -- ',reg_name)
 
-		da_reg = da_in.loc[:,reg_s:reg_n,reg_w:reg_e]
-		var_x = da_reg.min(dim='lev').values.ravel()
-		var_y = da_reg.differentiate('lev').min(dim='lev').values.ravel()
-		nlatlon = var_x.size
+			da_reg = da_in.loc[:,reg_s:reg_n,reg_w:reg_e]
+			var_x = da_reg.min(dim='lev').values.ravel()
+			var_y = da_reg.differentiate('lev').min(dim='lev').values.ravel()
+			nlatlon = var_x.size
 
-		var_df_reg = pd.DataFrame({'xvar':var_x[ip],'yvar':var_y[ip],'Region':reg_name} for ip in range(nlatlon))
-		var_df = pd.concat([var_df,var_df_reg],ignore_index=True)
+			var_df_reg = pd.DataFrame({'xvar':var_x[ip],'yvar':var_y[ip],'Region':reg_name} for ip in range(nlatlon))
+			var_df = pd.concat([var_df,var_df_reg],ignore_index=True)
 	
 	
-	print('  -- Plotting')
+		print('  -- Plotting')
 		
 #	xrange = [-0.04,0.12]
 #	yrange = [-1e-4,8e-4]
 	
-	xrange = [-0.12,0.04]
-	yrange = [-8e-4,1e-4]
-	
-	slevels = [0.02,0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-	
-	sclip = ((xrange[0],xrange[1]),(yrange[0],yrange[1])) 
-	
+		xrange = [-0.12,0.04]
+		yrange = [-8e-4,1e-4]
 		
-	axs = sb.kdeplot(var_df,x='xvar',y='yvar',hue='Region',levels=slevels,clip=sclip,common_norm=True)
+		slevels = [0.02,0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+	
+		sclip = ((xrange[0],xrange[1]),(yrange[0],yrange[1])) 
+	
+	
+		axs = sb.kdeplot(var_df,x='xvar',y='yvar',hue='Region',levels=slevels,clip=sclip,common_norm=True)
 
 #	axs = sb.jointplot(var_df, kind="kde",x='xvar',y='yvar',hue='Region',levels=slevels,clip=sclip,common_norm=True)
 
-	sb.move_legend(axs, "lower right")
+		sb.move_legend(axs, "lower right")
 	
-	mp.hlines(0., xrange[0],xrange[1], color='black',lw=1,linestyle='--')
-	mp.vlines(0., yrange[0],yrange[1], color='black',lw=1,linestyle='--')
+		mp.hlines(0., xrange[0],xrange[1], color='black',lw=1,linestyle='--')
+		mp.vlines(0., yrange[0],yrange[1], color='black',lw=1,linestyle='--')
 	
-	mp.xlabel('Maximum Ascent',fontsize=20)
-	mp.ticklabel_format(axis='y', style='sci', scilimits=(1,4))
-	mp.xlim(xrange)
+		mp.xlabel('Maximum Ascent',fontsize=20)
+		mp.ticklabel_format(axis='y', style='sci', scilimits=(1,4))
+		mp.xlim(xrange)
 	
-	mp.ylabel('Maximum Divergence',fontsize=20)
-	mp.ylim(yrange)
+		mp.ylabel('Maximum Divergence',fontsize=20)
+		mp.ylim(yrange)
 	
-	mp.suptitle(case,fontsize=20)
-	mp.savefig(case+'_nino_min_scatter.png', dpi=80)
+		mp.suptitle(case,fontsize=20)
+		mp.savefig(dir_proot+case+'_nino_min_scatter.png', dpi=80)
 	
-	mp.show()
+		mp.show()
 
 
 			
@@ -379,6 +386,9 @@ def leg_vprof(cases,case_type):
 		if case_type[ic] == 'c6_amip': 
 			pm,lc,lw,ls  = (None,'blue',1,'-')  
 
+		if case_type[ic] == 'lense2': 
+			pm,lc,lw,ls  = (None,'green',1,'-')  
+
 
 		if case_type[ic] == 'cam6_revert':
 			pm,lc,lw,ls  = ('.',all_colors[icc],1,'-')		
@@ -403,3 +413,20 @@ def leg_vprof(cases,case_type):
 	
 	return leg_elements,leg_labels,pmark,lcolor,lwidth,lstyle
 			
+
+	
+	
+	
+	
+	'''
+	#########################################################
+		
+	#########################################################
+	'''
+	
+def vprof_reg_plot(cases,case_type):
+	
+	
+	
+	
+	return ax

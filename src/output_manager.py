@@ -28,9 +28,11 @@ def html_templating_dict(pod):
         d[attr] = str(getattr(pod, attr, ""))
     return d
 
-class HTMLSourceFileMixin():
+
+class HTMLSourceFileMixin:
     """Convienience method to define location of html templates in one place.
     """
+
     @property
     def CASE_TEMP_HTML(self):
         """Path to temporary top-level html file for *case* that gets appended

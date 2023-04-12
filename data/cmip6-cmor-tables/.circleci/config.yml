@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 checkout:
   post:
@@ -24,7 +24,7 @@ aliases:
        conda config --set always_yes yes --set changeps1 no
        conda update -y -q conda
        conda config --set anaconda_upload no
-       conda create -q -n py3 -c cdat/label/nightly -c pcmdi/label/nightly -c conda-forge -c cdat lazy-object-proxy cmor=3.6.0 python=3.8 testsrunner
+       conda create -q -n py3 -c pcmdi/label/nightly -c conda-forge cmor=3.7.1 python=3.11
 
   - &setup_cmor
     name: setup_cmor
@@ -54,12 +54,31 @@ aliases:
        cp Tables/* cmor/Tables
        cd cmor
        export PYTHONPATH=Test
-       python run_tests.py -v2 -H -n1 Test/test_python_CMIP6_CV*.py
+       for file in `ls -1 Test/test_python_CMIP6_CV*.py`; do echo $file; python $file; mystatus=$?; if [[ "$mystatus" != "0" ]]; then return ${mystatus}; fi; done
+
+  - &update_cv_json
+    name: update_cv_json
+    command: |
+      export PATH=$WORKDIR/miniconda/bin:$PATH
+      git config user.email "$GITHUB_EMAIL"
+      git config user.name "$GITHUB_USERNAME"
+      git pull origin master
+      python scripts/createCMIP6CV.py
+      mv CMIP6_CV.json  Tables
+      if [[ $(git status --porcelain -uno) ]]; then
+        msg="cron: update CMIP6_CV -- "`date +%Y-%m-%dT%H:%M`
+        echo $msg
+        git commit -am "$msg"
+        git push --set-upstream origin cron_test
+      else
+        echo "No changes to commit."
+      fi
+
 
 jobs:
   macos_cmip6:
     macos:
-      xcode: "11.1.0"
+      xcode: "13.2.0"
     environment:
       WORKDIR: "workspace/test_macos_cmor"
       UVCDAT_ANONYMOUS_LOG: "False"
@@ -73,7 +92,7 @@ jobs:
 
   linux_cmip6:
     machine:
-      image: circleci/classic:latest
+      image: ubuntu-2004:202201-02
     environment:
       WORKDIR: "workspace/test_linux_cmor"
       UVCDAT_ANONYMOUS_LOG: "False"
@@ -85,9 +104,34 @@ jobs:
       - run: *setup_cmor
       - run: *run_prepare_tests
 
+  cmip6_cv_update:
+    machine:
+      image: ubuntu-2004:202201-02
+    environment:
+      WORKDIR: "workspace/cv_update"
+      UVCDAT_ANONYMOUS_LOG: "False"
+      OS: "linux-64"
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "$GITHUB_SSH_KEY_FINGERPRINT"
+      - checkout
+      - run: *setup_miniconda
+      - run: *update_cv_json
+
 workflows:
   version: 2
   nightly:
     jobs:
       - macos_cmip6
       - linux_cmip6
+  cv_update:
+    triggers:
+      - schedule:
+          cron: "0 0,8 * * *"
+          filters:
+            branches:
+              only:
+                - cron_test
+    jobs:
+      - cmip6_cv_update

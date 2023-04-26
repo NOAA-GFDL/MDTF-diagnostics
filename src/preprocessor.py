@@ -245,12 +245,12 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
 
         if t_start > dt_start_upper:
             err_str = (f"Error: dataset start ({t_start}) is after "
-                f"requested date range start ({dt_start_upper}).")
+                       f"requested date range start ({dt_start_upper}).")
             var.log.error(err_str)
             raise IndexError(err_str)
         if t_end < dt_end_lower:
             err_str = (f"Error: dataset end ({t_end}) is before "
-                f"requested date range end ({dt_end_lower}).")
+                       f"requested date range end ({dt_end_lower}).")
             var.log.error(err_str)
             raise IndexError(err_str)
 
@@ -258,11 +258,11 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         new_t = ds.cf.dim_axes(tv_name).get('T')
         if t_size == new_t.size:
             var.log.info(("Requested dates for %s coincide with range of dataset "
-                "'%s -- %s'; left unmodified."),
-                var.full_name,
-                new_t.values[0].strftime('%Y-%m-%d'),
-                new_t.values[-1].strftime('%Y-%m-%d'),
-            )
+                          "'%s -- %s'; left unmodified."),
+                         var.full_name,
+                         new_t.values[0].strftime('%Y-%m-%d'),
+                         new_t.values[-1].strftime('%Y-%m-%d'),
+                         )
         else:
             var.log.info("Cropped date range of %s from '%s -- %s' to '%s -- %s'.",
                          var.full_name,
@@ -1175,11 +1175,13 @@ class MultirunDaskMultiFilePreprocessor(DaskMultiFilePreprocessor):
     variable, using xarray `open_mfdataset()
     <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
     """
+    _file_preproc_functions = []
 
     def __init__(self, data_mgr):
         # initialize PreprocessorFunctionBase objects
         self.file_preproc_functions = \
             [cls_(data_mgr) for cls_ in self._file_preproc_functions]
+
 
     def edit_request(self, data_mgr, *args):
         """Edit *pod*\'s data request, based on the child class's functionality. If
@@ -1191,7 +1193,7 @@ class MultirunDaskMultiFilePreprocessor(DaskMultiFilePreprocessor):
             func.edit_request(data_mgr, *args)
 
 
-class MultirunDefaultPreprocessor(SampleDataPreprocessor):
+class MultirunDefaultPreprocessor(MultirunDaskMultiFilePreprocessor):
     """Implementation class for :class:`MDTFPreprocessorBase` intended for use
     on sample model data distributed with the package. Assumes all data for each
     multirun case is in one netCDF file.
@@ -1199,6 +1201,7 @@ class MultirunDefaultPreprocessor(SampleDataPreprocessor):
     _XarrayParserClass = xr_parser.MultirunDefaultDatasetParser
 
     def __init__(self, data_mgr):
+        super(MultirunDefaultPreprocessor, self).__init__(data_mgr)
         config = core.ConfigManager()
         self.overwrite_ds = config.get('overwrite_file_metadata', False)
 
@@ -1444,7 +1447,7 @@ class MultirunExtractLevelFunction(ExtractLevelFunction):
             new_tv_name = v.name
         else:
             new_tv_name = core.VariableTranslator().from_CF_name(
-                data_mgr.attrs.convention, v.standard_name, new_ax_set
+                data_mgr.convention, v.standard_name, new_ax_set
             )
         new_tv = tv.remove_scalar(
             tv.scalar_coords[0].axis,

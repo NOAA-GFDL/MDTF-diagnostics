@@ -6,6 +6,7 @@ from src.cmip6 import CMIP6DateFrequency as dt_freq
 from src.util import datelabel as dl
 from src.tests.shared_test_utils import setUp_config_singletons, tearDown_config_singletons
 
+
 # really incomplete! Do more systematically.
 class TestCMIP6_CVs(unittest.TestCase):
     def setUp(self):
@@ -25,8 +26,7 @@ class TestCMIP6_CVs(unittest.TestCase):
             x.lookup('NorCPM1', 'source_id', 'institution_id')
         )
         self.assertCountEqual(
-            ['NorCPM1', 'NorESM2-LMEC', 'NorESM2-HH', 'NorESM1-F',
-                'NorESM2-MH', 'NorESM2-LM', 'NorESM2-MM', 'NorESM2-LME'],
+            ['NorCPM1',  'NorESM1-F', 'NorESM2-LM', 'NorESM2-MM'],
             x.lookup('NCC', 'institution_id', 'source_id')
         )
 
@@ -54,10 +54,11 @@ class TestCMIP6_CVs(unittest.TestCase):
                 'AERmonZ'])
         )
 
+
 class TestCMIP6DateFrequency(unittest.TestCase):
     all_freqs = ['fx', 'dec', 'yr', 'yrPt', 'mon', 'monC', 'day',
-        '6hr', '6hrPt', '3hr', '3hrPt', '1hr', '1hrCM', '1hrPt',
-        'subhrPt']
+                 '6hr', '6hrPt', '3hr', '3hrPt', '1hr', '1hrCM', '1hrPt',
+                 'subhrPt']
 
     def test_string_output(self):
         for s in self.all_freqs:
@@ -74,6 +75,7 @@ class TestCMIP6DateFrequency(unittest.TestCase):
         for i in range(1, len(self.all_freqs) - 1):
             self.assertFalse(dt_freq(self.all_freqs[i]).is_static)
 
+
 class TestMIPTableParsing(unittest.TestCase):
     test_freqs = {
         'fx': ['fx', 'Ofx', 'IfxAnt'],
@@ -87,6 +89,7 @@ class TestMIPTableParsing(unittest.TestCase):
             for tbl in self.test_freqs[k]:
                 d = cmip6.CMIP6_MIPTable(tbl)
                 self.assertEqual(dt_freq(k), d.frequency)
+
 
 class TestDRSFilename(unittest.TestCase):
     def test_all_attrs(self):

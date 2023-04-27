@@ -11,6 +11,7 @@
     dotranslate-->adddf[Save trans var\n info to dataframe]
     adddf-->movefilesyn{Move input data?}
     translateyn-- No-->querycatvarnot[Query catalog for POD vars]
+    podset-->querycatvarnot
     cat1-->querycatvarnot
     querycatvarnot-->adddf2[Save POD data subset\n to dataframe]
     adddf2-->movefilesyn

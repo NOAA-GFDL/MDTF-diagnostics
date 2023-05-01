@@ -11,7 +11,7 @@
 #SBATCH --ntasks=8
 #SBATCH --constraint=bigmem
 #
-local_repo="/nbhome/[USERNAME]/catalog_builder"
+local_repo="/nbhome/[USERNAME]/mdtf/MDTF-diagnostics/tools/catalog_builder"
 _mdtf="/home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics"
 source "${_mdtf}/src/conda/conda_init.sh" -q "/home/oar.gfdl.mdtf/miniconda3"
 conda activate _MDTF_base

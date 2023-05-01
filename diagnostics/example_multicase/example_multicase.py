@@ -34,9 +34,10 @@
 #
 #   Required programming language and libraries
 #
-#     * Python >= 3.7
+#     * Python >= 3.10
 #     * xarray
 #     * matplotlib
+#     * intake
 #     * yaml
 #     * sys
 #     * numpy
@@ -61,8 +62,9 @@ matplotlib.use("Agg")  # non-X windows backend
 import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
-import yaml
+import intake
 import sys
+import yaml
 
 # Part 1: Read in the model data
 # ------------------------------
@@ -71,12 +73,12 @@ import sys
 # "fake" a dictionary now with information we are getting from the single case
 # POD that is processed by the framework
 print("reading case_info")
+os.environ["case_env_file"] = "/Users/jessica/mdtf/MDTF-diagnostics/diagnostics/example_multicase/case_info.yaml"
 case_env_file = os.environ["case_env_file"]
 assert(os.path.isfile(case_env_file))
 with open(case_env_file, 'r') as stream:
     try:
         case_info = yaml.safe_load(stream)
-        # print(parsed_yaml)
     except yaml.YAMLError as exc:
         print(exc)
 
@@ -98,11 +100,21 @@ with open(case_env_file, 'r') as stream:
 #    },
 # }
 
+# open a csv catalog
+cat = intake.open_csv('/Users/jessica/mdtf/MDTF-diagnostics/tools/catalog_builder/examples/cmip/esm_catalog_IPSL-CM5A2-INCA_historical_r1i1p1f1.csv')
+# read the catalog into a dataframe
+df = cat.read()
+
 # Loop over cases and load datasets into a separate dict
 model_datasets = dict()
-for case_name, case_dict in case_info.items():
-    ds = xr.open_dataset(case_dict["TAS_FILE"], use_cftime=True)
-    model_datasets[case_name] = ds
+tas_files = [case_dict["TAS_FILE"] for case_dict in case_info.values()]
+tas_var = [case_dict["tas_var"] for case_dict in case_info.values()]
+data_subset = df.search(
+    path=tas_files,
+    variable_id=tas_var[0]
+)
+    #ds = xr.open_dataset(case_dict["TAS_FILE"], use_cftime=True)
+   # model_datasets[case_name] = ds
     #print(ds)
 
 # Part 2: Do some calculations (time and zonal means)

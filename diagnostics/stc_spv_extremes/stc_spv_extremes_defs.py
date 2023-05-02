@@ -165,9 +165,6 @@ def ssw_cp07(variable,threshold=0, consec_days=20, hem="NH"):
                 westerlygroupslength = [len(group) for group in westerlygroups]
                 maxlength = np.nanmax(westerlygroupslength)
                 if maxlength > 9:
-                    #ssw_dates.append([var.dayofwinter[firstvalue].time.dt.day.values,                       
-                    #                  var.dayofwinter[firstvalue].time.dt.month.values,
-                    #             var.dayofwinter[firstvalue].time.dt.year.values])
                     ssw_dates.append(var.dayofwinter[firstvalue].time.dt.strftime("%Y-%m-%d").values.tolist())
         
         # if there are multiple 'groups,' first append the first central date using the exact same code as above #  
@@ -184,9 +181,6 @@ def ssw_cp07(variable,threshold=0, consec_days=20, hem="NH"):
                 westerlygroupslength = [len(group) for group in westerlygroups]
                 maxlength = np.nanmax(westerlygroupslength)
                 if maxlength > 9:
-                    #ssw_dates.append([var.dayofwinter[firstvalue].time.dt.day.values, 
-                    #                  var.dayofwinter[firstvalue].time.dt.month.values,
-                    #             var.dayofwinter[firstvalue].time.dt.year.values])
                     ssw_dates.append(var.dayofwinter[firstvalue].time.dt.strftime("%Y-%m-%d").values.tolist())
         
         # search for multiple SSWs by looping over 'groups' #
@@ -219,9 +213,6 @@ def ssw_cp07(variable,threshold=0, consec_days=20, hem="NH"):
                     westerlygroupslength = [len(group) for group in westerlygroups]
                     maxlength = np.nanmax(westerlygroupslength)
                     if maxlength > 9:
-                        #ssw_dates.append([var.dayofwinter[first_nextgroup].time.dt.day.values, 
-                        #         var.dayofwinter[first_nextgroup].time.dt.month.values,
-                        #         var.dayofwinter[first_nextgroup].time.dt.year.values])
                         ssw_dates.append(var.dayofwinter[firstvalue].time.dt.strftime("%Y-%m-%d").values.tolist())
  
     return ssw_dates
@@ -285,7 +276,7 @@ def spv_vi(variable, thresh = 0.8, persist=10, consec_days=20, hem="NH"):
             else:
                 s_str = str(y)+"-11-01"
                 e_str = str(y+1)+"-03-31"
-                print("Calculating NH VIs for "+s_str+" to "+e_str)
+                #print("Calculating NH VIs for "+s_str+" to "+e_str)
                 var = variable.sel(time=slice(s_str,e_str))
                 var_chk = variable.sel(time=slice(s_str,str(y+1)+"-04-30")) 
                 var_th = xr.concat([daily_thresh.sel(month_day_str=slice('11-01','12-31')),
@@ -298,7 +289,7 @@ def spv_vi(variable, thresh = 0.8, persist=10, consec_days=20, hem="NH"):
         if hem == "SH":
             s_str = str(y)+"-06-01"
             e_str = str(y)+"-10-31"
-            print("Calculating SH VIs for "+s_str+" to "+e_str)
+            #print("Calculating SH VIs for "+s_str+" to "+e_str)
             var = variable.sel(time=slice(s_str,e_str))
             var_chk = variable.sel(time=slice(s_str,str(y)+"-11-30")) 
         

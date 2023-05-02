@@ -3,14 +3,32 @@ This module contains functions used in the Stratospheric Polar Vortex
 Extremes POD.
 
 Contains:
+    standardize (standardize a variable)
     lat_avg (cosine-weighted averages over latitudes)
     getConsecutiveValues
-    ssw_cp07
+    ssw_cp07 (find central dates of SSWs)
+    spv_vi (find central dates of VIs)
               
 '''
 
 import numpy as np
 import xarray as xr
+
+#***********************************************************************************
+
+def standardize(x):
+    r""" Standardize a variable x by subtracting its mean and dividing by its standard
+    deviation over the total time period.
+    
+    Parameters
+    ----------
+    x : `xarray.DataArray` or `xarray.Dataset`
+        The input DataArray or Dataset for which to standardize, as a function of time
+    """
+    
+    stand_x = (x - x.mean("time")) / x.std("time")
+    
+    return (stand_x)
 
 #************************************************************************************
 

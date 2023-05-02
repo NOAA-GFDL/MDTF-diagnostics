@@ -292,6 +292,7 @@ def spv_vi(variable, thresh = 0.8, persist=10, consec_days=20, hem="NH"):
             #print("Calculating SH VIs for "+s_str+" to "+e_str)
             var = variable.sel(time=slice(s_str,e_str))
             var_chk = variable.sel(time=slice(s_str,str(y)+"-11-30")) 
+            var_th = daily_thresh.sel(month_day_str=slice('06-01','10-31'))
         
         var = var.assign_coords(dayofwinter=("time", np.arange(len(var.time.values))))
         var_chk = var_chk.assign_coords(dayofwinter=("time", np.arange(len(var_chk.time.values))))

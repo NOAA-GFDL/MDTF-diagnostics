@@ -225,3 +225,126 @@ def ssw_cp07(variable,threshold=0, consec_days=20, hem="NH"):
                         ssw_dates.append(var.dayofwinter[firstvalue].time.dt.strftime("%Y-%m-%d").values.tolist())
  
     return ssw_dates
+
+#**************************************************************************
+
+def spv_vi(variable, thresh = 0.8, persist=10, consec_days=20, hem="NH"):
+    
+    """
+    This calculates central dates of polar vortex intensifications (VIs), 
+    which are defined using a percentile threshold of the climatology.
+    Read in reanalysis data of zonal-mean zonal wind U at 10 hPa and 60degLat
+
+    Parameters:
+    ----------------------------------------------------
+    variable : `xarray.DataArray` 
+              The input DataArray or Dataset of zonal-mean zonal wind U at 10 hPa 
+              and 60 degLat as a function of time. 
+              Note: time variable must be named "time"
+              Note: if hem = 'SH', then zonal winds should be for 60 degS latitude
+    
+    thresh : Numeric quantity
+            The percentile (in fraction form, [0,1]) by which to define VIs as a
+            daily percentile of the climatological values,
+            default is 0.8
+                       
+    persist : Numeric quantity
+               The number of consecutive days required that the zonal winds are sustained
+               above `thresh` to be considered a VI event; default is 10
+    
+    consec_days :  Numeric quantity
+        The number of consecutive days below the `thresh` for a VI to be independent of the event before it;
+               default is 20 days
+        
+    hem: String quantity
+        An optional variable that applies code to either NH or SH; default is NH
+    """
+
+    import numpy as np 
+    import xarray as xr
+    import matplotlib.pyplot as plt
+    import datetime
+    
+    year = variable.time.dt.year.values   
+    yr = np.arange(year[0],year[-1]+1,1)
+    yr = yr.tolist()
+    
+    vi_dates = []
+    
+    month_day_str = xr.DataArray(variable.indexes['time'].strftime('%m-%d'), coords=variable.coords,
+                                    name='month_day_str')
+    daily_thresh = variable.groupby(month_day_str).quantile(thresh,dim='time')
+ 
+    for y in yr:
+        
+        # look for mid-winter VIs between Nov-Mar in the NH, June-Oct in the SH
+        if hem == "NH":
+            
+            if y == yr[-1]:
+                break
+            else:
+                s_str = str(y)+"-11-01"
+                e_str = str(y+1)+"-03-31"
+                print("Calculating NH VIs for "+s_str+" to "+e_str)
+                var = variable.sel(time=slice(s_str,e_str))
+                var_chk = variable.sel(time=slice(s_str,str(y+1)+"-04-30")) 
+                var_th = xr.concat([daily_thresh.sel(month_day_str=slice('11-01','12-31')),
+                                daily_thresh.sel(month_day_str=slice('01-01','03-31'))],dim='month_day_str')
+                
+                if len(var.time) == 151:
+                    # remove leap days from climo for simplicity
+                    var_th = var_th.where(~(var_th.month_day_str == '02-29'),drop=True)
+        
+        if hem == "SH":
+            s_str = str(y)+"-06-01"
+            e_str = str(y)+"-10-31"
+            print("Calculating SH VIs for "+s_str+" to "+e_str)
+            var = variable.sel(time=slice(s_str,e_str))
+            var_chk = variable.sel(time=slice(s_str,str(y)+"-11-30")) 
+        
+        var = var.assign_coords(dayofwinter=("time", np.arange(len(var.time.values))))
+        var_chk = var_chk.assign_coords(dayofwinter=("time", np.arange(len(var_chk.time.values))))
+        new_thr = xr.DataArray(var_th.values, dims={'time': np.arange(len(var.time.values))})
+        
+        #Find instances where U1060 is greater than threshold
+        vor_int = var.where(var > new_thr,drop=True) 
+
+        #determine consecutive groups of days above threshold
+        daysabovethreshold = getConsecutiveValues(vor_int.dayofwinter.values)
+        
+        # if there's only one group, check that winds are sustained for consec_days and append central date to vi_dates #
+        if len(daysabovethreshold) == 1:
+            firstvalue = daysabovethreshold[0][0]
+            lastvalue = daysabovethreshold[0][-1]
+        
+            if (lastvalue - firstvalue) > persist-1:
+                vi_dates.append(var.dayofwinter[firstvalue].time.dt.strftime("%Y-%m-%d").values.tolist())
+        
+
+        if len(daysabovethreshold) > 1:  # if there are multiple 'groups': 
+        
+        # search for multiple VIs by looping over 'groups' #
+            last_date = np.array([])
+            for i,v in enumerate(daysabovethreshold):
+            
+                # Get the first/last index from the current group
+                currentgroup = daysabovethreshold[int(i)]
+                first_currentgroup = currentgroup[0]
+                last_currentgroup = currentgroup[-1]
+            
+                if (last_currentgroup - first_currentgroup) > persist-1:
+
+                    if i==0 or last_date.size==0 : #on first iteration/event, no separation check needed
+                        vi_dates.append(var.dayofwinter[first_currentgroup].time.dt.strftime("%Y-%m-%d").values.tolist())
+                        last_date = last_currentgroup #this sets the last_date as the last date of a valid event
+                    
+                    else:
+                        # Get the last index from the previous (current-1) group
+                        oldgroup = daysabovethreshold[int(i-1)]
+                        first_oldgroup = oldgroup[0]
+                        last_oldgroup = oldgroup[-1] 
+                        if (first_currentgroup - last_date) > consec_days-1:
+                                vi_dates.append(var.dayofwinter[first_currentgroup].time.dt.strftime("%Y-%m-%d").values.tolist())
+                                last_date = last_currentgroup #this sets the last_date as the last date of a valid event
+    
+    return vi_dates

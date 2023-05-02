@@ -6,15 +6,15 @@
 # POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
 #
 # STC Stratospheric Polar Vortex Extremes
-# Last update: 2023-03-06
+# Last update: 2023-05-02
 #
 # This script performs calculations to detect stratospheric polar vortex extremes. 
 # Extremes in the stratospheric polar vortex are closely linked to the tropospheric
 # circulation and surface climate both before and after the event. The occurrence of 
 # polar stratospheric circulation extremes in the Northern Hemisphere (NH), such
-# as sudden stratospheric warmings (SSWs) and polar vortex intensifications, are important
-# aspects of stratospheric variability that rely on realistic representations of the 
-# stratosphere and the troposphere. Extremes in the strength of the Arctic polar 
+# as sudden stratospheric warmings (SSWs) and polar vortex intensifications (VIs), are 
+# important aspects of stratospheric variability that rely on realistic representations
+# of the stratosphere and the troposphere. Extremes in the strength of the Arctic polar 
 # stratospheric circulation are often preceded by known near-surface circulation 
 # patterns, and then subsequently followed by shifts in the storm tracks (sometimes
 # for weeks).
@@ -23,7 +23,7 @@
 # ==============================================================================
 #   Version, Contact Info, and License
 # ==============================================================================
-#   - Version/revision information: v1.0 (2023-03-06)
+#   - Version/revision information: v1.0 (2023-05-02)
 #   - PI: Amy H. Butler, NOAA CSL
 #   - Developer/point of contact: Amy H. Butler, amy.butler@noaa.gov
 #   - Other contributors: Zachary D. Lawrence, CIRES + CU Boulder / NOAA PSL, 

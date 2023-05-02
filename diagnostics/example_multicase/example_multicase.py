@@ -63,6 +63,7 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
 import intake
+import pandas as pd
 import sys
 import yaml
 
@@ -73,7 +74,8 @@ import yaml
 # "fake" a dictionary now with information we are getting from the single case
 # POD that is processed by the framework
 print("reading case_info")
-os.environ["case_env_file"] = "/Users/jessica/mdtf/MDTF-diagnostics/diagnostics/example_multicase/case_info.yaml"
+#os.environ["case_env_file"] = "/Users/jessica/mdtf/MDTF-diagnostics/diagnostics/example_multicase/case_info.yaml"
+os.environ["case_env_file"] = "/local2/home/mdtf/MDTF-diagnostics/diagnostics/example_multicase/case_info.yaml"
 case_env_file = os.environ["case_env_file"]
 assert(os.path.isfile(case_env_file))
 with open(case_env_file, 'r') as stream:
@@ -100,19 +102,28 @@ with open(case_env_file, 'r') as stream:
 #    },
 # }
 
-# open a csv catalog
-cat = intake.open_csv('/Users/jessica/mdtf/MDTF-diagnostics/tools/catalog_builder/examples/cmip/esm_catalog_IPSL-CM5A2-INCA_historical_r1i1p1f1.csv')
-# read the catalog into a dataframe
-df = cat.read()
+#os.environ['CATALOG_FILE'] = \
+#    '/Users/jessica/mdtf/MDTF-diagnostics/tools/catalog_builder/examples/cmip/esm_catalog_IPSL-CM5A2-INCA_historical_r1i1p1f1.csv'
+os.environ['CATALOG_FILE'] = '/nbhome/jml/esm_catalog_IPSL-CM5A2-INCA_historical_r1i1p1f1.csv'
+os.environ['CATALOG_DEF_FILE'] = '/nbhome/jml/esm_catalog_IPSL-CM5A2-INCA_historical_r1i1p1f1.json'
+cat_file = os.environ['CATALOG_FILE']
+cat_def_file = os.environ['CATALOG_DEF_FILE']
+# open the csv file using information provided by the catalog definition file
+cat = intake.open_esm_datastore(cat_def_file)
+
+#for case_dict in case_info.values():
+#    date_range.append(pd.datetime(case_dict['ENDDATE'])-case_dict['STARTDATE'])
+tas_files = [case_dict["TAS_FILE"] for case_dict in case_info.values()]
+# all cases share variable names, so just get first entry
+tas_var = [case_dict["tas_var"] for case_dict in case_info.values()][0]
+# filter data by variable and frequency
+data_subset = cat.search(
+    frequency="day",
+    variable_id=tas_var
+)
 
 # Loop over cases and load datasets into a separate dict
 model_datasets = dict()
-tas_files = [case_dict["TAS_FILE"] for case_dict in case_info.values()]
-tas_var = [case_dict["tas_var"] for case_dict in case_info.values()]
-data_subset = df.search(
-    path=tas_files,
-    variable_id=tas_var[0]
-)
     #ds = xr.open_dataset(case_dict["TAS_FILE"], use_cftime=True)
    # model_datasets[case_name] = ds
     #print(ds)

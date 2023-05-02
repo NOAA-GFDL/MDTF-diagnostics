@@ -2,6 +2,8 @@ CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231:
   CASENAME: CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231
   FIRSTYR: 1980
   LASTYR: 1984
+  STARTDATE: 1980-01-01
+  ENDDATE: 1984-12-31
   MPLBACKEND: Agg
   RGB: /home/jessica.liptak/mdtf/MDTF-diagnostics/shared/rgb
   TAS_ASSOC_FILES: ''
@@ -18,6 +20,8 @@ CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231:
   CASENAME: CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231
   FIRSTYR: 1985
   LASTYR: 1989
+  STARTDATE: 1985-01-01
+  ENDDATE: 1989-12-31
   MPLBACKEND: Agg
   RGB: /home/jessica.liptak/mdtf/MDTF-diagnostics/shared/rgb
   TAS_ASSOC_FILES: ''

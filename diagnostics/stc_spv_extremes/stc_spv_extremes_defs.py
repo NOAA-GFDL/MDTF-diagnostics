@@ -8,6 +8,7 @@ Contains:
     getConsecutiveValues
     ssw_cp07 (find central dates of SSWs)
     spv_vi (find central dates of VIs)
+    composite (average pressure-time variable across events)
               
 '''
 
@@ -132,10 +133,9 @@ def ssw_cp07(variable,threshold=0, consec_days=20, hem="NH"):
         An optional variable that applies code to either NH or SH; default is NH
     """
 
-    import numpy as np 
-    import xarray as xr
-    import matplotlib.pyplot as plt
-    import datetime
+    #import numpy as np 
+    #import xarray as xr
+    #import datetime
     
     year = variable.time.dt.year.values   
     yr = np.arange(year[0],year[-1]+1,1)
@@ -268,11 +268,6 @@ def spv_vi(variable, thresh = 0.8, persist=10, consec_days=20, hem="NH"):
     hem: String quantity
         An optional variable that applies code to either NH or SH; default is NH
     """
-
-    import numpy as np 
-    import xarray as xr
-    import matplotlib.pyplot as plt
-    import datetime
     
     year = variable.time.dt.year.values   
     yr = np.arange(year[0],year[-1]+1,1)
@@ -358,3 +353,58 @@ def spv_vi(variable, thresh = 0.8, persist=10, consec_days=20, hem="NH"):
                                 last_date = last_currentgroup #this sets the last_date as the last date of a valid event
     
     return vi_dates
+
+#**************************************************************************
+
+def composite(variable, yre, mne, dye):
+    
+    """
+    This averages a variable (with time and pressure level coordinates) across
+    specified events, which must be provided as (same-length) integer arrays of event year,
+    event month, and event day. The lag around each event is hard-coded here
+    as 20 days prior to the event and 60 days after the event.
+
+    Parameters:
+    ----------------------------------------------------
+    variable : `xarray.DataArray` 
+              The input DataArray or Dataset as a function of time in days
+              and pressure level. 
+
+    yre : `numpy.Array`
+            An integer array of event years
+                       
+    mne : `numpy.Array`
+            An integer array of event months
+            
+    dye : `numpy.Array`
+            An integer array of event days
+            
+    """
+    
+    from datetime import datetime,timedelta
+    
+    #initialize with first event
+    cen = datetime(year=yre[0],day=dye[0],month=mne[0])
+    en = cen + timedelta(days=60-1)
+    sta = cen - timedelta(days=20)
+    lag = np.arange(-20,60,1)
+    edate = en.strftime("%Y-%m-%d")
+    stdate = sta.strftime("%Y-%m-%d")
+    avgvar = variable.sel(time=slice(stdate,edate))
+    avgvar = avgvar.assign_coords(time=lag)
+    avgvar = avgvar.expand_dims(dim="event")
+        
+    for ct,dat in enumerate(yre[1:]):
+        cen = datetime(year=yre[ct],day=dye[ct],month=mne[ct])
+        en = cen + timedelta(days=60-1)
+        sta = cen - timedelta(days=20)
+        edate = en.strftime("%Y-%m-%d")
+        stdate = sta.strftime("%Y-%m-%d")
+        newvar = variable.sel(time=slice(stdate,edate))
+        newvar = newvar.assign_coords(time=lag)
+        newvar = newvar.expand_dims(dim="event")
+   
+        allvar10 = xr.concat([avgvar, newvar], dim='event')
+        avgvar = allvar10
+       
+    return avgvar

@@ -1044,7 +1044,8 @@ class DefaultDatasetParser:
         """
         for coord in ds.cf.axes_values(our_var.name).values():
             # .axes_values() will have thrown TypeError if XYZT axes not all uniquely defined
-            assert isinstance(coord, xr.core.dataarray.DataArray)
+            assert isinstance(coord, xr.core.dataarray.DataArray), \
+            "Assertion failed: " + coord + " not found in ds.cf.axes_values"
 
         # check set of dimension coordinates (array dimensionality) agrees
         our_axes_set = our_var.dim_axes_set
@@ -1070,7 +1071,7 @@ class DefaultDatasetParser:
 
         for c_name in ds_var.dims:
             if ds[c_name].size == 1:
-                if c_name == ds_axes['Z']:
+                if 'Z' in ds_axes.keys() and c_name == ds_axes['Z']:
                     # mis-identified scalar coordinate
                     self.log.warning(("Dataset has dimension coordinate '%s' of size "
                                       "1 not identified as scalar coord."), c_name)

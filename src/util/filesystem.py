@@ -12,7 +12,7 @@ import shutil
 import string
 from . import basic
 from . import exceptions
-# TODO from envyaml import EnvYAML
+import yaml
 
 import logging
 _log = logging.getLogger(__name__)
@@ -119,7 +119,17 @@ def check_executable(exec_name):
     Args:
         exec_name (:py:obj:`str`): Name of the executable to search for.
     """
-    return (find_executable(exec_name) is not None)
+    return find_executable(exec_name) is not None
+
+def get_config_file_type(file_path: str)->str:
+    """Verify that configuration file is json or yaml"""
+    ext = os.path.splitext(file_path)[-1].lower()
+
+    supported_file_types = [".jsonc", ".json", ".yml"]
+    if ext not in supported_file_types:
+        raise exceptions.UnsupportedFileTypeError(
+            f"Unsupported file type. {file_path} must be of type .json(c) or .yml")
+    return ext
 
 def find_files(src_dirs, filename_globs, n_files=None):
     """Return list of files in *src_dirs*, or any subdirectories, matching any

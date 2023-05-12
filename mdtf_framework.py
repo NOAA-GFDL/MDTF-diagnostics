@@ -15,55 +15,41 @@ if sys.version_info.major != 3 or sys.version_info.minor < 10:
         f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports
 import os
+import click
 from src import cli
 from src.util import logs
 
-def validate_base_environment():
-    """Check that the package's required third-party dependencies (listed in
-    src/conda/env_base.yml) are accessible.
-    """
-    # checking existence of one third-party module is imperfect, but will
-    # catch the most common case where user hasn't installed environments
-    try:
-        import cfunits
-    except ModuleNotFoundError:
-        sys.exit("ERROR: MDTF dependency check failed. Please make sure the "
-            "package's base environment has been activated prior to execution, e.g. "
-            "by calling the 'mdtf' wrapper script.\nSee installation instructions "
-            "at mdtf-diagnostics.rtfd.io/en/latest/sphinx/start_install.html.")
+@click.option('-f',
+              '--configfile',
+              required=True,
+              type=click.Path(),
+              help='Path to the runtime configuration file'
+              )
+@click.option("-v",
+              "--verbose",
+              is_flag=True,
+              default=False,
+              help="Enables verbose mode.")
 
-def main(argv):
+@click.command()
+def main(configfile:str, verbose:bool)->int:
+    """A community-developed package to run Process Oriented Diagnostics on weather and climate data
+    """
     # get dir of currently executing script:
     code_root = os.path.dirname(os.path.realpath(__file__))
     # Cache log info in memory until log file is set up
     logs.initial_log_config()
 
-    # poor man's subparser: argparse's subparser doesn't handle this
-    # use case easily, so just dispatch on first argument
-    if len(argv) == 1 or \
-        len(argv) == 2 and argv[1].lower() in ('-h', '--help'):
-        # case where we print CLI help
-        cli_obj = cli.MDTFTopLevelArgParser(code_root)
-        cli_obj.print_help()
-        return 0 # will actually exit from print_help
-    elif argv[1].lower() == 'info':
-        # case where we print command-line info on PODs
-        from src import mdtf_info
-        mdtf_info.InfoCLIHandler(code_root, argv[2:])
-        return 0 # will actually exit from print_help
-    else:
-        # case where we run the actual framework
-        print(f"=== Starting {os.path.realpath(__file__)}\n")
-        validate_base_environment()
+    # case where we run the actual framework
+    #print(f"=== Starting {os.path.realpath(__file__)}\n")
 
         # not printing help or info, setup CLI normally
-        cli_obj = cli.MDTFTopLevelArgParser(code_root,argv=argv)
-        framework = cli_obj.dispatch()
-        exit_code = framework.main()
-        return exit_code
+        #cli_obj = cli.MDTFTopLevelArgParser(code_root,argv=argv)
+        #framework = cli_obj.dispatch()
+       # exit_code = framework.main()
+    conf = cli.parse_cli(configfile)
 
 
 if __name__ == '__main__':
-    argv = sys.argv[1::] if len(sys.argv[1::]) >= 2 else sys.argv
-    exit_code = main(argv)
-    sys.exit(exit_code)
+
+    main(prog_name='MDTF-diagnostics')

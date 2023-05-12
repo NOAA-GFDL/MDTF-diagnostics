@@ -273,6 +273,11 @@ class GenericDataSourceEvent(DataProcessingEvent):
     """
     pass
 
+class UnsupportedFileTypeError(MDTFBaseException):
+    """Exception for unsupported file types ingested by the framework
+    """
+    pass
+
 class PodExceptionBase(MDTFBaseException):
     """Base class and common formatting code for exceptions affecting a single
     POD.

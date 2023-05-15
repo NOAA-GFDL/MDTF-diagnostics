@@ -101,30 +101,33 @@ def read_config_file(code_root, file_name, site=""):
         return fmwk_d
     return site_d
 
-def load_yaml_config(config)->dict:
+
+def load_yaml_config(config: str) -> dict:
     try:
         os.path.exists(config)
-    except:
+    except FileExistsError:
         raise util.exceptions.MDTFFileExistsError(
             f"{config} not found")
 
     with open(config, 'r') as f:
         return yaml.safe_load(f.read())
 
-def load_json_config(config)->dict:
+
+def load_json_config(config: str) -> dict:
     try:
         os.path.exists(config)
-    except:
+    except FileExistsError:
         raise util.exceptions.MDTFFileExistsError(
             f"{config} not found")
-    util.read_json(config, log=_log)
+    json_config = util.read_json(config, log=_log)
+    return json_config
 
-@click.command()
-@click.pass_context
-def parse_cli(configfile:str, verbose:bool):
+
+def parse_config_file(configfile: str) -> dict:
     """Command line interface"""
-    ext = get_config_file_type(configfile)
+    ext = util.get_config_file_type(configfile)
     if ext == ".yml":
-        ctx.config = load_yaml_config(configfile)
+        config = load_yaml_config(configfile)
     elif ext in [".jsonc", ".json"]:
-        ctx.config = load_json_config(configfile)
+        config = load_json_config(configfile)
+    return config

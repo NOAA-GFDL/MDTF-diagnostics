@@ -121,6 +121,7 @@ def check_executable(exec_name):
     """
     return find_executable(exec_name) is not None
 
+
 def get_config_file_type(file_path: str)->str:
     """Verify that configuration file is json or yaml"""
     ext = os.path.splitext(file_path)[-1].lower()
@@ -366,8 +367,6 @@ def read_json(file_path, log=_log):
     Execution exits with error code 1 on all other exceptions.
     """
     log.debug('Reading file %s', file_path)
-    if not os.path.isfile(file_path):
-        raise exceptions.MDTFFileNotFoundError(file_path)
     try:
         with io.open(file_path, 'r', encoding='utf-8') as file_:
             str_ = file_.read()
@@ -376,6 +375,7 @@ def read_json(file_path, log=_log):
         _log.critical("Caught exception when trying to read %s: %r", file_path, exc)
         exit(1)
     return parse_json(str_)
+
 
 def find_json(dir_, file_name, exit_if_missing=True, log=_log):
     """Reads a JSONC file *file_name* anywhere within the root directory *dir\_*.

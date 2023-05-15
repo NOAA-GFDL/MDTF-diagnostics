@@ -32,7 +32,8 @@ from src.util import logs
               help="Enables verbose mode.")
 
 @click.command()
-def main(configfile:str, verbose:bool)->int:
+@click.pass_context
+def main(ctx, configfile:str, verbose:bool=False)->int:
     """A community-developed package to run Process Oriented Diagnostics on weather and climate data
     """
     # get dir of currently executing script:
@@ -47,9 +48,8 @@ def main(configfile:str, verbose:bool)->int:
         #cli_obj = cli.MDTFTopLevelArgParser(code_root,argv=argv)
         #framework = cli_obj.dispatch()
        # exit_code = framework.main()
-    conf = cli.parse_cli(configfile)
+    ctx.config = cli.parse_config_file(configfile)
 
 
 if __name__ == '__main__':
-
     main(prog_name='MDTF-diagnostics')

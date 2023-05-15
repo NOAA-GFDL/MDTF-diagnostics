@@ -1,0 +1,67 @@
+# Runtime yaml configuration file template for the MDTF-diagnostics package
+# Create a copy of this file for personal use, and pass it to the framework
+# with the -f | --configfile flag
+
+# List of POD(s) to run
+pod_list:
+  - example_multicase
+#  - MJO_suite
+
+# Case list entries (must be unique IDs for each simulation
+case_list:
+  "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231"
+  "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231"
+
+# Attributes for each case
+CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231:
+  model : "test"
+  convention : "CMIP"
+  startdate : 19800101
+  endddate: 19841231
+
+CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231:
+  model: "test"
+  convention: "CMIP"
+  startdate: 19850101
+  endddate: 19891231
+
+### Data location settings ###
+# Required: Parent directory containing results from different models.
+MODEL_DATA_ROOT: "../mdtf_test_data"
+# Optianal: Parent directory containing observational data used by individual PODs.
+# If defined, the framework assumes observational data is in OBS_DATA_ROOT/[POD_NAME]
+OBS_DATA_ROOT: "../inputdata/obs_data"
+# Required: Working directory location. Temporary files are written here.
+# Final output is also written here if the OUTPUT_DIR is not defined.
+WORKING_DIR: "../wkdir"
+# Optional: Location to write final output if you don't want it in the wkdir
+OUTPUT_DIR: ""
+### Environment Settings ###
+# Required: Location of the Anaconda/miniconda installation to use for managing
+# dependencies (path returned by running `conda info --base`.)
+conda_root": ""
+# Optional: Directory containing the framework-specific conda environments. This should
+# be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
+# blank, the framework will look for its environments in conda_root/envs
+conda_env_root": ""
+### Data type settings ###
+# Type of data for the framework to process: `single_run` (default)
+# for PODs that compare output from a single simulation to observational data
+# for `multi_run` for PODs that analyze output from multiple simulations and/or
+# observational datasets
+data_type: "multi_run"
+# Method used to fetch model data.
+data_manager: "Local_File"
+### Output Settings ###
+# Set to true to have PODs save postscript figures in addition to bitmaps.
+save_ps: False
+# Set to true to have PODs save netCDF files of processed data.
+save_nc: False
+# Set to true to save HTML and bitmap plots in a .tar file.
+make_variab_tar: False
+# Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
+# under a unique name.
+overwrite: False
+### Developer settings ###
+# Set to True to skip preprocessing
+skip_preprocessor: False

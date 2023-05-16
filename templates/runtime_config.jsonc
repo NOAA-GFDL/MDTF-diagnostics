@@ -44,16 +44,15 @@
   ],
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
-
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
-
+  // Full path to model data ESM-intake catalog header file
+  "DATA_CATALOG": "",
+  // Backwards compatibility
+  "MODEL_DATA_ROOT": "../mdtf_test_data",
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
-
-  // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "../mdtf_test_data",
 
   // Working directory.
   "WORKING_DIR": "../wkdir",

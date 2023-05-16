@@ -4,13 +4,13 @@
 
 # List of POD(s) to run
 pod_list:
-  - example_multicase
-#  - MJO_suite
+  - "example_multicase"
+  - "MJO_suite"
 
 # Case list entries (must be unique IDs for each simulation
 case_list:
-  "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231"
-  "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231"
+  - "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231"
+  - "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231"
 
 # Attributes for each case
 CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231:
@@ -26,9 +26,11 @@ CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231:
   endddate: 19891231
 
 ### Data location settings ###
+# Required: full path to ESM-intake catalog header file
+DATA_CATALOG: ""
 # Required: Parent directory containing results from different models.
 MODEL_DATA_ROOT: "../mdtf_test_data"
-# Optianal: Parent directory containing observational data used by individual PODs.
+# Optional: Parent directory containing observational data used by individual PODs.
 # If defined, the framework assumes observational data is in OBS_DATA_ROOT/[POD_NAME]
 OBS_DATA_ROOT: "../inputdata/obs_data"
 # Required: Working directory location. Temporary files are written here.

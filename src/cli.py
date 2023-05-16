@@ -105,7 +105,7 @@ def read_config_file(code_root, file_name, site=""):
 def load_yaml_config(config: str) -> dict:
     try:
         os.path.exists(config)
-    except FileExistsError:
+    except FileNotFoundError:
         raise util.exceptions.MDTFFileExistsError(
             f"{config} not found")
 
@@ -116,7 +116,7 @@ def load_yaml_config(config: str) -> dict:
 def load_json_config(config: str) -> dict:
     try:
         os.path.exists(config)
-    except FileExistsError:
+    except FileNotFoundError:
         raise util.exceptions.MDTFFileExistsError(
             f"{config} not found")
     json_config = util.read_json(config, log=_log)
@@ -127,7 +127,27 @@ def parse_config_file(configfile: str) -> dict:
     """Command line interface"""
     ext = util.get_config_file_type(configfile)
     if ext == ".yml":
-        config = load_yaml_config(configfile)
+        return load_yaml_config(configfile)
     elif ext in [".jsonc", ".json"]:
-        config = load_json_config(configfile)
-    return config
+        return load_json_config(configfile)
+
+
+def verify_pod_list(pod_list: list, code_root: str):
+    pod_data_root = os.path.join(code_root, "diagnostics")
+    for p in pod_list:
+        pod_root = os.path.join(pod_data_root, p)
+        try:
+            not (not os.path.exists(os.path.join(pod_root, "settings.jsonc"))
+                 and not os.path.exists(os.path.join(pod_root, "settings.yml")))
+        except FileNotFoundError:
+            raise util.exceptions.MDTFFileExistsError(
+                f"settings file not found in {pod_root}")
+
+
+def verify_case_list(case_list: list, catalog_path: str):
+    pass
+
+
+def verify_config_options(config: dict):
+    verify_pod_list(config['pod_list'], config['code_root'])
+    verify_case_list(config['case_list'], config['DATA_CATALOG'])

@@ -25,30 +25,33 @@
   "pod_list" : [
      "example_multicase"
    ],
-   // Each CASENAME corresponds to a different simulation/output dataset
-  "case_list" : [
-     {
-       "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231",
-       "model" : "test",
-       "convention" : "CMIP",
-       "FIRSTYR" : 1980,
-       "LASTYR" : 1984
-     },
-     {
-       "CASENAME": "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231",
-       "model" : "test",
-       "convention" : "CMIP",
-       "FIRSTYR" : 1985,
-       "LASTYR" : 1989
-     }
-  ],
+   // Each case corresponds to a different simulation/output dataset
+   "case_list":
+    {
+      "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231":
+        {
+          "model": "test",
+          "convention": "CMIP",
+          "startdate": "1980101",
+          "enddate": "19841231"
+        }
+      ,
+      "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231":
+        {
+          "model": "test",
+          "convention": "CMIP",
+          "startdate": "1985101",
+          "enddate": "19891231"
+        }
+    }
+  ,
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
   // Full path to model data ESM-intake catalog header file
-  "DATA_CATALOG": "",
+  "DATA_CATALOG": "/local2/home/mdtf/MDTF-diagnostics/tools/catalog_builder/examples/gfdl/esm_catalog_DECK_ESM4_historical_D1_atmos_ts_monthly_5yr_subset.json",
   // Backwards compatibility
   "MODEL_DATA_ROOT": "../mdtf_test_data",
   // Parent directory containing observational data used by individual PODs.

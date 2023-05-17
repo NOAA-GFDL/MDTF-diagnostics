@@ -19,6 +19,7 @@ import re
 import textwrap
 import typing
 import yaml
+import intake
 from src import util
 
 import logging
@@ -144,10 +145,15 @@ def verify_pod_list(pod_list: list, code_root: str):
                 f"settings file not found in {pod_root}")
 
 
-def verify_case_list(case_list: list, catalog_path: str):
-    pass
+def verify_catalog(catalog_path: str):
+    # verify the catalog file path
+    try:
+        os.path.exists(catalog_path)
+    except FileNotFoundError:
+        raise util.exceptions.MDTFFileExistsError(
+            f"{catalog_path} not found.")
 
 
 def verify_config_options(config: dict):
     verify_pod_list(config['pod_list'], config['code_root'])
-    verify_case_list(config['case_list'], config['DATA_CATALOG'])
+    verify_catalog(config['DATA_CATALOG'])

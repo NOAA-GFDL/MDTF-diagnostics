@@ -19,6 +19,7 @@ import os
 import click
 from src import cli
 from src.util import logs
+from src.conda import conda_utils
 
 
 @click.option('-f',
@@ -39,7 +40,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     """
     # Cache log info in memory until log file is set up
     logs.initial_log_config()
-
+    conda_utils.verify_conda_env('_MDTF_base')
     # case where we run the actual framework
     # print(f"=== Starting {os.path.realpath(__file__)}\n")
 

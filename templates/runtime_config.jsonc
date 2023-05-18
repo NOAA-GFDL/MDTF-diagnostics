@@ -58,7 +58,7 @@
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Working directory.
-  "WORKING_DIR": "../wkdir",
+  "WORK_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be
   // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.

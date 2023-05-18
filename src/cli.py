@@ -153,7 +153,13 @@ def verify_catalog(catalog_path: str):
         raise util.exceptions.MDTFFileExistsError(
             f"{catalog_path} not found.")
 
+def verify_workdir(workdir: str, overwrite: bool=False):
+    if os.path.exists(workdir):
+    else:
+        os.mkdir(os.path.join(workdir)
+
 
 def verify_config_options(config: dict):
     verify_pod_list(config['pod_list'], config['code_root'])
     verify_catalog(config['DATA_CATALOG'])
+    verify_workdir(config['WORK_DIR'], config['overwrite'])

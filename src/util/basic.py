@@ -69,24 +69,18 @@ class MDTFABCMeta(abc.ABCMeta):
         return instance
 
 
-class _Singleton(type):
-    """Private metaclass that creates a :class:`~util.Singleton` base class when
-    called. This version is taken from `<https://stackoverflow.com/a/6798042>`__
-    and is compatible with Python 2 and 3.
-    """
+class Singleton(type):
+    # Updated definition to use solution #3 since Python 2 is no longer supported
+    # https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python/6798042
+    # example implementation:
+    # class MyClass(BaseClass, metaclass=Singleton):
+    #     pass
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
-
-
-class Singleton(_Singleton('SingletonMeta', (object,), {})):
-    """Parent class defining the
-    `Singleton <https://en.wikipedia.org/wiki/Singleton_pattern>`_ pattern. We
-    use this as safer way to pass around global state.
-    """
 
     @classmethod
     def _reset(cls):
@@ -375,18 +369,18 @@ class NameSpace(dict):
 
     def __eq__(self, other):
         if type(other) is type(self):
-            return (self._freeze() == other._freeze())
+            return self._freeze() == other._freeze()
         else:
             return False
 
     def __ne__(self, other):
-        return (not self.__eq__(other))  # more foolproof
+        return not self.__eq__(other)  # more foolproof
 
     def __hash__(self):
         return hash(self._freeze())
 
 
-class _MDTFEnumMixin():
+class _MDTFEnumMixin:
     def __str__(self):
         return str(self.name).lower()
 

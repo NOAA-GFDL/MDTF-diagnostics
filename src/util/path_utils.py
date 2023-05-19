@@ -7,6 +7,8 @@ from . import check_dir
 from . import exit_handler
 from . import Singleton
 from . import NameSpace
+from . import from_iter
+from . import resolve_path
 import shutil
 import string
 from . import basic
@@ -17,7 +19,7 @@ import logging
 _log = logging.getLogger(__name__)
 
 
-class PathManager(Singleton, NameSpace):
+class PathManager(metaclass=Singleton, NameSpace):
     """:class:`~util.Singleton` holding the root directories for all paths used
     by the code.
     """
@@ -48,7 +50,7 @@ class PathManager(Singleton, NameSpace):
             # set as attribute any CLI setting that has "action": "PathAction"
             # in its definition in the .jsonc file
             cli_paths = [act.dest for act in cli_obj.iter_actions()
-                         if isinstance(act, cli.PathAction)]
+                         if isinstance(act, PathAction)]
             if not cli_paths:
                 _log.warning("Didn't get list of paths from CLI.")
             for key in cli_paths:
@@ -65,31 +67,25 @@ class PathManager(Singleton, NameSpace):
                     self.TEMP_DIR_ROOT = self.WORKING_DIR
 
     def _init_path(self, key, d, env=None):
-        if self._unittest: # use in unit testing only
+        if self._unittest:  # use in unit testing only
             return 'TEST_'+key
         else:
             # need to check existence in case we're being called directly
             if not d.get(key, False):
                 _log.fatal(f"Error: {key} not initialized.")
-                util.exit_handler(code=1)
-            return util.resolve_path(
-                util.from_iter(d[key]), root_path=self.CODE_ROOT, env=env,
+                exit_handler(code=1)
+            return resolve_path(
+                from_iter(d[key]), root_path=self.CODE_ROOT, env=env,
                 log=_log
             )
 
-    def multirun_model_paths(self, pod, case):
+    def model_paths(self, pod, case: dict):
         # define directory paths for multirun mode
         # Each case directory is a subdirectory in wk_dir/pod_name
-        d = util.NameSpace()
-        if isinstance(case, dict):
-            name = case['CASENAME']
-            yr1 = case['FIRSTYR']
-            yr2 = case['LASTYR']
-        else:
-            name = case.name
-            yr1 = case.attrs.date_range.start.format(precision=1)
-            yr2 = case.attrs.date_range.end.format(precision=1)
-        case_wk_dir = 'MDTF_{}_{}_{}'.format(name, yr1, yr2)
+        d = NameSpace()
+        startdate = case.attrs.date_range.start.format(precision=1)
+        enddate = case.attrs.date_range.end.format(precision=1)
+        case_wk_dir = 'MDTF_{}_{}_{}'.format(case, startdate, enddate)
         d.MODEL_DATA_DIR = os.path.join(self.MODEL_DATA_ROOT, name)
         # Cases are located in a common POD directory
         d.MODEL_WK_DIR = os.path.join(pod.POD_WK_DIR, case_wk_dir)
@@ -97,25 +93,26 @@ class PathManager(Singleton, NameSpace):
         return d
 
     def pod_paths(self, pod, case):
-        d = util.NameSpace()
+        d = NameSpace()
         d.POD_CODE_DIR = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
         d.POD_OBS_DATA = os.path.join(self.OBS_DATA_ROOT, pod.name)
         d.POD_WK_DIR = os.path.join(case.MODEL_WK_DIR, pod.name)
         d.POD_OUT_DIR = os.path.join(case.MODEL_OUT_DIR, pod.name)
         return d
+
 def verify_paths(self, config, p):
     # needs to be here, instead of PathManager, because we subclass it in
     # NOAA_GFDL
     keep_temp = config.get('keep_temp', False)
     # clean out WORKING_DIR if we're not keeping temp files:
-    if os.path.exists(p.WORKING_DIR) and not \
-            (keep_temp or p.WORKING_DIR == p.OUTPUT_DIR):
-        shutil.rmtree(p.WORKING_DIR)
+    if os.path.exists(p.WORK_DIR) and not \
+            (keep_temp or p.WORK_DIR == p.OUTPUT_DIR):
+        shutil.rmtree(p.WORK_DIR)
 
     try:
         for dir_name, create_ in (
                 ('CODE_ROOT', False), ('OBS_DATA_ROOT', False),
-                ('MODEL_DATA_ROOT', True), ('WORKING_DIR', True)
+                ('MODEL_DATA_ROOT', True), ('WORK_DIR', True)
         ):
             check_dir(p, dir_name, create=create_)
     except Exception as exc:

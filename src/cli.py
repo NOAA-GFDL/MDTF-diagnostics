@@ -20,6 +20,7 @@ import textwrap
 import typing
 import yaml
 import intake
+from datetime import datetime,date
 from src import util
 
 import logging
@@ -153,13 +154,41 @@ def verify_catalog(catalog_path: str):
         raise util.exceptions.MDTFFileExistsError(
             f"{catalog_path} not found.")
 
-def verify_workdir(workdir: str, overwrite: bool=False):
-    if os.path.exists(workdir):
-    else:
-        os.mkdir(os.path.join(workdir)
+
+def verify_workdir(workdir: str):
+    if not os.path.exists(workdir):
+        os.mkdir(os.path.join(workdir))
+
+
+def verify_case_atts(case_list: dict):
+    # required case attributes
+    case_attrs = ['convention', 'startdate', 'enddate']
+    conventions = ['cmip', 'gfdl', 'cesm']
+    for name, att_dict in case_list.items():
+        try:
+            all(att in att_dict.keys() for att in case_attrs)
+        except KeyError:
+            raise util.exceptions.MDTFBaseException(
+                f"Missing or incorrect convention, startdate, or enddate for case {name}"
+            )
+        try:
+            att_dict['convention'].lower() in conventions
+        except KeyError:
+            raise util.exceptions.MDTFBaseException(
+                f"Convention {att_dict['convention']} not supported"
+            )
+        try:
+            st = datetime.strptime(att_dict['startdate'], 'yyyymmddhhmmss')
+            ed = datetime.fromisoformat(att_dict['enddate'])
+        except KeyError:
+            raise util.exceptions.MDTFBaseException(
+                f"{att_dict['startdate']} and {att_dict['enddate']} must have format yyyymmdd"
+            )
+
 
 
 def verify_config_options(config: dict):
     verify_pod_list(config['pod_list'], config['code_root'])
     verify_catalog(config['DATA_CATALOG'])
-    verify_workdir(config['WORK_DIR'], config['overwrite'])
+    verify_workdir(config['WORK_DIR'])
+    verify_case_atts(config['case_list'])

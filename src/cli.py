@@ -7,7 +7,7 @@ import os
 import sys
 import io
 import click
-import argparse
+import pathlib
 import collections
 import dataclasses
 import importlib
@@ -20,7 +20,7 @@ import textwrap
 import typing
 import yaml
 import intake
-from datetime import datetime,date
+from datetime import datetime, date
 from src import util
 
 import logging
@@ -155,9 +155,23 @@ def verify_catalog(catalog_path: str):
             f"{catalog_path} not found.")
 
 
-def verify_workdir(workdir: str):
-    if not os.path.exists(workdir):
-        os.mkdir(os.path.join(workdir))
+def verify_dirpath(dirpath: str, coderoot: str) -> str:
+    dirpath_parts = pathlib.Path(dirpath)
+    # replace relative path with absolute working directory path
+    if ".." in dirpath_parts.parts:
+        new_dirpath = os.path.realpath(os.path.join(coderoot, dirpath))
+    else:
+        new_dirpath = dirpath
+    if not os.path.exists(new_dirpath):
+        os.mkdir(new_dirpath)
+        _log.debug(f"Created directory {new_dirpath}")
+    try:
+        os.path.isdir(new_dirpath)
+    except FileNotFoundError:
+        raise util.exceptions.MDTFFileNotFoundError(
+            f"{new_dirpath} not found")
+
+    return new_dirpath
 
 
 def verify_case_atts(case_list: dict):
@@ -177,18 +191,39 @@ def verify_case_atts(case_list: dict):
             raise util.exceptions.MDTFBaseException(
                 f"Convention {att_dict['convention']} not supported"
             )
-        try:
-            st = datetime.strptime(att_dict['startdate'], 'yyyymmddhhmmss')
-            ed = datetime.fromisoformat(att_dict['enddate'])
-        except KeyError:
-            raise util.exceptions.MDTFBaseException(
-                f"{att_dict['startdate']} and {att_dict['enddate']} must have format yyyymmdd"
-            )
+        if len(att_dict['startdate']) == 8 and len(att_dict['enddate']) == 8:
+            try:
+                st = datetime.strptime(att_dict['startdate'], '%Y%m%d')
+                ed = datetime.strptime(att_dict['enddate'], '%Y%m%d')
+            except KeyError:
+                raise util.exceptions.MDTFBaseException(
+                    f"Expected {att_dict['startdate']} and {att_dict['enddate']} to have yyyymmdd format"
+                )
+        else:
+            try:
+                st = datetime.strptime(att_dict['startdate'], '%Y%m%d:%H%M%S')
+                ed = datetime.strptime(att_dict['enddate'], '%Y%m%d:%H%M%S')
+            except KeyError:
+                raise util.exceptions.MDTFBaseException(
+                    f"{att_dict['startdate']} and {att_dict['enddate']} "
+                    f"must have yyyymmdd or yyyymmdd:HHMMSS format."
+                )
 
+
+def update_config(config: dict, key: str, new_value):
+    if config[key] != new_value:
+        config.update({key: new_value})
 
 
 def verify_config_options(config: dict):
     verify_pod_list(config['pod_list'], config['code_root'])
     verify_catalog(config['DATA_CATALOG'])
-    verify_workdir(config['WORK_DIR'])
+    new_workdir = verify_dirpath(config['WORK_DIR'], config['code_root'])
+    update_config(config, 'WORK_DIR', new_workdir)
+    if any(config['OBS_DATA_ROOT']):
+        new_obs_data_path = verify_dirpath(config['OBS_DATA_ROOT'], config['code_root'])
+        update_config(config, 'OBS_DATA_ROOT', new_obs_data_path)
+    if any(config['OUTPUT_DIR']) and config['OUTPUT_DIR'] != config['WORK_DIR']:
+        new_output_dir = verify_dirpath(config['OUTPUT_DIR'], config['code_root'])
+        update_config(config, 'OUTPUT_DIR', new_output_dir)
     verify_case_atts(config['case_list'])

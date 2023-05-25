@@ -216,6 +216,11 @@
       "units": "K",
       "ndim": 4
     },
+    "SST": {
+      "standard_name": "Potential Temperature",
+      "units": "degC",
+      "ndim": 4
+    },
     // Variables for Convective Transition Diagnostics module:
     // ta: 3D temperature, units = K:
     "T": {

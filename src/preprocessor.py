@@ -644,16 +644,24 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         ds_z = ds.cf.dim_axes(tv_name)['Z']
         if ds_z is None:
             raise TypeError("No Z axis in dataset for %s.", var.full_name)
+        if isinstance(ds_z, list) and len(ds_z) == 1:
+            ds_z_units = ds_z[0].units
+            ds_z_name = ds_z[0].name
+            ds_z_values = ds_z[0].values
+        else:
+            ds_z_units = ds_z.units
+            ds_z_name = ds_z.name
+            ds_z_values = ds_z.values
         try:
-            ds_z_value = units.convert_scalar_coord(our_z, ds_z.units, log=var.log)
+            ds_z_value = units.convert_scalar_coord(our_z, ds_z_units, log=var.log)
             ds = ds.sel(
-                {ds_z.name: ds_z_value},
+                {ds_z_name: ds_z_value},
                 method='nearest',  # Allow for floating point roundoff in axis values
                 tolerance=_atol,
                 drop=False
             )
             var.log.info("Extracted %s %s level from Z axis ('%s') of %s.",
-                         ds_z_value, ds_z.units, ds_z.name, var.full_name,
+                         ds_z_value, ds_z_units, ds_z_name, var.full_name,
                          tags=util.ObjectLogTag.NC_HISTORY
                          )
             # rename translated var to reflect renaming we're going to do
@@ -663,12 +671,12 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             return ds.rename({tv_name: var.name})
         except KeyError:
             # ds.sel failed; level wasn't present in coordinate axis
-            raise KeyError((f"Z axis '{ds_z.name}' of {var.full_name} didn't "
+            raise KeyError((f"Z axis '{ds_z_name}' of {var.full_name} didn't "
                             f"provide requested level ({our_z.value} {our_z.units}).\n"
-                            f"(Axis values ({ds_z.units}): {ds_z.values})"))
+                            f"(Axis values ({ds_z.units}): {ds_z_values})"))
         except Exception as exc:
             raise ValueError((f"Caught exception extracting {our_z.value} {our_z.units} "
-                              f"level from '{ds_z.name}' coord of {var.full_name}.")) from exc
+                              f"level from '{ds_z_name}' coord of {var.full_name}.")) from exc
 
 
 class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):

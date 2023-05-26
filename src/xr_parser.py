@@ -1059,8 +1059,10 @@ class DefaultDatasetParser:
         """
         for coord in ds.cf.axes_values(our_var.name).values():
             # .axes_values() will have thrown TypeError if XYZT axes not all uniquely defined
-            assert isinstance(coord, xr.core.dataarray.DataArray), \
-                "Assertion failed: " + coord + " not found in ds.cf.axes_values"
+            assert isinstance(coord, list), \
+                "Assertion failed: " + coord + " is not a list"
+            assert isinstance(coord[0], xr.DataArray), \
+                "Assertion failed: " + coord[0] + " is not an instance of xarray.DataArray"
 
         # check set of dimension coordinates (array dimensionality) agrees
         our_axes_set = our_var.dim_axes_set

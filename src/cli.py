@@ -14,9 +14,7 @@ import importlib
 import itertools
 import json
 import operator
-import shlex
-import re
-import textwrap
+
 import typing
 import yaml
 import intake
@@ -26,39 +24,6 @@ from src import util
 import logging
 
 _log = logging.getLogger(__name__)
-
-_SCRIPT_NAME = 'mdtf.py'  # mimic argparse error message text
-
-
-def canonical_arg_name(str_):
-    """Convert a flag or other specification to a destination variable name.
-    The destination variable name always has underscores, never hyphens, in
-    accordance with PEP8.
-
-    E.g., ``canonical_arg_name('--GNU-style-flag')`` returns "GNU_style_flag".
-    """
-    return str_.lstrip('-').rstrip().replace('-', '_')
-
-
-def plugin_key(plugin_name):
-    """Convert user input for plugin options to string used to lookup plugin
-    value from options defined in cli_plugins.jsonc files.
-
-    Ignores spaces and underscores in supplied choices for CLI plugins, and
-    make matching of plugin names case-insensititve.
-    """
-    return re.sub(r"[\s_]+", "", plugin_name).lower()
-
-
-def word_wrap(str_):
-    """Clean whitespace and perform 80-column word wrapping for multi-line help
-    and description strings. Explicit paragraph breaks must be encoded as a
-    double newline \(``\\n\\n``\).
-    """
-    paragraphs = textwrap.dedent(str_).split('\n\n')
-    paragraphs = [re.sub(r'\s+', ' ', s).strip() for s in paragraphs]
-    paragraphs = [textwrap.fill(s, width=80) for s in paragraphs]
-    return '\n\n'.join(paragraphs)
 
 
 def read_config_files(code_root, file_name, site=""):
@@ -108,8 +73,9 @@ def load_yaml_config(config: str) -> dict:
     try:
         os.path.exists(config)
     except FileNotFoundError:
-        raise util.exceptions.MDTFFileExistsError(
+        exc = util.exceptions.MDTFFileExistsError(
             f"{config} not found")
+        _log.exception(exc)
 
     with open(config, 'r') as f:
         return yaml.safe_load(f.read())
@@ -119,8 +85,9 @@ def load_json_config(config: str) -> dict:
     try:
         os.path.exists(config)
     except FileNotFoundError:
-        raise util.exceptions.MDTFFileExistsError(
+        exc = util.exceptions.MDTFFileExistsError(
             f"{config} not found")
+        _log.exception(exc)
     json_config = util.read_json(config, log=_log)
     return json_config
 
@@ -142,8 +109,9 @@ def verify_pod_list(pod_list: list, code_root: str):
             not (not os.path.exists(os.path.join(pod_root, "settings.jsonc"))
                  and not os.path.exists(os.path.join(pod_root, "settings.yml")))
         except FileNotFoundError:
-            raise util.exceptions.MDTFFileExistsError(
+            exc = util.exceptions.MDTFFileExistsError(
                 f"settings file not found in {pod_root}")
+            _log.exception(exc)
 
 
 def verify_catalog(catalog_path: str):
@@ -168,8 +136,9 @@ def verify_dirpath(dirpath: str, coderoot: str) -> str:
     try:
         os.path.isdir(new_dirpath)
     except FileNotFoundError:
-        raise util.exceptions.MDTFFileNotFoundError(
+        exc = util.exceptions.MDTFFileNotFoundError(
             f"{new_dirpath} not found")
+        _log.exception(exc)
 
     return new_dirpath
 

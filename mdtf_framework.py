@@ -8,6 +8,7 @@
 # created during installation.
 
 import sys
+from enum import Enum
 
 # do version check before anything else
 if sys.version_info.major != 3 or sys.version_info.minor < 10:
@@ -18,8 +19,45 @@ if sys.version_info.major != 3 or sys.version_info.minor < 10:
 import os
 import click
 from src import cli
-from src.util import logs
+from src.util import logs, exit_handler, MDTFEnum, \
+    MDTFObjectLogger, MDTFObjectLoggerMixin, transfer_log_cache
 from src.conda import conda_utils
+import dataclasses
+import logging
+import datetime
+
+
+_log = logging.getLogger(__name__)
+
+ObjectStatus = MDTFEnum(
+    'ObjectStatus',
+    'NOTSET ACTIVE INACTIVE FAILED SUCCEEDED',
+    module=__name__
+)
+ObjectStatus.__doc__ = """
+:class:`util.MDTFEnum` used to track the status of an object hierarchy object:
+- *NOTSET*: the object hasn't been fully initialized.
+- *ACTIVE*: the object is currently being processed by the framework.
+- *INACTIVE*: the object has been initialized, but isn't being processed (e.g.,
+  alternate :class:`~diagnostic.VarlistEntry`\s).
+- *FAILED*: processing of the object has encountered an error, and no further
+  work will be done.
+- *SUCCEEDED*: Processing finished successfully.
+"""
+
+
+class MainLogger(MDTFObjectLoggerMixin, MDTFObjectLogger):
+    """Class to hold logging information for main driver script"""
+    log: dataclasses.InitVar = _log
+    name: str
+
+    def __init__(self, log_dir: str):
+        if not os.path.exists:
+            os.mkdir(log_dir)
+        self.name = "MDTF_main.{:%Y-%m-%d:%H.%M.%S}".format(datetime.datetime.now())
+        # Access MDTFObjectLogger attributes
+        super().__init__(name=self.name)
+        self.init_log(log_dir=log_dir)
 
 
 @click.option('-f',
@@ -38,8 +76,10 @@ from src.conda import conda_utils
 def main(ctx, configfile: str, verbose: bool = False) -> int:
     """A community-developed package to run Process Oriented Diagnostics on weather and climate data
     """
+    status: ObjectStatus = dataclasses.field(default=ObjectStatus.NOTSET, compare=False)
     # Cache log info in memory until log file is set up
     logs.initial_log_config()
+
     conda_utils.verify_conda_env('_MDTF_base')
     # case where we run the actual framework
     # print(f"=== Starting {os.path.realpath(__file__)}\n")
@@ -53,8 +93,14 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # add path of currently executing script
     ctx.config["code_root"] = os.path.dirname(os.path.realpath(__file__))
     cli.verify_config_options(ctx.config)
+    log = MainLogger(log_dir=ctx.config["WORK_DIR"])
+    log.log.debug("Initialized cli context")
     print('blah')
+    status = ObjectStatus.SUCCEEDED
+    log._log_handler.close()
+    return exit_handler(code=0)
 
 
 if __name__ == '__main__':
-    main(prog_name='MDTF-diagnostics')
+    exit_code = main(prog_name='MDTF-diagnostics')
+    sys.exit(exit_code)

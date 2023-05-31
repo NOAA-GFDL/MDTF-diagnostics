@@ -6,6 +6,8 @@ import collections.abc
 import enum
 import itertools
 import string
+import re
+import textwrap
 import unittest.mock
 import uuid
 from . import exceptions
@@ -637,3 +639,35 @@ def deserialize_class(name):
             else:
                 raise
     raise ValueError('No such type: %r' % name)
+
+
+def canonical_arg_name(str_):
+    """Convert a flag or other specification to a destination variable name.
+    The destination variable name always has underscores, never hyphens, in
+    accordance with PEP8.
+
+    E.g., ``canonical_arg_name('--GNU-style-flag')`` returns "GNU_style_flag".
+    """
+    return str_.lstrip('-').rstrip().replace('-', '_')
+
+
+def plugin_key(plugin_name):
+    """Convert user input for plugin options to string used to lookup plugin
+    value from options defined in cli_plugins.jsonc files.
+
+    Ignores spaces and underscores in supplied choices for CLI plugins, and
+    make matching of plugin names case-insensititve.
+    """
+    return re.sub(r"[\s_]+", "", plugin_name).lower()
+
+
+def word_wrap(str_):
+    """Clean whitespace and perform 80-column word wrapping for multi-line help
+    and description strings. Explicit paragraph breaks must be encoded as a
+    double newline \(``\\n\\n``\).
+    """
+    paragraphs = textwrap.dedent(str_).split('\n\n')
+    paragraphs = [re.sub(r'\s+', ' ', s).strip() for s in paragraphs]
+    paragraphs = [textwrap.fill(s, width=80) for s in paragraphs]
+    return '\n\n'.join(paragraphs)
+

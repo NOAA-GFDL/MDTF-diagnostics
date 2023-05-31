@@ -370,7 +370,7 @@ class MDTFObjectLogger(logging.Logger):
         self._tracebacks.append(tb_exc)
 
     @classmethod
-    def get_logger(cls, log_name):
+    def get_logger(cls, log_name) -> logging.getLogger():
         """Workaround for setting the logger class, since logger objects have
         global state (calling getLogger with the same name returns the same
         object, like a Singleton.)
@@ -384,11 +384,16 @@ class MDTFObjectLogger(logging.Logger):
         log.setLevel(logging.NOTSET)
         return log
 
+    def close_log_file(self, log=True):
+        self.log._log_handler.close()
+        self.log._log_handler = None
+
 class MDTFObjectLoggerMixinBase():
     """Dummy base class acting as a parent for all logging mixin classes for
     elements of the object hierarchy.
     """
     pass
+
 
 class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
     """Base class to implement per-object logging for objects in the object hierarchy.
@@ -403,19 +408,26 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
       This is intended for preparing per-POD and per-case log files; logging
       intended for the console should use the module loggers.
     """
-    def init_log(self, fmt=None):
+    def init_log(self, fmt=None, log_dir=None):
         """Logger initialization. This is a mixin class, so we don't define a
         ``__init__`` method for simplicity.
         """
         if fmt is None:
             fmt = '%(levelname)s: %(message)s'
 
-        assert hasattr(self, 'log')
-        self._log_handler = StringIOHandler()
-        # don't record events from children in StringIO buffer
-        self._log_handler.addFilter(NameMatchFilter(self._log_name))
-        formatter = logging.Formatter(fmt=fmt, datefmt='%H:%M:%S')
-        self._log_handler.setFormatter(formatter)
+        assert hasattr(self, 'log'), 'class is missing required `log` attribute'
+
+        if log_dir is not None:
+            self._log_handler = MDTFHeaderFileHandler(
+                filename=os.path.join(log_dir, f"{self.name}.log"),
+                mode="w", encoding="utf-8"
+            )
+        else:
+            self._log_handler = StringIOHandler()
+            # don't record events from children in StringIO buffer
+            self._log_handler.addFilter(NameMatchFilter(self._log_name))
+            formatter = logging.Formatter(fmt=fmt, datefmt='%H:%M:%S')
+            self._log_handler.setFormatter(formatter)
         self.log.addHandler(self._log_handler)
 
         self.init_extra_log_handlers()
@@ -461,6 +473,7 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
                     str_ += f"<{child} log placeholder>\n"
         return _hanging_indent(str_, 0, 4) + '\n'
 
+
 class VarlistEntryLoggerMixin(MDTFObjectLoggerMixin):
     """Mixin providing per-object logging for :class:`~diagnostic.VarlistEntry`.
     """
@@ -474,6 +487,7 @@ class VarlistEntryLoggerMixin(MDTFObjectLoggerMixin):
         )
         self._nc_history_log.setFormatter(formatter)
         self.log.addHandler(self._nc_history_log)
+
 
 class _CaseAndPODHandlerMixin():
     """Common methods for providing per-object logging for

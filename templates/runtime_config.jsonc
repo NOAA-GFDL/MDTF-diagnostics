@@ -32,7 +32,7 @@
         {
           "model": "test",
           "convention": "CMIP",
-          "startdate": "1980101",
+          "startdate": "19800101",
           "enddate": "19841231"
         }
       ,
@@ -40,7 +40,7 @@
         {
           "model": "test",
           "convention": "CMIP",
-          "startdate": "1985101",
+          "startdate": "19850101",
           "enddate": "19891231"
         }
     }
@@ -66,12 +66,12 @@
 
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned by running `conda info --base`.)
-  "conda_root": "",
+  "conda_root": "~/miniconda3",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in conda_root/envs
-  "conda_env_root": "",
+  "conda_env_root": "~/miniconda3/envs",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)

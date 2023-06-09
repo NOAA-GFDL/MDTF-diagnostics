@@ -69,7 +69,7 @@ def read_config_file(code_root, file_name, site=""):
     return site_d
 
 
-def load_yaml_config(config: str) -> dict:
+def load_yaml_config(config: str) -> util.NameSpace:
     try:
         os.path.exists(config)
     except FileNotFoundError:
@@ -78,10 +78,11 @@ def load_yaml_config(config: str) -> dict:
         _log.exception(exc)
 
     with open(config, 'r') as f:
-        return yaml.safe_load(f.read())
+        yaml_dict = yaml.safe_load(f.read())
+        return util.NameSpace.fromDict({k: yaml_dict[k] for k in yaml_dict.keys()})
 
 
-def load_json_config(config: str) -> dict:
+def load_json_config(config: str) -> util.NameSpace:
     try:
         os.path.exists(config)
     except FileNotFoundError:
@@ -89,7 +90,7 @@ def load_json_config(config: str) -> dict:
             f"{config} not found")
         _log.exception(exc)
     json_config = util.read_json(config, log=_log)
-    return json_config
+    return util.NameSpace.fromDict({k: json_config[k] for k in json_config.keys()})
 
 
 def parse_config_file(configfile: str) -> dict:
@@ -143,7 +144,7 @@ def verify_dirpath(dirpath: str, coderoot: str) -> str:
     return new_dirpath
 
 
-def verify_case_atts(case_list: dict):
+def verify_case_atts(case_list: util.NameSpace):
     # required case attributes
     case_attrs = ['convention', 'startdate', 'enddate']
     conventions = ['cmip', 'gfdl', 'cesm']
@@ -155,44 +156,45 @@ def verify_case_atts(case_list: dict):
                 f"Missing or incorrect convention, startdate, or enddate for case {name}"
             )
         try:
-            att_dict['convention'].lower() in conventions
+            att_dict.convention.lower() in conventions
         except KeyError:
             raise util.exceptions.MDTFBaseException(
                 f"Convention {att_dict['convention']} not supported"
             )
-        if len(att_dict['startdate']) == 8 and len(att_dict['enddate']) == 8:
+        if len(att_dict.startdate) == 8 and len(att_dict.enddate) == 8:
             try:
-                st = datetime.strptime(att_dict['startdate'], '%Y%m%d')
-                ed = datetime.strptime(att_dict['enddate'], '%Y%m%d')
+                st = datetime.strptime(att_dict.startdate, '%Y%m%d')
+                ed = datetime.strptime(att_dict.enddate, '%Y%m%d')
             except KeyError:
                 raise util.exceptions.MDTFBaseException(
-                    f"Expected {att_dict['startdate']} and {att_dict['enddate']} to have yyyymmdd format"
+                    f"Expected {att_dict.startdate} and {att_dict.enddate} to have yyyymmdd format"
                 )
         else:
             try:
-                st = datetime.strptime(att_dict['startdate'], '%Y%m%d:%H%M%S')
-                ed = datetime.strptime(att_dict['enddate'], '%Y%m%d:%H%M%S')
+                st = datetime.strptime(att_dict.startdate, '%Y%m%d:%H%M%S')
+                ed = datetime.strptime(att_dict.enddate, '%Y%m%d:%H%M%S')
             except KeyError:
                 raise util.exceptions.MDTFBaseException(
-                    f"{att_dict['startdate']} and {att_dict['enddate']} "
+                    f"{att_dict.startdate} and {att_dict.enddate} "
                     f"must have yyyymmdd or yyyymmdd:HHMMSS format."
                 )
 
 
-def update_config(config: dict, key: str, new_value):
-    if config[key] != new_value:
+def update_config(config: util.NameSpace, key: str, new_value):
+    config_dict = util.NameSpace.toDict(config)
+    if config_dict[key] != new_value:
         config.update({key: new_value})
 
 
-def verify_config_options(config: dict):
-    verify_pod_list(config['pod_list'], config['code_root'])
-    verify_catalog(config['DATA_CATALOG'])
-    new_workdir = verify_dirpath(config['WORK_DIR'], config['code_root'])
+def verify_runtime_config_options(config: util.NameSpace):
+    verify_pod_list(config.pod_list, config.code_root)
+    verify_catalog(config.DATA_CATALOG)
+    new_workdir = verify_dirpath(config.WORK_DIR, config.code_root)
     update_config(config, 'WORK_DIR', new_workdir)
-    if any(config['OBS_DATA_ROOT']):
-        new_obs_data_path = verify_dirpath(config['OBS_DATA_ROOT'], config['code_root'])
+    if any(config.OBS_DATA_ROOT):
+        new_obs_data_path = verify_dirpath(config.OBS_DATA_ROOT, config.code_root)
         update_config(config, 'OBS_DATA_ROOT', new_obs_data_path)
-    if any(config['OUTPUT_DIR']) and config['OUTPUT_DIR'] != config['WORK_DIR']:
-        new_output_dir = verify_dirpath(config['OUTPUT_DIR'], config['code_root'])
+    if any(config.OUTPUT_DIR) and config.OUTPUT_DIR != config.WORK_DIR:
+        new_output_dir = verify_dirpath(config.OUTPUT_DIR, config.code_root)
         update_config(config, 'OUTPUT_DIR', new_output_dir)
-    verify_case_atts(config['case_list'])
+    verify_case_atts(config.case_list)

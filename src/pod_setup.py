@@ -3,126 +3,59 @@
 from abc import ABC
 import logging
 import os
-from src import util, core, varlistentry_util, varlist_util
+from pathlib import Path
+from src import cli, util, varlistentry_util, varlist_util
 
 _log = logging.getLogger(__name__)
 
 
-class PodSetupBaseClass(metaclass=util.MDTFABCMeta):
+class PodBaseClass(metaclass=util.MDTFABCMeta):
     """Base class for POD setup methods
     """
-    def setup_pod(self, pod):
+    def parse_pod_settings_file(self, code_root: str):
+        pass
+
+    def setup_pod(self, code_root: str, case_list: dict, catalog_path: str):
         pass
 
     def setup_var(self, pod, v):
         pass
 
-    def variable_dest_path(self):
-        pass
 
+class PodObject(PodBaseClass, ABC):
+    """Class to hold pod information"""
+    name = str
+    pod_dims = dict
+    pod_vars = dict
 
-class SingleRunPod(PodSetupBaseClass, ABC):
+    def __init__(self, name: str):
+        self.name = name
 
-    def setup_pod(self, pod):
-        """Update POD with information that only becomes available after
-        DataManager and Diagnostic have been configured (ie, only known at
-        runtime, not from settings.jsonc.)
+    def parse_pod_settings_file(self, code_root: str) -> util.NameSpace:
+        """Parse the POD settings file"""
+        settings_file_query = Path(code_root, 'diagnostics', self.name).glob('*settings.*')
+        settings_file_path = str([p for p in settings_file_query][0])
+        # Use wildcard to support settings file in yaml and jsonc format
+        settings_dict = cli.parse_config_file(settings_file_path)
+        return util.NameSpace.fromDict({k: settings_dict[k] for k in settings_dict.keys()})
 
-        Could arguably be moved into Diagnostic's init, at the cost of
-        dependency inversion.
+    def get_pod_settings(self, pod_settings_dict: util.NameSpace):
+        self.pod_settings = util.NameSpace.toDict(pod_settings_dict.settings)
+
+    def get_pod_dims(self, pod_settings_dict: util.NameSpace):
+        self.pod_dims = util.NameSpace.toDict(pod_settings_dict.dims)
+
+    def get_pod_vars(self, pod_settings_dict: util.NameSpace):
+        self.pod_vars = util.NameSpace.toDict(pod_settings_dict.vars)
+
+    def setup_pod(self, code_root: str, case_list: util.NameSpace, catalog_path: str):
+        """Update POD information
         """
-        pod.setup(self)
-        for v in pod.iter_children():
-            try:
-                self.setup_var(pod, v)
-            except Exception as exc:
-                chained_exc = util.chain_exc(exc, f"configuring {v.full_name}.",
-                                             util.PodConfigError)
-                v.deactivate(chained_exc)
-                continue
-        # preprocessor will edit varlist alternates, depending on enabled functions
-        pod.preprocessor = self._PreprocessorClass(self, pod)
-        pod.preprocessor.edit_request(self, pod)
-
-        for v in pod.iter_children():
-            # deactivate failed variables, now that alternates are fully
-            # specified
-            if v.last_exception is not None and not v.failed:
-                v.deactivate(v.last_exception, level=logging.WARNING)
-        if pod.status == core.ObjectStatus.NOTSET and \
-                any(v.status == core.ObjectStatus.ACTIVE for v in pod.iter_children()):
-            pod.status = core.ObjectStatus.ACTIVE
-
-    def setup_var(self, pod, v):
-        """Update VarlistEntry fields with information that only becomes
-        available after DataManager and Diagnostic have been configured (ie,
-        only known at runtime, not from settings.jsonc.)
-
-        Could arguably be moved into VarlistEntry's init, at the cost of
-        dependency inversion.
-        """
-        translate = core.VariableTranslator().get_convention(self.convention)
-        if v.T is not None:
-            v.change_coord(
-                'T',
-                new_class={
-                    'self': varlist_util.VarlistTimeCoordinate,
-                    'range': util.DateRange,
-                    'frequency': util.DateFrequency
-                },
-                range=self.attrs.date_range,
-                calendar=util.NOTSET,
-                units=util.NOTSET
-            )
-        v.dest_path = self.variable_dest_path(pod, v)
-        try:
-            trans_v = translate.translate(v)
-            v.translation = trans_v
-            # copy preferred gfdl post-processing component during translation
-            if hasattr(trans_v, "component"):
-                v.component = trans_v.component
-            if hasattr(trans_v,"rename_coords"):
-                v.rename_coords = trans_v.rename_coords
-        except KeyError as exc:
-            # can happen in normal operation (eg. precip flux vs. rate)
-            chained_exc = util.PodConfigEvent((f"Deactivating {v.full_name} due to "
-                                               f"variable name translation: {str(exc)}."))
-            # store but don't deactivate, because preprocessor.edit_request()
-            # may supply alternate variables
-            v.log.store_exception(chained_exc)
-        except Exception as exc:
-            chained_exc = util.chain_exc(exc, f"translating name of {v.full_name}.",
-                                         util.PodConfigError)
-            # store but don't deactivate, because preprocessor.edit_request()
-            # may supply alternate variables
-            v.log.store_exception(chained_exc)
-
-        v.stage = varlistentry_util.VarlistEntryStage.INITED
-
-    def variable_dest_path(self, pod, var):
-        """Returns the absolute path of the POD's preprocessed, local copy of
-        the file containing the requested dataset. Files not following this
-        convention won't be found by the POD.
-        """
-        if var.is_static:
-            f_name = f"{self.name}.{var.name}.static.nc"
-            return os.path.join(pod.POD_WK_DIR, f_name)
-        else:
-            freq = var.T.frequency.format_local()
-            f_name = f"{self.name}.{var.name}.{freq}.nc"
-            return os.path.join(pod.POD_WK_DIR, freq, f_name)
-
-
-class MultiRunPod(PodSetupBaseClass, ABC):
-    # MultiRunDiagnostic class inherits directly from MultiRunPod class
-    # and there is no need to define a 'pod' parameter
-
-    def setup_pod(self):
-        """Update POD with information that only becomes available after
-        DataManager and Diagnostic have been configured (i.e., only known at
-        runtime, not from settings.jsonc.)
-        """
-        for case_name, case_dict in self.cases.items():
+        pod_input = self.parse_pod_settings_file(code_root)
+        self.get_pod_settings(pod_input)
+        self.get_pod_vars(pod_input)
+        self.get_pod_dims(pod_input)
+        for case_name, case_dict in case_list.items():
             for v in case_dict.iter_children():
                 try:
                     self.setup_var(v, case_dict.attrs.date_range, case_name)

@@ -18,9 +18,7 @@ if sys.version_info.major != 3 or sys.version_info.minor < 10:
 # passed; continue with imports
 import os
 import click
-from src import cli
-from src.util import logs, exit_handler, MDTFEnum, \
-    MDTFObjectLogger, MDTFObjectLoggerMixin, transfer_log_cache
+from src import util, cli, pod_setup
 from src.conda import conda_utils
 import dataclasses
 import logging
@@ -29,7 +27,7 @@ import datetime
 
 _log = logging.getLogger(__name__)
 
-ObjectStatus = MDTFEnum(
+ObjectStatus = util.MDTFEnum(
     'ObjectStatus',
     'NOTSET ACTIVE INACTIVE FAILED SUCCEEDED',
     module=__name__
@@ -46,7 +44,7 @@ ObjectStatus.__doc__ = """
 """
 
 
-class MainLogger(MDTFObjectLoggerMixin, MDTFObjectLogger):
+class MainLogger(util.MDTFObjectLoggerMixin, util.MDTFObjectLogger):
     """Class to hold logging information for main driver script"""
     log: dataclasses.InitVar = _log
     name: str
@@ -78,7 +76,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     """
     status: ObjectStatus = dataclasses.field(default=ObjectStatus.NOTSET, compare=False)
     # Cache log info in memory until log file is set up
-    logs.initial_log_config()
+    util.logs.initial_log_config()
 
     conda_utils.verify_conda_env('_MDTF_base')
     # case where we run the actual framework
@@ -88,17 +86,25 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # cli_obj = cli.MDTFTopLevelArgParser(code_root,argv=argv)
     # framework = cli_obj.dispatch()
     # exit_code = framework.main()
+    # NameSpace allows dictionary keys to be referenced with dot notation
+    ctx.config = util.NameSpace()
     # parse the runtime config file
     ctx.config = cli.parse_config_file(configfile)
     # add path of currently executing script
-    ctx.config["code_root"] = os.path.dirname(os.path.realpath(__file__))
-    cli.verify_config_options(ctx.config)
+    print(ctx.config.WORK_DIR)
+    ctx.config.code_root = os.path.dirname(os.path.realpath(__file__))
+    cli.verify_runtime_config_options(ctx.config)
     log = MainLogger(log_dir=ctx.config["WORK_DIR"])
-    log.log.debug("Initialized cli context")
-    print('blah')
-    status = ObjectStatus.SUCCEEDED
+    if verbose:
+        log.log.debug("Initialized cli context")
+    # configure pod object(s)
+    for pod_name in ctx.config.pod_list:
+        pod_obj = pod_setup.PodObject(pod_name)
+        pod_obj.setup_pod(ctx.config.code_root, ctx.config.case_list, ctx.config.DATA_CATALOG)
+
+    # close the main log file
     log._log_handler.close()
-    return exit_handler(code=0)
+    return util.exit_handler(code=0)
 
 
 if __name__ == '__main__':

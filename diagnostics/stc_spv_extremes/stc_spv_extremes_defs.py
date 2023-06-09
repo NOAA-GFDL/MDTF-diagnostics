@@ -4,6 +4,7 @@ Extremes POD.
 
 Contains:
     standardize (standardize a variable)
+    desasonalize (remove daily climatology)
     lat_avg (cosine-weighted averages over latitudes)
     getConsecutiveValues
     ssw_cp07 (find central dates of SSWs)
@@ -30,6 +31,23 @@ def standardize(x):
     stand_x = (x - x.mean("time")) / x.std("time")
     
     return (stand_x)
+
+
+#***********************************************************************************
+
+def deseasonalize(x):
+    r""" remove the daily seasonal cycle by subtracting its mean over the total time period.
+    Note that x should be organized by .groupby('dayofyear') 
+    
+    Parameters
+    ----------
+    x : `xarray.DataArray` or `xarray.Dataset`
+        The input DataArray or Dataset for which to standardize, as a function of time
+    """
+    
+    x_anom = (x - x.mean("time")) 
+    
+    return (x_anom)
 
 #************************************************************************************
 

@@ -10,7 +10,6 @@ import itertools
 import typing
 from src import util
 import src.units  # fully qualify name to reduce confusion with "units" attributes
-import src.core
 import logging
 _log = logging.getLogger(__name__)
 
@@ -72,6 +71,7 @@ class AbstractDMCoordinate(abc.ABC):
         """Whether the coordinate has an associated bounds variable (bool).
         """
         pass
+
 
 class AbstractDMDependentVariable(abc.ABC):
     """Defines interface (set of attributes) for "dependent variables" (data
@@ -142,6 +142,7 @@ class AbstractDMDependentVariable(abc.ABC):
         """Whether the variable has time dependence (bool)."""
         pass
 
+
 class AbstractDMCoordinateBounds(AbstractDMDependentVariable):
     """Defines interface (set of attributes) for :class:`DMCoordinateBounds`
     objects.
@@ -154,8 +155,10 @@ class AbstractDMCoordinateBounds(AbstractDMDependentVariable):
 
 # ------------------------------------------------------------------------------
 
+
 _AXIS_NAMES = ('X', 'Y', 'Z', 'T')
 _ALL_AXIS_NAMES = _AXIS_NAMES + ('BOUNDS', 'OTHER')
+
 
 @util.mdtf_dataclass
 class DMBoundsDimension(object):
@@ -185,6 +188,7 @@ class DMBoundsDimension(object):
         (bool). Always False for this class.
         """
         return False
+
 
 @util.mdtf_dataclass
 class _DMCoordinateShared(object):
@@ -224,13 +228,14 @@ class _DMCoordinateShared(object):
         <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#scalar-coordinate-variables>`__
         (bool).
         """
-        return (self.value is not None)
+        return self.value is not None
 
     def make_scalar(self, new_value):
         """Returns a copy of the coordinate, converted to a scalar coordinate
         at value *new_value* (and coordinate's current ``units``.)
         """
         return dc.replace(self, value=new_value)
+
 
 @util.mdtf_dataclass
 class DMCoordinate(_DMCoordinateShared):
@@ -248,6 +253,7 @@ class DMCoordinate(_DMCoordinateShared):
     """Coordinate units (str or :class:`~src.units.Units`)."""
     axis: str = 'OTHER'
     """Coordinate axis identifier ('X', 'Y', etc.)"""
+
 
 @util.mdtf_dataclass
 class DMLongitudeCoordinate(_DMCoordinateShared):
@@ -278,6 +284,7 @@ class DMLatitudeCoordinate(_DMCoordinateShared):
     """Coordinate units (str or :class:`~src.units.Units`)."""
     axis: str = 'Y'
     """Coordinate axis identifier. Always 'Y' for this coordinate."""
+
 
 @util.mdtf_dataclass
 class DMVerticalCoordinate(_DMCoordinateShared):
@@ -435,6 +442,7 @@ class _DMPlaceholderCoordinateBase(object):
     """
     pass
 
+
 @util.mdtf_dataclass
 class DMPlaceholderCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     """Dummy base class for placeholder coordinates. Placeholder coordinates are
@@ -452,6 +460,7 @@ class DMPlaceholderCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase)
     axis: str = 'OTHER'
     """Coordinate axis identifier ('X', 'Y', etc.)"""
 
+
 @util.mdtf_dataclass
 class DMPlaceholderXCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     """Dummy base class for placeholder X axis coordinates. Placeholder coordinates are
@@ -468,6 +477,7 @@ class DMPlaceholderXCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase
     """Coordinate units (str or :class:`~src.units.Units`)."""
     axis: str = 'X'
     """Coordinate axis identifier ('X', 'Y', etc.)"""
+
 
 @util.mdtf_dataclass
 class DMPlaceholderYCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):

@@ -19,23 +19,7 @@ from src.units import Units
 import logging
 _log = logging.getLogger(__name__)
 
-ObjectStatus = util.MDTFEnum(
-    'ObjectStatus',
-    'NOTSET ACTIVE INACTIVE FAILED SUCCEEDED',
-    module=__name__
-)
-ObjectStatus.__doc__ = """
-:class:`util.MDTFEnum` used to track the status of an object hierarchy object
-(child class of :class:`MDTFObjectBase`):
 
-- *NOTSET*: the object hasn't been fully initialized.
-- *ACTIVE*: the object is currently being processed by the framework.
-- *INACTIVE*: the object has been initialized, but isn't being processed (e.g.,
-  alternate :class:`~diagnostic.VarlistEntry`\s).
-- *FAILED*: processing of the object has encountered an error, and no further
-  work will be done.
-- *SUCCEEDED*: Processing finished successfully.
-"""
 
 
 @util.mdtf_dataclass
@@ -850,6 +834,9 @@ class MDTFFramework(MDTFObjectBase):
 
         if "no_pp" in cli_obj.config.get('data_manager').lower():
             self.preprocess_data = False
+
+    def iter_children(self, child_type=None, status=None, status_neq=None):
+        return super().iter_children(child_type, status, status_neq)
 
     def parse_env_vars(self, cli_obj):
         # don't think PODs use global env vars?

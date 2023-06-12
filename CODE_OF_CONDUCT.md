@@ -1,6 +1,6 @@
 ## Code of Conduct
 
-Model Diagnostics Task Force framework team is dedicated to providing a respectful and inclusive community for everyone. We do not tolerate harassment or bullying of any community member in any form. This applies equally to all community members regardless of their title, seniority, background, gender, etc., in all forums managed by the MDTF framework team. This includes the mailing lists, our GitHub project space, slack workspaces, in-person events, and any other forums created by the project team. In addition, violations of this code outside these spaces may affect a person's ability to participate within them. As part of the code of conduct policy, we will provide below ground rules for all forums (e.g meetings) created by the project team, supporting project initiatives. 
+Model Diagnostics Task Force framework team is dedicated to providing a respectful and inclusive community for everyone. We provide this code of conduct as part of this commitment, following similar standards for other community development projects, as cited in the references. We do not tolerate harassment or bullying of any community member in any form. This applies equally to all community members regardless of their title, seniority, background, gender, etc., in all forums managed by the MDTF framework team. This includes the mailing lists, our GitHub project space, slack workspaces, in-person events, and any other forums created by the project team. In addition, violations of this code outside these spaces may affect a person's ability to participate within them. As part of the code of conduct policy, we will provide below ground rules for all forums (e.g meetings) created by the project team, supporting project initiatives. 
 
 ## General code of conduct 
 
@@ -64,10 +64,10 @@ Motivate yourself and your community by acknowledging and giving credit to the o
 We strive for the highest standards of scientific integrity. This includes sharing ideas and information, keeping accurate and complete records, and giving due credit to the contributions of others. Undisclosed conflicts of interest and scientific misconduct, including fabrication, falsification, and plagiarism, are incompatible with this code.
 
 
-## Forms of harrassment
+## Forms of harassment
 
 We do not tolerate harassment or bullying of any community member in any form. 
-Forms of harrassment include, but is not limited to:
+Forms of harassment include, but is not limited to:
 
    * Violent threats or violent language directed against another person
    * Discriminatory jokes and language
@@ -86,11 +86,13 @@ Forms of harrassment include, but is not limited to:
 
 ## How to Report Harassment and Discrimination
 
-TBA
-
+ If you believe someone is violating the code of conduct, please report this in a timely manner. Code of conduct violations reduce the value of the community for everyone and we take them seriously.
+You can file a report by filling out [this form](https://forms.gle/Mx4WqA6A1NZunj9A6). 
+The online form gives you the option to keep your report anonymous or request that we follow up with you directly. While we cannot follow up on an anonymous report, we will take appropriate action.
+Some forms of harassment and discrimination may rise to the level where they cannot be addressed within the MDTF team, and must be reported to the relevant home institution(s). Home institution regulations supersede these guidelines where there are differences. Harassment procedures at some institutions require reporting to Title IX officers under certain circumstances.
 ##  Review
 
-This code of conduct document will be reviewed periodically annually by the Model Diagnostics Task Force leads team members. 
+This code of conduct document will be reviewed periodically on annual basis by the Model Diagnostics Task Force leads team members. 
 
 ## Your contributions 
    
@@ -106,3 +108,5 @@ This Code of Conduct has been adapted from:
    * The chemical professionals code of conduct (https://www.acs.org/content/acs/en/careers/career-services/ethics/the-chemical-professionals-code-of-conduct.html)
    * GFDL DEIAC forum
 We are grateful to these projects for contributing these materials for us to easily reuse.
+
+

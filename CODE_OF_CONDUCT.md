@@ -78,7 +78,7 @@ Forms of harassment include, but is not limited to:
    gender identity and expression, sexual orientation, ability, 
    physical appearance, body size, race, ethnicity, 
    religion, socioeconomic status, caste or creed
-   * Unwelcome sexual attention, stalking;
+   * Unwelcome sexual attention or stalking
    * Advocating for, or encouraging, any of the above behavior
    * Repeated harassment of others. In general, if someone asks you to stop,
      then stop

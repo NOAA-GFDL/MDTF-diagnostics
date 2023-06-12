@@ -362,7 +362,7 @@ class CLIArgument(object):
 class CLIArgumentGroup(object):
     """Class holding configuration options for an
     :py:class:`argparse.ArgumentParser` `argument group
-    <https://docs.python.org/3.7/library/argparse.html#argument-groups>`__.
+    <https://docs.python.org/3.10/library/argparse.html#argument-groups>`__.
     Attributes correspond to arguments
     to :py:meth:`~argparse.ArgumentParser.add_argument_group`.
     """
@@ -837,7 +837,7 @@ class MDTFArgParser(argparse.ArgumentParser):
     - Recording whether the user specified each argument value, or whether the
       default was used, via :class:`.RecordDefaultsAction`.
     - Better bookkeeping of `argument groups
-      <https://docs.python.org/3.7/library/argparse.html#argument-groups>`__,
+      <https://docs.python.org/3.10/library/argparse.html#argument-groups>`__,
       e.g. which arguments belong to which group.
     """
 
@@ -1279,7 +1279,7 @@ class MDTFTopLevelArgParser(MDTFArgParser):
                                add_help=True,
                                )
         self.add_argument(
-            '--version', action="version", version="%(prog)s 3.0 beta 4"
+            '--version', action="version", version="%(prog)s 3.0"
         )
         self._optionals.title = 'GENERAL OPTIONS'
         if not self.installed:
@@ -1392,7 +1392,7 @@ class MDTFTopLevelSubcommandArgParser(MDTFTopLevelArgParser):
             """)
                                )
         self.add_argument(
-            '--version', action="version", version="%(prog)s 3.0 beta 4"
+            '--version', action="version", version="%(prog)s 3.0"
         )
         self._optionals.title = 'GENERAL OPTIONS'
         if not self.installed:

@@ -1,0 +1,110 @@
+<title>Stratosphere-Troposphere Coupling: Stratospheric Ozone and Circulation</title>
+<img src="../mdtf_diag_banner.png">
+<h3>Relationship of stratospheric ozone with stratospheric and tropospheric circulation</h3>
+<p>
+This POD assesses coupling between stratospheric ozone and the large-scale circulation.
+Ozone-circulation coupling occurs during spring when sunlight returns to the polar region  
+and the radiative influence of ozone anomalies drives changes to meridional temperature 
+gradients and thus zonal winds, which can then dynamically drive temperatures changes, 
+which feedback onto ozone chemistry. For example, in years when the Antarctic ozone hole 
+is larger (more ozone loss) in early spring, the polar vortex stays stronger and persists
+later, leading to a later transition of the vortex at 50mb to its summertime state, here 
+defined as less than 5 (15) m/s in the NH (SH). This seasonal transition of the polar 
+vortex is called the "final stratospheric warming". Because the Arctic rarely gets cold 
+enough for severe chemical ozone loss, ozone-circulation coupling is primarily observed 
+in the Southern Hemisphere, but this POD allows application to both hemispheres, as similar
+relationships may still occur in the Northern Hemisphere during extreme polar conditions.
+</p>
+
+<p> These relationships can occur on both seasonal timescales, and on longer decadal
+timescales due to anthropogenic changes to the ozone layer. This POD considers both
+timescales. For example, the POD calculates trends in polar ozone, polar temperature, and
+extratropical zonal-mean zonal winds during both the ozone depletion era 
+(nominally defined here as 1979-1999) and the ozone recovery era (defined here as
+ 2000-2014).
+
+<p>
+This POD uses monthly-mean zonal mean winds, temperatures, and ozone. Since this POD uses 
+monthly frequency data, the date of the final stratospheric warming is estimated by 
+resampling a smoothed version of the monthly-mean time series for each year to daily 
+frequency (following Hardimann et al. 2011).
+</p>
+
+<h3>{{CASENAME}}</h3>
+<font color=navy>Early spring polar cap ozone vs late spring zonal winds
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Observations
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_NH_UZM-O3cap_Scatter.png>NH Model Scatterplot</A>
+    <TH align=center><A href=obs/obs_NH_UZM-O3cap_Scatter.png>NH Reanalysis Scatterplot</A>
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_SH_UZM-O3cap_Scatter.png>SH Model Scatterplot</A>
+    <TH align=center><A href=obs/obs_SH_UZM-O3cap_Scatter.png>SH Reanalysis Scatterplot</A>
+</TR>
+</TABLE>
+
+<p></p>
+
+<font color=navy>Early spring polar cap ozone vs final stratospheric warming Day of Year (DOY)
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Observations
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_NH_FSW-O3cap_Scatter.png>NH Model Scatterplot</A>
+    <TH align=center><A href=obs/obs_NH_FSW-O3cap_Scatter.png>NH Reanalysis Scatterplot</A>
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_SH_FSW-O3cap_Scatter.png>SH Model Scatterplot</A>
+    <TH align=center><A href=obs/obs_SH_FSW-O3cap_Scatter.png>SH Reanalysis Scatterplot</A>
+</TR>
+</TABLE>
+
+<p></p>
+
+<font color=navy>Spring polar cap ozone lag correlated to zonal winds 
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Observations
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_NH_UZM-O3cap_LagCorr_Lev.png>NH Model Lag Correlations</A>
+    <TH align=center><A href=obs/obs_NH_UZM-O3cap_LagCorr_Lev.png>NH Reanalysis Lag Correlations</A>
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_SH_UZM-O3cap_LagCorr_Lev.png>SH Model Lag Correlations</A>
+    <TH align=center><A href=obs/obs_SH_UZM-O3cap_LagCorr_Lev.png>SH Reanalysis Lag Correlations</A>
+</TR>
+</TABLE>
+
+<p></p>
+
+<font color=navy>Trends during ozone depletion and recovery eras
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Observations
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_NH_Trends.png>NH Model Trends</A>
+    <TH align=center><A href=obs/obs_NH_Trends.png>NH Reanalysis Trends</A>
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_SH_Trends.png>SH Model Trends</A>
+    <TH align=center><A href=obs/obs_SH_Trends.png>SH Reanalysis Trends</A>
+</TR>
+</TABLE>

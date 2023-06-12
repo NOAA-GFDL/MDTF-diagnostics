@@ -9,7 +9,7 @@ from abc import ABC
 import logging
 import pandas as pd
 import textwrap
-from src import util, data_manager, diagnostic, core
+from src import util, varlistentry_util, data_manager, diagnostic, core
 from src import query_fetch_preprocess as qfp
 
 
@@ -69,6 +69,7 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
 
        TODO: integrate better with general Intake API.
     """
+    log: dc.InitVar = _log
 
     def __init__(self, parent, case_dict):
         # parent and case_dict are required by parent init method
@@ -77,13 +78,6 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
     @property
     def all_columns(self):
         return tuple(self.df.columns)
-
-    @property
-    def remote_data_col(self):
-        col_name = self.col_spec.remote_data_col
-        if col_name is None:
-            raise ValueError
-        return col_name
 
     def _query_clause(self, col_name, query_attr_name, query_attr_val):
         """Translate a single field value into a logical clause in the dataframe
@@ -272,7 +266,7 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
             obj_name = obj.name
 
         for v in var_iterator:
-            if v.stage < diagnostic.VarlistEntryStage.QUERIED:
+            if v.stage < varlistentry_util.VarlistEntryStage.QUERIED:
                 continue
             rows = set([])
             for d_key in v.iter_data_keys():
@@ -396,7 +390,7 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
             key = self.get_expt_key('pod', self, parent, self._id)
             p = parent
             self.set_expt_key(p, key)
-        except Exception:  # util.DataExperimentEvent:
+        except Exception as exc:  # util.DataExperimentEvent:
             # couldn't do that, so allow different choices for each POD
             for p in parent.iter_children(status=core.ObjectStatus.ACTIVE):
                 try:
@@ -415,7 +409,7 @@ class MultirunDataframeQueryDataSourceBase(data_manager.DataframeQueryDataSource
             for pv in self.iter_vars(parent, active=True):  # varlist is a self (Multirun data source) attribute
                 key = self.get_expt_key('var', pv.pod, parent, pv.pod._id)
                 self.set_expt_key(pv.var, key)
-        except Exception:  # util.DataExperimentEvent:
+        except Exception as exc:  # util.DataExperimentEvent:
             # couldn't do that, so allow different choices for each variable
             for pv in self.iter_vars(parent, active=True):
                 try:

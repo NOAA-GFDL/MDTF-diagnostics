@@ -1,9 +1,5 @@
-// albedofb pod settings for MDTF diagnostic 
-//
-// This should be an ascii text file in JSON format 
-// (https://en.wikipedia.org/wiki/JSON#Data_types_and_syntax), with the addition
-// that all text to the  right of a "//" is a comment and ignored (sometimes 
-// called "JSONC" format).
+// albedofb pod settings for MDTF-diagnostics packaged
+// modify the pod_env_vars as needed
 // 
 {
 	"settings": {
@@ -23,7 +19,11 @@
 				"xesmf",
 				"dask"
 			]
-		}
+		},
+	 	"pod_env_vars" : {
+        		"area_file_path": "/nbhome/[insert username here]/mdtf/atmos.static.nc",
+        		"area_var_name": "area"
+    		}
 	},
 	"dimensions": {
 		"lat": {
@@ -42,7 +42,7 @@
 			"dimensions": ["lat", "lon"],
 			"units": "m2",
 			"modifier" : "atmos_realm",
-			"requirement": "required"
+			"requirement": "optional"
 		},
 		"tas": {
 			"standard_name": "air_temperature",

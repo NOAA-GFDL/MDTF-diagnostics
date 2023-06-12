@@ -5,7 +5,7 @@ the user via ``--data_manager``; see :doc:`ref_data_sources` and
 import os
 import collections
 import dataclasses
-from src import util, multirun, core, diagnostic, xr_parser, preprocessor, cmip6
+from src import util, multirun, core, diagnostic, preprocessor, xr_parser, cmip6
 from src import data_manager as dm
 from src import query_fetch_preprocess as qfp
 import pandas as pd
@@ -29,7 +29,7 @@ sample_data_regex = util.RegexPattern(
 
 
 @util.regex_dataclass(sample_data_regex)
-class SampleDataFile():
+class SampleDataFile:
     """Dataclass describing catalog entries for sample model data files.
     """
     sample_dataset: str = util.MANDATORY
@@ -117,13 +117,24 @@ class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
 # ----------------------------------------------------------------------------
 
 
+class NoPPDataSource(SampleLocalFileDataSource):
+    """DataSource for handling POD sample model data stored on a local filesystem.
+    """
+    # _FileRegexClass = SampleDataFile
+    # _AttributesClass = SampleDataAttributes
+    # col_spec = sampleLocalFileDataSource_col_spec
+    _DiagnosticClass = diagnostic.NoPPDiagnostic
+    _PreprocessorClass = preprocessor.NullPreprocessor
+
+
+# ----------------------------------------------------------------------------
+
 class MultirunSampleLocalFileDataSource(multirun.MultirunSingleLocalFileDataSource, SampleLocalFileDataSource):
     """DataSource for handling POD sample model data stored on a local filesystem.
     Duplicate of SampleLocalFileDataSource, but need to route to multirun parent data source classes
     """
     # No-op=--just inherit attributes, properties, and route to __init__ methods in parent classes
     pass
-
 
 class MultirunLocalFileDataSource(MultirunSampleLocalFileDataSource,
                                   qfp.MultirunDataSourceQFPMixin
@@ -133,8 +144,8 @@ class MultirunLocalFileDataSource(MultirunSampleLocalFileDataSource,
     # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
     # _AttributesClass = SampleDataAttributes
     # col_spec = sampleLocalFileDataSource_col_spec
-    _DiagnosticClass = diagnostic.MultirunDiagnostic
     varlist: diagnostic.MultirunVarlist = None
+    _DiagnosticClass = diagnostic.MultirunDiagnostic
     # Override data_manager:DataSourceBase init method
 
     def __init__(self, case_dict, parent):
@@ -146,6 +157,33 @@ class MultirunLocalFileDataSource(MultirunSampleLocalFileDataSource,
         # initialize data source atts and methods from parent classes
         super(MultirunLocalFileDataSource, self).__init__(case_dict, parent)
         # borrow MDTFObjectBase initialization from data_manager:~DataSourceBase
+        core.MDTFObjectBase.__init__(
+            self, name=case_dict['CASENAME'], _parent=parent
+        )
+
+    @property
+    def _children(self):
+        """Iterable of the multirun varlist that is associated with the data source object
+        """
+        yield from self.varlist.iter_vars()
+
+
+class MultirunNoPPDataSource(MultirunSampleLocalFileDataSource, qfp.MultirunDataSourceQFPMixin):
+    """DataSource for handling Multirun POD data that won't be preprocessed
+    """
+    # No-op=--just inherit attributes, properties, and route to __init__ methods in parent classes
+    _PreprocessorClass = preprocessor.MultirunNullPreprocessor
+    varlist: diagnostic.MultirunVarlist = None
+
+    def __init__(self, case_dict, parent):
+        # _id = util.MDTF_ID()        # attrs inherited from core.MDTFObjectBase
+        # name: str
+        # _parent: object
+        # log = util.MDTFObjectLogger
+        # status: ObjectStatus
+        # initialize data source atts and methods from parent classes
+        super(MultirunNoPPDataSource, self).__init__(case_dict, parent)
+
         core.MDTFObjectBase.__init__(
             self, name=case_dict['CASENAME'], _parent=parent
         )
@@ -686,7 +724,7 @@ class CMIP6ExperimentSelectionMixin():
         # NB need to pass list to iloc to get a pd.DataFrame instead of pd.Series
         df = df.sort_values(col_name).iloc[[0]]
         obj.log.debug("Selected experiment attribute '%s'='%s' for %s.",
-            col_name, df[col_name].iloc[0], obj.name)
+                      col_name, df[col_name].iloc[0], obj.name)
         return df
 
 

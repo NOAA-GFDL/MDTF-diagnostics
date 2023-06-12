@@ -1,14 +1,14 @@
 """Classes representing configuration and status of individual diagnostic scripts
 (PODs) and variables required by the scripts.
 """
+from abc import ABC
 import os
 import dataclasses as dc
 import io
 import itertools
 import typing
-from abc import ABC
-
-from src import util, core, data_model, pod_setup, preprocessor
+from pathlib import Path
+from src import util, core, varlistentry_util, varlist_util, data_model, preprocessor, pod_setup
 
 import logging
 _log = logging.getLogger(__name__)
@@ -18,125 +18,6 @@ _coord_bounds_env_var_suffix = '_bnds'
 _var_name_env_var_suffix = '_var'
 _file_env_var_suffix = '_FILE'
 
-PodDataFileFormat = util.MDTFEnum(
-    'PodDataFileFormat',
-    ("ANY_NETCDF ANY_NETCDF_CLASSIC "
-    "ANY_NETCDF3 NETCDF3_CLASSIC NETCDF_64BIT_OFFSET NETCDF_64BIT_DATA "
-    "ANY_NETCDF4 NETCDF4_CLASSIC NETCDF4"),
-    module=__name__
-)
-
-@util.mdtf_dataclass
-class _VarlistGlobalSettings(object):
-    format: PodDataFileFormat = \
-        dc.field(default=PodDataFileFormat.ANY_NETCDF_CLASSIC, metadata={'query': True})
-    rename_variables: bool = False
-    multi_file_ok: bool = False
-    dimensions_ordered: bool = False
-
-@util.mdtf_dataclass
-class _VarlistTimeSettings(object):
-    frequency:     util.DateFrequency = \
-        dc.field(default=util.NOTSET, metadata={'query': True})
-    min_frequency: util.DateFrequency = \
-        dc.field(default=util.NOTSET, metadata={'query': True})
-    max_frequency: util.DateFrequency = \
-        dc.field(default=util.NOTSET, metadata={'query': True})
-    min_duration: str = util.NOTSET
-    max_duration: str = util.NOTSET
-
-
-@util.mdtf_dataclass
-class VarlistSettings(_VarlistGlobalSettings, _VarlistTimeSettings):
-    """Class to describe options affecting all variables requested by this POD.
-    Corresponds to the "data" section of the POD's settings.jsonc file.
-    """
-    @property
-    def global_settings(self):
-        return util.filter_dataclass(self, _VarlistGlobalSettings)
-
-    @property
-    def time_settings(self):
-        return util.filter_dataclass(self, _VarlistTimeSettings)
-
-
-@util.mdtf_dataclass
-class VarlistCoordinateMixin(object):
-    """Base class to describe a single dimension (in the netcdf data model sense)
-    used by one or more variables. Corresponds to list entries in the
-    "dimensions" section of the POD's settings.jsonc file.
-    """
-    need_bounds: bool = False
-
-
-@util.mdtf_dataclass
-class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
-    # name: str              # fields from data_model.DMCoordinate
-    # standard_name: str
-    # units: units.Units
-    # axis: str
-    # bounds: AbstractDMCoordinateBounds
-    # value: typing.Union[int, float] # for scalar coordinates only
-    # need_bounds: bool      # fields from VarlistCoordinateMixin
-    # name_in_model: str
-    # bounds_in_model: str
-    pass
-
-
-@util.mdtf_dataclass
-class VarlistLongitudeCoordinate(data_model.DMLongitudeCoordinate, \
-    VarlistCoordinateMixin):
-    range: tuple = None
-
-
-@util.mdtf_dataclass
-class VarlistLatitudeCoordinate(data_model.DMLatitudeCoordinate, \
-    VarlistCoordinateMixin):
-    range: tuple = None
-
-
-@util.mdtf_dataclass
-class VarlistVerticalCoordinate(data_model.DMVerticalCoordinate, \
-    VarlistCoordinateMixin):
-    pass
-
-
-@util.mdtf_dataclass
-class VarlistPlaceholderTimeCoordinate(data_model.DMGenericTimeCoordinate, \
-    VarlistCoordinateMixin):
-    frequency: typing.Any = ""
-    min_frequency: typing.Any = ""
-    max_frequency: typing.Any = ""
-    min_duration: typing.Any = 'any'
-    max_duration: typing.Any = 'any'
-
-    standard_name = 'time'
-    axis = 'T'
-
-@util.mdtf_dataclass
-class VarlistTimeCoordinate(_VarlistTimeSettings, data_model.DMTimeCoordinate,
-    VarlistCoordinateMixin):
-    pass
-
-VarlistEntryRequirement = util.MDTFEnum(
-    'VarlistEntryRequirement',
-    'REQUIRED OPTIONAL ALTERNATE AUX_COORDINATE',
-    module=__name__
-)
-VarlistEntryRequirement.__doc__ = """
-:class:`util.MDTFEnum` used to track whether the DataSource is required to
-provide data for the :class:`VarlistEntry`.
-"""
-
-VarlistEntryStage = util.MDTFIntEnum(
-    'VarlistEntryStage',
-    'NOTSET INITED QUERIED FETCHED PREPROCESSED',
-    module=__name__
-)
-VarlistEntryStage.__doc__ = """
-:class:`util.MDTFIntEnum` used to track the stages of processing of a
-:class:`VarlistEntry` carried out by the DataSource.
-"""
 
 @util.mdtf_dataclass
 class VarlistEntryBase(metaclass=util.MDTFABCMeta):
@@ -216,6 +97,7 @@ class VarlistEntryBase(metaclass=util.MDTFABCMeta):
     def env_vars(self):
         pass
 
+
 @util.mdtf_dataclass
 class VarlistEntryMixin(object):
     def __post_init__(self, coords=None):
@@ -232,7 +114,7 @@ class VarlistEntryMixin(object):
         self.data: util.ConsistentDict()
         # activate required vars
         if self.status == core.ObjectStatus.NOTSET:
-            if self.requirement == VarlistEntryRequirement.REQUIRED:
+            if self.requirement == varlistentry_util.VarlistEntryRequirement.REQUIRED:
                 self.status = core.ObjectStatus.ACTIVE
             else:
                 self.status = core.ObjectStatus.INACTIVE
@@ -276,7 +158,7 @@ class VarlistEntryMixin(object):
         scalars = kwargs.get('scalar_coordinates', dict())
         seen = set()
         dupe_names = set(x for x
-                         in itertools.chain(kwargs['dimensions'], scalars.keys()) \
+                         in itertools.chain(kwargs['dimensions'], scalars.keys())
                          if x in seen or seen.add(x))
         if dupe_names:
             raise ValueError((f"Repeated coordinate names {list(dupe_names)} in "
@@ -299,7 +181,7 @@ class VarlistEntryMixin(object):
         filter_kw = util.filter_dataclass(kwargs, cls, init=True)
         obj = cls(name=name, _parent=parent, **new_kw, **filter_kw)
         # specialize time coord
-        time_kw = util.filter_dataclass(kwargs, _VarlistTimeSettings)
+        time_kw = util.filter_dataclass(kwargs, varlist_util._VarlistTimeSettings)
         if time_kw:
             obj.change_coord('T', None, **time_kw)
         return obj
@@ -401,7 +283,7 @@ class VarlistEntryMixin(object):
         for expt_key in expt_keys_to_remove:
             del self.data[expt_key]
 
-        if self.stage >= VarlistEntryStage.QUERIED and not self.data:
+        if self.stage >= varlistentry_util.VarlistEntryStage.QUERIED and not self.data:
             # all DataKeys obtained for this var during query have
             # been eliminated, so need to deactivate var
             self.deactivate(util.ChildFailureEvent(self))
@@ -411,9 +293,9 @@ class VarlistEntryMixin(object):
         """Return sorted list of local file paths corresponding to the selected
         experiment.
         """
-        if self.stage < VarlistEntryStage.FETCHED:
+        if self.stage < varlistentry_util.VarlistEntryStage.FETCHED:
             raise util.DataRequestError((f"Requested local_data property on "
-                f"{self.full_name} before fetch."))
+                                         f"{self.full_name} before fetch."))
 
         local_paths = set([])
         for d_key in self.iter_data_keys(status=core.ObjectStatus.ACTIVE):
@@ -421,7 +303,7 @@ class VarlistEntryMixin(object):
         local_paths = sorted(local_paths)
         if not local_paths:
             raise util.DataRequestError((f"local_data property on {self.full_name} "
-                "empty after fetch."))
+                                         "empty after fetch."))
         return local_paths
 
     def query_attrs(self, key_synonyms=None):
@@ -453,7 +335,7 @@ class VarlistEntryMixin(object):
 
 @util.mdtf_dataclass
 class VarlistEntry(VarlistEntryMixin, VarlistEntryBase, core.MDTFObjectBase, data_model.DMVariable,
-                   _VarlistGlobalSettings, util.VarlistEntryLoggerMixin):
+                   varlist_util._VarlistGlobalSettings, util.VarlistEntryLoggerMixin):
     """Class to describe data for a single variable requested by a POD.
     Corresponds to list entries in the "varlist" section of the POD's
     settings.jsonc file.
@@ -487,15 +369,15 @@ class VarlistEntry(VarlistEntryMixin, VarlistEntryBase, core.MDTFObjectBase, dat
     env_var: str = dc.field(default="", compare=False)
     path_variable: str = dc.field(default="", compare=False)
     dest_path: str = ""
-    requirement: VarlistEntryRequirement = dc.field(
-        default=VarlistEntryRequirement.REQUIRED, compare=False
+    requirement: varlistentry_util.VarlistEntryRequirement = dc.field(
+        default=varlistentry_util.VarlistEntryRequirement.REQUIRED, compare=False
     )
     alternates: list = dc.field(default_factory=list, compare=False)
     translation: typing.Any = dc.field(default=None, compare=False)
     data: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict,
-        compare=False)
-    stage: VarlistEntryStage = dc.field(
-        default=VarlistEntryStage.NOTSET, compare=False
+                                         compare=False)
+    stage: varlistentry_util.VarlistEntryStage = dc.field(
+        default=varlistentry_util.VarlistEntryStage.NOTSET, compare=False
     )
 
     _deactivation_log_level = logging.INFO # default log level for failure
@@ -557,16 +439,16 @@ class Varlist(data_model.DMDataSet, ABC):
         """
         def _pod_dimension_from_struct(name, dd, v_settings):
             class_dict = {
-                'X': VarlistLongitudeCoordinate,
-                'Y': VarlistLatitudeCoordinate,
-                'Z': VarlistVerticalCoordinate,
-                'T': VarlistPlaceholderTimeCoordinate,
-                'OTHER': VarlistCoordinate
+                'X': varlist_util.VarlistLongitudeCoordinate,
+                'Y': varlist_util.VarlistLatitudeCoordinate,
+                'Z': varlist_util.VarlistVerticalCoordinate,
+                'T': varlist_util.VarlistPlaceholderTimeCoordinate,
+                'OTHER': varlist_util.VarlistCoordinate
             }
             try:
                 return data_model.coordinate_from_struct(
                     dd, class_dict=class_dict, name=name,
-                    **(v_settings.time_settings)
+                    **v_settings.time_settings
                 )
             except Exception:
                 raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
@@ -579,12 +461,12 @@ class Varlist(data_model.DMDataSet, ABC):
                 yield from alt_vs
 
         vlist_settings = util.coerce_to_dataclass(
-            d.get('data', dict()), VarlistSettings)
+            d.get('data', dict()), varlist_util.VarlistSettings)
         globals_d = vlist_settings.global_settings
 
         assert 'dimensions' in d
-        dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings) \
-            for k,v in d['dimensions'].items()}
+        dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings)
+                  for k, v in d['dimensions'].items()}
 
         assert 'varlist' in d
         vlist_vars = {
@@ -596,7 +478,7 @@ class Varlist(data_model.DMDataSet, ABC):
             for altv_name in _iter_shallow_alternates(v):
                 if altv_name not in vlist_vars:
                     raise ValueError((f"Unknown variable name {altv_name} listed "
-                        f"in alternates for varlist entry {v.name}."))
+                                      f"in alternates for varlist entry {v.name}."))
             linked_alts = []
             for alts in v.alternates:
                 linked_alts.append([vlist_vars[v_name] for v_name in alts])
@@ -613,299 +495,126 @@ class Varlist(data_model.DMDataSet, ABC):
                 return vv
         return None
 
-# ------------------------------------------------------------
 
-@util.mdtf_dataclass
-class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
-    """Class holding configuration for a diagnostic script. Object attributes
-    are read from entries in the settings section of the POD's settings.jsonc
-    file upon initialization.
-
-    See `settings file documentation
-    <https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/ref_settings.html>`__
-    for documentation on attributes.
-    """
-    # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
-    # name: str
-    # _parent: object
-    # log = util.MDTFObjectLogger
-    # status: ObjectStatus
-    long_name: str = ""
-    """Test docstring for long_name."""
-    description: str = ""
-    convention: str = "CF"
-    realm: str = ""
-
-    driver: str = ""
-    program: str = ""
-    runtime_requirements: dict = dc.field(default_factory=dict)
-    pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
-    log_file: io.IOBase = dc.field(default=None, init=False)
-    nc_largefile: bool = False
-
-    varlist: Varlist = None
-    preprocessor: typing.Any = dc.field(default=None, compare=False)
-
-    POD_CODE_DIR = ""
-    POD_OBS_DATA = ""
-    POD_WK_DIR = ""
-    POD_OUT_DIR = ""
-
-    _deactivation_log_level = logging.ERROR # default log level for failure
-    # recognized interpreters for supported script types; can ovverride with
-    # explict 'program' attribute in settings
-    _interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
-
-    def __post_init__(self, *args, **kwargs):
-        core.MDTFObjectBase.__post_init__(self)
-        # set up log (PODLoggerMixin)
-        self.init_log()
-
-        for k,v in self.runtime_requirements.items():
-            self.runtime_requirements[k] = util.to_iter(v)
-
-    @property
-    def _log_name(self):
-        # POD loggers sit in a subtree of the DataSource logger distinct from
-        # the DataKey loggers; the two subtrees are distinguished by class name
-        _log_name = f"{self.name}_{self._id}".replace('.', '_')
-        return f"{self._parent._log_name}.{self.__class__.__name__}.{_log_name}"
-
+class NoPPVarlist(Varlist, ABC):
     @classmethod
-    def from_struct(cls, pod_name, d, parent, **kwargs):
-        """Instantiate a Diagnostic object from the JSON format used in its
-        settings.jsonc file.
+    def from_struct(cls, d, parent):
+        """Parse the "dimensions", "data" and "varlist" sections of the POD's
+        settings.jsonc file when instantiating a new :class:`Diagnostic` object.
+
+        Args:
+            parent: instance of the parent class object
+            d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
+
+        Returns:
+            :py:obj:`dict`, keys are names of the dimensions in POD's convention,
+            values are :class:`PodDataDimension` objects.
         """
-        try:
-            kwargs.update(d.get('settings', dict()))
-            pod = cls(name=pod_name, _parent=parent, **kwargs)
-        except Exception as exc:
-            raise util.PodConfigError("Caught exception while parsing settings",
-                pod_name) from exc
-        try:
-            pod.varlist = Varlist.from_struct(d, parent=pod)
-        except Exception as exc:
-            raise util.PodConfigError("Caught exception while parsing varlist",
-                pod_name) from exc
-        return pod
 
-    @classmethod
-    def from_config(cls, pod_name, parent):
-        """Usual method of instantiating Diagnostic objects, from the contents
-        of its settings.jsonc file as stored in the
-        :class:`~core.ConfigManager`.
-        """
-        config = core.ConfigManager()
-        return cls.from_struct(pod_name, config.pod_data[pod_name], parent)
-
-    @property
-    def _children(self):
-        """Iterable of child objects associated with this object."""
-        yield from self.varlist.iter_vars()
-
-    def child_deactivation_handler(self, failed_v, failed_v_exc):
-        """Update the status of which VarlistEntries are "active" (not failed
-        somewhere in the query/fetch process) based on new information. If the
-        process has failed for a :class:`VarlistEntry`, try to find a set of
-        alternate VarlistEntries. If successful, activate them; if not, raise a
-        :class:`PodDataError`.
-        """
-        if self.failed:
-            return
-
-        self.log.info("Request for %s failed; looking for alternate data.",
-                      failed_v)
-        success = False
-        for i, alt_list in enumerate(failed_v.iter_alternates()):
-            failed_list = [alt_v for alt_v in alt_list if alt_v.failed]
-            if failed_list:
-                # skip sets of alternates where any variables have already failed
-                self.log.debug(("Eliminated alternate set #%d due to deactivated "
-                    "members: %s."), i, failed_v.alternates_str(failed_list))
-                continue
-            # found a viable set of alternates
-            success = True
-            self.log.info("Selected alternate set #%d: %s.",
-                i+1, failed_v.alternates_str(alt_list))
-            for alt_v in alt_list:
-                alt_v.status = core.ObjectStatus.ACTIVE
-            break
-        if not success:
+        def _pod_dimension_from_struct(name, dd, v_settings):
+            class_dict = {
+                'X': varlist_util.VarlistLongitudeCoordinate,
+                'Y': varlist_util.VarlistLatitudeCoordinate,
+                'Z': varlist_util.VarlistVerticalCoordinate,
+                'T': varlist_util.VarlistPlaceholderTimeCoordinate,
+                'OTHER': varlist_util.VarlistCoordinate
+            }
             try:
-                raise util.PodDataError((f"No alternate data available for "
-                    f"{failed_v.full_name}."), self)
-            except Exception as exc:
-                self.deactivate(exc)
-
-    def close_log_file(self, log=True):
-        if self.log_file is not None:
-            if log:
-                self.log_file.write(self.format_log(children=False))
-            self.log_file.close()
-            self.log_file = None
-
-    # -------------------------------------
-
-    def setup(self, data_source):
-        """Configuration set by the DataSource on the POD (after the POD is
-        initialized, but before pre-run checks.)
-        """
-        # set up paths/working directories
-        paths = core.PathManager()
-        paths = paths.pod_paths(self, data_source)
-        for k, v in paths.items():
-            setattr(self, k, v)
-        self.setup_pod_directories()
-        self.set_entry_point()
-        self.set_interpreter()
-        config = core.ConfigManager()
-        if config.get('overwrite_file_metadata', False):
-            self.log.warning(('User has disabled preprocessing functionality that '
-                'uses input metadata.'), tags=util.ObjectLogTag.BANNER)
-        # set up env vars
-        self.pod_env_vars.update(data_source.env_vars)
-
-        self.nc_largefile = config.get('large_file', False)
-        if self.nc_largefile:
-            if self.program == 'ncl':
-                # argument to ncl setfileoption()
-                self.pod_env_vars['MDTF_NC_FORMAT'] = "NetCDF4"
-            else:
-                # argument to netCDF4-python/xarray/etc.
-                self.pod_env_vars['MDTF_NC_FORMAT'] = "NETCDF4"
-        else:
-            if self.program == 'ncl':
-                # argument to ncl setfileoption()
-                self.pod_env_vars['MDTF_NC_FORMAT'] = "NetCDF4Classic"
-            else:
-                # argument to netCDF4-python/xarray/etc.
-                self.pod_env_vars['MDTF_NC_FORMAT'] = "NETCDF4_CLASSIC"
-
-    def setup_pod_directories(self):
-        """Check and create directories specific to this POD.
-        """
-        util.check_dir(self, 'POD_CODE_DIR', create=False)
-        util.check_dir(self, 'POD_OBS_DATA', create=False)
-        util.check_dir(self, 'POD_WK_DIR', create=True)
-
-        dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
-        for d in dirs:
-            util.check_dir(os.path.join(self.POD_WK_DIR, d), create=True)
-
-    def set_entry_point(self):
-        """Locate the top-level driver script for the POD.
-
-        Raises: :class:`~util.PodRuntimeError` if driver script can't be found.
-        """
-        if not self.driver:
-            self.log.warning("No valid driver script found for %s.", self.full_name)
-            # try to find one anyway
-            script_names = [self.name, "driver"]
-            file_names = [f"{script}{ext}" for script in script_names \
-                for ext in self._interpreters.keys()]
-            for f in file_names:
-                path_ = os.path.join(self.POD_CODE_DIR, f)
-                if os.path.exists(path_):
-                    self.log.debug("Setting driver script for %s to '%s'.",
-                        self.full_name, f)
-                    self.driver = path_
-                    break    # go with the first one found
-        if not self.driver:
-            raise util.PodRuntimeError((f"No driver script found in "
-                f"{self.POD_CODE_DIR}. Specify 'driver' in settings.jsonc."),
-                self)
-
-        if not os.path.isabs(self.driver): # expand relative path
-            self.driver = os.path.join(self.POD_CODE_DIR, self.driver)
-        if not os.path.exists(self.driver):
-            raise util.PodRuntimeError(
-                f"Unable to locate driver script '{self.driver}'.",
-                self
-            )
-
-    def set_interpreter(self):
-        """Determine what executable should be used to run the driver script.
-
-        .. note::
-           Existence of the program on the environment's ``$PATH`` isn't checked
-           until before the POD runs (see :mod:`src.environment_manager`.)
-        """
-
-        if not self.program:
-            # Find ending of filename to determine the program that should be used
-            _, driver_ext  = os.path.splitext(self.driver)
-            # Possible error: Driver file type unrecognized
-            if driver_ext not in self._interpreters:
-                raise util.PodRuntimeError((f"Don't know how to call a '{driver_ext}' "
-                    f"file.\nSupported programs: {list(self._interpreters.values())}"),
-                    self
+                return data_model.coordinate_from_struct(
+                    dd, class_dict=class_dict, name=name,
+                    **v_settings.time_settings
                 )
-            self.program = self._interpreters[driver_ext]
-            self.log.debug("Set program for %s to '%s'.",
-                self.full_name, self.program)
+            except Exception:
+                raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
 
-    def pre_run_setup(self):
-        """Perform filesystem operations and checks prior to running the POD.
+        def _iter_shallow_alternates(var):
+            """Iterator over all VarlistEntries referenced as alternates. Doesn't
+            traverse alternates of alternates, etc.
+            """
+            for alt_vs in var.alternates:
+                yield from alt_vs
 
-        In order, this 1) sets environment variables specific to the POD, 2)
-        creates POD-specific working directories, and 3) checks for the existence
-        of the POD's driver script.
+        vlist_settings = util.coerce_to_dataclass(
+            d.get('data', dict()), varlist_util.VarlistSettings)
+        globals_d = vlist_settings.global_settings
 
-        Note:
-            The existence of data files is checked with
-            :meth:`~data_manager.DataManager.fetchData`
-            and the runtime environment is validated separately as a function of
-            :meth:`~environment_manager.EnvironmentManager.run`. This is because
-            each POD is run in a subprocess (due to the necessity of supporting
-            multiple languages) so the validation must take place in that
-            subprocess.
+        assert 'dimensions' in d
+        dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings)
+                  for k, v in d['dimensions'].items()}
 
-        Raises:
-            :exc:`~diagnostic.PodRuntimeError` if requirements aren't met. This
-                is re-raised from the :meth:`diagnostic.Diagnostic.set_entry_point`
-                and :meth:`diagnostic.Diagnostic._check_for_varlist_files`
-                subroutines.
+        assert 'varlist' in d
+        vlist_vars = {
+            k: NoPPVarlistEntry.from_struct(globals_d, dims_d, name=k, parent=parent, **v)
+            for k, v in d['varlist'].items()
+        }
+        for v in vlist_vars.values():
+            # validate & replace names of alt vars with references to VE objects
+            for altv_name in _iter_shallow_alternates(v):
+                if altv_name not in vlist_vars:
+                    raise ValueError((f"Unknown variable name {altv_name} listed "
+                                      f"in alternates for varlist entry {v.name}."))
+            linked_alts = []
+            for alts in v.alternates:
+                linked_alts.append([vlist_vars[v_name] for v_name in alts])
+            v.alternates = linked_alts
+        return cls(contents=list(vlist_vars.values()))
+
+
+class NoPPVarlistEntry(VarlistEntry, VarlistEntryMixin):
+    use_exact_name: bool = False
+    env_var: str = dc.field(default="", compare=False)
+    path_variable: str = dc.field(default="", compare=False)
+    dest_path: str = ""
+    requirement: varlistentry_util.VarlistEntryRequirement = dc.field(
+        default=varlistentry_util.VarlistEntryRequirement.REQUIRED, compare=False
+    )
+    alternates: list = dc.field(default_factory=list, compare=False)
+    translation: typing.Any = dc.field(default=None, compare=False)
+    data: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict,
+                                         compare=False)
+    stage: varlistentry_util.VarlistEntryStage = dc.field(
+        default=varlistentry_util.VarlistEntryStage.NOTSET, compare=False
+    )
+
+    _deactivation_log_level = logging.INFO  # default log level for failure
+
+    @property
+    def env_vars(self):
+        """Get env var definitions for:
+            - The path to the raw data file for this variable,
+            - The name for this variable in that data file,
+            - The names for all of this variable's coordinate axes in that file,
+            - The names of the bounds variables for all of those coordinate
+              dimensions, if provided by the data.
+
         """
-        try:
-            self.set_pod_env_vars()
-            self.set_entry_point()
-        except Exception as exc:
-            raise util.PodRuntimeError("Caught exception during pre_run_setup",
-                                       self) from exc
 
-    def set_pod_env_vars(self):
-        """Sets all environment variables for the POD: paths and names of each
-        variable and coordinate. Raise a :class:`~src.util.exceptions.WormKeyError`
-        if any of these definitions conflict.
-        """
-        self.pod_env_vars.update({
-            "POD_HOME": self.POD_CODE_DIR, # location of POD's code
-            "OBS_DATA": self.POD_OBS_DATA, # POD's observational data
-            "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
-            "DATADIR": self.POD_WK_DIR     # synonym so we don't need to change docs
+        assert self.dest_path
+        d = util.ConsistentDict()
+
+        assoc_dict = (
+            {self.name.upper() + "_ASSOC_FILES": self.associated_files}
+            if isinstance(self.associated_files, str)
+            else {}
+        )
+
+        d.update({
+            self.env_var: self.name_in_model,
+            self.path_variable: self.dest_path,
+            **assoc_dict
         })
-        for var in self.iter_children(status=core.ObjectStatus.SUCCEEDED):
-            try:
-                self.pod_env_vars.update(var.env_vars)
-            except util.WormKeyError as exc:
-                if var.rename_coords is False:
-                    pass
-                else:
-                    raise util.WormKeyError((f"{var.full_name} defines coordinate names "
-                        f"that conflict with those previously set. (Tried to update "
-                        f"{self.pod_env_vars} with {var.env_vars}.)")) from exc
-        for var in self.iter_children(status_neq=core.ObjectStatus.SUCCEEDED):
-            # define env vars for varlist entries without data. Name collisions
-            # are OK in this case.
-            try:
-                self.pod_env_vars.update(var.env_vars)
-            except util.WormKeyError:
-                continue
+        for ax, dim in self.dim_axes.items():
+            trans_dim = self.translation.dim_axes[ax]
+            d[dim.name + _coord_env_var_suffix] = trans_dim.name
+            if trans_dim.has_bounds:
+                d[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
+        return d
+
 
 @util.mdtf_dataclass
 class MultirunVarlistEntry(VarlistEntryMixin, VarlistEntryBase, core.MDTFObjectBase,
-                           data_model.DMVariable, _VarlistGlobalSettings,
-                           util.VarlistEntryLoggerMixin):
+                           data_model.DMVariable, varlist_util._VarlistGlobalSettings,
+                           util.VarlistEntryLoggerMixin, ABC):
     # Attributes:
     #         path_variable: Name of env var containing path to local data.
     #         dest_path: list of paths to local data
@@ -923,12 +632,12 @@ class MultirunVarlistEntry(VarlistEntryMixin, VarlistEntryBase, core.MDTFObjectB
     env_var: str = dc.field(default="", compare=False)
     path_variable: str = dc.field(default="", compare=False)
     dest_path: str = ""
-    requirement: VarlistEntryRequirement = \
-        dc.field(default=VarlistEntryRequirement.REQUIRED, compare=False)
+    requirement: varlistentry_util.VarlistEntryRequirement = \
+        dc.field(default=varlistentry_util.VarlistEntryRequirement.REQUIRED, compare=False)
     alternates: list = dc.field(default_factory=list, compare=False)
     translation: typing.Any = dc.field(default=None, compare=False)
     data: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict, compare=False)
-    stage: VarlistEntryStage = dc.field(default=VarlistEntryStage.NOTSET, compare=False)
+    stage: varlistentry_util.VarlistEntryStage = dc.field(default=varlistentry_util.VarlistEntryStage.NOTSET, compare=False)
     _deactivation_log_level = logging.INFO
 
     @property
@@ -987,7 +696,7 @@ class MultirunVarlist(Varlist, ABC):
             v.change_coord(
                 'T',
                 new_class={
-                    'self': VarlistTimeCoordinate,
+                    'self': varlist_util.VarlistTimeCoordinate,
                     'range': util.DateRange,
                     'frequency': util.DateFrequency
                 },
@@ -1016,7 +725,7 @@ class MultirunVarlist(Varlist, ABC):
             # may supply alternate variables
             v.log.store_exception(chained_exc)
 
-        v.stage = VarlistEntryStage.INITED
+        v.stage = varlistentry_util.VarlistEntryStage.INITED
 
     def variable_dest_path(self, pod, var):
         """Returns the absolute path of the POD's preprocessed, local copy of
@@ -1047,16 +756,16 @@ class MultirunVarlist(Varlist, ABC):
 
         def _pod_dimension_from_struct(name, dd, v_settings):
             class_dict = {
-                'X': VarlistLongitudeCoordinate,
-                'Y': VarlistLatitudeCoordinate,
-                'Z': VarlistVerticalCoordinate,
-                'T': VarlistPlaceholderTimeCoordinate,
-                'OTHER': VarlistCoordinate
+                'X': varlist_util.VarlistLongitudeCoordinate,
+                'Y': varlist_util.VarlistLatitudeCoordinate,
+                'Z': varlist_util.VarlistVerticalCoordinate,
+                'T': varlist_util.VarlistPlaceholderTimeCoordinate,
+                'OTHER': varlist_util.VarlistCoordinate
             }
             try:
                 return data_model.coordinate_from_struct(
                     dd, class_dict=class_dict, name=name,
-                    **(v_settings.time_settings)
+                    **v_settings.time_settings
                 )
             except Exception:
                 raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
@@ -1069,11 +778,11 @@ class MultirunVarlist(Varlist, ABC):
                 yield from alt_vs
 
         vlist_settings = util.coerce_to_dataclass(
-            d.get('data', dict()), VarlistSettings)
+            d.get('data', dict()), varlist_util.VarlistSettings)
         globals_d = vlist_settings.global_settings
 
         assert 'dimensions' in d
-        dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings) \
+        dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings)
                   for k, v in d['dimensions'].items()}
 
         assert 'varlist' in d
@@ -1092,10 +801,372 @@ class MultirunVarlist(Varlist, ABC):
                 linked_alts.append([vlist_vars[v_name] for v_name in alts])
             v.alternates = linked_alts
         return cls(contents=list(vlist_vars.values()))
+# ------------------------------------------------------------
+
+
+@util.mdtf_dataclass
+class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
+    """Class holding configuration for a diagnostic script. Object attributes
+    are read from entries in the settings section of the POD's settings.jsonc
+    file upon initialization.
+
+    See `settings file documentation
+    <https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx/ref_settings.html>`__
+    for documentation on attributes.
+    """
+    # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
+    # name: str
+    # _parent: object
+    # log = util.MDTFObjectLogger
+    # status: ObjectStatus
+    long_name: str = ""
+    """Test docstring for long_name."""
+    description: str = ""
+    convention: str = "CF"
+    realm: str = ""
+
+    driver: str = ""
+    program: str = ""
+    runtime_requirements: dict = dc.field(default_factory=dict)
+    pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
+    log_file: io.IOBase = dc.field(default=None, init=False)
+    nc_largefile: bool = False
+
+    varlist: Varlist = None
+    preprocessor: typing.Any = dc.field(default=None, compare=False)
+
+    POD_CODE_DIR = ""
+    POD_OBS_DATA = ""
+    POD_WK_DIR = ""
+    POD_OUT_DIR = ""
+
+    _deactivation_log_level = logging.ERROR # default log level for failure
+    # recognized interpreters for supported script types; can ovverride with
+    # explict 'program' attribute in settings
+    _interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
+
+    def __post_init__(self, *args, **kwargs):
+        core.MDTFObjectBase.__post_init__(self)
+        # set up log (PODLoggerMixin)
+        self.init_log()
+
+        for k, v in self.runtime_requirements.items():
+            self.runtime_requirements[k] = util.to_iter(v)
+
+    @property
+    def _log_name(self):
+        # POD loggers sit in a subtree of the DataSource logger distinct from
+        # the DataKey loggers; the two subtrees are distinguished by class name
+        _log_name = f"{self.name}_{self._id}".replace('.', '_')
+        return f"{self._parent._log_name}.{self.__class__.__name__}.{_log_name}"
+
+    @classmethod
+    def from_struct(cls, pod_name, d, parent, **kwargs):
+        """Instantiate a Diagnostic object from the JSON format used in its
+        settings.jsonc file.
+        """
+        try:
+            kwargs.update(d.get('settings', dict()))
+            pod = cls(name=pod_name, _parent=parent, **kwargs)
+        except Exception as exc:
+            raise util.PodConfigError("Caught exception while parsing settings",
+                                      pod_name) from exc
+        try:
+            pod.varlist = Varlist.from_struct(d, parent=pod)
+        except Exception as exc:
+            raise util.PodConfigError("Caught exception while parsing varlist",
+                                      pod_name) from exc
+        return pod
+
+    @classmethod
+    def from_config(cls, pod_name, parent):
+        """Usual method of instantiating Diagnostic objects, from the contents
+        of its settings.jsonc file as stored in the
+        :class:`~core.ConfigManager`.
+        """
+        config = core.ConfigManager()
+        return cls.from_struct(pod_name, config.pod_data[pod_name], parent)
+
+    @property
+    def _children(self):
+        """Iterable of child objects associated with this object."""
+        yield from self.varlist.iter_vars()
+
+    def child_deactivation_handler(self, failed_v, failed_v_exc):
+        """Update the status of which VarlistEntries are "active" (not failed
+        somewhere in the query/fetch process) based on new information. If the
+        process has failed for a :class:`VarlistEntry`, try to find a set of
+        alternate VarlistEntries. If successful, activate them; if not, raise a
+        :class:`PodDataError`.
+        """
+        if self.failed:
+            return
+
+        self.log.info("Request for %s failed; looking for alternate data.",
+                      failed_v)
+        success = False
+        for i, alt_list in enumerate(failed_v.iter_alternates()):
+            failed_list = [alt_v for alt_v in alt_list if alt_v.failed]
+            if failed_list:
+                # skip sets of alternates where any variables have already failed
+                self.log.debug(("Eliminated alternate set #%d due to deactivated "
+                                "members: %s."), i, failed_v.alternates_str(failed_list))
+                continue
+            # found a viable set of alternates
+            success = True
+            self.log.info("Selected alternate set #%d: %s.",
+                i+1, failed_v.alternates_str(alt_list))
+            for alt_v in alt_list:
+                alt_v.status = core.ObjectStatus.ACTIVE
+            break
+        if not success:
+            try:
+                raise util.PodDataError((f"No alternate data available for "
+                                         f"{failed_v.full_name}."), self)
+            except Exception as exc:
+                self.deactivate(exc)
+
+    def close_log_file(self, log=True):
+        if self.log_file is not None:
+            if log:
+                self.log_file.write(self.format_log(children=False))
+            self.log_file.close()
+            self.log_file = None
+
+    # -------------------------------------
+
+    def setup(self, data_source):
+        """Configuration set by the DataSource on the POD (after the POD is
+        initialized, but before pre-run checks.)
+        """
+        # set up paths/working directories
+        paths = core.PathManager()
+        paths = paths.pod_paths(self, data_source)
+        for k, v in paths.items():
+            setattr(self, k, v)
+        self.setup_pod_directories()
+        self.set_entry_point()
+        self.set_interpreter()
+        config = core.ConfigManager()
+        if config.get('overwrite_file_metadata', False):
+            self.log.warning(('User has disabled preprocessing functionality that '
+                              'uses input metadata.'), tags=util.ObjectLogTag.BANNER)
+        # set up env vars
+        self.pod_env_vars.update(data_source.env_vars)
+
+        self.nc_largefile = config.get('large_file', False)
+        if self.nc_largefile:
+            if self.program == 'ncl':
+                # argument to ncl setfileoption()
+                self.pod_env_vars['MDTF_NC_FORMAT'] = "NetCDF4"
+            else:
+                # argument to netCDF4-python/xarray/etc.
+                self.pod_env_vars['MDTF_NC_FORMAT'] = "NETCDF4"
+        else:
+            if self.program == 'ncl':
+                # argument to ncl setfileoption()
+                self.pod_env_vars['MDTF_NC_FORMAT'] = "NetCDF4Classic"
+            else:
+                # argument to netCDF4-python/xarray/etc.
+                self.pod_env_vars['MDTF_NC_FORMAT'] = "NETCDF4_CLASSIC"
+
+    def setup_pod_directories(self):
+        """Check and create directories specific to this POD.
+        """
+        util.check_dir(self, 'POD_CODE_DIR', create=False)
+        util.check_dir(self, 'POD_OBS_DATA', create=False)
+        util.check_dir(self, 'POD_WK_DIR', create=True)
+
+        dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
+        for d in dirs:
+            util.check_dir(os.path.join(self.POD_WK_DIR, d), create=True)
+
+    def set_entry_point(self):
+        """Locate the top-level driver script for the POD.
+
+        Raises: :class:`~util.PodRuntimeError` if driver script can't be found.
+        """
+        if not self.driver:
+            self.log.warning("No valid driver script found for %s.", self.full_name)
+            # try to find one anyway
+            script_names = [self.name, "driver"]
+            file_names = [f"{script}{ext}" for script in script_names
+                          for ext in self._interpreters.keys()]
+            for f in file_names:
+                path_ = os.path.join(self.POD_CODE_DIR, f)
+                if os.path.exists(path_):
+                    self.log.debug("Setting driver script for %s to '%s'.",
+                                   self.full_name, f)
+                    self.driver = path_
+                    break    # go with the first one found
+        if not self.driver:
+            raise util.PodRuntimeError((f"No driver script found in "
+                                        f"{self.POD_CODE_DIR}. Specify 'driver' in settings.jsonc."),
+                                       self)
+
+        if not os.path.isabs(self.driver): # expand relative path
+            self.driver = os.path.join(self.POD_CODE_DIR, self.driver)
+        if not os.path.exists(self.driver):
+            raise util.PodRuntimeError(
+                f"Unable to locate driver script '{self.driver}'.",
+                self
+            )
+
+    def set_interpreter(self):
+        """Determine what executable should be used to run the driver script.
+
+        .. note::
+           Existence of the program on the environment's ``$PATH`` isn't checked
+           until before the POD runs (see :mod:`src.environment_manager`.)
+        """
+
+        if not self.program:
+            # Find ending of filename to determine the program that should be used
+            _, driver_ext = os.path.splitext(self.driver)
+            # Possible error: Driver file type unrecognized
+            if driver_ext not in self._interpreters:
+                raise util.PodRuntimeError((f"Don't know how to call a '{driver_ext}' "
+                    f"file.\nSupported programs: {list(self._interpreters.values())}"),
+                    self
+                )
+            self.program = self._interpreters[driver_ext]
+            self.log.debug("Set program for %s to '%s'.",
+                self.full_name, self.program)
+
+    def pre_run_setup(self):
+        """Perform filesystem operations and checks prior to running the POD.
+
+        In order, this 1) sets environment variables specific to the POD, 2)
+        creates POD-specific working directories, and 3) checks for the existence
+        of the POD's driver script.
+
+        Note:
+            The existence of data files is checked with
+            :meth:`~data_manager.DataManager.fetchData`
+            and the runtime environment is validated separately as a function of
+            :meth:`~environment_manager.EnvironmentManager.run`. This is because
+            each POD is run in a subprocess (due to the necessity of supporting
+            multiple languages) so the validation must take place in that
+            subprocess.
+
+        Raises:
+            :exc:`~diagnostic.PodRuntimeError` if requirements aren't met. This
+                is re-raised from the :meth:`diagnostic.Diagnostic.set_entry_point`
+                and :meth:`diagnostic.Diagnostic._check_for_varlist_files`
+                subroutines.
+        """
+        try:
+            self.set_pod_env_vars()
+            self.set_entry_point()
+        except Exception as exc:
+            raise util.PodRuntimeError("Caught exception during pre_run_setup",
+                                       self) from exc
+
+    def set_pod_env_vars(self):
+        """Sets all environment variables for the POD: paths and names of each
+        variable and coordinate. Raise a :class:`~src.util.exceptions.WormKeyError`
+        if any of these definitions conflict.
+        """
+        self.pod_env_vars.update({
+            "POD_HOME": self.POD_CODE_DIR, # location of POD's code
+            "OBS_DATA": self.POD_OBS_DATA, # POD's observational data
+            "WK_DIR": self.POD_WK_DIR,     # POD's subdir within working directory
+            "DATADIR": self.POD_WK_DIR     # synonym so we don't need to change docs
+        })
+        for var in self.iter_children(status=core.ObjectStatus.SUCCEEDED):
+            try:
+                self.pod_env_vars.update(var.env_vars)
+            except util.WormKeyError as exc:
+                if var.rename_coords is False:
+                    pass
+                else:
+                    raise util.WormKeyError((f"{var.full_name} defines coordinate names "
+                                             f"that conflict with those previously set. (Tried to update "
+                                             f"{self.pod_env_vars} with {var.env_vars}.)")) from exc
+        for var in self.iter_children(status_neq=core.ObjectStatus.SUCCEEDED):
+            # define env vars for varlist entries without data. Name collisions
+            # are OK in this case.
+            try:
+                self.pod_env_vars.update(var.env_vars)
+            except util.WormKeyError:
+                continue
+
+
+@util.mdtf_dataclass
+class NoPPDiagnostic(Diagnostic):
+    """Class holding configuration for a diagnostic with non-preprocessed variables
+    Identical to Diagnostic, but varlist attribute is set to the NoPPVarlist
+    """
+    varlist: NoPPVarlist = None
+
+    @classmethod
+    def from_struct(cls, pod_name, d, parent, **kwargs):
+        """Instantiate a Diagnostic object from the JSON format used in its
+        settings.jsonc file.
+        """
+        try:
+            kwargs.update(d.get('settings', dict()))
+            pod = cls(name=pod_name, _parent=parent, **kwargs)
+        except Exception as exc:
+            raise util.PodConfigError("Caught exception while parsing settings",
+                                      pod_name) from exc
+        try:
+            pod.varlist = NoPPVarlist.from_struct(d, parent=pod)
+        except Exception as exc:
+            raise util.PodConfigError("Caught exception while parsing varlist",
+                                      pod_name) from exc
+        return pod
+
+    def link_input_data_to_wkdir(self):
+        if os.path.isdir(self.POD_OBS_DATA) and os.listdir(self.POD_OBS_DATA):
+            for f in os.listdir(self.POD_OBS_DATA):
+                os.symlink(os.path.join(self.POD_OBS_DATA, f), os.path.join(self.POD_WK_DIR, 'obs', f))
+
+        for v in self.varlist.iter_vars():
+            for kk, vv in v.env_vars.items():
+                if v.name.lower() + '_file' in kk.lower():
+                    path_components = os.path.split(vv)
+                    path_split_again = os.path.split(path_components[0])
+                    freq = path_split_again[1]
+                    # Note--assume that file names adhere to local file convention with variable names
+                    # that match those in the POD settings file
+                    inpath = os.path.join(self._parent.MODEL_DATA_DIR, freq, path_components[1])
+                    Path(path_components[0]).mkdir(parents=True, exist_ok=True)
+                    try:
+                        os.path.isfile(inpath)
+                        os.symlink(os.path.join(self._parent.MODEL_DATA_DIR, freq, path_components[1]), vv)
+                    except FileNotFoundError:
+                        print("Can't find file", inpath, ". Continuing with run setup. POD may not complete")
+                        continue
+
+    def pre_run_setup(self):
+        """Perform filesystem operations and checks prior to running the POD.
+
+        In order, this 1) sets environment variables specific to the POD, 2)
+        creates POD-specific working directories, and 3) checks for the existence
+        of the POD's driver script.
+
+        Raises:
+            :exc:`~NoPPdiagnostic.PodRuntimeError` if requirements aren't met. This
+                is re-raised from the :meth:`diagnostic.Diagnostic.set_entry_point`
+                and :meth:`diagnostic.NoPPDiagnostic._check_for_varlist_files`
+                subroutines.
+        """
+        try:
+            self.set_pod_env_vars()
+            self.set_entry_point()
+            self.link_input_data_to_wkdir()
+        except Exception as exc:
+            raise util.PodRuntimeError("Caught exception during pre_run_setup",
+                                       self) from exc
 
 
 @util.mdtf_dataclass
 class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
+    """Class holding configuration for a Multirun diagnostic script. Object attributes
+       are read from entries in the settings section of the POD's settings.jsonc
+       file upon initialization.
+    """
     # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
     # name: str
     # _parent: object
@@ -1164,7 +1235,7 @@ class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
         # append obs and model outdirs
         dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
         for d in dirs:
-            util.check_dir(os.path.join(self.POD_OUT_DIR, d), create=True)
+            util.check_dir(os.path.join(self.POD_WK_DIR, d), create=True)
 
     def configure_cases(self, case_dict, data_source):
         """ Instantiate case objects, set case directories, and define case attributes
@@ -1189,7 +1260,7 @@ class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
             self.MODEL_DATA_DIR[case_name] = d.MODEL_DATA_DIR
             self.MODEL_WK_DIR[case_name] = d.MODEL_WK_DIR
             self.MODEL_OUT_DIR[case_name] = d.MODEL_OUT_DIR
-            util.check_dir(self.MODEL_DATA_DIR[case_name], 'MODEL_DATA_DIR', create=False)
+            util.check_dir(self.MODEL_DATA_DIR[case_name], 'MODEL_DATA_DIR', create=True)
             util.check_dir(self.MODEL_WK_DIR[case_name], 'MODEL_WK_DIR', create=True)
             util.check_dir(self.MODEL_OUT_DIR[case_name], 'MODEL_OUT_DIR', create=True)
             # set up log(CaseLoggerMixin)
@@ -1364,3 +1435,54 @@ class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
                     self.pod_env_vars.update(var.env_vars)
                 except util.WormKeyError:
                     continue
+
+
+@util.mdtf_dataclass
+class MultirunNoPPDiagnostic(MultirunDiagnostic):
+    """Class holding configuration for a Multirun diagnostic that will not be preprocessed.
+    """
+    _PreprocessorClass = preprocessor.MultirunNullPreprocessor
+
+    def pre_run_setup(self):
+        """Perform filesystem operations and checks prior to running the POD.
+
+        In order, this 1) sets environment variables specific to the POD, 2)
+        creates POD-specific working directories, and 3) checks for the existence
+        of the POD's driver script.
+
+
+        Raises:
+            :exc:`~diagnostic.PodRuntimeError` if requirements aren't met. This
+                is re-raised from the :meth:`diagnostic.Diagnostic.set_entry_point`
+                and :meth:`diagnostic.Diagnostic._check_for_varlist_files`
+                subroutines.
+        """
+        try:
+            self.set_pod_env_vars()
+            self.set_entry_point()
+            self.link_input_data_to_wkdir()
+        except Exception as exc:
+            raise util.PodRuntimeError("Caught exception during pre_run_setup",
+                                       self) from exc
+
+    def link_input_data_to_wkdir(self):
+        for case_name, case_dict in self.cases.items():
+            for v in case_dict.varlist.iter_vars():
+                for kk, vv in v.env_vars.items():
+                    if v.name.lower() + '_file' in kk.lower():
+                        path_components = os.path.split(vv)
+                        path_split_again = os.path.split(path_components[0])
+                        freq = path_split_again[1]
+                        # Note--assume that file names adhere to local file convention with variable names
+                        # that match those in the POD settings file
+                        inpath = os.path.join(v._parent.MODEL_DATA_DIR[case_name], freq, path_components[1])
+                        try:
+                            os.path.isfile(inpath)
+                            v.env_vars[kk].replace(vv, inpath)
+                        except FileNotFoundError:
+                            print("Can't find file", inpath, ". Continuing with run setup. POD may not complete")
+                            continue
+                v.dest_path = inpath
+
+
+

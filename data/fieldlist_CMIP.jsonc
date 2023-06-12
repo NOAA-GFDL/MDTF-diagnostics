@@ -78,6 +78,11 @@
       "scalar_coord_templates": {"plev": "wap{value}"},
       "ndim": 4
     },
+    "o3": {
+      "standard_name": "mole_fraction_of_ozone_in_air",
+      "units": "mol mol-1",
+      "ndim": 4
+    },
     "ts": {
       "standard_name": "surface_temperature",
       "units": "K",

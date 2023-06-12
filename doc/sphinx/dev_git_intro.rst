@@ -5,22 +5,22 @@ Steps for brand new users:
 ------------------------------
 1. Fork the MDTF-diagnostics branch to your GitHub account (:ref:`ref-fork-code`)
 2. Clone (:ref:`ref-clone`) your fork of the MDTF-diagnostics repository (repo) to your local machine (if you are not using the web interface for development)
-3. Check out a new branch from the local main branch (:ref:`ref-new-feature`)
+3. Check out a new branch from the local main branch (:ref:`ref-new-pod`)
 4. Start coding
-5. Commit the changes in your feature branch (:ref:`ref-new-feature`)
-6. Push the changes to the copy of the feature branch on your remote fork (:ref:`ref-new-feature`)
+5. Commit the changes in your POD branch (:ref:`ref-new-pod`)
+6. Push the changes to the copy of the POD branch on your remote fork (:ref:`ref-new-pod`)
 7. Repeat steps 4--6 until you are finished working
 8. Submit a pull request to the NOAA-GFDL repo for review (:ref:`ref-pull-request`).
 
-Steps for users continuing work on an existing feature branch
+Steps for users continuing work on an existing POD branch
 -------------------------------------------------------------
 1. Create a backup copy of the MDTF-Diagnostics repo on your local machine
 2. Pull in updates from the NOAA-GFDL/main branch to the main branch in your remote repo (:ref:`ref-update-main`)
 3. Pull in updates from the main branch in your remote fork into the main branch in your local repo (:ref:`ref-update-main`)
-4. Sync your feature branch in your local repository with the local main branch using an interactive rebase (:ref:`ref-rebase`) or merge (:ref:`ref-merge`). Be sure to make a backup copy of of your local *MDTF-diagnostics* repo first, and test your branch after rebasing/merging as described in the linked instructions before proceeding to the next step.
-5. Continue working on your feature branch
-6. Commit the changes in your feature branch
-7. Push the changes to the copy of the feature branch in your remote fork (:ref:`ref-push`)
+4. Sync your POD branch in your local repository with the local main branch using an interactive rebase (:ref:`ref-rebase`) or merge (:ref:`ref-merge`). Be sure to make a backup copy of of your local *MDTF-diagnostics* repo first, and test your branch after rebasing/merging as described in the linked instructions before proceeding to the next step.
+5. Continue working on your POD branch
+6. Commit the changes in your POD branch
+7. Push the changes to the copy of the POD branch in your remote fork (:ref:`ref-push`)
 8. Submit a pull request (PR) to NOAA-GFDL/main branch when your code is ready for review (:ref:`ref-pull-request`)
 
 .. _ref-fork-code:
@@ -43,18 +43,18 @@ Before following the instructions below, make sure that a) you've created a fork
 
 Another approach is to create a local repo on your machine and manage the code using the ``git`` command in a terminal. In the interests of making things self-contained, the rest of this section gives brief step-by-step instructions on git for interested developers.
 
-.. _ref-new-feature:
+.. _ref-new-pod:
 
-Working on a brand new feature
+Working on a brand new POD
 ------------------------------
 Developers can either clone the MDTF-diagnostics repo to their computer, or manage the MDTF package using the GitHub webpage interface.
-Whichever method you choose, remember to create your feature/[POD name] branch from the main branch, not the main branch.
+Whichever method you choose, remember to create your [POD branch name] branch from the main branch, not the main branch.
 Since developers commonly work on their own machines, this manual provides command line instructions.
 
 1. Check out a branch for your POD
 ::
 
-   git checkout -b feature/[POD name]
+   git checkout -b [POD branch name]
 
 2. Write code, add files, etc...
 
@@ -73,23 +73,23 @@ Since developers commonly work on their own machines, this manual provides comma
 5. Push the updates to your remote repository
 ::
 
-   git push -u origin feature/[POD name]
+   git push -u origin [POD branch name]
 
 .. _ref-push:
 
-Pushing to your remote feature branch on your fork
+Pushing to your remote POD branch on your fork
 ----------------------------------------------------------
-When you are ready to push your updates to the remote feature branch on your fork
+When you are ready to push your updates to the remote POD branch on your fork
 
 1. Type ``git status`` to list the file(s) that have been updated
 
-2. Repeat steps 3--5 of section  (:ref:`ref-new-feature`)
+2. Repeat steps 3--5 of section  (:ref:`ref-new-pod`)
 
 .. _ref-pull-request:
 
 Submitting Pull Requests
 ------------------------
-The pull request (PR) for your branch is your proposal to the maintainers to incorporate your feature into NOAA's repo.
+The pull request (PR) for your branch is your proposal to the maintainers to incorporate your POD into NOAA's repo.
 Your changes will not affect the official NOAA's repo until the PR is accepted by the lead-team programmer.
 Note that if any buttons are missing, try ``CRTL`` + ``+`` or ``CRTL`` + ``-`` to adjust the webpage font size so the missing buttons may magically appear.
 
@@ -110,7 +110,7 @@ for a full review by the framework team. Starting from step 3. above
 
 1. Click the arrow on the right edge of the *Create Pull Request* button and select *Create draft pull request* from the dropdown menu.
 
-2. Continue pushing changes to your feature branch until you are ready for a review (the PR will update automatically)
+2. Continue pushing changes to your POD branch until you are ready for a review (the PR will update automatically)
 
 3. When you are ready for review, navigate to the NOAA-GFDL/MDTF-Diagnostics `*Pull requests* <https://github.com/NOAA-GFDL/MDTF-diagnostics/pulls>`__ page,
 and click on your PR
@@ -160,15 +160,15 @@ This method requires adding the *NOAA-GFDL/MDTF-diagnostics* repo to the *.git/c
 
 .. _ref-rebase:
 
-Updating your feature branch by rebasing it onto the main branch (preferred method)
+Updating your POD branch by rebasing it onto the main branch (preferred method)
 --------------------------------------------------------------------------------------
-Rebasing is procedure to integrate the changes from one branch into another branch. ``git rebase`` differs from ``git merge`` in that it reorders the commit history so that commits from the branch that is being updated are moved to the `tip` of the branch. This makes it easier to isolate changes in the feature branch, and usually results in fewer merge conflicts when the feature branch is merged into the main branch.
+Rebasing is procedure to integrate the changes from one branch into another branch. ``git rebase`` differs from ``git merge`` in that it reorders the commit history so that commits from the branch that is being updated are moved to the `tip` of the branch. This makes it easier to isolate changes in the POD branch, and usually results in fewer merge conflicts when the POD branch is merged into the main branch.
 1. Create a backup copy of your MDTF-diagnostics repo on your local machine
 
-2. Update the local and remote main branches on your fork as described in :ref:`ref-update-main`, then check out your feature branch
+2. Update the local and remote main branches on your fork as described in :ref:`ref-update-main`, then check out your POD branch
 ::
 
-   git checkout feature/[POD name]
+   git checkout [POD branch name]
 
 and launch an interactive rebase of your branch onto the main branch:: git rebase -i main
 3. Your text editor will open in the terminal (Vim by default)
@@ -228,7 +228,7 @@ Note that if you want to stop the rebase at any time and revert to the original 
 6. Once the rebase has completed, push your changes to the remote copy of your branch
 ::
 
-   git push -u origin feature/[POD name] --force
+   git push -u origin [POD branch name] --force
 
 The ``--force`` option is necessary because rebasing modified the commit history.
 
@@ -236,16 +236,16 @@ The ``--force`` option is necessary because rebasing modified the commit history
 
 .. _ref-merge:
 
-Updating your feature branch by merging in changes from the main branch
+Updating your POD branch by merging in changes from the main branch
 ---------------------------------------------------------------------------
 1. Create a backup copy of your repo on your machine.
 
 2. Update the local and remote main branches on your fork as described in :ref:`ref-update-main`.
 
-3. Check out your feature branch, and merge the main branch into your feature branch
+3. Check out your POD branch, and merge the main branch into your POD branch
 ::
 
-   git checkout feature/[POD name]
+   git checkout [POD branch name]
    git merge main
 
 4. Resolve any conflicts that occur from the merge
@@ -260,7 +260,7 @@ Updating your feature branch by merging in changes from the main branch
 6. Push the branch updates to your remote fork
 ::
 
-   git push -u origin feature/[POD name]
+   git push -u origin [POD branch name]
 
 Reverting commits
 ^^^^^^^^^^^^^^^^^
@@ -282,7 +282,7 @@ or consult the commit log in the web interface
 3. Push the updates to the remote branch
 ::
 
-   git push origin feature/[POD name]
+   git push origin [POD branch name]
 
 Set up SSH with GitHub
 ----------------------
@@ -305,7 +305,7 @@ There are many comprehensive online git tutorials, such as:
 
 Git Tips and Tricks
 -------------------
-* If you are unfamiliar with git and want to practice with the commands listed here, we recommend you to create an additional feature branch just for this. Remember: your changes will not affect NOAA's repo until you've submitted a pull request through the GitHub webpage and accepted by the lead-team programmer.
+* If you are unfamiliar with git and want to practice with the commands listed here, we recommend you to create an additional POD branch just for this. Remember: your changes will not affect NOAA's repo until you've submitted a pull request through the GitHub webpage and accepted by the lead-team programmer.
 
 * GUI applications can be helpful when trying to resolve merge conflicts.Git packages for IDEs such as VSCode and Eclipse often include tools for merge conflict resolution. You can also install free versions of merge-conflict tools like `P4merge <https://www.perforce.com/products/helix-core-apps/merge-diff-tool-p4merge>`__ and `Sublime merge <https://www.sublimemerge.com/>`__.
 
@@ -330,11 +330,11 @@ Git Tips and Tricks
 
 * To set your email: ``git config --global user.email "myemail@somedomain.com"`` You can use the masked email github provides if you don't want your work email included in the commit log message. The masked email address is located in the `Primary email address` section under Settings>emails.
 
-* When the feature branch is no longer needed, delete the branch locally with ``git branch -d feature/<my_feature_name>``.
-   If you pushed the feature branch to your fork, you can delete it remotely with ``git push --delete origin feature/<my_feature_name>``.
+* When the POD branch is no longer needed, delete the branch locally with ``git branch -d [POD branch name]``.
+   If you pushed the POD branch to your fork, you can delete it remotely with ``git push --delete origin [POD branch name]``.
    - Remember that branches in git are just pointers to a particular commit, so by deleting a branch you *don't* lose any history.
 
-* If you want to let others work on your feature, push its branch to your GitHub fork with ``git push -u origin feature/<my_feature_name>``.
+* If you want to let others work on your POD, push the POD branch to your GitHub fork with ``git push -u origin [POD branch name``.
 
 * For additional ways to undo changes in your branch, see `How to undo (almost) anything with Git <https://github.blog/2015-06-08-how-to-undo-almost-anything-with-git/>`__.
 

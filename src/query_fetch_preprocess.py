@@ -6,7 +6,7 @@ import intake_esm
 import os
 import pandas as pd
 import signal
-from src import core, diagnostic, util
+from src import core, util, varlistentry_util, diagnostic
 
 
 FileGlobTuple = collections.namedtuple(
@@ -169,7 +169,10 @@ class OnTheFlyFilesystemQueryMixin(metaclass=util.MDTFABCMeta):
                 "column_name": self.remote_data_col,
                 "format": self._asset_file_format
             },
-            "last_updated": "2020-12-06"
+            "last_updated": "2020-12-06",
+            'aggregation_control': {
+                'variable_column_name': 'variable', 'groupby_attrs': []
+            }
         }
 
     @abc.abstractmethod
@@ -193,9 +196,10 @@ class OnTheFlyFilesystemQueryMixin(metaclass=util.MDTFABCMeta):
         # sep: str = '.', delimiter to use when constructing key for a query
         # **kwargs: Any
 
-        self.catalog = intake_esm.core.esm_datastore.from_df(
-            self.generate_catalog(),
-            esmcol_data=self._dummy_esmcol_spec(),
+        obj = {'df': self.generate_catalog(), 'esmcat': self._dummy_esmcol_spec()}
+
+        self.catalog = intake_esm.core.esm_datastore(
+            obj,
             progressbar=False, sep='|'
         )
 
@@ -435,7 +439,7 @@ class DataSourceQFPMixin(core.MDTFObjectBase, util.CaseLoggerMixin,
         for _ in range(MAX_DATASOURCE_ITERS):
             vars_to_query = [
                 v for v in self.iter_vars_only(active=True) \
-                if v.stage < diagnostic.VarlistEntryStage.QUERIED
+                if v.stage < varlistentry_util.VarlistEntryStage.QUERIED
             ]
             if not vars_to_query:
                 break  # exit: queried everything or nothing active
@@ -449,7 +453,7 @@ class DataSourceQFPMixin(core.MDTFObjectBase, util.CaseLoggerMixin,
                     self.query_dataset(v)  # sets v.data
                     if not v.data:
                         raise util.DataQueryEvent("No data found.", v)
-                    v.stage = diagnostic.VarlistEntryStage.QUERIED
+                    v.stage = varlistentry_util.VarlistEntryStage.QUERIED
                 except util.DataQueryEvent as exc:
                     v.deactivate(exc)
                     continue
@@ -503,7 +507,7 @@ class DataSourceQFPMixin(core.MDTFObjectBase, util.CaseLoggerMixin,
                 update = False
             vars_to_fetch = [
                 v for v in self.iter_vars_only(active=True) \
-                if v.stage < diagnostic.VarlistEntryStage.FETCHED
+                if v.stage < varlistentry_util.VarlistEntryStage.FETCHED
             ]
             if not vars_to_fetch:
                 break  # exit: fetched everything or nothing active
@@ -530,7 +534,7 @@ class DataSourceQFPMixin(core.MDTFObjectBase, util.CaseLoggerMixin,
                     for d_key in v.iter_data_keys(status=core.ObjectStatus.ACTIVE):
                         if not d_key.local_data:
                             raise util.DataFetchEvent("Fetch failed.", d_key)
-                    v.stage = diagnostic.VarlistEntryStage.FETCHED
+                    v.stage = varlistentry_util.VarlistEntryStage.FETCHED
                 except Exception as exc:
                     update = True
                     chained_exc = util.chain_exc(exc,
@@ -556,8 +560,8 @@ class DataSourceQFPMixin(core.MDTFObjectBase, util.CaseLoggerMixin,
                 self.fetch_data()
                 update = False
             vars_to_process = [
-                pv for pv in self.iter_vars(active=True) \
-                if pv.var.stage < diagnostic.VarlistEntryStage.PREPROCESSED
+                pv for pv in self.iter_vars(active=True)
+                if pv.var.stage < varlistentry_util.VarlistEntryStage.PREPROCESSED
             ]
             if not vars_to_process:
                 break  # exit: processed everything or nothing active
@@ -566,9 +570,8 @@ class DataSourceQFPMixin(core.MDTFObjectBase, util.CaseLoggerMixin,
                 pod.preprocessor.setup(self, pod)
             for pv in vars_to_process:
                 try:
-                    pv.var.log.info("Preprocessing %s.", pv.var)
                     pv.pod.preprocessor.process(pv.var)
-                    pv.var.stage = diagnostic.VarlistEntryStage.PREPROCESSED
+                    pv.var.stage = varlistentry_util.VarlistEntryStage.PREPROCESSED
                 except Exception as exc:
                     update = True
                     self.log.exception("%s while preprocessing %s: %r",
@@ -600,7 +603,7 @@ class DataSourceQFPMixin(core.MDTFObjectBase, util.CaseLoggerMixin,
         for p in self.iter_children():
             for v in p.iter_children():
                 if v.status == core.ObjectStatus.ACTIVE:
-                    v.log.debug('Data request for %s completed succesfully.',
+                    v.log.debug('Data request for %s completed successfully.',
                                 v.full_name)
                     v.status = core.ObjectStatus.SUCCEEDED
                 elif v.failed:
@@ -610,7 +613,7 @@ class DataSourceQFPMixin(core.MDTFObjectBase, util.CaseLoggerMixin,
             if p.failed:
                 p.log.debug('Data request for %s failed.', p.full_name)
             else:
-                p.log.debug('Data request for %s completed succesfully.',
+                p.log.debug('Data request for %s completed successfully.',
                             p.full_name)
 
     def query_and_fetch_cleanup(self, signum=None, frame=None):
@@ -686,7 +689,7 @@ class MultirunDataSourceQFPMixin(DataSourceQFPMixin, ABC):
         for _ in range(MAX_DATASOURCE_ITERS):
             vars_to_query = [
                 v for v in self.iter_vars_only(parent, active=True) \
-                if v.stage < diagnostic.VarlistEntryStage.QUERIED
+                if v.stage < varlistentry_util.VarlistEntryStage.QUERIED
             ]
             if not vars_to_query:
                 break  # exit: queried everything or nothing active
@@ -700,7 +703,7 @@ class MultirunDataSourceQFPMixin(DataSourceQFPMixin, ABC):
                     self.query_dataset(v)  # sets v.data
                     if not v.data:
                         raise util.DataQueryEvent("No data found.", v)
-                    v.stage = diagnostic.VarlistEntryStage.QUERIED
+                    v.stage = varlistentry_util.VarlistEntryStage.QUERIED
                 except util.DataQueryEvent as exc:
                     v.deactivate(exc)
                     continue
@@ -754,7 +757,7 @@ class MultirunDataSourceQFPMixin(DataSourceQFPMixin, ABC):
                 update = False
             vars_to_fetch = [
                 v for v in self.iter_vars_only(parent, active=True) \
-                if v.stage < diagnostic.VarlistEntryStage.FETCHED
+                if v.stage < varlistentry_util.VarlistEntryStage.FETCHED
             ]
             if not vars_to_fetch:
                 break  # exit: fetched everything or nothing active
@@ -781,7 +784,7 @@ class MultirunDataSourceQFPMixin(DataSourceQFPMixin, ABC):
                     for d_key in v.iter_data_keys(status=core.ObjectStatus.ACTIVE):
                         if not d_key.local_data:
                             raise util.DataFetchEvent("Fetch failed.", d_key)
-                    v.stage = diagnostic.VarlistEntryStage.FETCHED
+                    v.stage = varlistentry_util.VarlistEntryStage.FETCHED
                 except Exception as exc:
                     update = True
                     chained_exc = util.chain_exc(exc,
@@ -808,7 +811,7 @@ class MultirunDataSourceQFPMixin(DataSourceQFPMixin, ABC):
                 update = False
             vars_to_process = [
                 pv for pv in self.iter_vars(parent, active=True) \
-                if pv.var.stage < diagnostic.VarlistEntryStage.PREPROCESSED
+                if pv.var.stage < varlistentry_util.VarlistEntryStage.PREPROCESSED
             ]
             if not vars_to_process:
                 break  # exit: processed everything or nothing active
@@ -820,7 +823,7 @@ class MultirunDataSourceQFPMixin(DataSourceQFPMixin, ABC):
                     pv.var.log.info("Preprocessing %s.", pv.var)
                     parent.preprocessor.process(pv.var, self.name)
  #                   pv.pod.preprocessor.process(pv.var, self.name)
-                    pv.var.stage = diagnostic.VarlistEntryStage.PREPROCESSED
+                    pv.var.stage = varlistentry_util.VarlistEntryStage.PREPROCESSED
                 except Exception as exc:
                     update = True
                     self.log.exception("%s while preprocessing %s: %r",
@@ -852,7 +855,7 @@ class MultirunDataSourceQFPMixin(DataSourceQFPMixin, ABC):
         for p in self.iter_children():
             for v in p.iter_children():
                 if v.status == core.ObjectStatus.ACTIVE:
-                    v.log.debug('Data request for %s completed succesfully.',
+                    v.log.debug('Data request for %s completed successfully.',
                                 v.full_name)
                     v.status = core.ObjectStatus.SUCCEEDED
                 elif v.failed:

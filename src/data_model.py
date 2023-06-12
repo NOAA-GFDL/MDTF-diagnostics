@@ -9,7 +9,7 @@ import dataclasses as dc
 import itertools
 import typing
 from src import util
-import src.units # fully qualify name to reduce confusion with "units" attributes
+import src.units  # fully qualify name to reduce confusion with "units" attributes
 import src.core
 import logging
 _log = logging.getLogger(__name__)
@@ -253,11 +253,11 @@ class DMCoordinate(_DMCoordinateShared):
 class DMLongitudeCoordinate(_DMCoordinateShared):
     """Class to describe a longitude dimension coordinate.
     """
-    name: str = 'lon'
+    name: str = util.MANDATORY
     """Coordinate name."""
     # bounds_var: AbstractDMCoordinateBounds
     # [scalar] value: int or float
-    standard_name: str = 'longitude'
+    standard_name: str = util.MANDATORY
     """Coordinate CF standard name."""
     units: src.units.Units = 'degrees_east'
     """Coordinate units (str or :class:`~src.units.Units`)."""
@@ -268,11 +268,11 @@ class DMLongitudeCoordinate(_DMCoordinateShared):
 class DMLatitudeCoordinate(_DMCoordinateShared):
     """Class to describe a latitude dimension coordinate.
     """
-    name: str = 'lat'
+    name: str = util.MANDATORY
     """Coordinate name; defaults to 'lat'."""
     # bounds_var: AbstractDMCoordinateBounds
     # [scalar] value: int or float
-    standard_name: str = 'latitude'
+    standard_name: str = util.MANDATORY
     """Coordinate CF standard name."""
     units: src.units.Units = 'degrees_north'
     """Coordinate units (str or :class:`~src.units.Units`)."""
@@ -388,6 +388,7 @@ AbstractDMCoordinate.register(DMGenericTimeCoordinate)
 AbstractDMCoordinate.register(DMTimeCoordinate)
 AbstractDMCoordinate.register(DMBoundsDimension)
 
+
 def coordinate_from_struct(d, class_dict=None, **kwargs):
     """Attempt to instantiate the correct :class:`DMCoordinate` class based on
     information in dict *d* (read from JSON file).
@@ -415,11 +416,16 @@ def coordinate_from_struct(d, class_dict=None, **kwargs):
         ax = 'OTHER'
         if 'axis' in d:
             ax = d['axis']
-        elif d.get('standard_name', "") in standard_names:
-            ax = standard_names[d['standard_name']]
+        else:
+            # try to match an axis value (X,Y,T) to the dimension. The standard name of the dimension specified
+            # in the input json file must contain the word "longitude", "latitude", or "time"
+            for k in standard_names.keys():
+                if k in d.get('standard_name', ""):
+                    ax = standard_names[k]
         return util.coerce_to_dataclass(d, class_dict[ax], **kwargs)
     except Exception:
         raise ValueError(f"Couldn't parse coordinate: {repr(d)}")
+
 
 class _DMPlaceholderCoordinateBase(object):
     """Dummy base class for placeholder coordinates. Placeholder coordinates are

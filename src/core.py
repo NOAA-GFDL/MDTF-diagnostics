@@ -155,6 +155,7 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
 
 # -----------------------------------------------------------------------------
 
+
 ConfigTuple = collections.namedtuple(
     'ConfigTuple', 'name backup_filename contents'
 )
@@ -162,9 +163,10 @@ ConfigTuple.__doc__ = """
     Class wrapping general structs used for configuration.
 """
 
+
 class ConfigManager(util.Singleton, util.NameSpace):
     def __init__(self, cli_obj=None, pod_info_tuple=None, global_env_vars=None,
-        case_d=None, log_config=None, unittest=False):
+                 case_d=None, log_config=None, unittest=False):
         self._unittest = unittest
         self._configs = dict()
         if self._unittest:
@@ -365,6 +367,7 @@ class TempDirManager(util.Singleton):
 
 _NO_TRANSLATION_CONVENTION = 'None' # naming convention for disabling translation
 
+
 @util.mdtf_dataclass
 class TranslatedVarlistEntry(data_model.DMVariable):
     """Class returned by :meth:`VarlistTranslator.translate`. Marks some
@@ -386,6 +389,7 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
     log: typing.Any = util.MANDATORY # assigned from parent var
+
 
 @util.mdtf_dataclass
 class FieldlistEntry(data_model.DMDependentVariable):
@@ -458,8 +462,8 @@ class FieldlistEntry(data_model.DMDependentVariable):
         key = new_coord.name
         if key not in self.scalar_coord_templates:
             raise ValueError((f"Don't know how to name {c.name} ({c.axis}) slice "
-                f"of {self.name}."
-            ))
+                              f"of {self.name}."
+                              ))
         # construct convention's name for this variable on a level
         name_template = self.scalar_coord_templates[key]
         new_name = name_template.format(value=int(new_coord.value))
@@ -833,6 +837,7 @@ class MDTFFramework(MDTFObjectBase):
         self.cases = dict()
         self.global_env_vars = dict()
         self.multirun = False
+        self.preprocess_data = True
         self.pods = dict()
         try:
             # load pod data
@@ -929,27 +934,31 @@ class MDTFFramework(MDTFObjectBase):
 
         if cli_obj.config.get('disable_preprocessor', False):
             _log.warning(("User disabled metadata checks and unit conversion in "
-                "preprocessor."),  extra={'tags': {util.ObjectLogTag.BANNER}})
+                          "preprocessor."),  extra={'tags': {util.ObjectLogTag.BANNER}})
         if cli_obj.config.get('overwrite_file_metadata', False):
             _log.warning(("User chose to overwrite input file metadata with "
-                "framework values (convention = '%s')."),
-                cli_obj.config.get('convention', ''),
-                extra={'tags': {util.ObjectLogTag.BANNER}}
+                          "framework values (convention = '%s')."),
+                         cli_obj.config.get('convention', ''),
+                         extra={'tags': {util.ObjectLogTag.BANNER}}
             )
         if cli_obj.config.get('data_type') == 'multi_run':
             self.multirun = True
             _log.info("Running framework in multi-run mode ")
         else:
             _log.info("Running framework in single-run mode ")
-        # check this here, otherwise error raised about missing caselist is not informative
+
+        # verify CASE_ROOT_DIR, otherwise error raised about missing caselist is not informative
         try:
             if cli_obj.config.get('CASE_ROOT_DIR', ''):
                 util.check_dir(cli_obj.config['CASE_ROOT_DIR'], 'CASE_ROOT_DIR',
-                    create=False)
+                               create=False)
         except Exception as exc:
             _log.fatal((f"Mis-specified input for CASE_ROOT_DIR (received "
-                f"'{cli_obj.config.get('CASE_ROOT_DIR', '')}', caught {repr(exc)}.)"))
+                        f"'{cli_obj.config.get('CASE_ROOT_DIR', '')}', caught {repr(exc)}.)"))
             util.exit_handler(code=1)
+
+        if "no_pp" in cli_obj.config.get('data_manager').lower():
+            self.preprocess_data = False
 
     def parse_env_vars(self, cli_obj):
         # don't think PODs use global env vars?
@@ -967,10 +976,13 @@ class MDTFFramework(MDTFObjectBase):
         for arg in args:
             if arg == 'all':
                 # add all PODs except example PODs
-                pods.extend([p for p in pod_data if not p.startswith('example')])
+                pods.extend([p for p in pod_data if not p.lower().startswith('example')])
             elif arg == 'example' or arg == 'examples':
                 # add example PODs
-                pods.extend([p for p in pod_data if p.startswith('example')])
+                if self.multirun:
+                    pods.extend([p for p in pod_data if p.lower() == 'example_multicase'])
+                else:
+                    pods.extend([p for p in pod_data if p.lower() == 'example'])
             elif arg in pod_info_tuple.realm_data:
                 # realm_data: realm name -> list of POD names
                 # add all PODs for this realm
@@ -988,18 +1000,18 @@ class MDTFFramework(MDTFObjectBase):
                 + pod_info_tuple.sorted_realms \
                 + pod_info_tuple.sorted_pods
             _log.critical(("The following POD identifiers were not recognized: "
-                "[%s].\nRecognized identifiers are: [%s].\n(Received --pods = %s)."),
-                ', '.join(f"'{p}'" for p in bad_args),
-                ', '.join(f"'{p}'" for p in valid_args),
-                str(list(args))
-            )
+                           "[%s].\nRecognized identifiers are: [%s].\n(Received --pods = %s)."),
+                          ', '.join(f"'{p}'" for p in bad_args),
+                          ', '.join(f"'{p}'" for p in valid_args),
+                          str(list(args))
+                          )
             util.exit_handler(code=1)
 
         pods = list(set(pods)) # delete duplicates
         if not pods:
             _log.critical(("ERROR: no PODs selected to be run. Do `./mdtf info pods`"
-                " for a list of available PODs, and check your -p/--pods argument."
-                f"\nReceived --pods = {str(list(args))}"))
+                           " for a list of available PODs, and check your -p/--pods argument."
+                           f"\nReceived --pods = {str(list(args))}"))
             util.exit_handler(code=1)
         return pods
 
@@ -1030,7 +1042,7 @@ class MDTFFramework(MDTFObjectBase):
         for field in ['FIRSTYR', 'LASTYR', 'convention']:
             if not d.get(field, None):
                 _log.warning(("No value set for %s in caselist entry #%d, "
-                    "skipping."), field, n+1)
+                              "skipping."), field, n+1)
                 return None
         # if pods set from CLI, overwrite pods in case list
         d['pod_list'] = self.set_case_pod_list(d, cli_obj, pod_info_tuple)
@@ -1054,8 +1066,8 @@ class MDTFFramework(MDTFObjectBase):
                 self.cases[case['CASENAME']] = case
         if not self.cases:
             _log.critical(("No valid entries in case_list. Please specify "
-                "model run information.\nReceived:"
-                f"\n{util.pretty_print_json(case_list_in)}"))
+                           "model run information.\nReceived:"
+                           f"\n{util.pretty_print_json(case_list_in)}"))
             util.exit_handler(code=1)
 
     def verify_paths(self, config, p):
@@ -1143,9 +1155,15 @@ class MDTFFramework(MDTFObjectBase):
 
             for case_name, case in self.cases.items():
                 if not case.failed:
-                    _log.info("### %s: requesting data for case '%s'.",
-                              self.full_name, case_name)
-                    case.request_data()
+                    if type(case).__name__ ==  'NoPPDataSource':
+                        _log.info("### %s: Skipping Data Preprocessing for case '%s'."
+                                  "Variables will not be renamed, and level extraction,"
+                                  "will not be done on 4-D fields.",
+                                  self.full_name, case_name)
+                    else:
+                        _log.info("### %s: requesting data for case '%s'.",
+                                  self.full_name, case_name)
+                        case.request_data()
                 else:
                     _log.info(("### %s: initialization for case '%s' failed; skipping "
                                f"data request."), self.full_name, case_name)
@@ -1169,29 +1187,39 @@ class MDTFFramework(MDTFObjectBase):
         else:
             # Import multirun methods here to avoid circular import problems
             # e.g., multirun.py inherits from diagnostic.py which inherits from core.py
-            from src.diagnostic import MultirunDiagnostic
+            from src.diagnostic import MultirunDiagnostic, MultirunNoPPDiagnostic
             pod_dict = dict.fromkeys(self.pod_list, [])
+            self.pods = pod_dict
             for pod in pod_dict.keys():
+                if self.preprocess_data:
+                    pod_dict[pod] = MultirunDiagnostic.from_config(pod, parent=self)
                 # Initialize the pod as a MultirunDiagnostic object
                 # Attach the caselist dict, and append case-specific attributes to each case object
                 # Set the POD attributes including paths, pod_env_vars, and the convention
                 # Append the varlist and import variable information from the pod settings file
-                pod_dict[pod] = MultirunDiagnostic.from_config(pod, parent=self)
+                else:  # initialize noPP object
+                    pod_dict[pod] = MultirunNoPPDiagnostic.from_config(pod, parent=self)
                 # Translate varlist variables and metadata
                 # Perform data preprocessing
                 pod_dict[pod].setup_pod()
                 # query the data
                 # request the data
                 util.transfer_log_cache(close=True)
-                for case_name, case in pod_dict[pod].cases.items():
-                    if not case.failed:
-                        _log.info("### %s: requesting data for case '%s'.",
-                                  self.full_name, case_name)
-                        case.request_data(pod_dict[pod])
-                    else:
-                        _log.info(("### %s: initialization for case '%s' failed; skipping "
-                                   f"data request."), self.full_name, case_name)
-            self.pods = pod_dict
+                if type(pod_dict[pod]).__name__ == 'MultirunNoPPDiagnostic':
+                    _log.info("### %s: Skipping Data Preprocessing for POD '%s'."
+                              "Variables will not be renamed, and level extraction,"
+                              "will not be done on 4-D fields.",
+                              self.full_name, pod)
+                else:
+                    for case_name, case in pod_dict[pod].cases.items():
+                        if not case.failed:
+                            _log.info("### %s: requesting data for case '%s'.",
+                                      self.full_name, case_name)
+                            case.request_data(pod_dict[pod])
+                        else:
+                            _log.info(("### %s: initialization for case '%s' failed; skipping "
+                                       f"data request."), self.full_name, case_name)
+
             if not any(p.failed for p in self.pods.values()):
                 _log.info("### %s: running pods '%s'.", self.full_name, [p for p in pod_dict.keys()])
                 run_mgr = self.RuntimeManager(self.pods, self.EnvironmentManager, self)

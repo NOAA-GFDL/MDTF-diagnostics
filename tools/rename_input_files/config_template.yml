@@ -1,0 +1,23 @@
+# Configuration file template for rename_input_files
+parameters:
+    # Define the casename and output frequency to substitute in the file names and output directories
+    # Define other parameters if needed
+    # assign an anchor name using the `&`
+    casename: &casename GFDL
+    frequency: &frequency mon
+
+CASENAME: *casename
+# Define the path to the directory containing the file(s) to rename
+inputPath: /home/mdtf/inputdata/model/SAM0-UNICON_r1i1p1f1_gn/mon
+# Define the path where the renamed files will be linked
+outputPath: /home/test_output
+# Define the target file(s) and variable name(s) to substitute in each file (1 variable per file)
+files:
+  -
+     name: SAM0-UNICON_r1i1p1f1_gn-1983-1997-ta.nc
+     var: tas
+     freq: *frequency
+  -
+    name: SAM0-UNICON_r1i1p1f1_gn-1998-2008-prect.nc
+    var: prect
+    freq: *frequency

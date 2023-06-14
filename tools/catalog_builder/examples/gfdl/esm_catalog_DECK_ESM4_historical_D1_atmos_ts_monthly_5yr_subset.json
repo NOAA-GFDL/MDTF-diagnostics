@@ -62,6 +62,10 @@
       "vocabulary": ""
     },
     {
+      "column_name": "assoc_files",
+      "vocabulary": ""
+    },
+    {
       "column_name": "file_name",
       "vocabulary": ""
     },

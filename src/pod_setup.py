@@ -5,6 +5,7 @@ import logging
 import os
 from pathlib import Path
 from src import cli, util, varlistentry_util, varlist_util
+import intake_esm
 
 _log = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class PodBaseClass(metaclass=util.MDTFABCMeta):
     def parse_pod_settings_file(self, code_root: str):
         pass
 
-    def setup_pod(self, code_root: str, case_list: dict, catalog_path: str):
+    def setup_pod(self, config: util.NameSpace):
         pass
 
     def setup_var(self, pod, v):
@@ -27,6 +28,7 @@ class PodObject(PodBaseClass, ABC):
     name = str
     pod_dims = dict
     pod_vars = dict
+    pod_settings = dict
 
     def __init__(self, name: str):
         self.name = name
@@ -39,31 +41,51 @@ class PodObject(PodBaseClass, ABC):
         settings_dict = cli.parse_config_file(settings_file_path)
         return util.NameSpace.fromDict({k: settings_dict[k] for k in settings_dict.keys()})
 
-    def get_pod_settings(self, pod_settings_dict: util.NameSpace):
+    def _get_pod_settings(self, pod_settings_dict: util.NameSpace):
         self.pod_settings = util.NameSpace.toDict(pod_settings_dict.settings)
 
-    def get_pod_dims(self, pod_settings_dict: util.NameSpace):
+    def _get_pod_dims(self, pod_settings_dict: util.NameSpace):
         self.pod_dims = util.NameSpace.toDict(pod_settings_dict.dims)
 
-    def get_pod_vars(self, pod_settings_dict: util.NameSpace):
+    def _get_pod_vars(self, pod_settings_dict: util.NameSpace):
         self.pod_vars = util.NameSpace.toDict(pod_settings_dict.vars)
 
-    def setup_pod(self, code_root: str, case_list: util.NameSpace, catalog_path: str):
+    def get_pod_data_subset(self, catalog_path, case_list):
+        cat = intake.open_esm_datastore(catalog_path)
+        # filter catalog by desired variable and output frequency
+        tas_subset = cat.search(variable_id=tas_var, frequency="day")
+    def query_files_in_time_range(self, startdate, enddate):
+    def setup_pod(self, runtime_config: util.NameSpace):
         """Update POD information
         """
-        pod_input = self.parse_pod_settings_file(code_root)
-        self.get_pod_settings(pod_input)
-        self.get_pod_vars(pod_input)
-        self.get_pod_dims(pod_input)
-        for case_name, case_dict in case_list.items():
-            for v in case_dict.iter_children():
-                try:
-                    self.setup_var(v, case_dict.attrs.date_range, case_name)
-                except Exception as exc:
-                    chained_exc = util.chain_exc(exc, f"configuring {v.full_name} in multirun mode.",
-                                                 util.PodConfigError)
-                    v.deactivate(chained_exc)
-                    continue
+        # Parse the POD settings file
+        pod_input = self.parse_pod_settings_file(runtime_config.code_root)
+        self._get_pod_settings(pod_input)
+        self._get_pod_vars(pod_input)
+        self._get_pod_dims(pod_input)
+        # run the PODs on data that has already been preprocessed
+        # PODs will ingest input directly from catalog that (should) contain
+        # the information for the saved preprocessed files, and a pre-existing case_env file
+        if runtime_config.persist_data:
+            pass
+        elif runtime_config.run_pp:
+            # translate variable(s) to user_specified standard if necessary
+
+            # get level
+
+        else:
+            pass
+        # run custom scripts on dataset
+        if any([s for s in runtime_config.my_scripts]):
+            pass
+
+        # ref for dict comparison
+        # https://stackoverflow.com/questions/20578798/python-find-matching-values-in-nested-dictionary
+
+        cat_subset = get_pod_data_subset(runtime_config.CATALOG_PATH, runtime_config.case_list)
+
+        self.setup_var(v, case_dict.attrs.date_range, case_name)
+
         # preprocessor will edit case varlist alternates, depending on enabled functions
         # self is the Mul
         self.preprocessor = self._PreprocessorClass(self)

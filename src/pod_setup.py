@@ -4,7 +4,7 @@ from abc import ABC
 import logging
 import os
 from pathlib import Path
-from src import cli, util, varlistentry_util, varlist_util
+from src import cli, util, data_model, translation, varlistentry_util, varlist_util
 import intake_esm
 
 _log = logging.getLogger(__name__)
@@ -21,6 +21,140 @@ class PodBaseClass(metaclass=util.MDTFABCMeta):
 
     def setup_var(self, pod, v):
         pass
+
+class Varlist(data_model.DMDataSet, ABC):
+    """Class to perform bookkeeping for the model variables requested by a
+        single POD for multiple cases/ensemble members
+    """
+
+    @classmethod
+    def from_struct(cls, d, parent):
+        """Parse the "dimensions", "data" and "varlist" sections of the POD's
+        settings.jsonc file when instantiating a new :class:`Diagnostic` object.
+
+        Args:
+            parent: instance of the parent class object
+            d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
+
+        Returns:
+            :py:obj:`dict`, keys are names of the dimensions in POD's convention,
+            values are :class:`PodDataDimension` objects.
+        """
+
+        def _pod_dimension_from_struct(name, dd, v_settings):
+            class_dict = {
+                'X': varlist_util.VarlistHorizontalCoordinate,
+                'Y': varlist_util.VarlistHorizontalCoordinate,
+                'Z': varlist_util.VarlistVerticalCoordinate,
+                'T': varlist_util.VarlistPlaceholderTimeCoordinate,
+                'OTHER': varlist_util.VarlistCoordinate
+            }
+            try:
+                return data_model.coordinate_from_struct(
+                    dd, class_dict=class_dict, name=name,
+                    **v_settings.time_settings
+                )
+            except Exception:
+                raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
+
+        def _iter_shallow_alternates(var):
+            """Iterator over all VarlistEntries referenced as alternates. Doesn't
+            traverse alternates of alternates, etc.
+            """
+            for alt_vs in var.alternates:
+                yield from alt_vs
+
+        vlist_settings = util.coerce_to_dataclass(
+            d.get('data', dict()), varlist_util.VarlistSettings)
+        globals_d = vlist_settings.global_settings
+
+        assert 'dimensions' in d
+        dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings)
+                  for k, v in d['dimensions'].items()}
+
+        assert 'varlist' in d
+        vlist_vars = {
+            k: varlistentry_util.VarlistEntry.from_struct(globals_d, dims_d, name=k, parent=parent, **v) \
+            for k, v in d['varlist'].items()
+        }
+        for v in vlist_vars.values():
+            # validate & replace names of alt vars with references to VE objects
+            for altv_name in _iter_shallow_alternates(v):
+                if altv_name not in vlist_vars:
+                    raise ValueError((f"Unknown variable name {altv_name} listed "
+                                      f"in alternates for varlist entry {v.name}."))
+            linked_alts = []
+            for alts in v.alternates:
+                linked_alts.append([vlist_vars[v_name] for v_name in alts])
+            v.alternates = linked_alts
+        return cls(contents=list(vlist_vars.values()))
+
+    def find_var(self, v):
+        """If a variable matching *v* is already present in the Varlist, return
+        (a reference to) it (so that we don't try to add duplicates), otherwise
+        return None.
+        """
+        for vv in self.iter_vars():
+            if v == vv:
+                return vv
+        return None
+
+    def setup_var(self, pod, v):
+        """Update VarlistEntry fields with information that only becomes
+        available after DataManager and Diagnostic have been configured (ie,
+        only known at runtime, not from settings.jsonc.)
+
+        Could arguably be moved into VarlistEntry's init, at the cost of
+        dependency inversion.
+        """
+        translate = translation.VariableTranslator().get_convention(self.convention)
+        if v.T is not None:
+            v.change_coord(
+                'T',
+                new_class={
+                    'self': varlist_util.VarlistTimeCoordinate,
+                    'range': util.DateRange,
+                    'frequency': util.DateFrequency
+                },
+                range=self.attrs.date_range,
+                calendar=util.NOTSET,
+                units=util.NOTSET
+            )
+        v.dest_path = self.variable_dest_path(pod, v)
+        try:
+            trans_v = translate.translate(v)
+            v.translation = trans_v
+            # copy preferred gfdl post-processing component during translation
+            if hasattr(trans_v, "component"):
+                v.component = trans_v.component
+        except KeyError as exc:
+            # can happen in normal operation (eg. precip flux vs. rate)
+            chained_exc = util.PodConfigEvent((f"Deactivating {v.full_name} due to "
+                                               f"variable name translation: {str(exc)}."))
+            # store but don't deactivate, because preprocessor.edit_request()
+            # may supply alternate variables
+            v.log.store_exception(chained_exc)
+        except Exception as exc:
+            chained_exc = util.chain_exc(exc, f"translating name of {v.full_name}.",
+                                         util.PodConfigError)
+            # store but don't deactivate, because preprocessor.edit_request()
+            # may supply alternate variables
+            v.log.store_exception(chained_exc)
+
+        v.stage = varlistentry_util.VarlistEntryStage.INITED
+
+    def variable_dest_path(self, pod, var):
+        """Returns the absolute path of the POD's preprocessed, local copy of
+        the file containing the requested dataset. Files not following this
+        convention won't be found by the POD.
+        """
+        if var.is_static:
+            f_name = f"{self.name}.{var.name}.static.nc"
+            return os.path.join(pod.POD_WK_DIR, f_name)
+        else:
+            freq = var.T.frequency.format_local()
+            f_name = f"{self.name}.{var.name}.{freq}.nc"
+            return os.path.join(pod.POD_WK_DIR, freq, f_name)
 
 
 class PodObject(PodBaseClass, ABC):
@@ -69,7 +203,11 @@ class PodObject(PodBaseClass, ABC):
         if runtime_config.persist_data:
             pass
         elif runtime_config.run_pp:
-            # translate variable(s) to user_specified standard if necessary
+            for case_name, case_dict in runtime_config.case_list.items():
+                if self.pod_settings.convention != case_dict.convention:
+                # translate variable(s) to user_specified standard if necessary
+                    case_dict.varlist = Varlist.from_struct(case_dict)
+
 
             # get level
 
@@ -99,13 +237,13 @@ class PodObject(PodBaseClass, ABC):
                 # specified
                 if v.last_exception is not None and not v.failed:
                     v.deactivate(v.last_exception, level=logging.WARNING)
-            if case_dict.status == core.ObjectStatus.NOTSET and \
-                    any(v.status == core.ObjectStatus.ACTIVE for v in case_dict.iter_children()):
-                case_dict.status = core.ObjectStatus.ACTIVE
+            if case_dict.status == util.ObjectStatus.NOTSET and \
+                    any(v.status == util.ObjectStatus.ACTIVE for v in case_dict.iter_children()):
+                case_dict.status = util.ObjectStatus.ACTIVE
         # set MultirunDiagnostic object status to Active if all case statuses are Active
-        if self.status == core.ObjectStatus.NOTSET and \
-                all(case_dict.status == core.ObjectStatus.ACTIVE for case_name, case_dict in self.cases.items()):
-            self.status = core.ObjectStatus.ACTIVE
+        if self.status == util.ObjectStatus.NOTSET and \
+                all(case_dict.status == util.ObjectStatus.ACTIVE for case_name, case_dict in self.cases.items()):
+            self.status = util.ObjectStatus.ACTIVE
 
     def setup_var(self, v, date_range: util.DateRange, case_name: str):
         """Update VarlistEntry fields "v" with information that only becomes
@@ -115,7 +253,7 @@ class PodObject(PodBaseClass, ABC):
         Could arguably be moved into VarlistEntry's init, at the cost of
         dependency inversion.
         """
-        translate = core.VariableTranslator().get_convention(self.convention)
+        translate = translation.VariableTranslator().get_convention(self.convention)
         if v.T is not None:
             v.change_coord(
                 'T',

@@ -76,14 +76,8 @@ class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
 
 
 @util.mdtf_dataclass
-class VarlistLongitudeCoordinate(data_model.DMLongitudeCoordinate,
-                                 VarlistCoordinateMixin):
-    range: tuple = None
-
-
-@util.mdtf_dataclass
-class VarlistLatitudeCoordinate(data_model.DMLatitudeCoordinate,
-                                VarlistCoordinateMixin):
+class VarlistHorizontalCoordinate(data_model.DMHorizontalCoordinate,
+                                  VarlistCoordinateMixin):
     range: tuple = None
 
 

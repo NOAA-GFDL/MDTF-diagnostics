@@ -27,22 +27,6 @@ import datetime
 
 _log = logging.getLogger(__name__)
 
-ObjectStatus = util.MDTFEnum(
-    'ObjectStatus',
-    'NOTSET ACTIVE INACTIVE FAILED SUCCEEDED',
-    module=__name__
-)
-ObjectStatus.__doc__ = """
-:class:`util.MDTFEnum` used to track the status of an object hierarchy object:
-- *NOTSET*: the object hasn't been fully initialized.
-- *ACTIVE*: the object is currently being processed by the framework.
-- *INACTIVE*: the object has been initialized, but isn't being processed (e.g.,
-  alternate :class:`~diagnostic.VarlistEntry`\s).
-- *FAILED*: processing of the object has encountered an error, and no further
-  work will be done.
-- *SUCCEEDED*: Processing finished successfully.
-"""
-
 
 class MainLogger(util.MDTFObjectLoggerMixin, util.MDTFObjectLogger):
     """Class to hold logging information for main driver script"""
@@ -74,7 +58,7 @@ class MainLogger(util.MDTFObjectLoggerMixin, util.MDTFObjectLogger):
 def main(ctx, configfile: str, verbose: bool = False) -> int:
     """A community-developed package to run Process Oriented Diagnostics on weather and climate data
     """
-    status: ObjectStatus = dataclasses.field(default=ObjectStatus.NOTSET, compare=False)
+    status: util.ObjectStatus = dataclasses.field(default=util.ObjectStatus.NOTSET, compare=False)
     # Cache log info in memory until log file is set up
     util.logs.initial_log_config()
 
@@ -100,7 +84,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # configure pod object(s)
     for pod_name in ctx.config.pod_list:
         pod_obj = pod_setup.PodObject(pod_name)
-        pod_obj.setup_pod(ctx.config.code_root, ctx.config.case_list, ctx.config.DATA_CATALOG)
+        pod_obj.setup_pod(ctx.config, ctx.config, ctx.config)
 
     # close the main log file
     log._log_handler.close()

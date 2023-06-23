@@ -16,6 +16,23 @@ import logging.config
 import logging.handlers
 _log = logging.getLogger(__name__)
 
+ObjectStatus = basic.MDTFEnum(
+    'ObjectStatus',
+    'NOTSET ACTIVE INACTIVE FAILED SUCCEEDED',
+    module=__name__
+)
+ObjectStatus.__doc__ = """
+:class:`util.MDTFEnum` used to track the status of an object hierarchy object:
+- *NOTSET*: the object hasn't been fully initialized.
+- *ACTIVE*: the object is currently being processed by the framework.
+- *INACTIVE*: the object has been initialized, but isn't being processed (e.g.,
+  alternate :class:`~diagnostic.VarlistEntry`\s).
+- *FAILED*: processing of the object has encountered an error, and no further
+  work will be done.
+- *SUCCEEDED*: Processing finished successfully.
+"""
+
+
 class MDTFConsoleHandler(logging.StreamHandler):
     """Dummy class to designate logging to stdout or stderr from the root logger.
     """

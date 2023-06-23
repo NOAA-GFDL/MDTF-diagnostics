@@ -315,7 +315,7 @@ class NameSpace(dict):
         self.clear()
         self.update(state)
 
-    def toDict(self):
+    def toDict(self) -> dict:
         """Recursively converts a NameSpace back into a dictionary.
         """
         return type(self)._toDict(self)

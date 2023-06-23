@@ -51,7 +51,7 @@
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
   // Full path to model data ESM-intake catalog header file
-  "DATA_CATALOG": "/local2/home/mdtf/MDTF-diagnostics/tools/catalog_builder/examples/gfdl/esm_catalog_DECK_ESM4_historical_D1_atmos_ts_monthly_5yr_subset.json",
+  "DATA_CATALOG": "/local2/home/mdtf/diagnostics/example_multicase/esm_catalog_CMIP_Synthetic_r1i1p1f1_gr1.json",
   // Backwards compatibility
   "MODEL_DATA_ROOT": "../mdtf_test_data",
   // Parent directory containing observational data used by individual PODs.
@@ -90,12 +90,13 @@
   "environment_manager": "Conda",
 
   // Settings affecting what output is generated:
-
+  // Set to true to run the preprocessor; default false:
+  "run_pp": false,
   // Set to true to have PODs save postscript figures in addition to bitmaps.
   "save_ps": false,
 
-  // Set to true to have PODs save netCDF files of processed data.
-  "save_nc": false,
+  // Set to true to have PODs run on data that has already been processed
+  "persist_data": false,
 
   // Set to true to save HTML and bitmap plots in a .tar file.
   "make_variab_tar": false,
@@ -103,6 +104,10 @@
   // Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
   // under a unique name.
   "overwrite": false,
+  // List with custom preprocessing script(s) to run on data
+  "my_scripts" : [
+     ""
+   ],
 
   // Settings used in debugging:
 

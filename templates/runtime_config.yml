@@ -51,13 +51,17 @@ data_manager: "Local_File"
 ### Output Settings ###
 # Set to true to have PODs save postscript figures in addition to bitmaps.
 save_ps: False
-# Set to true to have PODs save netCDF files of processed data.
-save_nc: False
+# Set to true to have PODs run on data that has already been processed
+persist_data: False
 # Set to true to save HTML and bitmap plots in a .tar file.
 make_variab_tar: False
 # Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
 # under a unique name.
 overwrite: False
 ### Developer settings ###
-# Set to True to skip preprocessing
-skip_preprocessor: False
+# Set to True to run the preprocessor
+run_pp: False
+# Additional custom preprocessing scripts to run on data
+# The framework will run the specified scripts whether run_pp is set to True or False
+my_scripts:
+  - ""

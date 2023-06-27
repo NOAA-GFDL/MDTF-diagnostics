@@ -28,7 +28,8 @@ from .filesystem import (
 from .logs import (
     OBJ_LOG_ROOT, ObjectLogTag, MDTFObjectLogger, MDTFObjectLoggerMixin,
     VarlistEntryLoggerMixin, PODLoggerMixin, CaseLoggerMixin,
-    signal_logger, git_info, mdtf_log_header, transfer_log_cache, ObjectStatus
+    signal_logger, git_info, mdtf_log_header, transfer_log_cache, ObjectStatus,
+    MDTFObjectBase
 )
 from .processes import (
     ExceptionPropagatingThread,

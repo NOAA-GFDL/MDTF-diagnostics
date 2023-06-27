@@ -5,7 +5,7 @@ the user via ``--data_manager``; see :doc:`ref_data_sources` and
 import os
 import collections
 import dataclasses
-from src import util, multirun, core, diagnostic, preprocessor, xr_parser, cmip6
+from src import util, diagnostic, preprocessor, xr_parser, cmip6
 from src import data_manager as dm
 from src import query_fetch_preprocess as qfp
 import pandas as pd
@@ -55,8 +55,7 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
     def _set_case_root_dir(self, log=_log):
         """Additional logic to set CASE_ROOT_DIR from MODEL_DATA_ROOT.
         """
-        config = core.ConfigManager()
-        paths = core.PathManager()
+
         if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
             log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
             self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
@@ -96,7 +95,6 @@ sampleLocalFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
     expt_cols = dm.DataFrameQueryColumnGroup(["sample_dataset"])
 )
 
-
 class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
     """DataSource for handling POD sample model data stored on a local filesystem.
     """
@@ -127,39 +125,28 @@ class NoPPDataSource(SampleLocalFileDataSource):
     _PreprocessorClass = preprocessor.NullPreprocessor
 
 
-# ----------------------------------------------------------------------------
-
-class MultirunSampleLocalFileDataSource(multirun.MultirunSingleLocalFileDataSource, SampleLocalFileDataSource):
-    """DataSource for handling POD sample model data stored on a local filesystem.
-    Duplicate of SampleLocalFileDataSource, but need to route to multirun parent data source classes
-    """
-    # No-op=--just inherit attributes, properties, and route to __init__ methods in parent classes
-    pass
-
-class MultirunLocalFileDataSource(MultirunSampleLocalFileDataSource,
-                                  qfp.MultirunDataSourceQFPMixin
-                                  ):
+class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     """DataSource for handling POD sample model data for multirun cases stored on a local filesystem.
     """
     # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
     # _AttributesClass = SampleDataAttributes
     # col_spec = sampleLocalFileDataSource_col_spec
-    varlist: diagnostic.MultirunVarlist = None
-    _DiagnosticClass = diagnostic.MultirunDiagnostic
-    # Override data_manager:DataSourceBase init method
+    varlist: diagnostic.Varlist = None
+    convention: str
 
-    def __init__(self, case_dict, parent):
-        # _id = util.MDTF_ID()        # attrs inherited from core.MDTFObjectBase
+    def __init__(self, case_name: str, case_dict: util.NameSpace, parent):
+        # _id = util.MDTF_ID()        # attrs inherited from util.logs.MDTFObjectBase
         # name: str
         # _parent: object
         # log = util.MDTFObjectLogger
-        # status: ObjectStatus
-        # initialize data source atts and methods from parent classes
-        super(MultirunLocalFileDataSource, self).__init__(case_dict, parent)
-        # borrow MDTFObjectBase initialization from data_manager:~DataSourceBase
-        core.MDTFObjectBase.__init__(
-            self, name=case_dict['CASENAME'], _parent=parent
+        # status: util.ObjectStatus
+        # initialize MDTF logging object associated with this case
+        super().__init__(
+            self, name=case_name, _parent=parent
         )
+        # set up log (CaseLoggerMixin)
+        self.init_log(log_dir=self.MODEL_WK_DIR)
+        self.convention = case_dict.convention
 
     @property
     def _children(self):
@@ -167,32 +154,44 @@ class MultirunLocalFileDataSource(MultirunSampleLocalFileDataSource,
         """
         yield from self.varlist.iter_vars()
 
+    def query_dataset(self, var):
+        """Verify that only a single file was found from each experiment.
+        """
+        super(MultirunSingleLocalFileDataSource, self).query_dataset(var)
+        for d_key in var.data.values():
+            if len(d_key.value) != 1:
+                self._query_error_handler(
+                    "Query found multiple files when one was expected:",
+                    d_key, log=var.log
+                )
 
-class MultirunNoPPDataSource(MultirunSampleLocalFileDataSource, qfp.MultirunDataSourceQFPMixin):
-    """DataSource for handling Multirun POD data that won't be preprocessed
+
+class CMIPDataSource(DataSourceBase):
+    """DataSource for handling POD sample model data for multirun cases stored on a local filesystem.
     """
-    # No-op=--just inherit attributes, properties, and route to __init__ methods in parent classes
-    _PreprocessorClass = preprocessor.MultirunNullPreprocessor
-    varlist: diagnostic.MultirunVarlist = None
+    # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
+    # _AttributesClass = SampleDataAttributes
+    # col_spec = sampleLocalFileDataSource_col_spec
+    convention: str = "CMIP"
 
-    def __init__(self, case_dict, parent):
-        # _id = util.MDTF_ID()        # attrs inherited from core.MDTFObjectBase
-        # name: str
-        # _parent: object
-        # log = util.MDTFObjectLogger
-        # status: ObjectStatus
-        # initialize data source atts and methods from parent classes
-        super(MultirunNoPPDataSource, self).__init__(case_dict, parent)
 
-        core.MDTFObjectBase.__init__(
-            self, name=case_dict['CASENAME'], _parent=parent
-        )
+class CESMDataSource(DataSourceBase):
+    """DataSource for handling POD sample model data for multirun cases stored on a local filesystem.
+    """
+    # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
+    # _AttributesClass = SampleDataAttributes
+    # col_spec = sampleLocalFileDataSource_col_spec
+    convention: str = "CESM"
 
-    @property
-    def _children(self):
-        """Iterable of the multirun varlist that is associated with the data source object
-        """
-        yield from self.varlist.iter_vars()
+
+class GFDLDataSource(DataSourceBase):
+    """DataSource for handling POD sample model data for multirun cases stored on a local filesystem.
+    """
+    # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
+    # _AttributesClass = SampleDataAttributes
+    # col_spec = sampleLocalFileDataSource_col_spec
+    convention: str = "GFDL"
+
 
 
 class MetadataRewriteParser(xr_parser.DefaultDatasetParser):

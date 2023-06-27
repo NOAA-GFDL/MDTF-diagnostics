@@ -1,5 +1,6 @@
 """Utilities related to configuration and handling of framework logging.
 """
+import abc
 import os
 import sys
 import argparse
@@ -8,8 +9,10 @@ import io
 import subprocess
 import signal
 import traceback
+import typing
+import dataclasses as dc
 
-from . import basic, exceptions
+from . import basic, dataclass, exceptions
 
 import logging
 import logging.config
@@ -38,6 +41,7 @@ class MDTFConsoleHandler(logging.StreamHandler):
     """
     pass
 
+
 class StringIOHandler(logging.StreamHandler):
     """:py:class:`~logging.StreamHandler` instance that writes log entries to
     an internal :py:class:`~io.StringIO` buffer.
@@ -60,6 +64,7 @@ class StringIOHandler(logging.StreamHandler):
     def buffer_contents(self):
         """Return contents of buffer as a string."""
         return self._log_buffer.getvalue()
+
 
 class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
     """Subclass :py:class:`~logging.handlers.MemoryHandler` to enable flushing
@@ -109,6 +114,7 @@ class MultiFlushMemoryHandler(logging.handlers.MemoryHandler):
             logger.warning("No non-console loggers configured.")
             self.transfer(logging.lastResort)
 
+
 class HeaderFileHandler(logging.FileHandler):
     """Subclass :py:class:`~logging.FileHandler` to print system and git repo
     information in a header at the start of a log file without writing it to
@@ -125,12 +131,14 @@ class HeaderFileHandler(logging.FileHandler):
         fp.write(self._log_header())
         return fp
 
+
 class MDTFHeaderFileHandler(HeaderFileHandler):
     """:py:class:`~logging.FileHandler` which adds a header to log files with
     system information, git repo status etc. provided by :func:`mdtf_log_header`.
     """
     def _log_header(self):
         return mdtf_log_header("MDTF PACKAGE LOG")
+
 
 def _hanging_indent(str_, initial_indent, subsequent_indent):
     """Poor man's indenter. Easier than using textwrap for this case.
@@ -156,6 +164,7 @@ def _hanging_indent(str_, initial_indent, subsequent_indent):
     if len(lines_) > 1:
         lines_out = lines_out + [(subsequent_indent+l) for l in lines_[1:]]
     return '\n'.join(lines_out)
+
 
 class HangingIndentFormatter(logging.Formatter):
     """:py:class:`~logging.Formatter` that applies a hanging indent, making it
@@ -229,6 +238,7 @@ class HangingIndentFormatter(logging.Formatter):
             s = s + self.footer
         return s
 
+
 class _LevelFilterBase(logging.Filter):
     """Base class to implement common features of level-based filters."""
     def __init__(self, name="", level=None):
@@ -242,6 +252,7 @@ class _LevelFilterBase(logging.Filter):
                 level = int(level)
         self.levelno = level
 
+
 class GeqLevelFilter(_LevelFilterBase):
     """:py:class:`~logging.Filter` to include only log messages with a severity of
     *level* or worse. This is normally done by setting the *level* attribute on a
@@ -252,6 +263,7 @@ class GeqLevelFilter(_LevelFilterBase):
     def filter(self, record):
         return record.levelno >= self.levelno
 
+
 class LtLevelFilter(_LevelFilterBase):
     """:py:class:`~logging.Filter` to include only log messages with a severity
     less than *level*.
@@ -259,12 +271,14 @@ class LtLevelFilter(_LevelFilterBase):
     def filter(self, record):
         return record.levelno < self.levelno
 
+
 class EqLevelFilter(_LevelFilterBase):
     """:py:class:`~logging.Filter` to include only log messages with a severity
     equal to *level*.
     """
     def filter(self, record):
         return record.levelno == self.levelno
+
 
 class NameMatchFilter(logging.Filter):
     """:py:class:`~logging.Filter` that only accepts log events directed to it
@@ -280,7 +294,9 @@ class NameMatchFilter(logging.Filter):
     def filter(self, record):
         return (record.name == self._name)
 
+
 OBJ_LOG_TAG_ATTR_NAME = 'tags'
+
 
 class TagMatchFilter(logging.Filter):
     """:py:class:`~logging.Filter` which only accepts records having the
@@ -302,6 +318,7 @@ class TagMatchFilter(logging.Filter):
 
 # ------------------------------------------------------------------------------
 
+
 # standardize
 OBJ_LOG_ROOT = 'MDTF' # "root logger" of the object logger hierarchy
 ObjectLogTag = basic.MDTFEnum(
@@ -314,6 +331,7 @@ attribute on :py:class:`~logging.LogRecord` objects can take, and that
 :class:`TagMatchFilter` can listen for. These specify different destinations for
 the logging events.
 """
+
 
 class MDTFObjectLogger(logging.Logger):
     """This class wraps functionality for use by :class:`MDTFObjectLoggerMixin`
@@ -405,7 +423,8 @@ class MDTFObjectLogger(logging.Logger):
         self.log._log_handler.close()
         self.log._log_handler = None
 
-class MDTFObjectLoggerMixinBase():
+
+class MDTFObjectLoggerMixinBase:
     """Dummy base class acting as a parent for all logging mixin classes for
     elements of the object hierarchy.
     """
@@ -506,7 +525,7 @@ class VarlistEntryLoggerMixin(MDTFObjectLoggerMixin):
         self.log.addHandler(self._nc_history_log)
 
 
-class _CaseAndPODHandlerMixin():
+class _CaseAndPODHandlerMixin:
     """Common methods for providing per-object logging for
     :class:`PODLoggerMixin` and :class:`CaseLoggerMixin`.
     """
@@ -531,11 +550,13 @@ class _CaseAndPODHandlerMixin():
         self._out_file_log.setFormatter(formatter)
         self.log.addHandler(self._out_file_log)
 
+
 class PODLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixin):
     """Mixin providing per-object logging for :class:`~diagnostic.Diagnostic`
     (POD objects.)
     """
     pass
+
 
 class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixinBase):
     """Mixin providing per-object logging for :class:`~data_manager.DataSourceBase`
@@ -546,7 +567,7 @@ class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixinBase):
         # NB: no super(); redefining the method
         if fmt is None:
             fmt = ("%(asctime)s %(levelname)s: %(funcName)s (%(filename)s line "
-                "%(lineno)d):\n%(message)s")
+                   "%(lineno)d):\n%(message)s")
 
         assert hasattr(self, 'log')
         self.log.propagate = True
@@ -554,10 +575,10 @@ class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixinBase):
         if self.log.hasHandlers():
             for handler in self.log.handlers:
                 self.log.removeHandler(handler)
-        self._log_handler = MDTFHeaderFileHandler(
-            filename=os.path.join(log_dir, f"{self.name}.log"),
-            mode="w", encoding="utf-8"
-        )
+                self._log_handler = MDTFHeaderFileHandler(
+                    filename=os.path.join(log_dir, f"{self.name}.log"),
+                    mode="w", encoding="utf-8"
+                )
         formatter = HangingIndentFormatter(
             fmt=fmt, datefmt='%H:%M:%S',
             header="", footer="\n"
@@ -575,6 +596,7 @@ class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixinBase):
         self._log_handler = None
 
 # ------------------------------------------------------------------------------
+
 
 def git_info():
     """Get the current git branch, hash, and list of uncommitted files, if
@@ -614,6 +636,7 @@ def git_info():
         git_hash = "<couldn't get git hash>"
     return (git_branch, git_hash, git_dirty)
 
+
 def mdtf_log_header(title):
     """Returns string of system debug information to use as log file header.
     Calls :func:`git_info` to get repo status.
@@ -636,6 +659,7 @@ def mdtf_log_header(title):
         str_ = f"ERROR: {err_str}\n"
     return str_ + (80 * '-') + '\n\n'
 
+
 def signal_logger(caller_name, signum=None, frame=None, log=_log):
     """Lookup signal name from number and write to log. Taken from
     `<https://stackoverflow.com/a/2549950>`__.
@@ -657,6 +681,7 @@ def signal_logger(caller_name, signum=None, frame=None, log=_log):
     else:
         log.info("%s caught unknown signal.", caller_name)
 
+
 def _set_excepthook(root_logger):
     """Ensure all uncaught exceptions, other than user KeyboardInterrupt, are
     logged to the root logger.
@@ -674,6 +699,7 @@ def _set_excepthook(root_logger):
         )
 
     sys.excepthook = uncaught_exception_handler
+
 
 def _configure_logging_dict(log_d, log_args):
     """Convert CLI flags (``--verbose``/``--quiet``) into log levels. Configure
@@ -709,6 +735,7 @@ def _configure_logging_dict(log_d, log_args):
         del log_d['handlers']['stdout']
         log_d['root']['handlers'] = ["stderr"]
     return log_d
+
 
 def initial_log_config():
     """Configure the root logger for logging to console and to a cache provided
@@ -779,6 +806,7 @@ def initial_log_config():
     logging.config.dictConfig(log_d)
     root_logger.debug('Console loggers configured.')
 
+
 def transfer_log_cache(target_log=None, close=False):
     """Transfer the contents of the root log cache
     (:class:`MultiFlushMemoryHandler`) to logs on newly-configured objects.
@@ -797,3 +825,118 @@ def transfer_log_cache(target_log=None, close=False):
             # delete it
             temp_log_cache.close()
             root_logger.removeHandler(temp_log_cache)
+
+
+@dataclass.mdtf_dataclass
+class MDTFObjectBase(metaclass=basic.MDTFABCMeta):
+    """Base class providing shared functionality for the case object hierarchy, which is:
+
+    - :class:`~data_manager.DataSourceBase`\s belonging to a run of the package;
+    - :class:`~pod_setup.PODObject`\s POD belonging to a
+      :class:`~data_manager.DataSourceBase`;
+    - :class:`~diagnostic.VarlistEntry`\s (requested model variables) belonging
+      to a :class:`~diagnostic.Diagnostic`.
+    """
+    _id: basic.MDTF_ID = None
+    name: str = dataclass.MANDATORY
+    _parent: typing.Any = dc.field(default=dataclass.MANDATORY, compare=False)
+    status: ObjectStatus = dc.field(default=ObjectStatus.NOTSET, compare=False)
+
+    def __post_init__(self):
+        if self._id is None:
+            # assign unique ID # so that we don't need to rely on names being unique
+            self._id = basic.MDTF_ID()
+        # init object-level logger
+        self.log = MDTFObjectLogger.get_logger(self._log_name)
+
+    # the @property decorator allows us to attach code to designated attribute, such as getter and setter methods
+    @property
+    def _log_name(self):
+        if self._parent is None:
+            return OBJ_LOG_ROOT # framework: root of tree
+        else:
+            _log_name = f"{self.name}_{self._id}".replace('.', '_')
+            return f"{self._parent._log_name}.{_log_name}"
+
+    @property
+    def full_name(self):
+        return f"<#{self._id}:{self._parent.name}.{self.name}>"
+
+    def __hash__(self):
+        return self._id.__hash__()
+
+    @property
+    def failed(self):
+        return self.status == ObjectStatus.FAILED # abbreviate
+
+    @property
+    def active(self):
+        return self.status == ObjectStatus.ACTIVE # abbreviate
+
+    @property
+    @abc.abstractmethod
+    def _children(self):
+        """Iterable of child objects associated with this object."""
+        pass
+
+    # This is a figurative "birth" routine that generates an object full of child objects
+    def iter_children(self, child_type=None, status=None, status_neq=None):
+        """Generator iterating over child objects associated with this object.
+
+        Args:
+            child_type: None or Type `type`; default None. If None, iterates over
+            all child objects regardless of their type
+            status: None or :class:`ObjectStatus`, default None. If None,
+                iterates over all child objects, regardless of status. If a
+                :class:`ObjectStatus` value is passed, only iterates over
+                child objects with that status.
+            status_neq: None or :class:`ObjectStatus`, default None. If set,
+                iterates over child objects which *don't* have the given status.
+                If *status* is set, this setting is ignored.
+        """
+        iter_ = self._children
+        if child_type is not None:  # return the iter_ elements that match a specified child_type
+            iter_ = filter((lambda x: isinstance(x, child_type)), iter_)
+        if status is not None:  # return the iter_ elements that match the specified status
+            iter_ = filter((lambda x: x.status == status), iter_)
+        elif status_neq is not None:  # return the iter elements that do NOT match status_neq
+            iter_ = filter((lambda x: x.status != status_neq), iter_)
+        yield from iter_
+
+    def child_deactivation_handler(self, child, exc):
+        # needs to test for child_type
+        pass
+
+    def child_status_update(self, exc=None):
+        if next(self.iter_children(), None) is None:
+            # should never get here (no children of any status), because this
+            # method should only be called by children
+            raise ValueError(f"Children misconfigured for {self.full_name}.")
+
+        # if all children have failed, deactivate self
+        if not self.failed and \
+            next(self.iter_children(status_neq=ObjectStatus.FAILED), None) is None:
+            self.deactivate(exceptions.ChildFailureEvent(self), level=None)
+
+    # level at which to log deactivation events
+    _deactivation_log_level = logging.ERROR
+
+    def deactivate(self, exc, level=None):
+        # always log exceptions, even if we've already failed
+        self.log.store_exception(exc)
+
+        if not (self.failed or self.status == ObjectStatus.SUCCEEDED):
+            # only need to log and update on status change for still-active objs
+            if level is None:
+                level = self._deactivation_log_level  # default level for child class
+            self.log.log(level, "Deactivated %s due to %r.", self.full_name, exc)
+
+            # update status on self
+            self.status = ObjectStatus.FAILED
+            if self._parent is not None:
+                # call handler on parent, which may change parent and/or siblings
+                self._parent.child_deactivation_handler(self, exc)
+                self._parent.child_status_update()
+            # update children (deactivate all)
+            for obj in self.iter_children(status_neq=ObjectStatus.FAILED):
+                obj.deactivate(exceptions.PropagatedEvent(exc=exc, parent=self), level=None)

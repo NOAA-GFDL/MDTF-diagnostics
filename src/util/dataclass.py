@@ -13,19 +13,46 @@ from . import exceptions
 import logging
 _log = logging.getLogger(__name__)
 
-class RegexPatternBase():
+
+# The ClassMaker is cribbed from SO
+# https://stackoverflow.com/questions/1176136/convert-string-to-python-class-object
+# Classmaker and the @catalog_class.maker decorator allow class instantiation from
+# strings. The main block can simply call the desired class using the convention
+# argument instead of messy if/then/else blocks
+# Instantiate the class maker with catalog_class = ClassMaker()
+
+class ClassMaker:
+    """ Class to instantiate other classes from strings"""
+    def __init__(self):
+        self.classes = {}
+
+    def add_class(self, c):
+        self.classes[c.__name__] = c
+
+    # define the class decorator to return the class passed
+    def maker(self, c):
+        self.add_class(c)
+        return c
+
+    def __getitem__(self, n):
+        return self.classes[n]
+
+
+class RegexPatternBase:
     """Dummy parent class for :class:`RegexPattern` and
     :class:`ChainedRegexPattern`.
     """
     pass
+
 
 class RegexPattern(collections.UserDict, RegexPatternBase):
     """Wraps :py:class:`re.Pattern` with more convenience methods for the use case
     of parsing information in a string, using a regex with named capture groups
     corresponding to the data fields being collected from the string.
     """
+
     def __init__(self, regex, defaults=None, input_field=None,
-        match_error_filter=None):
+                 match_error_filter=None):
         """Constructor.
 
         Args:
@@ -192,11 +219,12 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
         obj.data = copy.deepcopy(self.data, memo)
         return obj
 
+
 class RegexPatternWithTemplate(RegexPattern):
     """Adds formatted output to :class:`RegexPattern`.
     """
     def __init__(self, regex, defaults=None, input_field=None,
-        match_error_filter=None, template=None, log=_log):
+                 match_error_filter=None, template=None, log=_log):
         """Constructor.
 
         Args:
@@ -208,7 +236,8 @@ class RegexPatternWithTemplate(RegexPattern):
         Other arguments are the same as in :class:`RegexPattern`.
         """
         super(RegexPatternWithTemplate, self).__init__(regex, defaults=defaults,
-            input_field=input_field, match_error_filter=match_error_filter)
+                                                       input_field=input_field,
+                                                       match_error_filter=match_error_filter)
         self.template = template
         for f in self.fields:
             if f not in self.template:
@@ -251,6 +280,7 @@ class RegexPatternWithTemplate(RegexPattern):
         obj.data = copy.deepcopy(self.data, memo)
         return obj
 
+
 class ChainedRegexPattern(RegexPatternBase):
     """Class which takes an 'or' of multiple :class:`RegexPattern`\s, to parse
     data that may be represented as a string in one of multiple formats.
@@ -260,7 +290,7 @@ class ChainedRegexPattern(RegexPatternBase):
     the same as on :class:`RegexPattern`.
     """
     def __init__(self, *string_patterns, defaults=None, input_field=None,
-        match_error_filter=None):
+                 match_error_filter=None):
         """Constructor.
 
         Args:
@@ -302,7 +332,7 @@ class ChainedRegexPattern(RegexPatternBase):
 
     @property
     def is_matched(self):
-        return (self._match >= 0)
+        return self._match >= 0
 
     @property
     def data(self):
@@ -383,6 +413,7 @@ class ChainedRegexPattern(RegexPatternBase):
 
 # ---------------------------------------------------------
 
+
 NOTSET = basic.sentinel_object_factory('NotSet')
 """
 Sentinel object to detect uninitialized values for fields in :func:`mdtf_dataclass`
@@ -398,7 +429,8 @@ default fields in the dataclass auto-generated ``__init__`` method under
 we use the second solution described in `<https://stackoverflow.com/a/53085935>`__.
 """
 
-def _mdtf_dataclass_get_field_types(obj, f):
+
+def _mdtf_dataclass_get_field_types(obj, f, log):
     """Common functionality for :func:`_mdtf_dataclass_type_coercion` and
     :func:`_mdtf_dataclass_type_check`. Given a :py:class:`datacalsses.Field`
     object *f*, return either a tuple of the type its value should be coerced to
@@ -407,34 +439,37 @@ def _mdtf_dataclass_get_field_types(obj, f):
     """
     if not f.init:
         # ignore fields that aren't handled at init
-        return (None, None)
+        return None, None
     value = getattr(obj, f.name)
     # ignore unset field values, regardless of type
     if value is None or value is NOTSET:
-        return (None, None)
+        return None, None
     # guess what types are valid
     new_type = None
     if f.type is typing.Any or isinstance(f.type, typing.TypeVar):
-        return (None, None)
+        return None, None
     if dataclasses.is_dataclass(f.type):
         # ignore if type is a dataclass: use this type annotation to
         # implement dataclass inheritance
         if not isinstance(obj, f.type):
             raise exceptions.DataclassParseError((f"Field {f.name} specified "
-                f"as dataclass {f.type.__name__}, which isn't a parent class "
-                f"of {obj.__class__.__name__}."))
-        return (None, None)
+                                                  f"as dataclass {f.type.__name__}, which isn't a parent class "
+                                                  f"of {obj.__class__.__name__}."))
+        return None, None
     elif isinstance(f.type, typing._GenericAlias) \
-        or isinstance(f.type, typing._SpecialForm):
+            or isinstance(f.type, typing._SpecialForm):
         # type is a generic from typing module, eg "typing.List"
         if f.type.__origin__ is typing.Union:
             new_type = None # can't do coercion, but can test type
             valid_types = list(f.type.__args__)
-        elif issubclass(f.type.__origin__, typing.Generic):
-            return (None, None) # can't do anything in this case
         else:
-            new_type = f.type.__origin__
-            valid_types = [new_type]
+            try:
+                new_type = f.type.__origin__
+                valid_types = [new_type]
+            except Exception as exc:
+                log.debug(f"Caught exception when checking types for {f.type.__name__}", exc,
+                          "Routine will return None")
+                return None, None  # can't do anything in this case
     else:
         new_type = f.type
         valid_types = [new_type]
@@ -444,7 +479,8 @@ def _mdtf_dataclass_get_field_types(obj, f):
         valid_types.append(type(f.default))
     if not isinstance(f.default_factory, dataclasses._MISSING_TYPE):
         valid_types.append(type(f.default_factory()))
-    return (new_type, valid_types)
+    return new_type, valid_types
+
 
 def _mdtf_dataclass_type_coercion(self, log):
     """Do type checking on all dataclass fields after the auto-generated
@@ -457,7 +493,7 @@ def _mdtf_dataclass_type_coercion(self, log):
     """
     for f in dataclasses.fields(self):
         value = getattr(self, f.name, NOTSET)
-        new_type, valid_types = _mdtf_dataclass_get_field_types(self, f)
+        new_type, valid_types = _mdtf_dataclass_get_field_types(self, f, log)
         try:
             if valid_types is None or isinstance(value, tuple(valid_types)):
                 continue # don't coerce if we're already a valid type
@@ -475,11 +511,12 @@ def _mdtf_dataclass_type_coercion(self, log):
                 object.__setattr__(self, f.name, new_value)
         except (TypeError, ValueError, dataclasses.FrozenInstanceError) as exc:
             raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
-                f"Couldn't coerce value {repr(value)} for field {f.name} from "
-                f"type {type(value)} to type {new_type}.")) from exc
+                                                  f"Couldn't coerce value {repr(value)} for field {f.name} from "
+                                                  f"type {type(value)} to type {new_type}.")) from exc
         except Exception as exc:
             log.exception("%s: Caught exception: %r", self.__class__.__name__, exc)
             raise exc
+
 
 def _mdtf_dataclass_type_check(self, log):
     """Do type checking on all dataclass fields after ``__init__`` and
@@ -496,18 +533,19 @@ def _mdtf_dataclass_type_check(self, log):
             continue
         if value is MANDATORY:
             raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
-                f"No value supplied for mandatory field {f.name}."))
+                                                  f"No value supplied for mandatory field {f.name}."))
 
-        _, valid_types = _mdtf_dataclass_get_field_types(self, f)
+        _, valid_types = _mdtf_dataclass_get_field_types(self, f, log)
         if valid_types is not None and not isinstance(value, tuple(valid_types)):
             log.exception("%s: Failed type check for field '%s': %s != %s.",
                 self.__class__.__name__, f.name, type(value), valid_types)
             raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
-                f"Expected {f.name} to be {f.type}, got {type(value)} "
-                f"({repr(value)})."))
+                                                  f"Expected {f.name} to be {f.type}, got {type(value)} "
+                                                  f"({repr(value)})."))
+
 
 DEFAULT_MDTF_DATACLASS_KWARGS = {'init': True, 'repr': True, 'eq': True,
-    'order': False, 'unsafe_hash': False, 'frozen': False}
+                                 'order': False, 'unsafe_hash': False, 'frozen': False}
 
 # declaration to allow calling with and without args: python cookbook 9.6
 # https://github.com/dabeaz/python-cookbook/blob/master/src/9/defining_a_decorator_that_takes_an_optional_argument/example.py
@@ -626,13 +664,14 @@ def _regex_dataclass_preprocess_kwargs(self, kwargs):
                 new_kw.update(new_d)
             except exceptions.WormKeyError as exc:
                 raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
-                    f"Tried to make inconsistent field assignment when parsing "
-                    f"{f.name} as an instance of {f.type.__name__}.")) from exc
+                                                      f"Tried to make inconsistent field assignment when parsing "
+                                                      f"{f.name} as an instance of {f.type.__name__}.")) from exc
     post_init = dict()
     for f in dataclasses.fields(self):
         if not f.init and f.name in new_kw:
             post_init[f.name] = new_kw.pop(f.name)
-    return (new_kw, post_init)
+    return new_kw, post_init
+
 
 def regex_dataclass(pattern, **deco_kwargs):
     """Decorator combining the functionality of :class:`RegexPattern` and
@@ -678,9 +717,10 @@ def regex_dataclass(pattern, **deco_kwargs):
         for f in dataclasses.fields(cls):
             if is_regex_dataclass(f.type) and f.type not in cls.__mro__:
                 raise TypeError((f"{cls.__name__}: Field {f.name} specified as "
-                    f"{f.type.__name__}, but we don't inherit from it."))
+                                 f"{f.type.__name__}, but we don't inherit from it."))
 
         _old_init = cls.__init__
+
         @functools.wraps(_old_init)
         def _new_init(self, first_arg=None, *args, **kwargs):
             if isinstance(first_arg, str) and not args and not kwargs:
@@ -707,6 +747,7 @@ def regex_dataclass(pattern, **deco_kwargs):
             Used by :func:`regex_dataclass` for parsing field values and automatic
             type coercion.
             """
+
             cls_._pattern.match(str_, *args)
             return cls_(**cls_._pattern.data)
         type.__setattr__(cls, 'from_string', classmethod(_from_string))

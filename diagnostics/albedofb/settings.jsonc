@@ -6,6 +6,7 @@
 		"driver": "albedofb.py",
 		"long_name": "Surface Albedo Feedback Diagnostics",
 		"realm": "atmos",
+		"convention": "cmip",
 		"description": "Surface Albedo Feedback Diagnostics",
 		"runtime_requirements": {
 			"python3": [

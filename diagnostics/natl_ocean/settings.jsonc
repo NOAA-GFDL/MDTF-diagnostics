@@ -10,17 +10,15 @@
     // Name of the driver script. This should be a single script, taking no
     // command-line arguments, which runs the entire analysis (calling any other
     // scripts or subroutines as needed.)
-    "driver" : "example_diag.py",
+    "driver" : "moc_dummy.py",
 
     // Human-readable name of the diagnostic. May contain spaces.
     "long_name" : "Example diagnostic",
 
     // Modeling realm. If your diagnostic uses data from multiple realms, give
     // this as a list.
-    "realm" : "atmos",
-
-    // Data convention expected by the POD: cmip (default), cesm, or gfdl
-    "convention": "cmip",
+    //"realm" : "atmos",
+    "realm" : "ocean",
 
     // Human-readable name of the diagnostic. May contain spaces. This
     // is used to describe your diagnostic on the top-level index.html page.
@@ -48,9 +46,9 @@
   // "dimensions" attribute for each variable must correspond to a coordinate
   // named here.
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
-    "time": {"standard_name": "time"}
+     "time": {"standard_name": "time"},
+     "TLAT": {"standard_name": "array of t-grid latitudes"},
+     "TLONG": {"standard_name": "array of t-grid longitudes"}
   },
 
   // In this section, you describe what model data your diagnostic uses. Add one
@@ -59,29 +57,30 @@
   "varlist" : {
     // Variable identifier. An environment variable with this name will be set
     // to what the corresponding field is called in the model being analyzed.
-    "tas": {
+  //  "tas": {
+     "tos": {
       // Standard name for the variable according to the CF conventions. This
       // is used to reliably identify the variable if it's called by a different
       // name in the output format of the model being analyzed.
-      "standard_name" : "air_temperature",
-
+   //   "standard_name" : "air_temperature",
+     "standard_name" : "Potential Temperature",
       // Units the script expects this variable to be in (UDUnits2- compatible
       // string). If the model being analyzed provides the variable in different
       // units, the MDTF package will do unit conversion before calling the script.
-      "units": "K",
-
+   //   "units": "K",
+    "units": "degC",
       // Time frequency the data should be sampled at. Currently recognized
       // values are '1hr', '3hr', '6hr', 'day' and 'mon'.
-      "frequency" : "mon",
-
+   //   "frequency" : "mon",
+     "frequency" : "mon",
       // Coordinates of the variable (defined in the section above.)
-      "dimensions": ["time", "lat", "lon"],
-
+   //   "dimensions": ["time", "lat", "lon"],
+     "dimensions": ["time", "TLAT", "TLONG"]
       // Modifier attribute for variables defined on specific surfaces.
       // The current recognized value is "atmos_height" for variables
       // defined at atmospheric heights above the ground in meters.
       // (e.g., 2m temperature in this example, or 10m wind components).
-      "modifier": "atmos_height"
+   //   "modifier": "atmos_height"
     }
     // If we needed a second variable, we'd list it here.
   }

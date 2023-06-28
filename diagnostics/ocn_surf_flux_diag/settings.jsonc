@@ -2,7 +2,8 @@
   "settings": {
     "driver": "ocn_surf_flux_diag.py",
     "long_name": "ocean surface flux diagnostic",
-    "realm": "atmosphere",
+    "realm": "atmos",
+    "convention" : "cmip",
     "description": "Ocean surface flux diagnostic",
     "runtime_requirements": {
       "python3": [

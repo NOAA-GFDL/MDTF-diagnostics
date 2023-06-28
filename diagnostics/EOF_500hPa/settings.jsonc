@@ -13,6 +13,7 @@
     "driver" : "EOF_500hPa.py",
     "long_name" : "EOF of geopotential height anomalies of 500 hPa",
     "realm" : "atmos",
+    "convention": "cesm",
     "description" : "EOF of geopotential height anomalies for 500 hPa",
     "runtime_requirements": {
       "python3": [],

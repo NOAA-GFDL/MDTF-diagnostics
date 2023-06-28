@@ -18,6 +18,7 @@
 		"driver": "precip_buoy_diag.py",
 		"long_name": "Precipitation Buoyancy Diagnostics",
 		"realm": "atmos",
+		"convention" : "cmip",
 		"description": "Precipitation Buoyancy Diagnostics",
 		// threshold precipitation value to compute precipitating pdfs
 		"pod_env_vars": { "PRECIP_THRESHOLD": "0.25", 

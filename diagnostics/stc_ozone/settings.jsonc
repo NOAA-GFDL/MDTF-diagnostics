@@ -9,6 +9,7 @@
     "driver" : "stc_ozone.py",
     "long_name" : "Stratospheric Ozone and Circulation",
     "realm" : "atmos",
+    "convention" : "cmip",
     "description" : "Assess the relationships between spring stratospheric ozone and circulation",
     "pod_env_vars" : {
       // Lower latitude limit for zonal wind lat band avgs (defaults to 50)

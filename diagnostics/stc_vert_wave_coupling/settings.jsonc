@@ -8,6 +8,7 @@
       "driver" : "stc_vert_wave_coupling.py",
       "long_name" : "Seasonality and Extremes of Vertically Propagating Planetary Waves",
       "realm" : "atmos",
+      "convention" : "cmip",
       "description" : "Assess the representation of planetary wave coupling between the troposphere and stratosphere",
       "pod_env_vars" : {
         // The first and last years of the obs data to use. 

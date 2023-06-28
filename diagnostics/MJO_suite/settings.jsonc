@@ -9,6 +9,7 @@
     "driver" : "MJO_suite.py",
     "long_name" : "MJO diagnostics suite (from AMWG variability diagnostic package)",
     "realm" : "atmos",
+    "convention" : "cesm",
     "description" : "MJO CLIVAR suite (NCAR)",
     "runtime_requirements": {
       "python3": [],

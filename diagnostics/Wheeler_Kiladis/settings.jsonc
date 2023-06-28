@@ -14,6 +14,7 @@
     "driver" : "Wheeler_Kiladis.py",
     "long_name" : "Wheeler Kiladis plots",
     "realm" : "atmos",
+    "convention": "cesm",
     "description" : "Wavenumber-Frequency Power Spectra (Wheeler and Kiladis)",
     "runtime_requirements": {
       "python3": [],

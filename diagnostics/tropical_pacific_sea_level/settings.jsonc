@@ -3,6 +3,7 @@
     "driver" : "tropical_pacific_sea_level.py",
     "long_name" : "tropical pacific sea level",
     "realm" : "ocean",
+    "convention": "cmip",
     "description" : "Tropical pacific sea level diagnostic",
     "runtime_requirements": {
         "python3" : ["matplotlib","xarray","cartopy","cftime","numpy","dask"]

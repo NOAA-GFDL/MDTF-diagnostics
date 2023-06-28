@@ -10,6 +10,7 @@
     "driver" : "TC_rain.py",
     "long_name" : "Azimuthal Average of TC Rain Rate",
     "realm" : "atmos",
+    "convention" : "cmip",
     "description" : "TC rain rate azimuthal average",
     "runtime_requirements": {
         "python3": [

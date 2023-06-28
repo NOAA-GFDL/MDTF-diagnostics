@@ -3,6 +3,7 @@
     "driver" : "eulerian_storm_track.py",
     "long_name" : "Eulerian Storm Track",
     "realm" : "atmos",
+    "convention": "cmip",
     "description" : "Eulerian Storm Track",
     "pod_env_vars" : {
       "lat_var": "lat", 

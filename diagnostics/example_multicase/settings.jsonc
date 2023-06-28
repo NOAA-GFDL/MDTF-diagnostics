@@ -18,6 +18,7 @@
     "driver" : "example_multicase.py",
     "long_name" : "Example diagnostic with multiple cases",
     "realm" : "atmos",
+    "convention": "cmip",
     "runtime_requirements": {
         "python3": ["matplotlib", "xarray", "netCDF4"]
     }

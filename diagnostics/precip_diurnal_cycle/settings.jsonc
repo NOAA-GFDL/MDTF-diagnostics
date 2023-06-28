@@ -13,6 +13,7 @@
     "driver" : "precip_diurnal_cycle.py",
     "long_name": "Diurnal cycle of precipitation",
     "realm" : "atmos",
+    "convention" : "cmip",
     "description": "Diurnal Cycle of Precipitation",
     "runtime_requirements": {
       "python3": [],

@@ -16,6 +16,8 @@
     // Modeling realm.
     "realm" : "atmos",
 
+    "convention" : "cmip",
+
     // Human-readable name of the diagnostic.
     "description" : "Surface Temperature Extremes and Distribution Shape",
 

@@ -2,6 +2,8 @@
 	"settings": {
 		"driver": "ENSO_RWS.py",
 		"long_name": "ENSO Rossby Wave Source",
+		"realm": "atmos",
+		"convention": "cesm",
 		"description": "ENSO Rossby Wave Source",
               "runtime_requirements": {
               "ncl": ["contributed", "gsn_code", "gsn_csm", "shea_util", "calendar_decode2"]

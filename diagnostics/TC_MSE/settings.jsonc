@@ -16,6 +16,8 @@
       // Modeling realm. If your diagnostic uses data from multiple realms, give
       // this as a list.
       "realm" : "atmos",
+
+      "convention" : "cmip",
   
       // Human-readable name of the diagnostic. May contain spaces. This
       // is used to describe your diagnostic on the top-level index.html page.

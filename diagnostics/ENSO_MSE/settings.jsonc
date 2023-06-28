@@ -2,6 +2,8 @@
 	"settings": {
 		"driver": "ENSO_MSE.py",
 		"long_name": "ENSO moist static energy budget",
+		"realm": "atmos",
+		"convention": "cesm",
 		"description": "ENSO moist static energy budget",
               "runtime_requirements": {
               "ncl": ["contributed", "gsn_code", "gsn_csm", "shea_util", "calendar_decode2"]

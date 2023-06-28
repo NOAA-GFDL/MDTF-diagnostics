@@ -19,6 +19,8 @@
     // this as a list.
     "realm" : "atmos",
 
+    "convention": "cesm",
+
     // Human-readable name of the diagnostic. May contain spaces. This
     // is used to describe your diagnostic on the top-level index.html page.
     "description" : "Rich Neale's blocking diagnostic",

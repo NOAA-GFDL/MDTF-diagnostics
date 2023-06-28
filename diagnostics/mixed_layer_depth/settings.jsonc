@@ -3,6 +3,7 @@
     "driver" : "mixed_layer_depth.py",
     "long_name" : "Mixed Layer Depth Calculation",
     "realm" : "ocean",
+    "convention" : "cmip",
     "description" : "Compute Mixed Layer Depth Mean from 3D Ocean Variables",
     "runtime_requirements": {
         "python3": ["scipy","matplotlib","xarray","netCDF4","xesmf","dask","numpy","pandas","cartopy","gsw"]

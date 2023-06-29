@@ -8,7 +8,6 @@
   "settings" : {
     "driver" : "stc_ozone.py",
     "long_name" : "Stratospheric Ozone and Circulation",
-    "realm" : "atmos",
     "convention" : "cmip",
     "description" : "Assess the relationships between spring stratospheric ozone and circulation",
     "pod_env_vars" : {
@@ -42,6 +41,7 @@
   "varlist": {
     "ua": {
       "standard_name" : "eastward_wind",
+      "realm": "atmos",
       "units" : "m s-1",
       "frequency": "mon",
       "dimensions": ["time", "lev", "lat", "lon"],
@@ -49,6 +49,7 @@
     },
     "ta": {
       "standard_name" : "air_temperature",
+      "realm": "atmos",
       "units" : "K",
       "frequency": "mon",
       "dimensions": ["time", "lev", "lat", "lon"],
@@ -56,6 +57,7 @@
     },
     "o3": {
       "standard_name" : "mole_fraction_of_ozone_in_air",
+      "realm": "atmos",
       "use_exact_name": true,
       "units" : "mol mol-1",
       "frequency": "mon",

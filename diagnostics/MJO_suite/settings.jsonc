@@ -8,7 +8,6 @@
   "settings" : {
     "driver" : "MJO_suite.py",
     "long_name" : "MJO diagnostics suite (from AMWG variability diagnostic package)",
-    "realm" : "atmos",
     "convention" : "cesm",
     "description" : "MJO CLIVAR suite (NCAR)",
     "runtime_requirements": {
@@ -33,34 +32,40 @@
   "varlist": {
     "rlut": {
       "standard_name": "toa_outgoing_longwave_flux",
+      "realm": "atmos",
       "units": "W m-2",
       "dimensions": ["time", "lat", "lon"]
     },
     "pr": {
       "standard_name": "precipitation_rate",
+      "realm": "atmos",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"]
     },
     "u200": {
       "standard_name": "eastward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 200}
     },
     "u850": {
       "standard_name": "eastward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 850}
     },
     "v200": {
       "standard_name": "northward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 200}
     },
     "v850": {
       "standard_name": "northward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 850}

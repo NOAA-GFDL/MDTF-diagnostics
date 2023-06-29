@@ -9,7 +9,6 @@
   "settings" : {
     "driver" : "TC_rain.py",
     "long_name" : "Azimuthal Average of TC Rain Rate",
-    "realm" : "atmos",
     "convention" : "cmip",
     "description" : "TC rain rate azimuthal average",
     "runtime_requirements": {
@@ -38,6 +37,7 @@
   "varlist" : {
     "tp": {
       "standard_name" : "total_precipitation",
+      "realm": "atmos",
       "units": "kg m-2",
       "dimensions": ["time", "latitude", "longitude"]
 

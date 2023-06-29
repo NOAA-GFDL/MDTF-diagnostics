@@ -2,7 +2,6 @@
   "settings" : {
     "driver" : "eulerian_storm_track.py",
     "long_name" : "Eulerian Storm Track",
-    "realm" : "atmos",
     "convention": "cmip",
     "description" : "Eulerian Storm Track",
     "pod_env_vars" : {
@@ -30,6 +29,7 @@
   "varlist" : {
     "v850": {
       "standard_name" : "northward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"], 
       "use_exact_name": true,

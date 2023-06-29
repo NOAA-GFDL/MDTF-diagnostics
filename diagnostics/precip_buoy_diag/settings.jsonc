@@ -17,7 +17,6 @@
 	"settings": {
 		"driver": "precip_buoy_diag.py",
 		"long_name": "Precipitation Buoyancy Diagnostics",
-		"realm": "atmos",
 		"convention" : "cmip",
 		"description": "Precipitation Buoyancy Diagnostics",
 		// threshold precipitation value to compute precipitating pdfs
@@ -28,43 +27,44 @@
 			"python3": ["numpy", "scipy", "cython", "matplotlib", "xarray", "numba", "networkx"]
 		}
 	},
-	"varlist": [{
-			"var_name": "pr_var",
+	"varlist": {
+	    "pr": {
+			"standard_name": "precipitation_flux",
 			"freq": "1hr",
+			"realm": "atmos",
 			"requirement": "required",
-			"path_variable": "pr_file",
 			"units": "kg m-2 s-1",
             "dimensions" : ["time", "lat", "lon"],
             "multi_file_ok" : true
 		},
-		{
-			"var_name": "ta_var",
+		"ta": {
+			"standard_name": "air_temperature",
+			"realm": "atmos",
 			"freq": "1hr",
 			"requirement": "required",
-            "path_variable": "ta_file",
 			"units": "K",
             "dimensions" : ["time", "lev", "lat", "lon"],
             "multi_file_ok" : true
 		},
-		{
-			"var_name": "qa_var",
+		"qa": {
+			"standard_name": "specific_humidity",
+		    "realm": "atmos",
 			"freq": "1hr",
 			"requirement": "required",
-            "path_variable": "hus_file",
 			"units": "kg/kg",
             "dimensions" : ["time", "lev", "lat", "lon"],
             "multi_file_ok" : true
 		},
-		{
-			"var_name": "ps_var",
+		"ps": {
+			"standard_name": "surface_air_pressure",
+			"realm": "atmos",
 			"freq": "1hr",
 			// this is optional only if height co-ordinates are on pressure levels
 			// if height co-ordinates are sigma, then surface pressure is required.
 			"requirement": "optional",
-            "path_variable": "ps_file",
 			"units": "Pa",
             "dimensions" : ["time", "lat", "lon"],
             "multi_file_ok" : true
 		}
-	]
+	}
 }

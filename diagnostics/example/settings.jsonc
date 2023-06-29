@@ -15,10 +15,6 @@
     // Human-readable name of the diagnostic. May contain spaces.
     "long_name" : "Example diagnostic",
 
-    // Modeling realm. If your diagnostic uses data from multiple realms, give
-    // this as a list.
-    "realm" : "atmos",
-
     // Data convention expected by the POD: cmip (default), cesm, or gfdl
     "convention": "cmip",
 
@@ -64,6 +60,9 @@
       // is used to reliably identify the variable if it's called by a different
       // name in the output format of the model being analyzed.
       "standard_name" : "air_temperature",
+
+      // modeling realm of the variable: atmos, ocean, land, seaIce, landIce, etc...
+      "realm": "atmos",
 
       // Units the script expects this variable to be in (UDUnits2- compatible
       // string). If the model being analyzed provides the variable in different

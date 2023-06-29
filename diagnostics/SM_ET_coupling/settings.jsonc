@@ -27,16 +27,19 @@
   "varlist" : {
     "mrsos": {
       "standard_name": "mass_content_of_water_in_soil_layer",
+      "realm" : "land",
       "units": "kg m-2",
       "dimensions": ["time", "lat", "lon"]
     },
     "evspsbl": {
       "standard_name": "water_evapotranspiration_flux",
+      "realm": "land",
       "units": "kg m-2 s-1",
       "dimensions": ["time", "lat", "lon"]
     },
     "pr": {
       "standard_name": "precipitation_flux",
+      "realm": "atmos",
       "units": "kg m-2 s-1",
       "dimensions": ["time", "lat", "lon"]
     }

@@ -17,7 +17,6 @@
     "description" : "Example diagnostic with multiple cases",
     "driver" : "example_multicase.py",
     "long_name" : "Example diagnostic with multiple cases",
-    "realm" : "atmos",
     "convention": "cmip",
     "runtime_requirements": {
         "python3": ["matplotlib", "xarray", "netCDF4"]
@@ -35,6 +34,7 @@
   "varlist" : {
     "tas": {
       "frequency" : "day",
+      "realm": "atmos",
       "dimensions": ["time", "lat", "lon"],
       "modifier": "atmos_height",
       "standard_name" : "air_temperature",

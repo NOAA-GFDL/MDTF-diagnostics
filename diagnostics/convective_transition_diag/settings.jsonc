@@ -17,7 +17,6 @@
   "settings" : {
     "driver" : "convective_transition_diag_v2.py",
     "long_name" : "Convection Transition",
-    "realm" : "atmos",
     "convention": "cmip",
     "description" : "Convective transition diagnostics",
     "pod_env_vars" : {
@@ -53,11 +52,13 @@
   "varlist": {
     "pr": {
       "standard_name": "precipitation_flux",
+      "realm" : "atmos",
       "units": "kg m-2 s-1",
       "dimensions": ["time", "lat", "lon"]
     },
     "prw": {
       "standard_name": "atmosphere_mass_content_of_water_vapor",
+      "realm" : "atmos",
       "units": "kg m-2",
       "dimensions": ["time", "lat", "lon"]
     },
@@ -66,6 +67,7 @@
       // Variable doesn't have a CF standard name
       // Column taken to be 1000-200 hPa
       "standard_name": "mass_weighted_column_average_temperature",
+      "realm" : "atmos",
       "units": "K",
       "dimensions": ["time", "lat", "lon"],
       "alternates" : ["ta"]
@@ -76,12 +78,14 @@
       // Column taken to be 1000-200 hPa
       "standard_name": "column_integrated_saturation_humidity",
       "units": "kg m-2",
+      "realm" : "atmos",
       "dimensions": ["time", "lat", "lon"],
       "alternates" : ["ta"]
     },
     "ta": {
       "standard_name": "air_temperature",
       "units": "K",
+      "realm" : "atmos",
       "dimensions": ["time", "lev", "lat", "lon"],
       "requirement" : "alternate"
     }

@@ -12,10 +12,6 @@
   
       // Human-readable name of the diagnostic. May contain spaces.
       "long_name" : "TC MSE Variance Budget diagnostic",
-  
-      // Modeling realm. If your diagnostic uses data from multiple realms, give
-      // this as a list.
-      "realm" : "atmos",
 
       "convention" : "cmip",
   
@@ -64,84 +60,84 @@
     "varlist" : {
       "ta": {
         "standard_name": "air_temperature",
-        "path_variable" : "ta_var",
+        "realm": "atmos",
         "units": "K",
         "frequency": "6hr",
         "dimensions": ["time","plev","lat","lon"]
       },
       "zg": {
         "standard_name": "geopotential_height",
-        "path_variable" : "zg_var",
+        "realm": "atmos",
         "units": "m",
         "frequency": "6hr",
         "dimensions": ["time","plev","lat","lon"]
       },
       "hus": {
         "standard_name": "specific_humidity",
-        "path_variable" : "hus_var",
+        "realm": "atmos",
         "units": "1",
         "frequency": "6hr",
         "dimensions": ["time","plev","lat","lon"]
       },
       "hfss": {
         "standard_name": "surface_upward_sensible_heat_flux",
-        "path_variable" : "hfss_var",
+        "realm": "atmos",
         "units": "W m-2",
         "frequency": "6hr",
         "dimensions": ["time","lat","lon"]
       },
       "hfls": {
         "standard_name": "surface_upward_latent_heat_flux",
-        "path_variable" : "hfls_var",
+        "realm": "atmos",
         "units": "W m-2",
         "frequency": "6hr",
         "dimensions": ["time","lat","lon"]
       },
       "rlds": {
         "standard_name": "surface_downwelling_longwave_flux_in_air",
-        "path_variable" : "rlds_var",
+        "realm": "atmos",
         "units": "W m-2",
         "frequency": "6hr",
         "dimensions": ["time","lat","lon"]
       },
       "rlus": {
         "standard_name": "surface_upwelling_longwave_flux_in_air",
-        "path_variable" : "rlus_var",
+        "realm": "atmos",
         "units": "W m-2",
         "frequency": "6hr",
         "dimensions": ["time","lat","lon"]
       },
       "rlut": {
         "standard_name": "toa_outgoing_longwave_flux",
-        "path_variable" : "rlut_var",
+        "realm": "atmos",
         "units": "W m-2",
         "frequency": "6hr",
         "dimensions": ["time","lat","lon"]
       },
       "rsds": {
         "standard_name": "surface_downwelling_shortwave_flux_in_air",
-        "path_variable" : "rsds_var",
+        "realm": "atmos",
         "units": "W m-2",
         "frequency": "6hr",
         "dimensions": ["time","lat","lon"]
       },
       "rsdt": {
         "standard_name": "toa_incoming_shortwave_flux",
-        "path_variable" : "rsdt_var",
+        "realm": "atmos",
         "units": "W m-2",
         "frequency": "6hr",
         "dimensions": ["time","lat","lon"]
       },
       "rsus": {
         "standard_name": "surface_upwelling_shortwave_flux_in_air",
-        "path_variable" : "rsus_var",
+        "realm": "atmos",
         "units": "W m-2",
         "frequency": "6hr",
         "dimensions": ["time","lat","lon"]
       },
       "rsut": {
         "standard_name": "toa_outgoing_shortwave_flux",
-        "path_variable" : "rsut_var",
+        "realm": "atmos",
         "units": "W m-2",
         "frequency": "6hr",
         "dimensions": ["time","lat","lon"]

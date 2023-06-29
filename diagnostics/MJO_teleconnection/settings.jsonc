@@ -14,7 +14,6 @@
   "settings" : {
     "driver" : "mjo_teleconnection.py",
     "long_name" : "MJO teleconnection Diagnostic",
-    "realm" : "atmos",
     "convention" : "cesm",
     "description": "MJO Teleconnections Diagnostics, see Henderson et al., J. Climate, vol 30, No. 12, 4567-4587, 2017", 
     "runtime_requirements": {
@@ -39,28 +38,33 @@
   "varlist": {
     "rlut": {
       "standard_name": "toa_outgoing_longwave_flux",
+      "realm": "atmos",
       "units": "W m-2",
       "dimensions": ["time", "lat", "lon"]
     },
     "pr": {
       "standard_name": "precipitation_flux",
+      "realm": "atmos",
       "units": "kg m-2 s-1",
       "dimensions": ["time", "lat", "lon"]
     },
     "u250": {
       "standard_name": "eastward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 250}
     },
     "u850": {
       "standard_name": "eastward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 850}
     },
     "z250": {
       "standard_name": "geopotential_height",
+      "realm": "atmos",
       "units": "m",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 250}

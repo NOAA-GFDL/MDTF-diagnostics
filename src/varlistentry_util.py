@@ -253,7 +253,7 @@ class VarlistEntryMixin(object):
             else:
                 trans_str = "(not translated)"
             return (f"<{str_}; {status_str}, {v.stage.name.lower()}, {v.requirement})\n"
-                f"\tName in data source: {trans_str}")
+                    f"\tName in data source: {trans_str}")
 
         s = _format(self)
         for i, altvs in enumerate(self.iter_alternates()):
@@ -350,16 +350,34 @@ class VarlistEntryMixin(object):
             d.update(dict(iter_query_attrs(dim)))
         return d
 
-
 @util.mdtf_dataclass
-class VarlistEntry(VarlistEntryMixin, VarlistEntryBase,
-                   data_model.DMVariable, varlist_util._VarlistGlobalSettings,
-                   util.VarlistEntryLoggerMixin, ABC):
-    # Attributes:
-    #         path_variable: Name of env var containing path to local data.
-    #         dest_path: list of paths to local data
+class VarlistEntry(VarlistEntryMixin, VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
+                   varlist_util._VarlistGlobalSettings, util.VarlistEntryLoggerMixin):
+    """Class to describe data for a single variable requested by a POD.
+    Corresponds to list entries in the "varlist" section of the POD's
+    settings.jsonc file.
+
+    Two VarlistEntries are equal (as determined by the ``__eq__`` method, which
+    compares fields without ``compare=False``) if they specify the same data
+    product, ie if the same output file from the preprocessor can be symlinked
+    to two different locations.
+
+    Attributes:
+        use_exact_name: see docs
+        env_var: Name of env var which is set to the variable's name in the
+            provided dataset.
+        path_variable: Name of env var containing path to local data.
+        dest_path: Path to local data.
+        alternates: List of lists of VarlistEntries.
+        translation: :class:`core.TranslatedVarlistEntry`, populated by DataSource.
+        data: dict mapping experiment_keys to DataKeys. Populated by DataSource.
+    """
+    # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
+    # name: str
+    # _parent: object
+    # log = util.MDTFObjectLogger
     # status: ObjectStatus
-    # standard_name: str             # fields inherited from data_model.DMVariable
+    # standard_name: str           # fields inherited from data_model.DMVariable
     # units: Units
     # dims: list
     # scalar_coords: list
@@ -368,30 +386,36 @@ class VarlistEntry(VarlistEntryMixin, VarlistEntryBase,
     env_var: str = dc.field(default="", compare=False)
     path_variable: str = dc.field(default="", compare=False)
     dest_path: str = ""
-    requirement: VarlistEntryRequirement = \
-        dc.field(default=VarlistEntryRequirement.REQUIRED, compare=False)
+    requirement: VarlistEntryRequirement = dc.field(
+        default=VarlistEntryRequirement.REQUIRED, compare=False
+    )
     alternates: list = dc.field(default_factory=list, compare=False)
     translation: typing.Any = dc.field(default=None, compare=False)
-    data: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict, compare=False)
-    stage: VarlistEntryStage = dc.field(default=VarlistEntryStage.NOTSET, compare=False)
-    _deactivation_log_level = logging.INFO
+    data: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict,
+                                         compare=False)
+    stage: VarlistEntryStage = dc.field(
+        default=VarlistEntryStage.NOTSET, compare=False
+    )
+
+    _deactivation_log_level = logging.INFO # default log level for failure
 
     @property
     def env_vars(self):
         """Get env var definitions for:
 
-            X The path to the preprocessed data file for this variable,
+            - The path to the preprocessed data file for this variable,
             - The name for this variable in that data file,
             - The names for all of this variable's coordinate axes in that file,
             - The names of the bounds variables for all of those coordinate
               dimensions, if provided by the data.
 
         """
-        if self.status != util.ObjectStatus.ACTIVE:
+        if self.status != util.ObjectStatus.SUCCEEDED:
             # Signal to POD's code that vars are not provided by setting
             # variable to the empty string.
             return {self.env_var: "", self.path_variable: ""}
 
+        assert self.dest_path
         d = util.ConsistentDict()
 
         assoc_dict = (
@@ -405,7 +429,6 @@ class VarlistEntry(VarlistEntryMixin, VarlistEntryBase,
             self.path_variable: self.dest_path,
             **assoc_dict
         })
-
         for ax, dim in self.dim_axes.items():
             trans_dim = self.translation.dim_axes[ax]
             d[dim.name + _coord_env_var_suffix] = trans_dim.name

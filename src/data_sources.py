@@ -155,9 +155,52 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         yield from self.varlist.iter_vars()
 
     def query_dataset(self, var):
-        """Verify that only a single file was found from each experiment.
+        """Find all rows of the catalog matching relevant attributes of the
+            DataSource and of the variable (:class:`~diagnostic.VarlistEntry`).
+            Group these by experiments, and for each experiment make the corresponding
+            :class:`DataFrameDataKey` and store it in var's *data* attribute.
+            Specifically, the *data* attribute is a dict mapping experiments
+            (labeled by experiment_keys) to data found for that variable
+            by this query (labeled by the DataKeys).
+            Finally, verify that only a single file was found for each case.
         """
-        super(MultirunSingleLocalFileDataSource, self).query_dataset(var)
+        query_df = self._query_catalog(var)
+        # assign set of sets of catalog row indices to var's data attr
+        # filter out empty entries = queries that failed.
+        expt_groups = query_df.groupby(
+            by=(lambda idx: self.col_spec.expt_key(query_df, idx))
+        )
+        var.data = util.ConsistentDict()
+        for expt_key, group in expt_groups:
+            group = self.check_group_daterange(group, expt_key=expt_key, log=var.log)
+            if group.empty:
+                var.log.debug('Expt_key %s eliminated by _check_group_daterange',
+                              expt_key)
+                continue
+            group = self._query_group_hook(group)
+            if group.empty:
+                var.log.debug('Expt_key %s eliminated by _query_group_hook', expt_key)
+                continue
+            d_key = self.data_key(group, expt_key=expt_key)
+            var.log.debug('Query found <expt_key=%s, %s> for %s',
+                          expt_key, d_key, var.full_name)
+            var.data[expt_key] = d_key
+
+            if not isinstance(var.associated_files, dict):
+                var.associated_files = {}
+
+            # Query for associated files - if the object contains a
+            # `query_associated_fields` method, we call it here. This is currently
+            # implemented for the gfdl `GFDL_GCP_FileDataSourceBase`, but any
+            # class that inherits ` DataframeQueryDataSourceBase` can define this
+            # method to populate the `VarlistEntry.associated_files` attribute.
+            # Otherwise, this attribute is set to an empty dictionary here.
+            if not hasattr(self, "query_associated_files") or not var.associated_files:
+                continue
+            try:
+                var.associated_files[expt_key] = self.query_associated_files(d_key)
+            except Exception as exc:
+                var.log.debug(f"Unable to query associated files: {exc}")
         for d_key in var.data.values():
             if len(d_key.value) != 1:
                 self._query_error_handler(
@@ -166,6 +209,12 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
                 )
 
 
+# instantiate the class maker so that the convention-specific classes can be instantiated using
+# the convention string specification associated with each case
+data_source = util.ClassMaker()
+
+
+@data_source.maker
 class CMIPDataSource(DataSourceBase):
     """DataSource for handling POD sample model data for multirun cases stored on a local filesystem.
     """
@@ -175,6 +224,7 @@ class CMIPDataSource(DataSourceBase):
     convention: str = "CMIP"
 
 
+@data_source.maker
 class CESMDataSource(DataSourceBase):
     """DataSource for handling POD sample model data for multirun cases stored on a local filesystem.
     """
@@ -184,6 +234,7 @@ class CESMDataSource(DataSourceBase):
     convention: str = "CESM"
 
 
+@data_source.maker
 class GFDLDataSource(DataSourceBase):
     """DataSource for handling POD sample model data for multirun cases stored on a local filesystem.
     """

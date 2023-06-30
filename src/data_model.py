@@ -398,7 +398,7 @@ class DMPlaceholderCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase)
 
 
 @util.mdtf_dataclass
-class DMPlaceholderXHorizontalCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
+class DMPlaceholderHorizontalCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     """Dummy base class for placeholder X axis coordinates. Placeholder coordinates are
     only used in instantiating :class:`~src.core.FieldlistEntry` objects: they're
     replaced by the appropriate translated coordinates when that object is used

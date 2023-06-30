@@ -3,9 +3,13 @@
 from abc import ABC
 import logging
 import os
+import io
 from pathlib import Path
-from src import cli, util, data_model, translation, varlistentry_util, varlist_util
+from typing import Type
+
+from src import cli, util, data_sources, translation, varlistentry_util, varlist_util
 import intake_esm
+import dataclasses as dc
 
 _log = logging.getLogger(__name__)
 
@@ -22,150 +26,59 @@ class PodBaseClass(metaclass=util.MDTFABCMeta):
     def setup_var(self, pod, v):
         pass
 
-class Varlist(data_model.DMDataSet, ABC):
-    """Class to perform bookkeeping for the model variables requested by a
-        single POD for multiple cases/ensemble members
-    """
 
-    @classmethod
-    def from_struct(cls, d, parent):
-        """Parse the "dimensions", "data" and "varlist" sections of the POD's
-        settings.jsonc file when instantiating a new :class:`Diagnostic` object.
-
-        Args:
-            parent: instance of the parent class object
-            d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
-
-        Returns:
-            :py:obj:`dict`, keys are names of the dimensions in POD's convention,
-            values are :class:`PodDataDimension` objects.
-        """
-
-        def _pod_dimension_from_struct(name, dd, v_settings):
-            class_dict = {
-                'X': varlist_util.VarlistHorizontalCoordinate,
-                'Y': varlist_util.VarlistHorizontalCoordinate,
-                'Z': varlist_util.VarlistVerticalCoordinate,
-                'T': varlist_util.VarlistPlaceholderTimeCoordinate,
-                'OTHER': varlist_util.VarlistCoordinate
-            }
-            try:
-                return data_model.coordinate_from_struct(
-                    dd, class_dict=class_dict, name=name,
-                    **v_settings.time_settings
-                )
-            except Exception:
-                raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
-
-        def _iter_shallow_alternates(var):
-            """Iterator over all VarlistEntries referenced as alternates. Doesn't
-            traverse alternates of alternates, etc.
-            """
-            for alt_vs in var.alternates:
-                yield from alt_vs
-
-        vlist_settings = util.coerce_to_dataclass(
-            d.get('data', dict()), varlist_util.VarlistSettings)
-        globals_d = vlist_settings.global_settings
-
-        assert 'dimensions' in d
-        dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings)
-                  for k, v in d['dimensions'].items()}
-
-        assert 'varlist' in d
-        vlist_vars = {
-            k: varlistentry_util.VarlistEntry.from_struct(globals_d, dims_d, name=k, parent=parent, **v) \
-            for k, v in d['varlist'].items()
-        }
-        for v in vlist_vars.values():
-            # validate & replace names of alt vars with references to VE objects
-            for altv_name in _iter_shallow_alternates(v):
-                if altv_name not in vlist_vars:
-                    raise ValueError((f"Unknown variable name {altv_name} listed "
-                                      f"in alternates for varlist entry {v.name}."))
-            linked_alts = []
-            for alts in v.alternates:
-                linked_alts.append([vlist_vars[v_name] for v_name in alts])
-            v.alternates = linked_alts
-        return cls(contents=list(vlist_vars.values()))
-
-    def find_var(self, v):
-        """If a variable matching *v* is already present in the Varlist, return
-        (a reference to) it (so that we don't try to add duplicates), otherwise
-        return None.
-        """
-        for vv in self.iter_vars():
-            if v == vv:
-                return vv
-        return None
-
-    def setup_var(self, pod, v):
-        """Update VarlistEntry fields with information that only becomes
-        available after DataManager and Diagnostic have been configured (ie,
-        only known at runtime, not from settings.jsonc.)
-
-        Could arguably be moved into VarlistEntry's init, at the cost of
-        dependency inversion.
-        """
-        translate = translation.VariableTranslator().get_convention(self.convention)
-        if v.T is not None:
-            v.change_coord(
-                'T',
-                new_class={
-                    'self': varlist_util.VarlistTimeCoordinate,
-                    'range': util.DateRange,
-                    'frequency': util.DateFrequency
-                },
-                range=self.attrs.date_range,
-                calendar=util.NOTSET,
-                units=util.NOTSET
-            )
-        v.dest_path = self.variable_dest_path(pod, v)
-        try:
-            trans_v = translate.translate(v)
-            v.translation = trans_v
-            # copy preferred gfdl post-processing component during translation
-            if hasattr(trans_v, "component"):
-                v.component = trans_v.component
-        except KeyError as exc:
-            # can happen in normal operation (eg. precip flux vs. rate)
-            chained_exc = util.PodConfigEvent((f"Deactivating {v.full_name} due to "
-                                               f"variable name translation: {str(exc)}."))
-            # store but don't deactivate, because preprocessor.edit_request()
-            # may supply alternate variables
-            v.log.store_exception(chained_exc)
-        except Exception as exc:
-            chained_exc = util.chain_exc(exc, f"translating name of {v.full_name}.",
-                                         util.PodConfigError)
-            # store but don't deactivate, because preprocessor.edit_request()
-            # may supply alternate variables
-            v.log.store_exception(chained_exc)
-
-        v.stage = varlistentry_util.VarlistEntryStage.INITED
-
-    def variable_dest_path(self, pod, var):
-        """Returns the absolute path of the POD's preprocessed, local copy of
-        the file containing the requested dataset. Files not following this
-        convention won't be found by the POD.
-        """
-        if var.is_static:
-            f_name = f"{self.name}.{var.name}.static.nc"
-            return os.path.join(pod.POD_WK_DIR, f_name)
-        else:
-            freq = var.T.frequency.format_local()
-            f_name = f"{self.name}.{var.name}.{freq}.nc"
-            return os.path.join(pod.POD_WK_DIR, freq, f_name)
-
-
-class PodObject(PodBaseClass, ABC):
+class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
     """Class to hold pod information"""
-    name = str
-    pod_dims = dict
-    pod_vars = dict
-    pod_settings = dict
+    # name: str  Class atts inherited from MDTFObjectBase
+    # _id
+    # _parent: object
+    # status: ObjectStatus
+    pod_dims = util.NameSpace
+    pod_vars = util.NameSpace
+    pod_settings = util.NameSpace
+    cases = util.NameSpace
 
-    def __init__(self, name: str):
+    MODEL_DATA_DIR = dict()
+    MODEL_WORK_DIR = dict()
+    MODEL_OUT_DIR = dict()
+
+    overwrite: bool = False
+    # explict 'program' attribute in settings
+    _interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
+    runtime_requirements: dict = dc.field(default_factory=dict)
+    driver: str = ""
+    program: str = ""
+    pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
+    log_file: io.IOBase = dc.field(default=None, init=False)
+    nc_largefile: bool = False
+    log_file: io.IOBase = dc.field(default=None, init=False)
+
+    def __init__(self, name: str, runtime_config: util.NameSpace):
         self.name = name
+        self.init_log()
+        # define global environment variables: those that apply to the entire POD
+        self.pod_env_vars = os.environ.copy()
+        self.pod_env_vars['RGB'] = os.path.join(runtime_config.code_root, 'shared', 'rgb')
+        # globally enforce non-interactive matplotlib backend
+        # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
+        self.pod_env_vars['MPLBACKEND'] = "Agg"
+        self.nc_largefile = runtime_config.large_file
+        # set up work/output directories
+        self.paths = util.PathManager(runtime_config, self.global_env_vars)
+        self.paths.set_pod_paths(self.name, runtime_config, self.global_env_vars)
+
+    @property
+    def _log_name(self):
+        # POD loggers sit in a subtree of the DataSource logger distinct from
+        # the DataKey loggers; the two subtrees are distinguished by class name
+        _log_name = f"{self.name}_{self._id}".replace('.', '_')
+        return f"{self._parent._log_name}.{self.__class__.__name__}.{_log_name}"
+
+    def close_log_file(self, log=True):
+        if self.log_file is not None:
+            if log:
+                self.log_file.write(self.format_log(children=False))
+            self.log_file.close()
 
     def parse_pod_settings_file(self, code_root: str) -> util.NameSpace:
         """Parse the POD settings file"""
@@ -188,8 +101,66 @@ class PodObject(PodBaseClass, ABC):
         cat = intake.open_esm_datastore(catalog_path)
         # filter catalog by desired variable and output frequency
         tas_subset = cat.search(variable_id=tas_var, frequency="day")
+
     def query_files_in_time_range(self, startdate, enddate):
-    def setup_pod(self, runtime_config: util.NameSpace):
+        pass
+
+    def append_pod_env_vars(self, pod_input):
+        self.global_env_vars.update(v for v in pod_input.pod_env_vars)
+
+    def set_entry_point(self):
+        """Locate the top-level driver script for the POD.
+
+        Raises: :class:`~util.PodRuntimeError` if driver script can't be found.
+        """
+        if not self.pod_settings.driver:
+            self.log.warning("No valid driver script found for %s.", self.full_name)
+            # try to find one anyway
+            script_names = [self.name, "driver"]
+            file_names = [f"{script}{ext}" for script in script_names
+                          for ext in self._interpreters.keys()]
+            for f in file_names:
+                path_ = os.path.join(self.POD_CODE_DIR, f)
+                if os.path.exists(path_):
+                    self.log.debug("Setting driver script for %s to '%s'.",
+                                   self.full_name, f)
+                    self.driver = path_
+                    break  # go with the first one found
+        if not self.driver:
+            raise util.PodRuntimeError((f"No driver script found in "
+                                        f"{self.POD_CODE_DIR}. Specify 'driver' in settings.jsonc."),
+                                       self)
+
+        if not os.path.isabs(self.driver):  # expand relative path
+            self.driver = os.path.join(self.POD_CODE_DIR, self.driver)
+        if not os.path.exists(self.driver):
+            raise util.PodRuntimeError(
+                f"Unable to locate driver script '{self.driver}'.",
+                self
+            )
+
+    def set_interpreter(self):
+        """Determine what executable should be used to run the driver script.
+
+        .. note::
+           Existence of the program on the environment's ``$PATH`` isn't checked
+           until before the POD runs (see :mod:`src.environment_manager`.)
+        """
+
+        if not self.program:
+            # Find ending of filename to determine the program that should be used
+            _, driver_ext = os.path.splitext(self.driver)
+            # Possible error: Driver file type unrecognized
+            if driver_ext not in self._interpreters:
+                raise util.PodRuntimeError((f"Don't know how to call a '{driver_ext}' "
+                                            f"file.\nSupported programs: {list(self._interpreters.values())}"),
+                                           self
+                                           )
+            self.program = self._interpreters[driver_ext]
+            self.log.debug("Set program for %s to '%s'.",
+                           self.full_name, self.program)
+
+    def setup_pod(self, runtime_config: util.NameSpace,):
         """Update POD information
         """
         # Parse the POD settings file
@@ -197,16 +168,26 @@ class PodObject(PodBaseClass, ABC):
         self._get_pod_settings(pod_input)
         self._get_pod_vars(pod_input)
         self._get_pod_dims(pod_input)
+
         # run the PODs on data that has already been preprocessed
         # PODs will ingest input directly from catalog that (should) contain
         # the information for the saved preprocessed files, and a pre-existing case_env file
         if runtime_config.persist_data:
             pass
         elif runtime_config.run_pp:
+
             for case_name, case_dict in runtime_config.case_list.items():
+                # instantiate the data_source class instance for the specified convention
+                self.cases.case_name = data_sources.data_source[case_dict.convention.upper() +
+                                                                "DataSource"](case_dict, parent=self)
+
+                #util.NameSpace.fromDict({k: case_dict[k] for k in case_dict.keys()})
                 if self.pod_settings.convention != case_dict.convention:
-                # translate variable(s) to user_specified standard if necessary
-                    case_dict.varlist = Varlist.from_struct(case_dict)
+                    # translate variable(s) to user_specified standard if necessary
+
+                    self.cases.case_name.varlist = Varlist.from_struct(case_dict)
+                else:
+                    pass
 
 
             # get level

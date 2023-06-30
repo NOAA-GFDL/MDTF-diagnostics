@@ -17,6 +17,7 @@ import yaml
 import logging
 _log = logging.getLogger(__name__)
 
+
 def abbreviate_path(path, old_base, new_base=None):
     """Express *path* as a path relative to *old_base*, optionally prepending
     *new_base*.
@@ -27,19 +28,21 @@ def abbreviate_path(path, old_base, new_base=None):
         str_ = os.path.join(new_base, str_)
     return str_
 
-def resolve_path(path, root_path="", env=None, log=_log):
+
+def resolve_path(rel_path: str, root_path: str = "", env_vars: dict = None, log=_log):
     """Abbreviation to resolve relative paths, expanding environment variables
     if necessary.
 
     Args:
-        path (str): Path to resolve.
+        rel_path (str): Path to resolve.
         root_path (str): Optional. Root path to resolve `path` with. If
             not given, resolves relative to :py:func:`os.getcwd`.
+        env_vars (dict): global environment variables
 
     Returns:
         str: Absolute version of *path*.
     """
-    def _expandvars(path, env_dict):
+    def _expandvars(path_name: str, env_dict: dict):
         """Expand quoted variables of the form ``$key`` and ``${key}`` in *path*,
         where ``key`` is a key in *env_dict*, similar to
         :py:func:`os.path.expandvars`.
@@ -50,27 +53,28 @@ def resolve_path(path, root_path="", env=None, log=_log):
         return re.sub(
             r'\$(\w+|\{([^}]*)\})',
             lambda m: env_dict.get(m.group(2) or m.group(1), m.group(0)),
-            path
+            path_name
         )
 
-    if path == '':
-        return path # default value set elsewhere
-    path = os.path.expanduser(path) # resolve '~' to home dir
-    path = os.path.expandvars(path) # expand $VAR or ${VAR} for shell env_vars
-    if isinstance(env, dict):
-        path = _expandvars(path, env)
-    if '$' in path:
-        log.warning("Couldn't resolve all env vars in '%s'", path)
-        return path
-    if os.path.isabs(path):
-        return path
+    if rel_path == "":
+        return rel_path  # default value set elsewhere
+    rel_path = os.path.expanduser(rel_path)  # resolve '~' to home dir
+    rel_path = os.path.expandvars(rel_path)  # expand $VAR or ${VAR} for shell env_vars
+    if isinstance(env_vars, dict):
+        rel_path = _expandvars(rel_path, env_vars)
+    if '$' in rel_path:
+        log.warning("Couldn't resolve all env vars in '%s'", rel_path)
+        return rel_path
+    if os.path.isabs(rel_path):
+        return rel_path
     if root_path == "":
         root_path = os.getcwd()
     assert os.path.isabs(root_path)
-    return os.path.normpath(os.path.join(root_path, path))
+    return os.path.normpath(os.path.join(root_path, rel_path))
+
 
 def recursive_copy(src_files, src_root, dest_root, copy_function=None,
-    overwrite=False):
+                   overwrite=False):
     """Copy *src_files* to *dest_root*, preserving relative subdirectory structure.
 
     Copies a subset of files in a directory subtree rooted at *src_root* to an
@@ -113,6 +117,7 @@ def recursive_copy(src_files, src_root, dest_root, copy_function=None,
     for src, dest in zip(src_files, dest_files):
         copy_function(src, dest)
 
+
 def check_executable(exec_name):
     """Tests if the executable *exec_name* is found on the current ``$PATH``.
 
@@ -131,6 +136,7 @@ def get_config_file_type(file_path: str)->str:
         raise exceptions.UnsupportedFileTypeError(
             f"Unsupported file type. {file_path} must be of type .json(c) or .yml")
     return ext
+
 
 def find_files(src_dirs, filename_globs, n_files=None):
     """Return list of files in *src_dirs*, or any subdirectories, matching any

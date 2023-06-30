@@ -853,7 +853,7 @@ class MDTFObjectBase(metaclass=basic.MDTFABCMeta):
     @property
     def _log_name(self):
         if self._parent is None:
-            return OBJ_LOG_ROOT # framework: root of tree
+            return OBJ_LOG_ROOT  # framework: root of tree
         else:
             _log_name = f"{self.name}_{self._id}".replace('.', '_')
             return f"{self._parent._log_name}.{_log_name}"

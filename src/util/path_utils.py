@@ -10,6 +10,7 @@ from . import NameSpace
 from . import from_iter
 from . import resolve_path
 import shutil
+from . import filesystem
 import string
 from . import basic
 from . import exceptions
@@ -23,48 +24,41 @@ class PathManager(metaclass=Singleton, NameSpace):
     """:class:`~util.Singleton` holding the root directories for all paths used
     by the code.
     """
-    def __init__(self, cli_obj=None, env_vars=None, unittest=False):
+    WORK_DIR: str
+    OUTPUT_DIR: str
+    TEMP_DIR_ROOT: str
+    CODE_ROOT: str
+    OBS_DATA_ROOT: str
+    POD_WORK_DIR: str
+    POD_OUT_DIR: str
+
+    overwrite: bool = False
+
+    _unittest: bool = False
+
+    def __init__(self, config: NameSpace = None,
+                 env: dict = None, unittest: bool = False):
         self._unittest = unittest
         if self._unittest:
             for path in ['CODE_ROOT', 'OBS_DATA_ROOT',
                          'WORK_DIR', 'OUTPUT_DIR']:
-                setattr(self, path, 'TEST_'+path)
-            self.TEMP_DIR_ROOT = self.WORKING_DIR
+                setattr(self, path, 'TEST_' + path)
+            self.TEMP_DIR_ROOT = self.WORK_DIR
         else:
             # normal code path
-            self.CODE_ROOT = cli_obj.code_root
+            self.CODE_ROOT = config.code_root
             assert os.path.isdir(self.CODE_ROOT)
 
-            d = cli_obj.config
-            env = os.environ.copy()
-            if env_vars:
-                env.update(env_vars)
-            # set following explictly: redundant, but keeps linter from complaining
-            self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', d, env=env)
-            self.WORK_DIR = self._init_path('WOR_DIR', d, env=env)
-            self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', d, env=env)
+            # set following explicitly: redundant, but keeps linter from complaining
+            self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', config, env=env)
+            self.WORK_DIR = self._init_path('WORK_DIR', config, env=env)
+            self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', config, env=env)
 
             if not self.OUTPUT_DIR:
                 self.OUTPUT_DIR = self.WORK_DIR
 
-            # set as attribute any CLI setting that has "action": "PathAction"
-            # in its definition in the .jsonc file
-            cli_paths = [act.dest for act in cli_obj.iter_actions()
-                         if isinstance(act, PathAction)]
-            if not cli_paths:
-                _log.warning("Didn't get list of paths from CLI.")
-            for key in cli_paths:
-                self[key] = self._init_path(key, d, env=env)
-                if key in d:
-                    d[key] = self[key]
-
-            # set root directory for TempDirManager
-            if not getattr(self, 'TEMP_DIR_ROOT', ''):
-                if 'MDTF_TMPDIR' in env:
-                    self.TEMP_DIR_ROOT = env['MDTF_TMPDIR']
-                else:
-                    # default to writing temp files in working directory
-                    self.TEMP_DIR_ROOT = self.WORKING_DIR
+            if not config.persist_data:
+                self.overwrite = True
 
     def _init_path(self, key, d, env=None):
         if self._unittest:  # use in unit testing only
@@ -79,26 +73,47 @@ class PathManager(metaclass=Singleton, NameSpace):
                 log=_log
             )
 
-    def model_paths(self, pod, case: dict):
+    def model_paths(self, pod_name: str, case: dict):
         # define directory paths for multirun mode
         # Each case directory is a subdirectory in wk_dir/pod_name
-        d = NameSpace()
         startdate = case.attrs.date_range.start.format(precision=1)
         enddate = case.attrs.date_range.end.format(precision=1)
         case_wk_dir = 'MDTF_{}_{}_{}'.format(case, startdate, enddate)
-        d.MODEL_DATA_DIR = os.path.join(self.MODEL_DATA_ROOT, name)
+        self.MODEL_DATA_DIR = os.path.join(self.MODEL_DATA_ROOT, pod_name)
         # Cases are located in a common POD directory
-        d.MODEL_WK_DIR = os.path.join(pod.POD_WK_DIR, case_wk_dir)
-        d.MODEL_OUT_DIR = os.path.join(pod.POD_OUT_DIR, case_wk_dir)
-        return d
+        self.MODEL_WORK_DIR = os.path.join(self.POD_WORK_DIR, case_wk_dir)
+        self.MODEL_OUT_DIR = os.path.join(self.POD_OUT_DIR, case_wk_dir)
 
-    def pod_paths(self, pod, case):
-        d = NameSpace()
-        d.POD_CODE_DIR = os.path.join(self.CODE_ROOT, 'diagnostics', pod.name)
-        d.POD_OBS_DATA = os.path.join(self.OBS_DATA_ROOT, pod.name)
-        d.POD_WK_DIR = os.path.join(case.MODEL_WK_DIR, pod.name)
-        d.POD_OUT_DIR = os.path.join(case.MODEL_OUT_DIR, pod.name)
-        return d
+    def set_pod_paths(self, pod_name: str, config: NameSpace, env_vars: dict):
+        """Check and create directories specific to this POD.
+        """
+
+        self.POD_CODE_DIR = os.path.join(config.CODE_ROOT, 'diagnostics', pod_name)
+        self.POD_OBS_DATA = os.path.join(config.OBS_DATA_ROOT, pod_name)
+        self.POD_WORK_DIR = os.path.join(config.WORKING_DIR, pod_name)
+        self.POD_OUT_DIR = os.path.join(config.OUTPUT_DIR, pod_name)
+        if not self.overwrite:
+            # bump both WORK_DIR and OUT_DIR to same version because name of
+            # former may be preserved when we copy to latter, depending on
+            # copy method
+            self.POD_WORK_DIR, ver = filesystem.bump_version(
+                self.POD_WORK_DIR, extra_dirs=[self.OUTPUT_DIR])
+            self.POD_OUT_DIR, _ = filesystem.bump_version(self.POD_OUT_DIR, new_v=ver)
+        filesystem.check_dir(self.POD_WORK_DIR, 'POD_WORK_DIR', create=True)
+        filesystem.check_dir(self.POD_OUT_DIR, 'POD_OUT_DIR', create=True)
+        # append obs and model outdirs
+        dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
+        for d in dirs:
+            filesystem.check_dir(os.path.join(self.POD_WORK_DIR, d), create=True)
+
+        # set root directory for TempDirManager
+        if not getattr(self, 'TEMP_DIR_ROOT', ''):
+            if 'MDTF_TMPDIR' in env_vars:
+                self.TEMP_DIR_ROOT = env_vars['MDTF_TMPDIR']
+            else:
+                # default to writing temp files in working directory
+                self.TEMP_DIR_ROOT = self.WORK_DIR
+
 
 def verify_paths(self, config, p):
     # needs to be here, instead of PathManager, because we subclass it in

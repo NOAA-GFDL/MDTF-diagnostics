@@ -35,3 +35,7 @@ from .processes import (
     ExceptionPropagatingThread,
     poll_command, run_command, run_shell_command
 )
+
+from .path_utils import (
+    PathManager
+)

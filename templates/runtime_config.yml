@@ -41,13 +41,10 @@ conda_root": ""
 # blank, the framework will look for its environments in conda_root/envs
 conda_env_root": ""
 ### Data type settings ###
-# Type of data for the framework to process: `single_run` (default)
-# for PODs that compare output from a single simulation to observational data
-# for `multi_run` for PODs that analyze output from multiple simulations and/or
-# observational datasets
-data_type: "multi_run"
 # Method used to fetch model data.
 data_manager: "Local_File"
+# set to true to handle data files > 4 GB
+large_file: False
 ### Output Settings ###
 # Set to true to have PODs save postscript figures in addition to bitmaps.
 save_ps: False

@@ -77,11 +77,6 @@
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
   // can be set here, in the form "flag name": "desired setting".
   //
-  // Type of data for the framework to process: `single_run` (default)
-  // for PODs that compare output from a single simulation to observational data
-  // or `multi_run` for PODs that analyze output from multiple simulations and/or
-  // observational datasets
-  "data_type": "multi_run",
 
   // Method used to fetch model data.
   "data_manager": "Local_File",
@@ -94,6 +89,9 @@
   "run_pp": false,
   // Set to true to have PODs save postscript figures in addition to bitmaps.
   "save_ps": false,
+
+  // Set to true for files > 4 GB
+  "large_file": false,
 
   // Set to true to have PODs run on data that has already been processed
   "persist_data": false,

@@ -14,7 +14,7 @@ from src.units import Units
 import logging
 _log = logging.getLogger(__name__)
 
-_NO_TRANSLATION_CONVENTION = 'None' # naming convention for disabling translation
+_NO_TRANSLATION_CONVENTION = 'None'  # naming convention for disabling translation
 
 
 @util.mdtf_dataclass
@@ -66,8 +66,8 @@ class FieldlistEntry(data_model.DMDependentVariable):
             'PLACEHOLDER_X_COORD')
     }
     _placeholder_class_dict = {
-        'PLACEHOLDER_X_COORD': data_model.DMPlaceholderXCoordinate,
-        'PLACEHOLDER_Y_COORD': data_model.DMPlaceholderYCoordinate,
+        'PLACEHOLDER_X_COORD': data_model.DMPlaceholderHorizontalCoordinate,
+        'PLACEHOLDER_Y_COORD': data_model.DMPlaceholderHorizontalCoordinate,
         'PLACEHOLDER_Z_COORD': data_model.DMPlaceholderZCoordinate,
         'PLACEHOLDER_T_COORD': data_model.DMPlaceholderTCoordinate,
         'PLACEHOLDER_COORD': data_model.DMPlaceholderCoordinate
@@ -96,7 +96,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         for d_name in kwargs.get('scalar_coord_templates', dict()):
             if d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in scalar "
-                    f"coord definition for fieldlist entry for {name}."))
+                                  f"coord definition for fieldlist entry for {name}."))
 
         filter_kw = util.filter_dataclass(kwargs, cls, init=True)
         assert filter_kw['coords']
@@ -129,7 +129,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
 
 
 @util.mdtf_dataclass
-class Fieldlist():
+class Fieldlist:
     """Class corresponding to a single variable naming convention (single file
     in data/fieldlist_*.jsonc).
 
@@ -154,7 +154,7 @@ class Fieldlist():
                 entry = data_model.coordinate_from_struct(v, name=k)
                 d['axes'][k] = entry
                 temp_d[ax][entry.standard_name] = entry
-            return (d, temp_d)
+            return d, temp_d
 
         def _process_var(section_name, d, temp_d):
             # build two-stage lookup table (by standard name, then data
@@ -164,7 +164,7 @@ class Fieldlist():
                 entry = FieldlistEntry.from_struct(d['axes'], name=k, **v)
                 d['entries'][k] = entry
                 temp_d[entry.standard_name][entry.modifier] = entry
-            return (d, temp_d)
+            return d, temp_d
 
         temp_d = collections.defaultdict(util.WormDict)
         d['axes'] = util.WormDict()
@@ -277,16 +277,16 @@ class Fieldlist():
         else:
             if coord.standard_name not in lut1:
                 raise KeyError((f"Coordinate {coord.name} with standard name "
-                    f"'{coord.standard_name}' not defined in convention '{self.name}'."))
+                                f"'{coord.standard_name}' not defined in convention '{self.name}'."))
             new_coord = lut1[coord.standard_name]
 
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             new_coord = copy.deepcopy(new_coord)
             new_coord.value = units.convert_scalar_coord(coord, new_coord.units,
-                log=log)
+                                                         log=log)
         else:
             new_coord = dc.replace(coord,
-                **(util.filter_dataclass(new_coord, coord)))
+                                   **(util.filter_dataclass(new_coord, coord)))
         return new_coord
 
     def translate(self, var):

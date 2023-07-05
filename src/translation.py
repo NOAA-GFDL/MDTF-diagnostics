@@ -89,7 +89,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
                 kwargs['coords'].append(coord_cls())
             elif d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in fieldlist "
-                    f"entry for {name}."))
+                                  f"entry for {name}."))
             else:
                 kwargs['coords'].append(dims_d[d_name])
 
@@ -463,7 +463,7 @@ class VariableTranslator(util.Singleton):
 
     def from_CF(self, conv_name, standard_name, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF',
-            standard_name, modifier=modifier)
+                                      standard_name, modifier=modifier)
 
     def from_CF_name(self, conv_name, standard_name, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF_name',

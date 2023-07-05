@@ -462,7 +462,7 @@ class DMPlaceholderTCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase
         unique -- we may be using a different DateFrequency depending on the
         data source.
         """
-        return (self.range == util.FXDateRange)
+        return self.range == util.FXDateRange
 
 
 # ------------------------------------------------------------------------------
@@ -494,7 +494,7 @@ class _DMDimensionsMixin(object):
 
     @property
     def dim_axes(self):
-        """Retrun dict mapping axes labels ('X', 'Y', etc.) to corresponding
+        """Return dict mapping axes labels ('X', 'Y', etc.) to corresponding
         dimension coordinate objects.
         """
         return self.build_axes(self.dims, verify=False)
@@ -550,7 +550,7 @@ class _DMDimensionsMixin(object):
                 if c.axis != 'OTHER' and c.axis in verify_d:
                     err_name = getattr(self, 'name', self.__class__.__name__)
                     raise ValueError((f"Duplicate definition of {c.axis} axis in "
-                        f"{err_name}: {c}, {verify_d[c.axis]}"))
+                                      f"{err_name}: {c}, {verify_d[c.axis]}"))
                 verify_d[c.axis] = c
                 if c.axis in _AXIS_NAMES:
                     d[c.axis] = c
@@ -724,11 +724,11 @@ class DMCoordinateBounds(DMAuxiliaryCoordinate, AbstractDMDependentVariable):
         # validate dimensions
         if self.scalar_coords:
             raise ValueError(("Attempted to create DMCoordinateBounds "
-                f"{self.name} with scalar coordinates: {self.scalar_coords}."))
+                              f"{self.name} with scalar coordinates: {self.scalar_coords}."))
         if len(self.dims) != 2 or \
-            'BOUNDS' not in {c.axis for c in self.dims}:
+                'BOUNDS' not in {c.axis for c in self.dims}:
             raise ValueError(("Attempted to create DMCoordinateBounds "
-                f"{self.name} with improper dimensions: {self.dims}."))
+                              f"{self.name} with improper dimensions: {self.dims}."))
 
     @property
     def coord(self):

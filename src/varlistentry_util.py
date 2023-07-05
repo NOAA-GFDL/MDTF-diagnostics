@@ -350,6 +350,7 @@ class VarlistEntryMixin(object):
             d.update(dict(iter_query_attrs(dim)))
         return d
 
+
 @util.mdtf_dataclass
 class VarlistEntry(VarlistEntryMixin, VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
                    varlist_util._VarlistGlobalSettings, util.VarlistEntryLoggerMixin):

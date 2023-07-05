@@ -15,159 +15,10 @@ import logging
 _log = logging.getLogger(__name__)
 
 
-@util.mdtf_dataclass
-class VarlistEntry(VarlistEntryMixin, VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
-                   varlist_util._VarlistGlobalSettings, util.VarlistEntryLoggerMixin):
-    """Class to describe data for a single variable requested by a POD.
-    Corresponds to list entries in the "varlist" section of the POD's
-    settings.jsonc file.
-
-    Two VarlistEntries are equal (as determined by the ``__eq__`` method, which
-    compares fields without ``compare=False``) if they specify the same data
-    product, ie if the same output file from the preprocessor can be symlinked
-    to two different locations.
-
-    Attributes:
-        use_exact_name: see docs
-        env_var: Name of env var which is set to the variable's name in the
-            provided dataset.
-        path_variable: Name of env var containing path to local data.
-        dest_path: Path to local data.
-        alternates: List of lists of VarlistEntries.
-        translation: :class:`core.TranslatedVarlistEntry`, populated by DataSource.
-        data: dict mapping experiment_keys to DataKeys. Populated by DataSource.
-    """
-    # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
-    # name: str
-    # _parent: object
-    # log = util.MDTFObjectLogger
-    # status: ObjectStatus
-    # standard_name: str           # fields inherited from data_model.DMVariable
-    # units: Units
-    # dims: list
-    # scalar_coords: list
-    # modifier: str
-    use_exact_name: bool = False
-    env_var: str = dc.field(default="", compare=False)
-    path_variable: str = dc.field(default="", compare=False)
-    dest_path: str = ""
-    requirement: varlistentry_util.VarlistEntryRequirement = dc.field(
-        default=varlistentry_util.VarlistEntryRequirement.REQUIRED, compare=False
-    )
-    alternates: list = dc.field(default_factory=list, compare=False)
-    translation: typing.Any = dc.field(default=None, compare=False)
-    data: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict,
-                                         compare=False)
-    stage: varlistentry_util.VarlistEntryStage = dc.field(
-        default=varlistentry_util.VarlistEntryStage.NOTSET, compare=False
-    )
-
-    _deactivation_log_level = logging.INFO # default log level for failure
-
-    @property
-    def env_vars(self):
-        """Get env var definitions for:
-
-            - The path to the preprocessed data file for this variable,
-            - The name for this variable in that data file,
-            - The names for all of this variable's coordinate axes in that file,
-            - The names of the bounds variables for all of those coordinate
-              dimensions, if provided by the data.
-
-        """
-        if self.status != util.ObjectStatus.SUCCEEDED:
-            # Signal to POD's code that vars are not provided by setting
-            # variable to the empty string.
-            return {self.env_var: "", self.path_variable: ""}
-
-        assert self.dest_path
-        d = util.ConsistentDict()
-
-        assoc_dict = (
-            {self.name.upper() + "_ASSOC_FILES": self.associated_files}
-            if isinstance(self.associated_files, str)
-            else {}
-        )
-
-        d.update({
-            self.env_var: self.name_in_model,
-            self.path_variable: self.dest_path,
-            **assoc_dict
-        })
-        for ax, dim in self.dim_axes.items():
-            trans_dim = self.translation.dim_axes[ax]
-            d[dim.name + varlistentry_util._coord_env_var_suffix] = trans_dim.name
-            if trans_dim.has_bounds:
-                d[dim.name + varlistentry_util._coord_bounds_env_var_suffix] = trans_dim.bounds
-        return d
-
-
 class Varlist(data_model.DMDataSet, ABC):
     """Class to perform bookkeeping for the model variables requested by a
         single POD for multiple cases/ensemble members
     """
-
-    @classmethod
-    def from_struct(cls, d, parent):
-        """Parse the "dimensions", "data" and "varlist" sections of the POD's
-        settings.jsonc file when instantiating a new :class:`Diagnostic` object.
-
-        Args:
-            parent: instance of the parent class object
-            d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
-
-        Returns:
-            :py:obj:`dict`, keys are names of the dimensions in POD's convention,
-            values are :class:`PodDataDimension` objects.
-        """
-
-        def _pod_dimension_from_struct(name, dd, v_settings):
-            class_dict = {
-                'X': varlist_util.VarlistHorizontalCoordinate,
-                'Y': varlist_util.VarlistHorizontalCoordinate,
-                'Z': varlist_util.VarlistVerticalCoordinate,
-                'T': varlist_util.VarlistPlaceholderTimeCoordinate,
-                'OTHER': varlist_util.VarlistCoordinate
-            }
-            try:
-                return data_model.coordinate_from_struct(
-                    dd, class_dict=class_dict, name=name,
-                    **v_settings.time_settings
-                )
-            except Exception:
-                raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
-
-        def _iter_shallow_alternates(var):
-            """Iterator over all VarlistEntries referenced as alternates. Doesn't
-            traverse alternates of alternates, etc.
-            """
-            for alt_vs in var.alternates:
-                yield from alt_vs
-
-        vlist_settings = util.coerce_to_dataclass(
-            d.get('data', dict()), varlist_util.VarlistSettings)
-        globals_d = vlist_settings.global_settings
-
-        assert 'dimensions' in d
-        dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings)
-                  for k, v in d['dimensions'].items()}
-
-        assert 'varlist' in d
-        vlist_vars = {
-            k: varlistentry_util.VarlistEntry.from_struct(globals_d, dims_d, name=k, parent=parent, **v) \
-            for k, v in d['varlist'].items()
-        }
-        for v in vlist_vars.values():
-            # validate & replace names of alt vars with references to VE objects
-            for altv_name in _iter_shallow_alternates(v):
-                if altv_name not in vlist_vars:
-                    raise ValueError((f"Unknown variable name {altv_name} listed "
-                                      f"in alternates for varlist entry {v.name}."))
-            linked_alts = []
-            for alts in v.alternates:
-                linked_alts.append([vlist_vars[v_name] for v_name in alts])
-            v.alternates = linked_alts
-        return cls(contents=list(vlist_vars.values()))
 
     def find_var(self, v):
         """If a variable matching *v* is already present in the Varlist, return
@@ -236,6 +87,67 @@ class Varlist(data_model.DMDataSet, ABC):
             f_name = f"{self.name}.{var.name}.{freq}.nc"
             return os.path.join(pod.POD_WK_DIR, freq, f_name)
 
+    @classmethod
+    def from_struct(cls, parent):
+        """Parse the "dimensions", "data" and "varlist" sections of the POD's
+        settings.jsonc file when instantiating a new :class:`Diagnostic` object.
+
+        Args:
+            parent: instance of the parent class object
+
+        Returns:
+            :py:obj:`dict`, keys are names of the dimensions in POD's convention,
+            values are :class:`PodDataDimension` objects.
+        """
+
+        def _pod_dimension_from_struct(name, dd, v_settings):
+            class_dict = {
+                'X': varlist_util.VarlistHorizontalCoordinate,
+                'Y': varlist_util.VarlistHorizontalCoordinate,
+                'Z': varlist_util.VarlistVerticalCoordinate,
+                'T': varlist_util.VarlistPlaceholderTimeCoordinate,
+                'OTHER': varlist_util.VarlistCoordinate
+            }
+            try:
+                return data_model.coordinate_from_struct(
+                    dd, class_dict=class_dict, name=name,
+                    **v_settings.time_settings
+                )
+            except Exception:
+                raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
+
+        def _iter_shallow_alternates(var):
+            """Iterator over all VarlistEntries referenced as alternates. Doesn't
+            traverse alternates of alternates, etc.
+            """
+            for alt_vs in var.alternates:
+                yield from alt_vs
+
+        vlist_settings = util.coerce_to_dataclass(
+            parent.pod_data, varlist_util.VarlistSettings)
+        globals_d = vlist_settings.global_settings
+
+        dims_d = parent.pod_dims
+
+        vlist_vars = {
+            k: varlistentry_util.VarlistEntry.from_struct(globals_d, dims_d, name=k, parent=parent, **v)
+            for k, v in parent.pod_vars.items()
+        }
+        for v in vlist_vars.values():
+            # validate & replace names of alt vars with references to VE objects
+            for altv_name in _iter_shallow_alternates(v):
+                if altv_name not in vlist_vars:
+                    raise ValueError((f"Unknown variable name {altv_name} listed "
+                                      f"in alternates for varlist entry {v.name}."))
+            linked_alts = []
+            for alts in v.alternates:
+                linked_alts.append([vlist_vars[v_name] for v_name in alts])
+            v.alternates = linked_alts
+        return cls(contents=list(vlist_vars.values()))
+
+
+
+
 class NoPPVarlist(Varlist, ABC):
     @classmethod
     def from_struct(cls, d, parent):
@@ -300,7 +212,7 @@ class NoPPVarlist(Varlist, ABC):
         return cls(contents=list(vlist_vars.values()))
 
 
-class NoPPVarlistEntry(VarlistEntry, VarlistEntryMixin):
+class NoPPVarlistEntry(varlistentry_util.VarlistEntry, varlistentry_util.VarlistEntryMixin):
     use_exact_name: bool = False
     env_var: str = dc.field(default="", compare=False)
     path_variable: str = dc.field(default="", compare=False)
@@ -345,207 +257,14 @@ class NoPPVarlistEntry(VarlistEntry, VarlistEntryMixin):
         })
         for ax, dim in self.dim_axes.items():
             trans_dim = self.translation.dim_axes[ax]
-            d[dim.name + _coord_env_var_suffix] = trans_dim.name
+            d[dim.name + varlistentry_util._coord_env_var_suffix] = trans_dim.name
             if trans_dim.has_bounds:
-                d[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
+                d[dim.name + varlistentry_util._coord_bounds_env_var_suffix] = trans_dim.bounds
         return d
 
 
 @util.mdtf_dataclass
-class MultirunVarlistEntry(VarlistEntryMixin, VarlistEntryBase, core.MDTFObjectBase,
-                           data_model.DMVariable, varlist_util._VarlistGlobalSettings,
-                           util.VarlistEntryLoggerMixin, ABC):
-    # Attributes:
-    #         path_variable: Name of env var containing path to local data.
-    #         dest_path: list of paths to local data
-    # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
-    # name: str
-    # _parent: object
-    # log = util.MDTFObjectLogger
-    # status: ObjectStatus
-    # standard_name: str             # fields inherited from data_model.DMVariable
-    # units: Units
-    # dims: list
-    # scalar_coords: list
-    # modifier: str
-    use_exact_name: bool = False
-    env_var: str = dc.field(default="", compare=False)
-    path_variable: str = dc.field(default="", compare=False)
-    dest_path: str = ""
-    requirement: varlistentry_util.VarlistEntryRequirement = \
-        dc.field(default=varlistentry_util.VarlistEntryRequirement.REQUIRED, compare=False)
-    alternates: list = dc.field(default_factory=list, compare=False)
-    translation: typing.Any = dc.field(default=None, compare=False)
-    data: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict, compare=False)
-    stage: varlistentry_util.VarlistEntryStage = dc.field(default=varlistentry_util.VarlistEntryStage.NOTSET, compare=False)
-    _deactivation_log_level = logging.INFO
-
-    @property
-    def env_vars(self):
-        """Get env var definitions for:
-
-            X The path to the preprocessed data file for this variable,
-            - The name for this variable in that data file,
-            - The names for all of this variable's coordinate axes in that file,
-            - The names of the bounds variables for all of those coordinate
-              dimensions, if provided by the data.
-
-        """
-        if self.status != core.ObjectStatus.ACTIVE:
-            # Signal to POD's code that vars are not provided by setting
-            # variable to the empty string.
-            return {self.env_var: "", self.path_variable: ""}
-
-        d = util.ConsistentDict()
-
-        assoc_dict = (
-            {self.name.upper() + "_ASSOC_FILES": self.associated_files}
-            if isinstance(self.associated_files, str)
-            else {}
-        )
-
-        d.update({
-            self.env_var: self.name_in_model,
-            self.path_variable: self.dest_path,
-            **assoc_dict
-        })
-
-        for ax, dim in self.dim_axes.items():
-            trans_dim = self.translation.dim_axes[ax]
-            d[dim.name + _coord_env_var_suffix] = trans_dim.name
-            if trans_dim.has_bounds:
-                d[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
-        return d
-
-
-class MultirunVarlist(Varlist, ABC):
-    """Class to perform bookkeeping for the model variables requested by a
-        single POD for multiple cases/ensemble members
-    """
-
-    def setup_var(self, pod, v):
-        """Update VarlistEntry fields with information that only becomes
-        available after DataManager and Diagnostic have been configured (ie,
-        only known at runtime, not from settings.jsonc.)
-
-        Could arguably be moved into VarlistEntry's init, at the cost of
-        dependency inversion.
-        """
-        translate = core.VariableTranslator().get_convention(self.convention)
-        if v.T is not None:
-            v.change_coord(
-                'T',
-                new_class={
-                    'self': varlist_util.VarlistTimeCoordinate,
-                    'range': util.DateRange,
-                    'frequency': util.DateFrequency
-                },
-                range=self.attrs.date_range,
-                calendar=util.NOTSET,
-                units=util.NOTSET
-            )
-        v.dest_path = self.variable_dest_path(pod, v)
-        try:
-            trans_v = translate.translate(v)
-            v.translation = trans_v
-            # copy preferred gfdl post-processing component during translation
-            if hasattr(trans_v, "component"):
-                v.component = trans_v.component
-        except KeyError as exc:
-            # can happen in normal operation (eg. precip flux vs. rate)
-            chained_exc = util.PodConfigEvent((f"Deactivating {v.full_name} due to "
-                                               f"variable name translation: {str(exc)}."))
-            # store but don't deactivate, because preprocessor.edit_request()
-            # may supply alternate variables
-            v.log.store_exception(chained_exc)
-        except Exception as exc:
-            chained_exc = util.chain_exc(exc, f"translating name of {v.full_name}.",
-                                         util.PodConfigError)
-            # store but don't deactivate, because preprocessor.edit_request()
-            # may supply alternate variables
-            v.log.store_exception(chained_exc)
-
-        v.stage = varlistentry_util.VarlistEntryStage.INITED
-
-    def variable_dest_path(self, pod, var):
-        """Returns the absolute path of the POD's preprocessed, local copy of
-        the file containing the requested dataset. Files not following this
-        convention won't be found by the POD.
-        """
-        if var.is_static:
-            f_name = f"{self.name}.{var.name}.static.nc"
-            return os.path.join(pod.POD_WK_DIR, f_name)
-        else:
-            freq = var.T.frequency.format_local()
-            f_name = f"{self.name}.{var.name}.{freq}.nc"
-            return os.path.join(pod.POD_WK_DIR, freq, f_name)
-
-    @classmethod
-    def from_struct(cls, d, parent):
-        """Parse the "dimensions", "data" and "varlist" sections of the POD's
-        settings.jsonc file when instantiating a new :class:`Diagnostic` object.
-
-        Args:
-            parent: instance of the parent class object
-            d (:py:obj:`dict`): Contents of the POD's settings.jsonc file.
-
-        Returns:
-            :py:obj:`dict`, keys are names of the dimensions in POD's convention,
-            values are :class:`PodDataDimension` objects.
-        """
-
-        def _pod_dimension_from_struct(name, dd, v_settings):
-            class_dict = {
-                'X': varlist_util.VarlistLongitudeCoordinate,
-                'Y': varlist_util.VarlistLatitudeCoordinate,
-                'Z': varlist_util.VarlistVerticalCoordinate,
-                'T': varlist_util.VarlistPlaceholderTimeCoordinate,
-                'OTHER': varlist_util.VarlistCoordinate
-            }
-            try:
-                return data_model.coordinate_from_struct(
-                    dd, class_dict=class_dict, name=name,
-                    **v_settings.time_settings
-                )
-            except Exception:
-                raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
-
-        def _iter_shallow_alternates(var):
-            """Iterator over all VarlistEntries referenced as alternates. Doesn't
-            traverse alternates of alternates, etc.
-            """
-            for alt_vs in var.alternates:
-                yield from alt_vs
-
-        vlist_settings = util.coerce_to_dataclass(
-            d.get('data', dict()), varlist_util.VarlistSettings)
-        globals_d = vlist_settings.global_settings
-
-        assert 'dimensions' in d
-        dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings)
-                  for k, v in d['dimensions'].items()}
-
-        assert 'varlist' in d
-        vlist_vars = {
-            k: MultirunVarlistEntry.from_struct(globals_d, dims_d, name=k, parent=parent, **v)
-            for k, v in d['varlist'].items()
-        }
-        for v in vlist_vars.values():
-            # validate & replace names of alt vars with references to VE objects
-            for altv_name in _iter_shallow_alternates(v):
-                if altv_name not in vlist_vars:
-                    raise ValueError((f"Unknown variable name {altv_name} listed "
-                                      f"in alternates for varlist entry {v.name}."))
-            linked_alts = []
-            for alts in v.alternates:
-                linked_alts.append([vlist_vars[v_name] for v_name in alts])
-            v.alternates = linked_alts
-        return cls(contents=list(vlist_vars.values()))
-# ------------------------------------------------------------
-
-
-@util.mdtf_dataclass
-class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
+class Diagnostic(util.MDTFObjectBase, util.PODLoggerMixin):
     """Class holding configuration for a diagnostic script. Object attributes
     are read from entries in the settings section of the POD's settings.jsonc
     file upon initialization.
@@ -586,7 +305,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
     _interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
 
     def __post_init__(self, *args, **kwargs):
-        core.MDTFObjectBase.__post_init__(self)
+        util.MDTFObjectBase.__post_init__(self)
         # set up log (PODLoggerMixin)
         self.init_log()
 
@@ -624,7 +343,7 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
         of its settings.jsonc file as stored in the
         :class:`~core.ConfigManager`.
         """
-        config = core.ConfigManager()
+        config = util.ConfigManager()
         return cls.from_struct(pod_name, config.pod_data[pod_name], parent)
 
     @property

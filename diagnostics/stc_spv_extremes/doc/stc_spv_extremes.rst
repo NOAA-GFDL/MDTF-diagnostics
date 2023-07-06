@@ -45,7 +45,7 @@ both preceding and following extreme stratospheric events (Ayarzaguena et al. 20
 Models with low model lids (>1 hPa in pressure) may show less persistent 
 downward coupling than models with higher model lids (Charlton-Perez et al. 2013).
 SSWs and their precursor patterns and impacts have been heavily studied 
-(Baldwin et al. 2022), but VIs less so (Limpasuvan et al. 2005). 
+(Baldwin et al. 2021), but VIs less so (Limpasuvan et al. 2005). 
 
 This POD makes three kinds of figures from provided model data:
 
@@ -124,6 +124,27 @@ References
     Stratosphere-troposphere evolution during polar vortex intensification. Journal of 
     Geophysical Research, 110, D24101, https://doi.org/10.1029/2005JD006302.
 
+.. _ref-Domeisen:
+
+    Domeisen, D. I. V., and Coauthors, 2020: The role of the stratosphere in subseasonal 
+    to seasonal prediction Part I: Predictability of the stratosphere. Journal of Geophysical
+    Research: Atmospheres, 125, e2019JD030920, https://doi.org/10.1029/2019JD030920.
+    
+.. _ref-Ayarzaguena:
+
+    Ayarzagüena, B., and Coauthors, 2020: Uncertainty in the Response of Sudden Stratospheric
+    Warmings and Stratosphere-Troposphere Coupling to Quadrupled CO2 Concentrations in CMIP6 Models.
+    Journal of Geophysical Research: Atmospheres, 125, e2019JD032345, https://doi.org/10.1029/2019JD032345.
+    
+.. _ref-Baldwin:   
+
+    Baldwin, M. P., and Coauthors, 2021: Sudden Stratospheric Warmings. Reviews of Geophysics,
+    59, e2020RG000708, https://doi.org/10.1029/2020RG000708.
+    
+.. _ref-Hersbach:
+
+    Hersbach, H. and coauthors, 2020: The ERA5 global reanalysis. Q J R Meteorol Soc.,
+    146, 1999-2049, https://doi.org/10.1002/qj.3803
 
 
 More about this POD

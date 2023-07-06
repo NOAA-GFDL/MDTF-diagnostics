@@ -113,50 +113,17 @@ The following daily-mean fields are required:
 References
 ----------
 
-.. _ref-Hardimann:
+.. _ref-Charlton_a:
 
-    Hardiman, S. C., et al., 2011: Improved predictability of the troposphere 
-    using stratospheric final warmings, J. Geophys. Res., 116, D18113, 
-    doi:10.1029/2011JD015914
+    Charlton, A. J., and L. M. Polvani, 2007: A new look at stratospheric sudden warmings. 
+    Part I: Climatology and modeling benchmarks. Journal of Climate, 20, 449–469.
 
-.. _ref-Hersbach:
+.. _ref-Limpasuvan:
 
-    Hersbach, H. and coauthors, 2020: The ERA5 global reanalysis. Q J R Meteorol Soc.,
-    146, 1999-2049, https://doi.org/10.1002/qj.3803
+    Limpasuvan, V., D. L. Hartmann, D. W. J. Thompson, K. Jeev, and Y. L. Yung, 2005: 
+    Stratosphere-troposphere evolution during polar vortex intensification. Journal of 
+    Geophysical Research, 110, D24101, https://doi.org/10.1029/2005JD006302.
 
-.. _ref-Checa-Garcia_a:
-
-    Checa-Garcia, R: CMIP6 Ozone forcing dataset, 2018: supporting information, Zenodo,
-    https://doi.org/10.5281/zenodo.1135127
-    
-.. _ref-Checa-Garcia_b:
-
-    Checa-Garcia, R., Hegglin, M. I., Kinnison, D., Plummer, D. A., and Shine, K. P., 2018: 
-    Historical Tropospheric and Stratospheric Ozone Radiative Forcing Using the CMIP6 
-    Database, Geophys. Res. Lett., 45, 3264–3273, https://doi.org/10.1002/2017GL076770
-
-.. _ref-Keeble:
-
-    Keeble, J., Hassler, B., Banerjee, A., Checa-Garcia, R., Chiodo, G., Davis, S., Eyring, V., Griffiths, P. T., Morgenstern, O.,   
-    Nowack, P., Zeng, G., Zhang, J., Bodeker, G., Burrows, S., Cameron-Smith, P., Cugnet, D., Danek, C., Deushi, M., Horowitz, L. 
-    W., Kubin, A., Li, L., Lohmann, G., Michou, M., Mills, M. J., Nabat, P., Olivié, D., Park, S., Seland, Ø., Stoll, J., Wieners, 
-    K.-H., and Wu, T.. 2021: Evaluating stratospheric ozone and water vapour changes in CMIP6 models from 1850 to 2100, Atmos. Chem. 
-    Phys., 21, 5015–5061, https://doi.org/10.5194/acp-21-5015-2021
-
-.. _ref-Haase:
-
-    Haase, S., Fricke, J., Kruschke, T., Wahl, S., and Matthes, K., 2020: Sensitivity of the Southern Hemisphere circumpolar jet 
-    response to Antarctic ozone depletion: prescribed versus interactive chemistry, Atmos. Chem. Phys., 20, 14043–14061, 
-    https://doi.org/10.5194/acp-20-14043-2020
-
-.. _ref-Friedel:
-
-    Friedel, M., Chiodo, G., Stenke, A. et al., 2022: Springtime arctic ozone depletion forces northern hemisphere climate 
-    anomalies. Nat. Geosci. 15, 541–547, https://doi.org/10.1038/s41561-022-00974-7
-    
-.. _ref-Wilcox:
-
-    Wilcox, L. J., and Charlton-Perez, A. J., 2013: Final warming of the Southern Hemisphere polar vortex in high- and low-top CMIP5     models, J. Geophys. Res. Atmos., 118, 2535– 2546, doi:10.1002/jgrd.50254
 
 
 More about this POD

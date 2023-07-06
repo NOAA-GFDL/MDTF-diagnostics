@@ -20,7 +20,7 @@ import logging
 _log = logging.getLogger(__name__)
 
 
-class PathManager(metaclass=Singleton, NameSpace):
+class PathManager(metaclass=Singleton):
     """:class:`~util.Singleton` holding the root directories for all paths used
     by the code.
     """

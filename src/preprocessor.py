@@ -6,7 +6,7 @@ import shutil
 import abc
 import dataclasses
 import functools
-from src import util, core, varlistentry_util, diagnostic, xr_parser, units
+from src import util, varlistentry_util, diagnostic, xr_parser, units
 import cftime
 import numpy as np
 import xarray as xr

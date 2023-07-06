@@ -7,7 +7,7 @@ import io
 from pathlib import Path
 from typing import Type
 
-from src import cli, util, diagnostic, data_sources, translation, varlistentry_util, varlist_util
+from src import cli, util, data_sources, diagnostic
 import intake_esm
 import dataclasses as dc
 
@@ -37,7 +37,7 @@ class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
     pod_data = dict()
     pod_vars = dict()
     pod_settings = dict()
-    cases = util.NameSpace
+    cases = dict()
 
     MODEL_DATA_DIR = dict()
     MODEL_WORK_DIR = dict()
@@ -186,14 +186,14 @@ class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
         elif runtime_config.run_pp:
             for case_name, case_dict in runtime_config.case_list.items():
                 # instantiate the data_source class instance for the specified convention
-                self.cases.case_name = data_sources.data_source[case_dict.convention.upper() +
-                                                                "DataSource"](case_dict, parent=self)
+                self.cases[case_name] = data_sources.data_source[case_dict.convention.upper() +
+                                                                 "DataSource"](case_dict, parent=self)
 
                 #util.NameSpace.fromDict({k: case_dict[k] for k in case_dict.keys()})
-                if self.pod_settings['convention'] != case_dict.convention:
+                if self.pod_settings['convention'].lower() != case_dict.convention.lower():
                     # translate variable(s) to user_specified standard if necessary
 
-                    self.cases.case_name.varlist = diagnostic.Varlist.from_struct(self)
+                    self.cases[case_name].varlist = diagnostic.Varlist.from_struct(self)
                 else:
                     pass
 
@@ -209,7 +209,7 @@ class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
         # ref for dict comparison
         # https://stackoverflow.com/questions/20578798/python-find-matching-values-in-nested-dictionary
 
-        cat_subset = self.get_pod_data_subset(runtime_config.CATALOG_PATH, runtime_config.case_list)
+        #cat_subset = self.get_pod_data_subset(runtime_config.CATALOG_PATH, runtime_config.case_list)
 
         #self.setup_var(v, case_dict.attrs.date_range, case_name)
 
@@ -220,15 +220,15 @@ class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
         # cases
         #self.preprocessor.edit_request(self)
 
-        for case_name in self.cases.:
-            for v in case.iter_children():
+        for case_name in self.cases.keys():
+            for v in case_name.iter_children():
                 # deactivate failed variables, now that alternates are fully
                 # specified
                 if v.last_exception is not None and not v.failed:
                     v.deactivate(v.last_exception, level=logging.WARNING)
-            if case.status == util.ObjectStatus.NOTSET and \
-                    any(v.status == util.ObjectStatus.ACTIVE for v in case.iter_children()):
-                case.status = util.ObjectStatus.ACTIVE
+            if case_name.status == util.ObjectStatus.NOTSET and \
+                    any(v.status == util.ObjectStatus.ACTIVE for v in case_name.iter_children()):
+                case_name.status = util.ObjectStatus.ACTIVE
         # set MultirunDiagnostic object status to Active if all case statuses are Active
         if self.status == util.ObjectStatus.NOTSET and \
                 all(case.status == util.ObjectStatus.ACTIVE for case in self.cases):

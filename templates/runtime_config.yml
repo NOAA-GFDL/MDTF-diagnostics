@@ -57,7 +57,7 @@ make_variab_tar: False
 overwrite: False
 ### Developer settings ###
 # Set to True to run the preprocessor
-run_pp: False
+run_pp: True
 # Additional custom preprocessing scripts to run on data
 # The framework will run the specified scripts whether run_pp is set to True or False
 my_scripts:

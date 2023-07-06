@@ -5,7 +5,7 @@ the user via ``--data_manager``; see :doc:`ref_data_sources` and
 import os
 import collections
 import dataclasses
-from src import util, diagnostic, preprocessor, xr_parser, cmip6
+from src import util, diagnostic, xr_parser, cmip6
 from src import data_manager as dm
 from src import query_fetch_preprocess as qfp
 import pandas as pd
@@ -101,7 +101,7 @@ class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
     _FileRegexClass = SampleDataFile
     _AttributesClass = SampleDataAttributes
     _DiagnosticClass = diagnostic.Diagnostic
-    _PreprocessorClass = preprocessor.SampleDataPreprocessor
+    # _PreprocessorClass = preprocessor.SampleDataPreprocessor
     col_spec = sampleLocalFileDataSource_col_spec
 
     # map "name" field in VarlistEntry's query_attrs() to "variable" field here
@@ -122,7 +122,7 @@ class NoPPDataSource(SampleLocalFileDataSource):
     # _AttributesClass = SampleDataAttributes
     # col_spec = sampleLocalFileDataSource_col_spec
     _DiagnosticClass = diagnostic.NoPPDiagnostic
-    _PreprocessorClass = preprocessor.NullPreprocessor
+    # _PreprocessorClass = preprocessor.NullPreprocessor
 
 
 class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
@@ -145,7 +145,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
             self, name=case_name, _parent=parent
         )
         # set up log (CaseLoggerMixin)
-        self.init_log(log_dir=self.MODEL_WK_DIR)
+        self.init_log(log_dir=parent.MODEL_WK_DIR)
         self.convention = case_dict.convention
 
     @property
@@ -221,6 +221,7 @@ class CMIPDataSource(DataSourceBase):
     # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
     # _AttributesClass = SampleDataAttributes
     # col_spec = sampleLocalFileDataSource_col_spec
+    # varlist = diagnostic.varlist
     convention: str = "CMIP"
 
 
@@ -231,6 +232,7 @@ class CESMDataSource(DataSourceBase):
     # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
     # _AttributesClass = SampleDataAttributes
     # col_spec = sampleLocalFileDataSource_col_spec
+    # varlist = diagnostic.varlist
     convention: str = "CESM"
 
 
@@ -241,8 +243,8 @@ class GFDLDataSource(DataSourceBase):
     # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
     # _AttributesClass = SampleDataAttributes
     # col_spec = sampleLocalFileDataSource_col_spec
+    # varlist = diagnostic.varlist
     convention: str = "GFDL"
-
 
 
 class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
@@ -338,33 +340,33 @@ class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
                 setattr(var.translation, k, v)
 
 
-class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
-    """Subclass :class:`~preprocessor.DaskMultiFilePreprocessor` in order to
-    look up and apply edits to metadata that are stored in
-    :class:`ExplicitFileDataSourceConfigEntry` objects in the \config_by_id
-    attribute of :class:`ExplicitFileDataSource`.
-    """
-    _file_preproc_functions = []
-    _XarrayParserClass = MetadataRewriteParser
+#class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
+#    """Subclass :class:`~preprocessor.DaskMultiFilePreprocessor` in order to
+#   look up and apply edits to metadata that are stored in
+ #   :class:`ExplicitFileDataSourceConfigEntry` objects in the \config_by_id
+ #   attribute of :class:`ExplicitFileDataSource`.
+ #   """
+  #  _file_preproc_functions = []
+  #  _XarrayParserClass = MetadataRewriteParser
 
-    @property
-    def _functions(self):
-        config = core.ConfigManager()
-        if config.get('disable_preprocessor', False):
-            return (
-                preprocessor.CropDateRangeFunction,
-                preprocessor.RenameVariablesFunction
-            )
-        else:
+ #   @property
+   # def _functions(self):
+   #     config = core.ConfigManager()
+   #     if config.get('disable_preprocessor', False):
+   #         return (
+   #             preprocessor.CropDateRangeFunction,
+   #             preprocessor.RenameVariablesFunction
+   #         )
+  #      else:
             # Add ApplyScaleAndOffsetFunction to functions used by parent class
-            return (
-                preprocessor.CropDateRangeFunction,
-                preprocessor.ApplyScaleAndOffsetFunction,
-                preprocessor.PrecipRateToFluxFunction,
-                preprocessor.ConvertUnitsFunction,
-                preprocessor.ExtractLevelFunction,
-                preprocessor.RenameVariablesFunction
-            )
+    #        return (
+   #             preprocessor.CropDateRangeFunction,
+   #             preprocessor.ApplyScaleAndOffsetFunction,
+   #             preprocessor.PrecipRateToFluxFunction,
+   #             preprocessor.ConvertUnitsFunction,
+   #             preprocessor.ExtractLevelFunction,
+ #               preprocessor.RenameVariablesFunction
+#            )
 
 
 dummy_regex = util.RegexPattern(
@@ -478,7 +480,7 @@ class ExplicitFileDataSource(
     _FileRegexClass = GlobbedDataFile
     _AttributesClass = ExplicitFileDataAttributes
     _DiagnosticClass = diagnostic.Diagnostic
-    _PreprocessorClass = MetadataRewritePreprocessor
+   # _PreprocessorClass = MetadataRewritePreprocessor
     col_spec = explicitFileDataSource_col_spec
 
     expt_key_cols = tuple()
@@ -554,7 +556,7 @@ class MultirunExplicitFileDataSource(ExplicitFileDataSource):
     Data file paths and metadata modifications are specified in a separate config file.
     """
     _DiagnosticClass = diagnostic.MultirunDiagnostic
-    _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
+   # _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
 
 
 @util.mdtf_dataclass
@@ -786,7 +788,7 @@ class CMIP6LocalFileDataSource(CMIP6ExperimentSelectionMixin, dm.LocalFileDataSo
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = CMIP6DataSourceAttributes
     _DiagnosticClass = diagnostic.Diagnostic
-    _PreprocessorClass = preprocessor.DefaultPreprocessor
+    #_PreprocessorClass = preprocessor.DefaultPreprocessor
     col_spec = cmip6LocalFileDataSource_col_spec
 
 
@@ -795,4 +797,4 @@ class MultirunCMIP6LocalFileDataSource(CMIP6LocalFileDataSource):
     stored on a local filesystem.
     """
     _DiagnosticClass = diagnostic.MultirunDiagnostic
-    _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
+    #_PreprocessorClass = preprocessor.MultirunDefaultPreprocessor

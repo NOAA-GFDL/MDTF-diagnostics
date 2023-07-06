@@ -27,26 +27,6 @@ for weeks). SSWs in the Southern Hemisphere (SH) are rare (only one event in the
 satellite record), while VIs occur more often, but both events can have persistent 
 impacts on SH mid-latitude weather.
 
-This POD makes three kinds of figures from provided model data:
-
-- Barplots showing the frequency of events by month over the input period
-- Pressure versus lag contour plots of polar cap geopotential height anomalies, composited around all detected SSWs and VI events. These types of plots are sometimes referred to "dripping paint" plots in the scientific literature.
-- Polar stereographic maps of surface air temperature and 500 hPa geopotential
-height anomalies averaged over the 30 days before and after all detected SSW and VI 
-events.
-
-Additionally, the POD outputs text files of the detected SSW and VI event dates in each
-hemisphere. These plots are made for both hemispheres, and require at least one event to 
-be detected in order for the POD to create the figure. 
-
-Models often show a different SSW seasonality compared to reanalysis (Ayarzaguena et al. 2020),
-and may vary in their simulation of tropospheric circulation/surface patterns 
-both preceding and following extreme stratospheric events (Ayarzaguena et al. 2020). 
-Models with low model lids (>1 hPa in pressure) may show less persistent 
-downward coupling than models with higher model lids (Charlton-Perez et al. 2013).
-SSWs and their precursor patterns and impacts have been heavily studied 
-(Baldwin et al. 2022), but VIs less so (Limpasuvan et al. 2005). 
-
 The definition for SSW events used in this POD is arguably the most commonly used one
 (Charlon and Polvani 2007): a reversal of the 10 hPa 60 deg latitude daily-mean climatological
 westerly zonal winds between November and March, which returns to westerly for at least 10
@@ -59,6 +39,25 @@ the full input data time period, which persists for at least 10 consecutive days
 independent events if they are separated by at least 20 consecutive days below the 80th 
 percentile.
 
+Models often show a different SSW seasonality compared to reanalysis (Ayarzaguena et al. 2020),
+and may vary in their simulation of tropospheric circulation/surface patterns 
+both preceding and following extreme stratospheric events (Ayarzaguena et al. 2020). 
+Models with low model lids (>1 hPa in pressure) may show less persistent 
+downward coupling than models with higher model lids (Charlton-Perez et al. 2013).
+SSWs and their precursor patterns and impacts have been heavily studied 
+(Baldwin et al. 2022), but VIs less so (Limpasuvan et al. 2005). 
+
+This POD makes three kinds of figures from provided model data:
+
+- Barplots showing the frequency of events by month over the input period
+- Pressure versus lag contour plots of polar cap geopotential height anomalies, composited around all detected SSWs and VI events. These types of plots are sometimes referred to ``dripping paint`` plots in the scientific literature.
+- Polar stereographic maps of surface air temperature and 500 hPa geopotential
+height anomalies averaged over the 30 days before and after all detected SSW and VI 
+events.
+
+Additionally, the POD outputs text files of the detected SSW and VI event dates in each
+hemisphere. These plots are made for both hemispheres, and require at least one event to 
+be detected in order for the POD to create the figure. 
 
 Version & Contact info
 ----------------------
@@ -78,15 +77,17 @@ Functionality
 
 This POD is driven by the file ``stc_spv_extremes.py``, with a helper script of
 ``stc_spv_extremes_defs.py``.
-The driver script reads in the model fields, calculates zonal mean zonal winds
-for user-defined latitude bands, and polar cap ozone and temperature, and
-generates the plots. It also estimates the final warming DOY using 
-monthly-mean zonal wind data at 60 degLat, as in Hardimann et al. (2011).
+The driver script reads in the model fields, performs a few preparatory actions
+such as averaging the geopotential heights over the polar cap and removing
+the daily climatology to obtain anomalies, and selecting
+the 10 hPa zonal-mean zonal winds. The script then creates three plots (in both
+hemisphes, so 6 plots in total) and outputs to text files the SSW and VI dates.
 
 The observational data this POD uses is based on ERA5 reanalysis
-(Hersbach, et al., 2020), and includes pre-computed zonal mean zonal winds,
-temperatures, and ozone (i.e., they have dimensions of ``(time,lev,lat)``)
-calculated from monthly mean fields.
+(Hersbach, et al., 2020), and includes pre-computed daily-mean zonal mean 
+zonal winds and geopotential heights (with dimensions of ``(time,lev,lat)``),
+and gridded daily-mean 500 hPa geopotential heights and surface air 
+temperatures (with dimensions of ``(time,lat,lon)``).
 
 
 Required programming language and libraries

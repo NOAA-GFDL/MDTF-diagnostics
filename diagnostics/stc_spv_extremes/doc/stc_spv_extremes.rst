@@ -50,7 +50,7 @@ SSWs and their precursor patterns and impacts have been heavily studied
 This POD makes three kinds of figures from provided model data:
 
 - Barplots showing the frequency of events by month over the input period
-- Pressure versus lag contour plots of polar cap geopotential height anomalies, composited around all detected SSWs and VI events. These types of plots are sometimes referred to ``dripping paint`` plots in the scientific literature.
+- Pressure versus lag contour plots of polar cap geopotential height anomalies, composited around all detected SSWs and VI events. These types of plots are sometimes referred to "dripping paint" plots in the scientific literature.
 - Polar stereographic maps of surface air temperature and 500 hPa geopotential height anomalies averaged over the 30 days before and after all detected SSW and VI events.
 
 Additionally, the POD outputs text files of the detected SSW and VI event dates in each
@@ -105,8 +105,10 @@ Required model output variables
 
 The following daily-mean fields are required:
 
-- Zonal Winds, ``ua`` as ``(time,lev,lat,lon)`` (units: m/s)
-- Geopotential Heights, ``zg`` as ``(time,lev,lat,lon)`` (units: m)
+- Zonal-mean zonal Winds, ``ua`` as ``(time,lev,lat)`` (units: m/s)
+- Zonal-mean geopotential heights, ``zg`` as ``(time,lev,lat)`` (units: m)
+- Geopotential Heights at 500 hPa, ``zg`` as ``(time,lat,lon)`` (units: m)
+- Surface air temperature, ``tas`` as ``(time,lat,lon)`` (units: K)
 
 References
 ----------

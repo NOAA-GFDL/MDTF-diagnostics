@@ -30,9 +30,7 @@ impacts on SH mid-latitude weather.
 This POD makes three kinds of figures from provided model data:
 
 - Barplots showing the frequency of events by month over the input period
-- Pressure versus lag contour plots of polar cap geopotential height anomalies,
-composited around all detected SSWs and VI events. These types of plots are sometimes
-referred to "dripping paint" plots in the scientific literature.
+- Pressure versus lag contour plots of polar cap geopotential height anomalies, composited around all detected SSWs and VI events. These types of plots are sometimes referred to "dripping paint" plots in the scientific literature.
 - Polar stereographic maps of surface air temperature and 500 hPa geopotential
 height anomalies averaged over the 30 days before and after all detected SSW and VI 
 events.

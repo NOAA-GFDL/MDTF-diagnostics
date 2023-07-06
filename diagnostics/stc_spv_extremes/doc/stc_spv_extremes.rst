@@ -11,56 +11,61 @@
 Stratosphere-Troposphere Coupling: Stratospheric Polar Vortex Extremes
 ================================
 
-Last update: 2023-03-06
+Last update: 2023-07-06
 
 This POD assesses stratospheric polar vortex extremes, the tropospheric circulation
 patters that precede them, and the surface impacts that follow. Extremes in the 
 stratospheric polar vortex are closely linked to the tropospheric
 circulation and surface climate both before and after the event. The occurrence of 
 polar stratospheric circulation extremes in the Northern Hemisphere (NH), such
-as sudden stratospheric warmings (SSWs) and polar vortex intensifications, are important
+as sudden stratospheric warmings (SSWs) and polar vortex intensifications (VIs), are important
 aspects of stratospheric variability that rely on realistic representations of the 
 stratosphere and the troposphere. Extremes in the strength of the Arctic polar 
 stratospheric circulation are often preceded by known near-surface circulation 
 patterns, and then subsequently followed by shifts in the storm tracks (sometimes
-for weeks).
+for weeks). SSWs in the Southern Hemisphere (SH) are rare (only one event in the 
+satellite record), while VIs occur more often, but both events can have persistent 
+impacts on SH mid-latitude weather.
 
-This POD makes four kinds of figures from provided model data:
+This POD makes three kinds of figures from provided model data:
 
-- Scatterplots of early-spring polar cap stratospheric ozone with 
-  late-spring zonal winds
-- Scatterplots of early-spring polar cap stratospheric ozone with 
-  final stratospheric warming day of year
-- Lag-correlation plots of polar cap stratospheric ozone with 
-  extratropical zonal winds for different pressure levels
-- Linear trends of polar cap ozone, temperature, and extratropical
-  zonal winds as a function of month and pressure level
+- Barplots showing the frequency of events by month over the input period
+- Pressure versus lag contour plots of polar cap geopotential height anomalies,
+composited around all detected SSWs and VI events. These types of plots are sometimes
+referred to "dripping paint" plots in the scientific literature.
+- Polar stereographic maps of surface air temperature and 500 hPa geopotential
+height anomalies averaged over the 30 days before and after all detected SSW and VI 
+events.
 
-These plots are made for both hemispheres, with a focus on spring. This season
-is when sunlight returns to the polar region and when the strongest coupling 
-between stratospheric ozone and the circulation appears. The metrics used are 
-designed to focus on processes with known biases, particularly in the 
-Southern Hemisphere. For example, the scatterplots showing late-spring zonal
-winds or final stratospheric warming day of year can be used to compare the 
-mean values of these quantities in the model with reanalysis. In the SH, CMIP models
-tend to have too late of final warming, or equivalently, too strong of late spring 
-polar vortex winds (Wilcox et al., 2013). The POD outputs some of these metrics 
-so that multi-model comparison can be performed.
+Additionally, the POD outputs text files of the detected SSW and VI event dates in each
+hemisphere. These plots are made for both hemispheres, and require at least one event to 
+be detected in order for the POD to create the figure. 
 
-Note that many CMIP6 models do not have interactive stratosheric chemistry, and 
-instead use prescribed ozone provided by Checa-Garcia et al. (2018a,b), except for
-three models that instead use prescribed ozone from simulations performed by the 
-CESM-WACCM model (CESM2, CESM2-FV2, NorESM2). Details of ozone in CMIP6 models 
-can be found in Keeble et al. (2021). In models with prescribed ozone, the ozone
-forcing will still influence the circulation, but the circulation changes cannot 
-feedback onto ozone, which may influence the degree to which they capture the full 
-response in both hemispheres (Haase et al., 2020, Friedel et al. 2022).
+Models often show a different SSW seasonality compared to reanalysis (Ayarzaguena et al. 2020),
+and may vary in their simulation of tropospheric circulation/surface patterns 
+both preceding and following extreme stratospheric events (Ayarzaguena et al. 2020). 
+Models with low model lids (>1 hPa in pressure) may show less persistent 
+downward coupling than models with higher model lids (Charlton-Perez et al. 2013).
+SSWs and their precursor patterns and impacts have been heavily studied 
+(Baldwin et al. 2022), but VIs less so (Limpasuvan et al. 2005). 
+
+The definition for SSW events used in this POD is arguably the most commonly used one
+(Charlon and Polvani 2007): a reversal of the 10 hPa 60 deg latitude daily-mean climatological
+westerly zonal winds between November and March, which returns to westerly for at least 10
+consecutive days prior to 30 April (so that final warmings are not included). SSWs are
+independent events if they are separated by at least 20 days of consecutive westerlies.
+The definition for VI events used in this POD is adapted from previous studies 
+(Limpasuvan et al. 2005, Domeisen et al. 2020): an increase of the 10 hPa 60 deg latitude
+daily-mean zonal-mean zonal winds above the daily 80th percentile value calculated across
+the full input data time period, which persists for at least 10 consecutive days. VIs are
+independent events if they are separated by at least 20 consecutive days below the 80th 
+percentile.
 
 
 Version & Contact info
 ----------------------
 
-- Version/revision information: v1.0 (Mar 2023)
+- Version/revision information: v1.0 (Jul 2023)
 - Project PIs: Amy H. Butler (NOAA CSL) and Zachary D. Lawrence (CIRES/NOAA PSL)
 - Developer/point of contact: Amy Butler (amy.butler@noaa.gov)
 

@@ -16,10 +16,11 @@ repo, which is included as a git subtree under ``/data``.
 import os
 import re
 import dataclasses as dc
-from src import util, core
+from src import util
 
 import logging
 _log = logging.getLogger(__name__)
+
 
 class CMIP6_CVs(util.Singleton):
     """Interface for looking up information from the CMIP6 controlled vocabulary
@@ -37,7 +38,7 @@ class CMIP6_CVs(util.Singleton):
             # below with actual translation table to use for test
             file_ = 'dummy_filename'
         else:
-            paths = core.PathManager()
+            paths = util.PathManager()
             file_ = os.path.join(paths.CODE_ROOT, 'data',
                 'cmip6-cmor-tables','Tables','CMIP6_CV.json')
         self._contents = util.read_json(file_, log=_log)

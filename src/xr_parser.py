@@ -16,7 +16,7 @@ import cf_xarray
 import xarray as xr
 import numpy as np
 
-from src import util, units, core
+from src import util, units
 
 import logging
 
@@ -44,7 +44,7 @@ are expected, but not present in the data.
 
 
 @util.mdtf_dataclass
-class PlaceholderScalarCoordinate():
+class PlaceholderScalarCoordinate:
     """Dummy object used to describe `scalar coordinates
     <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.9/cf-conventions.html#scalar-coordinate-variables>`__
     referred to by name only in the 'coordinates' attribute of a variable or
@@ -428,7 +428,7 @@ class DefaultDatasetParser:
             pod (:class:`~src.diagnostic.Diagnostic`): POD whose variables are
                 being preprocessed.
         """
-        config = core.ConfigManager()
+        config = {}
         self.disable = config.get('disable_preprocessor', False)
         self.overwrite_ds = config.get('overwrite_file_metadata', False)
         self.guess_names = False
@@ -1335,7 +1335,7 @@ class MultirunDefaultDatasetParser(DefaultDatasetParser):
         Args:
             data_mgr: DataSource instance calling the preprocessor: src.diagnostic.MultirunDiagnostic
         """
-        config = core.ConfigManager()
+        config = {}
         self.disable = config.get('disable_preprocessor', False)
         self.overwrite_ds = config.get('overwrite_file_metadata', False)
         self.guess_names = False

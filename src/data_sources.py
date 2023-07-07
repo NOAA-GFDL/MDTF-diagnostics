@@ -5,8 +5,8 @@ the user via ``--data_manager``; see :doc:`ref_data_sources` and
 import os
 import collections
 import dataclasses
-from src import util, diagnostic, xr_parser, cmip6
-from src import data_manager as dm
+from abc import ABC
+from src import util, xr_parser, cmip6, varlist_util
 from src import query_fetch_preprocess as qfp
 import pandas as pd
 
@@ -37,9 +37,45 @@ class SampleDataFile:
     variable: str = util.MANDATORY
     remote_path: str = util.MANDATORY
 
+@util.mdtf_dataclass
+class DataSourceAttributesBase:
+    """Class defining attributes that any DataSource needs to specify:
+
+    - *CASENAME*: User-supplied label to identify output of this run of the
+      package.
+    - *FIRSTYR*, *LASTYR*, *date_range*: Analysis period, specified as a closed
+      interval (i.e. running from 1 Jan of FIRSTYR through 31 Dec of LASTYR).
+    - *CASE_ROOT_DIR*: Root directory containing input model data. Different
+      DataSources may interpret this differently.
+    - *convention*: name of the variable naming convention used by the source of
+      model data.
+    """
+    CASENAME: str = util.MANDATORY
+    FIRSTYR: str = util.MANDATORY
+    LASTYR: str = util.MANDATORY
+    date_range: util.DateRange = dataclasses.field(init=False)
+    CASE_ROOT_DIR: str = ""
+
+    log: dataclasses.InitVar = _log
+
+    def _set_case_root_dir(self, log=_log):
+        config = {}
+        if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
+            log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
+            self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
+        # verify case root dir exists
+        if not os.path.isdir(self.CASE_ROOT_DIR):
+            log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
+                         self.CASE_ROOT_DIR)
+            util.exit_handler(code=1)
+
+    def __post_init__(self, log=_log):
+        self._set_case_root_dir(log=log)
+        self.date_range = util.DateRange(self.FIRSTYR, self.LASTYR)
+
 
 @util.mdtf_dataclass
-class SampleDataAttributes(dm.DataSourceAttributesBase):
+class SampleDataAttributes(DataSourceAttributesBase):
     """Data-source-specific attributes for the DataSource providing sample model
     data.
     """
@@ -55,7 +91,8 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
     def _set_case_root_dir(self, log=_log):
         """Additional logic to set CASE_ROOT_DIR from MODEL_DATA_ROOT.
         """
-
+        config ={}
+        paths = util.PathManager()
         if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
             log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
             self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
@@ -90,17 +127,45 @@ class SampleDataAttributes(dm.DataSourceAttributesBase):
             util.exit_handler(code=1)
 
 
-sampleLocalFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
+sampleLocalFileDataSource_col_spec = qfp.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
-    expt_cols = dm.DataFrameQueryColumnGroup(["sample_dataset"])
+    # expt_cols =qfp.DataFrameQueryColumnGroup(["sample_dataset"])
 )
 
-class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
+
+class LocalFileDataSource(qfp.DataframeQueryDataSourceBase, ABC):
+    """DataSource for dealing data in a regular directory hierarchy on a
+    locally mounted filesystem. Assumes data for each variable may be split into
+    several files according to date, with the dates present in their filenames.
+    """
+    def __init__(self, case_dict, parent):
+        self.catalog = None
+        super(LocalFileDataSource, self).__init__(case_dict, parent)
+
+
+class SingleLocalFileDataSource(LocalFileDataSource, ABC):
+    """DataSource for dealing data in a regular directory hierarchy on a
+    locally mounted filesystem. Assumes all data for each variable (in each
+    experiment) is contained in a single file.
+    """
+    def query_dataset(self, var):
+        """Verify that only a single file was found from each experiment.
+        """
+        super(SingleLocalFileDataSource, self).query_dataset(var)
+        for d_key in var.data.values():
+            if len(d_key.value) != 1:
+                self._query_error_handler(
+                    "Query found multiple files when one was expected:",
+                    d_key, log=var.log
+                )
+
+
+class SampleLocalFileDataSource(SingleLocalFileDataSource, ABC):
     """DataSource for handling POD sample model data stored on a local filesystem.
     """
     _FileRegexClass = SampleDataFile
     _AttributesClass = SampleDataAttributes
-    _DiagnosticClass = diagnostic.Diagnostic
+    #_DiagnosticClass = diagnostic.Diagnostic
     # _PreprocessorClass = preprocessor.SampleDataPreprocessor
     col_spec = sampleLocalFileDataSource_col_spec
 
@@ -115,14 +180,17 @@ class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
 # ----------------------------------------------------------------------------
 
 
+
 class NoPPDataSource(SampleLocalFileDataSource):
     """DataSource for handling POD sample model data stored on a local filesystem.
     """
     # _FileRegexClass = SampleDataFile
     # _AttributesClass = SampleDataAttributes
     # col_spec = sampleLocalFileDataSource_col_spec
-    _DiagnosticClass = diagnostic.NoPPDiagnostic
+    #_DiagnosticClass = diagnostic.NoPPDiagnostic
     # _PreprocessorClass = preprocessor.NullPreprocessor
+
+
 
 
 class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
@@ -131,8 +199,8 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
     # _AttributesClass = SampleDataAttributes
     # col_spec = sampleLocalFileDataSource_col_spec
-    varlist: diagnostic.Varlist = None
     convention: str
+    varlist: varlist_util.Varlist = None
 
     def __init__(self, case_name: str, case_dict: util.NameSpace, parent):
         # _id = util.MDTF_ID()        # attrs inherited from util.logs.MDTFObjectBase
@@ -154,6 +222,8 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         """
         yield from self.varlist.iter_vars()
 
+    def get_varlist(self, parent):
+        return varlist_util.Varlist.from_struct(parent)
     def query_dataset(self, var):
         """Find all rows of the catalog matching relevant attributes of the
             DataSource and of the variable (:class:`~diagnostic.VarlistEntry`).
@@ -424,18 +494,18 @@ class ExplicitFileDataSourceConfigEntry():
             _has_user_metadata=_has_user_metadata
         )
 
-    def to_file_glob_tuple(self):
-        return dm.FileGlobTuple(
-            name=self.full_name, glob=self.glob,
-            attrs={
-                'glob_id': self.glob_id,
-                'pod_name': self.pod_name, 'name': self.name
-            }
-        )
+    #def to_file_glob_tuple(self):
+    #    return dm.FileGlobTuple(
+    #        name=self.full_name, glob=self.glob,
+    #        attrs={
+    #            'glob_id': self.glob_id,
+    #            'pod_name': self.pod_name, 'name': self.name
+    #        }
+    #    )
 
 
 @util.mdtf_dataclass
-class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
+class ExplicitFileDataAttributes(DataSourceAttributesBase):
     # CASENAME: str          # fields inherited from dm.DataSourceAttributesBase
     # FIRSTYR: str
     # LASTYR: str
@@ -450,7 +520,7 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
         """
         super(ExplicitFileDataAttributes, self).__post_init__(log=log)
 
-        config = core.ConfigManager()
+        config = {}
         if not self.config_file:
             self.config_file = config.get('config_file', '')
         if not self.config_file:
@@ -458,28 +528,26 @@ class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
                 "(--config-file)."))
             util.exit_handler(code=1)
 
-        if self.convention != core._NO_TRANSLATION_CONVENTION:
-            log.debug("Received incompatible convention '%s'; setting to '%s'.",
-                self.convention, core._NO_TRANSLATION_CONVENTION)
-            self.convention = core._NO_TRANSLATION_CONVENTION
+        #if self.convention != translation._NO_TRANSLATION_CONVENTION:
+        #    log.debug("Received incompatible convention '%s'; setting to '%s'.",
+        #        self.convention, translation._NO_TRANSLATION_CONVENTION)
+        #    self.convention = translation._NO_TRANSLATION_CONVENTION
 
 
-explicitFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
+explicitFileDataSource_col_spec = qfp.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
-    expt_cols = dm.DataFrameQueryColumnGroup([])
+    expt_cols=qfp.DataFrameQueryColumnGroup([])
 )
 
 
-class ExplicitFileDataSource(
-    qfp.OnTheFlyGlobQueryMixin, qfp.LocalFetchMixin, dm.DataframeQueryDataSourceBase
-):
+class ExplicitFileDataSource(qfp.DataframeQueryDataSourceBase, ABC):
     """DataSource for dealing data in a regular directory hierarchy on a
     locally mounted filesystem. Assumes data for each variable may be split into
     several files according to date, with the dates present in their filenames.
     """
     _FileRegexClass = GlobbedDataFile
     _AttributesClass = ExplicitFileDataAttributes
-    _DiagnosticClass = diagnostic.Diagnostic
+    #_DiagnosticClass = diagnostic.Diagnostic
    # _PreprocessorClass = MetadataRewritePreprocessor
     col_spec = explicitFileDataSource_col_spec
 
@@ -511,12 +579,12 @@ class ExplicitFileDataSource(
         """
         # store contents in ConfigManager so they can be backed up in output
         # (HTMLOutputManager.backup_config_files())
-        config = core.ConfigManager()
-        config._configs['data_source_config'] = core.ConfigTuple(
-            name='data_source_config',
-            backup_filename='ExplicitFileDataSource_config.json',
-            contents=config_d
-        )
+        config = {}
+        #config._configs['data_source_config'] = core.ConfigTuple(
+        #    name='data_source_config',
+        #    backup_filename='ExplicitFileDataSource_config.json',
+        #    contents=config_d
+        #)
 
         # parse contents
         for pod_name, v_dict in config_d.items():
@@ -535,10 +603,10 @@ class ExplicitFileDataSource(
         if self._has_user_metadata and \
             not config.get('overwrite_file_metadata', False):
             self.log.warning(("Requesting metadata edits in ExplicitFileDataSource "
-                "implies the use of the --overwrite-file-metadata flag. Input "
-                "file metadata will be overwritten."),
-                tags=util.ObjectLogTag.BANNER
-            )
+                              "implies the use of the --overwrite-file-metadata flag. Input "
+                              "file metadata will be overwritten."),
+                             tags=util.ObjectLogTag.BANNER
+                             )
             config['overwrite_file_metadata'] = True
 
     def iter_globs(self):
@@ -555,13 +623,13 @@ class MultirunExplicitFileDataSource(ExplicitFileDataSource):
     several files according to date, with the dates present in their filenames.
     Data file paths and metadata modifications are specified in a separate config file.
     """
-    _DiagnosticClass = diagnostic.MultirunDiagnostic
+    #_DiagnosticClass = diagnostic.Diagnostic
    # _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
 
 
 @util.mdtf_dataclass
-class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
-    # CASENAME: str          # fields inherited from dm.DataSourceAttributesBase
+class CMIP6DataSourceAttributes(DataSourceAttributesBase):
+    # CASENAME: str          # fields inherited from DataSourceAttributesBase
     # FIRSTYR: str
     # LASTYR: str
     # date_range: util.DateRange
@@ -581,7 +649,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
 
     def __post_init__(self, log=_log, model=None, experiment=None):
         super(CMIP6DataSourceAttributes, self).__post_init__(log=log)
-        config = core.ConfigManager()
+        config = {}
         cv = cmip6.CMIP6_CVs()
 
         def _init_x_from_y(source, dest):
@@ -596,7 +664,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
                     setattr(self, dest, dest_val)
                 except KeyError:
                     log.debug("Couldn't set %s from %s='%s'.",
-                        dest, source, source_val)
+                              dest, source, source_val)
                     setattr(self, dest, "")
 
         if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
@@ -653,9 +721,9 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
             self.CATALOG_DIR = new_root
 
 
-cmip6LocalFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
+cmip6LocalFileDataSource_col_spec = qfp.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
-    expt_cols = dm.DataFrameQueryColumnGroup(
+    expt_cols=qfp.DataFrameQueryColumnGroup(
         ["activity_id", "institution_id", "source_id", "experiment_id",
         "variant_label", "version_date"],
         # columns whose values are derived from those above
@@ -663,15 +731,15 @@ cmip6LocalFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
         'physics_index', 'forcing_index']
     ),
     # Catalog columns whose values must be the same for each POD.
-    pod_expt_cols = dm.DataFrameQueryColumnGroup(
+    pod_expt_cols = qfp.DataFrameQueryColumnGroup(
         ['grid_label'],
         # columns whose values are derived from those above
         ['regrid', 'grid_number']
     ),
     # Catalog columns whose values must "be the same for each variable", ie are
     # irrelevant but must be constrained to a unique value.
-    var_expt_cols = dm.DataFrameQueryColumnGroup(["table_id"]),
-    daterange_col = "date_range"
+    var_expt_cols=qfp.DataFrameQueryColumnGroup(["table_id"]),
+    daterange_col="date_range"
 )
 
 
@@ -780,14 +848,14 @@ class CMIP6ExperimentSelectionMixin():
         return df
 
 
-class CMIP6LocalFileDataSource(CMIP6ExperimentSelectionMixin, dm.LocalFileDataSource):
+class CMIP6LocalFileDataSource(CMIP6ExperimentSelectionMixin, LocalFileDataSource):
     """DataSource for handling model data named following the CMIP6 DRS and
     stored on a local filesystem.
     """
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = CMIP6DataSourceAttributes
-    _DiagnosticClass = diagnostic.Diagnostic
+    #_DiagnosticClass = diagnostic.Diagnostic
     #_PreprocessorClass = preprocessor.DefaultPreprocessor
     col_spec = cmip6LocalFileDataSource_col_spec
 
@@ -796,5 +864,5 @@ class MultirunCMIP6LocalFileDataSource(CMIP6LocalFileDataSource):
     """DataSource for handling multirun model data named following the CMIP6 DRS and
     stored on a local filesystem.
     """
-    _DiagnosticClass = diagnostic.MultirunDiagnostic
+    #_DiagnosticClass = diagnostic.Diagnostic
     #_PreprocessorClass = preprocessor.MultirunDefaultPreprocessor

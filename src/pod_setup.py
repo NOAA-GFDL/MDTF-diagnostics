@@ -7,7 +7,7 @@ import io
 from pathlib import Path
 from typing import Type
 
-from src import cli, util, data_sources, diagnostic
+from src import cli, util, data_sources
 import intake_esm
 import dataclasses as dc
 
@@ -193,7 +193,8 @@ class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
                 if self.pod_settings['convention'].lower() != case_dict.convention.lower():
                     # translate variable(s) to user_specified standard if necessary
 
-                    self.cases[case_name].varlist = diagnostic.Varlist.from_struct(self)
+                    #self.cases[case_name].varlist = varlist_util.Varlist.from_struct(self)
+                    self.cases[case_name].get_varlist(self)
                 else:
                     pass
 
@@ -233,3 +234,5 @@ class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
         if self.status == util.ObjectStatus.NOTSET and \
                 all(case.status == util.ObjectStatus.ACTIVE for case in self.cases):
             self.status = util.ObjectStatus.ACTIVE
+
+

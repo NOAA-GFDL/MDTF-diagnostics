@@ -133,7 +133,7 @@ _AXIS_NAMES = tuple
 
 
 @util.mdtf_dataclass
-class DMBoundsDimension(object, AbstractDMCoordinate):
+class DMBoundsDimension(AbstractDMCoordinate):
     """Placeholder object to represent the bounds dimension of a
     :class:`DMCoordinateBounds` object. Not a dimension coordinate, and strictly
     speaking we should make another set of classes for dimensions.
@@ -163,7 +163,7 @@ class DMBoundsDimension(object, AbstractDMCoordinate):
 
 
 @util.mdtf_dataclass
-class _DMCoordinateShared(object):
+class _DMCoordinateShared:
     """Fields common to all :class:`AbstractDMCoordinate` child classes which
     aren't fixed to particular values.
 
@@ -370,7 +370,7 @@ def coordinate_from_struct(d, class_dict=None, **kwargs):
         raise ValueError(f"Couldn't parse coordinate: {repr(d)}")
 
 
-class _DMPlaceholderCoordinateBase(object):
+class _DMPlaceholderCoordinateBase:
     """Dummy base class for placeholder coordinates. Placeholder coordinates are
     only used in instantiating :class:`~src.core.FieldlistEntry` objects: they're
     replaced by the appropriate translated coordinates when that object is used
@@ -468,7 +468,7 @@ class DMPlaceholderTCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase
 # ------------------------------------------------------------------------------
 
 @util.mdtf_dataclass
-class _DMDimensionsMixin(object):
+class _DMDimensionsMixin:
     """Lookups for the dimensions, and associated dimension coordinates,
     associated with an array (eg a variable or auxiliary coordinate.) Needs to
     be included as a parent class of a dataclass.

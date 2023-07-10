@@ -1,8 +1,6 @@
 """Utilities for variable translation
 """
 import os
-import sys
-import abc
 import collections
 import copy
 import dataclasses as dc
@@ -272,7 +270,7 @@ class Fieldlist:
             coords = tuple(lut1.values())
             if len(coords) > 1:
                 raise ValueError((f"Coordinate dimension in convention '{self.name}' "
-                    f"not uniquely determined by coordinate {coord.name}."))
+                                  f"not uniquely determined by coordinate {coord.name}."))
             new_coord = coords[0]
         else:
             if coord.standard_name not in lut1:
@@ -474,3 +472,4 @@ class VariableTranslator(util.Singleton):
 
     def translate(self, conv_name, var):
         return self._fieldlist_method(conv_name, 'translate', var)
+

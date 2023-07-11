@@ -26,12 +26,12 @@ import logging
 _log = logging.getLogger(__name__)
 
 
-def read_config_files(code_root, file_name, site=""):
+def read_config_files(CODE_ROOT, file_name, site=""):
     """Utility function to read a pair of configuration files: one for the
     framework defaults, another optional one for site-specific configuration.
 
     Args:
-        code_root (str): Code repo directory.
+        CODE_ROOT (str): Code repo directory.
         file_name (str): Name of file to search for. We search for the file
             in all subdirectories of :meth:`CLIConfigManager.site_dir`
             and :meth:`CLIConfigManager.framework_dir`, respectively.
@@ -42,14 +42,14 @@ def read_config_files(code_root, file_name, site=""):
         site specific file (empty dict if that file isn't found) and second
         is the framework file (if not found, fatal error and exit immediately.)
     """
-    src_dir = os.path.join(code_root, 'src')
-    site_dir = os.path.join(code_root, 'sites', site)
+    src_dir = os.path.join(CODE_ROOT, 'src')
+    site_dir = os.path.join(CODE_ROOT, 'sites', site)
     site_d = util.find_json(site_dir, file_name, exit_if_missing=False, log=_log)
     fmwk_d = util.find_json(src_dir, file_name, exit_if_missing=True, log=_log)
     return site_d, fmwk_d
 
 
-def read_config_file(code_root, file_name, site=""):
+def read_config_file(code_root: str, file_name: str, site: str = ""):
     """Return the site's config file if present, else the framework's file. Wraps
     :func:`read_config_files`.
 
@@ -124,11 +124,11 @@ def verify_catalog(catalog_path: str):
             f"{catalog_path} not found.")
 
 
-def verify_dirpath(dirpath: str, coderoot: str) -> str:
+def verify_dirpath(dirpath: str, code_root: str) -> str:
     dirpath_parts = pathlib.Path(dirpath)
     # replace relative path with absolute working directory path
     if ".." in dirpath_parts.parts:
-        new_dirpath = os.path.realpath(os.path.join(coderoot, dirpath))
+        new_dirpath = os.path.realpath(os.path.join(code_root, dirpath))
     else:
         new_dirpath = dirpath
     if not os.path.exists(new_dirpath):
@@ -187,14 +187,14 @@ def update_config(config: util.NameSpace, key: str, new_value):
 
 
 def verify_runtime_config_options(config: util.NameSpace):
-    verify_pod_list(config.pod_list, config.code_root)
+    verify_pod_list(config.pod_list, config.CODE_ROOT)
     verify_catalog(config.DATA_CATALOG)
-    new_workdir = verify_dirpath(config.WORK_DIR, config.code_root)
+    new_workdir = verify_dirpath(config.WORK_DIR, config.CODE_ROOT)
     update_config(config, 'WORK_DIR', new_workdir)
     if any(config.OBS_DATA_ROOT):
-        new_obs_data_path = verify_dirpath(config.OBS_DATA_ROOT, config.code_root)
+        new_obs_data_path = verify_dirpath(config.OBS_DATA_ROOT, config.CODE_ROOT)
         update_config(config, 'OBS_DATA_ROOT', new_obs_data_path)
     if any(config.OUTPUT_DIR) and config.OUTPUT_DIR != config.WORK_DIR:
-        new_output_dir = verify_dirpath(config.OUTPUT_DIR, config.code_root)
+        new_output_dir = verify_dirpath(config.OUTPUT_DIR, config.CODE_ROOT)
         update_config(config, 'OUTPUT_DIR', new_output_dir)
     verify_case_atts(config.case_list)

@@ -76,15 +76,15 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     ctx.config = cli.parse_config_file(configfile)
     # add path of currently executing script
     print(ctx.config.WORK_DIR)
-    ctx.config.code_root = os.path.dirname(os.path.realpath(__file__))
+    ctx.config.CODE_ROOT = os.path.dirname(os.path.realpath(__file__))
     cli.verify_runtime_config_options(ctx.config)
     log = MainLogger(log_dir=ctx.config["WORK_DIR"])
     if verbose:
         log.log.debug("Initialized cli context")
     # configure pod object(s)
     for pod_name in ctx.config.pod_list:
-        pod_obj = pod_setup.PodObject(pod_name)
-        pod_obj.setup_pod(ctx.config, ctx.config, ctx.config)
+        pod_obj = pod_setup.PodObject(pod_name, ctx.config)
+        pod_obj.setup_pod(ctx.config)
 
     # close the main log file
     log._log_handler.close()

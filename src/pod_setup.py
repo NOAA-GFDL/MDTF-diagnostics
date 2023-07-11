@@ -7,7 +7,7 @@ import io
 from pathlib import Path
 from typing import Type
 
-from src import cli, util, data_sources
+from src import cli, util, data_sources, varlist_util
 import intake_esm
 import dataclasses as dc
 
@@ -27,7 +27,7 @@ class PodBaseClass(metaclass=util.MDTFABCMeta):
         pass
 
 
-class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
+class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     """Class to hold pod information"""
     # name: str  Class atts inherited from MDTFObjectBase
     # _id
@@ -45,7 +45,7 @@ class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
 
     overwrite: bool = False
     # explict 'program' attribute in settings
-    _interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
+    _interpreters = dict()
     runtime_requirements: dict = dc.field(default_factory=dict)
     driver: str = ""
     program: str = ""
@@ -56,24 +56,32 @@ class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
 
     def __init__(self, name: str, runtime_config: util.NameSpace):
         self.name = name
-        self.init_log()
+        #self.log = util.MDTFObjectLogger.get_logger(self._log_name)
+        super().__init__(self, name=self.name, _parent=None)
         # define global environment variables: those that apply to the entire POD
         self.pod_env_vars = os.environ.copy()
-        self.pod_env_vars['RGB'] = os.path.join(runtime_config.code_root, 'shared', 'rgb')
+        self.pod_env_vars['RGB'] = os.path.join(runtime_config.CODE_ROOT, 'shared', 'rgb')
         # globally enforce non-interactive matplotlib backend
         # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
         self.pod_env_vars['MPLBACKEND'] = "Agg"
+        self._interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
         self.nc_largefile = runtime_config.large_file
         # set up work/output directories
-        self.paths = util.PathManager(runtime_config, self.global_env_vars)
-        self.paths.set_pod_paths(self.name, runtime_config, self.global_env_vars)
+        self.paths = util.PathManager(runtime_config, env=self.pod_env_vars)
+        self.paths.set_pod_paths(self.name, runtime_config, self.pod_env_vars)
+        self.init_log(log_dir=self.paths.POD_WORK_DIR)
 
     @property
-    def _log_name(self):
+ #   def _log_name(self):
         # POD loggers sit in a subtree of the DataSource logger distinct from
         # the DataKey loggers; the two subtrees are distinguished by class name
-        _log_name = f"{self.name}_{self._id}".replace('.', '_')
-        return f"{self._parent._log_name}.{self.__class__.__name__}.{_log_name}"
+   #     _log_name = f"{self.name}_{self._id}".replace('.', '_')
+   #     return f"{self.__class__.__name__}.{_log_name}"
+
+    @property
+    def _children(self):
+        # property required by MDTFObjectBase
+        pass
 
     def close_log_file(self, log=True):
         if self.log_file is not None:
@@ -109,14 +117,19 @@ class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
     def _get_pod_settings(self, pod_settings_dict: util.NameSpace):
         self.pod_settings = util.NameSpace.toDict(pod_settings_dict.settings)
 
-    def _get_pod_data(self, pod_settings_dict: util.NameSpace):
-        self.pod_data = util.NameSpace.toDict(pod_settings_dict.data)
+    def _get_pod_data(self, pod_settings: util.NameSpace):
+        if hasattr(pod_settings, 'data'):
+            self.pod_data = util.NameSpace.toDict(pod_settings.data)
+        else:
+            self.log.debug("The data attribute is undefined in '%s' settings file. "
+                           "Using attributes defined separately for each variable",
+                           self.name)
 
-    def _get_pod_dims(self, pod_settings_dict: util.NameSpace):
-        self.pod_dims = util.NameSpace.toDict(pod_settings_dict.dims)
+    def _get_pod_dims(self, pod_settings: util.NameSpace):
+        self.pod_dims = util.NameSpace.toDict(pod_settings.dimensions)
 
-    def _get_pod_vars(self, pod_settings_dict: util.NameSpace):
-        self.pod_vars = util.NameSpace.toDict(pod_settings_dict.varlist)
+    def _get_pod_vars(self, pod_settings: util.NameSpace):
+        self.pod_vars = util.NameSpace.toDict(pod_settings.varlist)
 
     def get_pod_data_subset(self, catalog_path: str, case_data_source):
         cat = intake.open_esm_datastore(catalog_path)
@@ -146,7 +159,7 @@ class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
         self.log.debug("Setting driver script for %s to '%s'.",
                        self.full_name, self.driver)
 
-    def set_interpreter(self):
+    def set_interpreter(self, pod_settings: util.NameSpace):
         """Determine what executable should be used to run the driver script.
 
         .. note::
@@ -156,7 +169,7 @@ class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
 
         if not self.program:
             # Find ending of filename to determine the program that should be used
-            _, driver_ext = os.path.splitext(self.driver)
+            _, driver_ext = os.path.splitext(pod_settings.driver)
             # Possible error: Driver file type unrecognized
             if driver_ext not in self._interpreters:
                 raise util.PodRuntimeError((f"Don't know how to call a '{driver_ext}' "
@@ -167,17 +180,17 @@ class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
             self.log.debug("Set program for %s to '%s'.",
                            self.full_name, self.program)
 
-    def setup_pod(self, runtime_config: util.NameSpace,):
+    def setup_pod(self, runtime_config: util.NameSpace):
         """Update POD information
         """
         # Parse the POD settings file
-        pod_input = self.parse_pod_settings_file(runtime_config.code_root)
+        pod_input = self.parse_pod_settings_file(runtime_config.CODE_ROOT)
         self._get_pod_settings(pod_input)
         self._get_pod_vars(pod_input)
         self._get_pod_data(pod_input)
         self._get_pod_dims(pod_input)
         self.verify_pod_settings()
-        self.set_interpreter()
+        self.set_interpreter(pod_input.settings)
         # run the PODs on data that has already been preprocessed
         # PODs will ingest input directly from catalog that (should) contain
         # the information for the saved preprocessed files, and a pre-existing case_env file
@@ -192,8 +205,6 @@ class PodObject(util.PODLoggerMixin, util.MDTFObjectBase, PodBaseClass, ABC):
                 #util.NameSpace.fromDict({k: case_dict[k] for k in case_dict.keys()})
                 if self.pod_settings['convention'].lower() != case_dict.convention.lower():
                     # translate variable(s) to user_specified standard if necessary
-
-                    #self.cases[case_name].varlist = varlist_util.Varlist.from_struct(self)
                     self.cases[case_name].get_varlist(self)
                 else:
                     pass

@@ -430,7 +430,7 @@ def sentinel_object_factory(obj_name):
     return getattr(unittest.mock.sentinel, obj_name)
 
 
-class MDTF_ID():
+class MDTF_ID:
     """Class wrapping :py:class:`~uuid.UUID`, to provide unique ID numbers for
     members of the object hierarchy (cases, pods, variables, etc.), so that we
     don't need to require that objects in these classes have unique names.

@@ -46,7 +46,7 @@ class PathManager(metaclass=Singleton):
             self.TEMP_DIR_ROOT = self.WORK_DIR
         else:
             # normal code path
-            self.CODE_ROOT = config.code_root
+            self.CODE_ROOT = config.CODE_ROOT
             assert os.path.isdir(self.CODE_ROOT)
 
             # set following explicitly: redundant, but keeps linter from complaining
@@ -69,7 +69,8 @@ class PathManager(metaclass=Singleton):
                 _log.fatal(f"Error: {key} not initialized.")
                 exit_handler(code=1)
             return resolve_path(
-                from_iter(d[key]), root_path=self.CODE_ROOT, env=env,
+                from_iter(d[key]), root_path=self.CODE_ROOT,
+                env_vars=env,
                 log=_log
             )
 
@@ -90,7 +91,7 @@ class PathManager(metaclass=Singleton):
 
         self.POD_CODE_DIR = os.path.join(config.CODE_ROOT, 'diagnostics', pod_name)
         self.POD_OBS_DATA = os.path.join(config.OBS_DATA_ROOT, pod_name)
-        self.POD_WORK_DIR = os.path.join(config.WORKING_DIR, pod_name)
+        self.POD_WORK_DIR = os.path.join(config.WORK_DIR, pod_name)
         self.POD_OUT_DIR = os.path.join(config.OUTPUT_DIR, pod_name)
         if not self.overwrite:
             # bump both WORK_DIR and OUT_DIR to same version because name of

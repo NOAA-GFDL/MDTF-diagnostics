@@ -31,6 +31,11 @@ class PathManager(metaclass=Singleton):
     OBS_DATA_ROOT: str
     POD_WORK_DIR: str
     POD_OUT_DIR: str
+    POD_OBS_DATA: str
+    POD_CODE_DIR: str
+    MODEL_DATA_DIR: str
+    MODEL_WORK_DIR: str
+    MODEL_OUT_DIR: str
 
     overwrite: bool = False
 
@@ -38,6 +43,7 @@ class PathManager(metaclass=Singleton):
 
     def __init__(self, config: NameSpace = None,
                  env: dict = None, unittest: bool = False):
+        self.POD_OBS_DATA = ""
         self._unittest = unittest
         if self._unittest:
             for path in ['CODE_ROOT', 'OBS_DATA_ROOT',
@@ -90,7 +96,8 @@ class PathManager(metaclass=Singleton):
         """
 
         self.POD_CODE_DIR = os.path.join(config.CODE_ROOT, 'diagnostics', pod_name)
-        self.POD_OBS_DATA = os.path.join(config.OBS_DATA_ROOT, pod_name)
+        if hasattr(config, "OBS_DATA_ROOT"):
+            self.POD_OBS_DATA = os.path.join(config.OBS_DATA_ROOT, pod_name)
         self.POD_WORK_DIR = os.path.join(config.WORK_DIR, pod_name)
         self.POD_OUT_DIR = os.path.join(config.OUTPUT_DIR, pod_name)
         if not self.overwrite:
@@ -126,10 +133,10 @@ def verify_paths(self, config, p):
         shutil.rmtree(p.WORK_DIR)
 
     try:
-        for dir_name, create_ in (
-                ('CODE_ROOT', False), ('OBS_DATA_ROOT', False),
-                ('MODEL_DATA_ROOT', True), ('WORK_DIR', True)
-        ):
+        check_dirs = (('CODE_ROOT', False), ('MODEL_DATA_ROOT', True), ('WORK_DIR', True))
+        if hasattr(config, 'OBS_DATA_ROOT'):
+            check_dirs.append('OBS_DATA_ROOT', False)
+        for dir_name, create_ in check_dirs:
             check_dir(p, dir_name, create=create_)
     except Exception as exc:
         _log.fatal((f"Input settings for {dir_name} mis-specified (caught "

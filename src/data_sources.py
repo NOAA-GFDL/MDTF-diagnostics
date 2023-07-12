@@ -103,6 +103,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
 
     def get_varlist(self, parent):
         return varlist_util.Varlist.from_struct(parent)
+
     def query_dataset(self, var):
         """Find all rows of the catalog matching relevant attributes of the
             DataSource and of the variable (:class:`~diagnostic.VarlistEntry`).

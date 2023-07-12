@@ -7,7 +7,7 @@ import io
 from pathlib import Path
 from typing import Type
 
-from src import cli, util, data_sources, varlist_util
+from src import cli, util, data_sources
 import intake_esm
 import dataclasses as dc
 
@@ -56,8 +56,8 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
 
     def __init__(self, name: str, runtime_config: util.NameSpace):
         self.name = name
+        self._id = None
         #self.log = util.MDTFObjectLogger.get_logger(self._log_name)
-        super().__init__(self, name=self.name, _parent=None)
         # define global environment variables: those that apply to the entire POD
         self.pod_env_vars = os.environ.copy()
         self.pod_env_vars['RGB'] = os.path.join(runtime_config.CODE_ROOT, 'shared', 'rgb')
@@ -69,19 +69,32 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         # set up work/output directories
         self.paths = util.PathManager(runtime_config, env=self.pod_env_vars)
         self.paths.set_pod_paths(self.name, runtime_config, self.pod_env_vars)
+        util.MDTFObjectBase.__init__(self, name=self.name, _parent=None)
+
+    # Explicitly invoke MDTFObjectBase post_init and init methods so that _id and other inherited
+    # attributes are initialized correctly. Calling super()__init__ causes and error in the _id definition
+    def __post_init__(self, *args, **kwargs):
+        util.MDTFObjectBase.__post_init__(self)
+        # set up log (PODLoggerMixin)
         self.init_log(log_dir=self.paths.POD_WORK_DIR)
 
+        #for k, v in self.runtime_requirements.items():
+        #    self.runtime_requirements[k] = util.to_iter(v)
     @property
- #   def _log_name(self):
+    def _log_name(self):
         # POD loggers sit in a subtree of the DataSource logger distinct from
         # the DataKey loggers; the two subtrees are distinguished by class name
-   #     _log_name = f"{self.name}_{self._id}".replace('.', '_')
-   #     return f"{self.__class__.__name__}.{_log_name}"
+        _log_name = f"{self.name}_{self._id}".replace('.', '_')
+        return f"{self.__class__.__name__}.{_log_name}"
 
     @property
     def _children(self):
         # property required by MDTFObjectBase
         pass
+
+    @property
+    def full_name(self):
+        return f"<#{self._id}:{self.name}>"
 
     def close_log_file(self, log=True):
         if self.log_file is not None:
@@ -200,7 +213,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             for case_name, case_dict in runtime_config.case_list.items():
                 # instantiate the data_source class instance for the specified convention
                 self.cases[case_name] = data_sources.data_source[case_dict.convention.upper() +
-                                                                 "DataSource"](case_dict, parent=self)
+                                                                 "DataSource"](case_name, case_dict, parent=self)
 
                 #util.NameSpace.fromDict({k: case_dict[k] for k in case_dict.keys()})
                 if self.pod_settings['convention'].lower() != case_dict.convention.lower():

@@ -81,19 +81,18 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     convention: str
     varlist: varlist_util.Varlist = None
 
-    def __init__(self, case_name: str, case_dict: util.NameSpace, parent):
+    def __init__(self, case_name: str, path_obj: util.PathManager, parent):
         # _id = util.MDTF_ID()        # attrs inherited from util.logs.MDTFObjectBase
         # name: str
         # _parent: object
         # log = util.MDTFObjectLogger
         # status: util.ObjectStatus
+
         # initialize MDTF logging object associated with this case
-        super().__init__(
-            self, name=case_name, _parent=parent
-        )
+        util.MDTFObjectBase.__init__(self, name=case_name, _parent=parent)
         # set up log (CaseLoggerMixin)
-        self.init_log(log_dir=parent.MODEL_WK_DIR)
-        self.convention = case_dict.convention
+        self.init_log(log_dir=path_obj.MODEL_WORK_DIR[case_name])
+
 
     @property
     def _children(self):

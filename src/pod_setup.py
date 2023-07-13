@@ -39,10 +39,6 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     pod_settings = dict()
     cases = dict()
 
-    MODEL_DATA_DIR = dict()
-    MODEL_WORK_DIR = dict()
-    MODEL_OUT_DIR = dict()
-
     overwrite: bool = False
     # explict 'program' attribute in settings
     _interpreters = dict()
@@ -68,7 +64,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         self.nc_largefile = runtime_config.large_file
         # set up work/output directories
         self.paths = util.PathManager(runtime_config, env=self.pod_env_vars)
-        self.paths.set_pod_paths(self.name, runtime_config, self.pod_env_vars)
+        self.paths.setup_pod_paths(self.name, runtime_config, self.pod_env_vars)
         util.MDTFObjectBase.__init__(self, name=self.name, _parent=None)
 
     # Explicitly invoke MDTFObjectBase post_init and init methods so that _id and other inherited
@@ -212,9 +208,9 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         elif runtime_config.run_pp:
             for case_name, case_dict in runtime_config.case_list.items():
                 # instantiate the data_source class instance for the specified convention
+                self.paths.setup_model_paths(case_name, case_dict)
                 self.cases[case_name] = data_sources.data_source[case_dict.convention.upper() +
-                                                                 "DataSource"](case_name, case_dict, parent=self)
-
+                                                                 "DataSource"](case_name, self.paths, parent=self)
                 #util.NameSpace.fromDict({k: case_dict[k] for k in case_dict.keys()})
                 if self.pod_settings['convention'].lower() != case_dict.convention.lower():
                     # translate variable(s) to user_specified standard if necessary

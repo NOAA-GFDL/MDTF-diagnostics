@@ -33,9 +33,10 @@ class PathManager(metaclass=Singleton):
     POD_OUT_DIR: str
     POD_OBS_DATA: str
     POD_CODE_DIR: str
-    MODEL_DATA_DIR: str
-    MODEL_WORK_DIR: str
-    MODEL_OUT_DIR: str
+    MODEL_DATA_ROOT: str
+    MODEL_DATA_DIR: dict
+    MODEL_WORK_DIR: dict
+    MODEL_OUT_DIR: dict
 
     overwrite: bool = False
 
@@ -59,12 +60,19 @@ class PathManager(metaclass=Singleton):
             self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', config, env=env)
             self.WORK_DIR = self._init_path('WORK_DIR', config, env=env)
             self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', config, env=env)
+            if hasattr(config, "MODEL_DATA_ROOT"):
+                self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', config, env=env)
+                self.MODEL_DATA_DIR = dict()
+            self.MODEL_OUT_DIR = dict()
+            self.MODEL_WORK_DIR = dict()
 
             if not self.OUTPUT_DIR:
                 self.OUTPUT_DIR = self.WORK_DIR
 
-            if not config.persist_data:
+            if not config.persist_data or config.overwrite:
                 self.overwrite = True
+            else:
+                self.overwrite = False
 
     def _init_path(self, key, d, env=None):
         if self._unittest:  # use in unit testing only
@@ -80,24 +88,38 @@ class PathManager(metaclass=Singleton):
                 log=_log
             )
 
-    def model_paths(self, pod_name: str, case: dict):
+    def setup_model_paths(self, case_name: str, case: dict):
         # define directory paths for multirun mode
         # Each case directory is a subdirectory in wk_dir/pod_name
-        startdate = case.attrs.date_range.start.format(precision=1)
-        enddate = case.attrs.date_range.end.format(precision=1)
-        case_wk_dir = 'MDTF_{}_{}_{}'.format(case, startdate, enddate)
-        self.MODEL_DATA_DIR = os.path.join(self.MODEL_DATA_ROOT, pod_name)
+        startdate = case.startdate.format(precision=1)
+        enddate = case.enddate.format(precision=1)
+        if startdate in case_name and enddate in case_name:
+            case_wk_dir = 'MDTF_{}'.format(case_name)
+        else:
+            case_wk_dir = 'MDTF_{}_{}_{}'.format(case_name, startdate, enddate)
+        # TODO: Remove refs to MODEL_DATA_ROOT when catalogs are implemented in
+        # older PODs
+        # Model data DIR retained for backwards compatibility
+        if len(self.MODEL_DATA_ROOT) > 1:
+            self.MODEL_DATA_DIR[case_name] = os.path.join(self.MODEL_DATA_ROOT, case_name)
+            filesystem.check_dir(self.MODEL_DATA_DIR[case_name], 'MODEL_DATA_DIR', create=True)
         # Cases are located in a common POD directory
-        self.MODEL_WORK_DIR = os.path.join(self.POD_WORK_DIR, case_wk_dir)
-        self.MODEL_OUT_DIR = os.path.join(self.POD_OUT_DIR, case_wk_dir)
+        self.MODEL_WORK_DIR[case_name] = os.path.join(self.POD_WORK_DIR, case_wk_dir)
+        self.MODEL_OUT_DIR[case_name] = os.path.join(self.POD_OUT_DIR, case_wk_dir)
 
-    def set_pod_paths(self, pod_name: str, config: NameSpace, env_vars: dict):
+        filesystem.check_dir(self.MODEL_WORK_DIR[case_name], 'MODEL_WORK_DIR', create=True)
+        filesystem.check_dir(self.MODEL_OUT_DIR[case_name], 'MODEL_OUT_DIR', create=True)
+    def setup_pod_paths(self, pod_name: str, config: NameSpace, env_vars: dict):
         """Check and create directories specific to this POD.
         """
 
         self.POD_CODE_DIR = os.path.join(config.CODE_ROOT, 'diagnostics', pod_name)
         if hasattr(config, "OBS_DATA_ROOT"):
             self.POD_OBS_DATA = os.path.join(config.OBS_DATA_ROOT, pod_name)
+        if hasattr(config, "MODEL_DATA_ROOT"):
+            self.MODEL_DATA_ROOT = config.MODEL_DATA_ROOT
+        else:
+            self.MODEL_DATA_ROOT = ""
         self.POD_WORK_DIR = os.path.join(config.WORK_DIR, pod_name)
         self.POD_OUT_DIR = os.path.join(config.OUTPUT_DIR, pod_name)
         if not self.overwrite:

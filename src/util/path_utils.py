@@ -69,10 +69,7 @@ class PathManager(metaclass=Singleton):
             if not self.OUTPUT_DIR:
                 self.OUTPUT_DIR = self.WORK_DIR
 
-            if not config.persist_data or config.overwrite:
-                self.overwrite = True
-            else:
-                self.overwrite = False
+            self.overwrite = config.overwrite
 
     def _init_path(self, key, d, env=None):
         if self._unittest:  # use in unit testing only
@@ -109,6 +106,7 @@ class PathManager(metaclass=Singleton):
 
         filesystem.check_dir(self.MODEL_WORK_DIR[case_name], 'MODEL_WORK_DIR', create=True)
         filesystem.check_dir(self.MODEL_OUT_DIR[case_name], 'MODEL_OUT_DIR', create=True)
+
     def setup_pod_paths(self, pod_name: str, config: NameSpace, env_vars: dict):
         """Check and create directories specific to this POD.
         """

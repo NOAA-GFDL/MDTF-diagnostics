@@ -558,7 +558,7 @@ class PODLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixin):
     pass
 
 
-class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixinBase):
+class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixin):
     """Mixin providing per-object logging for :class:`~data_manager.DataSourceBase`
     (case objects, corresponding to experiments.)
     """
@@ -572,6 +572,20 @@ class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixinBase):
         assert hasattr(self, 'log')
         self.log.propagate = True
         self.log.setLevel(logging.DEBUG)
+        formatter = HangingIndentFormatter(
+            fmt=fmt, datefmt='%H:%M:%S',
+            header="", footer="\n"
+        )
+        if log_dir is not None:
+            self._log_handler = MDTFHeaderFileHandler(
+                filename=os.path.join(log_dir, f"{self.name}.log"),
+                mode="w", encoding="utf-8"
+            )
+        else:
+            self._log_handler = StringIOHandler()
+            # don't record events from children in StringIO buffer
+            self._log_handler.addFilter(NameMatchFilter(self._log_name))
+            self._log_handler.setFormatter(formatter)
         if self.log.hasHandlers():
             for handler in self.log.handlers:
                 self.log.removeHandler(handler)
@@ -579,10 +593,7 @@ class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixinBase):
                     filename=os.path.join(log_dir, f"{self.name}.log"),
                     mode="w", encoding="utf-8"
                 )
-        formatter = HangingIndentFormatter(
-            fmt=fmt, datefmt='%H:%M:%S',
-            header="", footer="\n"
-        )
+
         self._log_handler.setFormatter(formatter)
         self.log.addHandler(self._log_handler)
 

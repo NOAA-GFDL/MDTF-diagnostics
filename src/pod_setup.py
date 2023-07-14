@@ -5,7 +5,8 @@ import logging
 import os
 import io
 from pathlib import Path
-from typing import Type
+import subprocess
+import shlex
 
 from src import cli, util, data_sources
 import intake_esm
@@ -48,12 +49,10 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
     log_file: io.IOBase = dc.field(default=None, init=False)
     nc_largefile: bool = False
-    log_file: io.IOBase = dc.field(default=None, init=False)
 
     def __init__(self, name: str, runtime_config: util.NameSpace):
         self.name = name
         self._id = None
-        #self.log = util.MDTFObjectLogger.get_logger(self._log_name)
         # define global environment variables: those that apply to the entire POD
         self.pod_env_vars = os.environ.copy()
         self.pod_env_vars['RGB'] = os.path.join(runtime_config.CODE_ROOT, 'shared', 'rgb')
@@ -122,6 +121,42 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         except Exception as exc:
             raise util.PodConfigError("Caught Exception: required setting %s not in pod setting file %s", value[0])\
                 from exc
+
+        def log_subprocess_output(pipe):
+            for line in iter(pipe.readline, b''):  # b'\n'-separated lines
+                self.log.info('got line from subprocess: %r', line)
+
+        def verify_runtime_reqs(runtime_reqs: dict):
+            out_file = os.path.join(self.paths.POD_WORK_DIR, 'conda_env_list.txt')
+            for k, v in runtime_reqs.items():
+                if any(v):
+                    pod_env = k
+                    break
+
+            env_name = '_MDTF' + pod_env.lower() + '_base'
+            conda_prefix = self.pod_env_vars[INSERT CORRECT ENV VAR HERE]
+            cmd = conda_prefix + ' conda list -p ' + os.path.join(conda_prefix, 'envs', env_name) + ' > ' + out_file
+            args = shlex.split(cmd)
+            process = subprocess.Popen(args,
+                                       shell=True,
+                                       env=self.pod_env_vars,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT)
+            with process.stdout:
+                log_subprocess_output(process.stdout)
+            exitcode = process.wait()  # 0 means success
+
+            try:
+                os.path.isfile(out_file)
+            except FileNotFoundError:
+                self.log.debug("Failed to write file %s", out_file)
+
+        try:
+            verify_runtime_reqs(self.pod_settings['runtime_requirements'])
+        except Exception as exc:
+            raise util.PodConfigError('POD runtime requirements not defined in specified Conda environment')\
+                from exc
+
 
     def _get_pod_settings(self, pod_settings_dict: util.NameSpace):
         self.pod_settings = util.NameSpace.toDict(pod_settings_dict.settings)

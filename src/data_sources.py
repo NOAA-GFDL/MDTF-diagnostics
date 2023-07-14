@@ -4,6 +4,7 @@ the user via ``--data_manager``; see :doc:`ref_data_sources` and
 """
 import abc
 import os
+import io
 import dataclasses
 from src import util, cmip6, varlist_util
 
@@ -80,6 +81,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     # col_spec = sampleLocalFileDataSource_col_spec
     convention: str
     varlist: varlist_util.Varlist = None
+    log_file: io.IOBase = dataclasses.field(default=None, init=False)
 
     def __init__(self, case_name: str, path_obj: util.PathManager, parent):
         # _id = util.MDTF_ID()        # attrs inherited from util.logs.MDTFObjectBase
@@ -92,7 +94,6 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         util.MDTFObjectBase.__init__(self, name=case_name, _parent=parent)
         # set up log (CaseLoggerMixin)
         self.init_log(log_dir=path_obj.MODEL_WORK_DIR[case_name])
-
 
     @property
     def _children(self):

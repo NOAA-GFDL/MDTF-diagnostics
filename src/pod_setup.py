@@ -3,6 +3,7 @@
 from abc import ABC
 import logging
 import os
+import sys
 import io
 from pathlib import Path
 import subprocess
@@ -11,6 +12,7 @@ import shlex
 from src import cli, util, data_sources
 import intake_esm
 import dataclasses as dc
+from distutils.spawn import find_executable
 
 _log = logging.getLogger(__name__)
 
@@ -18,6 +20,7 @@ _log = logging.getLogger(__name__)
 class PodBaseClass(metaclass=util.MDTFABCMeta):
     """Base class for POD setup methods
     """
+
     def parse_pod_settings_file(self, code_root: str):
         pass
 
@@ -49,6 +52,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
     log_file: io.IOBase = dc.field(default=None, init=False)
     nc_largefile: bool = False
+    bash_exec: str
 
     def __init__(self, name: str, runtime_config: util.NameSpace):
         self.name = name
@@ -56,11 +60,13 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         # define global environment variables: those that apply to the entire POD
         self.pod_env_vars = os.environ.copy()
         self.pod_env_vars['RGB'] = os.path.join(runtime_config.CODE_ROOT, 'shared', 'rgb')
+        self.pod_env_vars['CONDA_ROOT'] = os.path.expandvars(runtime_config.conda_root)
         # globally enforce non-interactive matplotlib backend
         # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
         self.pod_env_vars['MPLBACKEND'] = "Agg"
         self._interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
         self.nc_largefile = runtime_config.large_file
+        self.bash_exec = find_executable('bash')
         # set up work/output directories
         self.paths = util.PathManager(runtime_config, env=self.pod_env_vars)
         self.paths.setup_pod_paths(self.name, runtime_config, self.pod_env_vars)
@@ -73,8 +79,9 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         # set up log (PODLoggerMixin)
         self.init_log(log_dir=self.paths.POD_WORK_DIR)
 
-        #for k, v in self.runtime_requirements.items():
+        # for k, v in self.runtime_requirements.items():
         #    self.runtime_requirements[k] = util.to_iter(v)
+
     @property
     def _log_name(self):
         # POD loggers sit in a subtree of the DataSource logger distinct from
@@ -90,6 +97,11 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     @property
     def full_name(self):
         return f"<#{self._id}:{self.name}>"
+
+    def open_log_file(self):
+        self.log_file = io.open(self._log_handler.baseFilename,
+                                'w',
+                                encoding='utf-8')
 
     def close_log_file(self, log=True):
         if self.log_file is not None:
@@ -119,7 +131,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             value = [i for i in required_settings if i in self.pod_settings
                      and isinstance(self.pod_settings[i], type(required_settings[i]))]
         except Exception as exc:
-            raise util.PodConfigError("Caught Exception: required setting %s not in pod setting file %s", value[0])\
+            raise util.PodConfigError("Caught Exception: required setting %s not in pod setting file %s", value[0]) \
                 from exc
 
         def log_subprocess_output(pipe):
@@ -127,36 +139,44 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 self.log.info('got line from subprocess: %r', line)
 
         def verify_runtime_reqs(runtime_reqs: dict):
-            out_file = os.path.join(self.paths.POD_WORK_DIR, 'conda_env_list.txt')
             for k, v in runtime_reqs.items():
                 if any(v):
                     pod_env = k
                     break
+            pod_pkgs = runtime_reqs[pod_env]
 
-            env_name = '_MDTF' + pod_env.lower() + '_base'
-            conda_prefix = self.pod_env_vars[INSERT CORRECT ENV VAR HERE]
-            cmd = conda_prefix + ' conda list -p ' + os.path.join(conda_prefix, 'envs', env_name) + ' > ' + out_file
-            args = shlex.split(cmd)
-            process = subprocess.Popen(args,
-                                       shell=True,
-                                       env=self.pod_env_vars,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT)
-            with process.stdout:
-                log_subprocess_output(process.stdout)
-            exitcode = process.wait()  # 0 means success
+            env_name = '_MDTF_' + pod_env.lower() + '_base'
+            conda_root = self.pod_env_vars['CONDA_ROOT']
+            e = os.path.join(conda_root, 'envs', env_name)
+            env_dir = util.resolve_path(e,
+                                        env_vars=self.pod_env_vars,
+                                        log=self.log)
+            assert os.path.isdir(env_dir), self.log.error(f'%s not found.', env_dir)
+            args = [os.path.join(conda_root, "bin/conda"),
+                    'list',
+                    '-n',
+                    env_name]
 
-            try:
-                os.path.isfile(out_file)
-            except FileNotFoundError:
-                self.log.debug("Failed to write file %s", out_file)
+            p1 = subprocess.run(args,
+                                universal_newlines=True,
+                                bufsize=1,
+                                capture_output=True,
+                                text=True,
+                                env=self.pod_env_vars
+                                )
+            # verify that pod package names are substrings of at least one package installed
+            # in the pod environment
+            output = p1.stdout.splitlines()
+            for p in pod_pkgs:
+                l3 = [o for o in output if p.lower() in o.lower()]
+                if not any(l3):
+                    self.log.error(f'Package {p} not found in POD environment {pod_env}')
 
         try:
             verify_runtime_reqs(self.pod_settings['runtime_requirements'])
         except Exception as exc:
-            raise util.PodConfigError('POD runtime requirements not defined in specified Conda environment')\
+            raise util.PodConfigError('POD runtime requirements not defined in specified Conda environment') \
                 from exc
-
 
     def _get_pod_settings(self, pod_settings_dict: util.NameSpace):
         self.pod_settings = util.NameSpace.toDict(pod_settings_dict.settings)
@@ -246,13 +266,12 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 self.paths.setup_model_paths(case_name, case_dict)
                 self.cases[case_name] = data_sources.data_source[case_dict.convention.upper() +
                                                                  "DataSource"](case_name, self.paths, parent=self)
-                #util.NameSpace.fromDict({k: case_dict[k] for k in case_dict.keys()})
+                # util.NameSpace.fromDict({k: case_dict[k] for k in case_dict.keys()})
                 if self.pod_settings['convention'].lower() != case_dict.convention.lower():
                     # translate variable(s) to user_specified standard if necessary
                     self.cases[case_name].get_varlist(self)
                 else:
                     pass
-
 
             # get level
 
@@ -265,16 +284,16 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         # ref for dict comparison
         # https://stackoverflow.com/questions/20578798/python-find-matching-values-in-nested-dictionary
 
-        #cat_subset = self.get_pod_data_subset(runtime_config.CATALOG_PATH, runtime_config.case_list)
+        # cat_subset = self.get_pod_data_subset(runtime_config.CATALOG_PATH, runtime_config.case_list)
 
-        #self.setup_var(v, case_dict.attrs.date_range, case_name)
+        # self.setup_var(v, case_dict.attrs.date_range, case_name)
 
         # preprocessor will edit case varlist alternates, depending on enabled functions
         # self is the Mul
-        #self.preprocessor = self._PreprocessorClass(self)
+        # self.preprocessor = self._PreprocessorClass(self)
         # self=MulirunDiagnostic instance, and is passed as data_mgr parm to access
         # cases
-        #self.preprocessor.edit_request(self)
+        # self.preprocessor.edit_request(self)
 
         for case_name in self.cases.keys():
             for v in case_name.iter_children():
@@ -289,5 +308,3 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         if self.status == util.ObjectStatus.NOTSET and \
                 all(case.status == util.ObjectStatus.ACTIVE for case in self.cases):
             self.status = util.ObjectStatus.ACTIVE
-
-

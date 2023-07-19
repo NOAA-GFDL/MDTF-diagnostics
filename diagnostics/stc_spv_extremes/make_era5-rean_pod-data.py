@@ -86,7 +86,7 @@ tas = tas_ds.air.load()
 # other grid point
 tas = tas.isel(lat=slice(0,None,2),lon=slice(0,None,2))
 
-print(tas, zg_500,uwnd_zm,zg_zm)
+#print(tas, zg_500,uwnd_zm,zg_zm)
 
 # Make the zonal mean uwnd DataArray and add metadata
 uwnd_zm = xr.concat(uwnd_zm, dim='time')
@@ -117,7 +117,7 @@ out_ds = xr.merge([uwnd_zm, zg_zm, zg_500, tas])
 out_ds.attrs['reanalysis'] = 'ERA5'
 out_ds.attrs['notes'] = 'Fields derived from daily-mean ERA5 data on pressure and near-surface levels'
 
-print(out_ds.lon.values)
+#print(out_ds.lon.values)
 
 # To reduce size of output file even more, we will only keep latitudes poleward
 # of 30 degrees (since we are primarily interested in the extratropics).

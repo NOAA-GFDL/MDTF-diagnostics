@@ -249,7 +249,7 @@ def ssw_cp07(variable,threshold=0, consec_days=20, hem="NH"):
                     westerlygroupslength = [len(group) for group in westerlygroups]
                     maxlength = np.nanmax(westerlygroupslength)
                     if maxlength > 9:
-                        ssw_dates.append(var.dayofwinter[firstvalue].time.dt.strftime("%Y-%m-%d").values.tolist())
+                        ssw_dates.append(var.dayofwinter[first_nextgroup].time.dt.strftime("%Y-%m-%d").values.tolist())
  
     return ssw_dates
 
@@ -301,6 +301,8 @@ def spv_vi(variable, thresh = 0.8, persist=10, consec_days=20, hem="NH"):
         
         # look for mid-winter VIs between Nov-Mar in the NH, June-Oct in the SH
         if hem == "NH":
+            # uses a fixed threshold representing the "thresh"*100 percentile of the NDJFM values
+            #new_thr = variable.sel(time=variable.time.dt.month.isin([1,2,3,11,12])).quantile(thresh, dim='time')
             
             if y == yr[-1]:
                 break
@@ -374,13 +376,13 @@ def spv_vi(variable, thresh = 0.8, persist=10, consec_days=20, hem="NH"):
 
 #**************************************************************************
 
-def composite(variable, yre, mne, dye):
+def composite(variable, yre, mne, dye, lag_before=20, lag_after=60):
     
     """
     This averages a variable (with time and pressure level coordinates) across
     specified events, which must be provided as (same-length) integer arrays of event year,
-    event month, and event day. The lag around each event is hard-coded here
-    as 20 days prior to the event and 60 days after the event.
+    event month, and event day. The daily average across events is found for the time period
+    lag_before the event to lag_after the event in days.
 
     Parameters:
     ----------------------------------------------------
@@ -397,15 +399,23 @@ def composite(variable, yre, mne, dye):
     dye : `numpy.Array`
             An integer array of event days
             
+    lag_before: `integer value`
+            A single integer specifying how many days before the event to 
+            composite. Default = 20
+    
+    lag_after: `integer value`
+            A single integer specifying how many days after the event to 
+            composite. Default = 60
+            
     """
     
     from datetime import datetime,timedelta
     
     #initialize with first event
     cen = datetime(year=yre[0],day=dye[0],month=mne[0])
-    en = cen + timedelta(days=60-1)
-    sta = cen - timedelta(days=20)
-    lag = np.arange(-20,60,1)
+    en = cen + timedelta(days=lag_after-1)
+    sta = cen - timedelta(days=lag_before)
+    lag = np.arange(-lag_before,lag_after,1)
     edate = en.strftime("%Y-%m-%d")
     stdate = sta.strftime("%Y-%m-%d")
     avgvar = variable.sel(time=slice(stdate,edate))
@@ -414,15 +424,15 @@ def composite(variable, yre, mne, dye):
         
     for ct,dat in enumerate(yre[1:]):
         cen = datetime(year=yre[ct],day=dye[ct],month=mne[ct])
-        en = cen + timedelta(days=60-1)
-        sta = cen - timedelta(days=20)
+        en = cen + timedelta(days=lag_after-1)
+        sta = cen - timedelta(days=lag_before)
         edate = en.strftime("%Y-%m-%d")
         stdate = sta.strftime("%Y-%m-%d")
         newvar = variable.sel(time=slice(stdate,edate))
         newvar = newvar.assign_coords(time=lag)
         newvar = newvar.expand_dims(dim="event")
    
-        allvar10 = xr.concat([avgvar, newvar], dim='event')
-        avgvar = allvar10
+        allvar = xr.concat([avgvar, newvar], dim='event')
+        avgvar = allvar
        
     return avgvar

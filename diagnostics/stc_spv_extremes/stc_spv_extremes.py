@@ -6,7 +6,7 @@
 # POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
 #
 # STC Stratospheric Polar Vortex Extremes
-# Last update: 2023-05-02
+# Last update: 2023-07-19
 #
 # This script performs calculations to detect stratospheric polar vortex extremes. 
 # Extremes in the stratospheric polar vortex are closely linked to the tropospheric
@@ -16,14 +16,14 @@
 # important aspects of stratospheric variability that rely on realistic representations
 # of the stratosphere and the troposphere. Extremes in the strength of the Arctic polar 
 # stratospheric circulation are often preceded by known near-surface circulation 
-# patterns, and then subsequently followed by shifts in the storm tracks (sometimes
+# patterns, and then subsequently followed by shifts in weather patterns (sometimes
 # for weeks).
 # Please see the references for the scientific foundations of this POD.
 #
 # ==============================================================================
 #   Version, Contact Info, and License
 # ==============================================================================
-#   - Version/revision information: v1.0 (2023-05-02)
+#   - Version/revision information: v1.0 (2023-07-19)
 #   - PI: Amy H. Butler, NOAA CSL
 #   - Developer/point of contact: Amy H. Butler, amy.butler@noaa.gov
 #   - Other contributors: Zachary D. Lawrence, CIRES + CU Boulder / NOAA PSL, 
@@ -40,24 +40,27 @@
 #   stc_spv_extremes_defs.py.
 #   The primary script stc_spv_extremes.py goes through these basic steps:
 #  
+#   (1) reads in the model fields, performs a few preparatory actions such as 
+#       averaging the geopotential heights over the polar cap and removing
+#       the daily climatology to obtain anomalies, and selecting
+#       the 10 hPa zonal-mean zonal winds. 
+#   (2) creates three plots (in both hemispheres, so 6 plots in total) 
+#   (3) outputs to text files the SSW and VI dates for both hemispheres.
 #
 # ==============================================================================
 #   Required programming language and libraries
 # ==============================================================================
 #   This POD is done fully in python, and primarily makes use of numpy and
-#   xarray to read, subset, and transform the data. It also makes use of scipy to
-#   calculate the fast fourier transform (FFT) of the annual cycle of zonal winds
-#   in order to estimate the timing of the seasonal transition of the stratospheric
-#   polar vortex, and to calculate linear trends.
+#   xarray to read, subset, and transform the data. 
 #
 # ==============================================================================
 #   Required model input variables
 # ==============================================================================
 #   This POD requires daily-mean fields of
-#   - zonal wind velocity (ua)
-#   - geopotential heights (zg)
-#   - near-surface air temperature (tas)
-#   which should all be provided with dimensions of (time, lev, lat, lon)
+#   - zonal-man zonal wind velocity (ua) with dimensions of (time,lev,lat)
+#   - zonal-mean geopotential heights (zg) with dimensions of (time,lev,lat)
+#   - geopotential heights (zg) at 500 hPa with dimensions of (time,lat,lon)
+#   - surface air temperature (tas) with dimensions of (time,lat,lon)
 #
 # ==============================================================================
 #   References
@@ -72,7 +75,6 @@ import numpy.ma as ma
 import xarray as xr
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-from scipy.stats import linregress
 from datetime import datetime,timedelta
 
 from stc_spv_extremes_defs import lat_avg

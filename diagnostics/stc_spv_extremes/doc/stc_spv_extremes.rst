@@ -11,10 +11,10 @@
 Stratosphere-Troposphere Coupling: Stratospheric Polar Vortex Extremes
 ================================
 
-Last update: 2023-07-06
+Last update: 2023-07-19
 
 This POD assesses stratospheric polar vortex extremes, the tropospheric circulation
-patters that precede them, and the surface impacts that follow. Extremes in the 
+patterns that precede them, and the surface impacts that follow. Extremes in the 
 stratospheric polar vortex are closely linked to the tropospheric
 circulation and surface climate both before and after the event. The occurrence of 
 polar stratospheric circulation extremes in the Northern Hemisphere (NH), such
@@ -22,7 +22,7 @@ as sudden stratospheric warmings (SSWs) and polar vortex intensifications (VIs),
 aspects of stratospheric variability that rely on realistic representations of the 
 stratosphere and the troposphere. Extremes in the strength of the Arctic polar 
 stratospheric circulation are often preceded by known near-surface circulation 
-patterns, and then subsequently followed by shifts in the storm tracks (sometimes
+patterns, and then subsequently followed by shifts in weather patterns (sometimes
 for weeks). SSWs in the Southern Hemisphere (SH) are rare (only one event in the 
 satellite record), while VIs occur more often, but both events can have persistent 
 impacts on SH mid-latitude weather.
@@ -79,7 +79,7 @@ The driver script reads in the model fields, performs a few preparatory actions
 such as averaging the geopotential heights over the polar cap and removing
 the daily climatology to obtain anomalies, and selecting
 the 10 hPa zonal-mean zonal winds. The script then creates three plots (in both
-hemisphes, so 6 plots in total) and outputs to text files the SSW and VI dates.
+hemispheres, so 6 plots in total) and outputs to text files the SSW and VI dates.
 
 The observational data this POD uses is based on ERA5 reanalysis
 (Hersbach, et al., 2020), and includes pre-computed daily-mean zonal mean 
@@ -172,12 +172,3 @@ Furthermore, the bootstrap confidence interval in the observation plots
 give a sense of the sampling variability in the historical record; if 
 the model correlation falls outside the observed bootstrap confidence interval, 
 it is fair to say the model has a too strong or too weak relationship.
-
-**Statistical testing for linear trends**
-This POD outputs linear least squares best-fit trends in temperatures, winds, and 
-ozone averaged for different regions in the extratropics, for two different 
-historical periods during which ozone depletion or recovery occurred. These are 
-calculated using the scipy function "linregress", which allows output of the 
-p-value which is defined as: "The p-value for a hypothesis test whose null hypothesis
-is that the slope is zero, using Wald Test with t-distribution of the test statistic."
-Stippling is shown where the trends are *not* significant.

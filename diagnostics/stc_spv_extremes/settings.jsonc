@@ -9,12 +9,6 @@
     "realm" : "atmos",
     "description" : "Detecting extreme polar vortex events and their surface impacts",
     "pod_env_vars" : {
-      // Lower latitude limit for zonal wind lat band avgs (defaults to 50)
-      // Should be positive (values will also be calculated for southern hemi)
-      "UZM_LO_LAT" : "50",
-      // Upper latitude limit for zonal wind lat band avgs (defaults to 70)
-      // Should be positive (values will also be calculated for southern hemi)
-      "UZM_HI_LAT" : "70",
       // Lower latitude limit for polar cap avg calculations (defaults to 65)
       // Should be positive (values will also be calculated for southern hemi)
       "PCAP_LO_LAT": "65",
@@ -41,14 +35,28 @@
       "standard_name" : "eastward_wind",
       "units" : "m s-1",
       "frequency": "day",
-      "dimensions": ["time", "lev", "lat", "lon"],
+      "dimensions": ["time", "lev", "lat"],
       "requirement": "required"
     },
     "zg": {
       "standard_name" : "geopotential_height",
       "units" : "m",
       "frequency": "day",
-      "dimensions": ["time", "lev", "lat", "lon"],
+      "dimensions": ["time", "lev", "lat"],
+      "requirement": "required"
+    },
+    "zg500": {
+      "standard_name" : "geopotential_height_at_500_hPa",
+      "units" : "m",
+      "frequency": "day",
+      "dimensions": ["time", "lat", "lon"],
+      "requirement": "required"
+    },
+    "tas": {
+      "standard_name" : "surface_air_temperature",
+      "units" : "K",
+      "frequency": "day",
+      "dimensions": ["time", "lat", "lon"],
       "requirement": "required"
     }
   }

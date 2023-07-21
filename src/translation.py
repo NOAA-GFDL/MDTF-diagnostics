@@ -6,6 +6,7 @@ import copy
 import dataclasses as dc
 import glob
 import typing
+import pathlib
 from src import util, data_model, units
 from src.units import Units
 
@@ -145,12 +146,18 @@ class Fieldlist:
     env_vars: dict = dc.field(default_factory=dict)
 
     @classmethod
-    def from_struct(cls, d):
-        def _process_coord(section_name, d, temp_d):
+    def from_struct(cls, d, code_root: str, log=None):
+        def _process_coord(section_name, d, temp_d, code_root: str, log=None):
             # build two-stage lookup table (by axis type, then standard name)
             section_d = d.pop(section_name, dict())
-            for k,v in section_d.items():
-                ax = v['axis']
+            if '$ref' in section_d.keys():
+                ref_file_query = pathlib.Path(code_root, 'data', section_d['$ref'])
+                ref_file_path = str(ref_file_query)
+                assert ".json" in ref_file_query.suffix, f"{ref_file_path} is not a json(c) file"
+                section_d = util.read_json(ref_file_path, log=log)
+
+            for k, v in section_d.items():
+                ax = v['axis'] # need regexdict : https://stackoverflow.com/questions/21024822/python-accessing-dictionary-with-wildcards
                 entry = data_model.coordinate_from_struct(v, name=k)
                 d['axes'][k] = entry
                 temp_d[ax][entry.standard_name] = entry
@@ -169,7 +176,7 @@ class Fieldlist:
         temp_d = collections.defaultdict(util.WormDict)
         d['axes'] = util.WormDict()
         d['axes_lut'] = util.WormDict()
-        d, temp_d = _process_coord('coords', d, temp_d)
+        d, temp_d = _process_coord('coords', d, temp_d, code_root, log)
         d['axes_lut'].update(temp_d)
 
         temp_d = collections.defaultdict(util.WormDict)
@@ -393,14 +400,14 @@ class VariableTranslator(metaclass=util.Singleton):
         self.aliases = util.WormDict()
         self.modifier = util.read_json(os.path.join(code_root, 'data', 'modifiers.jsonc'), log=_log)
 
-    def add_convention(self, d):
+    def add_convention(self, d: dict, file_path: str, log=None):
         conv_name = d['name']
         _log.debug("Adding variable name convention '%s'", conv_name)
         for model in d.pop('models', []):
             self.aliases[model] = conv_name
-        self.conventions[conv_name] = Fieldlist.from_struct(d)
+        self.conventions[conv_name] = Fieldlist.from_struct(d, file_path, log=log)
 
-    def read_conventions(self,code_root, unittest=False):
+    def read_conventions(self, code_root: str, unittest=False):
         """ Read in the conventions from the Fieldlists and populate the convention attribute. """
         if unittest:
             # value not used, when we're testing will mock out call to read_json
@@ -414,7 +421,7 @@ class VariableTranslator(metaclass=util.Singleton):
         for f in config_files:
             try:
                 d = util.read_json(f, log=_log)
-                self.add_convention(d)
+                self.add_convention(d, code_root, log=_log)
             except Exception as exc:
                 _log.exception("Caught exception loading fieldlist file %s: %r",
                     f, exc)

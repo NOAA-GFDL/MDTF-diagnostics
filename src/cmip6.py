@@ -22,7 +22,7 @@ import logging
 _log = logging.getLogger(__name__)
 
 
-class CMIP6_CVs(util.Singleton):
+class CMIP6_CVs(metaclass=util.Singleton):
     """Interface for looking up information from the CMIP6 controlled vocabulary
     (CV) file.
 

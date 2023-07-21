@@ -136,6 +136,8 @@ class Fieldlist:
     dimensionality.
     """
     name: str = util.MANDATORY
+    model_realm: str = util.MANDATORY
+    ndim: int = util.MANDATORY
     axes: util.WormDict = dc.field(default_factory=util.WormDict)
     axes_lut: util.WormDict = dc.field(default_factory=util.WormDict)
     entries: util.WormDict = dc.field(default_factory=util.WormDict)
@@ -325,7 +327,7 @@ class Fieldlist:
         )
 
 
-class NoTranslationFieldlist(util.Singleton):
+class NoTranslationFieldlist(metaclass=util.Singleton):
     """Class which partially implements the :class:`Fieldlist` interface but
     does no variable translation. :class:`~diagnostic.VarlistEntry` objects from
     the POD are passed through to create :class:`TranslatedVarlistEntry` objects.
@@ -380,7 +382,7 @@ class NoTranslationFieldlist(util.Singleton):
         )
 
 
-class VariableTranslator(util.Singleton):
+class VariableTranslator(metaclass=util.Singleton):
     """:class:`~util.Singleton` containing information for different variable
     naming conventions. These are defined in the ``data/fieldlist_*.jsonc``
     files.

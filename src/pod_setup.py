@@ -98,11 +98,6 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     def full_name(self):
         return f"<#{self._id}:{self.name}>"
 
-    def open_log_file(self):
-        self.log_file = io.open(self._log_handler.baseFilename,
-                                'w',
-                                encoding='utf-8')
-
     def close_log_file(self, log=True):
         if self.log_file is not None:
             if log:
@@ -134,10 +129,6 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             raise util.PodConfigError("Caught Exception: required setting %s not in pod setting file %s", value[0]) \
                 from exc
 
-        def log_subprocess_output(pipe):
-            for line in iter(pipe.readline, b''):  # b'\n'-separated lines
-                self.log.info('got line from subprocess: %r', line)
-
         def verify_runtime_reqs(runtime_reqs: dict):
             for k, v in runtime_reqs.items():
                 if any(v):
@@ -145,32 +136,40 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                     break
             pod_pkgs = runtime_reqs[pod_env]
 
-            env_name = '_MDTF_' + pod_env.lower() + '_base'
+            if "python" not in pod_env:
+                env_name = '_MDTF_' + pod_env.upper() + '_base'
+            else:
+                env_name = '_MDTF_' + pod_env.lower() + '_base'
             conda_root = self.pod_env_vars['CONDA_ROOT']
             e = os.path.join(conda_root, 'envs', env_name)
             env_dir = util.resolve_path(e,
                                         env_vars=self.pod_env_vars,
                                         log=self.log)
             assert os.path.isdir(env_dir), self.log.error(f'%s not found.', env_dir)
-            args = [os.path.join(conda_root, "bin/conda"),
-                    'list',
-                    '-n',
-                    env_name]
 
-            p1 = subprocess.run(args,
-                                universal_newlines=True,
-                                bufsize=1,
-                                capture_output=True,
-                                text=True,
-                                env=self.pod_env_vars
-                                )
-            # verify that pod package names are substrings of at least one package installed
-            # in the pod environment
-            output = p1.stdout.splitlines()
-            for p in pod_pkgs:
-                l3 = [o for o in output if p.lower() in o.lower()]
-                if not any(l3):
-                    self.log.error(f'Package {p} not found in POD environment {pod_env}')
+            if pod_env.lower is not "python3":
+                pass
+            else:
+                self.log.info(f"Checking {e} for {self.name} package requirements")
+                args = [os.path.join(conda_root, "bin/conda"),
+                        'list',
+                        '-n',
+                        env_name]
+
+                p1 = subprocess.run(args,
+                                    universal_newlines=True,
+                                    bufsize=1,
+                                    capture_output=True,
+                                    text=True,
+                                    env=self.pod_env_vars
+                                    )
+                # verify that pod package names are substrings of at least one package installed
+                # in the pod environment
+                output = p1.stdout.splitlines()
+                for p in pod_pkgs:
+                    has_pkgs = [o for o in output if p.lower() in o.lower()]
+                    if not any(has_pkgs):
+                        self.log.error(f'Package {p} not found in POD environment {pod_env}')
 
         try:
             verify_runtime_reqs(self.pod_settings['runtime_requirements'])
@@ -245,7 +244,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                            self.full_name, self.program)
 
     def setup_pod(self, runtime_config: util.NameSpace):
-        """Update POD information
+        """Update POD information from settings and runtime configuration files
         """
         # Parse the POD settings file
         pod_input = self.parse_pod_settings_file(runtime_config.CODE_ROOT)
@@ -253,6 +252,8 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         self._get_pod_vars(pod_input)
         self._get_pod_data(pod_input)
         self._get_pod_dims(pod_input)
+        # verify that required settings are specified,
+        # and that required packages are installed in the target Conda environment
         self.verify_pod_settings()
         self.set_interpreter(pod_input.settings)
         # run the PODs on data that has already been preprocessed
@@ -269,7 +270,8 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 # util.NameSpace.fromDict({k: case_dict[k] for k in case_dict.keys()})
                 if self.pod_settings['convention'].lower() != case_dict.convention.lower():
                     # translate variable(s) to user_specified standard if necessary
-                    self.cases[case_name].get_varlist(self)
+                    pod_varlist = self.cases[case_name].get_varlist(self.pod_vars)
+                    self.cases[case_name].translate_varlist(pod_varlist)
                 else:
                     pass
 

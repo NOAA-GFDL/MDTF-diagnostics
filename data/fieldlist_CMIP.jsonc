@@ -3,10 +3,10 @@
 // in strings, so you'll want to turn word wrap on in your editor.
 //
 {
-  "name" : "CMIP",
+  "name": "CMIP",
   "models": ["CMIP_GFDL"],
-  "coords" :{
-    $ref: "./cmip6-cmor-tables/tables/CMIP6_coordinate.json"
+  "coords": {
+    "$ref": "./cmip6-cmor-tables/Tables/CMIP6_coordinate.json"
    },
   "aux_coords": {
     "deptho": {

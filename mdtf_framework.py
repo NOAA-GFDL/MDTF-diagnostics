@@ -18,7 +18,7 @@ if sys.version_info.major != 3 or sys.version_info.minor < 10:
 # passed; continue with imports
 import os
 import click
-from src import util, cli, pod_setup
+from src import util, cli, pod_setup, translation
 from src.conda import conda_utils
 import dataclasses
 import logging
@@ -81,6 +81,9 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     log = MainLogger(log_dir=ctx.config["WORK_DIR"])
     if verbose:
         log.log.debug("Initialized cli context")
+    # configure a variable translator object with information from Fieldlist tables
+    var_translator = translation.VariableTranslator(ctx.config.CODE_ROOT)
+    var_translator.read_conventions(ctx.config.CODE_ROOT)
     # configure pod object(s)
     for pod_name in ctx.config.pod_list:
         pod_obj = pod_setup.PodObject(pod_name, ctx.config)

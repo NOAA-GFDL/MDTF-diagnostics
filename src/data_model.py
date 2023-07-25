@@ -8,6 +8,7 @@ import abc
 import dataclasses as dc
 import itertools
 import typing
+import collections
 from src import util
 import src.units  # fully qualify name to reduce confusion with "units" attributes
 import logging
@@ -174,7 +175,7 @@ class _DMCoordinateShared:
     units: src.units.Units = util.MANDATORY
     axis: str = 'OTHER'
     bounds_var: AbstractDMCoordinateBounds = None
-    value: typing.Union[int, float] = None
+    value: typing.Union[int, float, str] = None
 
     @property
     def bounds(self):
@@ -233,7 +234,7 @@ class DMHorizontalCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
     name: str = util.MANDATORY
     """Coordinate name."""
     # bounds_var: AbstractDMCoordinateBounds
-    # [scalar] value: int or float
+    # [scalar] value: int, float, or str
     standard_name: str = util.MANDATORY
     """Coordinate CF standard name."""
     units: src.units.Units = 'degrees_east'
@@ -250,7 +251,7 @@ class DMVerticalCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
     name: str = util.MANDATORY
     """Coordinate name."""
     # bounds_var: AbstractDMCoordinateBounds
-    # [scalar] value: int or float
+    # [scalar] value: int, float, or str
     standard_name: str = util.MANDATORY
     """Coordinate CF standard name."""
     units: src.units.Units = "1" # dimensionless vertical coords OK
@@ -343,7 +344,19 @@ class DMTimeCoordinate(DMGenericTimeCoordinate, AbstractDMCoordinate):
         raise NotImplementedError
 
 
-def coordinate_from_struct(d, class_dict=None, **kwargs):
+# Use the "register" method, instead of inheritance, to associate these classes
+# with their corresponding abstract interfaces, because Python dataclass fields
+# aren't recognized as implementing an abc.abstractmethod.
+AbstractDMCoordinate.register(DMCoordinate)
+AbstractDMCoordinate.register(DMHorizontalCoordinate)
+AbstractDMCoordinate.register(DMVerticalCoordinate)
+AbstractDMCoordinate.register(DMParametricVerticalCoordinate)
+AbstractDMCoordinate.register(DMGenericTimeCoordinate)
+AbstractDMCoordinate.register(DMTimeCoordinate)
+AbstractDMCoordinate.register(DMBoundsDimension)
+
+
+def coordinate_from_struct(d: collections.OrderedDict, class_dict=None, **kwargs):
     """Attempt to instantiate the correct :class:`DMCoordinate` class based on
     information in dict *d* (read from JSON file).
 
@@ -354,17 +367,17 @@ def coordinate_from_struct(d, class_dict=None, **kwargs):
     TODO: implement full cf_xarray/MetPy heuristics.
     """
     if class_dict is None:
-        class_dict = {}
-    standard_names = {}
+        class_dict = {
+            'X': DMHorizontalCoordinate,
+            'Y': DMHorizontalCoordinate,
+            'Z': DMVerticalCoordinate,
+            'T': DMGenericTimeCoordinate,
+            'OTHER': DMCoordinate
+        }
     try:
         ax = 'OTHER'
-        if 'axis' in d:
+        if 'axis' in d and any(d['axis'].strip()):
             ax = d['axis']
-        else:
-            # try to match an axis value [e.g., (X,Y,T)] to the dimension using the dimension standard_names
-            for k in standard_names.keys():
-                if k in d.get('standard_name', ""):
-                    ax = standard_names[k]
         return util.coerce_to_dataclass(d, class_dict[ax], **kwargs)
     except Exception:
         raise ValueError(f"Couldn't parse coordinate: {repr(d)}")
@@ -621,10 +634,10 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
         # raises exceptions if axes are inconsistent
         _ = self.build_axes(self.dims, self.scalar_coords, verify=True)
         # if specified, verify that POD modifier attributes are valid
-        if not self.modifier.lower().strip() in (None, ''):
-            _str = src.core.VariableTranslator()
-            if self.modifier not in _str.modifier:
-                raise ValueError(f"Modifier {self.modifier} is not a recognized value.")
+        #if not self.modifier.lower().strip() in (None, ''):
+           # _str = translation.VariableTranslator()
+           # if self.modifier not in _str.modifier:
+           #     raise ValueError(f"Modifier {self.modifier} is not a recognized value.")
 
     @property
     def full_name(self):
@@ -764,6 +777,15 @@ class DMVariable(DMDependentVariable, AbstractDMDependentVariable):
     # dims: list            # fields inherited from _DMDimensionsMixin
     # scalar_coords: list
     pass
+
+
+# Use the "register" method, instead of inheritance, to associate these classes
+# with their corresponding abstract interfaces, because Python dataclass fields
+# aren't recognized as implementing an abc.abstractmethod.
+AbstractDMDependentVariable.register(DMDependentVariable)
+AbstractDMDependentVariable.register(DMAuxiliaryCoordinate)
+AbstractDMDependentVariable.register(DMVariable)
+AbstractDMCoordinateBounds.register(DMCoordinateBounds)
 
 
 @util.mdtf_dataclass

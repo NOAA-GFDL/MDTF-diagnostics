@@ -339,12 +339,12 @@ def parse_json(str_):
         # fix line number, since we stripped commented-out lines. JSONDecodeError
         # computes line/col no. in error message from character position in string.
         lines = str_.splitlines()
-        return (colno - 1) + sum( (len(line) + 1) for line in lines[:lineno])
+        return (colno - 1) + sum((len(line) + 1) for line in lines[:lineno])
 
-    (strip_str, line_nos) = strip_comments(str_, delimiter= '//')
+    (strip_str, line_nos) = strip_comments(str_, delimiter='//')
     try:
         parsed_json = json.loads(strip_str,
-            object_pairs_hook=collections.OrderedDict)
+                                 object_pairs_hook=collections.OrderedDict)
     except json.JSONDecodeError as exc:
         # fix reported line number, since we stripped commented-out lines.
         assert exc.lineno <= len(line_nos)
@@ -357,6 +357,7 @@ def parse_json(str_):
             msg=f"parse_json received UnicodeDecodeError:\n{exc}",
             doc=strip_str, pos=0
         )
+
     return parsed_json
 
 

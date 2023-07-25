@@ -271,6 +271,7 @@ class CMIP6DateFrequency(util.DateFrequency):
 
 # ===========================================================================
 
+
 variant_label_regex = util.RegexPattern(r"""
         (r(?P<realization_index>\d+))?    # (optional) int prefixed with 'r'
         (i(?P<initialization_index>\d+))? # (optional) int prefixed with 'i'
@@ -279,8 +280,10 @@ variant_label_regex = util.RegexPattern(r"""
     """,
     input_field="variant_label"
 )
+
+
 @util.regex_dataclass(variant_label_regex)
-class CMIP6_VariantLabel():
+class CMIP6_VariantLabel:
     """:class:`~src.util.regex_dataclass` which represents and parses the CMIP6
     DRS variant label identifier string (e.g., ``r1i1p1f1``.)
 
@@ -311,8 +314,10 @@ mip_table_regex = util.RegexPattern(r"""
     """,
     input_field="table_id"
 )
+
+
 @util.regex_dataclass(mip_table_regex)
-class CMIP6_MIPTable():
+class CMIP6_MIPTable:
     """:class:`~src.util.regex_dataclass` which represents and parses the MIP
     table identifier string.
 
@@ -377,8 +382,10 @@ grid_label_regex = util.RegexPattern(r"""
     """,
     input_field="grid_label"
 )
+
+
 @util.regex_dataclass(grid_label_regex)
-class CMIP6_GridLabel():
+class CMIP6_GridLabel:
     """:class:`~src.util.regex_dataclass` which represents and parses the CMIP6
     DRS grid label identifier string.
 
@@ -442,6 +449,8 @@ drs_directory_regex = util.RegexPattern(r"""
     """,
     input_field="directory"
 )
+
+
 @util.regex_dataclass(drs_directory_regex)
 class CMIP6_DRSDirectory(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
     """:class:`~src.util.regex_dataclass` which represents and parses the DRS
@@ -472,6 +481,7 @@ class CMIP6_DRSDirectory(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
     version_date: util.Date = None
     """Revision date of data, as parsed from ``directory``."""
 
+
 _drs_dates_filename_regex = util.RegexPattern(r"""
         (?P<variable_id>\w+)_       # field name
         (?P<table_id>\w+)_       # field name
@@ -482,7 +492,8 @@ _drs_dates_filename_regex = util.RegexPattern(r"""
         (?P<start_date>\d+)-(?P<end_date>\d+)   # file's date range
         \.nc                      # netCDF file extension
     """
-)
+    )
+
 _drs_static_filename_regex = util.RegexPattern(r"""
         (?P<variable_id>\w+)_       # field name
         (?P<table_id>\w+)_       # field name
@@ -494,11 +505,14 @@ _drs_static_filename_regex = util.RegexPattern(r"""
     """,
     defaults={'start_date': util.FXDateMin, 'end_date': util.FXDateMax},
 )
+
 drs_filename_regex = util.ChainedRegexPattern(
     # try the first regex, and if no match, try second
     _drs_dates_filename_regex, _drs_static_filename_regex,
     input_field="filename"
 )
+
+
 @util.regex_dataclass(drs_filename_regex)
 class CMIP6_DRSFilename(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
     """:class:`~src.util.regex_dataclass` which represents and parses the DRS
@@ -550,6 +564,8 @@ drs_path_regex = util.RegexPattern(r"""
     """,
     input_field="path"
 )
+
+
 @util.regex_dataclass(drs_path_regex)
 class CMIP6_DRSPath(CMIP6_DRSDirectory, CMIP6_DRSFilename):
     """:class:`~src.util.regex_dataclass` which represents and parses a full

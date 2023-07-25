@@ -73,7 +73,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
     }
 
     @classmethod
-    def from_struct(cls, dims_d, name, **kwargs):
+    def from_struct(cls, dims_d: dict, name: str, **kwargs):
         # if we only have ndim, map to axes names
         if 'dimensions' not in kwargs and 'ndim' in kwargs:
             kwargs['dimensions'] = cls._ndim_to_axes_set[kwargs.pop('ndim')]
@@ -99,6 +99,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
 
         filter_kw = util.filter_dataclass(kwargs, cls, init=True)
         assert filter_kw['coords']
+
         return cls(name=name, **filter_kw)
 
     def scalar_name(self, old_coord, new_coord, log=_log):
@@ -146,28 +147,32 @@ class Fieldlist:
     env_vars: dict = dc.field(default_factory=dict)
 
     @classmethod
-    def from_struct(cls, d, code_root: str, log=None):
-        def _process_coord(section_name, d, temp_d, code_root: str, log=None):
-            # build two-stage lookup table (by axis type, then standard name)
+    def from_struct(cls, d: dict, code_root: str, log=None):
+        def _process_coord(section_name: str, d: dict, temp_d: dict, code_root: str, log=None):
+            # build two-stage lookup table by axis type, then name/standard_name
+            # name is the key since standard_names are not necessarily unique ID's
             section_d = d.pop(section_name, dict())
             if '$ref' in section_d.keys():
                 ref_file_query = pathlib.Path(code_root, 'data', section_d['$ref'])
                 ref_file_path = str(ref_file_query)
                 assert ".json" in ref_file_query.suffix, f"{ref_file_path} is not a json(c) file"
-                section_d = util.read_json(ref_file_path, log=log)
+                coord_file_entries = util.read_json(ref_file_path, log=log)
+
+                regex_dict = util.RegexDict(coord_file_entries)
+                section_d = [r for r in regex_dict.get_matching_value('axis')][0]
 
             for k, v in section_d.items():
-                ax = v['axis'] # need regexdict : https://stackoverflow.com/questions/21024822/python-accessing-dictionary-with-wildcards
+                ax = v['axis']
                 entry = data_model.coordinate_from_struct(v, name=k)
                 d['axes'][k] = entry
-                temp_d[ax][entry.standard_name] = entry
+                temp_d[ax][k] = entry.standard_name
             return d, temp_d
 
         def _process_var(section_name, d, temp_d):
             # build two-stage lookup table (by standard name, then data
             # dimensionality)
             section_d = d.pop(section_name, dict())
-            for k,v in section_d.items():
+            for k, v in section_d.items():
                 entry = FieldlistEntry.from_struct(d['axes'], name=k, **v)
                 d['entries'][k] = entry
                 temp_d[entry.standard_name][entry.modifier] = entry
@@ -424,7 +429,7 @@ class VariableTranslator(metaclass=util.Singleton):
                 self.add_convention(d, code_root, log=_log)
             except Exception as exc:
                 _log.exception("Caught exception loading fieldlist file %s: %r",
-                    f, exc)
+                               f, exc)
                 continue
 
     def get_convention_name(self, conv_name):

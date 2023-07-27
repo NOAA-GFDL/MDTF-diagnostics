@@ -130,7 +130,8 @@ class AbstractDMCoordinateBounds(AbstractDMDependentVariable):
 # ------------------------------------------------------------------------------
 
 
-_AXIS_NAMES = tuple
+_AXIS_NAMES = ('X', 'Y', 'Z', 'T')
+_ALL_AXIS_NAMES = _AXIS_NAMES + ('BOUNDS', 'OTHER')
 
 
 @util.mdtf_dataclass
@@ -228,7 +229,7 @@ class DMCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
 
 
 @util.mdtf_dataclass
-class DMHorizontalCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
+class DMXCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
     """Class to describe a longitude dimension coordinate.
     """
     name: str = util.MANDATORY
@@ -239,8 +240,24 @@ class DMHorizontalCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
     """Coordinate CF standard name."""
     units: src.units.Units = 'degrees_east'
     """Coordinate units (str or :class:`~src.units.Units`)."""
-    axis: str = 'Other'
+    axis: str = 'X'
     """Coordinate axis identifier. Always 'X' for this coordinate."""
+
+
+@util.mdtf_dataclass
+class DMYCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
+    """Class to describe a longitude dimension coordinate.
+    """
+    name: str = util.MANDATORY
+    """Coordinate name."""
+    # bounds_var: AbstractDMCoordinateBounds
+    # [scalar] value: int, float, or str
+    standard_name: str = util.MANDATORY
+    """Coordinate CF standard name."""
+    units: src.units.Units = 'degrees_east'
+    """Coordinate units (str or :class:`~src.units.Units`)."""
+    axis: str = 'Y'
+    """Coordinate axis identifier. Always 'Y' for this coordinate."""
 
 
 @util.mdtf_dataclass
@@ -348,7 +365,8 @@ class DMTimeCoordinate(DMGenericTimeCoordinate, AbstractDMCoordinate):
 # with their corresponding abstract interfaces, because Python dataclass fields
 # aren't recognized as implementing an abc.abstractmethod.
 AbstractDMCoordinate.register(DMCoordinate)
-AbstractDMCoordinate.register(DMHorizontalCoordinate)
+AbstractDMCoordinate.register(DMXCoordinate)
+AbstractDMCoordinate.register(DMYCoordinate)
 AbstractDMCoordinate.register(DMVerticalCoordinate)
 AbstractDMCoordinate.register(DMParametricVerticalCoordinate)
 AbstractDMCoordinate.register(DMGenericTimeCoordinate)
@@ -368,8 +386,8 @@ def coordinate_from_struct(d: collections.OrderedDict, class_dict=None, **kwargs
     """
     if class_dict is None:
         class_dict = {
-            'X': DMHorizontalCoordinate,
-            'Y': DMHorizontalCoordinate,
+            'X': DMXCoordinate,
+            'Y': DMYCoordinate,
             'Z': DMVerticalCoordinate,
             'T': DMGenericTimeCoordinate,
             'OTHER': DMCoordinate
@@ -411,20 +429,38 @@ class DMPlaceholderCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase)
 
 
 @util.mdtf_dataclass
-class DMPlaceholderHorizontalCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
+class DMPlaceholderXCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     """Dummy base class for placeholder X axis coordinates. Placeholder coordinates are
     only used in instantiating :class:`~src.core.FieldlistEntry` objects: they're
     replaced by the appropriate translated coordinates when that object is used
     to create a :class:`~src.core.TranslatedVarlistEntry` object.
     """
-    name: str = 'PLACEHOLDER_HORIZONTAL_COORD'
-    """Coordinate name; defaults to 'PLACEHOLDER_HORIZONTAL_COORD' since this is a temporary
+    name: str = 'PLACEHOLDER_X_COORD'
+    """Coordinate name; defaults to 'PLACEHOLDER_X_COORD' since this is a temporary
     object."""
     standard_name: str = NotImplemented
     """Coordinate CF standard name."""
     units: src.units.Units = NotImplemented
     """Coordinate units (str or :class:`~src.units.Units`)."""
-    axis: str = 'OTHER'
+    axis: str = 'X'
+    """Coordinate axis identifier ('X', 'Y', etc.)"""
+
+
+@util.mdtf_dataclass
+class DMPlaceholderYCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
+    """Dummy base class for placeholder X axis coordinates. Placeholder coordinates are
+    only used in instantiating :class:`~src.core.FieldlistEntry` objects: they're
+    replaced by the appropriate translated coordinates when that object is used
+    to create a :class:`~src.core.TranslatedVarlistEntry` object.
+    """
+    name: str = 'PLACEHOLDER_Y_COORD'
+    """Coordinate name; defaults to 'PLACEHOLDER_Y_COORD' since this is a temporary
+    object."""
+    standard_name: str = NotImplemented
+    """Coordinate CF standard name."""
+    units: src.units.Units = NotImplemented
+    """Coordinate units (str or :class:`~src.units.Units`)."""
+    axis: str = 'Y'
     """Coordinate axis identifier ('X', 'Y', etc.)"""
 
 
@@ -564,14 +600,18 @@ class _DMDimensionsMixin:
                     err_name = getattr(self, 'name', self.__class__.__name__)
                     raise ValueError((f"Duplicate definition of {c.axis} axis in "
                                       f"{err_name}: {c}, {verify_d[c.axis]}"))
+                try:
+                    verify_d.get(c.axis)
+                except Exception as exc:
+                    self.log.error(f"{c.axis} already exists %s. Caught exception:", exc)
                 verify_d[c.axis] = c
                 if c.axis in _AXIS_NAMES:
                     d[c.axis] = c
             return d
         else:
             # assume we've already verified, so use a quicker version of same logic
-            return {c.axis: c for c in itertools.chain(*coords) \
-                if c.axis in _AXIS_NAMES}
+            return {c.axis: c for c in itertools.chain(*coords)
+                    if c.axis in _AXIS_NAMES}
 
     def change_coord(self, ax_name, new_class=None, **kwargs):
         """Replace attributes on a given coordinate, but also optionally cast
@@ -633,11 +673,6 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
         super(DMDependentVariable, self).__post_init__(coords)
         # raises exceptions if axes are inconsistent
         _ = self.build_axes(self.dims, self.scalar_coords, verify=True)
-        # if specified, verify that POD modifier attributes are valid
-        #if not self.modifier.lower().strip() in (None, ''):
-           # _str = translation.VariableTranslator()
-           # if self.modifier not in _str.modifier:
-           #     raise ValueError(f"Modifier {self.modifier} is not a recognized value.")
 
     @property
     def full_name(self):

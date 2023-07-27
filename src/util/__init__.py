@@ -4,7 +4,7 @@ from .basic import (
     Singleton, abstract_attribute, MDTFABCMeta, MultiMap, WormDict,
     ConsistentDict, WormDefaultDict, NameSpace, MDTFEnum, MDTFIntEnum,
     sentinel_object_factory, MDTF_ID,
-    is_iterable, to_iter, from_iter, remove_prefix,
+    is_iterable, to_iter, from_iter, remove_prefix, RegexDict,
     remove_suffix, filter_kwargs, splice_into_list, deserialize_class
 )
 from .dataclass import (

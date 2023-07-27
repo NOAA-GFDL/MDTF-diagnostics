@@ -671,3 +671,38 @@ def word_wrap(str_):
     paragraphs = [textwrap.fill(s, width=80) for s in paragraphs]
     return '\n\n'.join(paragraphs)
 
+
+def iterdict(d):
+    """Iterate through a nested dictionary
+       Return the key-value pair, and a level index
+       for the deepest level
+    """
+    level = 0
+    for k, v in d.items():
+        if isinstance(v, dict) or isinstance(v, collections.OrderedDict):
+            iterdict(v)
+            level = level+1
+        else:
+            return k, v, level
+
+
+class RegexDict(dict):
+    """ Utilities to find dictionary entries using regular expressions
+    Credit: https://stackoverflow.com/questions/21024822/python-accessing-dictionary-with-wildcards
+    """
+
+    def get_matching_value(self, query):
+        """Return the value corresponding to query"""
+        return (self[key] for key in self if re.search(r"(?P<key>\w+)", query))
+
+    def get_all_matching_values(self, queries: list):
+        """Return a tuple of all matching values corresponding to each entry in a list of queries"""
+        return (match for query in queries for match in self.get_matching_value(query))
+
+
+
+
+
+
+
+

@@ -36,7 +36,7 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     # modifier : str
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
-    log: typing.Any = util.MANDATORY # assigned from parent var
+    log: typing.Any = util.MANDATORY  # assigned from parent var
 
 
 @util.mdtf_dataclass
@@ -51,22 +51,33 @@ class FieldlistEntry(data_model.DMDependentVariable):
     # scalar_coords: list
     scalar_coord_templates: dict = dc.field(default_factory=dict)
 
+    #def __init__(self, name: str = "", **kwargs):
+    #    self.name = name
+    #    if any(kwargs):
+    #        for k, v in kwargs.items():
+    #            if hasattr(self, k):
+    #                setattr(self, k, v)
     def __post_init__(self, coords=None):
         super(FieldlistEntry, self).__post_init__(coords)
         assert len(self.scalar_coords) == 0
+        # if specified, verify that POD modifier attributes are valid
+        if not self.modifier.lower().strip() in (None, ''):
+            _str = VariableTranslator()
+            if self.modifier not in _str.modifier:
+                raise ValueError(f"Modifier {self.modifier} is not a recognized value.")
 
     _ndim_to_axes_set = {
         # allow specifying dimensionality as shorthand for explicit list
         # of coordinate dimension names
-        1: ('PLACEHOLDER_T_COORD'),
+        1: 'PLACEHOLDER_T_COORD',
         2: ('PLACEHOLDER_Y_COORD', 'PLACEHOLDER_X_COORD'),
         3: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Y_COORD', 'PLACEHOLDER_X_COORD'),
         4: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Z_COORD', 'PLACEHOLDER_Y_COORD',
             'PLACEHOLDER_X_COORD')
     }
     _placeholder_class_dict = {
-        'PLACEHOLDER_X_COORD': data_model.DMPlaceholderHorizontalCoordinate,
-        'PLACEHOLDER_Y_COORD': data_model.DMPlaceholderHorizontalCoordinate,
+        'PLACEHOLDER_X_COORD': data_model.DMPlaceholderXCoordinate,
+        'PLACEHOLDER_Y_COORD': data_model.DMPlaceholderYCoordinate,
         'PLACEHOLDER_Z_COORD': data_model.DMPlaceholderZCoordinate,
         'PLACEHOLDER_T_COORD': data_model.DMPlaceholderTCoordinate,
         'PLACEHOLDER_COORD': data_model.DMPlaceholderCoordinate
@@ -99,7 +110,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
 
         filter_kw = util.filter_dataclass(kwargs, cls, init=True)
         assert filter_kw['coords']
-
+        cls.standard_name = kwargs['standard_name']
         return cls(name=name, **filter_kw)
 
     def scalar_name(self, old_coord, new_coord, log=_log):
@@ -126,6 +137,12 @@ class FieldlistEntry(data_model.DMDependentVariable):
                       new_coord.value, new_coord.units
                       )
         return new_name
+
+    def scalar_coords(self):
+        pass
+
+    def dims(self):
+        pass
 
 
 @util.mdtf_dataclass

@@ -6,6 +6,12 @@
   "name": "CMIP",
   "models": ["CMIP_GFDL"],
   "coords": {
+    "plev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
     "$ref": "./cmip6-cmor-tables/Tables/CMIP6_coordinate.json"
    },
   "aux_coords": {
@@ -23,130 +29,128 @@
   "variables" : {
     "ua": {
       "standard_name": "eastward_wind",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "m s-1",
       "scalar_coord_templates": {"plev": "ua{value}"},
       "ndim": 4
     },
     "va": {
       "standard_name": "northward_wind",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "m s-1",
       "scalar_coord_templates": {"plev": "va{value}"},
       "ndim": 4
     },
      "wind_speed": {
       "standard_name": "wind_speed",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "m s-1",
       "scalar_coord_templates": {"plev": "wind_speed{value}"},
       "ndim": 4
     },
     "zg": {
       "standard_name": "geopotential_height",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "m",
       "scalar_coord_templates": {"plev": "zg{value}"},
       "ndim": 4
     },
     "hus": {
       "standard_name": "specific_humidity",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "1",
       "ndim": 4
     },
     "wap": {
       "standard_name": "lagrangian_tendency_of_air_pressure",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "Pa s-1",
       "scalar_coord_templates": {"plev": "wap{value}"},
       "ndim": 4
     },
     "o3": {
       "standard_name": "mole_fraction_of_ozone_in_air",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "mol mol-1",
       "ndim": 4
     },
     "ts": {
       "standard_name": "surface_temperature",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "K",
       "ndim": 3
     },
     "huss": {
       "standard_name": "specific_humidity",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "1",
       "ndim": 3,
       "modifier": "atmos_height"
     },
     "pr": {
       "standard_name": "precipitation_flux",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "kg m-2 s-1",
       "ndim": 3
     },
     "prc": {
       "standard_name": "convective_precipitation_flux",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "kg m-2 s-1",
       "ndim": 3
     },
     "tp": {
       "standard_name": "total_precipitation",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "kg m-2",
       "ndim": 3
     },
     "tas" : {
       "standard_name": "air_temperature",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "K",
       "ndim": 3,
       "modifier": "atmos_height"
     },
     "tauu": {
       "standard_name": "surface_downward_eastward_stress",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "Pa",
       "ndim": 3
     },
     "tauv": {
       "standard_name": "surface_downward_northward_stress",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "Pa",
       "ndim": 3
     },
     "areacello": {
       "standard_name": "cell_area",
-      "modeling_realm": "ocean",
-      "modifier" : "ocean_realm",
+      "realm": "ocean",
       "units": "m2",
       "ndim": 2
     },
     "areacella": {
       "standard_name": "cell_area",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "m2",
-      "modifier" : "atmos_realm",
       "ndim": 2
     },
     "ps": {
       "standard_name": "surface_air_pressure",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "Pa",
       "ndim": 3
     },
     "psl": {
       "standard_name": "air_pressure_at_mean_sea_level",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "Pa",
       "ndim": 3
     },
     "sfcWind": {
       "standard_name": "wind_speed",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "m s-1",
       "modifier": "atmos_height",
       "ndim": 3
@@ -154,116 +158,116 @@
     // radiative fluxes:
     "rsus": {
       "standard_name": "surface_upwelling_shortwave_flux_in_air",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "rsds": {
       "standard_name": "surface_downwelling_shortwave_flux_in_air",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "rsdt": {
       "standard_name": "toa_incoming_shortwave_flux",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "rsut": {
       "standard_name": "toa_outgoing_shortwave_flux",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "rlus": {
       "standard_name": "surface_upwelling_longwave_flux_in_air",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "rlds": {
       "standard_name": "surface_downwelling_longwave_flux_in_air",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "rlut": {
       "standard_name": "toa_outgoing_longwave_flux",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "rsdscs": {
       "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "rsuscs": {
       "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "rlutcs": {
       "standard_name": "toa_outgoing_longwave_flux_assuming_clear_sky",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "rsutcs": {
       "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "hfss": {
       "standard_name": "surface_upward_sensible_heat_flux",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "hfls": {
       "standard_name": "surface_upward_latent_heat_flux",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     // Variables for AMOC_3D_Structure module:
     "uo": {
       "standard_name": "sea_water_x_velocity",
-      "modeling_realm": "ocean",
+      "realm": "ocean",
       "units": "m s-1",
       "ndim": 4
     },
     "vo": {
       "standard_name": "sea_water_y_velocity",
-      "modeling_realm": "ocean",
+      "realm": "ocean",
       "units": "m s-1",
       "ndim": 4
     },
     "so": {
       "standard_name": "sea_water_salinity",
-      "modeling_realm": "ocean",
+      "realm": "ocean",
       "units": "psu",
       "ndim": 4
     },
     "umo": {
       "standard_name": "ocean_mass_x_transport",
-      "modeling_realm": "ocean",
+      "realm": "ocean",
       "units": "kg s-1",
       "ndim": 4
     },
     "vmo": {
       "standard_name": "ocean_mass_y_transport",
-      "modeling_realm": "ocean",
+      "realm": "ocean",
       "units": "kg s-1",
       "ndim": 4
     },
     "thetao": {
       "standard_name": "sea_water_potential_temperature",
-      "modeling_realm": "ocean",
+      "realm": "ocean",
       "units": "degC",
       "ndim": 4
     },
@@ -271,7 +275,7 @@
     // ta: 3D temperature, units = K:
     "ta": {
       "standard_name": "air_temperature",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "K",
       "scalar_coord_templates" : {"plev": "ta{value}"},
       "ndim": 4
@@ -279,45 +283,45 @@
     // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
     "prw": {
       "standard_name": "atmosphere_mass_content_of_water_vapor",
-      "modeling_realm": "atmos",
+      "realm": "atmos",
       "units": "kg m-2",
       "ndim": 3
     },
     // Variables for SM_ET_coupling module
     "mrsos": {
       "standard_name": "mass_content_of_water_in_soil_layer",
-      "modeling_realm": "land",
+      "realm": "land",
       "units": "kg m-2",
       "ndim": 3
     },
     "evspsbl": {
       "standard_name": "water_evapotranspiration_flux",
-      "modeling_realm": "land",
+      "realm": "land",
       "units": "kg m-2 s-1",
       "ndim": 3
     },
     // Ice-Ocean variables
     "siconc": {
       "standard_name": "sea_ice_area_fraction",
-      "modeling_realm": "seaIce",
+      "realm": "seaIce",
       "units": "%",
       "ndim": 3
     },
     "tauuo": {
       "standard_name": "downward_x_stress_at_sea_water_surface",
-      "modeling_realm": "ocean",
+      "realm": "ocean",
       "units": "N m-2",
       "ndim": 3
     },
     "tauvo": {
       "standard_name": "downward_y_stress_at_sea_water_surface",
-      "modeling_realm": "ocean",
+      "realm": "ocean",
       "units": "N m-2",
       "ndim": 3
     },
     "zos": {
       "standard_name": "sea_surface_height_above_geoid",
-      "modeling_realm": "ocean",
+      "realm": "ocean",
       "units": "m",
       "ndim": 3
     }

@@ -659,6 +659,7 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
     """
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
+    realm: str = ""
     units: src.units.Units = ""  # not MANDATORY since may be set later from var translation
     modifier: str = ""
     component: str = ""
@@ -727,11 +728,10 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
         new_dims.remove(dim)
         new_scalars = self.scalar_coords.copy()
         new_scalars.add(new_dim)
-        return dc.replace(
-            self,
-            coords=(new_dims + new_scalars),
-            **kwargs
-        )
+        return dc.replace(self,
+                          coords=(new_dims + new_scalars),
+                          **kwargs
+                          )
 
     def remove_scalar(self, ax, position=-1, **kwargs):
         """Metadata operation that's the inverse of :meth:`add_scalar`. Given an

@@ -111,6 +111,9 @@ class FieldlistEntry(data_model.DMDependentVariable):
         filter_kw = util.filter_dataclass(kwargs, cls, init=True)
         assert filter_kw['coords']
         cls.standard_name = kwargs['standard_name']
+        if filter_kw.get('realm'):
+            cls.realm = filter_kw['realm']
+
         return cls(name=name, **filter_kw)
 
     def scalar_name(self, old_coord, new_coord, log=_log):
@@ -155,8 +158,6 @@ class Fieldlist:
     dimensionality.
     """
     name: str = util.MANDATORY
-    model_realm: str = util.MANDATORY
-    ndim: int = util.MANDATORY
     axes: util.WormDict = dc.field(default_factory=util.WormDict)
     axes_lut: util.WormDict = dc.field(default_factory=util.WormDict)
     entries: util.WormDict = dc.field(default_factory=util.WormDict)
@@ -166,8 +167,9 @@ class Fieldlist:
     @classmethod
     def from_struct(cls, d: dict, code_root: str, log=None):
         def _process_coord(section_name: str, d: dict, temp_d: dict, code_root: str, log=None):
-            # build two-stage lookup table by axis type, then name/standard_name
-            # name is the key since standard_names are not necessarily unique ID's
+            # build two-stage lookup table by axis type, then name
+            # The name is the key since standard_names are not necessarily unique ID's
+            # and coordinates may be assigned to variables in multiple realms
             section_d = d.pop(section_name, dict())
             if '$ref' in section_d.keys():
                 ref_file_query = pathlib.Path(code_root, 'data', section_d['$ref'])
@@ -176,7 +178,8 @@ class Fieldlist:
                 coord_file_entries = util.read_json(ref_file_path, log=log)
 
                 regex_dict = util.RegexDict(coord_file_entries)
-                section_d = [r for r in regex_dict.get_matching_value('axis')][0]
+                section_d.update([r for r in regex_dict.get_matching_value('axis')][0])
+                section_d.pop('$ref', None)
 
             for k, v in section_d.items():
                 ax = v['axis']
@@ -192,7 +195,12 @@ class Fieldlist:
             for k, v in section_d.items():
                 entry = FieldlistEntry.from_struct(d['axes'], name=k, **v)
                 d['entries'][k] = entry
-                temp_d[entry.standard_name][entry.modifier] = entry
+                # note that realm and modifier class atts are empty strings
+                # by default and, therefore, so are the corresponding dictionary
+                # keys. TODO: be sure to handle empty keys in PP
+                if not temp_d[entry.standard_name].get(entry.realm):
+                    temp_d[entry.standard_name][entry.realm] = dict()
+                temp_d[entry.standard_name][entry.realm][entry.modifier] = entry
             return d, temp_d
 
         temp_d = collections.defaultdict(util.WormDict)

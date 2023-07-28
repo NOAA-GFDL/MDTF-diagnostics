@@ -513,10 +513,15 @@ class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
 
 
 @util.mdtf_dataclass
-class VarlistHorizontalCoordinate(data_model.DMHorizontalCoordinate,
-                                  VarlistCoordinateMixin):
+class VarlistXCoordinate(data_model.DMXCoordinate,
+                         VarlistCoordinateMixin):
     range: tuple = None
 
+
+@util.mdtf_dataclass
+class VarlistYCoordinate(data_model.DMYCoordinate,
+                         VarlistCoordinateMixin):
+    range: tuple = None
 
 @util.mdtf_dataclass
 class VarlistVerticalCoordinate(data_model.DMVerticalCoordinate,

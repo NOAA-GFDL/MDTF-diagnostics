@@ -94,10 +94,12 @@ Required programming language and libraries
 This POD requires Python 3, with the following packages:
 
 - numpy
+- pandas
 - datetime
-- scipy
 - xarray
 - matplotlib
+- statsmodels
+- cartopy
 
 
 Required model output variables

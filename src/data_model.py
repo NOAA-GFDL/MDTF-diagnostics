@@ -177,6 +177,7 @@ class _DMCoordinateShared:
     axis: str = 'OTHER'
     bounds_var: AbstractDMCoordinateBounds = None
     value: typing.Union[int, float, str] = None
+    need_bounds: bool = False
 
     @property
     def bounds(self):

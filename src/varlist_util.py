@@ -490,16 +490,11 @@ class VarlistSettings(_VarlistGlobalSettings,
 
 
 @util.mdtf_dataclass
-class VarlistCoordinateMixin:
+class VarlistCoordinate(data_model.DMCoordinate):
     """Base class to describe a single dimension (in the netcdf data model sense)
-    used by one or more variables. Corresponds to list entries in the
-    "dimensions" section of the POD's settings.jsonc file.
-    """
-    need_bounds: bool = False
-
-
-@util.mdtf_dataclass
-class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
+       used by one or more variables. Corresponds to list entries in the
+       "dimensions" section of the POD's settings.jsonc file.
+       """
     # name: str              # fields from data_model.DMCoordinate
     # standard_name: str
     # units: units.Units
@@ -509,29 +504,27 @@ class VarlistCoordinate(data_model.DMCoordinate, VarlistCoordinateMixin):
     # need_bounds: bool      # fields from VarlistCoordinateMixin
     # name_in_model: str
     # bounds_in_model: str
+    need_bounds: bool = False
     pass
 
 
 @util.mdtf_dataclass
-class VarlistXCoordinate(data_model.DMXCoordinate,
-                         VarlistCoordinateMixin):
+class VarlistXCoordinate(data_model.DMXCoordinate):
     range: tuple = None
 
 
 @util.mdtf_dataclass
-class VarlistYCoordinate(data_model.DMYCoordinate,
-                         VarlistCoordinateMixin):
+class VarlistYCoordinate(data_model.DMYCoordinate):
     range: tuple = None
 
+
 @util.mdtf_dataclass
-class VarlistVerticalCoordinate(data_model.DMVerticalCoordinate,
-                                VarlistCoordinateMixin):
+class VarlistVerticalCoordinate(data_model.DMVerticalCoordinate):
     pass
 
 
 @util.mdtf_dataclass
-class VarlistPlaceholderTimeCoordinate(data_model.DMGenericTimeCoordinate,
-                                       VarlistCoordinateMixin):
+class VarlistPlaceholderTimeCoordinate(data_model.DMGenericTimeCoordinate):
     frequency: typing.Any = ""
     min_frequency: typing.Any = ""
     max_frequency: typing.Any = ""
@@ -544,8 +537,7 @@ class VarlistPlaceholderTimeCoordinate(data_model.DMGenericTimeCoordinate,
 
 @util.mdtf_dataclass
 class VarlistTimeCoordinate(_VarlistTimeSettings,
-                            data_model.DMTimeCoordinate,
-                            VarlistCoordinateMixin):
+                            data_model.DMTimeCoordinate):
     pass
 
 
@@ -627,7 +619,7 @@ class Varlist(data_model.DMDataSet):
         settings.jsonc file when instantiating a new :class:`Diagnostic` object.
 
         Args:
-            parent: instance of the parent class object
+            parent: instance of the parent class object (pod_setup.PodObject)
 
         Returns:
             :py:obj:`dict`, keys are names of the dimensions in POD's convention,
@@ -636,8 +628,8 @@ class Varlist(data_model.DMDataSet):
 
         def _pod_dimension_from_struct(name, dd, v_settings):
             class_dict = {
-                'X': VarlistHorizontalCoordinate,
-                'Y': VarlistHorizontalCoordinate,
+                'X': VarlistXCoordinate,
+                'Y': VarlistYCoordinate,
                 'Z': VarlistVerticalCoordinate,
                 'T': VarlistPlaceholderTimeCoordinate,
                 'OTHER': VarlistCoordinate

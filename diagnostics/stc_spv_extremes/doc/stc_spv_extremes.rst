@@ -27,7 +27,7 @@ for weeks). SSWs in the Southern Hemisphere (SH) are rare (only one event in the
 satellite record), while VIs occur more often, but both events can have persistent 
 impacts on SH mid-latitude weather.
 
-The definition for SSW events used in this POD is arguably the most commonly used one
+The definition for SSW events used in this POD is the most commonly used one
 (Charlon and Polvani 2007): a reversal of the 10 hPa 60 deg latitude daily-mean climatological
 westerly zonal winds between November and March, which returns to westerly for at least 10
 consecutive days prior to 30 April (so that final warmings are not included). SSWs are
@@ -150,13 +150,13 @@ References
 More about this POD
 --------------------------
 
-**Statistical testing for correlations**
+**Confidence intervals for frequency of events**
 
-One of the outputs of this POD is lag correlations between spring ozone at 
-50 mb and zonal-mean zonal winds at all other pressure levels for two months
-before and after. A student's 2-tailed t-test of the Pearson's correlation
-coefficient is used to determine where the correlation is significant at 
-p<0.05. Stippling is shown where the correlations are *not* significant. 
+This POD calculates the total frequency of SSW and VI events over the input
+period, and then determines what fraction of those events occur in each month
+of the winter season. Because the event either occurs or doesn't in any given
+month, we calculate the binomial proportion confidence interval using the 
+Wilson score interval, for the 95% level. 
 
 **Use of bootstrapping**
 

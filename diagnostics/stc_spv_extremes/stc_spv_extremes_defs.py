@@ -412,6 +412,7 @@ def composite(variable, yre, mne, dye, lag_before=20, lag_after=60):
     from datetime import datetime,timedelta
     
     #initialize with first event
+    count = np.arange(len(yre))
     cen = datetime(year=yre[0],day=dye[0],month=mne[0])
     en = cen + timedelta(days=lag_after-1)
     sta = cen - timedelta(days=lag_before)
@@ -421,13 +422,15 @@ def composite(variable, yre, mne, dye, lag_before=20, lag_after=60):
     avgvar = variable.sel(time=slice(stdate,edate))
     avgvar = avgvar.assign_coords(time=lag)
     avgvar = avgvar.expand_dims(dim="event")
+    #print(stdate+' to '+edate)
         
-    for ct,dat in enumerate(yre[1:]):
-        cen = datetime(year=yre[ct],day=dye[ct],month=mne[ct])
+    for dat in count[1:]:
+        cen = datetime(year=yre[dat],day=dye[dat],month=mne[dat])
         en = cen + timedelta(days=lag_after-1)
         sta = cen - timedelta(days=lag_before)
         edate = en.strftime("%Y-%m-%d")
         stdate = sta.strftime("%Y-%m-%d")
+        #print(stdate+' to '+edate)
         newvar = variable.sel(time=slice(stdate,edate))
         newvar = newvar.assign_coords(time=lag)
         newvar = newvar.expand_dims(dim="event")

@@ -13,8 +13,8 @@ Stratosphere-Troposphere Coupling: Stratospheric Polar Vortex Extremes
 
 Last update: 2023-07-19
 
-This POD assesses stratospheric polar vortex extremes, the tropospheric circulation
-patterns that precede them, and the surface impacts that follow. Extremes in the 
+This POD assesses stratospheric polar vortex extremes, and the tropospheric circulation
+and surface patterns that precede and follow them. Extremes in the 
 stratospheric polar vortex are closely linked to the tropospheric
 circulation and surface climate both before and after the event. The occurrence of 
 polar stratospheric circulation extremes in the Northern Hemisphere (NH), such

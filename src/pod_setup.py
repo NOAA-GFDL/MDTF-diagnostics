@@ -270,7 +270,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 # util.NameSpace.fromDict({k: case_dict[k] for k in case_dict.keys()})
                 if self.pod_settings['convention'].lower() != case_dict.convention.lower():
                     # translate variable(s) to user_specified standard if necessary
-                    pod_varlist = self.cases[case_name].get_varlist(self.pod_vars)
+                    pod_varlist = self.cases[case_name].get_varlist(self)
                     self.cases[case_name].translate_varlist(pod_varlist)
                 else:
                     pass

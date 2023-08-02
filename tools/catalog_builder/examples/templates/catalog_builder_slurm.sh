@@ -1,8 +1,8 @@
-#!/usr/bin/env tcsh
+#!/usr/bin/env bash
 # Slurm batch submission script template for the MDTF-diagnostics ESM-Intake catalog builder:
 # Usage:
 # > cd /nbhome/[USERNAME]/mdtf/MDTF-diagnostics/tools/catalog_builder
-# > sbatch examples/templates/catalog_builder_slurm.csh --config examples/templates/example_builder_config.yml
+# > sbatch examples/templates/catalog_builder_slurm.sh --config examples/templates/example_builder_config.yml
 #SBATCH --job-name=esm_cat_builder
 #SBATCH --chdir=/nbhome/[USERNAME]
 #SBATCH --output=/nbhome/[USERNAME]/logs/slurm_%x.%A_%a.out

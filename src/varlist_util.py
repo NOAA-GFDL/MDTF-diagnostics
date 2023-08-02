@@ -58,6 +58,7 @@ class _VarlistGlobalSettings:
     multi_file_ok: bool = False
     dimensions_ordered: bool = False
 
+
 @util.mdtf_dataclass
 class _VarlistTimeSettings:
     frequency: util.DateFrequency = \
@@ -152,9 +153,12 @@ class VarlistEntryBase(metaclass=util.MDTFABCMeta):
 @util.mdtf_dataclass
 class VarlistEntryMixin:
     status: util.ObjectStatus = dc.field(default=util.ObjectStatus.NOTSET, compare=False)
+    name: str = util.MANDATORY
+    _parent: typing.Any = dc.field(default=util.MANDATORY, compare=False)
 
     def __post_init__(self, coords=None):
         # set up log (VarlistEntryLoggerMixin)
+        self.log = util.MDTFObjectLogger.get_logger(self._log_name)
         self.init_log()
         data_model.DMVariable.__post_init__(self, coords)
 
@@ -182,10 +186,27 @@ class VarlistEntryMixin:
                 self.alternates = [self.alternates]
             self.alternates = [vs for vs in self.alternates if vs]
 
+    def dims(self):
+        pass
+
+    def scalar_coords(self):
+        pass
+
+    def is_scalar(self):
+        pass
+
+    @property
+    def _log_name(self):
+        if self._parent is None:
+            return util.OBJ_LOG_ROOT
+        else:
+            _log_name = f"{self.name}_{self._id}".replace('.', '_')
+            return f"{self._parent._log_name}.{_log_name}"
+
     @property
     def _children(self):
-        """Iterable of child objects associated with this object."""
-        return []  # leaves of object hierarchy
+            """Iterable of child objects associated with this object."""
+            return []  # leaves of object hierarchy
 
     @property
     def name_in_model(self):
@@ -204,7 +225,7 @@ class VarlistEntryMixin:
         new_kw['coords'] = []
 
         if 'dimensions' not in kwargs:
-            raise ValueError(f"No dimensions specified for varlist entry {name}.")
+            raise ValueError(f"No dimensions specified for Varlist entry {name}.")
         # validate: check for duplicate coord names
         scalars = kwargs.get('scalar_coordinates', dict())
         seen = set()
@@ -213,9 +234,10 @@ class VarlistEntryMixin:
                          if x in seen or seen.add(x))
         if dupe_names:
             raise ValueError((f"Repeated coordinate names {list(dupe_names)} in "
-                              f"varlist entry for {name}."))
+                              f"Varlist entry for {name}."))
 
-        # add dimensions
+        # add dimensions for each variable in POD settings file, and check that they
+        # match the definitions in the "dimensions" section
         for d_name in kwargs.pop('dimensions'):
             if d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in varlist "
@@ -652,8 +674,9 @@ class Varlist(data_model.DMDataSet):
         vlist_settings = util.coerce_to_dataclass(
             parent.pod_data, VarlistSettings)
         globals_d = vlist_settings.global_settings
-
-        dims_d = parent.pod_dims
+        dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings)
+                  for k, v in parent.pod_dims.items()}
+  #      dims_d = parent.pod_dims
 
         vlist_vars = {
             k: VarlistEntry.from_struct(globals_d, dims_d, name=k, parent=parent, **v)

@@ -42,10 +42,17 @@
   // In this section, you define the names and units for the coordinates used by
   // the variables defined below in the "varlist" section. Names in the
   // "dimensions" attribute for each variable must correspond to a coordinate
-  // named here.
+  // named here. Units must be specified for horizontal and vertical coordinates.
+  // If a dimension is unitless, set "units" to "1".
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+     "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east"
+           },
     "time": {"standard_name": "time"}
   },
 

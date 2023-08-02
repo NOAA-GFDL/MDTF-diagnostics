@@ -27,6 +27,23 @@
 			"python3": ["numpy", "scipy", "cython", "matplotlib", "xarray", "numba", "networkx"]
 		}
 	},
+    "dimensions": {
+        "lat": {
+                 "standard_name": "latitude",
+                 "units": "degrees_north"
+                },
+        "lon": {
+                 "standard_name": "longitude",
+                 "units": "degrees_east"
+               },
+        "lev": {
+                 "standard_name": "air_pressure",
+                 "units": "hPa",
+                 "positive": "down",
+                 "axis": "Z"
+                },
+        "time": {"standard_name": "time"}
+  },
 	"varlist": {
 	    "pr": {
 			"standard_name": "precipitation_flux",

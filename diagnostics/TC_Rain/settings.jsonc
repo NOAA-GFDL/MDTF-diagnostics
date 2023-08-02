@@ -27,8 +27,14 @@
   },
 
   "dimensions": {
-    "latitude": {"standard_name": "latitude"},
-    "longitude": {"standard_name": "longitude"},
+    "latitude": {
+                  "standard_name": "latitude",
+                  "units": "degrees_north"
+                 },
+    "longitude": {
+                   "standard_name": "longitude",
+                   "units": "degrees+_east"
+                  },
     "time": {"standard_name": "time"}
   },
 "data": {

@@ -25,8 +25,14 @@
 
 // Variable Coordinates
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+     "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east"
+           },
     "time": {"standard_name": "time"}
   },
 

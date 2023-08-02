@@ -42,7 +42,10 @@
       }
     },
     "dimensions": {
-      "lat": {"standard_name": "latitude"},
+      "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north"
+           },
       "lev": {
         "standard_name": "air_pressure",
         "units": "hPa",

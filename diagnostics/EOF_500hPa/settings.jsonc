@@ -23,8 +23,14 @@
     "frequency": "mon"
   },
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east"
+           },
     "plev": {
       "standard_name": "air_pressure",
       "realm": "atmos",

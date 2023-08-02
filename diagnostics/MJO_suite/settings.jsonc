@@ -19,8 +19,15 @@
     "frequency": "day"
   },
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+    "dimensions": {
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east"
+           },
     "lev": {
       "standard_name": "air_pressure",
       "units": "hPa",

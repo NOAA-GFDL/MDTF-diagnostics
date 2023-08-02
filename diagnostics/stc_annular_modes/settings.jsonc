@@ -44,7 +44,8 @@
     "dimensions": {
       "lat": {
              "standard_name": "latitude",
-             "units": "degrees_north"
+             "units": "degrees_north",
+             "axis": "Y"
            },
       "lev": {
         "standard_name": "air_pressure",

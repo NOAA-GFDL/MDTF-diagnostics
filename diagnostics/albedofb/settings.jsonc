@@ -28,11 +28,13 @@
 	"dimensions": {
 		"lat": {
                  "standard_name": "latitude",
-                 "units": "degrees_north"
+                 "units": "degrees_north",
+                 "axis": "Y"
                },
         "lon": {
                  "standard_name": "longitude",
-                 "units": "degrees_east"
+                 "units": "degrees_east",
+                 "axis": "X"
                 },
 		"time": {
 			      "standard_name": "time"

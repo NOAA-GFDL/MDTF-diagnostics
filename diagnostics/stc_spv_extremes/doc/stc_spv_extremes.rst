@@ -162,7 +162,7 @@ Wilson score interval, for the 95% level.
 
 **Significance for vertical composites**
 
-The lag-pressure composites (``dripping paint") plots provided by this POD show
+The lag-pressure composites ("dripping paint") plots provided by this POD show
 the composite-mean values of standardized polar cap geopotential height anomalies.
 In these figures, significance is evaluated at the 95% level using a one-sample
 t-test, and assumes that the population mean has an anomaly value of 0 and that

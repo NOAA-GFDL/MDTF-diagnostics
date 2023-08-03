@@ -101,8 +101,8 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         """
         yield from self.varlist.iter_vars()
 
-    def get_varlist(self, var_dict: dict):
-        return varlist_util.Varlist.from_struct(var_dict)
+    def get_varlist(self, parent):
+        return varlist_util.Varlist.from_struct(parent)
 
     def translate_varlist(self, varlist, from_convention: str, to_convention: str):
         fieldlist_from = get_fieldlist_table(from_convention)

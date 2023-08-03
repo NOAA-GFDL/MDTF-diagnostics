@@ -538,7 +538,7 @@ def _mdtf_dataclass_type_check(self, log):
         _, valid_types = _mdtf_dataclass_get_field_types(self, f, log)
         if valid_types is not None and not isinstance(value, tuple(valid_types)):
             log.exception("%s: Failed type check for field '%s': %s != %s.",
-                self.__class__.__name__, f.name, type(value), valid_types)
+                          self.__class__.__name__, f.name, type(value), valid_types)
             raise exceptions.DataclassParseError((f"{self.__class__.__name__}: "
                                                   f"Expected {f.name} to be {f.type}, got {type(value)} "
                                                   f"({repr(value)})."))
@@ -554,7 +554,7 @@ DEFAULT_MDTF_DATACLASS_KWARGS = {'init': True, 'repr': True, 'eq': True,
 def mdtf_dataclass(cls=None, **deco_kwargs):
     """Wrap the Python :py:func:`~dataclasses.dataclass` class decorator to customize
     dataclasses to provide rudimentary type checking and conversion. This
-    is hacky, since dataclasses don't enforce type annontations for their fields.
+    is hacky, since dataclasses don't enforce type annotations for their fields.
     A better solution would be to use the third-party
     `cattrs <https://github.com/Tinche/cattrs>`__ package, which has essentially
     the same aim.
@@ -829,13 +829,13 @@ def filter_dataclass(d, dc, init=False):
     assert dataclasses.is_dataclass(dc)
     if dataclasses.is_dataclass(d):
         if isinstance(d, type):
-            d = d() # d is a class; instantiate with default field values
+            d = d()  # d is a class; instantiate with default field values
         d = dataclasses.asdict(d)
     if not init or (init == 'all'):
         ans = {f.name: d[f.name] for f in dataclasses.fields(dc) if f.name in d}
     else:
-        ans = {f.name: d[f.name] for f in dataclasses.fields(dc) \
-            if (f.name in d and f.init)}
+        ans = {f.name: d[f.name] for f in dataclasses.fields(dc)
+               if (f.name in d and f.init)}
     if init or (init == 'all'):
         init_fields = filter(
             (lambda f: f.type == dataclasses.InitVar),

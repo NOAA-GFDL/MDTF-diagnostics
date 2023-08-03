@@ -153,7 +153,6 @@ def plot_spv_hist(uzm_10, hemi, filepath_ssw, filepath_vi):
         #Determine seasonality of frequency
         seas_ssw = None
         if ssw:
-            #nov_freq = len([i for i in ssw if i.split("-")[1]=='11'])/(len(yr)-1)
             nov_freq = len([i for i in ssw if i.split("-")[1]=='11'])/(len(ssw))
             dec_freq = len([i for i in ssw if i.split("-")[1]=='12'])/(len(ssw))
             jan_freq = len([i for i in ssw if i.split("-")[1]=='01'])/(len(ssw))
@@ -273,7 +272,6 @@ def plot_spv_hist(uzm_10, hemi, filepath_ssw, filepath_vi):
     xlab_str = f"Month"
     ylab_str1 = f"Fractional occurrence per month"
     # Set plot limits, add labels, and make axis square
-    #ylims = (0, np.around(seas_ssw.max(),decimals=2)+0.05)
     ax[0].set_xlim(0,6)
     ax[0].set_ylim(0,1)
     ax[0].set_xlabel(xlab_str, fontsize=14)
@@ -294,7 +292,6 @@ def plot_spv_hist(uzm_10, hemi, filepath_ssw, filepath_vi):
     ax[0].set_title(f'Fraction of {hemi} SSW occurrence by month',fontsize=16)
     
     # Set plot limits, add labels, and make axis square
-    #ylims = (0, np.around(seas_vi.max(),decimals=2)+0.05)
     ax[1].set_xlim(0,6)
     ax[1].set_ylim(0,1)
     ax[1].set_xlabel(xlab_str, fontsize=14)
@@ -475,8 +472,6 @@ def plot_dripping_paint(uzm_10, zg_pcap, hemi):
         
         ct_vi = len(vi)
         
-        #mask = np.logical_and(avgvi.mean("event") > dist_vi.quantile(.05,dim="sample"), 
-        #                     avgvi.mean("event") < dist_vi.quantile(.95,dim="sample"))
         mask = np.logical_and(prob_vi > 0.05, prob_vi < 0.95)
         m2=ax[1].contourf(lag, press, avgvi.mean("event").transpose(), levels=lev, cmap=cmap, 
                       norm=colors.CenteredNorm(),extend='both')
@@ -716,8 +711,6 @@ def plot_composite_maps(uzm_10, zg_500, tas, hemi):
                 fontsize=16)
     fig.tight_layout()
     
-    #cb_ax = fig.add_axes([0.35, 0.05, 0.30, 0.015])
-    #cbar = fig.colorbar(m, cax=cb_ax, ticks=lev2[::2],orientation='horizontal')
     fig.subplots_adjust(right=0.8)
     cb_ax = fig.add_axes([0.85, 0.25, 0.03, 0.5])
     cbar = fig.colorbar(m, cax=cb_ax, ticks=lev2[::2],orientation='vertical',label='[degK]')
@@ -899,14 +892,12 @@ try:
     tas['NH'] = ts_anom.isel(lat = np.logical_and(ts_anom.lat >= 30, ts_anom.lat <= 90))
     tas['SH'] = ts_anom.isel(lat = np.logical_and(ts_anom.lat >= -90, ts_anom.lat <= -30))
     
-    #plot_dir = f'{WK_DIR}/obs/PS'
-    plot_dir = '/Users/abutler/earth-analytics/mdtf/MDTF-diagnostics/diagnostics/stc_spv_extremes/'
+    plot_dir = f'{WK_DIR}/obs/PS'
     for hemi in ['NH','SH']:
         print(f'*** Calculating {hemi} SPV extremes and plotting seasonality')
         freq_plot = f'{plot_dir}/obs_{hemi}_Freq_SPV_BarPlot.png'
-        #filepath = f'{WK_DIR}/obs/netCDF/{rean}_{hemi}_fsw.txt'
-        filepath_ssw = f'/{OBS_DIR}/{rean}_{hemi}_ssw.txt'
-        filepath_vi = f'/{OBS_DIR}/{rean}_{hemi}_vi.txt'
+        filepath_ssw = f'{WK_DIR}/obs/netCDF/{rean}_{hemi}_ssw.txt'
+        filepath_vi = f'{WK_DIR}/obs/netCDF/{rean}_{hemi}_vi.txt'
         fig,ax = plot_spv_hist(uzm_10, hemi, filepath_ssw, filepath_vi)
         fig.savefig(freq_plot)
         

@@ -4,12 +4,13 @@ Extremes POD.
 
 Contains:
     standardize (standardize a variable)
-    desasonalize (remove daily climatology)
+    deseasonalize (remove daily climatology)
     lat_avg (cosine-weighted averages over latitudes)
     getConsecutiveValues
     ssw_cp07 (find central dates of SSWs)
     spv_vi (find central dates of VIs)
     composite (average pressure-time variable across events)
+    ttest_1samp (one sample t-test)
               
 '''
 

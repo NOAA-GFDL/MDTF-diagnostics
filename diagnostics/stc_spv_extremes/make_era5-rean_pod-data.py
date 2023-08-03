@@ -135,5 +135,5 @@ encoding = {'uwnd_zm':    {'dtype':'float32', 'scale_factor':0.1},
 #OBS_DATA = os.environ['OBS_DATA'] 
 OBS_DATA = '/Users/abutler/earth-analytics/mdtf/MDTF-diagnostics/diagnostics/stc_spv_extremes/'
 filename = OBS_DATA+'stc_spv_extremes_obs-data.nc'
-out_ds.rename({'level':'lev'}).to_netcdf(filename, encoding=encoding)
+out_ds.rename({'level':'plev'}).to_netcdf(filename, encoding=encoding)
 

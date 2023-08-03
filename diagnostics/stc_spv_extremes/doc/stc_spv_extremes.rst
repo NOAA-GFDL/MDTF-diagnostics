@@ -160,17 +160,13 @@ of the winter season. Because the event either occurs or doesn't in any given
 month, we calculate the binomial proportion confidence interval using the 
 Wilson score interval, for the 95% level. 
 
-**Use of bootstrapping**
+**Significance for vertical composites**
 
-The scatterplots provided by this POD show the correlations between 
-springtime ozone at 50 mb and either the final stratospheric warming day of year, 
-or the late summer zonal winds at 50 mb. In these figures, 
-the parentheses next to the correlations contain the 95% bootstrap confidence 
-interval on the correlations from resampling the available years 1000 times. 
-These confidence intervals help to determine whether the correlations are 
-significant; if 0 does not fall within the range of the confidence 
-interval, the correlation can be said to be statistically significant. 
-Furthermore, the bootstrap confidence interval in the observation plots
-give a sense of the sampling variability in the historical record; if 
-the model correlation falls outside the observed bootstrap confidence interval, 
-it is fair to say the model has a too strong or too weak relationship.
+The lag-pressure composites (``dripping paint") plots provided by this POD show
+the composite-mean values of standardized polar cap geopotential height anomalies.
+In these figures, significance is evaluated at the 95% level using a one-sample
+t-test, and assumes that the population mean has an anomaly value of 0 and that
+the sample mean comes from a normally distributed population. This may not be a 
+robust assumption, but here this test is chosen for a computationally inexpensive
+estimate of significance. In these plots, values that are *insignificant* by this
+test are stippled. 

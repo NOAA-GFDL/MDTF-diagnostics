@@ -60,7 +60,7 @@ be detected in order for the POD to create the figure.
 Version & Contact info
 ----------------------
 
-- Version/revision information: v1.0 (Jul 2023)
+- Version/revision information: v1.0 (Aug 2023)
 - Project PIs: Amy H. Butler (NOAA CSL) and Zachary D. Lawrence (CIRES/NOAA PSL)
 - Developer/point of contact: Amy Butler (amy.butler@noaa.gov)
 

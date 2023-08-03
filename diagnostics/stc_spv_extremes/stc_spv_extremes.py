@@ -867,8 +867,6 @@ try:
     obs_firstyr = obs.time.dt.year.values[0]
     obs_lastyr = obs.time.dt.year.values[-1]
     
-    #NOTE FOR UPDATE: could pull only 10 mb uwnds in make_era5 code, to make file smaller
-    # (but may want to keep option open to select other levels)
     print(f'*** Selecting zonal-mean zonal winds at 10 hPa')
     uzm_10 = obs.uwnd_zm.sel(plev=10)
     

@@ -11,7 +11,7 @@
 Stratosphere-Troposphere Coupling: Stratospheric Polar Vortex Extremes
 ================================
 
-Last update: 2023-07-19
+Last update: 2023-08-03
 
 This POD assesses stratospheric polar vortex extremes, and the tropospheric circulation
 and surface patterns that precede and follow them. Extremes in the 
@@ -100,6 +100,7 @@ This POD requires Python 3, with the following packages:
 - matplotlib
 - statsmodels
 - cartopy
+- scipy
 
 
 Required model output variables

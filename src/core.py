@@ -238,10 +238,6 @@ class TempDirManager(util.Singleton):
         util.signal_logger(self.__class__.__name__, signum, frame, log=_log)
         self.cleanup()
 
-# --------------------------------------------------------------------
-
-
-
 # ---------------------------------------------------------------------------
 
 

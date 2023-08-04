@@ -397,6 +397,8 @@ def coordinate_from_struct(d: collections.OrderedDict, class_dict=None, **kwargs
         ax = 'OTHER'
         if 'axis' in d and any(d['axis'].strip()):
             ax = d['axis']
+        elif 'time' in d['standard_name'].lower():
+            ax = 'T'
         return util.coerce_to_dataclass(d, class_dict[ax], **kwargs)
     except Exception:
         raise ValueError(f"Couldn't parse coordinate: {repr(d)}")

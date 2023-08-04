@@ -147,7 +147,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                                         log=self.log)
             assert os.path.isdir(env_dir), self.log.error(f'%s not found.', env_dir)
 
-            if pod_env.lower is not "python3":
+            if pod_env.lower != "python3":
                 pass
             else:
                 self.log.info(f"Checking {e} for {self.name} package requirements")
@@ -268,12 +268,12 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 self.cases[case_name] = data_sources.data_source[case_dict.convention.upper() +
                                                                  "DataSource"](case_name, self.paths, parent=self)
                 # util.NameSpace.fromDict({k: case_dict[k] for k in case_dict.keys()})
-                if self.pod_settings['convention'].lower() != case_dict.convention.lower():
+                #if self.pod_settings['convention'].lower() != case_dict.convention.lower():
                     # translate variable(s) to user_specified standard if necessary
-                    pod_varlist = self.cases[case_name].get_varlist(self)
-                    self.cases[case_name].translate_varlist(pod_varlist)
-                else:
-                    pass
+                pod_varlist = self.cases[case_name].get_varlist(self)
+                self.cases[case_name].translate_varlist(pod_varlist)
+                #else:
+                #    pass
 
             # get level
 
@@ -298,7 +298,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         # self.preprocessor.edit_request(self)
 
         for case_name in self.cases.keys():
-            for v in case_name.iter_children():
+            for v in self.cases[case_name].iter_children():
                 # deactivate failed variables, now that alternates are fully
                 # specified
                 if v.last_exception is not None and not v.failed:

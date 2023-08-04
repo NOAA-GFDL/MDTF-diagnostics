@@ -676,7 +676,6 @@ class Varlist(data_model.DMDataSet):
         globals_d = vlist_settings.global_settings
         dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings)
                   for k, v in parent.pod_dims.items()}
-  #      dims_d = parent.pod_dims
 
         vlist_vars = {
             k: VarlistEntry.from_struct(globals_d, dims_d, name=k, parent=parent, **v)

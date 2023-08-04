@@ -79,6 +79,7 @@ def parse_gfdl_pp_ts(file_name: str):
         variant_label = ""
         grid_label = ""
         table_id = ""
+        assoc_files = ""
         if 'mon' in freq.lower():
             output_frequency = 'mon'
         elif 'day' in freq.lower():
@@ -96,6 +97,7 @@ def parse_gfdl_pp_ts(file_name: str):
             # "in {file}"
             info = {
                 'activity_id': source_id,
+                'assoc_files': assoc_files,
                 'institution_id': "GFDL",
                 'member_id': member_id,
                 'realm': realm,

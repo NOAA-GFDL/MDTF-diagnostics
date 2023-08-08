@@ -266,12 +266,20 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 # instantiate the data_source class instance for the specified convention
                 self.paths.setup_model_paths(case_name, case_dict)
                 self.cases[case_name] = data_sources.data_source[case_dict.convention.upper() +
-                                                                 "DataSource"](case_name, self.paths, parent=self)
+                                                                 "DataSource"](case_name,
+                                                                               self.paths, parent=self)
+                self.cases[case_name].set_date_range(case_dict.startdate, case_dict.enddate)
                 # util.NameSpace.fromDict({k: case_dict[k] for k in case_dict.keys()})
                 #if self.pod_settings['convention'].lower() != case_dict.convention.lower():
                     # translate variable(s) to user_specified standard if necessary
                 pod_varlist = self.cases[case_name].get_varlist(self)
-                self.cases[case_name].translate_varlist(pod_varlist)
+                pod_convention = self.pod_settings['convention'].lower()
+                data_convention = case_dict.convention.lower()
+                if pod_convention != data_convention:
+                    self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
+                    self.cases[case_name].translate_varlist(self, pod_varlist,
+                                                            from_convention=pod_convention,
+                                                            to_convention=data_convention)
                 #else:
                 #    pass
 

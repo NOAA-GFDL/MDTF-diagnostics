@@ -7,6 +7,7 @@ import os
 import io
 import dataclasses
 from src import util, cmip6, varlist_util
+import datetime
 
 import logging
 _log = logging.getLogger(__name__)
@@ -80,10 +81,13 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     # _AttributesClass = SampleDataAttributes
     # col_spec = sampleLocalFileDataSource_col_spec
     convention: str
+    date_range: util.DateRange = dataclasses.field(init=False)
     varlist: varlist_util.Varlist = None
     log_file: io.IOBase = dataclasses.field(default=None, init=False)
 
-    def __init__(self, case_name: str, path_obj: util.PathManager, parent):
+    def __init__(self, case_name: str,
+                 path_obj: util.PathManager,
+                 parent):
         # _id = util.MDTF_ID()        # attrs inherited from util.logs.MDTFObjectBase
         # name: str
         # _parent: object
@@ -95,6 +99,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         # set up log (CaseLoggerMixin)
         self.init_log(log_dir=path_obj.MODEL_WORK_DIR[case_name])
 
+
     @property
     def _children(self):
         """Iterable of the multirun varlist that is associated with the data source object
@@ -104,9 +109,14 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     def get_varlist(self, parent):
         return varlist_util.Varlist.from_struct(parent)
 
-    def translate_varlist(self, varlist, from_convention: str, to_convention: str):
-        fieldlist_from = get_fieldlist_table(from_convention)
-        fieldlist_to = get_fieldlist_table(to_convention)
+    def set_date_range(self, startdate: str, enddate: str):
+        self.date_range = util.DateRange(start=startdate, end=enddate)
+
+    def translate_varlist(self, pod_obj, varlist, from_convention: str, to_convention: str):
+        for v in varlist.iter_vars():
+            varlist.setup_var(pod_obj, v, to_convention, self.date_range)
+    #    fieldlist_from = get_fieldlist_table(from_convention)
+    #    fieldlist_to = get_fieldlist_table(to_convention)
 
 
     def query_dataset(self, var):

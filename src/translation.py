@@ -51,12 +51,6 @@ class FieldlistEntry(data_model.DMDependentVariable):
     # scalar_coords: list
     scalar_coord_templates: dict = dc.field(default_factory=dict)
 
-    #def __init__(self, name: str = "", **kwargs):
-    #    self.name = name
-    #    if any(kwargs):
-    #        for k, v in kwargs.items():
-    #            if hasattr(self, k):
-    #                setattr(self, k, v)
     def __post_init__(self, coords=None):
         super(FieldlistEntry, self).__post_init__(coords)
         assert len(self.scalar_coords) == 0
@@ -304,7 +298,7 @@ class Fieldlist:
         if ax not in self.axes_lut:
             raise KeyError(f"Axis {ax} not defined in convention '{self.name}'.")
 
-        lut1 = self.axes_lut[ax] # abbreviate
+        lut1 = self.axes_lut[ax]
         if not hasattr(coord, 'standard_name'):
             coords = tuple(lut1.values())
             if len(coords) > 1:
@@ -431,7 +425,7 @@ class VariableTranslator(metaclass=util.Singleton):
         self.modifier = util.read_json(os.path.join(code_root, 'data', 'modifiers.jsonc'), log=_log)
 
     def add_convention(self, d: dict, file_path: str, log=None):
-        conv_name = d['name']
+        conv_name = d['name'].lower()
         _log.debug("Adding variable name convention '%s'", conv_name)
         for model in d.pop('models', []):
             self.aliases[model] = conv_name
@@ -457,14 +451,14 @@ class VariableTranslator(metaclass=util.Singleton):
                                f, exc)
                 continue
 
-    def get_convention_name(self, conv_name):
+    def get_convention_name(self, conv_name: str):
         """Resolve the naming convention associated with a given
         :class:`Fieldlist` object from among a set of possible aliases.
         """
         if conv_name in self.conventions \
-            or conv_name == _NO_TRANSLATION_CONVENTION:
+                or conv_name == _NO_TRANSLATION_CONVENTION:
             return conv_name
-        if conv_name in self.aliases:
+        if conv_name.upper() in self.aliases:
             _log.debug("Using convention '%s' based on alias '%s'.",
                        self.aliases[conv_name], conv_name)
             return self.aliases[conv_name]
@@ -472,7 +466,7 @@ class VariableTranslator(metaclass=util.Singleton):
                    conv_name)
         raise KeyError(conv_name)
 
-    def get_convention(self, conv_name):
+    def get_convention(self, conv_name: str):
         """Return the :class:`Fieldlist` object containing the variable name
         translation logic for a given convention name.
         """
@@ -484,7 +478,7 @@ class VariableTranslator(metaclass=util.Singleton):
             conv_name = self.get_convention_name(conv_name)
             return self.conventions[conv_name]
 
-    def _fieldlist_method(self, conv_name, method_name, *args, **kwargs):
+    def _fieldlist_method(self, conv_name: str, method_name, *args, **kwargs):
         """Wrapper which determines the requested convention and calls the
         requested *method_name* on the :class:`Fieldlist` object for that
         convention.
@@ -492,23 +486,23 @@ class VariableTranslator(metaclass=util.Singleton):
         meth = getattr(self.get_convention(conv_name), method_name)
         return meth(*args, **kwargs)
 
-    def to_CF(self, conv_name, name):
+    def to_CF(self, conv_name: str, name: str):
         return self._fieldlist_method(conv_name, 'to_CF', name)
 
-    def to_CF_name(self, conv_name, name):
+    def to_CF_name(self, conv_name: str, name: str):
         return self._fieldlist_method(conv_name, 'to_CF_name', name)
 
     def from_CF(self, conv_name, standard_name, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF',
                                       standard_name, modifier=modifier)
 
-    def from_CF_name(self, conv_name, standard_name, modifier=None):
+    def from_CF_name(self, conv_name: str, standard_name: str, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF_name',
                                       standard_name, modifier=modifier)
 
-    def translate_coord(self, conv_name, coord, log=_log):
+    def translate_coord(self, conv_name: str, coord, log=_log):
         return self._fieldlist_method(conv_name, 'translate_coord', coord, log=log)
 
-    def translate(self, conv_name, var):
+    def translate(self, conv_name: str, var):
         return self._fieldlist_method(conv_name, 'translate', var)
 

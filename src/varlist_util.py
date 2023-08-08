@@ -578,7 +578,11 @@ class Varlist(data_model.DMDataSet):
                 return vv
         return None
 
-    def setup_var(self, pod, v):
+    def setup_var(self,
+                  pod_obj,
+                  v: VarlistEntry,
+                  data_convention: str,
+                  date_range: util.DateRange):
         """Update VarlistEntry fields with information that only becomes
         available after DataManager and Diagnostic have been configured (ie,
         only known at runtime, not from settings.jsonc.)
@@ -586,7 +590,7 @@ class Varlist(data_model.DMDataSet):
         Could arguably be moved into VarlistEntry's init, at the cost of
         dependency inversion.
         """
-        translate = translation.VariableTranslator().get_convention(self.convention)
+        translate = translation.VariableTranslator().get_convention(data_convention)
         if v.T is not None:
             v.change_coord(
                 'T',
@@ -595,11 +599,11 @@ class Varlist(data_model.DMDataSet):
                     'range': util.DateRange,
                     'frequency': util.DateFrequency
                 },
-                range=self.attrs.date_range,
+                range=date_range,
                 calendar=util.NOTSET,
                 units=util.NOTSET
             )
-        v.dest_path = self.variable_dest_path(pod, v)
+        v.dest_path = self.variable_dest_path(pod_obj, v)
         try:
             trans_v = translate.translate(v)
             v.translation = trans_v

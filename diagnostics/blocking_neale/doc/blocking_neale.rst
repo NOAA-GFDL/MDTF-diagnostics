@@ -70,14 +70,17 @@ jsonc file:
 2) Variables to control reading or writing of digested data 
 
    - ``MDTF_BLOCKING_READ_DIGESTED (Default True)``
-     If True, the POD looks for digested data for the obs & CAM ensembles (MDTF_BLOCKING_READ_DIGESTED = False). 
-     Digested means the data has been processed by this script into the `block_time` variable name and format.
+     If True, the POD looks for digested data for the obs & CAM ensembles 
+     Digested means the data has been processed by this POD into the `block_time` variable name and format
+     (see ``MDTF_BLOCKING_WRITE_DIGESTED`` below)
+     ``(MDTF_BLOCKING_READ_DIGESTED = False)``
+     If False, the POD looks for raw data (Z500(time,lat,lon)).
 
      The POD is not currently capable of running with a mix of digested and undigested (other than the undigested MDTF input case). If the user desires this, it is recommended to run only the components that are not digested, and write out digested. Then re-running with MDTF_BLOCKING_READ_DIGESTED will work.
 
-     It is not yet possible to run the MDTF input case with digested data, although it is possible to write it out
+     It is not yet possible to run the MDTF input case with digested data, although it is possible to write it out.
 
-     | OBS/CAM files are expected to be delineated with the file name & dir name as follows.
+     | OBS/CAM file name & dir expectations:
      | Digested:   obs_data/blocking/ERAI/ERAI.z500.day. *digested* .nc
      | Undigested: obs_data/blocking/*undigested*/ERAI/ERAI.z500.day.nc
 

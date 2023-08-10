@@ -44,7 +44,7 @@
 	"MDTF_BLOCKING_READ_DIGESTED" : "True",     // file should be available!
 	"MDTF_BLOCKING_WRITE_DIGESTED": "False",    // writes out case data as digested. requires READ_DIGESTED = False(DRB?!)
 	"MDTF_BLOCKING_WRITE_DIGESTED_DIR": "",       //default outdir
-        "MDTF_BLOCKING_DEBUG": "True"
+        "MDTF_BLOCKING_DEBUG": "False"
     },
   // MDTF_BLOCKING_COMPARE_LONG_YEARS:
   //            True  : uses 1979-1999 (or available) for comparisons

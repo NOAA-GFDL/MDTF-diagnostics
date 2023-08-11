@@ -64,8 +64,6 @@ jobs:
       with:
         miniconda-version: "latest"
         python-version: 3.10.0
-        libarchive-version: "*"
-        mamba-version: "*"
         channels: conda-forge,defaults
     - name: Verify miniconda
       run: |
@@ -73,8 +71,12 @@ jobs:
     - name: Install XQuartz and libarchive if macOS
       if: ${{ matrix.os == 'macos-latest' && matrix.conda-root == '/Users/runner/miniconda3' }}
       run: |
-        echo "Installing XQuartz"
+        echo "Installing XQuartz and libarchive"
         brew install --cask xquartz
+        conda install -c conda-forge -n base libarchive
+    - name: Install mamba
+      run: | 
+        conda install -c conda-forge -n base mamba
     - name: Set environment variables
       run: |
         echo "POD_OUTPUT=$(echo $PWD/../wkdir/GFDL.Synthetic)" >> $GITHUB_ENV

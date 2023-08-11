@@ -25,7 +25,7 @@ dependencies:
 - ecgtools=2022.10.7
 - cfunits=3.3.5
 - intake=0.6
-- intake-esm=2022.9.18
+- intake-esm=2023.07.07
 - subprocess32=3.5.4
 - pyyaml=6.0
 - click=8.0.4

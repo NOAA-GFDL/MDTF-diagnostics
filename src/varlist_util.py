@@ -580,6 +580,7 @@ class Varlist(data_model.DMDataSet):
 
     def setup_var(self,
                   pod_obj,
+                  case_name: str,
                   v: VarlistEntry,
                   data_convention: str,
                   date_range: util.DateRange):
@@ -603,7 +604,7 @@ class Varlist(data_model.DMDataSet):
                 calendar=util.NOTSET,
                 units=util.NOTSET
             )
-        v.dest_path = self.variable_dest_path(pod_obj, v)
+        v.dest_path = self.variable_dest_path(pod_obj, case_name, v)
         try:
             trans_v = translate.translate(v)
             v.translation = trans_v
@@ -626,18 +627,21 @@ class Varlist(data_model.DMDataSet):
 
         v.stage = VarlistEntryStage.INITED
 
-    def variable_dest_path(self, pod, var):
+    def variable_dest_path(self,
+                           pod,
+                           case_name: str,
+                           var: VarlistEntry):
         """Returns the absolute path of the POD's preprocessed, local copy of
         the file containing the requested dataset. Files not following this
         convention won't be found by the POD.
         """
         if var.is_static:
-            f_name = f"{self.name}.{var.name}.static.nc"
-            return os.path.join(pod.POD_WK_DIR, f_name)
+            f_name = f"{case_name}.{var.name}.static.nc"
+            return os.path.join(pod.paths.MODEL_WORK_DIR[case_name], f_name)
         else:
             freq = var.T.frequency.format_local()
-            f_name = f"{self.name}.{var.name}.{freq}.nc"
-            return os.path.join(pod.POD_WK_DIR, freq, f_name)
+            f_name = f"{case_name}.{var.name}.{freq}.nc"
+            return os.path.join(pod.paths.MODEL_WORK_DIR[case_name], freq, f_name)
 
     @classmethod
     def from_struct(cls, parent):

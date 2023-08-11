@@ -277,7 +277,9 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 data_convention = case_dict.convention.lower()
                 if pod_convention != data_convention:
                     self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
-                    self.cases[case_name].translate_varlist(self, pod_varlist,
+                    self.cases[case_name].translate_varlist(self,
+                                                            case_name,
+                                                            pod_varlist,
                                                             from_convention=pod_convention,
                                                             to_convention=data_convention)
                 #else:

@@ -755,6 +755,12 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
             **kwargs
         )
 
+    def dims(self):
+        pass
+
+    def scalar_coords(self):
+        pass
+
 
 @util.mdtf_dataclass
 class DMAuxiliaryCoordinate(DMDependentVariable, AbstractDMDependentVariable):

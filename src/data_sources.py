@@ -112,9 +112,15 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     def set_date_range(self, startdate: str, enddate: str):
         self.date_range = util.DateRange(start=startdate, end=enddate)
 
-    def translate_varlist(self, pod_obj, varlist, from_convention: str, to_convention: str):
+    def translate_varlist(self,
+                          pod_obj,
+                          case_name: str,
+                          varlist,
+                          from_convention: str,
+                          to_convention: str):
         for v in varlist.iter_vars():
-            varlist.setup_var(pod_obj, v, to_convention, self.date_range)
+            varlist.setup_var(pod_obj, case_name, v, to_convention, self.date_range)
+            print(v)
     #    fieldlist_from = get_fieldlist_table(from_convention)
     #    fieldlist_to = get_fieldlist_table(to_convention)
 

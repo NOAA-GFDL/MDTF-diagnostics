@@ -226,8 +226,13 @@ class Fieldlist:
         """
         return self.to_CF(var_or_name).standard_name
 
-    def from_CF(self, var_or_name, modifier=None, num_dims=0,
-                has_scalar_coords_att=False, name_only=False):
+    def from_CF(self,
+                var_or_name,
+                realm: str,
+                modifier=None,
+                num_dims: int = 0,
+                has_scalar_coords_att: bool = False,
+                name_only: bool = False):
         """Look up :class:`FieldlistEntry` corresponding to the given standard
         name, optionally providing a modifier to resolve ambiguity.
 
@@ -235,6 +240,7 @@ class Fieldlist:
         expanded with more ways to uniquely identify variable (eg cell methods).
         Args:
             var_or_name: variable or name of the variable
+            realm: variable realm (atmos, ocean, land, ice, etc...)
             modifier:optional string to distinguish a 3-D field from a 4-D field with
             the same var_or_name value
             num_dims: number of dimensions of the POD variable corresponding to var_or_name
@@ -251,7 +257,7 @@ class Fieldlist:
         if standard_name not in self.lut:
             raise KeyError((f"Standard name '{standard_name}' not defined in "
                   f"convention '{self.name}'."))
-        lut1 = self.lut[standard_name]  # abbreviate
+        lut1 = self.lut[standard_name][realm]  # abbreviate
         fl_entry: FieldlistEntry = None
         empty_mod_count = 0  # counter for modifier attributes that are blank strings in the fieldlist lookup table
         if not modifier:  # empty strings and None types evaluate to False
@@ -336,7 +342,11 @@ class Fieldlist:
         else:
             has_scalar_coords = bool(var.scalar_coords)
 
-            fl_entry = self.from_CF(var.standard_name, var.modifier, var.dims.__len__(), has_scalar_coords)
+            fl_entry = self.from_CF(var.standard_name,
+                                    var.realm,
+                                    var.modifier,
+                                    var.dims.__len__(),
+                                    has_scalar_coords)
             new_name = fl_entry.name
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]

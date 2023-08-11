@@ -64,6 +64,7 @@ jobs:
       with:
         miniconda-version: "latest"
         python-version: 3.10.0
+        libarchive-version: "*"
         mamba-version: "*"
         channels: conda-forge,defaults
     - name: Verify miniconda
@@ -74,7 +75,6 @@ jobs:
       run: |
         echo "Installing XQuartz"
         brew install --cask xquartz
-        conda install libarchive -n base -c conda-forge 
     - name: Set environment variables
       run: |
         echo "POD_OUTPUT=$(echo $PWD/../wkdir/GFDL.Synthetic)" >> $GITHUB_ENV

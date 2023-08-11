@@ -75,8 +75,8 @@ jobs:
         brew install --cask xquartz
         conda install -c conda-forge -n base libarchive
         echo "DYNLIB_PATH=$(echo /Users/runner/miniconda3/pkgs/libarchive*/lib/libarchive.13.dylib)" >> $GITHUB_ENV
-        ls ${DYNLIB_PATH}
-        ln -s ${DYNLIB_PATH} /usr/local/lib/libarchive.13.dylib
+        ls ${{ DYNLIB_PATH }}
+        ln -s ${{ DYNLIB_PATH }} /usr/local/lib/libarchive.13.dylib
         echo "usr local ls"
         ls -l /usr/local/lib/libarchive.13.dylib
     - name: Install mamba

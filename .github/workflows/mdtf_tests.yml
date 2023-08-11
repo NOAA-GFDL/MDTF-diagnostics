@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         # [ubuntu-latest macos-latest]
-        os: [ubuntu-latest]
+        os: [macos-latest]
         # [/usr/share/miniconda3 /Users/runner/miniconda3]
         conda-root: [/usr/share/miniconda3]
         json-file: ["tests/github_actions_test_ubuntu_set1.jsonc","tests/github_actions_test_macos_set1.jsonc"]
@@ -28,22 +28,22 @@ jobs:
         # if experimental is true, other jobs to run if one fails
         experimental: [false]
         exclude:
-          - os: ubuntu-latest
-            conda-root: /Users/runner/miniconda3
-          - os: ubuntu-latest
-            json-file: "tests/github_actions_test_macos_set1.jsonc"
-          - os: ubuntu-latest
-            json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
-          - os: ubuntu-latest
-            json-file-set3: "tests/github_actions_test_macos_set3.jsonc"
-          #- os: macos-latest
-          #  conda-root: /usr/share/miniconda3
-         #- os: macos-latest
-         #   json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
-         # - os: macos-latest
-         #   json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
-         # - os: macos-latest
-         #   json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
+         # - os: ubuntu-latest
+         #   conda-root: /Users/runner/miniconda3
+         # - os: ubuntu-latest
+         #   json-file: "tests/github_actions_test_macos_set1.jsonc"
+         # - os: ubuntu-latest
+        #    json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
+        #  - os: ubuntu-latest
+        #    json-file-set3: "tests/github_actions_test_macos_set3.jsonc"
+          - os: macos-latest
+            conda-root: /usr/share/miniconda3
+          - os: macos-latest
+            json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
+          - os: macos-latest
+            json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
+          - os: macos-latest
+            json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
         #  - conda-root: /usr/share/miniconda3
        #     json-file: "tests/github_actions_test_macos_set1.jsonc"
        #   - conda-root: /Users/runner/minconda3
@@ -69,11 +69,12 @@ jobs:
     - name: Verify miniconda
       run: |
         conda info -a
-    - name: Install XQuartz if macOS
+    - name: Install XQuartz and libarchive if macOS
       if: ${{ matrix.os == 'macos-latest' && matrix.conda-root == '/Users/runner/miniconda3' }}
       run: |
         echo "Installing XQuartz"
         brew install --cask xquartz
+        conda install libarchive -n base -c conda-forge 
     - name: Set environment variables
       run: |
         echo "POD_OUTPUT=$(echo $PWD/../wkdir/GFDL.Synthetic)" >> $GITHUB_ENV

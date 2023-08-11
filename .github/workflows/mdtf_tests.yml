@@ -74,8 +74,9 @@ jobs:
         echo "Installing XQuartz and libarchive"
         brew install --cask xquartz
         conda install -c conda-forge -n base libarchive
-        ls /Users/runner/miniconda3/pkgs
+        ls /Users/runner/miniconda3/pkgs/libarchive*/lib
         ln -s /Users/runner/miniconda3/pkgs/libarchive*/lib/libarchive.13.dylib /Users/runner/miniconda3/lib/
+        ls /Users/runner/miniconda3/lib
     - name: Install mamba
       run: | 
         conda install -c conda-forge -n base mamba

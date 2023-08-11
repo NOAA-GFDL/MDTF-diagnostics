@@ -21,13 +21,21 @@ jobs:
         # [ubuntu-latest macos-latest]
         os: [macos-latest]
         # [/usr/share/miniconda3 /Users/runner/miniconda3]
-        conda-root: [/usr/share/miniconda3]
+        conda-root: [/Users/runner/miniconda3]
         json-file: ["tests/github_actions_test_ubuntu_set1.jsonc","tests/github_actions_test_macos_set1.jsonc"]
         json-file-set2: ["tests/github_actions_test_ubuntu_set2.jsonc", "tests/github_actions_test_macos_set2.jsonc"]
         json-file-set3: ["tests/github_actions_test_ubuntu_set3.jsonc", "tests/github_actions_test_macos_set3.jsonc"]
         # if experimental is true, other jobs to run if one fails
         experimental: [false]
         exclude:
+          #- os: macos-latest
+          #  conda-root: /usr/share/miniconda3
+          - os: macos-latest
+            json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
+          - os: macos-latest
+            json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
+          - os: macos-latest
+            json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
          # - os: ubuntu-latest
          #   conda-root: /Users/runner/miniconda3
          # - os: ubuntu-latest
@@ -36,14 +44,6 @@ jobs:
         #    json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
         #  - os: ubuntu-latest
         #    json-file-set3: "tests/github_actions_test_macos_set3.jsonc"
-          - os: macos-latest
-            conda-root: /usr/share/miniconda3
-          - os: macos-latest
-            json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
-          - os: macos-latest
-            json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
-          - os: macos-latest
-            json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
         #  - conda-root: /usr/share/miniconda3
        #     json-file: "tests/github_actions_test_macos_set1.jsonc"
        #   - conda-root: /Users/runner/minconda3

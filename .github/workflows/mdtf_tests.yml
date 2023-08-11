@@ -75,8 +75,9 @@ jobs:
         brew install --cask xquartz
         conda install -c conda-forge -n base libarchive
         ls /Users/runner/miniconda3/pkgs/libarchive*/lib
-        ln -s /Users/runner/miniconda3/pkgs/libarchive*/lib/libarchive.13.dylib /Users/runner/miniconda3/lib/
-        ls /Users/runner/miniconda3/lib
+        ln -s /Users/runner/miniconda3/pkgs/libarchive*/lib/libarchive.13.dylib /usr/local/lib/libarchive.13.dylib
+        echo "usr local ls"
+        ls /usr/local/lib/*
     - name: Install mamba
       run: | 
         conda install -c conda-forge -n base mamba

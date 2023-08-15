@@ -106,8 +106,8 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         """
         yield from self.varlist.iter_vars()
 
-    def get_varlist(self, parent):
-        return varlist_util.Varlist.from_struct(parent)
+    def read_varlist(self, parent):
+        self.varlist=varlist_util.Varlist.from_struct(parent)
 
     def set_date_range(self, startdate: str, enddate: str):
         self.date_range = util.DateRange(start=startdate, end=enddate)
@@ -115,11 +115,9 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     def translate_varlist(self,
                           pod_obj,
                           case_name: str,
-                          varlist,
-                          from_convention: str,
                           to_convention: str):
-        for v in varlist.iter_vars():
-            varlist.setup_var(pod_obj, case_name, v, to_convention, self.date_range)
+        for v in self.varlist.iter_vars():
+            self.varlist.setup_var(pod_obj, case_name, v, to_convention, self.date_range)
             print(v)
     #    fieldlist_from = get_fieldlist_table(from_convention)
     #    fieldlist_to = get_fieldlist_table(to_convention)

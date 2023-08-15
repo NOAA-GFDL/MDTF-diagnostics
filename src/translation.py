@@ -13,7 +13,7 @@ from src.units import Units
 import logging
 _log = logging.getLogger(__name__)
 
-_NO_TRANSLATION_CONVENTION = 'None'  # naming convention for disabling translation
+_NO_TRANSLATION_CONVENTION = 'no_translation'  # naming convention for disabling translation
 
 
 @util.mdtf_dataclass

@@ -256,6 +256,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         # and that required packages are installed in the target Conda environment
         self.verify_pod_settings()
         self.set_interpreter(pod_input.settings)
+        pod_convention = self.pod_settings['convention'].lower()
         # run the PODs on data that has already been preprocessed
         # PODs will ingest input directly from catalog that (should) contain
         # the information for the saved preprocessed files, and a pre-existing case_env file
@@ -269,22 +270,20 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                                                                  "DataSource"](case_name,
                                                                                self.paths, parent=self)
                 self.cases[case_name].set_date_range(case_dict.startdate, case_dict.enddate)
+                self.cases[case_name].read_varlist(self)
                 # util.NameSpace.fromDict({k: case_dict[k] for k in case_dict.keys()})
-                #if self.pod_settings['convention'].lower() != case_dict.convention.lower():
-                    # translate variable(s) to user_specified standard if necessary
-                pod_varlist = self.cases[case_name].get_varlist(self)
-                pod_convention = self.pod_settings['convention'].lower()
                 data_convention = case_dict.convention.lower()
                 if pod_convention != data_convention:
                     self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
-                    self.cases[case_name].translate_varlist(self,
-                                                            case_name,
-                                                            pod_varlist,
-                                                            from_convention=pod_convention,
-                                                            to_convention=data_convention)
-                #else:
-                #    pass
-
+                else:
+                    data_convention = 'no_translation'
+                    self.log.info(f'POD convention and data convention are both {data_convention}. '
+                                  f'No data translation will be performed for case {case_name}.')
+                # translate POD variable(s) to case data convention(s) if they do not match
+                # A 'notranslationfieldlist' will be defined for the varlistentry translation attribute
+                self.cases[case_name].translate_varlist(self,
+                                                        case_name,
+                                                        to_convention=data_convention)
             # get level
 
         else:

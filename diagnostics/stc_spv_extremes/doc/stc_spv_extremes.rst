@@ -108,7 +108,7 @@ Required model output variables
 
 The following daily-mean fields are required:
 
-- Zonal-mean zonal Winds, ``ua`` as ``(time,lev,lat)`` (units: m/s)
+- Zonal-mean zonal wind, ``ua`` as ``(time,lev,lat)`` (units: m/s)
 - Zonal-mean geopotential heights, ``zg`` as ``(time,lev,lat)`` (units: m)
 - Geopotential Heights at 500 hPa, ``zg`` as ``(time,lat,lon)`` (units: m)
 - Surface air temperature, ``tas`` as ``(time,lat,lon)`` (units: K)

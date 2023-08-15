@@ -11,6 +11,8 @@
     // only used for taking slices, unit conversion
     "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
     "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
+    "TLONG": {"axis": "X", "standard_name": "array of t-grid longitudes", "units": "degrees_east"},
+    "TLAT": {"axis": "Y", "standard_name": "array of t-grid latitudes", "units": "degrees_north"},
     "plev": {
       "standard_name": "air_pressure",
       "units": "hPa",
@@ -23,6 +25,12 @@
       "positive": "down",
       "axis": "Z"
     },
+    "z_t": {
+      "standard_name": "depth from surface to midpoint of layer",
+      "units": "centimeters",
+      "positive": "down",
+      "axis": "Z"
+   },
     "time": {"axis": "T", "standard_name": "time", "units": "days"}
   },
   "aux_coords": {
@@ -214,6 +222,11 @@
     "THETAL": {
       "standard_name": "sea_water_potential_temperature",
       "units": "K",
+      "ndim": 4
+    },
+    "SST": {
+      "standard_name": "Potential Temperature",
+      "units": "degC",
       "ndim": 4
     },
     // Variables for Convective Transition Diagnostics module:

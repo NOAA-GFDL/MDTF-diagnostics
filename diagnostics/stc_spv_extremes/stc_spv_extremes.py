@@ -456,7 +456,7 @@ def plot_dripping_paint(uzm_10, zg_pcap, hemi):
                     norm=colors.CenteredNorm(),extend='both')
         ax[0].contourf(lag,press, mask.transpose(),levels=[.1,1],hatches=['..'],colors='none')
         ax[0].vlines(x=0,ymin=np.min(press),ymax=np.max(press),color='gray')
-        ax[0].set_title(f'Composite polar cap geopotential height anomalies \n for {hemi} SSWs ({ct_ssw} events)',fontsize=16)
+        ax[0].set_title(f'Standardized polar cap geopotential height anomalies \n composited for {hemi} SSWs ({ct_ssw} events)',fontsize=16)
 
     else:
         m=ax[0].text(0,100, 'No SSWs detected') 
@@ -854,6 +854,40 @@ for hemi in ['NH','SH']:
     map_plot = f'{plot_dir}/{CASENAME}_{hemi}_SPV_Composite_Map.png'
     fig,ax = plot_composite_maps(uzm_10, zg_500[hemi], tas[hemi], hemi)
     fig.savefig(map_plot)
+    
+# Output data will have dimensions of [hemi, time, lev], where hemi
+# corresponds to the Northern/Southern hemispheres
+print('*** Preparing to save derived data')
+data_dir = f'{WK_DIR}/model/netCDF'
+outfile = data_dir+f'/{CASENAME}_SPV-extremes_diagnostics.nc'
+
+# Prepare the output variables and their metadata
+zg_pcap   = xr.concat([zg_pcap['SH'], zg_pcap['NH']], dim='hemi')
+zg_pcap.name = 'zg_pcap'
+zg_pcap.attrs['units'] = 'm'
+zg_pcap.attrs['long_name'] = f'{PCAP_LO_LAT}-90 polar cap geopotential heights'
+
+zg_500   = xr.concat([zg_500['SH'], zg_500['NH']], dim='hemi')
+zg_500.name = 'zg_500'
+zg_500.attrs['units'] = 'm'
+zg_500.attrs['long_name'] = f'Daily geopotential height anomalies at 500 hPa'
+
+tas   = xr.concat([tas['SH'], tas['NH']], dim='hemi')
+tas.name = 'tas'
+tas.attrs['units'] = 'K'
+tas.attrs['long_name'] = f'Daily surface air temperature anomalies'
+
+# Create merged dataset containing the individual variables
+out_ds = xr.merge([zg_pcap,zg_500,tas])
+out_ds = out_ds.assign_coords({'hemi':[-1,1]})
+out_ds.hemi.attrs['long_name'] = 'hemisphere (-1 for SH, 1 for NH)'
+
+encoding = {'zg_pcap':  {'dtype':'float32',"scale_factor": 0.1}, 
+            'zg_500':   {'dtype':'float32',"scale_factor": 0.1}, 
+            'tas':      {'dtype':'float32',"scale_factor": 0.1}}
+
+print(f'*** Saving SPV-extremes diagnostics to {outfile}')
+out_ds.to_netcdf(outfile, encoding=encoding)
 
 ## Loading obs data files & plotting obs figures: ##########################
 

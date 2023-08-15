@@ -49,6 +49,12 @@
       "scalar_coord_templates": {"plev": "ua{value}"},
       "ndim": 4
     },
+    "u10": {
+      "standard_name": "10 hPa zonal_wind",
+      "units": "m s-1",
+      "scalar_coord_templates": {"plev": "u10{value}"},
+      "ndim": 3
+    },
     "va": {
       "standard_name": "northward_wind",
       "units": "m s-1",
@@ -145,6 +151,11 @@
     "psl": {
       "standard_name": "air_pressure_at_mean_sea_level",
       "units": "Pa",
+      "ndim": 3
+    },
+    "tos": {
+      "standard_name": "sea_surface_temperature",
+      "units": "degC",
       "ndim": 3
     },
     "sfcWind": {

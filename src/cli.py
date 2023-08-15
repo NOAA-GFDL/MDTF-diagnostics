@@ -1049,6 +1049,8 @@ class MDTFTopLevelArgParser(MDTFArgParser):
     """Class for constructing the command-line interface, parsing the options,
     and handing off execution to the selected subcommand.
     """
+    
+    print ("Cli file")
 
     def __init__(self, code_root, skip_defaults=False, argv=None):
         _ = CLIConfigManager(code_root, skip_defaults=skip_defaults)

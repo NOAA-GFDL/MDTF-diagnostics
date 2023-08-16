@@ -26,15 +26,24 @@
     // (optional) Any diagnostic-specific environment variables, given as 
     // key:value pairs. The user can't change these at runtime, but they can be 
     // used to set site-specific installation settings for your diagnostic.
+    // Years behavior: Ideally, there analysis is only done on overlapping obs & MDTF case data
+    //                 If there isn't overlapping data, set USE_CASE_YEARS false and specify years
+    //                 Note that MDTF case years are set in the input file: src/default_tests.jsonc
     "pod_env_vars" : {
-	"MDTF_BLOCKING_OBS" : "True",  //webpage will fail without
+	"MDTF_BLOCKING_OBS"               : "True",  //both ERA & MERRA for now
+        "MDTF_BLOCKING_OBS_USE_CASE_YEARS": "False", //if False, must set ERA/MERRA/CAM5 FIRST/LAST-YRS below
+	"MDTF_BLOCKING_OBS_ERA_FIRSTYR"   : 2010,    
+	"MDTF_BLOCKING_OBS_ERA_LASTYR"    : 2014,  
+	"MDTF_BLOCKING_OBS_MERRA_FIRSTYR" : 2009,  
+	"MDTF_BLOCKING_OBS_MERRA_LASTYR"  : 2011,  
+	"MDTF_BLOCKING_OBS_CAM5_FIRSTYR"  : 1979,     
+	"MDTF_BLOCKING_OBS_CAM5_LASTYR"   : 2007,  
 	"MDTF_BLOCKING_CAM3": "False", //will run but doesn't show on webpage
 	"MDTF_BLOCKING_CAM4": "False", //will run but doesn't show on webpage
-	"MDTF_BLOCKING_CAM5": "True",  //webpage will fail without
-	"MDTF_BLOCKING_READ_DIGESTED" : "True",
-	"MDTF_BLOCKING_WRITE_DIGESTED": "False",      //requires READ_DIGESTED = False
+	"MDTF_BLOCKING_CAM5": "True",  //webpage will fail without- 4/26/23 maybe not true anymore
+	"MDTF_BLOCKING_READ_DIGESTED" : "True",     // file should be available!
+	"MDTF_BLOCKING_WRITE_DIGESTED": "False",    // writes out case data as digested. requires READ_DIGESTED = False(DRB?!)
 	"MDTF_BLOCKING_WRITE_DIGESTED_DIR": "",       //default outdir
-        "MDTF_BLOCKING_COMPARE_LONG_YEARS": "False",  //see notes below
         "MDTF_BLOCKING_DEBUG": "False"
     },
   // MDTF_BLOCKING_COMPARE_LONG_YEARS:

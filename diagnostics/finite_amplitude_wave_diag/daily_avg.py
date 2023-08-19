@@ -11,14 +11,23 @@ t_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL-CM4/data/atmos_inst/ts/ho
 wk_dir = "/home/clare/GitHub/mdtf/wkdir/"
 
 
-u_file = xr.open_dataset(u_path)  # xarray.Dataset
-print(u_file)
-print("================")
-u_daily_resampled = u_file['ua'].resample(time="1D").mean()
-print(u_daily_resampled)
-print("================")
-print(f"u_daily_resampled.shape:\n{u_daily_resampled.shape}")
-output_file = f"{wk_dir}u_daily_resampled.nc"
-print(f"Start outputing file: {output_file}")
-u_daily_resampled.to_netcdf(f"{wk_dir}u_daily_resampled.nc")
-print(f"Finished outputing file: {output_file}")
+def output_daily_avg(input_path, output_file, varname="ua"):
+    input_file = xr.open_dataset(input_path)  # xarray.Dataset
+    print(input_file)
+    print("================")
+    daily_resampled = input_file[varname].resample(time="1D").mean()
+    print(daily_resampled)
+    print("================")
+    print(f"daily_resampled.shape:\n{daily_resampled.shape}")
+    output_path = f"{wk_dir}{output_file}"
+    print(f"Start outputing file: {output_path}")
+    daily_resampled.to_netcdf(output_path)
+    print(f"Finished outputing file: {output_path}")
+    return output_path
+
+
+if __name__ == '__main__':
+    u_output_path = output_daily_avg(u_path, "u_daily_mean.nc", varname="ua")
+    v_output_path = output_daily_avg(u_path, "v_daily_mean.nc", varname="va")
+    t_output_path = output_daily_avg(u_path, "t_daily_mean.nc", varname="ta")
+    print("Finished full procedures")

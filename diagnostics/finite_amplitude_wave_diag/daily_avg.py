@@ -14,11 +14,11 @@ wk_dir = "/home/clare/GitHub/mdtf/wkdir/"
 u_file = xr.open_dataset(u_path)  # xarray.Dataset
 print(u_file)
 print("================")
-u_daily_avg = u_file['ua'].groupby("time.day").mean(dim='time')
-print(u_daily_avg)
+u_daily_resampled = u_file['ua'].ds.resample(time="1D")
+print(u_daily_resampled)
 print("================")
-print(f"u_daily_avg.shape:\n{u_daily_avg.shape}")
-output_file = f"{wk_dir}u_daily_avg.nc"
+print(f"u_daily_resampled.shape:\n{u_daily_resampled.shape}")
+output_file = f"{wk_dir}u_daily_resampled.nc"
 print(f"Start outputing file: {output_file}")
-u_daily_avg.to_netcdf(f"{wk_dir}u_daily_avg.nc")
+u_daily_resampled.to_netcdf(f"{wk_dir}u_daily_resampled.nc")
 print(f"Finished outputing file: {output_file}")

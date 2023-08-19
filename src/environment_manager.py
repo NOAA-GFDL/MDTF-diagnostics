@@ -670,9 +670,11 @@ class MultirunSubprocessRuntimePODWrapper(object):
         out_file = os.path.join(self.pod.POD_WK_DIR, 'case_info.yaml')
         self.pod.pod_env_vars["case_env_file"] = out_file
         case_info = dict()
+
         for case_name, case in case_list.items():
             case_info[case_name] = {k: v
                                     for k, v in case.env_vars.items()}
+            
             # append case environment vars
             for v in case.iter_vars_only(case, active=True):
                 for kk, vv in v.env_vars.items():
@@ -682,10 +684,11 @@ class MultirunSubprocessRuntimePODWrapper(object):
                         case_info[case_name][kk] = v.dest_path
                     else:
                         case_info[case_name][kk] = vv
-        # write the case_info env vars to a yaml file that the POD will read
+        
         f = open(out_file, 'w+')
         assert (os.path.isfile(out_file))
         yaml.dump(case_info, f, allow_unicode=True, default_flow_style=False)
+        self.pod.multi_case_dict = case_info
 
     def setup_exception_handler(self, exc):
         chained_exc = util.chain_exc(exc, f"preparing to run {self.pod.full_name}.",

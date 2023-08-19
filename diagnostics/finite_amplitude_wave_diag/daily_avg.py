@@ -11,7 +11,7 @@ t_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL-CM4/data/atmos_inst/ts/ho
 wk_dir = "/home/clare/GitHub/mdtf/wkdir"
 
 
-u_file = xr.load_dataset(u_path)  # xarray.Dataset
+u_file = xr.open_dataset(u_path)  # xarray.Dataset
 print(u_file)
 print("================")
 u_field = u_file['ua'].isel(time=slice(0, 500))

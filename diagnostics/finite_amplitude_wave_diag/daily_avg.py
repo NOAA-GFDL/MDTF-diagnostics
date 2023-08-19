@@ -14,7 +14,7 @@ wk_dir = "/home/clare/GitHub/mdtf/wkdir/"
 u_file = xr.open_dataset(u_path)  # xarray.Dataset
 print(u_file)
 print("================")
-u_daily_resampled = u_file['ua'].resample(time="1D")
+u_daily_resampled = u_file['ua'].resample(time="1D").mean()
 print(u_daily_resampled)
 print("================")
 print(f"u_daily_resampled.shape:\n{u_daily_resampled.shape}")

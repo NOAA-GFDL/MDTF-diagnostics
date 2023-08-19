@@ -11,8 +11,11 @@ t_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL-CM4/data/atmos_inst/ts/ho
 
 u_file = xr.open_dataset(u_path)  # xarray.Dataset
 print(u_file)
+print("================")
 u_field = u_file['ua'].isel(time=slice(0, 500))
 print(u_field)
-ans = u_field.groupby("time.month").mean(dim='time')
+print("================")
+ans = u_field.groupby("time.day").mean(dim='time')
 print(ans)
-print(ans.shape)
+print("================")
+print(f"ans.shape:\n{ans.shape}")

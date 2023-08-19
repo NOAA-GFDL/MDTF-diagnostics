@@ -3,6 +3,6 @@ channels:
 - conda-forge
 - defaults
 dependencies:
-- pytest=7.4.0
+- pytest==7.4.0
 - pip:
-  - hn2016_falwa=0.7.1
+  - hn2016_falwa==0.7.1

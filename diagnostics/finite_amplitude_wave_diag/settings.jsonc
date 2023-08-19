@@ -34,15 +34,8 @@
       }
    },
    "pod_env_vars":{
-      "slon1":"160",
-      "slon2":"200",
-      "slat1":"-10",
-      "slat2":"5",
-      "ENSO_OBS":"0",
-      "ENSO_COMPOSITE":"1",
-      "ENSO_MSE":"0",
-      "ENSO_MSE_VAR":"0",
-      "ENSO_SCATTER":"0"
+      "start_year" : "1993",
+      "end_year" : "2009",
    },
    "varlist":{
       "ua":{

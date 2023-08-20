@@ -34,7 +34,7 @@ def output_daily_avg(input_path, output_file, varname="ua"):
 
 
 if __name__ == '__main__':
-    qgds = xr.open_mfdataset("era5_2022_[tuv].nc").resample(time="1D").mean()  # get daily mean
+    qgds = xr.open_mfdataset(f"{data_dir}era5_2022_[tuv].nc").resample(time="1D").mean()  # get daily mean
     print("Start interpolating.")
     uvtinterp = qgds.interpolate_fields()
     print("Finished interpolating. State reference state computation")

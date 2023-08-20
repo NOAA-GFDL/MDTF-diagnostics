@@ -34,9 +34,9 @@ if __name__ == '__main__':
         'plev': 'level',
         'ylat': 'lat',
         'xlon': 'lon',
-        'U': 'ua',
-        'V': 'va',
-        'T': 'ta'}
+        'u': 'ua',
+        'v': 'va',
+        't': 'ta'}
     # u_output_path = output_daily_avg(u_path, "u_daily_mean.nc", varname="ua")
     # v_output_path = output_daily_avg(v_path, "v_daily_mean.nc", varname="va")
     # t_output_path = output_daily_avg(t_path, "t_daily_mean.nc", varname="ta")

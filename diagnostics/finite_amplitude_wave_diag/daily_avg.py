@@ -12,6 +12,9 @@ wk_dir = "/home/clare/GitHub/mdtf/wkdir/"
 u_daily_mean_path = f"{wk_dir}u_daily_mean.nc"
 v_daily_mean_path = f"{wk_dir}v_daily_mean.nc"
 t_daily_mean_path = f"{wk_dir}t_daily_mean.nc"
+u_daily_mean_3steps_path = f"{wk_dir}u_daily_mean_3steps.nc"
+v_daily_mean_3steps_path = f"{wk_dir}v_daily_mean_3steps.nc"
+t_daily_mean_3steps_path = f"{wk_dir}t_daily_mean_3steps.nc"
 
 
 def output_daily_avg(input_path, output_file, varname="ua"):
@@ -40,11 +43,8 @@ if __name__ == '__main__':
     # u_output_path = output_daily_avg(u_path, "u_daily_mean.nc", varname="ua")
     # v_output_path = output_daily_avg(v_path, "v_daily_mean.nc", varname="va")
     # t_output_path = output_daily_avg(t_path, "t_daily_mean.nc", varname="ta")
-    data_u = xr.load_dataset(u_daily_mean_path)
-    data_v = xr.load_dataset(v_daily_mean_path)
-    data_t = xr.load_dataset(t_daily_mean_path)
-    qgds = QGDataset(da_u=data_u, da_v=data_v, da_t=data_t, var_names=var_names)
-    uvtinterp = qgds.interpolate_fields()
-    refstates = qgds.compute_reference_states()
+    data_u = xr.open_dataset(u_daily_mean_path).isel(time=[0, 1, 2]).to_netcdf(u_daily_mean_3steps_path)
+    data_v = xr.open_dataset(v_daily_mean_path).isel(time=[0, 1, 2]).to_netcdf(v_daily_mean_3steps_path)
+    data_t = xr.open_dataset(t_daily_mean_path).isel(time=[0, 1, 2]).to_netcdf(t_daily_mean_3steps_path)
 
     print("Finished full procedures")

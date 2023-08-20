@@ -5,10 +5,9 @@ import xarray as xr                # python library we use to read netcdf files
 import matplotlib.pyplot as plt    # python library we use to make plots
 from hn2016_falwa.xarrayinterface import QGDataset
 
-data_dir = "/home/clare/GitHub/mdtf/inputdata/obs_data/finite_amplitude_wave_diag/"
-u_path = f"{data_dir}era5_2022_u_component_of_wind.nc"
-v_path = f"{data_dir}era5_2022_v_component_of_wind.nc"
-t_path = f"{data_dir}era5_2022_temperature.nc"
+u_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL-CM4/data/atmos_inst/ts/hourly/1yr/atmos_inst.1984010100-1984123123.ua.nc"
+v_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL-CM4/data/atmos_inst/ts/hourly/1yr/atmos_inst.1984010100-1984123123.va.nc"
+t_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL-CM4/data/atmos_inst/ts/hourly/1yr/atmos_inst.1984010100-1984123123.ta.nc"
 wk_dir = "/home/clare/GitHub/mdtf/wkdir/"
 u_daily_mean_path = f"{wk_dir}u_daily_mean.nc"
 v_daily_mean_path = f"{wk_dir}v_daily_mean.nc"
@@ -34,9 +33,18 @@ def output_daily_avg(input_path, output_file, varname="ua"):
 
 
 if __name__ == '__main__':
-    qgds = xr.open_mfdataset("era5_2022_[tuv].nc").resample(time="1D").mean()  # get daily mean
-    print("Start interpolating.")
-    uvtinterp = qgds.interpolate_fields()
-    print("Finished interpolating. State reference state computation")
-    refstates = qgds.compute_reference_states()
+    var_names = {
+        'plev': 'level',
+        'ylat': 'lat',
+        'xlon': 'lon',
+        'u': 'ua',
+        'v': 'va',
+        't': 'ta'}
+    # u_output_path = output_daily_avg(u_path, "u_daily_mean.nc", varname="ua")
+    # v_output_path = output_daily_avg(v_path, "v_daily_mean.nc", varname="va")
+    # t_output_path = output_daily_avg(t_path, "t_daily_mean.nc", varname="ta")
+    data_u = xr.open_dataset(u_daily_mean_path).isel(time=[0, 1, 2]).to_netcdf(u_daily_mean_3steps_path)
+    data_v = xr.open_dataset(v_daily_mean_path).isel(time=[0, 1, 2]).to_netcdf(v_daily_mean_3steps_path)
+    data_t = xr.open_dataset(t_daily_mean_path).isel(time=[0, 1, 2]).to_netcdf(t_daily_mean_3steps_path)
+
     print("Finished full procedures")

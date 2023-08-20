@@ -12,5 +12,6 @@ dependencies:
 - matplotlib=3.5.3
 - pytest==7.4.0
 - pip=22.0.4
+- dask
 - pip:
   - hn2016_falwa==0.7.1

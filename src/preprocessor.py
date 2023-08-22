@@ -116,15 +116,11 @@ class PreprocessorFunctionBase(abc.ABC):
         format *Y* and the POD requests *X*, this method should insert an
         alternate variable request (:class:`~src.diagnostic.VarlistEntry`) for
         *Y*.
-
-        Args:
-            data_mgr: Parent data source instance, used read-only to obtain
-                initialization information not available from individual PODs.
         """
         pass
 
     @abc.abstractmethod
-    def process(self, var, dataset, *args):
+    def process(self, var, xr_dataset, *args):
         """Apply the format conversion implemented in this PreprocessorFunction
         to the input dataset *dataset*, according to the request made in *var*.
 
@@ -132,14 +128,14 @@ class PreprocessorFunctionBase(abc.ABC):
             var (:class:`~src.diagnostic.VarlistEntry`): POD varlist entry
                 instance describing POD's data request, which is the desired end
                 result of the conversion implemented by this method.
-            dataset: `xarray.Dataset
+            xr_dataset: `xarray.Dataset
                 <http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html>`__
                 instance.
 
         Returns:
             Modified *dataset*.
         """
-        return dataset
+        return xr_dataset
 
 
 class CropDateRangeFunction(PreprocessorFunctionBase):
@@ -162,7 +158,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
               ('tm_year', 'tm_mon', 'tm_mday', 'tm_hour', 'tm_min', 'tm_sec'))
         return cftime.datetime(*tt, calendar=calendar)
 
-    def edit_request(self, pod):
+    def edit_request(self):
         """No-op for this PreprocessorFunction, since no alternate data is needed.
         """
         pass
@@ -175,7 +171,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         user's input before we knew the calendar being used by the model. The
         workaround here to cast those values into `cftime.datetime
         <https://unidata.github.io/cftime/api.html#cftime.datetime>`__
-        objects so they can be compared with the model data's time axis.
+        objects so that they can be compared with the model data's time axis.
         """
         tv_name = var.name_in_model
         t_coord = ds.cf.dim_axes(tv_name).get('T', None)
@@ -258,7 +254,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
     """
     # Incorrect but matches convention for this conversion.
     _liquid_water_density = units.Units('1000.0 kg m-3')
-    # list of regcognized standard_names for which transformation is applicable
+    # list of recognized standard_names for which transformation is applicable
     # NOTE: not exhaustive
     _std_name_tuples = [
         # flux in CF, rate is not
@@ -272,7 +268,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
     _flux_d = {tup[1]: tup[0] for tup in _std_name_tuples}
 
     @edit_request_wrapper
-    def edit_request(self, v, pod, data_mgr):
+    def edit_request(self, v, pod, data_convention: str):
         """Edit *pod*\'s Varlist prior to query. If the
         :class:`~src.diagnostic.VarlistEntry` *v* has a ``standard_name`` in the
         recognized list, insert an alternate VarlistEntry whose translation
@@ -291,27 +287,27 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         if std_name in self._rate_d:
             # requested rate, so add alternate for flux
             v_to_translate = copy_as_alternate(
-                v, data_mgr,
+                v,
                 standard_name=self._rate_d[std_name],
                 units=units.to_cfunits(v.units) * self._liquid_water_density
             )
         elif std_name in self._flux_d:
             # requested flux, so add alternate for rate
             v_to_translate = copy_as_alternate(
-                v, data_mgr,
+                v,
                 standard_name=self._flux_d[std_name],
                 units=units.to_cfunits(v.units) / self._liquid_water_density
             )
 
         translate = translation.VariableTranslator()
         try:
-            new_tv = translate.translate(data_mgr.attrs.convention, v_to_translate)
+            new_tv = translate.translate(data_convention, v_to_translate)
         except KeyError as exc:
             pod.log.debug(('%s edit_request on %s: caught %r when trying to '
                            'translate \'%s\'; varlist unaltered.'), self.__class__.__name__,
                           v.full_name, exc, v_to_translate.standard_name)
             return None
-        new_v = copy_as_alternate(v, data_mgr)
+        new_v = copy_as_alternate(v)
         new_v.translation = new_tv
         return new_v
 
@@ -361,7 +357,7 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
     :doc:`src.units`.
     """
 
-    def edit_request(self, data_mgr, pod):
+    def edit_request(self):
         """No-op for this PreprocessorFunction, since no alternate data is needed.
         """
         pass
@@ -413,7 +409,7 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
     """Renames dependent variables and coordinates to what's expected by the POD.
     """
 
-    def edit_request(self, data_mgr, pod):
+    def edit_request(self):
         """No-op for this PreprocessorFunction, since no alternate data is needed.
         """
         pass
@@ -516,7 +512,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
     """
 
     @edit_request_wrapper
-    def edit_request(self, v, pod, data_mgr):
+    def edit_request(self, v, data_convention:str):
         """Edit the *pod*'s :class:`~src.diagnostic.Varlist` prior to data query.
         If given a :class:`~src.diagnostic.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
@@ -547,7 +543,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             new_tv_name = v.name
         else:
             new_tv_name = translation.VariableTranslator().from_CF_name(
-                data_mgr.attrs.convention, v.standard_name, new_ax_set
+                data_convention, v.standard_name, new_ax_set
             )
         new_tv = tv.remove_scalar(
             tv.scalar_coords[0].axis,
@@ -640,7 +636,7 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
     """
 
     @edit_request_wrapper
-    def edit_request(self, v, *args):
+    def edit_request(self, v, data_convention: str, *args):
         """Edit the *pod*'s :class:`~src.diagnostic.Varlist` prior to data query.
         If given a :class:`~src.MultirunDiagnostic.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
@@ -670,14 +666,14 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
         if v.use_exact_name:
             new_tv_name = v.name
         else:
-            new_tv_name = translate.VariableTranslator().from_CF_name(
-                data_mgr.convention, v.standard_name, new_ax_set
+            new_tv_name = translation.VariableTranslator().from_CF_name(
+                data_convention, v.standard_name, new_ax_set
             )
         new_tv = tv.remove_scalar(
             tv.scalar_coords[0].axis,
             name=new_tv_name
         )
-        new_v = copy_as_alternate(v, data_mgr)
+        new_v = copy_as_alternate(v)
         new_v.translation = new_tv
         return new_v
 
@@ -712,7 +708,19 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
         return ds
 
 
-# ==================================================
+class UserDefinedPreprocessorFunction(PreprocessorFunctionBase):
+    """Class to hold user-defined preprocessor functions"""
+    user_defined_script: str
+
+    def __init__(self, pp_script: str):
+        """Called during Preprocessor's init."""
+        self.user_defined_script = pp_script
+
+    def edit_request(self, v, data_convention: str, args):
+        pass
+
+    def process(self, var, ds, *args):
+        pass
 
 
 class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
@@ -747,7 +755,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # initialize xarray parser
         self.parser = self._XarrayParserClass(pod)
         # initialize PreprocessorFunctionBase objects
-        self.functions = [cls_(pod) for cls_ in self._functions]
+        self.functions = []
+        if any(pod.user_pp_scripts):
+            for s in pod.user_pp_scripts:
+                self.functions.append(UserDefinedPreprocessorFunction(s))
+        self.functions.append(f for f in self._functions)
+
 
     @property
     def _functions(self):
@@ -759,12 +772,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             listing the preprocessing functions to be called, in order.
         """
         # normal operation: run all functions
-        return (
+        return [
             CropDateRangeFunction,
             PrecipRateToFluxFunction, ConvertUnitsFunction,
             ExtractLevelFunction, RenameVariablesFunction,
             AssociatedVariablesFunction
-        )
+         ]
 
     def edit_request(self, pod):
         """Top-level method to edit *pod*\'s data request, based on the child
@@ -1046,7 +1059,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         var.log.debug("Successful preprocessor exit on %s.", var)
 
 
-class SingleFilePreprocessor(MDTFPreprocessorBase):
+class SingleVarFilePreprocessor(MDTFPreprocessorBase):
     """A Preprocessor class for preprocessing model data that's provided as a
     single netCDF file per variable, for example the POD's sample model data.
 
@@ -1065,12 +1078,11 @@ class NullPreprocessor(MDTFPreprocessorBase):
     """A class that skips preprocessing and just symlinks files from the input dir to the wkdir
     """
 
-    def __init__(self, data_mgr, pod):
-        config = core.ConfigManager()
-        self.overwrite_ds = config.get('overwrite_file_metadata', False)
+    def __init__(self, pod, data_convention: str):
+        self.overwrite_ds = pod.overwrite
 
-        self.WK_DIR = data_mgr.MODEL_WK_DIR
-        self.convention = data_mgr.attrs.convention
+        self.WK_DIR = pod.dirs.MODEL_WORK_DIR
+        self.convention = data_convention
         self.pod_convention = pod.convention
 
         if getattr(pod, 'nc_largefile', False):
@@ -1081,11 +1093,11 @@ class NullPreprocessor(MDTFPreprocessorBase):
         self.output_to_ncl = ('ncl' in pod.runtime_requirements)
 
         # initialize xarray parser
-        self.parser = self._XarrayParserClass(data_mgr, pod)
+        self.parser = self._XarrayParserClass(pod)
         # dummy attribute--no pp functions to perform
         self.functions = []
 
-    def edit_request(self, data_mgr, pod):
+    def edit_request(self, *args):
         """Dummy implementation of edit_request to meet abstract base class requirements
         """
         pass
@@ -1095,7 +1107,7 @@ class NullPreprocessor(MDTFPreprocessorBase):
         """
         pass
 
-    def process(self, var):
+    def process(self, var, ds):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with the POD variable *var*.
         """
@@ -1165,23 +1177,12 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
             )
 
 
-# -------------------------------------------------
-
-class SampleDataPreprocessor(SingleFilePreprocessor):
-    """Implementation class for :class:`MDTFPreprocessorBase` intended for use
-    on sample model data distributed with the package. Assumes all data is in
-    one netCDF file.
-    """
-    # Need to include all functions; ExtractLevelFunction needed for
-    # NCAR-CAM5.timeslice for Travis CI
-    pass
-
-
 class DefaultPreprocessor(DaskMultiFilePreprocessor):
     """Implementation class for :class:`MDTFPreprocessorBase` for the general
     use case. Includes all implemented functionality and handles multi-file data.
     """
     _file_preproc_functions = []
+
 
 
 

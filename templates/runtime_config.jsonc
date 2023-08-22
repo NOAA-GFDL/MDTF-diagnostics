@@ -31,7 +31,7 @@
       "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231":
         {
           "model": "test",
-          "convention": "CMIP",
+          "convention": "GFDL",
           "startdate": "19800101",
           "enddate": "19841231"
         }
@@ -66,12 +66,12 @@
 
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned by running `conda info --base`.)
-  "conda_root": "~/miniconda3",
+  "conda_root": "/local2/home/miniconda3",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in conda_root/envs
-  "conda_env_root": "~/miniconda3/envs",
+  "conda_env_root": "/local2/home/miniconda3/envs",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
@@ -103,9 +103,8 @@
   // under a unique name.
   "overwrite": false,
   // List with custom preprocessing script(s) to run on data
-  "my_scripts" : [
-     ""
-   ],
+  // Place these scripts in the sites/local directory of your copy of the MDTF-diagnostics repository
+  "user_pp_scripts" : ["example_pp_script.py"],
 
   // Settings used in debugging:
 

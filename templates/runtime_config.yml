@@ -59,6 +59,7 @@ overwrite: False
 # Set to True to run the preprocessor
 run_pp: True
 # Additional custom preprocessing scripts to run on data
+# place these scripts in the sites/local directory
 # The framework will run the specified scripts whether run_pp is set to True or False
-my_scripts:
+user_pp_scripts:
   - ""

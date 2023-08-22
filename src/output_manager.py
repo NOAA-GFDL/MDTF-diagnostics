@@ -209,7 +209,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         )
         util.recursive_copy(
             files, abs_src_subdir, abs_dest_subdir,
-            copy_function=shutil.move, overwrite=False
+            copy_function=shutil.move, overwrite=True
         )
 
     def cleanup_pod_files(self):

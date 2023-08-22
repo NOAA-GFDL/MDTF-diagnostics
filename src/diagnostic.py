@@ -1248,7 +1248,7 @@ class MultirunDiagnostic(pod_setup.MultiRunPod, Diagnostic):
         translate = core.VariableTranslator()
         for case_name, case_d in case_dict.items():
             # Info for each case is initialized in a Multirun data source object
-            self.log.info("### %s: initializing case '%s'.", self.full_name, case_name)
+            self.log.info("###diagnostic.py %s: initializing case '%s'.", self.full_name, case_name)
             # update the dictionary entry for each case
             self.cases[case_name] = data_source(case_d, parent=self)
             self.cases[case_name].overwrite = config.overwrite

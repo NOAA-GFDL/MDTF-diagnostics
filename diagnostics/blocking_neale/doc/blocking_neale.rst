@@ -53,31 +53,49 @@ jsonc file:
 1) What to compare input case(s) against: 
 
    - observational products from ERAI & MERRA. Can be turned on or off together. Default: On
+     Years used can be controlled individually
 
    - three CESM 5-member ensembles (CAM3, CAM4, CAM5) which can be turned on or off individually. Default: CAM5 only. (Note that the code runs with these but the html file does not yet respond to this. Therefore the POD will fail to link the figures if non-default options are used)
 
-   ==================  ====================  
-   Variable name       Default  
-   ==================  ====================  
-   MDTF_BLOCKING_OBS   True
-   MDTF_BLOCKING_CAM3  False
-   MDTF_BLOCKING_CAM4  False
-   MDTF_BLOCKING_CAM5  True
-   ==================  ====================
+     ==================                  ====================  
+     Variable name                       Default  
+     ==================                  ====================  
+
+     "MDTF_BLOCKING_OBS"               : "True",  //both ERA & MERRA (not possible to choose individually yet)
+     "MDTF_BLOCKING_OBS_USE_CASE_YEARS": "False", //if False, must set ERA/MERRA/CAM5 FIRST/LAST-YRS below
+     "MDTF_BLOCKING_OBS_ERA_FIRSTYR"   : 2010,    
+     "MDTF_BLOCKING_OBS_ERA_LASTYR"    : 2014,  
+     "MDTF_BLOCKING_OBS_MERRA_FIRSTYR" : 2009,  
+     "MDTF_BLOCKING_OBS_MERRA_LASTYR"  : 2011,  
+     "MDTF_BLOCKING_OBS_CAM5_FIRSTYR"  : 1979,     
+     "MDTF_BLOCKING_OBS_CAM5_LASTYR"   : 2007,  
+     "MDTF_BLOCKING_CAM3"              : "False", //if True, will run but doesn't show on webpage
+     "MDTF_BLOCKING_CAM4"              : "False", //if True, will run but doesn't show on webpage
+     "MDTF_BLOCKING_CAM5"              : "True",  
+     "MDTF_BLOCKING_READ_DIGESTED"     : "True",     // if True, files must be available
+     "MDTF_BLOCKING_WRITE_DIGESTED"    : "False",    // if True, writes out case data as digested. requires READ_DIGESTED = False
+     "MDTF_BLOCKING_WRITE_DIGESTED_DIR": "",         // default output directory for digested data
+     "MDTF_BLOCKING_DEBUG"             : "False"      // reduces number of ensemble members to 2 for quicker execution
+
+REMOVED:  
+      "MDTF_BLOCKING_COMPARE_LONG_YEARS"         use instead the more detailed variables above
 
 
 
 2) Variables to control reading or writing of digested data 
 
    - ``MDTF_BLOCKING_READ_DIGESTED (Default True)``
-     If True, the POD looks for digested data for the obs & CAM ensembles (MDTF_BLOCKING_READ_DIGESTED = False). 
-     Digested means the data has been processed by this script into the `block_time` variable name and format.
+     If True, the POD looks for digested data for the obs & CAM ensembles 
+     Digested means the data has been processed by this POD into the `block_time` variable name and format
+     (see ``MDTF_BLOCKING_WRITE_DIGESTED`` below)
+     ``(MDTF_BLOCKING_READ_DIGESTED = False)``
+     If False, the POD looks for raw data (Z500(time,lat,lon)).
 
      The POD is not currently capable of running with a mix of digested and undigested (other than the undigested MDTF input case). If the user desires this, it is recommended to run only the components that are not digested, and write out digested. Then re-running with MDTF_BLOCKING_READ_DIGESTED will work.
 
-     It is not yet possible to run the MDTF input case with digested data, although it is possible to write it out
+     It is not yet possible to run the MDTF input case with digested data, although it is possible to write it out.
 
-     | OBS/CAM files are expected to be delineated with the file name & dir name as follows.
+     | OBS/CAM file name & dir expectations:
      | Digested:   obs_data/blocking/ERAI/ERAI.z500.day. *digested* .nc
      | Undigested: obs_data/blocking/*undigested*/ERAI/ERAI.z500.day.nc
 

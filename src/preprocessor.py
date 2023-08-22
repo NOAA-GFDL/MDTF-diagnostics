@@ -1488,6 +1488,7 @@ class MultirunExtractLevelFunction(ExtractLevelFunction):
             new_tv_name = core.VariableTranslator().from_CF_name(
                 data_mgr.convention, v.standard_name, new_ax_set
             )
+
         new_tv = tv.remove_scalar(
             tv.scalar_coords[0].axis,
             name=new_tv_name

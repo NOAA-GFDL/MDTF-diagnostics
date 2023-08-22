@@ -22,7 +22,7 @@
   "dimensions": {
     "lat": {"standard_name": "latitude"},
     "lon": {"standard_name": "longitude"},
-    "lev": {
+    "plev": {
       "standard_name": "air_pressure",
       "units": "Pa",
       "positive": "down",
@@ -35,29 +35,31 @@
       "standard_name" : "eastward_wind",
       "units" : "m s-1",
       "frequency": "day",
-      "dimensions": ["time", "lev", "lat"],
+      "dimensions": ["time", "plev", "lat"],
       "requirement": "required"
     },
     "zg": {
       "standard_name" : "geopotential_height",
       "units" : "m",
       "frequency": "day",
-      "dimensions": ["time", "lev", "lat"],
+      "dimensions": ["time", "plev", "lat"],
       "requirement": "required"
     },
     "zg500": {
-      "standard_name" : "geopotential_height_at_500_hPa",
+      "standard_name" : "geopotential_height",
       "units" : "m",
       "frequency": "day",
       "dimensions": ["time", "lat", "lon"],
+      "scalar_coordinates": {"plev": 50000},
       "requirement": "required"
     },
     "tas": {
-      "standard_name" : "surface_air_temperature",
+      "standard_name" : "air_temperature",
       "units" : "K",
       "frequency": "day",
       "dimensions": ["time", "lat", "lon"],
-      "requirement": "required"
+      "requirement": "required",
+      "modifier" : "atmos_height"
     }
   }
 }

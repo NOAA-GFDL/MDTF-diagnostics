@@ -16,7 +16,6 @@ Contains:
 
 import numpy as np
 import xarray as xr
-import xarray.ufuncs as xrf
 from datetime import datetime,timedelta 
 from scipy import stats
 
@@ -475,10 +474,10 @@ def ttest_1samp(a, popmean, dim):
     a_mean = a.mean(dim)
     d = a_mean - popmean
     v = a.var(dim, ddof=1)
-    denom = xrf.sqrt(v / float(n))
+    denom = np.sqrt(v / float(n))
 
     t = d /denom
-    prob = stats.distributions.t.sf(xrf.fabs(t), df) * 2
+    prob = stats.distributions.t.sf(np.fabs(t), df) * 2
     prob_xa = xr.DataArray(prob, coords=a_mean.coords)
     return a_mean, prob_xa
 

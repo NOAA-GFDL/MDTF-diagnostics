@@ -736,7 +736,7 @@ OBS_DIR = os.environ['OBS_DATA']
 ufi = os.environ['UA_FILE']
 zfi = os.environ['ZG_FILE']
 z500fi = os.environ['ZG500_FILE']
-tfi = os.environ['TAS_FILE']
+tasfi = os.environ['TAS_FILE']
 
 # Parse POD-specific environment variables
 print('*** Parse POD-specific environment variables ...')

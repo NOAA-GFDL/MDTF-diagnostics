@@ -6,7 +6,7 @@
 # POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
 #
 # STC Stratospheric Polar Vortex Extremes
-# Last update: 2023-08-03
+# Last update: 2023-08-22
 #
 # This script performs calculations to detect stratospheric polar vortex extremes. 
 # Extremes in the stratospheric polar vortex are closely linked to the tropospheric
@@ -23,7 +23,7 @@
 # ==============================================================================
 #   Version, Contact Info, and License
 # ==============================================================================
-#   - Version/revision information: v1.0 (2023-08-03)
+#   - Version/revision information: v1.0 (2023-08-22)
 #   - PI: Amy H. Butler, NOAA CSL
 #   - Developer/point of contact: Amy H. Butler, amy.butler@noaa.gov
 #   - Other contributors: Zachary D. Lawrence, CIRES + CU Boulder / NOAA PSL, 

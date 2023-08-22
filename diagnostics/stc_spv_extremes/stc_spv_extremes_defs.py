@@ -10,8 +10,7 @@ Contains:
     ssw_cp07 (find central dates of SSWs)
     spv_vi (find central dates of VIs)
     composite (average pressure-time variable across events)
-    ttest_1samp (one sample t-test)
-              
+    ttest_1samp (one sample t-test)          
 '''
 
 import numpy as np
@@ -483,70 +482,3 @@ def ttest_1samp(a, popmean, dim):
 
 #**************************************************************************************
 
-def comp_bootstrap(variable, index, lag_before=20, lag_after=60, nbs=200, hem="NH"):
-   
-    """
-    This function will do a bootstrap of ``variable'' based on the number of samples
-    in ``index'', with nbs resampling (default: nbs = 200 for efficiency)
-   
-    index needs to be a 1D time series.
-   
-    variable needs to have time as its first dimension. 
-   
-    """
-    c1 = index.shape[0]
-   
-    #restrict fake index dates to extended winter
-    if hem == "NH":
-        win = variable.sel(time=variable.time.dt.month.isin([1, 2, 3, 10, 11, 12]))
-    if hem == "SH":
-        win = variable.sel(time=variable.time.dt.month.isin([7, 8, 9, 10, 11, 12]))
-    dys = win.time.dt.day.values
-    mns = win.time.dt.month.values
-    yrs = win.time.dt.year.values
-   
-    final_comp = []
-    for n in range(nbs):
-        ixs = np.random.choice(win.shape[0], size=c1, replace=False)
-        ixs = np.sort(ixs)
-        ixs = ixs[np.where(ixs > lag_before)]
-       
-        dye = dys[ixs]
-        mne = mns[ixs]
-        yre = yrs[ixs]
-       
-        count = np.arange(len(yre))
-        t = np.arange(-lag_before,lag_after,1)
-        # Initialize dataset using the first event
-        cen = datetime(year=yre[0],day=dye[0],month=mne[0])
-        en = cen + timedelta(days=lag_after-1)
-        sta = cen - timedelta(days=lag_before)
-        edate = en.strftime("%Y-%m-%d")
-        stdate = sta.strftime("%Y-%m-%d")
-        #print(stdate + ' to '+edate)
-        if (sta >= datetime(year=yre[0],day=1,month=1)) and (en <= datetime(year=yre[-1],day=31,month=12)):
-            avgvar = variable.sel(time=slice(stdate,edate))
-            avgvar = avgvar.assign_coords(time=t)
-            avgvar = avgvar.expand_dims(dim="event")
-
-        for dat in count[1:]:
-            cen = datetime(year=yre[dat],day=dye[dat],month=mne[dat])
-            en = cen + timedelta(days=lag_after-1)
-            sta = cen - timedelta(days=lag_before)
-            edate = en.strftime("%Y-%m-%d")
-            stdate = sta.strftime("%Y-%m-%d")
-            if (sta >= datetime(year=yre[0],day=1,month=1)) and (en <= datetime(year=yre[-1],day=31,month=12)): 
-                #print(stdate + ' to '+edate)
-                newvar = variable.sel(time=slice(stdate,edate))
-                newvar = newvar.assign_coords(time=t)
-                newvar = newvar.expand_dims(dim="event")
-                allvar = xr.concat([avgvar, newvar], dim='event')
-                avgvar = allvar
-       
-        tot_comp = avgvar.mean(dim="event")
-        tot_comp = tot_comp.expand_dims(dim="sample")
-        final_comp.append(tot_comp)
-   
-    combined = xr.concat(final_comp, dim='sample')
-   
-    return combined

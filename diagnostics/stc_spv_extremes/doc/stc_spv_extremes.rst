@@ -11,7 +11,7 @@
 Stratosphere-Troposphere Coupling: Stratospheric Polar Vortex Extremes
 ================================
 
-Last update: 2023-08-03
+Last update: 2023-08-22
 
 This POD assesses stratospheric polar vortex extremes, and the tropospheric circulation
 and surface patterns that precede and follow them. Extremes in the 

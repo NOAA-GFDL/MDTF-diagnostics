@@ -42,6 +42,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     pod_vars = dict()
     pod_settings = dict()
     cases = dict()
+    user_pp_scripts: list
 
     overwrite: bool = False
     # explict 'program' attribute in settings
@@ -243,6 +244,15 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             self.log.debug("Set program for %s to '%s'.",
                            self.full_name, self.program)
 
+    def add_user_pp_scripts(self, runtime_config: util.NameSpace):
+        self.user_pp_scripts = [os.path.join(self.paths.CODE_ROOT, "sites/local", s)
+                                for s in runtime_config.user_pp_scripts]
+        for s in self.user_pp_scripts:
+            try:
+                os.path.exists(s)
+            except util.MDTFFileExistsError:
+                self.log.error(f"User-defined post-processing file {s} not found")
+
     def setup_pod(self, runtime_config: util.NameSpace):
         """Update POD information from settings and runtime configuration files
         """
@@ -284,13 +294,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 self.cases[case_name].translate_varlist(self,
                                                         case_name,
                                                         to_convention=data_convention)
-            # get level
 
-        else:
-            pass
-        # run custom scripts on dataset
-        if any([s for s in runtime_config.my_scripts]):
-            pass
 
         # ref for dict comparison
         # https://stackoverflow.com/questions/20578798/python-find-matching-values-in-nested-dictionary
@@ -312,10 +316,10 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 # specified
                 if v.last_exception is not None and not v.failed:
                     v.deactivate(v.last_exception, level=logging.WARNING)
-            if case_name.status == util.ObjectStatus.NOTSET and \
-                    any(v.status == util.ObjectStatus.ACTIVE for v in case_name.iter_children()):
-                case_name.status = util.ObjectStatus.ACTIVE
+            if self.cases[case_name].status == util.ObjectStatus.NOTSET and \
+                    any(v.status == util.ObjectStatus.ACTIVE for v in self.cases[case_name].iter_children()):
+                self.cases[case_name].status = util.ObjectStatus.ACTIVE
         # set MultirunDiagnostic object status to Active if all case statuses are Active
         if self.status == util.ObjectStatus.NOTSET and \
-                all(case.status == util.ObjectStatus.ACTIVE for case in self.cases):
+                all(case_dict.status == util.ObjectStatus.ACTIVE for case_name, case_dict in self.cases.items()):
             self.status = util.ObjectStatus.ACTIVE

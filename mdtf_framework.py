@@ -88,6 +88,9 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     for pod_name in ctx.config.pod_list:
         pod_obj = pod_setup.PodObject(pod_name, ctx.config)
         pod_obj.setup_pod(ctx.config)
+        # run custom scripts on dataset
+        if any([s for s in ctx.config.user_pp_scripts]):
+            pod_obj.add_user_pp_scripts(ctx.config)
 
     # close the main log file
     log._log_handler.close()

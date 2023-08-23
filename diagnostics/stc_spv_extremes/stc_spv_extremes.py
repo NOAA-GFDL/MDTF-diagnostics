@@ -133,12 +133,13 @@ def plot_spv_hist(uzm_10, hemi, filepath_ssw, filepath_vi):
     
     year = uzm_10.time.dt.year.values 
     yr = np.arange(year[0],year[-1]+1,1)
-
+    
+    ssw = None
+    vi = None
     if (hemi == 'NH'):
         
         # Need SSW central dates
         uzm_spec = uzm_10.interp(lat=60)
-        ssw = None
         ssw = stc_spv_extremes_defs.ssw_cp07(uzm_spec,hem=hemi)
         
         # Determine SSW frequency (in NH, the total years are one less than in 
@@ -171,7 +172,6 @@ def plot_spv_hist(uzm_10, hemi, filepath_ssw, filepath_vi):
                       (seas_ssw[4]-ci_smar_lo, ci_smar_up-seas_ssw[4])]
         
         # Need VI central dates
-        vi = None
         vi = stc_spv_extremes_defs.spv_vi(uzm_spec,hem=hemi)
         
         # Determine VI frequency (in NH, the total years are one less than in 
@@ -206,7 +206,6 @@ def plot_spv_hist(uzm_10, hemi, filepath_ssw, filepath_vi):
         
         # Need SSW central dates
         uzm_spec = uzm_10.interp(lat=-60)
-        ssw = None
         ssw = stc_spv_extremes_defs.ssw_cp07(uzm_spec,hem=hemi)
         
         # Determine SSW frequency
@@ -237,7 +236,6 @@ def plot_spv_hist(uzm_10, hemi, filepath_ssw, filepath_vi):
                       (seas_ssw[4]-ci_soct_lo, ci_soct_up-seas_ssw[4])]
         
          # Need VI central dates
-        vi = None
         vi = stc_spv_extremes_defs.spv_vi(uzm_spec,hem=hemi)
         
         # Determine VI frequency
@@ -353,18 +351,17 @@ def plot_dripping_paint(uzm_10, zg_pcap, hemi):
     """
     
     year = uzm_10.time.dt.year.values 
-    yr = np.arange(year[0],year[-1]+1,1)
     
     #This function standardizes the polar cap geopotential heights at each pressure
     #level by the daily climatology
     std_anom = zg_pcap.groupby("time.dayofyear").map(stc_spv_extremes_defs.standardize)
 
+    ssw = None
+    vi = None
     if (hemi == 'NH'):
         
         # Need SSW and VI central dates
         uzm_spec = uzm_10.interp(lat=60)
-        ssw = None
-        vi = None
         ssw = stc_spv_extremes_defs.ssw_cp07(uzm_spec,hem=hemi)
         vi = stc_spv_extremes_defs.spv_vi(uzm_spec,hem=hemi)
         avgssw = None
@@ -397,8 +394,6 @@ def plot_dripping_paint(uzm_10, zg_pcap, hemi):
         
         # Need SSW central dates
         uzm_spec = uzm_10.interp(lat=-60)
-        ssw = None
-        vi = None
         ssw = stc_spv_extremes_defs.ssw_cp07(uzm_spec,hem=hemi)  
         vi = stc_spv_extremes_defs.spv_vi(uzm_spec,hem=hemi)
         avgssw = None
@@ -452,14 +447,14 @@ def plot_dripping_paint(uzm_10, zg_pcap, hemi):
         ct_ssw = len(ssw)
         
         mask = np.logical_and(prob_ssw > 0.05, prob_ssw < 0.95)
-        m=ax[0].contourf(lag, press, avgssw.mean("event").transpose(), levels=lev, cmap=cmap,
+        ax[0].contourf(lag, press, avgssw.mean("event").transpose(), levels=lev, cmap=cmap,
                     norm=colors.CenteredNorm(),extend='both')
         ax[0].contourf(lag,press, mask.transpose(),levels=[.1,1],hatches=['..'],colors='none')
         ax[0].vlines(x=0,ymin=np.min(press),ymax=np.max(press),color='gray')
         ax[0].set_title(f'Standardized polar cap geopotential height anomalies \n composited for {hemi} SSWs ({ct_ssw} events)',fontsize=16)
 
     else:
-        m=ax[0].text(0,100, 'No SSWs detected') 
+        ax[0].text(0,100, 'No SSWs detected') 
     
     ax[1].set_xlim(-20,60-1)
     ax[1].set_ylim(10,1000)
@@ -481,7 +476,7 @@ def plot_dripping_paint(uzm_10, zg_pcap, hemi):
         fig.colorbar(m2, ax=ax[:], ticks=lev[::2], orientation='vertical',label='[Std Dev]')
     
     else:
-        m2=ax[1].text(0,100, 'No VIs detected')  
+        ax[1].text(0,100, 'No VIs detected')  
          
     return (fig,ax)
 
@@ -517,14 +512,12 @@ def plot_composite_maps(uzm_10, zg_500, tas, hemi):
     """
     
     year = uzm_10.time.dt.year.values 
-    yr = np.arange(year[0],year[-1]+1,1)
-
+    ssw = None
+    vi = None
     if (hemi == 'NH'):
         
         # Need SSW and VI central dates
         uzm_spec = uzm_10.interp(lat=60)
-        ssw = None
-        vi = None
         ssw = stc_spv_extremes_defs.ssw_cp07(uzm_spec,hem=hemi)
         vi = stc_spv_extremes_defs.spv_vi(uzm_spec,hem=hemi)
         zg_ssw = None
@@ -559,8 +552,6 @@ def plot_composite_maps(uzm_10, zg_500, tas, hemi):
         
         # Need SSW central dates
         uzm_spec = uzm_10.interp(lat=-60)
-        ssw = None
-        vi = None
         ssw = stc_spv_extremes_defs.ssw_cp07(uzm_spec,hem=hemi)  
         vi = stc_spv_extremes_defs.spv_vi(uzm_spec,hem=hemi)
         zg_ssw = None
@@ -611,7 +602,7 @@ def plot_composite_maps(uzm_10, zg_500, tas, hemi):
     lev2 = np.linspace(-2, 2, 21)
     cmap ='RdBu_r'
     
-    ax[0,0].coastlines(linewidth=0.2)
+    m=ax[0,0].coastlines(linewidth=0.2)
     ax[0,0].set_extent([-180, 180, minlat, maxlat], ccrs.PlateCarree())
     theta = np.linspace(0, 2*np.pi, 100)
     center, radius = [0.5, 0.5], 0.5
@@ -900,6 +891,16 @@ try:
     rean = obs.reanalysis
     obs_firstyr = obs.time.dt.year.values[0]
     obs_lastyr = obs.time.dt.year.values[-1]
+    
+    print(f'***Limiting obs data to {FIRSTYR} to {LASTYR}***')
+    if (FIRSTYR < obs_firstyr):
+        msg = 'FIRSTYR must be >= obs first year'
+        raise ValueError(msg)
+    if (LASTYR > obs_lastyr):
+        msg = 'LASTYR must be <= obs last year'
+        raise ValueError(msg)
+    
+    obs = obs.sel(time=slice(str(FIRSTYR),str(LASTYR)))
     
     print(f'*** Selecting zonal-mean zonal winds at 10 hPa')
     uzm_10 = obs.uwnd_zm.sel(plev=10)

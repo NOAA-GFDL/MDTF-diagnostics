@@ -152,10 +152,6 @@ def ssw_cp07(variable,threshold=0, consec_days=20, hem="NH"):
     hem: String quantity
         An optional variable that applies code to either NH or SH; default is NH
     """
-
-    #import numpy as np 
-    #import xarray as xr
-    #import datetime
     
     year = variable.time.dt.year.values   
     yr = np.arange(year[0],year[-1]+1,1)

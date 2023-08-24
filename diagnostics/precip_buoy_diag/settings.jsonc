@@ -32,7 +32,7 @@
                        "lon": {"standard_name": "longitude"},
                        "lev": {
                                "standard_name": "air_pressure",
-                               "positive": "down
+                               "positive": "down"
                               },
                        "time": {"standard_name": "time"}
                       },

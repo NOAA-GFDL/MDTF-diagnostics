@@ -8,10 +8,10 @@ load "$POD_HOME/blocking_digested.ncl"
 ; Reads in daily Z500mb and constructs various indices and plots of blocking.
 ; Analyzes many ensemble members and plots the mean and spread or std
 ; Can accomodate data of different resolutions.
-; - DRB Feb 2021
+; - DRBC Feb 2021
 ; separate some analysis and plotting functions into blocking_funcs
 ; make controllable by env vars
-
+; - DRBC May 2023: Add multi-run capability
 begin 
 
 lstd = False     ; Plot standard dev lines (otherwise plot min/max which is UNTESTED).
@@ -22,7 +22,8 @@ set_digested(opts) ; translates env vars to opts@read_digested,write_digested
                    ; this is used by all_cases to set file names
 
 all_cases = blocking_get_all_case_info(opts) 
-; data structure to hold all case information of length number of files
+printVarSummary(all_cases)
+; opts = data structure to hold all case information of length number of files
 ; case_names,case_type,file_names,@years_run0, years_run1 = start and stop years corresponding to above
 
 
@@ -89,6 +90,7 @@ do ifile=0,all_cases@nfiles-1
    
    ; Check for global read digested settings (MDTF case restricted to only undigested)
    if (opts@MDTF_BLOCKING_READ_DIGESTED.and.(file_opts@case_type.ne."MDTF")) then  ; read in block_time
+     print("Opening digested file")
      f_dig = open_digested(file_opts)
 
      time_ymd = blocking_readtime(f_dig,file_opts)  ; time_ymd(idays)
@@ -105,6 +107,7 @@ do ifile=0,all_cases@nfiles-1
      nlons = dimsizes(lon)
 
    else  ; opts@MDTF_BLOCKING_READ_DIGESTED = False
+     print("Opening un-digested file")
      var_in_p = blocking_readfile_orig(file_opts)           ; Data actually read here
              ;file_opts in:  year0,year1,period_name,filename,var_name,lat/lon limits
              ;file_opts out: time_ymd, idays,time
@@ -241,7 +244,7 @@ do ifile=0,all_cases@nfiles-1
     block_freq_p(ifile,:) = (/block_freq/) ; For plotting (days->freq)
   end if
 
-  print(" Sanity check: min max "+min(block_freq_p(ifile,:))+" "+max(block_freq_p(ifile,:)))
+  print(" Sanity check: block freq range "+min(block_freq_p(ifile,:))+"-"+max(block_freq_p(ifile,:)))
 
 ; Plots of individual cases with time axes
 ; ndoys = 365 always (remove extra day in obs for simplicity)
@@ -292,9 +295,11 @@ do ifile=0,all_cases@nfiles-1
     ; if this is the first file in the ensemble, create the panel graphics object
     if (ifile.eq.min(ens_file_inds)) then  
       res_t = True  ;output from get_plot_*
-      res_t@tiMainString = file_opts@case_name +file_opts@year_range
       wks_ens_page = get_plot_anncycle_ensname(this_ens_name,all_cases,settings,res_t)
     end if
+
+    res_t@tiMainString = file_opts@case_name +file_opts@year_range
+
 
     ; draw the Hovmueller figure (individual panels for each file)
     plot_t(ifile) = gsn_csm_hov(wks_ens_page, lonPivot(block_freq_yr,270.), res_t) 

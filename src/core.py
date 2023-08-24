@@ -547,7 +547,7 @@ class MDTFFramework(MDTFObjectBase):
         if not self.multirun:
             self.cases = dict(list(self.cases.items())[0:1])
             for case_name, case_d in self.cases.items():
-                _log.info("### %s: initializing case '%s'.", self.full_name, case_name)
+                _log.info("###core.py %s: initializing case '%s'.", self.full_name, case_name)
                 case = self.DataSource(case_d, parent=self)
                 case.setup()
                 new_d[case_name] = case

@@ -132,11 +132,10 @@ jobs:
         echo "POD_OUTPUT is: "
         echo "${POD_OUTPUT}"
         micromamba activate _MDTF_base
-        cat ./mdtf
         # trivial check that install script worked
         ./mdtf_framework.py --version
         # run the test PODs
-        ./mdtf_framework -v -f ${{matrix.json-file}}
+        ./mdtf_framework.py -v -f ${{matrix.json-file}}
     - name: Get observational data for set 2
       run: |
         echo "${PWD}"

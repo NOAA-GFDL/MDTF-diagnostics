@@ -18,10 +18,8 @@ jobs:
     runs-on: ${{matrix.os}}
     strategy:
       matrix:
-        # [ubuntu-latest macos-latest]
-        os: [ubuntu-latest]
-        # [/usr/share/miniconda3 /Users/runner/miniconda3]
-        conda-root: [/usr/share/miniconda3]
+        os: [ubuntu-latest macos-latest]
+        conda-root: [/usr/share/miniconda /Users/runner/miniconda]
         json-file: ["tests/github_actions_test_ubuntu_set1.jsonc","tests/github_actions_test_macos_set1.jsonc"]
         json-file-set2: ["tests/github_actions_test_ubuntu_set2.jsonc", "tests/github_actions_test_macos_set2.jsonc"]
         json-file-set3: ["tests/github_actions_test_ubuntu_set3.jsonc", "tests/github_actions_test_macos_set3.jsonc"]
@@ -29,33 +27,33 @@ jobs:
         experimental: [false]
         exclude:
           - os: ubuntu-latest
-            conda-root: /Users/runner/miniconda3
+            conda-root: /Users/runner/miniconda
           - os: ubuntu-latest
             json-file: "tests/github_actions_test_macos_set1.jsonc"
           - os: ubuntu-latest
             json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
           - os: ubuntu-latest
             json-file-set3: "tests/github_actions_test_macos_set3.jsonc"
-          #- os: macos-latest
-          #  conda-root: /usr/share/miniconda3
-         #- os: macos-latest
-         #   json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
-         # - os: macos-latest
-         #   json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
-         # - os: macos-latest
-         #   json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
-        #  - conda-root: /usr/share/miniconda3
-       #     json-file: "tests/github_actions_test_macos_set1.jsonc"
-       #   - conda-root: /Users/runner/minconda3
-       #     json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
-         # - conda-root: /usr/share/miniconda3
-         #   json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
-         # - conda-root: /Users/runner/minconda3
-        #    json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
-         # - conda-root: /usr/share/miniconda3
-         #   json-file-set3: "tests/github_actions_test_macos_set3.jsonc"
-         # - conda-root: /Users/runner/minconda3
-         #   json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
+          - os: macos-latest
+            conda-root: /usr/share/miniconda
+          - os: macos-latest
+            json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
+          - os: macos-latest
+            json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
+          - os: macos-latest
+            json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
+          - conda-root: /usr/share/miniconda
+            json-file: "tests/github_actions_test_macos_set1.jsonc"
+          - conda-root: /Users/runner/minconda
+            json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
+          - conda-root: /usr/share/miniconda
+            json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
+          - conda-root: /Users/runner/minconda
+            json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
+          - conda-root: /usr/share/miniconda
+            json-file-set3: "tests/github_actions_test_macos_set3.jsonc"
+          - conda-root: /Users/runner/minconda
+            json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
       max-parallel: 2
     steps:
     - uses: actions/checkout@v3
@@ -67,7 +65,7 @@ jobs:
           channels:
             - conda-forge
             - defaults
-    - name: Verify miniconda
+    - name: Initialize and verify miniconda installation
       run: |
         conda init bash
         conda info -a

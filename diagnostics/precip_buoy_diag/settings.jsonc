@@ -61,7 +61,7 @@
                            "dimensions" : ["time", "lev", "lat", "lon"],
                            "multi_file_ok" : true
 		         },
-		    "ps" {
+		    "ps": {
 			   "standard_name": "surface_air_pressure",
 			   "freq": "1hr",
 			   // this is optional only if height co-ordinates are on pressure levels

@@ -62,7 +62,7 @@
                            "multi_file_ok" : true
 		         },
 		    "ps" {
-			   "standard_name": "surface_aihupressure",
+			   "standard_name": "surface_air_pressure",
 			   "freq": "1hr",
 			   // this is optional only if height co-ordinates are on pressure levels
 			   // if height co-ordinates are sigma, then surface pressure is required.

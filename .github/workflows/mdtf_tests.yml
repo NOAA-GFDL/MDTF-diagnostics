@@ -69,6 +69,7 @@ jobs:
             - defaults
     - name: Verify miniconda
       run: |
+        conda init bash
         conda info -a
     - name: Install XQuartz if macOS
       if: ${{ matrix.os == 'macos-latest' && matrix.conda-root == '/Users/runner/miniconda3' }}
@@ -91,7 +92,7 @@ jobs:
     - name: Generate Model Data
       run: |
         cd ../
-        conda activate _MDTF_synthetic_data
+        micromamba activate _MDTF_synthetic_data
         pip install mdtf-test-data
         mkdir mdtf_test_data ; cd mdtf_test_data
         # generate the data and run unit tests
@@ -130,7 +131,7 @@ jobs:
       run: |
         echo "POD_OUTPUT is: "
         echo "${POD_OUTPUT}"
-        conda activate _MDTF_base
+        micromamba activate _MDTF_base
         cat ./mdtf
         # trivial check that install script worked
         ./mdtf --version
@@ -157,9 +158,9 @@ jobs:
         rm -f *.tar
     - name: Run diagnostic tests set 2
       run: |
-        conda activate _MDTF_base
+        micromamba activate _MDTF_base
         # run the test PODs
-        ./mdtf -v -f ${{matrix.json-file-set2}}
+        ./mtdt_framework.py -v -f ${{matrix.json-file-set2}}
     - name: Get observational data for set 3
       run: |
         echo "${PWD}"
@@ -194,10 +195,10 @@ jobs:
         rm -f *.tar.gz
     - name: Run CMIP diagnostic tests set 3
       run: |
-        conda activate _MDTF_base
+        micromamba activate _MDTF_base
         # run the test PODs
         ./mdtf -v -f ${{matrix.json-file-set3}}
     - name: Run unit tests
       run: |
-        conda activate _MDTF_base
+       micromamba activate _MDTF_base
         python -m unittest discover

@@ -1,0 +1,103 @@
+<title>Stratosphere-Troposphere Coupling: Stratospheric Polar Vortex Extremes</title>
+<img src="../mdtf_diag_banner.png">
+<h3>Relationship of extreme stratospheric events to tropospheric and surface conditions</h3>
+<p>
+This POD assesses stratospheric polar vortex extremes, and the tropospheric circulation
+and surface patterns that precede and follow them. Extremes in the 
+stratospheric polar vortex are closely linked to the tropospheric
+circulation and surface climate both before and after the event. The occurrence of 
+polar stratospheric circulation extremes in the Northern Hemisphere (NH), such
+as sudden stratospheric warmings (SSWs) and polar vortex intensifications (VIs), are important
+aspects of stratospheric variability that rely on realistic representations of the 
+stratosphere and the troposphere. Extremes in the strength of the Arctic polar 
+stratospheric circulation are often preceded by known near-surface circulation 
+patterns, and then subsequently followed by shifts in weather patterns (sometimes
+for weeks). SSWs in the Southern Hemisphere (SH) are rare (only one event in the 
+satellite record), while VIs occur more often, but both events can have persistent 
+impacts on SH mid-latitude weather.
+</p>
+
+<p> The definition for SSW events used in this POD is the most commonly used one
+(Charlon and Polvani 2007): a reversal of the 10 hPa 60 deg latitude daily-mean climatological
+westerly zonal winds between November and March, which returns to westerly for at least 10
+consecutive days prior to 30 April (so that final warmings are not included). SSWs are
+independent events if they are separated by at least 20 days of consecutive westerlies.
+The definition for VI events used in this POD is adapted from previous studies 
+(Limpasuvan et al. 2005, Domeisen et al. 2020): an increase of the 10 hPa 60 deg latitude
+daily-mean zonal-mean zonal winds above the daily 80th percentile value calculated across
+the full input data time period, which persists for at least 10 consecutive days. VIs are
+independent events if they are separated by at least 20 consecutive days below the 80th 
+percentile. </p>
+
+<p>Models often show a different SSW seasonality compared to reanalysis (Ayarzaguena et al. 2020),
+and may vary in their simulation of tropospheric circulation/surface patterns 
+both preceding and following extreme stratospheric events (Ayarzaguena et al. 2020). 
+Models with low model lids (>1 hPa in pressure) may show less persistent 
+downward coupling than models with higher model lids (Charlton-Perez et al. 2013).
+SSWs and their precursor patterns and impacts have been heavily studied 
+(Baldwin et al. 2021), but VIs less so (Limpasuvan et al. 2005). </p>
+
+<p>
+This POD uses daily-mean zonal-mean zonal mean winds, zonal-mean geopotential heights,
+gridded geopotential heights at 500 hPa, and gridded surface air temperature. 
+</p>
+
+<h3>{{CASENAME}}</h3>
+<font color=navy>Frequency of SSWs and VIs by month of occurrence
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_NH_Freq_SPV_BarPlot.png>NH Model Barplot</A>
+    <TH align=center><A href=obs/obs_NH_Freq_SPV_BarPlot.png>NH Reanalysis Barplot</A>
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_SH_Freq_SPV_BarPlot.png>SH Model Barplot</A>
+    <TH align=center><A href=obs/obs_SH_Freq_SPV_BarPlot.png>SH Reanalysis Barplot</A>
+</TR>
+</TABLE>
+
+<p></p>
+
+<font color=navy>Vertical coupling (dripping paint) composite plots
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_NH_SPV_Drip_Plot.png>NH Model composite plot</A>
+    <TH align=center><A href=obs/obs_NH_SPV_Drip_Plot.png>NH Reanalysis composite plot</A>
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_SH_SPV_Drip_Plot.png>SH Model composite plot</A>
+    <TH align=center><A href=obs/obs_SH_SPV_Drip_Plot.png>SH Reanalysis composite plot</A>
+</TR>
+</TABLE>
+
+<p></p>
+
+<font color=navy>Troposphere and surface impacts before and after SSWs and VIs 
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_NH_SPV_Composite_Map.png>NH Model Maps </A>
+    <TH align=center><A href=obs/obs_NH_SPV_Composite_Map.png>NH Reanalysis Maps</A>
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}_SH_SPV_Composite_Map.png>SH Model Maps</A>
+    <TH align=center><A href=obs/obs_SH_SPV_Composite_Map.png>SH Reanalysis Maps</A>
+</TR>
+</TABLE>
+

@@ -53,7 +53,7 @@ jobs:
         conda init bash
         conda info -a
     - name: Install XQuartz if macOS
-      if: ${{ matrix.os == 'macos-latest' && matrix.conda-root == '/Users/runner/miniconda' }}
+      if: ${{ matrix.os == 'macos-latest'}}
       run: |
         echo "Installing XQuartz"
         brew install --cask xquartz

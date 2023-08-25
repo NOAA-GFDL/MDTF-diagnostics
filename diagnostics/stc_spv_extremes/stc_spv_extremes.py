@@ -350,22 +350,20 @@ def plot_dripping_paint(uzm_10, zg_pcap, hemi):
 
     """
     
-    year = uzm_10.time.dt.year.values 
-    
     #This function standardizes the polar cap geopotential heights at each pressure
     #level by the daily climatology
     std_anom = zg_pcap.groupby("time.dayofyear").map(stc_spv_extremes_defs.standardize)
 
     ssw = None
     vi = None
+    avgssw = None
+    avgvi = None
     if (hemi == 'NH'):
         
         # Need SSW and VI central dates
         uzm_spec = uzm_10.interp(lat=60)
         ssw = stc_spv_extremes_defs.ssw_cp07(uzm_spec,hem=hemi)
         vi = stc_spv_extremes_defs.spv_vi(uzm_spec,hem=hemi)
-        avgssw = None
-        avgvi = None
         
         if ssw: 
             yrs = np.array([i.split("-")[0] for i in ssw]).astype(int)
@@ -396,8 +394,6 @@ def plot_dripping_paint(uzm_10, zg_pcap, hemi):
         uzm_spec = uzm_10.interp(lat=-60)
         ssw = stc_spv_extremes_defs.ssw_cp07(uzm_spec,hem=hemi)  
         vi = stc_spv_extremes_defs.spv_vi(uzm_spec,hem=hemi)
-        avgssw = None
-        avgvi = None
         
         if ssw:
             yrs = np.array([i.split("-")[0] for i in ssw]).astype(int)
@@ -511,19 +507,18 @@ def plot_composite_maps(uzm_10, zg_500, tas, hemi):
 
     """
     
-    year = uzm_10.time.dt.year.values 
     ssw = None
     vi = None
+    zg_ssw = None
+    ts_ssw = None
+    zg_vi = None
+    ts_vi = None
     if (hemi == 'NH'):
         
         # Need SSW and VI central dates
         uzm_spec = uzm_10.interp(lat=60)
         ssw = stc_spv_extremes_defs.ssw_cp07(uzm_spec,hem=hemi)
         vi = stc_spv_extremes_defs.spv_vi(uzm_spec,hem=hemi)
-        zg_ssw = None
-        ts_ssw = None
-        zg_vi = None
-        ts_vi = None
         
         if ssw: 
             yrs = np.array([i.split("-")[0] for i in ssw]).astype(int)
@@ -554,10 +549,6 @@ def plot_composite_maps(uzm_10, zg_500, tas, hemi):
         uzm_spec = uzm_10.interp(lat=-60)
         ssw = stc_spv_extremes_defs.ssw_cp07(uzm_spec,hem=hemi)  
         vi = stc_spv_extremes_defs.spv_vi(uzm_spec,hem=hemi)
-        zg_ssw = None
-        ts_ssw = None
-        zg_vi = None
-        ts_vi = None
         
         if ssw:
             
@@ -587,6 +578,10 @@ def plot_composite_maps(uzm_10, zg_500, tas, hemi):
     from palettable.colorbrewer.diverging import RdBu_11
     cmap=RdBu_11.mpl_colormap.reversed()
     
+    minlat = []
+    maxlat = []
+    fig = []
+    ax = []
     if (hemi == 'NH'):
         fig, ax = plt.subplots(2,2, figsize=(10, 10),subplot_kw={'projection': ccrs.NorthPolarStereo()})
         minlat = 30

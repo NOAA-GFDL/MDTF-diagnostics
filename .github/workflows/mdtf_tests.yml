@@ -23,7 +23,7 @@ jobs:
         json-file-set2: ["tests/github_actions_test_ubuntu_set2.jsonc", "tests/github_actions_test_macos_set2.jsonc"]
         json-file-set3: ["tests/github_actions_test_ubuntu_set3.jsonc", "tests/github_actions_test_macos_set3.jsonc"]
         # if experimental is true, other jobs to run if one fails
-        experimental: [true]
+        experimental: [false]
         exclude:
           #- os: ubuntu-latest
           #  json-file: "tests/github_actions_test_macos_set1.jsonc"
@@ -117,7 +117,7 @@ jobs:
         ./mdtf_framework.py --version
         # run the test PODs
         ./mdtf_framework.py -v -f ${{matrix.json-file}}
-        cat ../wkdir/MDTF_NCAR.Synthetic_1975_1981/Wheeler_Kiladis/Wheeler_Kiladis.log
+        
 
     - name: Get observational data for set 2
       run: |
@@ -143,6 +143,7 @@ jobs:
         micromamba activate _MDTF_base
         # run the test PODs
         ./mdtf_framework.py -v -f ${{matrix.json-file-set2}}
+        cat ../wkdir/MDTF_GFDL.Synthetic_1_10/MJO_prop_amp/MJO_prop_amp.log
     - name: Get observational data for set 3
       run: |
         echo "${PWD}"

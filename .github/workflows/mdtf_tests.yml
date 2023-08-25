@@ -117,8 +117,6 @@ jobs:
         ./mdtf_framework.py --version
         # run the test PODs
         ./mdtf_framework.py -v -f ${{matrix.json-file}}
-        
-
     - name: Get observational data for set 2
       run: |
         echo "${PWD}"
@@ -143,7 +141,8 @@ jobs:
         micromamba activate _MDTF_base
         # run the test PODs
         ./mdtf_framework.py -v -f ${{matrix.json-file-set2}}
-        cat ../wkdir/MDTF_GFDL.Synthetic_1_10/MJO_prop_amp/MJO_prop_amp.log
+       # Uncomment the following line for debugging
+       # cat ../wkdir/MDTF_GFDL.Synthetic_1_10/MJO_prop_amp/MJO_prop_amp.log
     - name: Get observational data for set 3
       run: |
         echo "${PWD}"

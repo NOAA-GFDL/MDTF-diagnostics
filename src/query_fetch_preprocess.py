@@ -8,14 +8,18 @@ from src import util
 
 
 _log = logging.getLogger(__name__)
-
-def query_catalog(case_list: dict, catalog_path: str):
+def query_catalog(case_list: util.NameSpace, catalog_path: str):
     # build list of case names with wild card appended
     cases = [c + "*" for c in case_list.keys()]
     # open the csv file using information provided by the catalog definition file
     cat = intake.open_esm_datastore(catalog_path)
-    sub_cat = cat.search('file_name'=cases)
+    for case_name, case_dict in case_list.items():
+        sub_cat = cat.search(file_name=case_name,
+                             activity_id=case_dict.convention)
+
+    # todo: add method to get files in desired daterange
     return sub_cat
+
 
 @util.mdtf_dataclass
 class DataKeyBase(util.MDTFObjectBase, metaclass=util.MDTFABCMeta):

@@ -741,7 +741,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def __init__(self, pod, pod_convention: str, data_convention: str):
         self.overwrite_ds = pod.overwrite
 
-        self.WORK_DIR = pod.paths.MODEL_WORK_DIR
+        self.WORK_DIR = pod.paths.POD_WORK_DIR
         self.data_convention = data_convention
         self.pod_convention = pod_convention
 
@@ -820,14 +820,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             "format": self.nc_format
         }
 
-    def read_one_file(self, var, path_list):
+    def read_one_file(self, var, data_catalog_path: str):
         """Wraps xarray `open_dataset()
         <https://xarray.pydata.org/en/stable/generated/xarray.open_dataset.html>`__
         to load a single netCDF file.
         """
-        if len(path_list) != 1:
-            raise ValueError(f"{var.full_name}: Expected one file, got {path_list}.")
-        var.log.debug("Loaded '%s'.", path_list[0], tags=util.ObjectLogTag.IN_FILE)
         return xr.open_dataset(
             path_list[0],
             **self.open_dataset_kwargs
@@ -1078,12 +1075,12 @@ class NullPreprocessor(MDTFPreprocessorBase):
     """A class that skips preprocessing and just symlinks files from the input dir to the wkdir
     """
 
-    def __init__(self, pod, data_convention: str):
-        self.overwrite_ds = pod.overwrite
+    def __init__(self, pod, data_convention: str, overwrite: bool = False):
+        self.overwrite_ds = overwrite
 
-        self.WK_DIR = pod.dirs.MODEL_WORK_DIR
+        self.WK_DIR = pod.dirs.POD_WORK_DIR
         self.convention = data_convention
-        self.pod_convention = pod.convention
+        self.pod_convention = data_convention
 
         if getattr(pod, 'nc_largefile', False):
             self.nc_format = "NETCDF4_CLASSIC"
@@ -1146,6 +1143,8 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
         """
 
+
+
         def _file_preproc(ds):
             for f in self.file_preproc_functions:
                 ds = f.process(var, ds)
@@ -1182,3 +1181,12 @@ class DefaultPreprocessor(DaskMultiFilePreprocessor):
     use case. Includes all implemented functionality and handles multi-file data.
     """
     _file_preproc_functions = []
+
+
+def init_preprocessor(run_pp: bool = True):
+    """Initialize the data preprocessor class using runtime configuration specs
+    """
+    if not run_pp:
+        return NullPreprocessor
+    else:
+        return DefaultPreprocessor

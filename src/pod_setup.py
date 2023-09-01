@@ -69,8 +69,8 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         self.nc_largefile = runtime_config.large_file
         self.bash_exec = find_executable('bash')
         # set up work/output directories
-        self.paths = util.PathManager(runtime_config, env=self.pod_env_vars)
-        self.paths.setup_pod_paths(self.name, runtime_config, self.pod_env_vars)
+        self.paths = util.PodPathManager(runtime_config, env=self.pod_env_vars)
+        self.paths.setup_pod_paths(self.name, runtime_config)
         util.MDTFObjectBase.__init__(self, name=self.name, _parent=None)
 
     # Explicitly invoke MDTFObjectBase post_init and init methods so that _id and other inherited
@@ -178,10 +178,10 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             raise util.PodConfigError('POD runtime requirements not defined in specified Conda environment') \
                 from exc
 
-    def _get_pod_settings(self, pod_settings_dict: util.NameSpace):
+    def get_pod_settings(self, pod_settings_dict: util.NameSpace):
         self.pod_settings = util.NameSpace.toDict(pod_settings_dict.settings)
 
-    def _get_pod_data(self, pod_settings: util.NameSpace):
+    def get_pod_data(self, pod_settings: util.NameSpace):
         if hasattr(pod_settings, 'data'):
             self.pod_data = util.NameSpace.toDict(pod_settings.data)
         else:
@@ -189,10 +189,10 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                            "Using attributes defined separately for each variable",
                            self.name)
 
-    def _get_pod_dims(self, pod_settings: util.NameSpace):
+    def get_pod_dims(self, pod_settings: util.NameSpace):
         self.pod_dims = util.NameSpace.toDict(pod_settings.dimensions)
 
-    def _get_pod_vars(self, pod_settings: util.NameSpace):
+    def get_pod_vars(self, pod_settings: util.NameSpace):
         self.pod_vars = util.NameSpace.toDict(pod_settings.varlist)
 
     def get_pod_data_subset(self, catalog_path: str, case_data_source):
@@ -258,10 +258,10 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         """
         # Parse the POD settings file
         pod_input = self.parse_pod_settings_file(runtime_config.CODE_ROOT)
-        self._get_pod_settings(pod_input)
-        self._get_pod_vars(pod_input)
-        self._get_pod_data(pod_input)
-        self._get_pod_dims(pod_input)
+        self.get_pod_settings(pod_input)
+        self.get_pod_vars(pod_input)
+        self.get_pod_data(pod_input)
+        self.get_pod_dims(pod_input)
         # verify that required settings are specified,
         # and that required packages are installed in the target Conda environment
         self.verify_pod_settings()
@@ -290,7 +290,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                     self.log.info(f'POD convention and data convention are both {data_convention}. '
                                   f'No data translation will be performed for case {case_name}.')
                 # translate POD variable(s) to case data convention(s) if they do not match
-                # A 'notranslationfieldlist' will be defined for the varlistentry translation attribute
+                # A 'noTranslationFieldlist' will be defined for the varlistentry translation attribute
                 self.cases[case_name].translate_varlist(self,
                                                         case_name,
                                                         to_convention=data_convention)
@@ -312,8 +312,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
 
         for case_name in self.cases.keys():
             for v in self.cases[case_name].iter_children():
-                # deactivate failed variables, now that alternates are fully
-                # specified
+                # deactivate failed variables now that alternates are fully specified
                 if v.last_exception is not None and not v.failed:
                     v.deactivate(v.last_exception, level=logging.WARNING)
             if self.cases[case_name].status == util.ObjectStatus.NOTSET and \
@@ -323,3 +322,5 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         if self.status == util.ObjectStatus.NOTSET and \
                 all(case_dict.status == util.ObjectStatus.ACTIVE for case_name, case_dict in self.cases.items()):
             self.status = util.ObjectStatus.ACTIVE
+
+

@@ -18,7 +18,7 @@ if sys.version_info.major != 3 or sys.version_info.minor < 10:
 # passed; continue with imports
 import os
 import click
-from src import util, cli, pod_setup, translation
+from src import util, cli, pod_setup, preprocessor, translation
 from src.conda import conda_utils
 import dataclasses
 import logging
@@ -91,6 +91,9 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         # run custom scripts on dataset
         if any([s for s in ctx.config.user_pp_scripts]):
             pod_obj.add_user_pp_scripts(ctx.config)
+    model_paths = util.ModelDataPathManager(ctx.config)
+    model_paths.setup_model_paths(ctx.config.case_list, ctx.config.DATA_CATALOG)
+    data_pp = preprocessor.init_preprocessor(ctx.config.run_pp)
 
     # close the main log file
     log._log_handler.close()

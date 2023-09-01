@@ -37,5 +37,5 @@ from .processes import (
 )
 
 from .path_utils import (
-    PathManager
+    PodPathManager, ModelDataPathManager
 )

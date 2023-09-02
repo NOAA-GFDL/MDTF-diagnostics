@@ -82,6 +82,12 @@
           "help": "Source used to query and fetch model data.",
           "default": "Local_file",
           "action": "PluginArgAction"
+        },{
+          "name": "data_type",
+          "short_name" : "d",
+          "help": "Type of dataset to analyze: 'single_run' or 'multi_run' ",
+          "default": "single_run",
+          "metavar" : "<data_mode>"
         }
       ]
     },{

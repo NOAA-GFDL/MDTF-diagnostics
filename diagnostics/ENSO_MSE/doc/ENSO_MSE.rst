@@ -1,4 +1,5 @@
-**Moist Static Energy Diagnostic Package**
+Moist Static Energy Diagnostic Package
+======================================
 
 **Last update 01/21/2021**
 

@@ -1,0 +1,62 @@
+// Strat-Trop Coupling: Annular Modes
+//
+// This POD requires daily-frequency zonal mean geopotential heights
+// on pressure levels.
+//
+{
+    "settings" : {
+      "driver" : "stc_annular_modes.py",
+      "long_name" : "Annular Mode Coupling",
+      "realm" : "atmos",
+      "description" : "Assess the representation of zonal mean annular mode coupling between the troposphere and stratosphere",
+      "pod_env_vars" : {
+        // The first and last years of the obs data to use. 
+        // Only considered if USE_CONSISTENT_YEARS is false.
+        "OBS_FIRSTYR" : 1979,
+        "OBS_LASTYR" : 2021,
+
+        // Try to use the same years as for the model data?
+        // If true, ignores OBS_FIRSTYR and OBS_LASTYR and uses the 
+        // FIRSTYR and LASTYR environment variables to subset the
+        // obs data. Defaults to false.
+        "USE_CONSISTENT_YEARS": false,
+
+        // Which method to use to compute zonal mean geopotential 
+        // height anomalies? Defaults to "gerber" to do the full 
+        // process outlined in the Gerber et al., 2010 paper. 
+        // The other option is "simple", which removes global mean
+        // height, computes raw anomalies, and then linearly detrends
+        // them across the years. 
+        "ANOM_METHOD": "gerber", 
+        
+        // Which pressure level to use for computing the annular mode
+        // predictability diagnostic? Defaults to 850 hPa, as in the 
+        // Gerber et al., 2010 paper. 
+        "PRED_LEV": 850,
+
+        // Save the derived data to netcdf files? Defaults to true
+        "SAVE_DERIVED_DATA" : true
+      },
+      "runtime_requirements": {
+        "python3": ["matplotlib", "numpy", "eofs", "xarray"]
+      }
+    },
+    "dimensions": {
+      "lat": {"standard_name": "latitude"},
+      "lev": {
+        "standard_name": "air_pressure",
+        "units": "hPa",
+        "positive": "down",
+        "axis": "Z"
+      },
+      "time": {"standard_name": "time"}
+    },
+    "varlist": {
+      "zg": {
+        "standard_name" : "geopotential_height",
+        "units" : "m",
+        "frequency": "day",
+        "dimensions": ["time", "lev", "lat"] // note the lack of "lon" -- this should be zonal mean data!
+      }
+    }
+  }

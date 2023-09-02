@@ -1,0 +1,45 @@
+// Example MDTF diagnostic settings file
+//
+// This should be an ascii text file in JSON format
+// (https://en.wikipedia.org/wiki/JSON#Data_types_and_syntax), with the addition
+// that all text to the  right of a "//" is a comment and ignored (sometimes
+// called "JSONC" format).
+//
+{
+  "settings" : {
+    "driver" : "TC_rain.py",
+    "long_name" : "Azimuthal Average of TC Rain Rate",
+    "realm" : "atmos",
+    "description" : "TC rain rate azimuthal average",
+    "runtime_requirements": {
+        "python3": [
+          "matplotlib", 
+          "xarray", 
+          "netCDF4", 
+          "scipy,numpy"
+        ]
+    },
+    "pod_env_vars" : {
+        "basin": "wnp",
+        "minthresh": "35",
+        "maxthresh": "45"
+    }
+  },
+
+  "dimensions": {
+    "latitude": {"standard_name": "latitude"},
+    "longitude": {"standard_name": "longitude"},
+    "time": {"standard_name": "time"}
+  },
+"data": {
+  "frequency": "6hr"
+},
+  "varlist" : {
+    "tp": {
+      "standard_name" : "total_precipitation",
+      "units": "kg m-2",
+      "dimensions": ["time", "latitude", "longitude"]
+
+    }
+  }
+}

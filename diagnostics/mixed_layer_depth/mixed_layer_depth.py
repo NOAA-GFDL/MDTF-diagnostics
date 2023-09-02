@@ -226,7 +226,7 @@ def computemld(fieldso, fieldthetao):
     )  # units 'meters'
 
     # set MLD to water depth where MLD is NaN
-    mld = mld.where(~xr.ufuncs.isnan(mld), bottom_depth)
+    mld = mld.where(~np.isnan(mld), bottom_depth)
 
     return mld
 
@@ -368,3 +368,4 @@ monthlyplot(
     cmapname="viridis",
     myname="EN4 reanalysis",
 )
+

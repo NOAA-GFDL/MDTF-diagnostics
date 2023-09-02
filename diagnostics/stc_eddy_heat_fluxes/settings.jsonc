@@ -1,0 +1,87 @@
+// Strat-Trop Coupling: Vertical Wave Propagation
+//
+// This POD requires monthly-frequency meridional winds, air temperatures,
+// and geopotential heights with pressure levels in the troposphere
+// and stratosphere.
+//
+{
+  "settings" : {
+    "driver" : "stc_eddy_heat_fluxes.py",
+    "long_name" : "Upward Coupling of Vertically Propagating Planetary Waves",
+    "realm" : "atmos",
+    "description" : "Assess the influence of wave driving on the polar stratosphere",
+    "pod_env_vars" : {
+      // Lower latitude limit for heat flux lat band avgs (defaults to 45)
+      // Should be positive (values will also be calculated for southern hemi)
+      "HEAT_FLUX_LO_LAT" : "45",
+      // Upper latitude limit for heat flux lat band avgs (defaults to 75)
+      // Should be positive (values will also be calculated for southern hemi)
+      "HEAT_FLUX_HI_LAT" : "75",
+      // Lower latitude limit for polar cap avg calculations (defaults to 65)
+      // Should be positive (values will also be calculated for southern hemi)
+      "PCAP_LO_LAT": "65",
+      // Save the derived data to netcdf files? Defaults to true
+      "SAVE_DERIVED_DATA" : "true"
+    },
+    "runtime_requirements": {
+      "python3": ["matplotlib", "numpy", "pandas", "xarray", "xesmf"]
+    }
+  },
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {"standard_name": "time"}
+  },
+  "varlist": {
+    "v100": {
+      "standard_name": "northward_wind",
+      "units": "m s-1",
+      "frequency": "mon",
+      "dimensions": ["time", "lat", "lon"],
+      "scalar_coordinates": {"lev": 100},
+      "alternates" : ["va"]
+    },
+    "t100": {
+      "standard_name": "air_temperature",
+      "units": "K",
+      "frequency": "mon",
+      "dimensions": ["time", "lat", "lon"],
+      "scalar_coordinates": {"lev": 100},
+      "alternates" : ["ta"]
+    },
+    "t50": {
+        "standard_name": "air_temperature",
+        "units": "K",
+        "frequency": "mon",
+        "dimensions": ["time", "lat", "lon"],
+        "scalar_coordinates": {"lev": 50},
+        "alternates": ["ta"]
+    },
+    "va": {
+      "standard_name" : "northward_wind",
+      "units" : "m s-1",
+      "frequency": "mon",
+      "dimensions": ["time", "lev", "lat", "lon"],
+      "requirement": "alternate"
+    },
+    "ta": {
+      "standard_name" : "air_temperature",
+      "units" : "K",
+      "frequency": "mon",
+      "dimensions": ["time", "lev", "lat", "lon"],
+      "requirement": "alternate"
+    },
+    "zg": {
+      "standard_name" : "geopotential_height",
+      "units" : "m",
+      "frequency": "mon",
+      "dimensions": ["time", "lev", "lat", "lon"]
+    }
+  }
+}

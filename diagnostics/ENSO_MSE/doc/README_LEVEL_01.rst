@@ -1,4 +1,5 @@
-**Information about Level 1 – Basic ENSO diagnostics**
+Information about Level 1 – Basic ENSO diagnostics
+==================================================
 
 At this level, POD calculates simple seasonal averages, composites,
 regression and correlations.

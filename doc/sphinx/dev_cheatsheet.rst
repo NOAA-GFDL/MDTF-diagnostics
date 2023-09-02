@@ -13,7 +13,7 @@ Creating and submitting a POD
 2. Link your POD code into the framework  
 
    - Modify your POD's driver script (e.g, ``driver.py``) to interface with your code
-   - Modify pod's ``settings.jsonc`` to specifiy variables that will be passed to the framework
+   - Modify pod's ``settings.jsonc`` to specify variables that will be passed to the framework
    - Modify your code to use ``ENV_VARS`` provided by the framework (see the *Notes* for descriptions of the available environment variables)
       - Input files:
          - model input data: ``MDTF-diagnostics/../inputdata/model/[dataset name]/[output frequency]``
@@ -50,7 +50,7 @@ Notes:
       - variable units
       - variable dimensions (e.g., [time, lat, lon])
       - scalar coordinates for variables defined on a specific atmospheric pressure level (e.g. ``{"lev": 250}`` for a field on the 250-hPa p level).
-   - If your variable is not in the necessary fieldlist file(s), add them to the file(s), or open an issue on GitHub requesting that the framework team add them. Once the files are updated, merge the changes from the develop branch into your POD branch. 
+   - If your variable is not in the necessary fieldlist file(s), add them to the file(s), or open an issue on GitHub requesting that the framework team add them. Once the files are updated, merge the changes from the main branch into your POD branch. 
    - Note that the variable name and the standard name must be unique fieldlist entries
 - Environment variables
    - To define an environment variable specific to your POD, add a ``"pod_env_vars"`` block to the ``"settings"`` block in your POD's ``settings.jsonc`` file and define the desired variables 

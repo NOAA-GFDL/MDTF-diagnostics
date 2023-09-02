@@ -172,3 +172,17 @@ span[class="viewcode-link"] {
     line-height: 1.6em;
     display: inline-block;
 }
+
+/* Smaller fonts to fit more text in the sidebar */
+div.sphinxsidebar ul li.toctree-l1 > a {
+    font-size: 120%;
+}
+
+div.sphinxsidebar ul li.toctree-l2 > a {
+    font-size: 100%;
+}
+
+div.sphinxsidebar ul {
+    padding-top: 3px;
+    padding-bottom: 10px;
+}

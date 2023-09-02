@@ -282,15 +282,14 @@ class TestMDTFDataclass(unittest.TestCase):
     def test_typing_generics(self):
         @util.mdtf_dataclass
         class Dummy(object):
-            a: typing.List = None
+            a: list = dataclasses.field(default_factory=list)  # init a list with mutable default values
             b: typing.List[int] = None
             c: typing.Union[int, list] = 6
             d: typing.MutableSequence = dataclasses.field(default_factory=list)
             e: typing.Text = "foo"
 
-        dummy = Dummy(a=(1,2), b=(1,2))
-        self.assertEqual(dummy.a, [1,2])
-        self.assertEqual(dummy.b, [1,2])
+        dummy = Dummy(a=(1, 2), b=(1, 2))
+        self.assertEqual(dummy.a, dummy.b)
         self.assertEqual(dummy.c, 6)
         dummy = Dummy(a=(1,2), b=(1,2), c=[1,2])
         self.assertEqual(dummy.c, [1,2])

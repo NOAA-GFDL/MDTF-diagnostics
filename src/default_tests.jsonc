@@ -27,8 +27,13 @@
           "EOF_500hPa",
           "MJO_suite",
           "MJO_teleconnection"
-          // "convective_transition_diag"
-          // "precip_diurnal_cycle"
+          // "convective_transition_diag",
+          // "precip_diurnal_cycle",
+          // "ocn_surf_flux_diag",
+          // "mixed_layer_depth",
+          // "tropical_pacific_sea_level",
+          // "temp_extremes_distshape",
+          // "precip_buoy_diag"
       ]
     }
     // {
@@ -64,16 +69,16 @@
   // "$" and will be expended to their current values when the framework runs.
 
   // Parent directory containing observational data used by individual PODs.
-  "OBS_DATA_ROOT": "../inputdata/obs_data",
+  "OBS_DATA_ROOT": "../inputdata/obs_data/",
 
   // Parent directory containing results from different models.
   "MODEL_DATA_ROOT": "../inputdata/model/",
 
-  // Working directory.
+  // Working directory. Defaults to OUTPUT_DIR if blank.
   "WORKING_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be
-  // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.
+  // put in a subdirectory of this directory.
   "OUTPUT_DIR": "../wkdir",
 
   // Location of the Anaconda/miniconda installation to use for managing
@@ -93,6 +98,10 @@
 
   // Method used to fetch model data.
   "data_manager": "Local_File",
+    
+  // Type of data that POD(s) will analyze
+  // "single_run" (default) or "multi_run"
+  "data_type": "single_run",
 
   // Method used to manage dependencies.
   "environment_manager": "Conda",

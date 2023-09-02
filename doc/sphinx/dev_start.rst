@@ -17,14 +17,14 @@ To download and install the framework for development, follow the instructions f
 Obtaining the source code
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-POD developers should create their branches from the `develop branch <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/develop>`__ of the framework code
+POD developers should create their branches from the `main branch <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main>`__ of the framework code
 ::
 
-   git checkout -b feature/[POD name] develop
+   git checkout -b feature/[POD name] main
 
 This is the "beta test" version, used for testing changes before releasing them to end users
 
-Developers may download the code from GitHub as described in :ref:`ref-download`, but we strongly recommend that you clone the repo in order to keep up with changes in the develop branch, and to simplify submitting pull requests with your POD's code. Instructions for how to do this are given in :doc:`dev_git_intro`.
+Developers may download the code from GitHub as described in :ref:`ref-download`, but we strongly recommend that you clone the repo in order to keep up with changes in the main branch, and to simplify submitting pull requests with your POD's code. Instructions for how to do this are given in :doc:`dev_git_intro`.
 
 Installing dependencies via conda
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -32,25 +32,25 @@ Installing dependencies via conda
 Regardless of development language, we strongly recommend that developers use conda to manage their language and library versions. Note that Conda is not Python-specific, but allows coexisting versioned environments of most scripting languages, including, `R <https://anaconda.org/conda-forge/r-base>`__, `NCL <https://anaconda.org/conda-forge/ncl>`__, `Ruby <https://anaconda.org/conda-forge/ruby>`__, `PyFerret <https://anaconda.org/conda-forge/pyferret>`__, and more.
 
 
-We recommend that new PODs be written in Python 3. We provide a developer version of the python3_base environment (described below) that includes Jupyter and other developer-specific tools. This is not installed by default, and must be requested by passing the ``-all-dev`` flag to the conda setup script:
+Python-based PODs should be written in Python 3.10 or newer. We provide a developer version of the python3_base environment (described below) that includes Jupyter and other developer-specific tools. This is not installed by default, and must be requested by passing the ``--all`` flag to the conda setup script:
 
 .. code-block:: console
 
    % cd $CODE_ROOT
-   % ./src/conda/conda_env_setup.sh --all-dev --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
+   % ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
 
 
 POD development using existing Conda environments
 -------------------------------------------------
 
-To prevent the proliferation of dependencies, we suggest that new POD development use existing Conda environments whenever possible, e.g., `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_python3_base.yml>`__, `NCL_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_NCL_base.yml>`__, and `R_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_R_base.yml>`__ for Python, NCL, and R, respectively.
+To prevent the proliferation of dependencies, we suggest that new POD development use existing Conda environments whenever possible, e.g., `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__, `NCL_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_NCL_base.yml>`__, and `R_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_R_base.yml>`__ for Python, NCL, and R, respectively.
 
 In case you need any exotic third-party libraries, e.g., a storm tracker, consult with the lead team and create your own Conda environment following :ref:`instructions <ref-create-conda-env>` below.
 
 Python
 ^^^^^^
 
-The framework provides the `_MDTF_python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_pythone3_base.yml>`__ Conda environment (recall the ``_MDTF`` prefix for framework-specific environment) as the generic Python environment, which you can install following the :ref:`instructions <ref-conda-install>`. You can then activate this environment by running in a terminal:
+The framework provides the `_MDTF_python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_pythone3_base.yml>`__ Conda environment (recall the ``_MDTF`` prefix for framework-specific environment) as the generic Python environment, which you can install following the :ref:`instructions <ref-conda-install>`. You can then activate this environment by running in a terminal:
 
 .. code-block:: console
 
@@ -61,7 +61,7 @@ where ``$CONDA_ENV_DIR`` is the path you used to install the Conda environments.
 Other languages
 ^^^^^^^^^^^^^^^
 
-The framework also provides the `_MDTF_NCL_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_NCL_base.yml>`__ and `_MDTF_R_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/conda/env_R_base.yml>`__ Conda environments as the generic NCL and R environments.
+The framework also provides the `_MDTF_NCL_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_NCL_base.yml>`__ and `_MDTF_R_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_R_base.yml>`__ Conda environments as the generic NCL and R environments.
 
 .. _ref-create-conda-env:
 

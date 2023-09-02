@@ -77,7 +77,6 @@
 # OPEN SOURCE COPYRIGHT Agreement TBA
 # ======================================================================
 # Import standard Python packages
-import glob
 import os
 import json
 

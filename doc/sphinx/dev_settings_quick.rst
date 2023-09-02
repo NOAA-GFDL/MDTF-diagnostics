@@ -133,3 +133,5 @@ This section is where you list the variables your diagnostic uses. Each entry sh
 ``dimensions``:
   List of names of dimensions specified in the "dimensions" section, to specify the coordinate dependence of each variable.
 
+``modifier`` (optional):
+ Descriptor to distinguish variables with identical standard names and different dimensionalities or realms. See `modifiers.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/data/modifiers.jsonc>`__ for supported modfiers. Open an issue to request the addition of a new modifier to the modifiers.jsonc file, or submit a pull request that includes the new modifier in the modifiers.jsonc file and the necessary POD settings.jsonc file(s).

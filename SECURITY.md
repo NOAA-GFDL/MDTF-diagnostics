@@ -8,7 +8,7 @@ these risks include threats to data integrity as well as the introduction of mal
 and climate model analysis code from the community, we adopt the following security measures in order to mitigate these risks:
 
 1. All software must be open source and fully transparent. No closed source code or dependencies will be permitted in the package.  The software should also use an open source license compatible with the LGPLv3 licence associated with the MDTF Diagnostics Framework.
-2. As much testing as possible will take place outside of NOAA and DOC systems. This includes leveraging external testing platforms (e.g. circle-ci, travis) and our project partners at NCAR and UCLA.  Testing source code and procedures should also be open and be compatible with the project’s open source license.
+2. As much testing as possible will take place outside of NOAA and DOC systems. This includes leveraging external testing platforms (e.g., LGTM) and our project partners at NCAR and UCLA.  Testing source code and procedures should also be open and be compatible with the project’s open source license.
 3. Prior to running any submitted code on NOAA systems, at least two reviewers must certify to the best of their knowledge that the code is a reasonable contribution to the project and contains no obvious security issues that could potentially harm NOAA systems or data. At least one of these reviews must be conducted by a NOAA Federal employee.
 4. Any security issues must be immediately reported to the local NOAA IT security officer.
 
@@ -16,8 +16,11 @@ and climate model analysis code from the community, we adopt the following secur
 
 | Version    | Supported          |
 | ---------- | ------------------ |
+| 3.0        | :white_check_mark: |
+| 3.0 beta 5 | :white_check_mark: |
+| 3.0 beta 4 | :white_check_mark: |
 | 3.0 beta 3 | :white_check_mark: |
-| 3.0 beta 2 | :white_check_mark: |
+| 3.0 beta 2 | :x:                |
 | 3.0 beta 1 | :x:                |
 | 2.0        | :x:                |
 

@@ -281,17 +281,23 @@ variant_label_regex = util.RegexPattern(r"""
 @util.regex_dataclass(variant_label_regex)
 class CMIP6_VariantLabel():
     """:class:`~src.util.regex_dataclass` which represents and parses the CMIP6
-    DRS variant label identifier string (e.g., `r1i1p1f1`.)
+    DRS variant label identifier string (e.g., ``r1i1p1f1``.)
 
     References: `<https://earthsystemcog.org/projects/wip/mip_table_about>`__,
     although this doesn't document all cases used in CMIP6. See also note 8 on
     page 9 of the CMIP6 `planning document <http://goo.gl/v1drZl>`__.
     """
     variant_label: str = util.MANDATORY
+    """Input to :meth:`~CMIP6_VariantLabel.from_string`. Complete variant label
+    identifier string (e.g., 'r1i1p1f1'.)"""
     realization_index: int = None
+    """Realization index (integer following the letter ``r``.)"""
     initialization_index: int = None
+    """Initialization index (integer following the letter ``i``.)"""
     physics_index: int = None
+    """Physics index (integer following the letter ``p``.)"""
     forcing_index: int = None
+    """Forcing index (integer following the letter ``f``.)"""
 
 mip_table_regex = util.RegexPattern(r"""
         # ^ # start of line
@@ -313,16 +319,32 @@ class CMIP6_MIPTable():
     although this doesn't document all cases used in CMIP6.
     """
     table_id: str = util.MANDATORY
+    """Input to :meth:`~CMIP6_MIPTable.from_string`. ``table_id`` string as used
+    in the DRS."""
     table_prefix: str = ""
+    """Substring of ``table_id`` specifying modeling realm."""
     table_freq: dc.InitVar = ""
+    """Substring of ``table_id`` specifying sampling frequency."""
     table_suffix: str = ""
+    """Substring of ``table_id`` specifying sampling/averaging methods."""
     table_qualifier: str = ""
+    """Substring of ``table_id`` specifying sampling/averaging methods."""
     frequency: CMIP6DateFrequency = dc.field(init=False)
+    """Frequency at which data for the table is sampled. From ``table_freq``."""
     spatial_avg: str = dc.field(init=False)
+    """Method used for spatial averaging, from ``table_qualifier``. Either
+    'zonal_mean' or None."""
     temporal_avg: str = dc.field(init=False)
+    """Method used for time averaging, from ``table_qualifier``. Either 'point'
+    or 'interval'."""
     region: str = dc.field(init=False)
+    """Geographic region described by the table, from ``table_suffix``. Either
+    'Antarctica', 'Greenland' or None."""
 
     def __post_init__(self, table_freq=None):
+        """Logic to populate all object attributes, based on substrings of
+        ``table_id`` captured by regex.
+        """
         if table_freq is None:
             raise ValueError()
         elif table_freq == 'clim':
@@ -359,18 +381,34 @@ class CMIP6_GridLabel():
     """:class:`~src.util.regex_dataclass` which represents and parses the CMIP6
     DRS grid label identifier string.
 
-    Reference: CMIP6 `planning document <http://goo.gl/v1drZl>`__, note 11 on page 11.
+    Reference: CMIP6 `planning document <http://goo.gl/v1drZl>`__, note 11 on
+    page 11.
     """
     grid_label: str = util.MANDATORY
+    """Input to :meth:`~CMIP6_GridLabel.from_string`. ``grid_label`` string as
+    used in the DRS."""
     global_mean: dc.InitVar = ""
+    """Substring of ``grid_label`` for globally-averaged data."""
     regrid: str = ""
+    """Substring of ``grid_label`` for regridded data."""
     grid_number: int = 0
+    """Regridding method used (0 if native grid). As per CMIP6 spec, meaning of
+    each integer is not specified and left to individual modeling centers."""
     region: str = ""
+    """Geographic region described by the grid. Either 'Antarctica', 'Greenland'
+    or None."""
     zonal_mean: dc.InitVar = ""
+    """Substring of ``grid_label`` for zonal mean averaging."""
     spatial_avg: str = dc.field(init=False)
+    """Method used for spatial averaging. Either 'global_mean', 'zonal_mean' or
+    None."""
     native_grid: bool = dc.field(init=False)
+    """Boolean, True if data is on model's native grid."""
 
     def __post_init__(self, global_mean=None, zonal_mean=None):
+        """Logic to populate all object attributes, based on substrings of
+        ``grid_label`` captured by regex.
+        """
         if not self.grid_number:
             self.grid_number = 0
         if global_mean:
@@ -414,14 +452,24 @@ class CMIP6_DRSDirectory(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
        This regex will fail on paths involving subexperiments.
     """
     directory: str = util.MANDATORY
+    """Input to :meth:`~CMIP6_DRSDirectory.from_string`. Directory path
+    string (excluding filename) as used in the DRS."""
     activity_id: str = ""
+    """Activity ID (MIP) of data, as parsed from ``directory``."""
     institution_id: str = ""
+    """Institution ID of data, as parsed from ``directory``."""
     source_id: str = ""
+    """Source ID (model name) of data, as parsed from ``directory``."""
     experiment_id: str = ""
+    """Experiment ID of data, as parsed from ``directory``."""
     variant_label: CMIP6_VariantLabel = ""
+    """Variant label of data, as parsed from ``directory``."""
     table_id: CMIP6_MIPTable = ""
+    """MIP table of data, as parsed from ``directory``."""
     grid_label: CMIP6_GridLabel = ""
+    """Grid label of data, as parsed from ``directory``."""
     version_date: util.Date = None
+    """Revision date of data, as parsed from ``directory``."""
 
 _drs_dates_filename_regex = util.RegexPattern(r"""
         (?P<variable_id>\w+)_       # field name
@@ -458,15 +506,27 @@ class CMIP6_DRSFilename(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
     Reference: CMIP6 `planning document <http://goo.gl/v1drZl>`__, page 14-15.
     """
     filename: str = util.MANDATORY
+    """Input to :meth:`~CMIP6_DRSFilename.from_string`. Filename as used in the
+    DRS."""
     variable_id: str = ""
+    """Variable name, as parsed from ``filename``."""
     table_id: CMIP6_MIPTable = ""
+    """MIP table of data, as parsed from ``filename``."""
     source_id: str = ""
+    """Source ID (model name) of data, as parsed from ``filename``."""
     experiment_id: str = ""
+    """Experiment ID of data, as parsed from ``filename``."""
     variant_label: CMIP6_VariantLabel = ""
+    """Variant label of data, as parsed from ``filename``."""
     grid_label: CMIP6_GridLabel = ""
+    """Grid label of data, as parsed from ``filename``."""
     start_date: util.Date = None
+    """Start date of data, as parsed from ``filename``."""
     end_date: util.Date = None
+    """End date of data, as parsed from ``filename``."""
     date_range: util.DateRange = dc.field(init=False)
+    """Start and end dates combined into a :class:`~src.util.datelable.DateRange`
+    object."""
 
     def __post_init__(self, *args):
         if self.start_date == util.FXDateMin \
@@ -495,6 +555,8 @@ class CMIP6_DRSPath(CMIP6_DRSDirectory, CMIP6_DRSFilename):
     CMIP6 DRS path.
     """
     path: str = util.MANDATORY
+    """Input to :meth:`~CMIP6_DRSPath.from_string`. Full path to data file as
+    used in the DRS."""
     directory: CMIP6_DRSDirectory = ""
     filename: CMIP6_DRSFilename = ""
 

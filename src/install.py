@@ -5,10 +5,10 @@ conda environments and supporting data.
 
 import sys
 # do version check before importing other stuff
-if sys.version_info[0] != 3 or sys.version_info[1] < 7:
-    sys.exit("ERROR: MDTF currently only supports python >= 3.7.*. Please check "
-    "which version is on your $PATH (e.g. with `which python`.)\n"
-    f"Attempted to run with following python version:\n{sys.version}")
+if sys.version_info[0] != 3 or sys.version_info[1] < 10:
+    sys.exit("ERROR: MDTF currently only supports python >= 3.10.*. Please check "
+             "which version is on your $PATH (e.g. with `which python`.)\n"
+             f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports
 import os
 import io
@@ -339,7 +339,7 @@ class MDTFInstaller(object):
         if d.env_setup == 'conda-basic':
             d.conda_envs = [self.settings.conda['framework_env'], 'NCL_base']
             d.environment_manager = "Conda"
-            d.pods = ["Wheeler_Kiladis", "EOF_500hPa", "MJO_suite", "MJO_teleconnection"]
+            d.pods = ["Wheeler_Kiladis", "EOF_500hPa", "MJO_suite", "MJO_teleconnection","blocking_neale"]
             if 'model_am4' in d.downloads_list:
                 d.downloads_list.remove('model_am4')
         elif d.env_setup == 'conda-full':

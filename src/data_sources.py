@@ -6,7 +6,7 @@ import abc
 import os
 import io
 import dataclasses
-from src import util, cmip6, varlist_util
+from src import util, cmip6, varlist_util, preprocessor
 import datetime
 
 import logging
@@ -86,7 +86,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     log_file: io.IOBase = dataclasses.field(default=None, init=False)
 
     def __init__(self, case_name: str,
-                 path_obj: util.PathManager,
+                 path_obj: util.PodPathManager,
                  parent):
         # _id = util.MDTF_ID()        # attrs inherited from util.logs.MDTFObjectBase
         # name: str
@@ -97,7 +97,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         # initialize MDTF logging object associated with this case
         util.MDTFObjectBase.__init__(self, name=case_name, _parent=parent)
         # set up log (CaseLoggerMixin)
-        self.init_log(log_dir=path_obj.MODEL_WORK_DIR[case_name])
+        self.init_log(log_dir=path_obj.POD_WORK_DIR)
 
 
     @property
@@ -113,14 +113,12 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         self.date_range = util.DateRange(start=startdate, end=enddate)
 
     def translate_varlist(self,
-                          pod_obj,
+                          model_paths: util.ModelDataPathManager,
                           case_name: str,
                           to_convention: str):
         for v in self.varlist.iter_vars():
-            self.varlist.setup_var(pod_obj, case_name, v, to_convention, self.date_range)
+            self.varlist.setup_var(model_paths, case_name, v, to_convention, self.date_range)
             print(v)
-    #    fieldlist_from = get_fieldlist_table(from_convention)
-    #    fieldlist_to = get_fieldlist_table(to_convention)
 
 
     def query_dataset(self, var):

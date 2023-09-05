@@ -74,25 +74,28 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     ctx.config = util.NameSpace()
     # parse the runtime config file
     ctx.config = cli.parse_config_file(configfile)
-    # add path of currently executing script
+    # Test ctx.config
     print(ctx.config.WORK_DIR)
     ctx.config.CODE_ROOT = os.path.dirname(os.path.realpath(__file__))
     cli.verify_runtime_config_options(ctx.config)
     log = MainLogger(log_dir=ctx.config["WORK_DIR"])
     if verbose:
         log.log.debug("Initialized cli context")
+    # Initialize the model path object and define the model data output paths
+    make_new_work_dir = not(ctx.config.overwrite)
+    model_paths = util.ModelDataPathManager(ctx.config,
+                                            new_work_dir=make_new_work_dir)
+    model_paths.setup_data_paths(ctx.config.case_list)
     # configure a variable translator object with information from Fieldlist tables
     var_translator = translation.VariableTranslator(ctx.config.CODE_ROOT)
     var_translator.read_conventions(ctx.config.CODE_ROOT)
     # configure pod object(s)
     for pod_name in ctx.config.pod_list:
         pod_obj = pod_setup.PodObject(pod_name, ctx.config)
-        pod_obj.setup_pod(ctx.config)
+        pod_obj.setup_pod(ctx.config, model_paths)
         # run custom scripts on dataset
         if any([s for s in ctx.config.user_pp_scripts]):
             pod_obj.add_user_pp_scripts(ctx.config)
-    model_paths = util.ModelDataPathManager(ctx.config)
-    model_paths.setup_model_paths(ctx.config.case_list, ctx.config.DATA_CATALOG)
     data_pp = preprocessor.init_preprocessor(ctx.config.run_pp)
 
     # close the main log file

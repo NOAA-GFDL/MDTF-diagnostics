@@ -22,13 +22,12 @@ class PathManagerBase(metaclass=Singleton):
     TEMP_DIR_ROOT: str
     CODE_ROOT: str
     OBS_DATA_ROOT: str
-
-    overwrite: bool = False
     _unittest: bool = False
 
     def __init__(self, config: NameSpace = None,
-                 env: dict = None, unittest: bool = False):
-        self.POD_OBS_DATA = ""
+                 env: dict = None,
+                 unittest: bool = False,
+                 new_work_dir: bool = True):
         self._unittest = unittest
         if self._unittest:
             for path in ['CODE_ROOT', 'OBS_DATA_ROOT',
@@ -41,18 +40,26 @@ class PathManagerBase(metaclass=Singleton):
             assert os.path.isdir(self.CODE_ROOT)
 
             # set following explicitly: redundant, but keeps linter from complaining
-            self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', config, env=env)
-            self.WORK_DIR = self._init_path('WORK_DIR', config, env=env)
-            self.OUTPUT_DIR = self._init_path('OUTPUT_DIR', config, env=env)
+            if hasattr(config, "OBS_DATA_ROOT"):
+                self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', config, env=env)
+            self.WORK_DIR = os.path.join(self._init_path('WORK_DIR', config, env=env),
+                                         'MDTF_output')
 
-            if not self.OUTPUT_DIR:
+            if not hasattr(config, 'OUTPUT_DIR'):
                 self.OUTPUT_DIR = self.WORK_DIR
-
-            self.overwrite = config.overwrite
+            elif len(config['OUTPUT_DIR']) < 1:
+                self.OUTPUT_DIR = self.WORK_DIR
+            else:
+                self.OUTPUT_DIR = os.path.join(self._init_path('OUTPUT_DIR', config, env=env),
+                                               'MDTF_output')
+            if new_work_dir:
+                self.WORK_DIR, ver = filesystem.bump_version(
+                    self.WORK_DIR, extra_dirs=[self.OUTPUT_DIR])
+                self.OUTPUT_DIR, _ = filesystem.bump_version(self.OUTPUT_DIR, new_v=ver)
 
             # set root directory for TempDirManager
             if not getattr(self, 'TEMP_DIR_ROOT', ''):
-                if 'MDTF_TMPDIR' in env:
+                if env is not None and 'MDTF_TMPDIR' in env:
                     self.TEMP_DIR_ROOT = env['MDTF_TMPDIR']
                 else:
                     # default to writing temp files in working directory
@@ -75,29 +82,22 @@ class PathManagerBase(metaclass=Singleton):
 
 class PodPathManager(PathManagerBase):
     POD_WORK_DIR: str
-    POD_OUT_DIR: str
+    POD_OUTPUT_DIR: str
     POD_OBS_DATA: str
     POD_CODE_DIR: str
 
-    def setup_pod_paths(self, pod_name: str, config: NameSpace):
+    def setup_pod_paths(self, pod_name: str):
         """Check and create directories specific to this POD.
         """
 
-        self.POD_CODE_DIR = os.path.join(config.CODE_ROOT, 'diagnostics', pod_name)
-        self.POD_WORK_DIR = os.path.join(config.WORK_DIR, pod_name)
-        self.POD_OUT_DIR = os.path.join(config.OUTPUT_DIR, pod_name)
-        if hasattr(config, "OBS_DATA_ROOT"):
-            self.POD_OBS_DATA = os.path.join(config.OBS_DATA_ROOT, pod_name)
-        if not self.overwrite:
-            # bump both WORK_DIR and OUT_DIR to same version because name of
-            # former may be preserved when we copy to latter, depending on
-            # copy method
-            self.POD_WORK_DIR, ver = filesystem.bump_version(
-                self.POD_WORK_DIR, extra_dirs=[self.OUTPUT_DIR])
-            self.POD_OUT_DIR, _ = filesystem.bump_version(self.POD_OUT_DIR, new_v=ver)
+        self.POD_CODE_DIR = os.path.join(self.CODE_ROOT, 'diagnostics', pod_name)
+        self.POD_WORK_DIR = os.path.join(self.WORK_DIR, pod_name)
+        self.POD_OUTPUT_DIR = os.path.join(self.OUTPUT_DIR, pod_name)
+        if any(self.OBS_DATA_ROOT):
+            self.POD_OBS_DATA = os.path.join(self.OBS_DATA_ROOT, pod_name)
         filesystem.check_dir(self.POD_WORK_DIR, 'POD_WORK_DIR', create=True)
-        filesystem.check_dir(self.POD_OUT_DIR, 'POD_OUT_DIR', create=True)
-        # OBS data are unique to POD
+        filesystem.check_dir(self.POD_OUTPUT_DIR, 'POD_OUTPUT_DIR', create=True)
+        # OBS data are unique to POD, so the obs output is copied to the POD subdirectory
         dirs = ('model/PS', 'obs/PS', 'obs/netCDF')
         for d in dirs:
             filesystem.check_dir(os.path.join(self.POD_WORK_DIR, d), create=True)
@@ -107,23 +107,26 @@ class ModelDataPathManager(PathManagerBase):
     MODEL_DATA_ROOT: str
     MODEL_DATA_DIR: dict
     MODEL_WORK_DIR: dict
-    MODEL_OUT_DIR: dict
+    MODEL_OUTPUT_DIR: dict
 
-    def __init__(self, config: NameSpace, env=None, unittest=False):
-        super().__init__(config, env, unittest)
+    def __init__(self, config: NameSpace,
+                 env=None,
+                 unittest: bool = False,
+                 new_work_dir: bool = False):
+        super().__init__(config, env, unittest, new_work_dir)
 
         if hasattr(config, "MODEL_DATA_ROOT"):
             self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', config, env=env)
             self.MODEL_DATA_DIR = dict()
-            self.MODEL_OUT_DIR = dict()
+            self.MODEL_OUTPUT_DIR = dict()
             self.MODEL_WORK_DIR = dict()
         else:
             self.MODEL_DATA_ROOT = ""
 
-    def setup_data_paths(self, case_list: NameSpace, data_catalog_path: str):
+    def setup_data_paths(self, case_list: NameSpace):
         # define directory paths for multirun mode
         # Each case directory is a subdirectory in wk_dir/pod_name
-        for case_name, case_dict in case_list:
+        for case_name, case_dict in case_list.items():
             startdate = case_dict.startdate.format(precision=1)
             enddate = case_dict.enddate.format(precision=1)
             if startdate in case_name and enddate in case_name:
@@ -135,18 +138,13 @@ class ModelDataPathManager(PathManagerBase):
             # Model data DIR retained for backwards compatibility
             if len(self.MODEL_DATA_ROOT) > 1:
                 self.MODEL_DATA_DIR[case_name] = os.path.join(self.MODEL_DATA_ROOT, case_name)
-                filesystem.check_dir(self.MODEL_DATA_DIR[case_name], 'MODEL_DATA_DIR', create=True)
+                filesystem.check_dir(self.MODEL_DATA_DIR[case_name], 'MODEL_DATA_DIR', create=False)
                 # Cases are located in a common POD directory
             self.MODEL_WORK_DIR[case_name] = os.path.join(self.WORK_DIR, case_wk_dir)
-            self.MODEL_OUT_DIR[case_name] = os.path.join(self.OUT_DIR, case_wk_dir)
-
-            self.MODEL_WORK_DIR[case_name], ver = filesystem.bump_version(
-            self.MODEL_WORK_DIR[case_name], extra_dirs=[self.MODEL_OUT_DIR[case_name]])
-            self.MODEL_OUT_DIR[case_name], _ = filesystem.bump_version(self.MODEL_OUT_DIR[case_name], new_v=ver)
+            self.MODEL_OUTPUT_DIR[case_name] = os.path.join(self.OUTPUT_DIR, case_wk_dir)
 
             filesystem.check_dir(self.MODEL_WORK_DIR[case_name], 'MODEL_WORK_DIR', create=True)
-            filesystem.check_dir(self.MODEL_OUT_DIR[case_name], 'MODEL_OUT_DIR', create=True)
-
+            filesystem.check_dir(self.MODEL_OUTPUT_DIR[case_name], 'MODEL_OUTPUT_DIR', create=True)
 
 
 def verify_paths(self, config, p):

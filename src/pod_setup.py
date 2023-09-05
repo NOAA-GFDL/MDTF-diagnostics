@@ -1,16 +1,12 @@
 """Classes for POD setup routines previously located in data_manager.DataSourceBase
 """
-from abc import ABC
 import logging
 import os
-import sys
 import io
 from pathlib import Path
 import subprocess
-import shlex
 
 from src import cli, util, data_sources
-import intake_esm
 import dataclasses as dc
 from distutils.spawn import find_executable
 
@@ -24,7 +20,8 @@ class PodBaseClass(metaclass=util.MDTFABCMeta):
     def parse_pod_settings_file(self, code_root: str):
         pass
 
-    def setup_pod(self, config: util.NameSpace):
+    def setup_pod(self, config: util.NameSpace,
+                  model_paths: util.ModelDataPathManager):
         pass
 
     def setup_var(self, pod, v):
@@ -69,7 +66,9 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         self.nc_largefile = runtime_config.large_file
         self.bash_exec = find_executable('bash')
         # Initialize the POD path object and define the POD output paths
-        self.paths = util.PodPathManager(runtime_config, env=self.pod_env_vars)
+        self.paths = util.PodPathManager(runtime_config,
+                                         env=self.pod_env_vars,
+                                         new_work_dir=False)
         self.paths.setup_pod_paths(self.name)
         util.MDTFObjectBase.__init__(self, name=self.name, _parent=None)
 
@@ -247,7 +246,8 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             except util.MDTFFileExistsError:
                 self.log.error(f"User-defined post-processing file {s} not found")
 
-    def setup_pod(self, runtime_config: util.NameSpace):
+    def setup_pod(self, runtime_config: util.NameSpace,
+                  model_paths: util.ModelDataPathManager):
         """Update POD information from settings and runtime configuration files
         """
         # Parse the POD settings file
@@ -278,9 +278,9 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 self.log.info(f'POD convention and data convention are both {data_convention}. '
                               f'No data translation will be performed for case {case_name}.')
             # A 'noTranslationFieldlist' will be defined for the varlistentry translation attribute
-            self.cases[case_name].translate_varlist(self,
+            self.cases[case_name].translate_varlist(model_paths,
                                                     case_name,
-                                                    to_convention=data_convention)
+                                                    data_convention)
 
 
         # ref for dict comparison

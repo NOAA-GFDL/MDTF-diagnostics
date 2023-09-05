@@ -1,7 +1,6 @@
 name: _MDTF_finite_amplitude_wave_diag
 channels:
 - conda-forge
-- defaults
 dependencies:
 - python=3.10
 - numpy=1.22.3
@@ -13,5 +12,6 @@ dependencies:
 - pytest==7.4.0
 - pip=22.0.4
 - dask
+- gridfill
 - pip:
-  - hn2016_falwa==0.7.1
+  - hn2016_falwa==0.7.2

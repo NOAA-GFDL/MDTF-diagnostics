@@ -68,9 +68,9 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         self._interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
         self.nc_largefile = runtime_config.large_file
         self.bash_exec = find_executable('bash')
-        # set up work/output directories
+        # Initialize the POD path object and define the POD output paths
         self.paths = util.PodPathManager(runtime_config, env=self.pod_env_vars)
-        self.paths.setup_pod_paths(self.name, runtime_config)
+        self.paths.setup_pod_paths(self.name)
         util.MDTFObjectBase.__init__(self, name=self.name, _parent=None)
 
     # Explicitly invoke MDTFObjectBase post_init and init methods so that _id and other inherited
@@ -195,12 +195,6 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     def get_pod_vars(self, pod_settings: util.NameSpace):
         self.pod_vars = util.NameSpace.toDict(pod_settings.varlist)
 
-    def get_pod_data_subset(self, catalog_path: str, case_data_source):
-        cat = intake.open_esm_datastore(catalog_path)
-        # filter catalog by desired variable and output frequency
-        tas_subset = cat.search(variable_id=case_data_source.varlist.iter_vars(),
-                                frequency=self.pod_data['freq'])
-
     def query_files_in_time_range(self, startdate, enddate):
         pass
 
@@ -267,33 +261,26 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         self.verify_pod_settings()
         self.set_interpreter(pod_input.settings)
         pod_convention = self.pod_settings['convention'].lower()
-        # run the PODs on data that has already been preprocessed
-        # PODs will ingest input directly from catalog that (should) contain
-        # the information for the saved preprocessed files, and a pre-existing case_env file
-        if runtime_config.persist_data:
-            pass
-        elif runtime_config.run_pp:
-            for case_name, case_dict in runtime_config.case_list.items():
-                # instantiate the data_source class instance for the specified convention
-                self.paths.setup_model_paths(case_name, case_dict)
-                self.cases[case_name] = data_sources.data_source[case_dict.convention.upper() +
-                                                                 "DataSource"](case_name,
-                                                                               self.paths, parent=self)
-                self.cases[case_name].set_date_range(case_dict.startdate, case_dict.enddate)
-                self.cases[case_name].read_varlist(self)
-                # util.NameSpace.fromDict({k: case_dict[k] for k in case_dict.keys()})
-                data_convention = case_dict.convention.lower()
-                if pod_convention != data_convention:
-                    self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
-                else:
-                    data_convention = 'no_translation'
-                    self.log.info(f'POD convention and data convention are both {data_convention}. '
-                                  f'No data translation will be performed for case {case_name}.')
-                # translate POD variable(s) to case data convention(s) if they do not match
-                # A 'noTranslationFieldlist' will be defined for the varlistentry translation attribute
-                self.cases[case_name].translate_varlist(self,
-                                                        case_name,
-                                                        to_convention=data_convention)
+
+        for case_name, case_dict in runtime_config.case_list.items():
+            # instantiate the data_source class instance for the specified convention
+            self.cases[case_name] = data_sources.data_source[case_dict.convention.upper() +
+                                                             "DataSource"](case_name,
+                                                                           self.paths, parent=self)
+            self.cases[case_name].set_date_range(case_dict.startdate, case_dict.enddate)
+            self.cases[case_name].read_varlist(self)
+            # Translate the data if desired and the pod convention does not match the case convention
+            data_convention = case_dict.convention.lower()
+            if runtime_config.translate_data and pod_convention != data_convention:
+                self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
+            else:
+                data_convention = 'no_translation'
+                self.log.info(f'POD convention and data convention are both {data_convention}. '
+                              f'No data translation will be performed for case {case_name}.')
+            # A 'noTranslationFieldlist' will be defined for the varlistentry translation attribute
+            self.cases[case_name].translate_varlist(self,
+                                                    case_name,
+                                                    to_convention=data_convention)
 
 
         # ref for dict comparison

@@ -41,15 +41,16 @@ conda_root": ""
 # blank, the framework will look for its environments in conda_root/envs
 conda_env_root": ""
 ### Data type settings ###
-# Method used to fetch model data.
-data_manager: "Local_File"
 # set to true to handle data files > 4 GB
 large_file: False
 ### Output Settings ###
 # Set to true to have PODs save postscript figures in addition to bitmaps.
 save_ps: False
-# Set to true to have PODs run on data that has already been processed
-persist_data: False
+# If true, leave pp data in OUTPUT_DIR after preprocessing; if false, delete pp data after PODs
+# run to completion
+save_pp_data: True
+# Set to true to perform data translation; default is True:
+translate_data: True
 # Set to true to save HTML and bitmap plots in a .tar file.
 make_variab_tar: False
 # Set to true to overwrite results in OUTPUT_DIR; otherwise results saved

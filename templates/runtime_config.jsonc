@@ -53,7 +53,7 @@
   // Full path to model data ESM-intake catalog header file
   "DATA_CATALOG": "/local2/home/mdtf/diagnostics/example_multicase/esm_catalog_CMIP_Synthetic_r1i1p1f1_gr1.json",
   // Backwards compatibility
-  "MODEL_DATA_ROOT": "../mdtf_test_data",
+  "MODEL_DATA_ROOT": "../inputdata/mdtf_test_data",
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
@@ -76,25 +76,21 @@
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
   // can be set here, in the form "flag name": "desired setting".
-  //
-
-  // Method used to fetch model data.
-  "data_manager": "Local_File",
-
-  // Method used to manage dependencies.
-  "environment_manager": "Conda",
 
   // Settings affecting what output is generated:
-  // Set to true to run the preprocessor; default false:
+  // Set to true to run the preprocessor; default true:
   "run_pp": true,
+  // Set to true to perform data translation; default false:
+  "translate_data": true,
   // Set to true to have PODs save postscript figures in addition to bitmaps.
   "save_ps": false,
 
   // Set to true for files > 4 GB
   "large_file": false,
 
-  // Set to true to have PODs run on data that has already been processed
-  "persist_data": false,
+  // If true, leave pp data in OUTPUT_DIR after preprocessing; if false, delete pp data after PODs
+  // run to completion
+  "save_pp_data": true,
 
   // Set to true to save HTML and bitmap plots in a .tar file.
   "make_variab_tar": false,

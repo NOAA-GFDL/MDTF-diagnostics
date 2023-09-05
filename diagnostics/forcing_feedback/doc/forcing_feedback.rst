@@ -1,14 +1,15 @@
 Forcing Feedback Diagnostic Package
 ============================================================
-Last update: 1/31/2021
+Last update: 9/5/2023
 
-The Forcing Feedback Diagnostic package evaluates a model's radiative forcing and radiative feedbacks. This is a commong framework for understanding the radiative constraints on a model's climate sensitivity and is outlined in detail by :ref:`Sherwood et al. (2015) <1>`, among many others. To compute radiative feedbacks, anomalies of temperature, specific humidity and surface albedo are translated into radiative anomalies by multiplying them by radiative kernels developed from the CloudSat/CALIPSO Fluxes and Heating Rates product (:ref:`Kramer et al. 2019 <2>`).  These radiative anomalies are regressed against the model's global-mean surface temperature anomalies to estimate the radiative feedbacks. Cloud radiative feedbacks are computed as the change in cloud radiative effects from the model's TOA radiative flux variables, corrected for cloud masking using the kernel-derived non-cloud radiative feedbacks (:ref:`Soden et al. 2008 <3>`).  The Instantaneous Radiative Forcing is computed first under clear-sky conditions by subtracting kernel-derivred clear-sky radiative feedbacks from the clear-sky TOA radiative imbalance diagnosed from the model's radiative flux variables. The all-sky Instantaneous Radiative Forcing is estimated by dividing the clear-sky Instantaneous Radiative Forcing by a cloud masking constant (:ref:`Kramer et al. 2021 <4>`). All radiative quantities in this package are defined at the TOA and positive represents an increase in net downwelling or a radiative heating of the planet.
+The Forcing Feedback Diagnostic package evaluates a model's radiative forcing and radiative feedbacks. This is a commong framework for understanding the radiative constraints on a model's climate sensitivity and is outlined in detail by :ref:`Sherwood et al. (2015) <1>`, among many others. To compute radiative feedbacks, anomalies of temperature, specific humidity and surface albedo are translated into radiative anomalies by multiplying them by radiative kernels developed from the CloudSat/CALIPSO Fluxes and Heating Rates product (:ref:`Kramer et al. 2019 <2>`).These radiative anomalies are regressed against the model's global-mean surface temperature anomalies to estimate the radiative feedbacks. Cloud radiative feedbacks are computed as the change in cloud radiative effects from the model's TOA radiative flux variables, corrected for cloud masking using the kernel-derived non-cloud radiative feedbacks (:ref:`Soden et al. 2008 <3>`).  The Instantaneous Radiative Forcing is computed first under clear-sky conditions by subtracting kernel-derivred clear-sky radiative feedbacks from the clear-sky TOA radiative imbalance diagnosed from the model's radiative flux variables. The all-sky Instantaneous Radiative Forcing is estimated by dividing the clear-sky Instantaneous Radiative Forcing by a cloud masking constant (:ref:`Kramer et al. 2021 <4>`). All radiative quantities in this package are defined at the TOA and positive represents an increase in net downwelling or a radiative heating of the planet.
+
 
 Contact info
 ------------
 
 - PI of the project: Brian Soden, University of Miami (bsoden@rsmas.miami.edu);
-- Current developer: Ryan Kramer (ryan.j.kramer@nasa.gov)
+- Current developer: Ryan Kramer (ryan.kramer@noaa.gov)
 
 Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -33,7 +34,7 @@ Required programming language and libraries
 
 Python is required to run the diagnostic.
 
-The part of the package written in Python requires packages os, sys, numpy, xarray, scipy, matplotlib and cartopy. These Python packages are already included in the standard Anaconda installation 
+The part of the package written in Python requires packages os, sys, numpy, xarray, scipy, matplotlib, cartopy and dask. These Python packages are already included in the standard Anaconda installation 
 
 Required model output variables
 -------------------------------
@@ -54,7 +55,9 @@ The following 4-D (lat-lon-level-time), monthly model fields are requied:
 - Air temperature ("ta" in CMIP conventions)
 - Specific humidity ("hus")
 
-The observational estimates (see below) are for 2003-2018. While ideally the model data should cover the same period, it is reasonable to compare the model's radiative feedbacks and radiative forcing over any historical time period.  Note that idealized model experiments, such as a single forcing scenario, may produce radiative forcing trends that differ considerably from the observations.  In that case, this package will still have value as a qualitative "gut check" on the radiative feedbacks, which exhibit similar characteristics regardless of the forcing scenario.
+The observational estimates (see below) are for 2003-2014. The start date is based on data availability while the end date was selected to match the end date of relevant CMIP6 simulations. For an ideal comparison, the model data used in this POD should cover the same period and have realistic, historical forcing boundary conditions. However, this package will still have value as a "gut check" for any simulation, especially with respect to radiative feedbacks, which often exhibit similar characteristics regardless of the forcing scenario.
+
+
 
 
 More about the diagnostic
@@ -63,7 +66,7 @@ More about the diagnostic
 a) Choice of reference dataset
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-While total TOA radiative changes are directly observed, the radiative feedback and radiative forcing components are not. Therefore, in this package the observational estimates of radiative feedbacks and radiative forcing are derived by multiplying data from ERA5 Reanalysis by the CloudSat/CALIPSO radiative kernels mentioned above. Global-mean surface temperature anomalies from ERA5 are used to compute the radiative feedbacks from the kernel-derived radiative anomalies as described above. The methods for diagnosing these radiative changes in observations are outlined by :ref:`Kramer et al. 2021 <4>` and :ref:`He et al. 2021 <5>`
+While total TOA radiative changes are directly observed, the radiative feedback and radiative forcing components are not. Therefore, in this package the observational estimates of radiative feedbacks and radiative forcing are derived by multiplying data from ERA5 Reanalysis by the CloudSat/CALIPSO radiative kernels mentioned above. Global-mean surface temperature anomalies from ERA5 are used to compute the radiative feedbacks from the kernel-derived radiative anomalies as described above. To diagnose the instantaneous radiative forcing, the kernel-derived, clear-sky estimates of radiative feedbacks are subtracted by a measure of  the total radiative anomalies at the TOA. For the observational dataset used here, that total radiative anomaly estimates is from CERES. The methods for diagnosing these radiative changes in observations are outlined by :ref:`Kramer et al. 2021 <4>` and :ref:`He et al. 2021 <5>`
 
 References
 ----------

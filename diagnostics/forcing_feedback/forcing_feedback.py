@@ -7,9 +7,9 @@
 #
 # The forcing feedback diagnostic package uses radiative kernels to compute radiative forcing and radiative feedback terms.
 #
-#  Version 1 21-Jan-2021 Ryan Kramer (NASA Goddard Space Flight Center)
+#  Version 1 05-Sept-2023 Ryan Kramer (NOAA/GFDL prev. NASA GSFC/UMBC)
 #  PI: Brian Soden (University of Miami; bsoden@rsmas.miami.edu)
-#  Current developer: Ryan Kramer (ryan.j.kramer@nasa.gov)
+#  Current developer: Ryan Kramer (ryan.kramer@noaa.gov)
 #  
 #   This package and the MDTF code package are distributed under the LGPLv3 license 
 #    (see LICENSE.txt).
@@ -22,7 +22,7 @@
 #   (**$ver depends on the actual version of the MDTF code package
 #
 #   This package is written in Python 3 and requires the following Python packages:
-#   fnmatch,os,sys,numpy,xarray,scipy,matplotlib,cartopy
+#   os,sys,numpy,xarray,scipy,matplotlib,cartopy,dask
 #
 #   The following 4-D (lon-lat-pressure levels-time) monthly-mean model fields 
 #   are required:
@@ -57,7 +57,7 @@ if not os.path.isfile(os.environ["OBS_DATA"]+"/forcing_feedback_kernels.nc"):
 else:
 
     try:
-       os.system("python "+os.environ["POD_HOME"]+"/"+"forcing_feedback_kernelcalcs.py")
+       os.system("python "+os.environ["POD_HOME"]+"/"+"forcing_feedback_kernelcalcs_tropseperate_dask2.py")
        print('Working Directory is '+os.environ['WK_DIR'])
        print('Forcing Feedback POD is executing')
     except RuntimeError as e1:

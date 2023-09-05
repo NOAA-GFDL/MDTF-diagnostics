@@ -1,7 +1,7 @@
 # This file is part of the forcing_feedback module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
 
 # ======================================================================
-# forcing_feedback_util.py
+# forcing_feedback_util_tropseperate.py
 #
 # Provide functions called by forcing_feedback.py
 #
@@ -27,6 +27,7 @@
 import os
 import numpy as np
 import numpy.ma as ma
+import dask.array as da
 import xarray as xr
 from scipy.interpolate import griddata
 import matplotlib as mpl
@@ -36,11 +37,34 @@ import cartopy.crs as ccrs
 import matplotlib.ticker as mticker
 import cartopy.crs as ccrs
 from cartopy.mpl.gridliner import LATITUDE_FORMATTER
+from cartopy.util import add_cyclic_point
+
+
+# =======================================================
+# var_anom4D
+
+def var_anom4D(var_pert, var_base):
+ 
+    sp = var_pert.shape
+    sb = var_base.shape
+
+    if len(sp)!=4 or len(sb)!=4:
+       print("An input variable is not 4D! Function will not execute")
+    else:
+       #Prep variable to analyze on a monthly-basis
+
+       var_pert_re = np.reshape(var_pert, (np.int(sp[0]/12),12,sp[1],sp[2],sp[3]))
+       var_base_re = np.reshape(var_base, (np.int(sb[0]/12),12,sb[1],sb[2],sb[3]))
+       var_base_tmean = np.repeat(np.squeeze(np.nanmean(var_base_re,axis=0))[np.newaxis,:,:,:], \
+             np.int(sp[0]/12),axis=0)
+       var_anom = da.from_array(var_pert_re - var_base_tmean,chunks=(5,5,sp[1],sp[2],sp[3]))
+
+    return var_anom
 
 # ======================================================================
 #fluxanom_calc_4D
 
-def fluxanom_calc_4D(var_pert, var_base, tot_kern, clr_kern, dpsfc, levs):
+def fluxanom_calc_4D(var_anom, tot_kern, clr_kern, dpsfc, levs, lats, psk):
     '''
     Computes anomalies of radiatively-relevant 4D climate variables and multiplies
     by radiative kernel to convert to radiative flux change. Performs clear- and 
@@ -57,54 +81,84 @@ def fluxanom_calc_4D(var_pert, var_base, tot_kern, clr_kern, dpsfc, levs):
     #Pressure thickness of each vertical level
     dp = pb - pt
      
-    sp = var_pert.shape
-    sb = var_base.shape
+    sp = var_anom.shape
     skt = tot_kern.shape
     skc = clr_kern.shape
 
 
-    if len(skt)!=4 or len(skc)!=4 or len(sp)!=4 or len(sb)!=4:
+    #Create indices to seperate troposphere from stratosphere
+    frac_tropo = np.zeros((sp[0],sp[1],sp[2]-1,sp[3],sp[4]))
+    frac_strato = np.zeros((sp[0],sp[1],sp[2]-1,sp[3],sp[4]))
+    tropopause = (100 + np.absolute(lats)*200/90)
+    tropopause_mat = np.tile(tropopause,(sp[0],sp[1],sp[2]-1,sp[4],1)).transpose(0,1,2,4,3)
+    ptop_mat = np.tile(pt[1:],(sp[0],sp[1],sp[3],sp[4],1)).transpose(0,1,4,2,3)
+    pbot_mat = np.tile(pb[1:],(sp[0],sp[1],sp[3],sp[4],1)).transpose(0,1,4,2,3)
+    psk_mat = np.tile(psk, (sp[0],sp[2]-1,1,1,1)).transpose(0,2,1,3,4)
+
+    frac_tropo[(pbot_mat<=psk_mat) & (ptop_mat>=tropopause_mat)] = 1
+    frachold = (pbot_mat-tropopause_mat)/(pbot_mat-ptop_mat)
+    frac_tropo[(pbot_mat>=tropopause_mat) & (ptop_mat<=tropopause_mat)] = frachold[(pbot_mat>=tropopause_mat) & (ptop_mat<=tropopause_mat)]
+    frachold = (psk_mat-ptop_mat)/(pbot_mat-ptop_mat)
+    frac_tropo[(pbot_mat>=psk_mat) & (ptop_mat<=psk_mat)] = frachold[(pbot_mat>=psk_mat) & (ptop_mat<=psk_mat)]
+
+    frachold = (tropopause_mat-ptop_mat)/(pbot_mat-ptop_mat)
+    frac_strato[(pbot_mat>=tropopause_mat) & (ptop_mat<=tropopause_mat)] = frachold[(pbot_mat>=tropopause_mat) & (ptop_mat<=tropopause_mat)]
+    frac_strato[(pbot_mat<=tropopause_mat) & (ptop_mat <= tropopause_mat)] = 1
+    frachold, tropopause_mat, ptop_mat, pbot_mat, psk_mat = None, None, None, None, None
+
+    if len(sp)!=5:
        print("An input variable is not 4D! Function will not execute")
     else:
-       #Prep variable to analyze on a monthly-basis
-       var_pert_re = np.reshape(var_pert, (np.int(sp[0]/12),12,sp[1],sp[2],sp[3]))
-       var_base_re = np.reshape(var_base, (np.int(sb[0]/12),12,sb[1],sb[2],sb[3]))
- 
-       flux_tot = np.zeros((np.int(sp[0]/12),12,sp[1],sp[2],sp[3]))
-       flux_clr = np.zeros((np.int(sp[0]/12),12,sp[1],sp[2],sp[3]))
-       for m in range(0,12):
-           
-           #Conduct calculations by month, using m index to isolate data accordingly
-           #Create climatology by average all timesteps in the var_base variable
-           var_base_m_tmean = np.squeeze(np.nanmean(var_base_re[:,m,:,:,:],axis=0))
-           var_pert_m = np.squeeze(var_pert_re[:,m,:,:,:])
-           
-           #Compute anomalies
-           var_anom = var_pert_m - np.repeat(var_base_m_tmean[np.newaxis,:,:,:],np.int(sp[0]/12),axis=0)
 
-           #Calculate flux anomaly for all levels except first level above surface - total-sky, troposphere
-           flux_tot[:,m,1:,:,:] = np.squeeze(np.repeat(tot_kern[np.newaxis,m,1:,:,:],np.int(sp[0]/12),axis=0)) *\
-                                        np.squeeze(np.repeat(np.repeat(np.repeat(\
-                                        dp[np.newaxis,1:],np.int(sp[0]/12),axis=0)[:,:,np.newaxis],sp[2],axis=2)[:,:,:,np.newaxis],sp[3],axis=3))\
-                                        *var_anom[:,1:,:,:]/100
-           #Calculate flux anomaly for level above surface
-           flux_tot[:,m,0,:,:] = np.squeeze(np.repeat(tot_kern[np.newaxis,m,0,:,:],np.int(sp[0]/12),axis=0))\
-                                       *np.squeeze(dpsfc[:,m,:,:])*var_anom[:,0,:,:]/100
+       tot_kern = da.from_array(np.squeeze(np.repeat(tot_kern[np.newaxis,...],sp[0],axis=0)),chunks=(5,5,sp[2],sp[3],sp[4]))
+       clr_kern = da.from_array(np.squeeze(np.repeat(clr_kern[np.newaxis,...],sp[0],axis=0)),chunks=(5,5,sp[2],sp[3],sp[4]))
+       dp_mat = da.from_array(np.squeeze(np.repeat(np.repeat(np.repeat(np.repeat(\
+                                        dp[np.newaxis,1:],12,axis=0)[np.newaxis,...],sp[0],axis=0)[:,:,:,np.newaxis], \
+                                        sp[3],axis=3)[:,:,:,:,np.newaxis],sp[4],axis=4)),chunks=(5,5,sp[2],sp[3],sp[4]))
+       frac_tropo = da.from_array(frac_tropo,chunks=(5,5,sp[2],sp[3],sp[4]))
+       frac_strato = da.from_array(frac_strato,chunks=(5,5,sp[2],sp[3],sp[4]))
+       dpsfc = da.from_array(dpsfc,chunks=(5,5,sp[3],sp[4]))
 
-           #Calculate flux anomaly for all levels except first level above surface - clear-sky, troposphere
-           flux_clr[:,m,1:,:,:] = np.squeeze(np.repeat(clr_kern[np.newaxis,m,1:,:,:],np.int(sp[0]/12),axis=0)) *\
-                                        np.squeeze(np.repeat(np.repeat(np.repeat(\
-                                        dp[np.newaxis,1:],np.int(sp[0]/12),axis=0)[:,:,np.newaxis],sp[2],axis=2)[:,:,:,np.newaxis],sp[3],axis=3))\
-                                        *var_anom[:,1:,:,:]/100
-           #Calculate flux anomaly for level above surface
-           flux_clr[:,m,0,:,:] = np.squeeze(np.repeat(clr_kern[np.newaxis,m,0,:,:],np.int(sp[0]/12),axis=0))\
-                                       *np.squeeze(dpsfc[:,m,:,:])*var_anom[:,0,:,:]/100
+       #Calculate flux anomaly for all levels except first level above surface - total-sky, troposphere
+       flux_tot_tropo = (tot_kern[:,:,1:,:,:]* frac_tropo * dp_mat * var_anom[:,:,1:,:,:]/100)
+       flux_tot_strato = (tot_kern[:,:,1:,:,:]* frac_strato * dp_mat *var_anom[:,:,1:,:,:]/100)
+   
+       #Calculate flux anomaly for level above surface
+
+       flux_tot_tropo_bottom = (tot_kern[:,:,0,:,:]\
+                                       *dpsfc *var_anom[:,:,0,:,:]/100)
+
+       flux_tot_strato_bottom = (tot_kern[:,:,0,:,:]\
+                                       * dpsfc *var_anom[:,:,0,:,:]/100)
+
+       #Calculate flux anomaly for all levels except first level above surface - clear-sky, troposphere
+       flux_clr_tropo = (clr_kern[:,:,1:,:,:] * frac_tropo * dp_mat * var_anom[:,:,1:,:,:]/100)
+
+       flux_clr_strato = (clr_kern[:,:,1:,:,:] * frac_tropo * dp_mat * var_anom[:,:,1:,:,:]/100)
+
+       #Calculate flux anomaly for level above surface
+       flux_clr_tropo_bottom = (clr_kern[:,:,0,:,:]\
+                                       *dpsfc *var_anom[:,:,0,:,:]/100)
+
+       flux_clr_strato_bottom = (clr_kern[:,:,0,:,:]\
+                                       *dpsfc *var_anom[:,:,0,:,:]/100)
+
+
+    frac_tropo, frac_strato = None, None
 
     #Reshape fluxanom variables and vertically integrate
-    flux_tot = np.reshape(np.squeeze(np.nansum(flux_tot,axis=2)),(sp[0],sp[2],sp[3]))
-    flux_clr = np.reshape(np.squeeze(np.nansum(flux_clr,axis=2)),(sp[0],sp[2],sp[3]))
-   
-    return flux_tot, flux_clr
+    flux_tot_tropo = da.append(flux_tot_tropo,flux_tot_tropo_bottom[:,:,np.newaxis,...],axis=2)
+    flux_tot_strato = da.append(flux_tot_strato,flux_tot_strato_bottom[:,:,np.newaxis,...],axis=2)
+    flux_tot_strato = da.append(flux_tot_strato,flux_tot_strato_bottom[:,:,np.newaxis,...],axis=2)
+    flux_tot_strato = da.append(flux_tot_strato,flux_tot_strato_bottom[:,:,np.newaxis,...],axis=2)
+
+    flux_tot_tropo = np.reshape(np.squeeze(np.nansum(flux_tot_tropo,axis=2)),(sp[0]*sp[1],sp[3],sp[4]))
+    flux_clr_tropo = np.reshape(np.squeeze(np.nansum(flux_clr_tropo,axis=2)),(sp[0]*sp[1],sp[3],sp[4]))
+    flux_tot_strato = np.reshape(np.squeeze(np.nansum(flux_tot_strato,axis=2)),(sp[0]*sp[1],sp[3],sp[4]))
+    flux_clr_strato = np.reshape(np.squeeze(np.nansum(flux_clr_strato,axis=2)),(sp[0]*sp[1],sp[3],sp[4]))
+
+
+    return np.asarray(flux_tot_tropo), np.asarray(flux_clr_tropo), np.asarray(flux_tot_strato), np.asarray(flux_clr_strato)
 
 
 # ======================================================================
@@ -425,8 +479,8 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
        start1a = var1_model[...,0:np.int(len(model_origlon)/2)]
        start1b = var1_model[...,np.int(len(model_origlon)/2):]
        var1_model = np.concatenate((start1b,start1a),axis=1)
-    #axs[0, 0].set_extent([-180,180,-80,80])
-    cs = axs[0, 0].contourf(lon_m,lat_m,var1_model,cmap=plt.cm.RdBu_r, \
+    var1_model, lon_m180 = add_cyclic_point(var1_model,coord=lon_m)
+    cs = axs[0, 0].contourf(lon_m180,lat_m,var1_model,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs1[0], \
                        vmax=cbar_levs1[-1],levels=cbar_levs1,extend='both')
     axs[0, 0].coastlines()
@@ -440,8 +494,8 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
        cbar.set_label(var_units)
 
     axs[0, 1].set_title(var1_name+' - Obs.')
-    #axs[0, 1].set_extent([-180,180,-80,80])
-    cs = axs[0, 1].contourf(lon_o,lat_o,var1_obs,cmap=plt.cm.RdBu_r, \
+    var1_obs, lon_o180 = add_cyclic_point(var1_obs,coord=lon_o)
+    cs = axs[0, 1].contourf(lon_o180,lat_o,var1_obs,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs1[0], \
                        vmax=cbar_levs1[-1],levels=cbar_levs1,extend='both')
     axs[0, 1].coastlines()
@@ -456,8 +510,8 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
        start1a = var2_model[...,0:np.int(len(model_origlon)/2)]
        start1b = var2_model[...,np.int(len(model_origlon)/2):]
        var2_model = np.concatenate((start1b,start1a),axis=1)
-    #axs[1, 0].set_extent([-180,180,-80,80])
-    cs = axs[1, 0].contourf(lon_m,lat_m,var2_model,cmap=plt.cm.RdBu_r, \
+    var2_model, lon_m180 = add_cyclic_point(var2_model,coord=lon_m)
+    cs = axs[1, 0].contourf(lon_m180,lat_m,var2_model,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs2[0], \
                        vmax=cbar_levs2[-1],levels=cbar_levs2,extend='both')
     axs[1, 0].coastlines()
@@ -471,8 +525,8 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
        cbar.set_label(var_units)
 
     axs[1, 1].set_title(var2_name+' - Obs.')
-    #axs[1, 1].set_extent([-180,180,-80,80])
-    cs = axs[1, 1].contourf(lon_o,lat_o,var2_obs,cmap=plt.cm.RdBu_r, \
+    var2_obs, lon_o180 = add_cyclic_point(var2_obs,coord=lon_o)
+    cs = axs[1, 1].contourf(lon_o180,lat_o,var2_obs,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs2[0], \
                        vmax=cbar_levs2[-1],levels=cbar_levs2,extend='both')
     axs[1, 1].coastlines()
@@ -483,11 +537,13 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
        cbar.set_label(var_units)
 
     if np.all(cbar_levs1 == cbar_levs2)==True:
-       cbar = plt.colorbar(cs,ax=axs.flat,orientation='horizontal',aspect=25)
+       cbar = plt.colorbar(cs,ax=axs.ravel(),orientation='horizontal',aspect=25)
        cbar.set_label(var_units)
     plt.savefig(os.environ['WK_DIR']+'/model/PS/forcing_feedback_maps_'+ \
                 var_filename+'.eps',bbox_inches='tight')
     plt.close()
+
+    return None
 
 # ======================================================================
 # map_plotting_2subs
@@ -514,8 +570,8 @@ def map_plotting_2subs(cbar_levs,var_name,var_model, \
        start1a = var_model[...,0:np.int(len(model_origlon)/2)]
        start1b = var_model[...,np.int(len(model_origlon)/2):]
        var_model = np.concatenate((start1b,start1a),axis=1)
-    #axs[0].set_extent([-180,180,-80,80])
-    axs[0].contourf(lon_m,lat_m,var_model,cmap=plt.cm.RdBu_r, \
+    var_model, lon_m180 = add_cyclic_point(var_model,coord=lon_m)
+    axs[0].contourf(lon_m180,lat_m,var_model,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs[0], \
                        vmax=cbar_levs[-1],levels=cbar_levs,extend='both')
     axs[0].coastlines()
@@ -526,17 +582,19 @@ def map_plotting_2subs(cbar_levs,var_name,var_model, \
     g1.yformatter = LATITUDE_FORMATTER
 
     axs[1].set_title(var_name+' - Obs.')
-    #axs[1].set_extent([-180,180,-80,80])
-    cs = axs[1].contourf(lon_o,lat_o,var_obs,cmap=plt.cm.RdBu_r, \
+    var_obs, lon_o180 = add_cyclic_point(var_obs,coord=lon_o)
+    cs = axs[1].contourf(lon_o180,lat_o,var_obs,cmap=plt.cm.RdBu_r, \
                        transform=ccrs.PlateCarree(),vmin=cbar_levs[0], \
                        vmax=cbar_levs[-1],levels=cbar_levs,extend='both')
     axs[1].coastlines()
     g1 = axs[1].gridlines(linestyle=':')
     g1.xlines = False
 
-    cbar = plt.colorbar(cs,ax=axs.flat,orientation='horizontal',aspect=25)
+    cbar = plt.colorbar(cs,ax=axs.ravel(),orientation='horizontal',aspect=25)
     cbar.set_label(var_units)
     plt.savefig(os.environ['WK_DIR']+'/model/PS/forcing_feedback_maps_'+ \
                 var_filename+'.eps',bbox_inches='tight')
     plt.close()
+
+    return None
 

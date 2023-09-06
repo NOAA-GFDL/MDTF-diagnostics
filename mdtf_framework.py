@@ -63,13 +63,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     util.logs.initial_log_config()
 
     conda_utils.verify_conda_env('_MDTF_base')
-    # case where we run the actual framework
     # print(f"=== Starting {os.path.realpath(__file__)}\n")
-
-    # not printing help or info, setup CLI normally
-    # cli_obj = cli.MDTFTopLevelArgParser(code_root,argv=argv)
-    # framework = cli_obj.dispatch()
-    # exit_code = framework.main()
     # NameSpace allows dictionary keys to be referenced with dot notation
     ctx.config = util.NameSpace()
     # parse the runtime config file
@@ -78,14 +72,15 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     print(ctx.config.WORK_DIR)
     ctx.config.CODE_ROOT = os.path.dirname(os.path.realpath(__file__))
     cli.verify_runtime_config_options(ctx.config)
-    log = MainLogger(log_dir=ctx.config["WORK_DIR"])
-    if verbose:
-        log.log.debug("Initialized cli context")
     # Initialize the model path object and define the model data output paths
     make_new_work_dir = not(ctx.config.overwrite)
     model_paths = util.ModelDataPathManager(ctx.config,
                                             new_work_dir=make_new_work_dir)
     model_paths.setup_data_paths(ctx.config.case_list)
+    # Set up main logger
+    log = MainLogger(log_dir=model_paths.WORK_DIR)
+    if verbose:
+        log.log.debug("Initialized cli context")
     # configure a variable translator object with information from Fieldlist tables
     var_translator = translation.VariableTranslator(ctx.config.CODE_ROOT)
     var_translator.read_conventions(ctx.config.CODE_ROOT)

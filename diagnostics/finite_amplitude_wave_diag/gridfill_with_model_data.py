@@ -1,13 +1,13 @@
 """
 Attempt to work with daily mean data from daily_avg_model_notfinished.py
+This runs on iMac
 """
 import os
 import xarray as xr
-import gridfill
 import numpy as np
-import matplotlib.pyplot as plt
 from hn2016_falwa.xarrayinterface import QGDataset
-import scipy
+
+from diagnostics.finite_amplitude_wave_diag.gridfill_utils import gridfill_each_level
 
 # These are local path to Clare's iMac
 storage_path = f"{os.environ['HOME']}/Dropbox/GitHub/hn2016_falwa/github_data_storage/"
@@ -24,27 +24,6 @@ coord_file = xr.open_dataset(u_file)
 xlon = coord_file.coords['lon']
 ylat = coord_file.coords['lat']
 plev = coord_file.coords['level']
-
-
-def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
-    """
-    Apply gridfill to do interpolation on lat-lon grid using poisson solver, and then interpolate onto 1-degree grid
-
-    Args:
-        lat_lon_field(np.ndarray): 2D array to apply gridfill on
-        itermax(int): maximum iteration for poisson solver
-        verbose(bool): verbose level of poisson solver
-
-    Returns:
-        A 2D array of the same dimension with all nan filled.
-    """
-
-    lat_lon_filled, converged = gridfill.fill(
-        grids=np.ma.masked_invalid(lat_lon_field), xdim=1, ydim=0, eps=0.01,
-        cyclic=True, itermax=itermax, verbose=verbose)
-
-    return lat_lon_filled
-
 
 if output_interp:
     args_tuple = [(u_file, 'ua', interp_u_file), (v_file, 'va', interp_v_file), (t_file, 'ta', interp_t_file)]

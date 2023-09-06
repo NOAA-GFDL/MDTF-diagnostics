@@ -1,5 +1,5 @@
 """
-Compute daily average from sample files. This is working on server
+Compute daily average from sample files. This is working on OTC
 """
 import os
 import xarray as xr                # python library we use to read netcdf files

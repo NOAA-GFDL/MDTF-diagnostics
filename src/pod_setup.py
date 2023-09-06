@@ -92,7 +92,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     @property
     def _children(self):
         # property required by MDTFObjectBase
-        pass
+        return self.cases.values()
 
     @property
     def full_name(self):

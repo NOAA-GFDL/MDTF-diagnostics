@@ -6,7 +6,7 @@ import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 from hn2016_falwa.oopinterface import QGFieldNHN22
-import hn2016_falwa.utilities as utilities
+from hn2016_falwa.xarrayinterface import QGDataset
 
 # 0) Get environment variables
 wkdir = os.environ['wkdir']
@@ -53,30 +53,46 @@ nlon = xlon.size
 nlat = ylat.size
 nlev = plev.size
 
+selected_months = [1]
 # u_file = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
 # v_file = v_file.sel(time=v_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
 # t_file = t_file.sel(time=t_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
 new_xlon = np.arange(0, 360)
 new_ylat = np.arange(-90, 91)
-data_u = u_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="linear")
-data_v = v_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="linear")
-data_t = t_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="linear")
+
+print("Compute daily average and interp onto coarser grid.")
+data_u = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
+    .interp(latitude=new_ylat, longitude=new_xlon, method="linear")
+data_v = v_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
+    .interp(latitude=new_ylat, longitude=new_xlon, method="linear")
+data_t = t_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
+    .interp(latitude=new_ylat, longitude=new_xlon, method="linear")
+
 print("Examine data_u:")
 print(data_u)
 print(data_u.coords['latitude'])
 
-print("Start QGDataset calculation.")
-
 # 3) Saving output data:
 out_path = f"{wkdir}/refstates.nc"
-uu = data_u.u.values[::-1, :, :]
-vv = data_v.v.values[::-1, :, :]
-tt = data_t.t.values[::-1, :, :]
-qgfield_object = QGFieldNHN22(new_xlon, new_ylat, plev, uu, vv, tt, northern_hemisphere_results_only=False)
-qgfield_object.interpolate_fields(return_named_tuple=False)
-qgfield_object.compute_reference_states(return_named_tuple=False)
-qgfield_object.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)
+old_interface = False
+
+print("=== Start QGDataset calculation ===")
+qgds = QGDataset(da_u=data_u, da_v=data_v, da_t=data_t, var_names={"u": "u", "v": "v", "t": "t"})
+uvtinterp = qgds.interpolate_fields()
+refstates = qgds.compute_reference_states()
+print(refstates)
 print("Finished")
+
+
+if old_interface:
+    uu = data_u.u.values[::-1, :, :]
+    vv = data_v.v.values[::-1, :, :]
+    tt = data_t.t.values[::-1, :, :]
+    qgfield_object = QGFieldNHN22(new_xlon, new_ylat, plev, uu, vv, tt, northern_hemisphere_results_only=False)
+    qgfield_object.interpolate_fields(return_named_tuple=False)
+    qgfield_object.compute_reference_states(return_named_tuple=False)
+    qgfield_object.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)
+    print("Finished")
 
 
 

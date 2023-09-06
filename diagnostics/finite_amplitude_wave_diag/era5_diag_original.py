@@ -2,7 +2,6 @@
 import os
 import sys
 sys.path.insert(0, "/home/clare/Dropbox/GitHub/hn2016_falwa")
-import time
 import numpy as np
 import xarray as xr
 import datetime
@@ -27,6 +26,11 @@ plev_coord_name = os.environ["plev_coord"]
 u_file = xr.open_dataset(input_u_path)
 v_file = xr.open_dataset(input_v_path)
 t_file = xr.open_dataset(input_t_path)
+
+
+def print_process_time(process):
+    print(f"{process}. Time: {datetime.datetime.now()}")
+
 
 # Select DJF and do daily mean
 # selected_months = [1, 2, 12]
@@ -55,7 +59,6 @@ nlon = xlon.size
 nlat = ylat.size
 nlev = plev.size
 
-
 new_xlon = np.arange(0, 360)
 new_ylat = np.arange(-90, 91)
 
@@ -70,28 +73,28 @@ data_v = v_file.sel(time=time_selected).resample(time="1D").first()\
 data_t = t_file.sel(time=time_selected).resample(time="1D").first()\
     .interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
 
-print(f"Finished computing daily average and interp onto coarser grid. Time: {datetime.datetime.now()}.\nExamine data_u:")
+print_process_time("Finished computing daily average and interp onto coarser grid")
 print(data_u)
-print(data_u.coords['latitude'])
+print(data_u.coords[ylat_coord_name])
 
 # 3) Saving output data:
-out_path = f"{wkdir}/refstates_output.nc"
+out_path = f"{wkdir}/refstates_2022Jan.nc"
 
-print(f"Start QGDataset calculation. Time: {datetime.datetime.now()}.")
+print_process_time("Start QGDataset calculation")
 qgds = QGDataset(da_u=data_u, da_v=data_v, da_t=data_t, var_names={"u": u_var_name, "v": v_var_name, "t": t_var_name})
 uvtinterp = qgds.interpolate_fields()
 refstates = qgds.compute_reference_states()
-print(f"Examine refstates. Time: {datetime.datetime.now()}.")
+print_process_time("Examine refstates")
 print(refstates)
 lwadiags = qgds.compute_lwa_and_barotropic_fluxes()
-lwadiags = lwadiags[["lwa_baro", "u_baro", "lwa"]]
 # TODO: interpolate back onto original grid?
-print(f"Compute seasonal average. Time: {datetime.datetime.now()}.")
-seasonal_average = xr.merge([refstates, lwadiags]).mean(dim=time_coord_name)
+print_process_time("Compute seasonal average")
+seasonal_average = xr.merge([uvtinterp, refstates, lwadiags]).mean(dim=time_coord_name)
 print(seasonal_average)
-print(f"Start outputing to the file: {out_path}. Time: {datetime.datetime.now()}.")
+print_process_time(f"Start outputing to the file: {out_path}")
 seasonal_average.to_netcdf(out_path)
-print("Finished")
+print_process_time("Finished")
+
 
 # 4) Saving output plots:
 

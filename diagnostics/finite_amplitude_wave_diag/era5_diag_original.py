@@ -59,9 +59,9 @@ new_ylat = np.arange(-90, 91)
 
 print("Compute daily average and interp onto coarser grid.")
 tstep = 1
-data_u = u_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="linear")
-data_v = v_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="linear")
-data_t = t_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="linear")
+data_u = u_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
+data_v = v_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
+data_t = t_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
 
 # data_u = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
 #     .interp(latitude=new_ylat, longitude=new_xlon, method="linear")
@@ -75,7 +75,7 @@ print(data_u)
 print(data_u.coords['latitude'])
 
 # 3) Saving output data:
-out_path = f"{wkdir}/refstates.nc"
+out_path = f"{wkdir}/refstates_output.nc"
 
 print("=== Start QGDataset calculation ===")
 qgds = QGDataset(da_u=data_u, da_v=data_v, da_t=data_t, var_names={"u": u_var_name, "v": v_var_name, "t": t_var_name})

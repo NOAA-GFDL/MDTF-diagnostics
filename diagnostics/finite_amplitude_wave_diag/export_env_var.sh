@@ -8,4 +8,4 @@ export time_coord=time
 export xlon_coord=longitude
 export ylat_coord=latitude
 export plev_coord=level
-export wkdir=$HOME/clare/GitHub/mdtf/wkdir
+export wkdir=$HOME/GitHub/mdtf/wkdir

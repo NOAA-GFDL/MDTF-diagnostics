@@ -61,6 +61,9 @@ new_ylat = np.arange(-90, 91)
 data_u = u_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="linear")
 data_v = v_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="linear")
 data_t = t_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="linear")
+print("Examine data_u:")
+print(data_u)
+print(data_u.coords['latitude'])
 
 print("Start QGDataset calculation.")
 

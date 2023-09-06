@@ -56,18 +56,20 @@ nlev = plev.size
 # u_file = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
 # v_file = v_file.sel(time=v_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
 # t_file = t_file.sel(time=t_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
-u_file = u_file.isel(time=tstep).coarsen({'latitutde': 4, 'longitude': 4}, boundary="exact").mean()
-v_file = v_file.isel(time=tstep).coarsen({'latitutde': 4, 'longitude': 4}, boundary="exact").mean()
-t_file = t_file.isel(time=tstep).coarsen({'latitutde': 4, 'longitude': 4}, boundary="exact").mean()
+new_xlon = np.arange(0, 360)
+new_ylat = np.arange(-90, 91)
+data_u = u_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="linear")
+data_v = v_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="linear")
+data_t = t_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="linear")
 
 print("Start QGDataset calculation.")
 
 # 3) Saving output data:
 out_path = f"{wkdir}/refstates.nc"
-uu = u_file.u.values[::-1, ::-1, :]
-vv = v_file.v.values[::-1, ::-1, :]
-tt = t_file.t.values[::-1, ::-1, :]
-qgfield_object = QGFieldNHN22(xlon, ylat, plev, uu, vv, tt, northern_hemisphere_results_only=False)
+uu = data_u.u.values[::-1, :, :]
+vv = data_v.v.values[::-1, :, :]
+tt = data_t.t.values[::-1, :, :]
+qgfield_object = QGFieldNHN22(new_xlon, new_ylat, plev, uu, vv, tt, northern_hemisphere_results_only=False)
 qgfield_object.interpolate_fields(return_named_tuple=False)
 qgfield_object.compute_reference_states(return_named_tuple=False)
 qgfield_object.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)

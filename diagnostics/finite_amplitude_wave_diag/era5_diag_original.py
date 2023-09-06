@@ -56,9 +56,9 @@ nlev = plev.size
 # u_file = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
 # v_file = v_file.sel(time=v_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
 # t_file = t_file.sel(time=t_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
-u_file = u_file.isel(time=tstep).coarsen({'latitutde': 4, 'longitude': 4}, boundary="exact")
-v_file = v_file.isel(time=tstep).coarsen({'latitutde': 4, 'longitude': 4}, boundary="exact")
-t_file = t_file.isel(time=tstep).coarsen({'latitutde': 4, 'longitude': 4}, boundary="exact")
+u_file = u_file.isel(time=tstep).coarsen({'latitutde': 4, 'longitude': 4}, boundary="exact").mean()
+v_file = v_file.isel(time=tstep).coarsen({'latitutde': 4, 'longitude': 4}, boundary="exact").mean()
+t_file = t_file.isel(time=tstep).coarsen({'latitutde': 4, 'longitude': 4}, boundary="exact").mean()
 
 print("Start QGDataset calculation.")
 

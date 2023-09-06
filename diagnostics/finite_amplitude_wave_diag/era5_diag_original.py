@@ -31,36 +31,34 @@ t_file = xr.open_dataset(input_t_path)
 print("Start computing daily mean.")
 tstep = 100
 selected_months = [1]
-# u_file = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
-# v_file = v_file.sel(time=v_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
-# t_file = t_file.sel(time=t_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
-u_file = u_file.isel(time=tstep)
-v_file = v_file.isel(time=tstep)
-t_file = t_file.isel(time=tstep)
 
 # 2) Doing computations:
 print("Set coordinates")
 ntimes = u_file.time.size
 time_array = u_file.time
 xlon = u_file.longitude.values
-
 # latitude has to be in ascending order
 print(u_file.latitude)
 ylat = u_file.latitude.values
 if np.diff(ylat)[0] < 0:
     print('Flip ylat.')
     ylat = ylat[::-1]
-
 # pressure level has to be in descending order (ascending height)
 print(u_file.level)
 plev = u_file.level.values
 if np.diff(plev)[0] > 0:
     print('Flip plev.')
     plev = plev[::-1]
-
 nlon = xlon.size
 nlat = ylat.size
 nlev = plev.size
+
+# u_file = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
+# v_file = v_file.sel(time=v_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
+# t_file = t_file.sel(time=t_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
+u_file = u_file.isel(time=tstep).coarsen({'latitutde': 4, 'longitude': 4}, boundary="exact")
+v_file = v_file.isel(time=tstep).coarsen({'latitutde': 4, 'longitude': 4}, boundary="exact")
+t_file = t_file.isel(time=tstep).coarsen({'latitutde': 4, 'longitude': 4}, boundary="exact")
 
 print("Start QGDataset calculation.")
 

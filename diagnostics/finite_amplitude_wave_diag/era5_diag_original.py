@@ -62,11 +62,12 @@ new_ylat = np.arange(-90, 91)
 print(f"Compute daily average and interp onto coarser grid. Time: {datetime.datetime.now()}")
 # selected_months = [1, 2, 12]  # DJF
 selected_months = [1]  # TODO testing
-data_u = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).groupby("time.day").mean(dim='time')\
+time_selected = u_file.time.dt.month.isin(selected_months)
+data_u = u_file.sel(time=time_selected).resample(time="1D").mean()\
     .interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
-data_v = v_file.sel(time=u_file.time.dt.month.isin(selected_months)).groupby("time.day").mean(dim='time')\
+data_v = v_file.sel(time=time_selected).resample(time="1D").mean()\
     .interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
-data_t = t_file.sel(time=u_file.time.dt.month.isin(selected_months)).groupby("time.day").mean(dim='time')\
+data_t = t_file.sel(time=time_selected).resample(time="1D").mean()\
     .interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
 
 print(f"Finished computing daily average and interp onto coarser grid. Time: {datetime.datetime.now()}.\nExamine data_u:")

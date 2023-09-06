@@ -2,7 +2,7 @@
 import os
 import sys
 sys.path.insert(0, "/home/clare/Dropbox/GitHub/hn2016_falwa")
-import math
+import time
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
@@ -58,7 +58,7 @@ nlev = plev.size
 new_xlon = np.arange(0, 360)
 new_ylat = np.arange(-90, 91)
 
-print("Compute daily average and interp onto coarser grid.")
+print(f"Compute daily average and interp onto coarser grid. Time: {time.time()}")
 # selected_months = [1, 2, 12]  # DJF
 selected_months = [1]  # TODO testing
 data_u = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).groupby("time.day").mean(dim='time')\
@@ -68,26 +68,26 @@ data_v = v_file.sel(time=u_file.time.dt.month.isin(selected_months)).groupby("ti
 data_t = t_file.sel(time=u_file.time.dt.month.isin(selected_months)).groupby("time.day").mean(dim='time')\
     .interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
 
-print("Examine data_u:")
+print(f"Finished computing daily average and interp onto coarser grid. Time: {time.time()}.\nExamine data_u:")
 print(data_u)
 print(data_u.coords['latitude'])
 
 # 3) Saving output data:
 out_path = f"{wkdir}/refstates_output.nc"
 
-print("=== Start QGDataset calculation ===")
+print(f"Start QGDataset calculation. Time: {time.time()}.")
 qgds = QGDataset(da_u=data_u, da_v=data_v, da_t=data_t, var_names={"u": u_var_name, "v": v_var_name, "t": t_var_name})
 uvtinterp = qgds.interpolate_fields()
 refstates = qgds.compute_reference_states()
-print("Examine refstates:")
+print(f"Examine refstates. Time: {time.time()}.")
 print(refstates)
 lwadiags = qgds.compute_lwa_and_barotropic_fluxes()
 lwadiags = lwadiags[["lwa_baro", "u_baro", "lwa"]]
 # TODO: interpolate back onto original grid?
-print("Compute seasonal average:")
+print(f"Compute seasonal average. Time: {time.time()}.")
 seasonal_average = xr.merge([refstates, lwadiags]).mean(dim=time_coord_name)
 print(seasonal_average)
-print(f"Start outputing to the file: {out_path}")
+print(f"Start outputing to the file: {out_path}. Time: {time.time()}.")
 seasonal_average.to_netcdf(out_path)
 print("Finished")
 

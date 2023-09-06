@@ -34,7 +34,7 @@ data_t = data_t.isel(time=0)
 
 # 2) Doing computations:
 print("Start QGDataset calculation.")
-qgds = QGDataset(data_u, data_v, data_t, var_names={"u": u_var_name, "v": v_var_name, "t": t_var_name})
+qgds = QGDataset(da_u=data_u, da_v=data_v, da_t=data_t, var_names={"u": u_var_name, "v": v_var_name, "t": t_var_name})
 uvtinterp = qgds.interpolate_fields()
 refstates = qgds.compute_reference_states()
 print(refstates)

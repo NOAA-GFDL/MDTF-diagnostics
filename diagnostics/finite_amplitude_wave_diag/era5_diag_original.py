@@ -29,13 +29,14 @@ t_file = xr.open_dataset(input_t_path)
 # Select DJF and do daily mean
 # selected_months = [1, 2, 12]
 print("Start computing daily mean.")
+tstep = 100
 selected_months = [1]
 # u_file = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
 # v_file = v_file.sel(time=v_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
 # t_file = t_file.sel(time=t_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
-u_file = u_file.isel(time=0)
-v_file = v_file.isel(time=0)
-t_file = t_file.isel(time=0)
+u_file = u_file.isel(time=tstep)
+v_file = v_file.isel(time=tstep)
+t_file = t_file.isel(time=tstep)
 
 # 2) Doing computations:
 print("Set coordinates")
@@ -62,7 +63,6 @@ nlat = ylat.size
 nlev = plev.size
 
 print("Start QGDataset calculation.")
-tstep = 0
 
 # 3) Saving output data:
 out_path = f"{wkdir}/refstates.nc"

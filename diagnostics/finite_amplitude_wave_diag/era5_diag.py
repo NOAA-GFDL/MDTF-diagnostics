@@ -28,9 +28,9 @@ selected_months = [1]
 # data_u = data_u.sel(time=data_u.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
 # data_v = data_v.sel(time=data_v.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
 # data_t = data_t.sel(time=data_t.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
-data_u = data_u.sel(time=0)
-data_v = data_v.sel(time=0)
-data_t = data_t.sel(time=0)
+data_u = data_u.isel(time=0)
+data_v = data_v.isel(time=0)
+data_t = data_t.isel(time=0)
 
 # 2) Doing computations:
 print("Start QGDataset calculation.")

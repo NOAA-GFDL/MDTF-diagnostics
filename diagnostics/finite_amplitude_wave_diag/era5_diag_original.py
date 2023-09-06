@@ -66,9 +66,9 @@ tstep = 0
 
 # 3) Saving output data:
 out_path = f"{wkdir}/refstates.nc"
-uu = u_file.u.isel(time=tstep).values[::-1, ::-1, :]
-vv = v_file.v.isel(time=tstep).values[::-1, ::-1, :]
-tt = t_file.t.isel(time=tstep).values[::-1, ::-1, :]
+uu = u_file.u.values[::-1, ::-1, :]
+vv = v_file.v.values[::-1, ::-1, :]
+tt = t_file.t.values[::-1, ::-1, :]
 qgfield_object = QGFieldNH18(xlon, ylat, plev, uu, vv, tt, northern_hemisphere_results_only=False)
 qgfield_object.interpolate_fields(return_named_tuple=False)
 qgfield_object.compute_reference_states(return_named_tuple=False)

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt    # python library we use to make plots
 from hn2016_falwa.xarrayinterface import QGDataset
 
 # 0) Get environment variables
+wkdir = os.environ['wkdir']
 input_u_path = os.environ["u_file"]
 input_v_path = os.environ["v_file"]
 input_t_path = os.environ["t_file"]
@@ -24,13 +25,22 @@ data_t = xr.open_dataset(input_t_path)
 # selected_months = [1, 2, 12]
 print("Start computing daily mean.")
 selected_months = [1]
-data_u = data_u.sel(time=data_u.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
-data_v = data_v.sel(time=data_v.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
-data_t = data_t.sel(time=data_t.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
+# data_u = data_u.sel(time=data_u.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
+# data_v = data_v.sel(time=data_v.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
+# data_t = data_t.sel(time=data_t.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
+data_u = data_u.sel(time=0)
+data_v = data_v.sel(time=0)
+data_t = data_t.sel(time=0)
 
 # 2) Doing computations:
 print("Start QGDataset calculation.")
 qgds = QGDataset(data_u, data_v, data_t, var_names={"u": u_var_name, "v": v_var_name, "t": t_var_name})
 uvtinterp = qgds.interpolate_fields()
 refstates = qgds.compute_reference_states()
+print(refstates)
 print("Finished")
+
+# 3) Saving output data:
+out_path = f"{wkdir}/refstates.nc"
+
+

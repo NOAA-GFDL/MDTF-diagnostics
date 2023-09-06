@@ -16,9 +16,9 @@ ylat_coord_name = os.environ["ylat_coord"]
 plev_coord_name = os.environ["plev_coord"]
 
 # 1) Loading model data files:
-data_u = xr.load_dataset(input_u_path).sel(season='DJF').resample(time="1D").mean(dim="time")
-data_v = xr.load_dataset(input_v_path).sel(season='DJF').resample(time="1D").mean(dim="time")
-data_t = xr.load_dataset(input_t_path).sel(season='DJF').resample(time="1D").mean(dim="time")
+data_u = xr.open_dataset(input_u_path).sel(season='DJF').resample(time="1D").mean(dim="time")
+data_v = xr.open_dataset(input_v_path).sel(season='DJF').resample(time="1D").mean(dim="time")
+data_t = xr.open_dataset(input_t_path).sel(season='DJF').resample(time="1D").mean(dim="time")
 
 # 2) Doing computations:
 qgds = QGDataset(data_u, data_v, data_t, var_names={"u": u_var_name, "v": v_var_name, "t": t_var_name})

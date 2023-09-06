@@ -1,7 +1,9 @@
 import os
+import sys
 import xarray as xr                # python library we use to read netcdf files
 import matplotlib.pyplot as plt    # python library we use to make plots
 from hn2016_falwa.xarrayinterface import QGDataset
+sys.path.insert(0, "/home/clare/Dropbox/GitHub/hn2016_falwa")
 
 # 0) Get environment variables
 wkdir = os.environ['wkdir']

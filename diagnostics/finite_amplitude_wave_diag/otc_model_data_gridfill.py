@@ -11,8 +11,12 @@ u_path = f"{data_dir}atmos_inst.1984010100-1984123123.ua.nc"
 v_path = f"{data_dir}atmos_inst.1984010100-1984123123.va.nc"
 t_path = f"{data_dir}atmos_inst.1984010100-1984123123.ta.nc"
 
-# Extract just one timestamp
-data = xr.open_mfdataset(f"{data_dir}atmos_inst.1984010100-1984123123.[uvt]a.nc")
-print(data)
+print("Start outputting 1 timestamp")
+tstep = 100
+xr.open_dataset(u_path).isel(time=tstep).to_netcdf(f"{data_dir}atmos_inst_1tstep_u.nc")
+xr.open_dataset(v_path).isel(time=tstep).to_netcdf(f"{data_dir}atmos_inst_1tstep_v.nc")
+xr.open_dataset(t_path).isel(time=tstep).to_netcdf(f"{data_dir}atmos_inst_1tstep_t.nc")
+print("Finish outputting 1 timestamp")
+
 
 

@@ -21,16 +21,16 @@ data_v = xr.open_dataset(input_v_path)
 data_t = xr.open_dataset(input_t_path)
 
 # Select DJF and do daily mean
-data_u = data_u.sel(time=data_u.time.dt.month.isin([1, 2, 12])).resample(time="1D").mean(dim="time")
-data_v = data_v.sel(time=data_v.time.dt.month.isin([1, 2, 12])).resample(time="1D").mean(dim="time")
-data_t = data_t.sel(time=data_t.time.dt.month.isin([1, 2, 12])).resample(time="1D").mean(dim="time")
+# selected_months = [1, 2, 12]
+print("Start computing daily mean.")
+selected_months = [1]
+data_u = data_u.sel(time=data_u.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
+data_v = data_v.sel(time=data_v.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
+data_t = data_t.sel(time=data_t.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
 
 # 2) Doing computations:
+print("Start QGDataset calculation.")
 qgds = QGDataset(data_u, data_v, data_t, var_names={"u": u_var_name, "v": v_var_name, "t": t_var_name})
 uvtinterp = qgds.interpolate_fields()
 refstates = qgds.compute_reference_states()
-lwadiags = qgds.compute_lwa_and_barotropic_fluxes()
 print("Finished")
-
-
-data.sel(time=data.time.dt.month.isin([1, 2, 3, 10, 11, 12]))

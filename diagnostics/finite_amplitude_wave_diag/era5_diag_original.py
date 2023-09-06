@@ -58,10 +58,10 @@ new_xlon = np.arange(0, 360)
 new_ylat = np.arange(-90, 91)
 
 print("Compute daily average and interp onto coarser grid.")
-tstep = 1
-data_u = u_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
-data_v = v_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
-data_t = t_file.isel(time=tstep).interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
+tsteps = np.arange(10)
+data_u = u_file.isel(time=tsteps).groupby("time.day").mean(dim='time').interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
+data_v = v_file.isel(time=tsteps).groupby("time.day").mean(dim='time').interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
+data_t = t_file.isel(time=tsteps).groupby("time.day").mean(dim='time').interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
 
 # data_u = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
 #     .interp(latitude=new_ylat, longitude=new_xlon, method="linear")

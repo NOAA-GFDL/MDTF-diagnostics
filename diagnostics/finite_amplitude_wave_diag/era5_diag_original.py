@@ -1,3 +1,4 @@
+# TODO: replace all with env variables
 import os
 import sys
 sys.path.insert(0, "/home/clare/Dropbox/GitHub/hn2016_falwa")
@@ -53,22 +54,19 @@ nlon = xlon.size
 nlat = ylat.size
 nlev = plev.size
 
-selected_months = [1]
+
 new_xlon = np.arange(0, 360)
 new_ylat = np.arange(-90, 91)
 
 print("Compute daily average and interp onto coarser grid.")
-tsteps = np.arange(10)
-data_u = u_file.isel(time=tsteps).groupby("time.day").mean(dim='time').interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
-data_v = v_file.isel(time=tsteps).groupby("time.day").mean(dim='time').interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
-data_t = t_file.isel(time=tsteps).groupby("time.day").mean(dim='time').interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
-
-# data_u = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
-#     .interp(latitude=new_ylat, longitude=new_xlon, method="linear")
-# data_v = v_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
-#     .interp(latitude=new_ylat, longitude=new_xlon, method="linear")
-# data_t = t_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
-#     .interp(latitude=new_ylat, longitude=new_xlon, method="linear")
+# selected_months = [1, 2, 12]  # DJF
+selected_months = [1]  # TODO testing
+data_u = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).groupby("time.day").mean(dim='time')\
+    .interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
+data_v = v_file.sel(time=u_file.time.dt.month.isin(selected_months)).groupby("time.day").mean(dim='time')\
+    .interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
+data_t = t_file.sel(time=u_file.time.dt.month.isin(selected_months)).groupby("time.day").mean(dim='time')\
+    .interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
 
 print("Examine data_u:")
 print(data_u)
@@ -85,20 +83,19 @@ print("Examine refstates:")
 print(refstates)
 lwadiags = qgds.compute_lwa_and_barotropic_fluxes()
 lwadiags = lwadiags[["lwa_baro", "u_baro", "lwa"]]
+# TODO: interpolate back onto original grid?
+print("Compute seasonal average:")
+seasonal_average = xr.merge([refstates, lwadiags]).mean(dim=time_coord_name)
+print(seasonal_average)
 print(f"Start outputing to the file: {out_path}")
-xr.merge([refstates, lwadiags]).to_netcdf(out_path)
+seasonal_average.to_netcdf(out_path)
 print("Finished")
 
-old_interface = False
-if old_interface:
-    uu = data_u.u.values[::-1, :, :]
-    vv = data_v.v.values[::-1, :, :]
-    tt = data_t.t.values[::-1, :, :]
-    qgfield_object = QGFieldNHN22(new_xlon, new_ylat, plev, uu, vv, tt, northern_hemisphere_results_only=False)
-    qgfield_object.interpolate_fields(return_named_tuple=False)
-    qgfield_object.compute_reference_states(return_named_tuple=False)
-    qgfield_object.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)
-    print("Finished")
+# 4) Saving output plots:
 
+# 5) Loading obs data files & plotting obs figures
 
-
+# 6) Cleaning up:
+u_file.close()
+v_file.close()
+t_file.close()

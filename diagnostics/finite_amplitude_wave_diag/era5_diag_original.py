@@ -5,7 +5,7 @@ import math
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
-from hn2016_falwa.oopinterface import QGFieldNH18
+from hn2016_falwa.oopinterface import QGFieldNHN22
 import hn2016_falwa.utilities as utilities
 
 # 0) Get environment variables
@@ -69,7 +69,7 @@ out_path = f"{wkdir}/refstates.nc"
 uu = u_file.u.values[::-1, ::-1, :]
 vv = v_file.v.values[::-1, ::-1, :]
 tt = t_file.t.values[::-1, ::-1, :]
-qgfield_object = QGFieldNH18(xlon, ylat, plev, uu, vv, tt, northern_hemisphere_results_only=False)
+qgfield_object = QGFieldNHN22(xlon, ylat, plev, uu, vv, tt, northern_hemisphere_results_only=False)
 qgfield_object.interpolate_fields(return_named_tuple=False)
 qgfield_object.compute_reference_states(return_named_tuple=False)
 qgfield_object.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)

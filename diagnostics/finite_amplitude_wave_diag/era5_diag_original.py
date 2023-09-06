@@ -54,19 +54,23 @@ nlat = ylat.size
 nlev = plev.size
 
 selected_months = [1]
-# u_file = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
-# v_file = v_file.sel(time=v_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
-# t_file = t_file.sel(time=t_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")
 new_xlon = np.arange(0, 360)
 new_ylat = np.arange(-90, 91)
 
 print("Compute daily average and interp onto coarser grid.")
-data_u = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
+data_u = u_file.isel(time=np.arange(1, 11)).resample(time="1D").mean(dim="time")\
     .interp(latitude=new_ylat, longitude=new_xlon, method="linear")
-data_v = v_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
+data_v = v_file.isel(time=np.arange(1, 11)).resample(time="1D").mean(dim="time")\
     .interp(latitude=new_ylat, longitude=new_xlon, method="linear")
-data_t = t_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
+data_t = t_file.isel(time=np.arange(1, 11)).resample(time="1D").mean(dim="time")\
     .interp(latitude=new_ylat, longitude=new_xlon, method="linear")
+
+# data_u = u_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
+#     .interp(latitude=new_ylat, longitude=new_xlon, method="linear")
+# data_v = v_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
+#     .interp(latitude=new_ylat, longitude=new_xlon, method="linear")
+# data_t = t_file.sel(time=u_file.time.dt.month.isin(selected_months)).resample(time="1D").mean(dim="time")\
+#     .interp(latitude=new_ylat, longitude=new_xlon, method="linear")
 
 print("Examine data_u:")
 print(data_u)
@@ -74,16 +78,20 @@ print(data_u.coords['latitude'])
 
 # 3) Saving output data:
 out_path = f"{wkdir}/refstates.nc"
-old_interface = False
 
 print("=== Start QGDataset calculation ===")
-qgds = QGDataset(da_u=data_u, da_v=data_v, da_t=data_t, var_names={"u": "u", "v": "v", "t": "t"})
+qgds = QGDataset(da_u=data_u, da_v=data_v, da_t=data_t, var_names={"u": u_var_name, "v": v_var_name, "t": t_var_name})
 uvtinterp = qgds.interpolate_fields()
 refstates = qgds.compute_reference_states()
+print("Examine refstates:")
 print(refstates)
+lwadiags = qgds.compute_lwa_and_barotropic_fluxes()
+lwadiags = lwadiags[["lwa_baro", "u_baro", "lwa"]]
+print(f"Start outputing to the file: {out_path}")
+xr.merge([refstates, lwadiags]).to_netcdf(out_path)
 print("Finished")
 
-
+old_interface = False
 if old_interface:
     uu = data_u.u.values[::-1, :, :]
     vv = data_v.v.values[::-1, :, :]

@@ -63,11 +63,11 @@ print(f"Compute daily average and interp onto coarser grid. Time: {datetime.date
 # selected_months = [1, 2, 12]  # DJF
 selected_months = [1]  # TODO testing
 time_selected = u_file.time.dt.month.isin(selected_months)
-data_u = u_file.sel(time=time_selected).resample(time="1D").mean()\
+data_u = u_file.sel(time=time_selected).resample(time="1D").first()\
     .interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
-data_v = v_file.sel(time=time_selected).resample(time="1D").mean()\
+data_v = v_file.sel(time=time_selected).resample(time="1D").first()\
     .interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
-data_t = t_file.sel(time=time_selected).resample(time="1D").mean()\
+data_t = t_file.sel(time=time_selected).resample(time="1D").first()\
     .interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
 
 print(f"Finished computing daily average and interp onto coarser grid. Time: {datetime.datetime.now()}.\nExamine data_u:")

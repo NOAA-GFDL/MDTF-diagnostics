@@ -8,8 +8,11 @@ import matplotlib.pyplot as plt    # python library we use to make plots
 from hn2016_falwa.xarrayinterface import QGDataset
 
 original_file_path = f"{os.environ['HOME']}/GitHub/mdtf/inputdata/model/GFDL-CM4/data/atmos_inst/ts/hourly/1yr/atmos_inst.1984010100-1984123123.[uvt]a.nc"
-file_handle = xr.open_mfdataset(original_file_path).isel(time=np.arange(0, 8760, 730))
-file_handle.to_netcdf("send_to_sandro.nc")
+tstep = 0
+file_handle = xr.open_mfdataset(original_file_path).isel(time=tstep)
 print("file_handle")
 print(file_handle)
-print("Finished")
+filename = f"send_to_sandro_t{tstep}.nc"
+print(f"Start outputting {filename}")
+file_handle.to_netcdf(filename)
+print(f"Finished outputting {filename}")

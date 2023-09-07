@@ -26,7 +26,7 @@ v_file = xr.open_dataset(v_path)
 t_file = xr.open_dataset(t_path)
 
 # *** Examine data first ***
-for tstep in np.arange(0, 8761, 50):
+for tstep in np.arange(0, 8761, 500):
     zonal_mean_u = np.ma.masked_invalid(u_file.isel(time=tstep).ua.values).mean(axis=-1)
     zonal_mean_v = np.ma.masked_invalid(v_file.isel(time=tstep).va.values).mean(axis=-1)
     zonal_mean_t = np.ma.masked_invalid(t_file.isel(time=tstep).ta.values).mean(axis=-1)

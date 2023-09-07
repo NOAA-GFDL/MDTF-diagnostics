@@ -1,11 +1,9 @@
 name: _MDTF_NCL_base
 channels:
-- conda-forge # NOTE: critical to give highest priority to conda-forge
-- defaults
+- conda-forge
 dependencies:
-- python=3.10
-# - ncl=6.5 # has a font rendering issue fixed in 6.6
+- python=3.11
 # - openblas=0.3.4 # otherwise ncl 6.5 installs but doesn't function on macs
 - ncl=6.6.2
-- nco>=4.7.6,<=4.8.1
-- pyyaml=6.0
+- nco=5.1.7
+- pyyaml=6.0.1

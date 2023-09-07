@@ -13,5 +13,6 @@ dependencies:
 - pip=22.0.4
 - dask
 - gridfill
+- bottleneck
 - pip:
   - hn2016_falwa==0.7.2

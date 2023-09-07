@@ -4,8 +4,6 @@ Run this on OTC to compute reference state for 1 timestep
 import os
 import numpy as np
 import xarray as xr                # python library we use to read netcdf files
-from diagnostics.finite_amplitude_wave_diag.gridfill_utils import gridfill_each_level
-from hn2016_falwa.xarrayinterface import QGDataset
 import matplotlib.pyplot as plt
 
 

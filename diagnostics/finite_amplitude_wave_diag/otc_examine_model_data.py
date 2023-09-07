@@ -1,5 +1,5 @@
 """
-Run this on OTC to compute reference state for 1 timestep
+Examine the zonal mean of u, v, T before gridfill
 """
 import os
 import numpy as np

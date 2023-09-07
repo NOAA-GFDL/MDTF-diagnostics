@@ -7,6 +7,7 @@ import xarray as xr                # python library we use to read netcdf files
 from diagnostics.finite_amplitude_wave_diag.gridfill_utils import gridfill_each_level
 from hn2016_falwa.xarrayinterface import QGDataset
 import matplotlib.pyplot as plt
+from hn2016_falwa.oopinterface import QGFieldNHN22
 
 
 wk_dir = f"{os.environ['HOME']}/Dropbox/GitHub/mdtf/wkdir/"
@@ -29,30 +30,32 @@ v_file = xr.open_dataset(v_path)
 t_file = xr.open_dataset(t_path)
 
 # *** Examine data first ***
-zonal_mean_u = np.ma.masked_invalid(u_file.ua.values).mean(axis=-1)
-zonal_mean_v = np.ma.masked_invalid(v_file.va.values).mean(axis=-1)
-zonal_mean_t = np.ma.masked_invalid(t_file.ta.values).mean(axis=-1)
+to_examine_data = False
+if to_examine_data:
+    zonal_mean_u = np.ma.masked_invalid(u_file.ua.values).mean(axis=-1)
+    zonal_mean_v = np.ma.masked_invalid(v_file.va.values).mean(axis=-1)
+    zonal_mean_t = np.ma.masked_invalid(t_file.ta.values).mean(axis=-1)
 
-fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 3))
-cs1 = ax1.contourf(ylat, plev, zonal_mean_u, 30, cmap='rainbow')
-ax1.set_title("Zonal mean zonal wind u")
-ax1.set_ylabel("Pressure [hPa]")
-ax1.set_xlabel("Longitude [deg]")
-fig.colorbar(cs1, ax=ax1, shrink=0.9)
-ax1.invert_yaxis()
-cs2 = ax2.contourf(ylat, plev, zonal_mean_v, 30, cmap='rainbow')
-ax2.set_title("Zonal mean meridional wind v")
-ax2.set_xlabel("Longitude [deg]")
-fig.colorbar(cs2, ax=ax2, shrink=0.9)
-ax2.invert_yaxis()
-cs3 = ax3.contourf(ylat, plev, zonal_mean_t, 30, cmap='rainbow')
-ax3.set_title("Zonal mean air temperature t")
-ax3.set_xlabel("Longitude [deg]")
-fig.colorbar(cs3, ax=ax3, shrink=0.9)
-ax3.invert_yaxis()
-plt.tight_layout()
-plt.show()
-print("Stop here")
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 3))
+    cs1 = ax1.contourf(ylat, plev, zonal_mean_u, 30, cmap='rainbow')
+    ax1.set_title("Zonal mean zonal wind u")
+    ax1.set_ylabel("Pressure [hPa]")
+    ax1.set_xlabel("Longitude [deg]")
+    fig.colorbar(cs1, ax=ax1, shrink=0.9)
+    ax1.invert_yaxis()
+    cs2 = ax2.contourf(ylat, plev, zonal_mean_v, 30, cmap='rainbow')
+    ax2.set_title("Zonal mean meridional wind v")
+    ax2.set_xlabel("Longitude [deg]")
+    fig.colorbar(cs2, ax=ax2, shrink=0.9)
+    ax2.invert_yaxis()
+    cs3 = ax3.contourf(ylat, plev, zonal_mean_t, 30, cmap='rainbow')
+    ax3.set_title("Zonal mean air temperature t")
+    ax3.set_xlabel("Longitude [deg]")
+    fig.colorbar(cs3, ax=ax3, shrink=0.9)
+    ax3.invert_yaxis()
+    plt.tight_layout()
+    plt.show()
+    print("Stop here")
 
 
 # *** First do poisson solver ***
@@ -73,12 +76,16 @@ if run_poisson:
 # *** Interpolate onto regular grid ***
 all_files = xr.open_mfdataset(f"{data_dir}atmos_inst_1tstep_[uvt]_gridfill.nc")
 all_files = all_files.interp(
-    coords={"lat": np.arange(-90, 91), "lon": np.arange(0, 360)},
+    coords={
+        "lat": np.arange(-90, 91, 1.5),
+        "lon": np.arange(0, 361, 1.5)},
     method="linear",
-    kwargs={"fill_value": 0})
-qgds = QGDataset(all_files, var_names={"u": "ua", "v": "va", "t": "ta"})
+    kwargs={"fill_value": "extrapolate"})
+qgds = QGDataset(all_files, var_names={"u": "ua", "v": "va", "t": "ta"}, qgfield=QGFieldNHN22)
 uvtinterp = qgds.interpolate_fields()
 print("Finished interpolate_fields")
-# Error arises when solving reference state
-print("Stop here")
+refstates = qgds.compute_reference_states()  # Error arises when solving reference state
+plt.contourf(refstates['uref'].ylat, refstates['uref'].height, refstates['uref'], np.arange(-50, 51, 10)); plt.colorbar(); plt.show()
+print("Finished compute_reference_states")
+
 

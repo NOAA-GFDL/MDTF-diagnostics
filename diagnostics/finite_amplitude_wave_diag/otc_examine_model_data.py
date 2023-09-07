@@ -27,10 +27,10 @@ t_file = xr.open_dataset(t_path)
 
 # *** Examine data first ***
 for tstep in np.arange(0, 8761, 50):
-    time_str = u_file["time"].dt.strftime("%Y%m%d")
     zonal_mean_u = np.ma.masked_invalid(u_file.isel(time=tstep).ua.values).mean(axis=-1)
     zonal_mean_v = np.ma.masked_invalid(v_file.isel(time=tstep).va.values).mean(axis=-1)
     zonal_mean_t = np.ma.masked_invalid(t_file.isel(time=tstep).ta.values).mean(axis=-1)
+    time_str = u_file.isel(time=tstep).time.dt.strftime("%Y%m%d")
 
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 3))
     plt.suptitle(f"{time_str}")

@@ -27,7 +27,7 @@ t_file = xr.open_dataset(t_path)
 
 # *** Examine data first ***
 for tstep in np.arange(0, 8761, 50):
-    time_str = str(u_file.isel(time=tstep).time)
+    time_str = u_file["time"].dt.strftime("%Y%m%d")
     zonal_mean_u = np.ma.masked_invalid(u_file.isel(time=tstep).ua.values).mean(axis=-1)
     zonal_mean_v = np.ma.masked_invalid(v_file.isel(time=tstep).va.values).mean(axis=-1)
     zonal_mean_t = np.ma.masked_invalid(t_file.isel(time=tstep).ta.values).mean(axis=-1)
@@ -51,7 +51,7 @@ for tstep in np.arange(0, 8761, 50):
     fig.colorbar(cs3, ax=ax3, shrink=0.9)
     ax3.invert_yaxis()
     plt.tight_layout()
-    plt.savefig(f"zonal_mean_{time_str.replace(' ', '')}.png")
+    plt.savefig(f"zonal_mean_{time_str}.png")
     print(f"Finished processing {time_str}")
 
 

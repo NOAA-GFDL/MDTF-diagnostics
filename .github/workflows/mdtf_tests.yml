@@ -50,8 +50,8 @@ jobs:
             - defaults
     - name: check install dirs
       run: |
-        echo "ls /usr/local"
-        echo "ls /Users/runner"
+        ls /usr/local
+        ls /Users/runner
 
     - name: Initialize and verify miniconda installation
       run: |

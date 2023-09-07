@@ -10,6 +10,7 @@ import xarray as xr
 import datetime
 from hn2016_falwa.xarrayinterface import QGDataset
 
+start_time = datetime.datetime.now()
 # 0) Get environment variables
 wkdir = os.environ['wkdir']
 input_u_path = os.environ["u_file"]
@@ -69,27 +70,27 @@ data_v = v_file.sel(time=time_selected).resample(time="1D").first()\
 data_t = t_file.sel(time=time_selected).resample(time="1D").first()\
     .interp(latitude=new_ylat, longitude=new_xlon, method="nearest")
 
-print_process_time("Finished computing daily average and interp onto coarser grid")
+print_process_time("Finished computing daily average and interp onto coarser grid", start_time)
 print(data_u)
 print(data_u.coords[ylat_coord_name])
 
 # 3) Saving output data:
 out_path = f"{wkdir}/refstates_2022Jan.nc"
 
-print_process_time("Start QGDataset calculation")
+print_process_time("Start QGDataset calculation", start_time)
 qgds = QGDataset(da_u=data_u, da_v=data_v, da_t=data_t, var_names={"u": u_var_name, "v": v_var_name, "t": t_var_name})
 uvtinterp = qgds.interpolate_fields()
 refstates = qgds.compute_reference_states()
-print_process_time("Examine refstates")
+print_process_time("Examine refstates", start_time)
 print(refstates)
 lwadiags = qgds.compute_lwa_and_barotropic_fluxes()
 # TODO: interpolate back onto original grid?
-print_process_time("Compute seasonal average")
+print_process_time("Compute seasonal average", start_time)
 seasonal_average = xr.merge([uvtinterp, refstates, lwadiags]).mean(dim=time_coord_name)
 print(seasonal_average)
-print_process_time(f"Start outputing to the file: {out_path}")
+print_process_time(f"Start outputing to the file: {out_path}", start_time)
 seasonal_average.to_netcdf(out_path)
-print_process_time("Finished")
+print_process_time("Finished", start_time)
 
 
 # 4) Saving output plots:

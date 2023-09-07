@@ -50,6 +50,7 @@ jobs:
             - defaults
     - name: Initialize and verify miniconda installation
       run: |
+        echo "ls /usr/local"
         conda init bash
         conda info -a
     - name: Install XQuartz if macOS

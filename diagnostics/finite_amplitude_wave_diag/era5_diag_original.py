@@ -2,13 +2,14 @@
 import os
 import sys
 
-from diagnostics.finite_amplitude_wave_diag.gridfill_utils import print_process_time
-
 sys.path.insert(0, "/home/clare/Dropbox/GitHub/hn2016_falwa")
 import numpy as np
 import xarray as xr
 import datetime
 from hn2016_falwa.xarrayinterface import QGDataset
+
+def print_process_time(process, start_time):
+    print(f"{process}. Time: {(datetime.datetime.now() - start_time).total_seconds()}")
 
 start_time = datetime.datetime.now()
 # 0) Get environment variables

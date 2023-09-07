@@ -24,5 +24,3 @@ def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
     return lat_lon_filled
 
 
-def print_process_time(process, start_time):
-    print(f"{process}. Time: {(datetime.datetime.now() - start_time).total_seconds()}")

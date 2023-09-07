@@ -1,3 +1,5 @@
+import datetime
+
 import gridfill
 import numpy as np
 
@@ -20,3 +22,7 @@ def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
         cyclic=True, itermax=itermax, verbose=verbose)
 
     return lat_lon_filled
+
+
+def print_process_time(process):
+    print(f"{process}. Time: {datetime.datetime.now()}")

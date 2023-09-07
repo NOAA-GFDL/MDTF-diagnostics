@@ -1,12 +1,13 @@
 # TODO: replace all with env variables
 import os
 import sys
+
+from diagnostics.finite_amplitude_wave_diag.gridfill_utils import print_process_time
+
 sys.path.insert(0, "/home/clare/Dropbox/GitHub/hn2016_falwa")
 import numpy as np
 import xarray as xr
 import datetime
-import matplotlib.pyplot as plt
-from hn2016_falwa.oopinterface import QGFieldNHN22
 from hn2016_falwa.xarrayinterface import QGDataset
 
 # 0) Get environment variables
@@ -26,11 +27,6 @@ plev_coord_name = os.environ["plev_coord"]
 u_file = xr.open_dataset(input_u_path)
 v_file = xr.open_dataset(input_v_path)
 t_file = xr.open_dataset(input_t_path)
-
-
-def print_process_time(process):
-    print(f"{process}. Time: {datetime.datetime.now()}")
-
 
 # Select DJF and do daily mean
 # selected_months = [1, 2, 12]

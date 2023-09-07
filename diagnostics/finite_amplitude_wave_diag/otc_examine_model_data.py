@@ -3,7 +3,9 @@ Run this on OTC to compute reference state for 1 timestep
 """
 import os
 import numpy as np
-import xarray as xr                # python library we use to read netcdf files
+import xarray as xr
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
@@ -49,7 +51,7 @@ for tstep in np.arange(0, 8761, 50):
     fig.colorbar(cs3, ax=ax3, shrink=0.9)
     ax3.invert_yaxis()
     plt.tight_layout()
-    plt.savefig(f"zonal_mean_{time_str.replace(' ', '')}")
+    plt.savefig(f"zonal_mean_{time_str.replace(' ', '')}.png")
     print(f"Finished processing {time_str}")
 
 

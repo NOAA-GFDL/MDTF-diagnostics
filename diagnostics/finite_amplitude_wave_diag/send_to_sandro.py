@@ -8,10 +8,11 @@ import matplotlib.pyplot as plt    # python library we use to make plots
 from hn2016_falwa.xarrayinterface import QGDataset
 
 
-# *** Combine files ***
+# *** Combine files: concatenate over time  ***
 file_handle = xr.open_mfdataset(f"send_to_sandro_t*.nc", concat_dim='time', combine='nested')
 print(file_handle)
 print(file_handle.coords['time'])
+file_handle.to_netcdf("send_to_sandro_12_time_slice.nc")
 
 
 to_output_step_by_step = False

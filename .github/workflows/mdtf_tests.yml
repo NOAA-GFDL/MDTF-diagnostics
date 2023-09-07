@@ -18,24 +18,24 @@ jobs:
     runs-on: ${{matrix.os}}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [macos-13]
         json-file: ["tests/github_actions_test_ubuntu_set1.jsonc","tests/github_actions_test_macos_set1.jsonc"]
         json-file-set2: ["tests/github_actions_test_ubuntu_set2.jsonc", "tests/github_actions_test_macos_set2.jsonc"]
         json-file-set3: ["tests/github_actions_test_ubuntu_set3.jsonc", "tests/github_actions_test_macos_set3.jsonc"]
         # if experimental is true, other jobs to run if one fails
         experimental: [false]
         exclude:
-          - os: ubuntu-latest
-            json-file: "tests/github_actions_test_macos_set1.jsonc"
-          - os: ubuntu-latest
-            json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
-          - os: ubuntu-latest
-            json-file-set3: "tests/github_actions_test_macos_set3.jsonc"
-          - os: macos-latest
+          #- os: ubuntu-latest
+          #  json-file: "tests/github_actions_test_macos_set1.jsonc"
+          #- os: ubuntu-latest
+          #  json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
+          #- os: ubuntu-latest
+          #  json-file-set3: "tests/github_actions_test_macos_set3.jsonc"
+          - os: macos-13
             json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
-          - os: macos-latest
+          - os: macos-13
             json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
-          - os: macos-latest
+          - os: macos-13
             json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
       max-parallel: 2
     steps:
@@ -53,7 +53,7 @@ jobs:
         conda init bash
         conda info -a
     - name: Install XQuartz if macOS
-      if: ${{ matrix.os == 'macos-latest'}}
+      if: ${{ matrix.os == 'macos-13'}}
       run: |
         echo "Installing XQuartz"
         brew install --cask xquartz

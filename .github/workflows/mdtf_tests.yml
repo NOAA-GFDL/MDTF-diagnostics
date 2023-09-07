@@ -48,9 +48,13 @@ jobs:
           channels:
             - conda-forge
             - defaults
-    - name: Initialize and verify miniconda installation
+    - name: check install dirs
       run: |
         echo "ls /usr/local"
+        echo "ls /Users/runner"
+
+    - name: Initialize and verify miniconda installation
+      run: |
         conda init bash
         conda info -a
     - name: Install XQuartz if macOS

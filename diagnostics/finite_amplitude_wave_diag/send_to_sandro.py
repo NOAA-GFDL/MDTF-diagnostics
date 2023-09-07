@@ -9,7 +9,7 @@ from hn2016_falwa.xarrayinterface import QGDataset
 
 
 # *** Combine files ***
-file_handle = xr.open_mfdataset(f"send_to_sandro_t*.nc")
+file_handle = xr.open_mfdataset(f"send_to_sandro_t*.nc", concat_dim='time', combine='nested')
 print(file_handle)
 print(file_handle.coords['time'])
 

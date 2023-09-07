@@ -50,8 +50,7 @@ jobs:
             - defaults
     - name: check install dirs
       run: |
-        ls /usr/local
-        ls /Users/runner
+        ls /Users/runner/micromamba
 
     - name: Initialize and verify miniconda installation
       run: |

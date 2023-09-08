@@ -10,6 +10,7 @@ from diagnostics.finite_amplitude_wave_diag.gridfill_utils import gridfill_each_
 from hn2016_falwa.xarrayinterface import QGDataset
 import matplotlib.pyplot as plt
 from hn2016_falwa.oopinterface import QGFieldNHN22, QGFieldNH18
+from hn2016_falwa.xarrayinterface import hemisphere_to_globe
 
 
 wk_dir = f"{os.environ['HOME']}/Dropbox/GitHub/mdtf/wkdir/"
@@ -27,39 +28,43 @@ ylat = coord_file.coords['lat']
 plev = coord_file.coords['level']
 coord_file.close()
 
-run_poisson = False
+run_gridfill = True
+
 all_files = xr.open_mfdataset("atmos_inst_t1000_[uvt].nc")\
     .interp(
     coords={
-        "lat": np.arange(-90, 91, 1.5),
-        "lon": np.arange(0, 361, 1.5)},
+        "lat": np.arange(0, 91, 3),
+        "lon": np.arange(0, 361, 3)},
     method="linear",
     kwargs={"fill_value": "extrapolate"})  # installed package bottleneck
-if not run_poisson:
-    all_files = all_files.fillna(10)
 gridfill_file = "atmos_inst_t1000_gridfill_{var}.nc"
 
 # *** First do poisson solver ***
-if run_poisson:
+if run_gridfill:
     args_tuple = ['ua', 'va', 'ta']
     field_list = []
     for var_name in args_tuple:
         field_at_all_level = xr.apply_ufunc(
             gridfill_each_level,
-            *[all_files[var_name]],
+            *[all_files[var_name].load()],
             input_core_dims=(('lat', 'lon'),),
             output_core_dims=(('lat', 'lon'),),
-            vectorize=True, dask="allowed")
+            vectorize=True, dask="forbidden")
         gridfill_file_path = gridfill_file.format(var=var_name)
         field_at_all_level.to_netcdf(gridfill_file_path)
         print(f"Finished outputing {gridfill_file_path}")
     all_files = xr.open_mfdataset("atmos_inst_t1000_gridfill_[uvt]a.nc")
+else:
+    all_files = all_files.fillna(10)
+
+# *** Create symmetric data ***
+all_files = hemisphere_to_globe(all_files)
 
 # *** Interpolate onto regular grid ***
 qgds = QGDataset(
     all_files,
     var_names={"u": "ua", "v": "va", "t": "ta"},
-    qgfield=QGFieldNH18)
+    qgfield=QGFieldNHN22)
 uvtinterp = qgds.interpolate_fields()
 plt.contourf(
     uvtinterp['interpolated_u'].ylat,

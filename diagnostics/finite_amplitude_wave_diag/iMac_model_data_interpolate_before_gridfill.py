@@ -30,15 +30,17 @@ coord_file.close()
 
 run_gridfill = True
 
-all_files = xr.open_mfdataset("atmos_inst_t1000_[uvt].nc")\
+all_files = xr.open_dataset("GFDL-CM3_historical_r1i1p1_20050101-20051231_1tslice.nc")
+all_files = all_files\
+    .assign_coords({'plev': all_files.plev // 100})\
     .interp(
     coords={
-        "lat": np.arange(0, 91, 3),
-        "lon": np.arange(0, 361, 3)},
-    method="linear",
-    kwargs={"fill_value": "extrapolate"})  # installed package bottleneck
-gridfill_file = "atmos_inst_t1000_gridfill_{var}.nc"
-
+        "lat": np.arange(-90, 91, 1.5),
+        "lon": np.arange(0, 361, 1.5)},
+    method="linear")
+    # kwargs={"fill_value": "extrapolate"})  # installed package bottleneck
+gridfill_file = "GFDL-CM3_historical_r1i1p1_20050101-20051231_1tslice_gridfill_{var}.nc"
+gridfill_file_all = gridfill_file.format(var="[uvt]a")
 # *** First do poisson solver ***
 if run_gridfill:
     args_tuple = ['ua', 'va', 'ta']
@@ -53,33 +55,36 @@ if run_gridfill:
         gridfill_file_path = gridfill_file.format(var=var_name)
         field_at_all_level.to_netcdf(gridfill_file_path)
         print(f"Finished outputing {gridfill_file_path}")
-    all_files = xr.open_mfdataset("atmos_inst_t1000_gridfill_[uvt]a.nc")
+    all_files = xr.open_mfdataset(gridfill_file_all)
 else:
     all_files = all_files.fillna(10)
 
 # *** Create symmetric data ***
-all_files = hemisphere_to_globe(all_files)
+# all_files = hemisphere_to_globe(all_files)
 
 # *** Interpolate onto regular grid ***
 qgds = QGDataset(
     all_files,
     var_names={"u": "ua", "v": "va", "t": "ta"},
-    qgfield=QGFieldNHN22)
+    qgfield=QGFieldNH18,
+    qgfield_kwargs={"kmax": 33})
 uvtinterp = qgds.interpolate_fields()
 plt.contourf(
     uvtinterp['interpolated_u'].ylat,
     uvtinterp['interpolated_u'].height,
     uvtinterp['interpolated_u'].mean(axis=-1),
-    np.arange(-50, 51, 5), cmap='rainbow')
+    40,
+    cmap='rainbow')
 plt.title("Zonal mean zonal wind")
 plt.colorbar()
 plt.show()
 print("Finished interpolate_fields")
 refstates = qgds.compute_reference_states()  # Error arises when solving reference state
-plt.contourf(refstates['uref'].ylat,
+plt.contourf(refstates['uref'].ylat[2:-2],
              refstates['uref'].height,
-             refstates['uref'],
-             np.arange(-50, 101, 5), cmap='rainbow')
+             refstates['uref'][:, 2:-2],
+             40,
+             cmap='rainbow')
 plt.title("Uref")
 plt.colorbar()
 plt.show()
@@ -87,7 +92,7 @@ print("Finished compute_reference_states")
 refstates = qgds.compute_lwa_and_barotropic_fluxes()  # Error arises when solving reference state
 plt.contourf(refstates['lwa'].ylat,
              refstates['lwa'].height,
-             refstates['lwa'].mean(axis=-1), np.arange(0, 200, 10), cmap='rainbow')
+             refstates['lwa'].mean(axis=-1), 40, cmap='rainbow')
 plt.title("Zonal mean FAWA")
 plt.colorbar()
 plt.show()
@@ -104,8 +109,8 @@ plt.show()
 height_level_index = 10
 
 plt.contourf(uvtinterp['qgpv'].xlon,
-             uvtinterp['qgpv'].ylat,
-             uvtinterp['qgpv'].isel(height=height_level_index),
+             uvtinterp['qgpv'].ylat[3:-3],
+             uvtinterp['qgpv'].isel(height=height_level_index)[3:-3, :],
              40, cmap='rainbow')
 plt.title(f"QGPV at k={height_level_index}")
 plt.colorbar()

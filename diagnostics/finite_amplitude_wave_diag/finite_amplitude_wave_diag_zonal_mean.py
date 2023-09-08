@@ -1,63 +1,44 @@
-# MDTF Example Diagnostic POD
+# Finite-amplitude Rossby wave POD
 # ================================================================================
-# This script does a simple diagnostic calculation to illustrate how to adapt code
-# for use in the MDTF diagnostic framework. The main change is to set input/output
-# paths, variable names etc. from shell environment variables the framework 
-# provides, instead of hard-coding them.
+# Calculate finite-amplitude wave diagnostics that quantifies wave-mean flow
+# interactions.
 #
-# Below, this script consists of 2 parts: (1) a template of comprehensive header POD
-# developers must include in their POD's main driver script, (2) actual code, and 
-# (3) extensive in-line comments.
+# Last update: 09/07/2023
 # ================================================================================
-# 
-# This file is part of the Example Diagnostic POD of the MDTF code package (see mdtf/MDTF-diagnostics/LICENSE.txt)
-# 
-# Example Diagnostic POD
-# 
-#   Last update: 8/1/2020
-# 
-#   This is a example POD that you can use as a template for your diagnostics.
-#   If this were a real POD, you'd place a one-paragraph synopsis of your
-#   diagnostic here (like an abstract). 
-# 
 #   Version & Contact info
 # 
-#   Here you should describe who contributed to the diagnostic, and who should be
-#   contacted for further information:
-# 
-#   - Version/revision information: version 1 (5/06/2020)
-#   - PI (name, affiliation, email)
-#   - Developer/point of contact (name, affiliation, email)
-#   - Other contributors
-# 
+#   - Version/revision information: version 1 (09/07/2023)
+#   - PI: Clare S. Y. Huang. The University of Chicago. csyhuang@uchicago.edu.
+#   - Developer/point of contact (name, affiliation, email): (same as PI)
+#   - Other contributors: Christopher Polster (JGU Mainz), Noboru Nakamura (UChicago)
+# ================================================================================
 #   Open source copyright agreement
 # 
-#   The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt). 
-#   Unless you've distirbuted your script elsewhere, you don't need to change this.
-# 
-#   Functionality
+#   The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt).
+# ================================================================================
+#   Functionality (not written yet)
 # 
 #   In this section you should summarize the stages of the calculations your 
 #   diagnostic performs, and how they translate to the individual source code files 
 #   provided in your submission. This will, e.g., let maintainers fixing a bug or 
 #   people with questions about how your code works know where to look.
-# 
-#   Required programming language and libraries
+# ================================================================================
+#   Required programming language and libraries (not written yet)
 # 
 #   In this section you should summarize the programming languages and third-party 
 #   libraries used by your diagnostic. You also provide this information in the 
 #   ``settings.jsonc`` file, but here you can give helpful comments to human 
 #   maintainers (eg, "We need at least version 1.5 of this library because we call
 #   this function.")
-# 
-#   Required model output variables
+# ================================================================================
+#   Required model output variables (not written yet)
 # 
 #   In this section you should describe each variable in the input data your 
 #   diagnostic uses. You also need to provide this in the ``settings.jsonc`` file, 
 #   but here you should go into detail on the assumptions your diagnostic makes 
 #   about the structure of the data.
-# 
-#   References
+# ================================================================================
+#   References (not written yet)
 # 
 #   Here you should cite the journal articles providing the scientific basis for 
 #   your diagnostic.
@@ -65,71 +46,136 @@
 #      Maloney, E. D, and Co-authors, 2019: Process-oriented evaluation of climate
 #         and wether forcasting models. BAMS, 100(9), 1665-1686,
 #         doi:10.1175/BAMS-D-18-0042.1.
-#
+# ================================================================================
 import os
 import matplotlib
 matplotlib.use('Agg') # non-X windows backend
 # Commands to load third-party libraries. Any code you don't include that's 
 # not part of your language's standard library should be listed in the 
 # settings.jsonc file.
+import netCDF4
+import numpy as np
 import xarray as xr                # python library we use to read netcdf files
 import matplotlib.pyplot as plt    # python library we use to make plots
+from diagnostics.finite_amplitude_wave_diag.gridfill_utils import gridfill_each_level
+from hn2016_falwa.xarrayinterface import QGDataset
+from hn2016_falwa.oopinterface import QGFieldNHN22, QGFieldNH18
+from hn2016_falwa.constant import SCALE_HEIGHT, P_GROUND
+from hn2016_falwa.xarrayinterface import hemisphere_to_globe
 
 
-### 1) Loading model data files: ###############################################
+# 1) Loading model data files:
 #
 # The framework copies model data to a regular directory structure of the form
 # <DATADIR>/<frequency>/<CASENAME>.<variable_name>.<frequency>.nc
 # Here <variable_name> and frequency are requested in the "varlist" part of 
 # settings.json.
+load_environ = False
+if load_environ:
+    uvt_path = os.environ["UVT_FILE"]
+    u_var_name = os.environ["U_VAR"]
+    v_var_name = os.environ["V_VAR"]
+    t_var_name = os.environ["T_VAR"]
+    time_coord_name = os.environ["TIME_COORD"]
+    plev_name = os.environ["LEV_COORD"]
+    lat_name = os.environ["LAT_COORD"]
+    lon_name = os.environ["LON_COORD"]
+else:
+    # iMac path
+    uvt_path = f"{os.environ['HOME']}/Dropbox/GitHub/mdtf/MDTF-diagnostics/diagnostics/finite_amplitude_wave_diag/GFDL-CM3_historical_r1i1p1_20050101-20051231_1tslice.nc"
+    u_var_name = "ua"
+    v_var_name = "va"
+    t_var_name = "ta"
+    time_coord_name = "time"
+    plev_name = "plev"
+    lat_name = "lat"
+    lon_name = "lon"
+# Regular grid
+xlon = np.arange(0, 361, 1.5)
+ylat = np.arange(-90, 91, 1.5)
 
-# The following command sets input_path to the value of the shell environment
-# variable called TAS_FILE. This variable is set by the framework to let the 
-# script know where the locally downloaded copy of the data for this variable
-# (which we called "tas") is.
-input_path = os.environ["TAS_FILE"]
+# 2) Doing computations:
+model_dataset = xr.open_mfdataset(uvt_path)  # command to load the netcdf file
 
-# command to load the netcdf file
-model_dataset = xr.open_dataset(input_path)
+# === 2.0) Save original grid ===
+original_grid = {
+    time_coord_name: model_dataset.coords[time_coord_name],
+    plev_name: model_dataset.coords[plev_name],
+    lat_name: model_dataset.coords[lat_name],
+    lon_name: model_dataset.coords[lon_name]}
 
+# === 2.1) GRIDFILL: Check if any NaN exist. If yes, do gridfill. ===
+num_of_nan = model_dataset['ua'].isnull().sum().values
+do_gridfill = True if num_of_nan > 0 else False  # Boolean
+if do_gridfill:
+    print("NaN detected in u/v/T field. Do gridfill with poisson solver.")
+    gridfill_file_path = "gridfill_{var}.nc"
+    args_tuple = [u_var_name, v_var_name, t_var_name]
+    field_list = []
+    for var_name in args_tuple:
+        field_at_all_level = xr.apply_ufunc(
+            gridfill_each_level,
+            *[model_dataset[var_name]],
+            input_core_dims=(('lat', 'lon'),),
+            output_core_dims=(('lat', 'lon'),),
+            vectorize=True, dask="allowed")
+        field_at_all_level.to_netcdf(gridfill_file_path.format(var=var_name))
+        print(f"Finished outputing {var_name} to {gridfill_file_path.format(var=var_name)}")
+    print("Finished gridfill")
+    gridfill_file_path = gridfill_file_path.format(var="*")
+else:
+    gridfill_file_path = uvt_path  # Original file
+    print(f"No gridfill is necessary. Continue to work on {gridfill_file_path}")
+model_dataset.close()
 
-### 2) Doing computations: #####################################################
-#
-# Diagnostics in the framework are intended to work with native output from a
-# variety of models. For this reason, variable names should not be hard-coded
-# but instead set from environment variables. 
-#
-tas_var_name = os.environ["tas_var"]
-# For safety, don't even assume that the time dimension of the input file is
-# named "time":
-time_coord_name = os.environ["time_coord"]
+# === 2.2) INTERPOLATION: Interpolate onto regular grid for simplicity ===
+gridfilled_dataset = xr.open_mfdataset(gridfill_file_path)
+gridfilled_dataset = gridfilled_dataset.interp(
+    coords={lat_name: ylat, lon_name: xlon}, method="linear", kwargs={"fill_value": "extrapolate"})
+if gridfilled_dataset[plev_name].units == 'Pa':  # Shall divide by 100
+    gridfilled_dataset = gridfilled_dataset.assign_coords({plev_name: gridfilled_dataset[plev_name] // 100})
+    gridfilled_dataset[plev_name].attrs["units"] = 'hPa'
 
-# The only computation done here: compute the time average of input data
-tas_data = model_dataset[tas_var_name]
-model_mean_tas = tas_data.mean(dim = time_coord_name)
-# Note that we supplied the observational data as time averages, to save space
-# and avoid having to repeat that calculation each time the diagnostic is run.
+# === 2.3) VERTICAL RESOLUTION: determine the maximum pseudo-height this calculation can handle ===
+dz = 1000  # TODO Variable to set earlier?
+hmax = -SCALE_HEIGHT*np.log(gridfilled_dataset[plev_name].min()/P_GROUND)
+kmax = int(hmax//dz)+1
 
-# Logging relevant debugging or progress information is a good idea. Anything
-# your diagnostic prints to STDOUT will be saved to its own log file.
-print("Computed time average of {tas_var} for {CASENAME}.".format(**os.environ))
+# === 2.3) WAVE ACTIVITY COMPUTATION: Compute Uref, FAWA, barotropic components of u and LWA ===
+qgds = QGDataset(
+    gridfilled_dataset,
+    var_names={"u": u_var_name, "v": v_var_name, "t": t_var_name},
+    qgfield=QGFieldNH18,
+    qgfield_kwargs={"dz": dz, "kmax": kmax})
+qgds.interpolate_fields()  # No need to retrieve variables
+refstates = qgds.compute_reference_states()['uref']
+lwadiags = qgds.compute_lwa_and_barotropic_fluxes()['lwa_baro', 'u_baro']
+# TODO:
+# RefState has to be interpolated back onto plev-lat grid
+# lwadiags has to be interpolated back onto lat-lon grid
 
+"""
+New coordinate can also be attached to an existing dimension:
 
-### 3) Saving output data: #####################################################
-#
-# Diagnostics should write output data to disk to a) make relevant results 
+lon_2 = np.array([300, 289, 0, 1])
+da.assign_coords(lon_2=("lon", lon_2))
+<xarray.DataArray (lon: 4)>
+array([0.5488135 , 0.71518937, 0.60276338, 0.54488318])
+Coordinates:
+  * lon      (lon) int64 358 359 0 1
+    lon_2    (lon) int64 300 289 0 1
+"""
+
+# === 3) Saving output data (TODO not yet finished) ===
+# Diagnostics should write output data to disk to a) make relevant results
 # available to the user for further use or b) to pass large amounts of data
 # between stages of a calculation run as different sub-scripts. Data can be in
 # any format (as long as it's documented) and should be written to the 
 # directory <WK_DIR>/model/netCDF (created by the framework).
-#
-out_path = "{WK_DIR}/model/netCDF/temp_means.nc".format(**os.environ)
+out_path = "{WK_DIR}/model/netCDF/temp_means.nc".format(**os.environ)  # TODO set it
+lwadiags.to_netcdf(out_path)  # (not done) write out time averages as a netcdf file
 
-# write out time averages as a netcdf file
-model_mean_tas.to_netcdf(out_path)
-
-
-### 4) Saving output plots: ####################################################
+# === 4) Saving output plots (TODO not yet finished) ===
 #
 # Plots should be saved in EPS or PS format at <WK_DIR>/<model or obs>/PS 
 # (created by the framework). Plots can be given any filename, but should have 
@@ -155,7 +201,7 @@ def plot_and_save_figure(model_or_obs, title_string, dataset):
 # set an informative title using info about the analysis set in env vars
 title_string = "{CASENAME}: mean {tas_var} ({FIRSTYR}-{LASTYR})".format(**os.environ)
 # Plot the model data:
-plot_and_save_figure("model", title_string, model_mean_tas)
+plot_and_save_figure("model", title_string, model_dataset)
 
 
 ### 5) Loading obs data files & plotting obs figures: ##########################

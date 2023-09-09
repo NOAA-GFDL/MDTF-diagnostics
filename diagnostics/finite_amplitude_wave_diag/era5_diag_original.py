@@ -82,7 +82,7 @@ print_process_time("Start QGDataset calculation", start_time)
 qgds = QGDataset(da_u=data_u, da_v=data_v, da_t=data_t, var_names={"u": u_var_name, "v": v_var_name, "t": t_var_name})
 uvtinterp = qgds.interpolate_fields()
 refstates = qgds.compute_reference_states()
-print_process_time("Examine refstates", start_time)
+print_process_time("Examine yz_var", start_time)
 print(refstates)
 lwadiags = qgds.compute_lwa_and_barotropic_fluxes()
 # TODO: interpolate back onto original grid?

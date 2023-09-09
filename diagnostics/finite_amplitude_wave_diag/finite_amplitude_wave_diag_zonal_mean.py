@@ -76,7 +76,7 @@ from hn2016_falwa.constant import SCALE_HEIGHT, P_GROUND
 # <DATADIR>/<frequency>/<CASENAME>.<variable_name>.<frequency>.nc
 # Here <variable_name> and frequency are requested in the "varlist" part of 
 # settings.json.
-load_environ = True
+load_environ = (socket.gethostname() == 'otc')
 if load_environ:
     uvt_path = os.environ["UVT_FILE"]
     u_var_name = os.environ["U_VAR"]
@@ -117,6 +117,8 @@ def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
     Returns:
         A 2D array of the same dimension with all nan filled.
     """
+    if np.isnan(lat_lon_field).sum() == 0:
+        return lat_lon_field
 
     lat_lon_filled, converged = gridfill.fill(
         grids=np.ma.masked_invalid(lat_lon_field), xdim=1, ydim=0, eps=0.01,
@@ -163,7 +165,7 @@ original_grid = {
 
 def compute_from_sampled_data(sampled_dataset):
     # === 2.1) GRIDFILL: Check if any NaN exist. If yes, do gridfill. ===
-    num_of_nan = sampled_dataset['ua'].isnull().sum().values
+    num_of_nan = sampled_dataset[u_var_name].isnull().sum().values
     do_gridfill = True if num_of_nan > 0 else False  # Boolean
     if do_gridfill:
         print("NaN detected in u/v/T field. Do gridfill with poisson solver.")

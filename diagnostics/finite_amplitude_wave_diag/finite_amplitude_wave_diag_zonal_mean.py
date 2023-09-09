@@ -179,6 +179,7 @@ def compute_from_sampled_data(sampled_dataset):
                 output_core_dims=(('lat', 'lon'),),
                 vectorize=True, dask="allowed")
             field_at_all_level.to_netcdf(gridfill_file_path.format(var=var_name))
+            field_at_all_level.close()
             print(f"Finished outputing {var_name} to {gridfill_file_path.format(var=var_name)}")
         print("Finished gridfill")
         gridfill_file_path = gridfill_file_path.format(var="*")
@@ -202,6 +203,7 @@ def compute_from_sampled_data(sampled_dataset):
         var_names={"u": u_var_name, "v": v_var_name, "t": t_var_name},
         qgfield=QGFieldNH18,
         qgfield_kwargs={"dz": dz, "kmax": kmax})
+    gridfilled_dataset.close()
     uvtinterp = qgds.interpolate_fields()[['interpolated_u']] \
         .interp(coords={
         "xlon": (lon_name, original_grid[lon_name].data),

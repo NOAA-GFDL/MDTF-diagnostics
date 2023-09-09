@@ -2,7 +2,7 @@
 Extract one time slice from model data from OTC
 """
 import os
-import numpy
+import numpy as np
 import xarray as xr
 
 data_path = f"{os.environ['HOME']}/GitHub/mdtf/inputdata/model/CMIP5/output1/NOAA-GFDL/GFDL-CM3/historical/day/" + \

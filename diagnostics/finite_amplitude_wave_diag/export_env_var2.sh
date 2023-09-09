@@ -5,5 +5,5 @@ export T_VAR=t
 export TIME_COORD=time
 export LON_COORD=lon
 export LAT_COORD=lat
-export LEV_COORD=level
+export LEV_COORD=plev
 export WK_DIR=$HOME/GitHub/mdtf/wkdir

@@ -48,6 +48,8 @@
 #         doi:10.1175/BAMS-D-18-0042.1.
 # ================================================================================
 import os
+
+import gridfill
 import matplotlib
 from collections import namedtuple
 import socket
@@ -64,7 +66,6 @@ import numpy as np
 import xarray as xr  # python library we use to read netcdf files
 import matplotlib.pyplot as plt  # python library we use to make plots
 from cartopy import crs as ccrs
-from diagnostics.finite_amplitude_wave_diag.gridfill_utils import gridfill_each_level
 from hn2016_falwa.xarrayinterface import QGDataset
 from hn2016_falwa.oopinterface import QGFieldNHN22, QGFieldNH18
 from hn2016_falwa.constant import SCALE_HEIGHT, P_GROUND
@@ -103,6 +104,26 @@ ylat = np.arange(-90, 91, 1.0)
 
 
 # === Define functions ===
+def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
+    """
+    Fill missing values in lat-lon grids with values derived by solving Poisson's equation
+    using a relaxation scheme.
+
+    Args:
+        lat_lon_field(np.ndarray): 2D array to apply gridfill on
+        itermax(int): maximum iteration for poisson solver
+        verbose(bool): verbose level of poisson solver
+
+    Returns:
+        A 2D array of the same dimension with all nan filled.
+    """
+
+    lat_lon_filled, converged = gridfill.fill(
+        grids=np.ma.masked_invalid(lat_lon_field), xdim=1, ydim=0, eps=0.01,
+        cyclic=True, itermax=itermax, verbose=verbose)
+
+    return lat_lon_filled
+
 def convert_pseudoheight_to_hPa(height_array):
     """
     Args:
@@ -403,3 +424,4 @@ if __name__ == '__main__':
 
 ### 8) Confirm POD executed sucessfully ########################################
 # print("Last log message by Example POD: finished successfully!")
+

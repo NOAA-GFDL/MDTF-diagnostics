@@ -7,7 +7,7 @@ import xarray as xr
 import numpy as np
 from hn2016_falwa.xarrayinterface import QGDataset
 
-from diagnostics.finite_amplitude_wave_diag.gridfill_utils import gridfill_each_level
+from diagnostics.finite_amplitude_wave_diag.finite_amplitude_wave_diag_zonal_mean import gridfill_each_level
 
 # These are local path to Clare's iMac
 storage_path = f"{os.environ['HOME']}/Dropbox/GitHub/hn2016_falwa/github_data_storage/"

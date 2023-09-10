@@ -56,10 +56,9 @@ jobs:
         condarc: |
           channels:
             - conda-forge
+        python-version: 3.11.0
     - name: check install dirs
       run: |
-        conda init bash
-        conda info -a
         ls /Users/runner/micromamba
     - name: Install XQuartz if macOS
       if: ${{ matrix.os == 'macos-13'}}

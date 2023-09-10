@@ -639,5 +639,5 @@ def deserialize_class(name):
                 q.extend(t.__subclasses__)
             except TypeError:
                 pass
-        if t is not type:
+        if not type(t):
             raise ValueError('No such type: %r' % name)

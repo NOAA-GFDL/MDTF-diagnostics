@@ -28,4 +28,3 @@ dependencies:
 - subprocess32=3.5.4
 - pyyaml=6.0.1
 - click=8.1.7
-- typing>=3.10.0.0

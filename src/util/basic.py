@@ -636,8 +636,10 @@ def deserialize_class(name):
             return t
         else:
             try:  # keep looking
-                q.extend(t.__subclasses__)
+                q.extend(t.__subclasses__())
             except TypeError:
                 pass
         if not type(t):
             raise ValueError('No such type: %r' % name)
+        else:
+            print(f"Type is {type(t)}")

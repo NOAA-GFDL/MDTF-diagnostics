@@ -61,11 +61,11 @@ jobs:
       if: ${{ matrix.os == 'macos-13'}}
       run: |
         echo "Creating conda links"
-        mkdir -p /usr/local/miniconda/condabin
-        ls /usr/local
-        ln -s  /Users/runner/micromamba-bin/micromamba /usr/local/miniconda/condabin/conda
-        echo "CONDA_BIN=$(echo /usr/local/miniconda/condabin/conda)" >> $GITHUB_ENV
-        alias conda='/usr/local/miniconda/condabin/conda'
+        mkdir -p /Users/runner/miniconda/condabin
+        ls /Users/runner
+        ln -s  /Users/runner/micromamba-bin/micromamba /Users/runner/miniconda/condabin/conda
+        echo "CONDA_BIN=$(echo /Users/runner/miniconda/condabin/conda)" >> $GITHUB_ENV
+        alias conda='/Users/runner/miniconda/condabin/conda'
         which conda
 
     - name: Install XQuartz if macOS

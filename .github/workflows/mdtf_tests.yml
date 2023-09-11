@@ -71,7 +71,11 @@ jobs:
         echo "setting CONDA_BIN"
         echo "CONDA_BIN=$(echo /Users/runner/miniconda/condabin/conda)" >> $GITHUB_ENV
         echo "creating alias"
+        cat >> /Users/runner/micromamba-bin/.condarc << EOF
         alias conda='/Users/runner/miniconda/condabin/conda'
+        EOF
+
+        source /Users/runner/micromamba-bin/.condarc
         echo "verifying conda"
         conda info
 

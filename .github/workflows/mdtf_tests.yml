@@ -60,6 +60,9 @@ jobs:
     - name: check conda
       if: ${{ matrix.os == 'macos-13'}}
       run: |
+        echo "list micromamba dir contents"
+        ls /Users/runner/micromamba/*
+        ls /Users/runner/micromamba/*/*
         echo "Creating conda links"
         mkdir -p /Users/runner/miniconda/condabin
         ls /Users/runner/miniconda

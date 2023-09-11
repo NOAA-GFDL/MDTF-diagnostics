@@ -70,10 +70,11 @@ jobs:
         ls -l /Users/runner/miniconda/condabin/conda
         echo "setting CONDA_BIN"
         echo "CONDA_BIN=$(echo /Users/runner/miniconda/condabin/conda)" >> $GITHUB_ENV
+        touch ~/.bashrc
         echo "creating 'alias'"
-        echo "alias conda='/Users/runner/miniconda/condabin/conda'" | tee -a /Users/runner/micromamba/etc/profile.d
-        cat /Users/runner/micromamba/etc/profile.d
-        source /Users/runner/micromamba/etc/profile.d
+        echo "alias conda='/Users/runner/miniconda/condabin/conda'" | tee -a ~/.bashrc
+        cat ~/.bashrc
+        source ~/.bashrc
         echo "verifying conda"
         conda info
 

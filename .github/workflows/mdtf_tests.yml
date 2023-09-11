@@ -71,12 +71,14 @@ jobs:
         echo "setting CONDA_BIN"
         echo "CONDA_BIN=$(echo /Users/runner/miniconda/condabin/conda)" >> $GITHUB_ENV
         echo "creating alias"
-        cat alias conda='/Users/runner/miniconda/condabin/conda' /Users/runner/micromamba-bin/.condarc > tmp.txt
+        touch tmp.txt
+        cat > tmp.txt <<EOF
+        conda='/Users/runner/miniconda/condabin/conda' /Users/runner/micromamba-bin/.condarc
+        EOF
         cat tmp.txt >> /Users/runner/micromamba-bin/.condarc
-
+        cat /Users/runner/micromamba-bin/.condarc
         source /Users/runner/micromamba-bin/.condarc
         echo "verifying conda"
-        cat /Users/runner/micromamba-bin/.condarc
         conda info
 
     - name: Install XQuartz if macOS

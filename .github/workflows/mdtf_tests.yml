@@ -64,6 +64,7 @@ jobs:
         mkdir -p /Users/runner/miniconda/condabin
         ls /Users/runner
         ln -s  /Users/runner/micromamba-bin/micromamba /Users/runner/miniconda/condabin/conda
+        ls /Users/runner/miniconda/condabin
         echo "CONDA_BIN=$(echo /Users/runner/miniconda/condabin/conda)" >> $GITHUB_ENV
         alias conda='/Users/runner/miniconda/condabin/conda'
         which conda

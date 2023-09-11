@@ -57,22 +57,16 @@ jobs:
           channels:
             - conda-forge
         python-version: 3.11.0
-    - name: check install dirs
-      run: |
-        ls /Users/runner/micromamba/*
-        ls /Users/runner/conda-meta/*
     - name: check conda
       if: ${{ matrix.os == 'macos-13'}}
       run: |
-        if [ -d /usr/local/miniconda ]
-        then 
-            echo 'Exists'
-        else 
-            mkdir -p /usr/local/miniconda/condabin
-            ln -s  /Users/runner/micromamba-bin/micromamba /usr/local/miniconda/condabin/conda
-            echo "CONDA_BIN=$(echo /usr/local/miniconda/condabin/conda)" >> $GITHUB_ENV
-            which conda
-        fi
+        echo "Creating conda links"
+        mkdir -p /usr/local/miniconda/condabin
+        ls /usr/local
+        ln -s  /Users/runner/micromamba-bin/micromamba /usr/local/miniconda/condabin/conda
+        echo "CONDA_BIN=$(echo /usr/local/miniconda/condabin/conda)" >> $GITHUB_ENV
+        alias conda='/usr/local/miniconda/condabin/conda'
+        which conda
 
     - name: Install XQuartz if macOS
       if: ${{ matrix.os == 'macos-13'}}

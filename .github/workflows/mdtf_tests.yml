@@ -65,9 +65,12 @@ jobs:
         ls /Users/runner/miniconda
         ln -s /Users/runner/micromamba-bin/micromamba /Users/runner/miniconda/condabin/conda
         ls /Users/runner/miniconda/condabin
+        echo "setting CONDA_BIN"
         echo "CONDA_BIN=$(echo /Users/runner/miniconda/condabin/conda)" >> $GITHUB_ENV
+        echo "creating alias"
         alias conda='/Users/runner/miniconda/condabin/conda'
-        which conda
+        echo "verifying conda"
+        conda info
 
     - name: Install XQuartz if macOS
       if: ${{ matrix.os == 'macos-13'}}

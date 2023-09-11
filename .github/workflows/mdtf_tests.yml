@@ -70,8 +70,8 @@ jobs:
         ls -l /Users/runner/miniconda/condabin/conda
         echo "setting CONDA_BIN"
         echo "CONDA_BIN=$(echo /Users/runner/miniconda/condabin/conda)" >> $GITHUB_ENV
-        echo "creating alias"
-        echo -n "conda='/Users/runner/miniconda/condabin/conda' /Users/runner/micromamba-bin/.condarc" >> /Users/runner/micromamba-bin/.condarc
+        echo "creating 'alias'"
+        echo "conda='/Users/runner/miniconda/condabin/conda' /Users/runner/micromamba-bin/.condarc" | tee -a /Users/runner/micromamba-bin/.condarc
         cat /Users/runner/micromamba-bin/.condarc
         source /Users/runner/micromamba-bin/.condarc
         echo "verifying conda"

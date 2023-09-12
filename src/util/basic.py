@@ -641,5 +641,3 @@ def deserialize_class(name):
                 pass
         if not type(t):
             raise ValueError('No such type: %r' % name)
-        else:
-            print(f"Type is {type(t)}")

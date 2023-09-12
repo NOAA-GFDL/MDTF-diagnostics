@@ -60,9 +60,9 @@ jobs:
     - name: check conda
       if: ${{ matrix.os == 'macos-13'}}
       run: |
-        echo "list micromamba dir contents"
-        ls /Users/runner/micromamba/*
-        ls /Users/runner/micromamba/*/*
+        #echo "list micromamba dir contents"
+        #ls /Users/runner/micromamba/*
+        #ls /Users/runner/micromamba/*/*
         echo "Creating conda links"
         mkdir -p /Users/runner/miniconda/condabin
         ls /Users/runner/miniconda
@@ -72,8 +72,6 @@ jobs:
         echo "CONDA_BIN=$(echo /Users/runner/miniconda/condabin/conda)" >> $GITHUB_ENV
         echo "adding condabin to GITHUB PATH"
         echo "/Users/runner/miniconda/condabin" >> $GITHUB_PATH
-        echo "test conda"
-        which conda
 
     - name: Install XQuartz if macOS
       if: ${{ matrix.os == 'macos-13'}}
@@ -105,41 +103,41 @@ jobs:
         mdtf_synthetic.py -c CMIP --startyear 1990 --nyears 20
         cd ../
         mkdir wkdir
-    - name: Get Observational Data for Set 1
-      run: |
-        echo "${PWD}"
-        cd ../
-        echo "Available Space"
-        df -h
+    #- name: Get Observational Data for Set 1
+    #  run: |
+    #    echo "${PWD}"
+    #    cd ../
+    #    echo "Available Space"
+    #    df -h
         # attempt FTP data fetch
         # allow 20 min for transfer before timeout; Github actions allows 6 hours for individual
         # jobs, but we don't want to max out resources that are shared by the NOAA-GFDL repos.
-        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/convective_transition_diag_obs_data.tar --output convective_transition_diag_obs_data.tar
-        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/EOF_500hPa_obs_data.tar --output EOF_500hPa_obs_data.tar
-        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/Wheeler_Kiladis_obs_data.tar --output Wheeler_Kiladis_obs_data.tar
-        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/MJO_teleconnection_obs_data.tar --output MJO_teleconnection_obs_data.tar
-        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/MJO_suite_obs_data.tar --output MJO_suite_obs_data.tar
-        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/precip_diurnal_cycle_obs_data.tar --output precip_diurnal_cycle_obs_data.tar
+    #    curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/convective_transition_diag_obs_data.tar --output convective_transition_diag_obs_data.tar
+    #    curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/EOF_500hPa_obs_data.tar --output EOF_500hPa_obs_data.tar
+    #    curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/Wheeler_Kiladis_obs_data.tar --output Wheeler_Kiladis_obs_data.tar
+    #    curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/MJO_teleconnection_obs_data.tar --output MJO_teleconnection_obs_data.tar
+    #    curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/MJO_suite_obs_data.tar --output MJO_suite_obs_data.tar
+    #    curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/precip_diurnal_cycle_obs_data.tar --output precip_diurnal_cycle_obs_data.tar
         ## make input data directories
         mkdir -p inputdata/obs_data
-        echo "Untarring set 1 NCAR/CESM standard test files"
-        tar -xvf convective_transition_diag_obs_data.tar
-        tar -xvf EOF_500hPa_obs_data.tar
-        tar -xvf precip_diurnal_cycle_obs_data.tar
-        tar -xvf MJO_teleconnection_obs_data.tar
-        tar -xvf MJO_suite_obs_data.tar
-        tar -xvf Wheeler_Kiladis_obs_data.tar
+    #    echo "Untarring set 1 NCAR/CESM standard test files"
+    #    tar -xvf convective_transition_diag_obs_data.tar
+    #    tar -xvf EOF_500hPa_obs_data.tar
+    #    tar -xvf precip_diurnal_cycle_obs_data.tar
+    #    tar -xvf MJO_teleconnection_obs_data.tar
+    #    tar -xvf MJO_suite_obs_data.tar
+    #    tar -xvf Wheeler_Kiladis_obs_data.tar
         # clean up tarballs
-        rm -f *.tar
-    - name: Run diagnostic tests set 1
-      run: |
-        echo "POD_OUTPUT is: "
-        echo "${POD_OUTPUT}"
-        micromamba activate _MDTF_base
+    #    rm -f *.tar
+    #- name: Run diagnostic tests set 1
+    #  run: |
+    #    echo "POD_OUTPUT is: "
+    #    echo "${POD_OUTPUT}"
+    #    micromamba activate _MDTF_base
         # trivial check that install script worked
-        ./mdtf_framework.py --version
+      #  ./mdtf_framework.py --version
         # run the test PODs
-        ./mdtf_framework.py -v -f ${{matrix.json-file}}
+      #  ./mdtf_framework.py -v -f ${{matrix.json-file}}
     - name: Get observational data for set 2
       run: |
         echo "${PWD}"

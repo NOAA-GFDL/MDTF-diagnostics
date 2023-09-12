@@ -103,6 +103,8 @@ jobs:
         mdtf_synthetic.py -c CMIP --startyear 1990 --nyears 20
         cd ../
         mkdir wkdir
+        ## make input data directories
+        mkdir -p inputdata/obs_data
     #- name: Get Observational Data for Set 1
     #  run: |
     #    echo "${PWD}"
@@ -118,8 +120,6 @@ jobs:
     #    curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/MJO_teleconnection_obs_data.tar --output MJO_teleconnection_obs_data.tar
     #    curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/MJO_suite_obs_data.tar --output MJO_suite_obs_data.tar
     #    curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/precip_diurnal_cycle_obs_data.tar --output precip_diurnal_cycle_obs_data.tar
-        ## make input data directories
-        mkdir -p inputdata/obs_data
     #    echo "Untarring set 1 NCAR/CESM standard test files"
     #    tar -xvf convective_transition_diag_obs_data.tar
     #    tar -xvf EOF_500hPa_obs_data.tar

@@ -40,15 +40,15 @@ jobs:
       max-parallel: 2
     steps:
     - uses: actions/checkout@v3
-    #- uses: conda-incubator/setup-miniconda@v2
-    #  with:
-    #      miniconda-version: "latest"
-    #      python-version: 3.11.0
-    #      channels: conda-forge
-    #- name: Conda info
-    #  shell: bash -el {0}
-    #  run: conda info
-
+    - name: Download Miniconda 3
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: "latest"
+        python-version: 3.11.0
+        channels: conda-forge
+    - name: Conda info
+      shell: bash -el {0}
+      run: conda info
    # Set up Micromamba
     - uses: mamba-org/setup-micromamba@v1
       with:
@@ -56,22 +56,6 @@ jobs:
         condarc: |
           channels:
             - conda-forge
-        python-version: 3.11.0
-    - name: check conda
-      if: ${{ matrix.os == 'macos-13'}}
-      run: |
-        #echo "list micromamba dir contents"
-        #ls /Users/runner/micromamba/*
-        #ls /Users/runner/micromamba/*/*
-        echo "Creating conda links"
-        mkdir -p /Users/runner/miniconda/condabin
-        ls /Users/runner/miniconda
-        ln -s /Users/runner/micromamba-bin/micromamba /Users/runner/miniconda/condabin/conda
-        ls -l /Users/runner/miniconda/condabin/conda
-        echo "setting CONDA_BIN"
-        echo "CONDA_BIN=$(echo /Users/runner/miniconda/condabin/conda)" >> $GITHUB_ENV
-        echo "adding condabin to GITHUB PATH"
-        echo "/Users/runner/miniconda/condabin" >> $GITHUB_PATH
 
     - name: Install XQuartz if macOS
       if: ${{ matrix.os == 'macos-13'}}

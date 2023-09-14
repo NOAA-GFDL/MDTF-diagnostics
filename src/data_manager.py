@@ -582,10 +582,12 @@ class DataframeQueryDataSourceBase(DataSourceBase, metaclass=util.MDTFABCMeta):
             if expt_df is None:
                 expt_df = v_expt_df.copy()
             else:
-                expt_df = pd.merge(
-                    expt_df, v_expt_df,
-                    how='inner', on=key_col, sort=False, validate='1:1'
-                )
+                # Everything is just Stack Overflow answers example #16894614
+                # https://stackoverflow.com/questions/70525053/merging-multiple-data-frames-causing-duplicate-column-names
+                df_list = [expt_df, v_expt_df]
+                s = pd.concat([x.set_index('expt_key') for x in df_list], axis=1, keys=range(len(df_list)))
+                s.columns = s.columns.map('{0[1]}_{0[0]}'.format)
+                expt_df = s.reset_index()
             if expt_df.empty:
                 raise util.DataExperimentEvent(("Eliminated all choices of experiment "
                     f"attributes for {obj_name} when adding {v.full_name}."), v)

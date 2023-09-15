@@ -43,7 +43,7 @@ jobs:
             json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
           - os: macos-13
             json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
-      max-parallel: 2
+      max-parallel: 3
     steps:
     - uses: actions/checkout@v3
     - name: Download Miniconda 3

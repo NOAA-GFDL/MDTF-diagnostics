@@ -8,6 +8,7 @@ import dataclasses
 import functools
 from src import util, varlist_util, translation, xr_parser, units
 import cftime
+import intake
 import numpy as np
 import xarray as xr
 
@@ -766,10 +767,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             AssociatedVariablesFunction
          ]
 
-    @abc.abstractmethod
+
     def query_catalog(self, varlist: varlist_util.Varlist,
+                      case_dict: dict,
                       data_catalog: str,
-                      args):
+                      *args):
         """Apply the format conversion implemented in this PreprocessorFunction
         to the input dataset *dataset*, according to the request made in *var*.
 
@@ -781,9 +783,18 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         Returns:
             Modified *dataset*.
         """
-        
+        # open the csv file using information provided by the catalog definition file
+        cat = intake.open_esm_datastore(data_catalog)
+        for v in varlist.iter_vars():
+            print(v)
+            # filter catalog by desired variables and output frequency
+            v_subset = cat.search(variable_id=v, frequency=v['frequency'])
+        # examine assets for a specific file
+        # convert tas_subset catalog to an xarray dataset dict
+        tas_dict = tas_subset.to_dataset_dict(
+            xarray_open_kwargs={"decode_times": True, "use_cftime": True}
+        )
 
-        query_catalog()
     def edit_request(self, pod):
         """Top-level method to edit *pod*\'s data request, based on the child
         class's functionality. Calls the :meth:`~PreprocessorFunctionBase.edit_request`

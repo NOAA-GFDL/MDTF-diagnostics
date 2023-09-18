@@ -120,22 +120,21 @@ class PreprocessorFunctionBase(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def process(self, var, xr_dataset, *args):
+    def process(self, varlist: varlist_util.Varlist,
+                data_catalog: str,
+                *args):
         """Apply the format conversion implemented in this PreprocessorFunction
         to the input dataset *dataset*, according to the request made in *var*.
 
         Args:
-            var (:class:`~src.diagnostic.VarlistEntry`): POD varlist entry
-                instance describing POD's data request, which is the desired end
-                result of the conversion implemented by this method.
-            xr_dataset: `xarray.Dataset
-                <http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html>`__
-                instance.
+            varlist (:class:`~src.varlist_util.varlist`): POD varlist
+                instance with variable information used to query the data catalog
+            data_catalog: path to data catalog header file
 
         Returns:
             Modified *dataset*.
         """
-        return xr_dataset
+        pass
 
 
 class CropDateRangeFunction(PreprocessorFunctionBase):
@@ -737,29 +736,17 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     which will be the input to that POD.
     """
     _XarrayParserClass = xr_parser.DefaultDatasetParser
-
-    def __init__(self, pod, pod_convention: str, data_convention: str):
-        self.overwrite_ds = pod.overwrite
-
-        self.WORK_DIR = pod.paths.POD_WORK_DIR
-        self.data_convention = data_convention
-        self.pod_convention = pod_convention
-
-        if getattr(pod, 'nc_largefile', False):
-            self.nc_format = "NETCDF4_CLASSIC"
-        else:
-            self.nc_format = "NETCDF4"
-        # HACK only used for _FillValue workaround in clean_output_encoding
-        self.output_to_ncl = ('ncl' in pod.runtime_requirements)
-
-        # initialize xarray parser
-        self.parser = self._XarrayParserClass(pod)
+    WORK_DIR: dict
+    """List of PreprocessorFunctions to be executed on a per-file basis as the
+        multi-file Dataset is being loaded, rather than afterwards as part of the
+        :meth:`process`. Note that such functions will not be able to rely on the
+        metadata cleaning done by xr_parser.
+    """
+    file_preproc_functions = util.abstract_attribute()
+    def __init__(self, model_paths: util.ModelDataPathManager):
+        self.WORK_DIR = model_paths.MODEL_WORK_DIR
         # initialize PreprocessorFunctionBase objects
-        self.functions = []
-        if any(pod.user_pp_scripts):
-            for s in pod.user_pp_scripts:
-                self.functions.append(UserDefinedPreprocessorFunction(s))
-        self.functions.append(f for f in self._functions)
+        self.file_preproc_functions = []
 
 
     @property
@@ -779,12 +766,30 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             AssociatedVariablesFunction
          ]
 
+    @abc.abstractmethod
+    def query_catalog(self, varlist: varlist_util.Varlist,
+                      data_catalog: str,
+                      args):
+        """Apply the format conversion implemented in this PreprocessorFunction
+        to the input dataset *dataset*, according to the request made in *var*.
+
+        Args:
+            varlist (:class:`~src.varlist_util.varlist`): POD varlist
+                instance with variable information used to query the data catalog
+            data_catalog: path to data catalog header file
+
+        Returns:
+            Modified *dataset*.
+        """
+        
+
+        query_catalog()
     def edit_request(self, pod):
         """Top-level method to edit *pod*\'s data request, based on the child
         class's functionality. Calls the :meth:`~PreprocessorFunctionBase.edit_request`
         method on all included PreprocessorFunctions.
         """
-        for func in self.functions:
+        for func in self.file_preproc_functions:
             func.edit_request(pod)
 
     def setup(self, pod):
@@ -1075,24 +1080,6 @@ class NullPreprocessor(MDTFPreprocessorBase):
     """A class that skips preprocessing and just symlinks files from the input dir to the wkdir
     """
 
-    def __init__(self, pod, data_convention: str, overwrite: bool = False):
-        self.overwrite_ds = overwrite
-
-        self.WK_DIR = pod.dirs.POD_WORK_DIR
-        self.convention = data_convention
-        self.pod_convention = data_convention
-
-        if getattr(pod, 'nc_largefile', False):
-            self.nc_format = "NETCDF4_CLASSIC"
-        else:
-            self.nc_format = "NETCDF4"
-        # HACK only used for _FillValue workaround in clean_output_encoding
-        self.output_to_ncl = ('ncl' in pod.runtime_requirements)
-
-        # initialize xarray parser
-        self.parser = self._XarrayParserClass(pod)
-        # dummy attribute--no pp functions to perform
-        self.functions = []
 
     def edit_request(self, *args):
         """Dummy implementation of edit_request to meet abstract base class requirements
@@ -1117,16 +1104,13 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     variable, using xarray `open_mfdataset()
     <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
     """
-    _file_preproc_functions = util.abstract_attribute()
-    """List of PreprocessorFunctions to be executed on a per-file basis as the
-    multi-file Dataset is being loaded, rather than afterwards as part of the
-    :meth:`process`. Note that such functions will not be able to rely on the
-    metadata cleaning done by xr_parser."""
 
-    def __init__(self, pod):
+
+    def __init__(self, model_paths: util.ModelDataPathManager):
         # initialize PreprocessorFunctionBase objects
-        self.file_preproc_functions = \
-            [cls_(pod) for cls_ in self._file_preproc_functions]
+        super().__init__(model_paths)
+        self.file_preproc_functions = [f for f in self._functions]
+
 
     def edit_request(self, *args):
         """Edit *pod*\'s data request, based on the child class's functionality. If
@@ -1142,8 +1126,6 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         *var*, wrapping xarray `open_mfdataset()
         <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
         """
-
-
 
         def _file_preproc(ds):
             for f in self.file_preproc_functions:
@@ -1176,17 +1158,11 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
             )
 
 
-class DefaultPreprocessor(DaskMultiFilePreprocessor):
-    """Implementation class for :class:`MDTFPreprocessorBase` for the general
-    use case. Includes all implemented functionality and handles multi-file data.
-    """
-    _file_preproc_functions = []
-
-
-def init_preprocessor(run_pp: bool = True):
+def init_preprocessor(model_paths: util.ModelDataPathManager,
+                      run_pp: bool = True):
     """Initialize the data preprocessor class using runtime configuration specs
     """
     if not run_pp:
-        return NullPreprocessor
+        return NullPreprocessor(model_paths)
     else:
-        return DefaultPreprocessor
+        return DaskMultiFilePreprocessor(model_paths)

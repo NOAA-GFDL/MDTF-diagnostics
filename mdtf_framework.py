@@ -84,6 +84,10 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # configure a variable translator object with information from Fieldlist tables
     var_translator = translation.VariableTranslator(ctx.config.CODE_ROOT)
     var_translator.read_conventions(ctx.config.CODE_ROOT)
+
+    # initialize the preprocessor (dummy pp object if run_pp=False)
+    data_pp = preprocessor.init_preprocessor(model_paths,
+                                             ctx.config.run_pp)
     # configure pod object(s)
     for pod_name in ctx.config.pod_list:
         pod_obj = pod_setup.PodObject(pod_name, ctx.config)
@@ -91,7 +95,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         # run custom scripts on dataset
         if any([s for s in ctx.config.user_pp_scripts]):
             pod_obj.add_user_pp_scripts(ctx.config)
-    data_pp = preprocessor.init_preprocessor(ctx.config.run_pp)
+            data_pp.process(pod_obj.pod_vars, ctx.config.DATA_CATALOG)
 
     # close the main log file
     log._log_handler.close()

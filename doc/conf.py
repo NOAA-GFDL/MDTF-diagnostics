@@ -76,7 +76,6 @@ version = u''
 release = u'3.4'
 
 # only used for resolving relative links in markdown docs
-# use develop branch because that's what readthedocs is configured to use
 _project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/'
 
 # -- General configuration ---------------------------------------------------
@@ -236,7 +235,7 @@ latex_additional_files = [
     'latex/latexmkrc'
 ]
 
-latex_logo = 'img/CPO_MAPP_MDTF_Logo.jpg'
+latex_logo = 'img/logo_MDTF.png'
 
 # # For "manual" documents, if this is true, then top-level headings are
 # # parts, not chapters.

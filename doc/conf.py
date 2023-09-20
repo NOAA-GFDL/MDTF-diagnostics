@@ -76,8 +76,8 @@ version = u''
 release = u'3.3'
 
 # only used for resolving relative links in markdown docs
-# use develop branch because that's what readthedocs is configured to use
-_project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/'
+##_project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/'
+_project_github_url = 'https://github.com/wronkindofdoctor/MDTF-diagnostics/tree/fix_sphinx_docs/'
 
 # -- General configuration ---------------------------------------------------
 

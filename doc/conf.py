@@ -76,8 +76,7 @@ version = u''
 release = u'3.3'
 
 # only used for resolving relative links in markdown docs
-##_project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/'
-_project_github_url = 'https://github.com/wronkindofdoctor/MDTF-diagnostics/tree/fix_sphinx_docs/'
+_project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/'
 
 # -- General configuration ---------------------------------------------------
 

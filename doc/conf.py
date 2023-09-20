@@ -67,13 +67,13 @@ setattr(sys.modules['cfunits'], 'Units', Units)
 # -- Project information -----------------------------------------------------
 
 project = u'MDTF Diagnostics'
-copyright = u'2022, Model Diagnostics Task Force'
+copyright = u'2023, Model Diagnostics Task Force'
 author = u'Model Diagnostics Task Force'
 
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'3.0'
+release = u'3.3'
 
 # only used for resolving relative links in markdown docs
 # use develop branch because that's what readthedocs is configured to use
@@ -236,7 +236,7 @@ latex_additional_files = [
     'latex/latexmkrc'
 ]
 
-latex_logo = 'img/CPO_MAPP_MDTF_Logo.jpg'
+latex_logo = 'img/logo_MDTF.png'
 
 # # For "manual" documents, if this is true, then top-level headings are
 # # parts, not chapters.

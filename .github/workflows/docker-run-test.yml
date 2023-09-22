@@ -1,0 +1,18 @@
+name: docker-run-minitest1
+on:
+  pull_request:
+    branches: [ main ]
+jobs:
+  container-test-job:
+    runs-on: ubuntu-latest
+    container:
+      image: public.ecr.aws/c6h4h4s8/mdtf/mdtf-test:latest
+      env:
+        NODE_ENV: development
+      options: --cpus 1
+    steps:
+      - name: Check PATH
+        run: (echo $PATH) || (echo "No path")
+      - name: Activate environment
+        shell: bash 
+        run: (eval "$(micromamba shell hook -s bash -p ~/conda)"; micromamba activate; micromamba activate _MDTF_base;mdtf_framework.py --version)

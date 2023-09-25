@@ -1,4 +1,4 @@
-# This file is part of the convective_transition_diag module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+# This file is part of the convective_transition_diag module of the MDTF code package (see LICENSE.txt)
 
 # ======================================================================
 # convecTransBasic.py
@@ -56,7 +56,6 @@
 #  (and change obs_data/convective_transition_diag/region_0.25x0.25_costal2.5degExcluded.mat)
 # ======================================================================
 # Import standard Python packages
-import glob
 import os
 import json
 

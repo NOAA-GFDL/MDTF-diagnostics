@@ -1,0 +1,61 @@
+<title>Surface Temperature Extremes and Distribution Shape diagnostic</title>
+<img src="../mdtf_diag_banner.png">
+<h3>Example diagnostic: time-averaged near-surface temperature</h3>
+<p>
+The surface temperature extremes and distribution shape package computes statistics that relate to the shape of the two-meter temperature distribution and its influence on extreme temperature exceedances. These metrics evaluate model fidelity in capturing moments of the temperature distribution and distribution tail properties, as well as the large-scale meteorological patterns associated with extreme temperature exceedance days.Frequency of exceedances of a fixed extreme temperature threshold after a uniform warm shift across the distribution, the simplest prototype for future warming, provides a measure of Gaussianity as well as insight into the complexity of future changes in temperature extremes.
+</p>
+<p>
+The three moments of the temperature distribution characterize its shape by measuring the central tendency, spread, and symmetry.
+</p>
+<p>
+The shift ratio identifies regions of non-Gaussianity and regions statistically indistinguishable from Gaussian based on a ratio of distribution tail exceedances following the application of a uniform shift (0.5 sigma).
+</p>
+<p>
+Normalized frequency distributions of two-meter temperature anomalies provide a closer examination of distribution shape at selected locations exhibiting non-Gaussian behavior in the tail in the MERRA-2 distributions.
+</p>
+<p>
+Composites of large-scale meteorological patterns lagged from tail exceedance days help diagnose the physical processes underlying the tail behavior.
+</p>
+<p>
+References:
+</p>
+<p>
+Catalano, A. J., P. C. Loikith, and J. D. Neelin, 2020: Evaluating CMIP6 Model Fidelity at Simulating Non-Gaussian Temperature Distribution Tails. Environ. Res. Lett., <a href="https://doi.org/10.1088/1748-9326/ab8cd0">https://doi.org/10.1088/1748-9326/ab8cd0</a>
+</p>
+<p>
+Loikith, P. C., and J. D. Neelin, 2015: Short-tailed temperature distributions over North America and implications for future changes in extremes. Geophys. Res. Lett., 42, <a href="https://doi.org/10.1002/2015GL065602">https://doi.org/10.1002/2015GL065602</a>
+</p>
+<p>
+Loikith, P. C., J. D. Neelin, J. Meyerson, and J. S. Hunter, 2018: Short warm-side temperature distribution tails drive hotspots of warm temperature extreme increases under near-future warming. J. Climate, 31, 9469–9487, <a href="https://doi.org/10.1175/JCLI-D-17-0878.1">https://doi.org/10.1175/JCLI-D-17-0878.1</a>
+</p>
+<p>
+Loikith, P. C., and J. D. Neelin, 2019: Non-Gaussian cold-side temperature distribution tails and associated synoptic meteorology. J. Climate, 32, 8399–8414, <a href="https://doi.org/10.1175/JCLI-D-19-0344.1">https://doi.org/10.1175/JCLI-D-19-0344.1</a>
+</p>
+<p>
+Ruff, T. W., and J. D. Neelin, 2012: Long tails in regional surface temperature probability distributions with implications for extremes under global warming. Geophys. Res. Lett., 39, L04704, <a href="https://doi.org/10.1029/2011GL050610">https://doi.org/10.1029/2011GL050610</a>
+</p>
+
+
+<TABLE>
+<TR>
+<TH ALIGH=LEFT><font color=navy> Surface Temperature Extremes and Distribution Shape Diagnostics
+<TH ALIGH=LEFT>{{CASENAME}}
+<TH ALIGH=LEFT>OBS
+<TR>
+<TH ALIGH=LEFT>Moments of Surface Temperature Probability Distribution
+<TH ALIGH=CENTER><A HREF=model/Moments_{{monthstr}}.png>plot</A>
+<TH ALIGH=CENTER><A HREF=obs/MERRA2_1980-2009_res=0.5-0.66.Moments_{{monthstr}}.png>plot</A>
+<TR>
+<TH ALIGH=LEFT>Shifted underlying-to-Gaussian Distribution Tail Exceedances Ratio
+<TH ALIGH=CENTER><A HREF=model/ShiftRatio_{{monthstr}}_{{ptile}}.png>plot</A>
+<TH ALIGH=CENTER><A HREF=obs/MERRA2_1980-2009_res=0.5-0.66.ShiftRatio_{{monthstr}}_{{ptile}}.png>plot</A>
+<TR>
+<TH ALIGH=LEFT>Frequency Distributions at Non-Gaussian Tail Locations
+<TH ALIGH=CENTER><A HREF=model/FreqDists.png>plot</A>
+<TH ALIGH=CENTER><A HREF=obs/MERRA2_1980-2009_res=0.5-0.66.FreqDists.png>plot</A>
+<TR>
+<TH ALIGH=LEFT>Composite Circulation at One Select Non-Gaussian Tail Location
+<TH ALIGH=CENTER><A HREF=model/CircComps_{{city}}_{{monthstr}}.png>plot</A>
+<TH ALIGH=CENTER><A HREF=obs/MERRA2_1980-2009_res=0.5-0.66.CircComps_{{city}}_{{monthstr}}_{{ptile}}.png>plot</A>
+<TR>
+</TABLE>

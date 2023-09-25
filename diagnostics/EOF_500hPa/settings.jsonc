@@ -15,34 +15,51 @@
     "realm" : "atmos",
     "description" : "EOF of geopotential height anomalies for 500 hPa",
     "runtime_requirements": {
-      "python2": [],
+      "python3": [],
       "ncl": ["contributed", "gsn_code", "gsn_csm"]
     }
   },
-  //
-  // USAGE varlist
-  // var_name time-frequency [requirement]
-  // - var_name: as found in src/fieldlist_*.json
-  // - freq: mon (monthly), day, 6hr, 3hr, 1hr
-  // - requirement = blank  (default = optional),
-  //                 required (package cannot run without this)
-  //                 required unless field_name field_name2 ...
-  // - alternates:
-  //
-  // nb. if a variable is required at multiple time frequencies, list it 
-  // separately for each one. Clearly the developer can just leave out 
-  // optional files. However, it is always nice to get an upfront warning of
-  // missing files.
-  //
-  "varlist" : [
-    {
-      "var_name" : "zg_var",
-      "freq" : "mon",
-      "requirement": "required"
-    },{
-      "var_name": "ps_var",
-      "freq": "mon",
-      "requirement": "required"
+  "data": {
+    "frequency": "mon"
+  },
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "plev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "lev": {
+      "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate",
+      "units": "level",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {"standard_name": "time"}
+  },
+  "varlist": {
+    // NOTE conversion of this POD is incomplete, since we need a native python
+    // implementation of NCL's conversion from hybrid sigma vertical coordinate.
+    "zg": {
+      "standard_name": "geopotential_height",
+      "units": "m",
+      "dimensions": ["time", "lat", "lon"],
+      "scalar_coordinates": {"plev": 500},
+      "alternates": ["zg_hybrid_sigma", "ps"]
+    },
+    "zg_hybrid_sigma": {
+      "standard_name": "geopotential_height",
+      "units": "m",
+      "dimensions": ["time", "lev", "lat", "lon"],
+      "requirement": "alternate"
+    },
+    "ps": {
+      "standard_name": "surface_air_pressure",
+      "units": "Pa",
+      "dimensions": ["time", "lat", "lon"],
+      "requirement": "alternate"
     }
-  ]
+  }
 }

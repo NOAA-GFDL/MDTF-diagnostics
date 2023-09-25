@@ -5,12 +5,41 @@ channels:
 dependencies:
 # specify up to minor version number to provide a consistent environment for POD developers
 # versions are current as of Jul 2020
-# see https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/pkg-specs.html
-- python=3.7
-- numpy=1.19
-- scipy=1.5.2
-- netCDF4=1.5.4
-- cftime=1.2
-- xarray=0.16
-- matplotlib=3.3
-- cartopy=0.18
+# see https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/pkg-specs.
+
+- python=3.10
+- numpy=1.22.3
+- scipy=1.9
+- netCDF4=1.5.8
+- cftime=1.6
+- xarray=2022.11.0
+- matplotlib=3.6
+- pandas=1.5
+- cartopy=0.21.0
+- cython=0.29
+- pint=0.16
+- dask=2022.10.0
+- numba=0.56.3
+- scikit-learn=1.1
+- xesmf=0.6.2
+- esmf=8.2.0
+- esmpy=8.2.0
+- gsw=3.6
+- metpy=1.1
+- pcmdi_metrics=2.2.2
+- h5py=3.6.0
+- intake-xarray=0.6.0
+- nc-time-axis=1.4.1
+- pyyaml=6.0
+- networkx=2.8.4
+- jupyterlab=3.5.0
+- pip=22.0.4
+- pip:
+    - cmocean
+    - regionmask
+    - git+https://github.com/raphaeldussin/static_downsampler
+    - git+https://github.com/jkrasting/xcompare
+    - git+https://github.com/raphaeldussin/xoverturning
+    - git+https://github.com/jkrasting/xwavelet
+    - git+https://github.com/jetesdal/xwmt
+    - git+https://github.com/raphaeldussin/om4labs

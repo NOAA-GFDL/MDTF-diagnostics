@@ -1,21 +1,15 @@
 import os
 import sys
 import unittest
-if os.name == 'posix' and sys.version_info[0] < 3:
-    try:
-        import subprocess32 as subprocess
-    except ImportError:
-        import subprocess
-    else:
-        import subprocess
+import subprocess
 from src.util import write_json
-from tests import shared_test_utils as shared
+from src.tests import shared_test_utils as shared
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
 DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)
 DOING_SETUP = DOING_MDTF_DATA_TESTS and not DOING_TRAVIS
-# All this is a workaround because tests are programmatically generated at 
-# import time, but the tests are skipped at runtime. We're skipping tests 
+# All this is a workaround because tests are programmatically generated at
+# import time, but the tests are skipped at runtime. We're skipping tests
 # because we're not in an environment where we have the data to set them up,
 # so we just throw everything in an if-block to ensure they don't get generated
 # if they're going to be skipped later.
@@ -26,7 +20,7 @@ if DOING_SETUP:
 
     case_list = shared.get_test_data_configuration()
 
-    # write temp configuration, one for each POD  
+    # write temp configuration, one for each POD
     temp_config = config.copy()
     temp_config['pod_list'] = []
     temp_config['settings']['make_variab_tar'] = False
@@ -38,7 +32,7 @@ if DOING_SETUP:
 
 
 # Python 3 has subTest; in 2.7 to avoid introducing other dependencies we use
-# the advanced construction presented in https://stackoverflow.com/a/20870875 
+# the advanced construction presented in https://stackoverflow.com/a/20870875
 # to programmatically generate tests
 
 class TestSequenceMeta(type):
@@ -50,7 +44,7 @@ class TestSequenceMeta(type):
                     ['python', 'src/mdtf.py', temp_config_file]
                 ))
                 # should do better cleanup here
-            return test       
+            return test
 
         if DOING_SETUP:
             for pod in case_list['pods']:

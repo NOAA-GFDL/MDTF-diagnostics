@@ -2,13 +2,13 @@ import os
 import sys
 import unittest
 from src.util import read_json
-from tests import shared_test_utils as shared
+from src.tests import shared_test_utils as shared
 
 DOING_TRAVIS = (os.environ.get('TRAVIS', False) == 'true')
 DOING_MDTF_DATA_TESTS = ('--data_tests' in sys.argv)
 DOING_SETUP = DOING_MDTF_DATA_TESTS and not DOING_TRAVIS
-# All this is a workaround because tests are programmatically generated at 
-# import time, but the tests are skipped at runtime. We're skipping tests 
+# All this is a workaround because tests are programmatically generated at
+# import time, but the tests are skipped at runtime. We're skipping tests
 # because we're not in an environment where we have the data to set them up,
 # so we just throw everything in an if-block to ensure they don't get generated
 # if they're going to be skipped later.
@@ -25,11 +25,11 @@ if DOING_SETUP:
     model_data_checksums = read_json(os.path.join(md5_path, 'checksum_model_data.json'))
 
 # Python 3 has subTest; in 2.7 to avoid introducing other dependencies we use
-# the advanced construction presented in https://stackoverflow.com/a/20870875 
+# the advanced construction presented in https://stackoverflow.com/a/20870875
 # to programmatically generate tests
 
 class TestSequenceMeta(type):
-    def __new__(mcs, name, bases, test_dict):     
+    def __new__(mcs, name, bases, test_dict):
         if DOING_SETUP:
             for pod in case_list['pods']:
                 test_name = "test_input_checksum_"+pod

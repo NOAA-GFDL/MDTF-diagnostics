@@ -12,6 +12,8 @@ The material in this section must be submitted though a `pull request <https://d
 
 The `example POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example>`__ should be used as a reference for how each component of the submission should be structured.
 
+The POD feature must be up-to-date with the NOAA-GFDL main branch, with no outstanding merge conflicts. See :doc:`dev_git_intro` for instructions on syncing your fork with NOAA-GFDL, and pulling updates from the NOAA-GFDL main branch into your feature branch.
+
 POD source code
 ^^^^^^^^^^^^^^^
 
@@ -68,18 +70,63 @@ For maintainability purposes, include all information needed for a third party t
 Sample and supporting data submission
 -------------------------------------
 
-Data hosting for the MDTF framework is currently managed manually. The data is currently hosted via anonymous FTP on UCAR's servers. Please contact the MDTF team leads via email to arrange a data transfer. 
+Data hosting for the MDTF framework is currently managed manually. The data
+is hosted via anonymous FTP on UCAR's servers. 
+
 
 Digested observational or supporting data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The "digested" supporting data policy is described in :numref:`ref-pod-digested-data`.
+Create a directory under ``inputdata/obs_data/`` named after the short name
+of your POD, and put all your *digested* observation data in (or more
+generally, any quantities that are independent of the model being
+analyzed).  The "digested" data policy is described in :numref:`ref-pod-digested-data`.
 
-Create a directory under ``inputdata/obs_data/`` named after the short name, and put all your *digested* observation data in (or more generally, any quantities that are independent of the model being analyzed).
+- Requirements
+  - Digested data should be in the form of numerical data, not figures.
+  - The data files should be small (preferably a few MB) and just enough for producing figures for model comparison. If you really cannot reduce the data size and your POD requires more than 1GB of space, consult with the lead team.
+  - Include in the directory a “README.txt” description file with original source info.
+  - Include in the directory any necessary licensing information, files, etc. (if applicable)
 
-   - Digested data should be in the form of numerical data, not figures.
-   - The data files should be small (preferably a few MB) and just enough for producing figures for model comparison.
-   - If you really cannot reduce the data size or require GB of space, consult with the lead team.
+- Create a tar file of your obs_data directory:
+  - Use the --hard_dereference flag so that all users can read your file.
+  - Naming convention: $pod_name.yyyymmdd.tar, where yyyymmdd is the file creation date. Alternatively, you may use some other version tag to allow the framework to check compatibiity between the POD code and data provided.  
+  - Create the tar file from the inputdata directory so the file paths start with obs_data.
+  - Example (c-shell):
+
+    .. code-block:: console
+
+       set pod_name = MJO_suite
+       set tartail  =  `date +'%Y%m%d'`
+       cd inputdata/obs_data
+       tar cfh $pod_name.$tartail.tar --hard-dereference $pod_name
+
+  - To check:
+
+    .. code-block:: console
+
+       % tar tf $pod_name.$tartail.tar
+       MJO_suite/
+       MJO_suite/ERA.v200.EOF.summer-0.png
+       MJO_suite/ERA.u200.EOF.summer-1.png
+
+After following the above instructions, please refer to 
+`the GitHub Discussion on transfering obs_data <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/125>`__ 
+or email Dani Coleman at bundy at ucar dot edu or contact your liason on the
+MDTF Leads Team.
+
+Files will be posted for Guest/anonymous access :
+ftp://ftp.cgd.ucar.edu/archive/mdtf/obs_data_latest/{$pod_name}.latest.tar
+with 'latest' pointing to the date-or-version-tagged tar file
+
+
+Note that, previous to version 3, obs_data from all PODs was consolidated in one
+tar file. To assist in usability as the number of PODs grow, they will now
+be available individually, with the responsiblity for creating the tar
+files on the developer.
+
+
+
 
 
 Sample model data

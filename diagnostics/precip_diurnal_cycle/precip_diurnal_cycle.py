@@ -1,4 +1,4 @@
-# This file is part of the precip_diurnal_cycle module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+# This file is part of the precip_diurnal_cycle module of the MDTF code package (see LICENSE.txt)
 
 #============================================================
 # Diurnal Cycle of Precipitation
@@ -35,7 +35,7 @@ def generate_ncl_plots(nclPlotFile):
     # don't exit if it does not exists just print a warning.
     try:
         pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
-        output = pipe.communicate()[0]
+        output = pipe.communicate()[0].decode()
         print('NCL routine {0} \n {1}'.format(nclPlotFile,output))            
         while pipe.poll() is None:
             time.sleep(0.5)
@@ -44,7 +44,7 @@ def generate_ncl_plots(nclPlotFile):
 
     return 0
 
-if os.path.isfile( os.environ["DATADIR"]+"/3hr/"+os.environ["CASENAME"]+"."+os.environ["pr_var"]+".3hr.nc"):
+if os.path.isfile(os.environ["PR_FILE"]):
     print("3 hourly precipitation rate file found")
     print("computing diurnal cycle of precipitation")
 

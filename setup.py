@@ -3,8 +3,6 @@
 from setuptools import setup, find_packages
 from setuptools.command.develop import develop
 from setuptools.command.install import install
-import glob
-import subprocess
 
 # Leave option to run commands post-install
 # see https://stackoverflow.com/a/36902139
@@ -28,26 +26,25 @@ with open("README.md", 'r') as f:
 packages = find_packages()
 setup(
     name='MDTF-diagnostics',
-    version='3.0 beta 2',
+    version='3.0',
     description='Process-oriented diagnostics for weather and climate simulations',
     license='LGPLv3',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='MDTF Collaboration',
-    author_email='thomas.jackson@noaa.gov',
+    author_email='20195932+wrongkindofdoctor@users.noreply.github.com',
     url="https://github.com/NOAA-GFDL/MDTF-diagnostics",
     classifiers=[
             # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
             "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
             'Programming Language :: Python',
-            'Programming Language :: Python :: 2.7'
-            'Programming Language :: Python :: 3.7',
+            'Programming Language :: Python :: 3.10',
     ],
     scripts=[
-        'src/mdtf.py'
+        'mdtf_framework.py'
     ],
     packages=packages,
-    cmdclass={ # hook for post-install commands
+    cmdclass={  # hook for post-install commands
         'develop': PostDevelopCommand,
         'install': PostInstallCommand
     }

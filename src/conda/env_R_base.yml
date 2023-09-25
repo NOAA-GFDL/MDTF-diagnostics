@@ -3,8 +3,7 @@ channels:
 - conda-forge
 - defaults
 dependencies:
-- python=2.7
-- subprocess32
+- python=3.10
 - r-base
 - r-akima
 - r-colorramps

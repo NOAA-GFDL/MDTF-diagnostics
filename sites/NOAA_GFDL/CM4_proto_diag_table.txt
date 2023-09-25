@@ -1,0 +1,112 @@
+# REQUIRED FIELDS TO RUN MDTF DIAGNOSTICS on supported atmosphere and land PODs
+
+#--------------------------------------------------------------------------------------------------
+#-- grid_spec
+#--------------------------------------------------------------------------------------------------
+
+
+"grid_spec",            -1, "months",  1, "days", "time",
+
+
+"dynamics", "grid_lon",  "grid_lon",  "grid_spec", "all", .false.,  "none", 2
+"dynamics", "grid_lat",  "grid_lat",  "grid_spec", "all", .false.,  "none", 2
+"dynamics", "grid_lont", "grid_lont", "grid_spec", "all", .false.,  "none", 2
+"dynamics", "grid_latt", "grid_latt", "grid_spec", "all", .false.,  "none", 2
+"dynamics", "area",      "area",      "grid_spec", "all", .false.,  "none", 2
+"dynamics", "bk",        "bk",        "grid_spec", "all", .false.,  "none", 2
+"dynamics", "pk",        "pk",        "grid_spec", "all", .false.,  "none", 2
+"flux",     "land_mask", "land_mask", "grid_spec", "all", .false.,  "none", 2
+"dynamics", "zsurf",     "zsurf",     "grid_spec", "all", .false.,  "none", 2
+
+
+#--------------------------------------------------------------------------------------------------
+#-- Monthly Data
+#--------------------------------------------------------------------------------------------------
+
+"atmos_month",         1, "months",    1,  "days",  "time",
+
+"flux",          "land_mask", "land_mask",   "atmos_month",   "all",  .false., "none", 2
+"dynamics",      "zsurf",     "zsurf",       "atmos_month",   "all",  .false., "none", 2
+"dynamics",      "bk",      "bk",            "atmos_month",   "all",  .false., "none", 2
+"dynamics",      "pk",      "pk",            "atmos_month",   "all",  .false., "none", 2
+"dynamics",      "temp",   "temp",           "atmos_month",   "all",  .true.,  "none", 2
+"dynamics",      "sphum",  "sphum",          "atmos_month",   "all",  .true.,  "none", 2
+"moist",         "pr",      "pr",            "atmos_month",   "all",  .true.,  "none", 2
+"moist",         "prw",     "prw",            "atmos_month",   "all",  .true.,  "none", 2
+"flux",          "evspsbl", "evspsbl",       "atmos_month",   "all",  .true.,  "none", 2
+"flux",          "psl",     "psl",           "atmos_month",   "all",  .true.,  "none", 2
+"flux",          "t_surf",  "t_surf",        "atmos_month",   "all",  .true.,  "none", 2
+"flux",          "hfss",    "hfss",          "atmos_month",   "all",  .true.,  "none", 2
+"flux",          "lwflx",   "lwflx",         "atmos_month",   "all",  .true.,  "none", 2
+"flux",          "shflx",   "shflx",         "atmos_month",   "all",  .true.,  "none", 2
+"radiation",     "swdn_toa", "swdn_toa",     "atmos_month",   "all",  .true.,  "none", 2
+"radiation",     "swup_toa", "swup_toa",     "atmos_month",   "all",  .true.,  "none", 2
+"radiation",     "lwtoa_ad", "lwtoa_ad",     "atmos_month",   "all",  .true.,  "none", 2
+"radiation",     "lwdn_sfc", "lwdn_sfc",     "atmos_month",   "all",  .true.,  "none", 2
+"radiation",     "lwup_sfc", "lwup_sfc",     "atmos_month",   "all",  .true.,  "none", 2
+"radiation",     "swdn_sfc", "swdn_sfc",     "atmos_month",   "all",  .true.,  "none", 2
+"radiation",     "swup_sfc", "swup_sfc",     "atmos_month",   "all",  .true.,  "none", 2
+"atmos",         "ps",    "ps",              "atmos_month",   "all",  .true.,  "none", 2
+"atmos",         "zg500", "zg500",           "atmos_month",   "all",  .true.,  "none", 2
+"atmos_plev19",  "zg",    "zg_unmsk",        "atmos_month",   "all",  .true.,  "none", 2
+"atmos_plev19",  "ua",    "ua_unmsk",        "atmos_month",   "all",  .true.,  "none", 2
+"atmos_plev19",  "va",    "va_unmsk",        "atmos_month",   "all",  .true.,  "none", 2
+"atmos_plev19",  "ta",    "ta_unmsk",        "atmos_month",   "all",  .true.,  "none", 2
+"atmos_plev19",  "wap",   "wap_unmsk",       "atmos_month",   "all",  .true.,  "none", 2
+"atmos_plev19",  "hus",   "hus_unmsk",       "atmos_month",   "all",  .true.,  "none", 2
+
+"land_month_cmip",          1, "months",    1,  "days",  "time",
+
+
+"land",        "geolon_t",   "geolon_t",    "land_month_cmip", "all", .false.,  "none", 1
+"land",        "geolat_t",   "geolat_t",    "land_month_cmip", "all", .false.,  "none", 1
+"land",       "area_land",  "land_area",    "land_month_cmip", "all",  .true.,  "none", 2
+"cmor_land",   "mrsos",      "mrsos",       "land_month_cmip", "all",  .true.,  "none", 2
+
+#--------------------------------------------------------------------------------------------------
+#-- Daily Data
+#--------------------------------------------------------------------------------------------------
+
+"atmos_daily",          24,  "hours",  1, "days", "time",
+
+"flux",          "land_mask", "land_mask", "atmos_daily",    "all",  .false., "none", 2
+"dynamics",      "zsurf", "zsurf",         "atmos_daily",    "all",  .false., "none", 2
+"dynamics",      "bk",    "bk",            "atmos_daily",    "all",  .false., "none", 2
+"dynamics",      "pk",    "pk",            "atmos_daily",    "all",  .false., "none", 2
+"atmos_plev19",  "hus",   "hus_unmsk",     "atmos_daily",    "all",  .true.,  "none", 2
+"atmos_plev19",  "omega", "omega_unmsk",   "atmos_daily",    "all",  .true.,  "none", 2
+"atmos_plev19",  "ua",    "ua_unmsk",      "atmos_daily",    "all",  .true.,  "none", 2
+"atmos_plev19",  "va",    "va_unmsk",      "atmos_daily",    "all",  .true.,  "none", 2
+"atmos_plev19",  "wap",   "wap_unmsk",     "atmos_daily",    "all",  .true.,  "none", 2
+"atmos_plev19",  "zg",    "zg_unmsk",      "atmos_daily",    "all",  .true.,  "none", 2
+"moist",         "pr",    "pr",            "atmos_daily",    "all",  .true.,  "none", 2
+"moist",         "prw",   "prw",           "atmos_daily",    "all",  .true.,  "none", 2
+"atmos",         "zg500", "zg500",         "atmos_daily",    "all",  .true.,  "none", 2
+"atmos",         "ps",    "ps",            "atmos_daily",    "all",  .true.,  "none", 2
+"dynamics",      "u200",  "u200",          "atmos_daily",    "all",  .true.,  "none", 2
+"dynamics",      "v200",  "v200",          "atmos_daily",    "all",  .true.,  "none", 2
+"dynamics",      "u850",  "u850",          "atmos_daily",    "all",  .true.,  "none", 2
+"dynamics",      "v850",  "v850",          "atmos_daily",    "all",  .true.,  "none", 2
+"flux",          "tas",   "tas",           "atmos_daily",    "all",  .true.,  "none", 2
+"flux",          "psl",   "psl",           "atmos_daily",    "all",  .true.,  "none", 2
+"dynamics",      "omega500", "omega500",   "atmos_daily",    "all",  .true.,  "none", 2
+"radiation",     "rlut",  "rlut",          "atmos_daily",    "all",  .true.,  "none", 2
+"dynamics",      "temp",  "temp",          "atmos_daily",    "all",  .true.,  "none", 2
+"dynamics",      "sphum", "sphum",         "atmos_daily",    "all",  .true.,  "none", 2
+
+
+#--------------------------------------------------------------------------------------------------
+#-- 6 hourly data
+#--------------------------------------------------------------------------------------------------
+"atmos_4xdaily",         6,  "hours",  1, "days", "time",
+
+"flux",          "land_mask", "land_mask", "atmos_4xdaily",    "all",  .false., "none", 2
+"dynamics",      "zsurf", "zsurf",         "atmos_4xdaily",    "all",  .false., "none", 2
+"dynamics",      "bk",    "bk",            "atmos_4xdaily",    "all",  .false., "none", 2
+"dynamics",      "pk",    "pk",            "atmos_4xdaily",    "all",  .false., "none", 2
+"dynamics",      "temp",  "temp",          "atmos_4xdaily",    "all",  .true.,  "none", 2
+"dynamics",      "sphum", "sphum",         "atmos_4xdaily",    "all",  .true.,  "none", 2
+"moist",         "pr",    "pr",            "atmos_4xdaily",    "all",  .true.,  "none", 2
+"moist",         "prw",   "prw",           "atmos_4xdaily",    "all",  .true.,  "none", 2
+"atmos",         "ps",    "ps",            "atmos_4xdaily",    "all",  .true.,  "none", 2
+"atmos_plev19",  "ta",    "ta_unmsk",      "atmos_4xdaily",    "all",  .true.,  "none", 2

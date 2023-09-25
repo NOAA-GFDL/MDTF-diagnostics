@@ -1,0 +1,33 @@
+<!-- This file is part of the precip_buoy_diag module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt) -->
+
+<IMG SRC="../mdtf_diag_banner.png" border=0 usemap="#logo">
+<TITLE>Precipitation Buoyancy Statistics</TITLE>
+<H3>Precipitation Buoyancy Statistics</h3>
+<P>
+
+The precipitation-buoyancy diagnostics POD evaluates the thermodynamic sensitivity of model 
+precipitation. This POD relates precipitation to a measure of lower-tropospheric averaged buoyancy (B<sub>L</sub>) and its two components:
+a measure of lower-tropospheric Convective Available Potential Energy (CAPE<sub>L</sub>) and
+lower-tropospheric sub saturation (SUBSAT<sub>L</sub>). 
+The observational baseline for the comparison is constructed using ERA5 
+thermodynamic profiles and TRMM 3B42 precipitation. The evaluation identifies if the model 
+first displays a precipitation-buoyancy relationship, and then assesses how sensitive the model 
+precipitation is to relative measures of conditional instability (CAPE<sub>L</sub>) and lower-tropospheric 
+sub-saturation (SUBSAT<sub>L</sub>). This evaluation also places the candidate model being evaluated among a 
+collection of CMIP6 models with respect to measures of thermodynamic sensitivity.
+
+
+<TH ALIGH=LEFT><font color=navy> Precipitation Buoyancy Statistics for {{CASENAME}}
+<TABLE>
+<TD>Precipitation-buoyancy curve
+<TD>&nbsp; <A HREF=model/{{CASENAME}}.PrecipBuoyCurve.png>plot</A>
+<TR>
+<TR>
+<TD>Precipitation-buoyancy surface
+<TD>&nbsp; <A HREF=model/{{CASENAME}}.PrecipBuoySurf.png>plot</A>
+<TR>
+<TR>
+<TD>CMIP6 comparison
+<TD>&nbsp; <A HREF=model/{{CASENAME}}.CMIP6comparison.png>plot</A>
+<TR>
+</TABLE>

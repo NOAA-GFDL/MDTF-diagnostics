@@ -36,25 +36,25 @@ Python: General
      * - Task
        - Recommended function
      * - Construct a path from *dir1*, *dir2*, ..., *filename*
-       - `os.path.join <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path#os.path.join>`__\(*dir1*, *dir2*, ..., *filename*)
+       - `os.path.join <https://docs.python.org/3.10/library/os.path.html?highlight=os%20path#os.path.join>`__\(*dir1*, *dir2*, ..., *filename*)
      * - Split a *path* into directory and filename
-       - `os.path.split <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path#os.path.split>`__\(*path*) and related functions in `os.path <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path>`__
+       - `os.path.split <https://docs.python.org/3.10/library/os.path.html?highlight=os%20path#os.path.split>`__\(*path*) and related functions in `os.path <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path>`__
      * - List files in directory *dir*
-       - `os.scandir <https://docs.python.org/3.7/library/os.html#os.scandir>`__\(*dir*)
+       - `os.scandir <https://docs.python.org/3.10/library/os.html#os.scandir>`__\(*dir*)
      * - Move or rename a file or directory from *old_path* to *new_path*
-       - `shutil.move <https://docs.python.org/3.7/library/shutil.html#shutil.move>`__\(*old_path*, *new_path*)
+       - `shutil.move <https://docs.python.org/3.10/library/shutil.html#shutil.move>`__\(*old_path*, *new_path*)
      * - Create a directory or sequence of directories *dir*
-       - `os.makedirs <https://docs.python.org/3.7/library/os.html#os.makedirs>`__\(*dir*)
+       - `os.makedirs <https://docs.python.org/3.10/library/os.html#os.makedirs>`__\(*dir*)
      * - Copy a file from *path* to *new_path*
-       - `shutil.copy2 <https://docs.python.org/3.7/library/shutil.html#shutil.copy2>`__\(*path*, *new_path*)
+       - `shutil.copy2 <https://docs.python.org/3.10/library/shutil.html#shutil.copy2>`__\(*path*, *new_path*)
      * - Copy a directory *dir*, and everything inside it, to *new_dir*
-       - `shutil.copytree <https://docs.python.org/3.7/library/shutil.html#shutil.copytree>`__\(*dir*, *new_dir*)
+       - `shutil.copytree <https://docs.python.org/3.10/library/shutil.html#shutil.copytree>`__\(*dir*, *new_dir*)
      * - Delete a single file at *path*
-       - `os.remove <https://docs.python.org/3.7/library/os.html#os.remove>`__\(*path*)
+       - `os.remove <https://docs.python.org/3.10/library/os.html#os.remove>`__\(*path*)
      * - Delete a directory *dir* and everything inside it
-       - `shutil.rmtree <https://docs.python.org/3.7/library/shutil.html#shutil.rmtree>`__\(*dir*)
+       - `shutil.rmtree <https://docs.python.org/3.10/library/shutil.html#shutil.rmtree>`__\(*dir*)
 
-  In particular, using `os.path.join <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path#os.path.join>`__ is more verbose than joining strings but eliminates bugs arising from missing or redundant directory separators.
+  In particular, using `os.path.join <https://docs.python.org/3.10/library/os.path.html?highlight=os%20path#os.path.join>`__ is more verbose than joining strings but eliminates bugs arising from missing or redundant directory separators.
 
 Python: Arrays
 --------------
@@ -119,9 +119,21 @@ Python: Plotting
 
   When developing your POD, you'll want an interactive backend -- for example, this is automatically set up for you in a Jupyter notebook. When it comes to testing your POD outside of the framework, however, you should be aware of this backend difference.
 
+- **Pass the cartopy CRS to plotting functions**: See cartopy's `documentation <https://scitools.org.uk/cartopy/docs/latest/tutorials/understanding_transform.html>`__. A coordinate reference system (CRS) must be passed as a ``projection`` argument when plot axes are created. This should be passed to subsequent functions that set the plot range (``crs`` argument of ``set_extent``: avoid the use of ``set_xlim``/``set_ylim``) and to plotting functions (``transform`` argument). 
+
+Note that this applies even to simple lat/lon plots, for which the appropriate CRS is ``PlateCarree()``. Not specifying a CRS in this case will give rise to subtle errors, e.g. when trying to set longitude ranges of [-180,180] or [0, 360] in which the bounds map to the same location.
 
 NCL
 ---
+
+- **Large file support**: By default, NCL cannot read netCDF files larger than 2gb. To drop this limitation, call `setfileoption <https://www.ncl.ucar.edu/Document/Functions/Built-in/setfileoption.shtml>`__ with the following arguments in every script before any file operations:
+
+  .. code-block:: 
+
+    setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
+  ``"netCDF4"`` can also be used as the requested format in the above call.
+
 
 - **Deprecated calendar functions**: Check the `function reference <https://www.ncl.ucar.edu/Document/Functions/index.shtml>`__ to verify that the functions you use are not deprecated in the current version of `NCL <https://www.ncl.ucar.edu/>`__. This is especially necessary for `date/calendar functions <https://www.ncl.ucar.edu/Document/Functions/date.shtml>`__.
 

@@ -1,0 +1,113 @@
+<title>Stratosphere-Troposphere Coupling: Vertical Wave Coupling</title>
+<img src="../mdtf_diag_banner.png">
+<h3>Seasonality and extremes of vertically propagating planetary waves</h3>
+
+<p>
+This POD assesses the climatologies and extremes of vertically propagating 
+planetary waves, and their coupling between the troposphere and stratosphere. 
+</p>
+
+<p>
+Wave amplitudes and stratosphere-troposphere wave coupling are diagnosed using
+Fourier decomposed geopotential height fields at 10 and 500 hPa. Extreme 
+stratospheric wave events are diagnosed from wave-1 polar cap eddy heat fluxes
+at 50 hPa (wave-1 provides the strongest contribution to the overall heat flux).
+</p>
+
+<h3>{{CASENAME}}</h3>
+<font color=navy><b>Wave amplitude climatologies</b></font>
+<p> From left to right, these plots show climatological time series of the zonal wavenumbers 1, 2, and 3
+    wave amplitudes. The thick solid lines are the climatological mean, while the grey envelopes represent
+    the 1st and 3rd quartiles across the years. The thin dashed lines are the all-time range. The top
+    row is plotted for 10 hPa, while the bottom row is plotted for 500 hPa.</p>
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Observations
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-60N-wave-amps.png>NH Model Time series</A>
+    <TH align=center><A href=obs/ERA5-60N-wave-amps.png>NH Reanalysis Time series</A>
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-60S-wave-amps.png>SH Model Time series</A>
+    <TH align=center><A href=obs/ERA5-60S-wave-amps.png>SH Reanalysis Time series</A>
+</TR>
+</TABLE>
+<p></p>
+
+<font color=navy><b>50 hPa Polar Cap Eddy Heat Flux Histograms</b></font>
+<p> From left to right, these histograms show the 50 hPa polar cap eddy heat flux distributions. The vertical 
+    lines are plotted at the 10th and 90th percentiles; the numbers in the corner are the numeric values of these 
+    percentiles. These values are what have been used to define 50 hPa heat flux extremes. Keep in mind that
+    the sign of eddy heat fluxes is flipped in the SH, such that enhanced poleward fluxes (indicative of 
+    enhaned wave driving) are negative, while negative values associated with wave reflection 
+    are positive. </p>
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Observations
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-vt-histos-NH.png>NH Model Histograms</A>
+    <TH align=center><A href=obs/ERA5-vt-histos-NH.png>NH Reanalysis Histograms</A>
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-vt-histos-SH.png>SH Model Histograms</A>
+    <TH align=center><A href=obs/ERA5-vt-histos-SH.png>SH Reanalysis Histograms</A>
+</TR>
+</TABLE>
+<p></p>
+
+<font color=navy><b>Eddy Height Composites for Heat Flux Extremes</b></font>
+<p>From left to right, these maps show the eddy geopotential height climatology for the given season, 
+the anomalous eddy heights for extreme positive 50 hPa heat flux days, and the anomalous eddy heights 
+for extreme negative 50 hPa heat flux days. The line contours are representative of the 500 hPa level,
+while the color filled contours are for the 10 hPa level. In the first map, the 500 hPa contours are
+plotted from -500m to 500m by 20m (0 contour omitted); the 10 hPa contours are plotted from -800m to 
+800m by 100m (0 contour omitted). In the second and third maps, the 500 hPa contours are plotted 
+from -500m to 500m by 10m, while the 10 hPa contours are plotted from -500m to 500m by 50m.</p>
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Observations
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-extreme-vt-eddy-heights-NH.png>NH Model Composites</A>
+    <TH align=center><A href=obs/ERA5-extreme-vt-eddy-heights-NH.png>NH Reanalysis Composites</A>
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-extreme-vt-eddy-heights-SH.png>SH Model Composites</A>
+    <TH align=center><A href=obs/ERA5-extreme-vt-eddy-heights-SH.png>SH Reanalysis Composites</A>
+</TR>
+</TABLE>
+<p></p>
+
+<font color=navy><b>10 vs 500 hPa Correlation Coherence of Zonal Waves 1 and 2</b></font>
+<p>These plots show the correlation coherence of zonal waves 1 (left) and 2 (right) between
+   10 and 500 hPa for different bimonthly periods of the extended winter seasons. For negative 
+   lags, the stratospheric signal leads the troposphere, indicative of downward wave coupling 
+   (reflection); for positive lags, the tropospheric signal leads the stratosphere, 
+   indicative of upward wave propagation.</p>
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Observations
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-corr-coh-NH.png>NH Model Composites</A>
+    <TH align=center><A href=obs/ERA5-corr-coh-NH.png>NH Reanalysis Composites</A>
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-corr-coh-SH.png>SH Model Composites</A>
+    <TH align=center><A href=obs/ERA5-corr-coh-SH.png>SH Reanalysis Composites</A>
+</TR>
+</TABLE>

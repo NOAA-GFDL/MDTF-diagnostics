@@ -1,4 +1,4 @@
-# This file is part of the SM_ET_coupling module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+# This file is part of the SM_ET_coupling module of the MDTF code package (see LICENSE.txt)
 
 #============================================================
 # Coupling between soil moisture (SM) and evapotanspiration (ET) in summer
@@ -30,7 +30,7 @@ def generate_R_plots(RPlotFile):
         pipe = subprocess.Popen([
             'Rscript --verbose --vanilla {}'.format(RPlotFile)
         ] , shell=True, stdout=subprocess.PIPE)
-        output = pipe.communicate()[0]
+        output = pipe.communicate()[0].decode()
         print('R routine {0} \n {1}'.format(RPlotFile,output))            
         while pipe.poll() is None:
             time.sleep(0.5)
@@ -39,14 +39,11 @@ def generate_R_plots(RPlotFile):
 
     return 0
 
-if os.path.isfile( os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["mrsos_var"]+".mon.nc"):
+if os.path.isfile(os.environ["MRSOS_FILE"]):
     print("monthly soil moisture file found")
 
-#if os.path.isfile( os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["mrsos_var"]+".mon.nc"):
-#      print("monthly soil moisture file found")
-
-#if os.path.isfile( os.environ["DATADIR"]+"/mon/"+os.environ["CASENAME"]+"."+os.environ["evspsbl_var"]+".mon.nc"):
-#      print("monthly evapotranspiration file found")
+if os.path.isfile(os.environ["EVSPSBL_FILE"]):
+    print("monthly evapotranspiration file found")
 
     print("computing SM-ET coupling")
 

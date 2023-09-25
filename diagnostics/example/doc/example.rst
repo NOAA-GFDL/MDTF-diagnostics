@@ -47,7 +47,7 @@ Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt). 
-Unless you've distirbuted your script elsewhere, you don't need to change this.
+Unless you've distributed your script elsewhere, you don't need to change this.
 
 Functionality
 -------------
@@ -216,9 +216,15 @@ Equations
 Accented and Greek letters can be written directly using Unicode: é, Ω. 
 (Make sure your text editor is saving the file in UTF-8 encoding).
 
-Use the following syntax for superscripts and subscripts in text:
-``W m\ :sup:`-2`\ `` → W m\ :sup:`-2`\ ; ``CO\ :sub:`2`\ `` → CO\ :sub:`2`\ .
-Note that spaces are needed before and after the forward slashes.
+Use the following syntax for superscripts and subscripts in in-line text:
+
+.. code-block:: restructuredtext
+
+   W m\ :sup:`-2`\ ; CO\ :sub:`2`\ .
+
+which produces: W m\ :sup:`-2`\ ; CO\ :sub:`2`\ .
+Note one space is needed after both forward slashes in the input; these spaces 
+are not included in the output.
 
 Equations can be written using standard 
 `latex <https://www.reed.edu/academic_support/pdfs/qskills/latexcheatsheet.pdf>`__ 

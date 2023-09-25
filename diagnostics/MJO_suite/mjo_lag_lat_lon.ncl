@@ -1,13 +1,16 @@
-; This file is part of the MJO_suite module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_suite module of the MDTF code package (see LICENSE.txt)
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"   
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"    
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"    
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"    
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
   
 ;******************** MAIN **********************************
 begin
+routine_name = "mjo_lat_lat_lon.ncl"
 vars = (/"pr","u850"/)
 casename = getenv("CASENAME")
 
@@ -85,8 +88,8 @@ nameSeason = (/"winter","summer","annual"/)
 
   pr = f->$vars(0)$(:,{latS_globe:latN_globe},:) 
 
-  printVarSummary( pr )
-  printMinMax(pr, True)
+;  printVarSummary( pr )
+;  printMinMax(pr, True)
 
   time_pr = pr&time                     ; clarity
   date_pr = cd_calendar(time_pr, -2 )   ; yyyymmdd
@@ -119,8 +122,8 @@ nameSeason = (/"winter","summer","annual"/)
 
   u850 = f->$vars(1)$(:,{latS_globe:latN_globe},:) 
 
-  printVarSummary( u850 )
-  printMinMax(u850, True)
+;  printVarSummary( u850 )
+;  printMinMax(u850, True)
 
   time_u850 = u850&time                     ; clarity
   date_u850 = cd_calendar(time_u850 , -2 )  ; yyyymmdd
@@ -199,5 +202,8 @@ nameSeason = (/"winter","summer","annual"/)
      pltNameSeason = pltName+"."+nameSeason(ns)
      mjo_xcor_lag_ovly_panel(rpr_timelon, ru850_timelon, rpr_timelat, ru850_timelat \
                             ,pltType, pltDir, pltNameSeason, optPlot)
+
+     print(routine_name+" wrote "+pltDir+"/"+pltNameSeason+"."+pltType) ;lag.lat.lon.summer.ps
+                            
   end do
 end

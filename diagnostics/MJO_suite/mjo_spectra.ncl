@@ -1,13 +1,16 @@
-; This file is part of the MJO_suite module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_suite module of the MDTF code package (see LICENSE.txt)
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"   
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"    
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"    
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"    
 load "$POD_HOME/my_cam_diags.ncl"
-   
+
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 begin
+routine_name = "mjo_spectra.ncl"
 vars = (/"pr","rlut","u200","u850","v200","v850"/)
 
 casename = getenv("CASENAME")
@@ -89,8 +92,8 @@ do ivars = 0,dimsizes(vars)-1
 ;      X = f->$vName$(iStrt:iLast,{latS:latN},:) 
 ;  end if
   X = f[ivars]->$vars(ivars)$(:,{latS:latN},:)
-  printVarSummary( X )
-  printMinMax(X, True)
+;  printVarSummary( X )
+;  printMinMax(X, True)
 
   time  = X&time                     ; clarity
   date  = cd_calendar( time , -2 )   ; yyyymmdd
@@ -151,7 +154,7 @@ do ivars = 0,dimsizes(vars)-1
   res@tmXBValues = 1./(/-5,-10,-20,-30,-90,90,30,20,10,5/)     ; choose first 13 timesteps
   res@tmXBLabels = (/"5d","10d","20d","30d","90d","90d","30d","20d","10d","5d"/)
  
-  print (" *** Plotting ***")
+;  print (" *** Plotting ***")
   res@gsnLeftString = ""
   res@gsnRightString = ""
   res@gsnCenterString = ""
@@ -170,6 +173,7 @@ do ivars = 0,dimsizes(vars)-1
      pan@txString = vars(ivars)+":"+twStrt+" to "+twLast
      gsn_panel(wks,plot,(/1,1/),pan)
      
+     print(routine_name+ " wrote "+ pltDir+"/"+pltName+"."+nameSeason(ns)+"."+pltType)
   end do
 
   delete(res@cnLevels)

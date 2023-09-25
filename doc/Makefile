@@ -8,8 +8,8 @@ BUILDDIR      = _build
 PAPER         = letter
 
 # Internal variables.
-PAPEROPT_a4     = -D latex_paper_size=a4
-PAPEROPT_letter = -D latex_paper_size=letter
+PAPEROPT_a4     = -D latex_elements.papersize=a4
+PAPEROPT_letter = -D latex_elements.papersize=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 # Put it first so that "make" without argument is like "make help".
@@ -24,6 +24,7 @@ clean:
 clean_all:
 	-rm -rf $(BUILDDIR)
 	-rm -rf sphinx_pods
+	-rm -rf sphinx_sites
 	-rm sphinx/src.*
 
 html:

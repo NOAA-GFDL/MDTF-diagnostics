@@ -1,4 +1,4 @@
-# This file is part of the MJO_prop_amp module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+# This file is part of the MJO_prop_amp module of the MDTF code package (see LICENSE.txt)
 
 #===============================================================
 #   Diagnostic package for MJO propagation and amplitude in GCMs
@@ -47,7 +47,7 @@ def generate_ncl_plots(nclPlotFile):
     # don't exit if it does not exists just print a warning.
     try:
         pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
-        output = pipe.communicate()[0]
+        output = pipe.communicate()[0].decode()
         print('NCL routine {0} \n {1}'.format(nclPlotFile,output))            
         while pipe.poll() is None:
             time.sleep(0.5)
@@ -60,9 +60,10 @@ def generate_ncl_plots(nclPlotFile):
 # Call NCL code here
 #============================================================
 
-os.environ["file_pr"]  = os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["pr_var"]+".day.nc"
-os.environ["file_prw"] = os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["prw_var"]+".day.nc"
-os.environ["file_hus"] = os.environ["DATADIR"]+"/day/"+os.environ["CASENAME"]+"."+os.environ["qa_var"]+".day.nc"
+# create synonyms for env var names to avoid changes to rest of this POD's code
+os.environ["file_pr"]  = os.environ["PR_FILE"]
+os.environ["file_prw"] = os.environ["PRW_FILE"]
+os.environ["file_hus"] = os.environ["HUS_FILE"]
 
 print("    ")
 print("=======")

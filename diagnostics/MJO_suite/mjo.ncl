@@ -1,4 +1,4 @@
-; This file is part of the MJO_suite module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_suite module of the MDTF code package (see LICENSE.txt)
 
 ; FILE: mjo.ncl
 
@@ -6,11 +6,14 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 begin
 ; read daily output files from CAM2 and process the u200 data
 ; each daily file has 30 days of data
 ; U200(time,lat,lon)
 
+routine_name = "mjo.ncl"
 pod_home = getenv("POD_HOME")
 casename = getenv("CASENAME")
 file_dir = getenv("WK_DIR")+"/model/netCDF/"
@@ -86,15 +89,16 @@ res@vpHeightF = 0.30
 res@trXMinF = firstyr
 res@trXMaxF = lastyr+1
 
-print("DEBUG yrfrac")
-print(getvardims(yrfrac)+": "+dimsizes(yrfrac))
-print("DEBUG data")
-print(getvardims(data)+": "+dimsizes(data))
-print("DEBUG filtered")
-print(getvardims(filtered)+": "+dimsizes(filtered))
-print("DEBUG var_fil")
-print(getvardims(var_fil)+": "+dimsizes(var_fil))
-
+if ( False ) then
+  print("DEBUG yrfrac")
+  print(getvardims(yrfrac)+": "+dimsizes(yrfrac))
+  print("DEBUG data")
+  print(getvardims(data)+": "+dimsizes(data))
+  print("DEBUG filtered")
+  print(getvardims(filtered)+": "+dimsizes(filtered))
+  print("DEBUG var_fil")
+  print(getvardims(var_fil)+": "+dimsizes(var_fil))
+end if
 
 ; First Plot
 res@gsnCenterString = casename+" Mean of Daily 200 mb Zonal Wind (10S-10N)" 
@@ -123,4 +127,5 @@ pan@gsnPaperOrientation = "portrait"
 pan@gsnPanelYWhiteSpacePercent = 2.0
 gsn_panel(wks,plot,(/3,1/),pan)
 
+print(routine_name+" wrote "+psplot+".ps")
 end

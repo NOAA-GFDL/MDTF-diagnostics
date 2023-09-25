@@ -1,40 +1,95 @@
-Framework configuration for user model data
-===========================================
+.. role:: console(code)
+   :language: console
+   :class: highlight
 
-In this section we describe how to run the framework with your own model data, and more configuration options than the test case described in :doc:`start_install`.
+Running the package on your data
+================================
 
-The complete set of configuration options is described in :doc:`ref_cli`, or by running ``% ./mdtf --help``. All options can be specified as a command-line flag (e.g., ``--OUTPUT_DIR``) or as a JSON configuration input file of the form provided in `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/default_tests.jsonc>`__. We recommend using this file as a template, making copies and customizing it as needed.
+In this section we describe how to proceed beyond running the simple test case described in the
+:doc:`previous section <start_install>`, in particular how to run the framework on your own model data.
 
-Options given on the command line always take precedence over the input file. This is so you can store options that don't frequently change in the file (e.g., the input/output data paths) and use command-line flags to set only those options you want to change from run to run (e.g., the analysis period start and end years). In all cases, the complete set of option values used in each run of the framework will be included in the log file as part of the output, for reproducibility and provenance.
+Preparing your data for use by the package
+------------------------------------------
 
-**Summary of steps for running the framework on user data**
+You have multiple options for organizing or setting up access to your model's data in a way that the framework
+can recognize. This task is performed by a "data source," a code plug-in that handles obtaining model data from
+a remote location for analysis by the PODs.
 
-1. Save or link model data files following the framework's filename convention.
-2. Select the variable name convention used by the model.
-3. Edit the configuration input file accordingly, then 
-4. Run the framework.
+For a list of the available data sources, what types of model data they provide and how to configure them,
+see the :doc:`data source reference<ref_data_sources>`. In the rest of this section,
+we describe the steps required to add your own model data for use with the
+:ref:`LocalFile<ref-data-source-localfile>` data source, since it's currently the most general-purpose option.
 
-Adding your model data
-----------------------
+Selecting and formatting the model data
++++++++++++++++++++++++++++++++++++++++
 
-Currently the framework is only able to run on model data in the form of NetCDF files on a locally mounted disk following a specific directory hierarchy and filename convention, with one variable per file. We hope to offer more flexibility in this area in the near future.
+Consult the `list of available PODs <https://github.com/NOAA-GFDL/MDTF-diagnostics#available-and-planned-diagnostics>`__
+to identify which diagnostics you want to run and what variables are required as input for each. In general,
+if the data source can't find data that's required by a POD,
+an error message will be logged in place of that POD's output that should help you diagnose the problem.
 
-The directory/filename convention we use is
+The LocalFile data source works with model data structured with each variable stored in a separate netCDF file.
+Some additional conditions on the metadata are required: any model output compliant with the
+`CF conventions <http://cfconventions.org/>`__ is acceptable, but only a small subset of those conventions are required
+by this data source. See the :doc:`data format reference<ref_data>` for a complete description of what's required.
 
-``$MODEL_DATA_ROOT``/$CASENAME/$frequency/$CASENAME.$variable.$frequency.nc,
+Naming variables according to a convention
+++++++++++++++++++++++++++++++++++++++++++
+
+The LocalFile data source is intended to deal with output produced by different models,
+which poses a problem because different models use different variable names for the same physical quantity.
+For example, in NCAR's `CESM2 <https://www.cesm.ucar.edu/models/cesm2/>`__ the name for total precipitation is
+``PRECT``, while the name for the same quantity in GFDL's
+`CM4 <https://www.gfdl.noaa.gov/coupled-physical-model-cm4/>`__ is ``precip``.
+
+In order to identify what variable names correspond to the physical quantities requested by each POD, the LocalFile
+data source requires that model data follow one of several recognized variable naming conventions defined by
+the package. The currently recognized conventions are:
+
+* ``CMIP``: Variable names and units as used in the
+`CMIP6 <https://www.wcrp-climate.org/wgcm-cmip/wgcm-cmip6>`__ `data request <https://doi.org/10.5194/gmd-2019-219>`__.
+There is a `web interface <http://clipc-services.ceda.ac.uk/dreq/index.html>`__ to the request.
+Data from any model that has been published as part of CMIP6
+(e.g., made available via `ESGF <https://esgf-node.llnl.gov/projects/cmip6/>`__) should follow this convention.
+
+* ``NCAR``: Variable names and units used in the default output of models developed at the
+`National Center for Atmospheric Research <https://ncar.ucar.edu>`__, such as
+`CAM <https://www.cesm.ucar.edu/models/cesm2/atmosphere/>`__ (all versions) and
+`CESM2 <https://www.cesm.ucar.edu/models/cesm2/>`__.
+
+* ``GFDL``: Variable names and units used in the default output of models developed at the
+`Geophysical Fluid Dynamics Laboratory <https://www.gfdl.noaa.gov/>`__, such as
+`AM4 <https://www.gfdl.noaa.gov/am4/>`__, `CM4 <https://www.gfdl.noaa.gov/coupled-physical-model-cm4/>`__ and
+`SPEAR <https://www.gfdl.noaa.gov/spear/>`__.
+
+The names and units for the variables in the model data you're adding need to conform to one of the above conventions
+in order to be recognized by the LocalFile data source. For models that aren't currently supported, the workaround we
+recommend is to generate ``CMIP``-compliant data by postprocessing model output with the
+`CMOR <https://cmor.llnl.gov/>`__ tool.
+We hope to offer support for the naming conventions of a wider range of models in the future.
+
+Adding your model data files
+++++++++++++++++++++++++++++
+
+The LocalFile data source reads files from a local directory that follow the filename convention used
+for the sample model data. Specifically, the files should be placed in a subdirectory in <*MODEL_DATA_ROOT*>
+and named following the pattern
+
+<*MODEL_DATA_ROOT*>/<*dataset_name*>/<*frequency*>/<*dataset_name*>.<*variable_name*>.<*frequency*>.nc,
 
 where
 
-- $CASENAME is any string used to identify the model run (experiment) that generated the data,
-- $frequency is the frequency at which the data is sampled: one of ``1hr``, ``3hr``, ``6hr``, ``day``, ``mon`` or ``year``.
-- $variable is the name of the variable in your model's convention.
+* <*MODEL_DATA_ROOT*> is the path where the sample model data was installed (see :ref:`ref-configure`),
+* <*dataset_name*> is any string uniquely identifying the dataset,
+* <*frequency*> is a string describing the frequency at which the data is sampled, e.g. ``1hr``, ``3hr``, ``6hr``, ``day``, ``mon`` or ``year``.
+* <*variable_name*> is the name of the variable in the convention chosen in the previous section.
 
 As an example, here's how the sample model data is organized:
 
 ::
 
    inputdata
-   ├── model ( = $MODEL_DATA_ROOT)
+   ├── model ( = <MODEL_DATA_ROOT>)
    │   ├── GFDL.CM4.c96L32.am4g10r8
    │   │   └── day
    │   │       ├── GFDL.CM4.c96L32.am4g10r8.precip.day.nc
@@ -51,71 +106,98 @@ As an example, here's how the sample model data is organized:
    │       └── mon
    │           ├── QBOi.EXP1.AMIP.001.PS.mon.nc
    │           └── (... other .nc files )
-   └── obs_data ( = $OBS_DATA_ROOT)
-       ├── (... supporting data for individual PODs )
 
-If your model data is available on a locally mounted disk, we recommend creating `symlinks <https://en.wikipedia.org/wiki/Symbolic_link>`__ that have the needed filenames and point to the data, rather than making copies of the files. For example,
+Note that the ``GFDL.CM4.c96L32.am4g10r8`` dataset uses the ``GFDL`` convention (precipitation = ``precip``), while the ``QBOi.EXP1.AMIP.001`` dataset uses the ``NCAR`` convention (precipitation = ``PRECT``).
 
-::
+If the data you want to analyze is available on a locally mounted disk, we recommend creating `symlinks <https://en.wikipedia.org/wiki/Symbolic_link>`__ that have the needed filenames, rather than making copies of the data files. For example,
 
-   % mkdir -p inputdata/model/my_new_experiment/day
-   % ln -s $path_to_file/pr_day_GFDL-ESM4_historical_r1i1p1f1_gr1_20100101-20141231.nc inputdata/model/my_experiment/day/my_new_experiment.pr.day.nc
+.. code-block:: console
 
-will create a link to the file in the first argument that can be accessed normally:
+   % mkdir -p inputdata/model/my_dataset/day
+   % ln -s <path> inputdata/model/my_dataset/day/my_dataset.pr.day.nc
+
+will create a symbolic link to the file at <*path*> that follows the filename convention used by this data source:
 
 ::
 
    inputdata
-   ├── model ( = $MODEL_DATA_ROOT)
+   ├── model ( = <MODEL_DATA_ROOT>)
    │   ├── GFDL.CM4.c96L32.am4g10r8
    │   ├── QBOi.EXP1.AMIP.001
-   │   └── my_new_experiment
+   │   └── my_dataset
    │       └── day
-   │           └── my_new_experiment.pr.day.nc
+   │           └── my_dataset.pr.day.nc
 
-Select the model's variable name convention
--------------------------------------------
+Finally, we note that it's not necessary to place the files (or symlinks) for all experiments in <*MODEL_DATA_ROOT*>. To point the LocalFile data source to data stored in the subdirectory hierarchy following the pattern described above, but located in a different place, pass that location to the package as <*CASE_ROOT_DIR*>.
 
-The framework requires specifying a convention for variable names used in the model data. Currently recognized conventions are
+Running the package on your data
+--------------------------------
 
-- ``CMIP``, for CF-compliant output produced as part of CMIP6;
-- ``CESM``, for the NCAR `community earth system model <http://www.cesm.ucar.edu/>`__;
-- ``AM4``, for the NOAA-GFDL `atmosphere model <https://www.gfdl.noaa.gov/am4/>`__;
-- ``SPEAR``, for the NOAA-GFDL `seasonal model <https://www.gfdl.noaa.gov/research_highlight/spear-the-next-generation-gfdl-modeling-system-for-seasonal-to-multidecadal-prediction-and-projection/>`__.
+How to configure the package
+++++++++++++++++++++++++++++
 
-We hope to offer support for the variable naming conventions of a wider range of models in the future. For the time being, please process output of models not on this list with `CMOR <https://cmor.llnl.gov/>`__ to make them CF-compliant.
+All configuration options for the package are set via its command line interface, which is described in :doc:`ref_cli`, or by running :console:`% mdtf --help`. Because it's cumbersome to deal with long lists of command-line flags, options can also be set in a JSON configuration file passed to the package with the ``-f``/``--input-file`` flag. An example of this input file is given in `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/default_tests.jsonc>`__, which you used :ref:`previously<ref-execute>` to run the package on test data. We recommend using this file as a template, making copies and customizing it as needed.
 
-Alternatively, the framework will load any lookup tables of the form ``src/fieldlist_$convention.jsonc`` and use them for variable name conversion. Users can add new files in this format to specify new conventions. For example, in ``src/fieldlist_CESM.jsonc`` the line ``"pr_var" : "PRECT"`` means that the CESM name for the precipitation rate is PRECT (case sensitive). In addition, ``"pr_conversion_factor" : 1000`` specifies the conversion factor to CF standard units for this variable.
+Option values given on the command line always take precedence over those set in the configuration file. This is so that you can store options that don't frequently change in the file (e.g., input/output paths) and then use flags to set only those options you want to change from run to run (e.g., the start and end years for the analysis). In all cases, the complete set of option values used in each run of the package is saved as a JSON configuration file in the package's output, so you can always reproduce your results.
 
-Running the code on your data
------------------------------
+Options controlling the analysis
+++++++++++++++++++++++++++++++++
 
-After adding your model data to the directory hierarchy as described above, you can run the framework on that data using the following options. These can either be set in the ``caselist`` section of the configuration input file (see `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/develop/src/default_tests.jsonc>`__ for an example/template), or individually as command-line flags (e.g., ``--CASENAME my_new_experiment``). Required settings are:
+The configuration options required to specify what analysis the package should do are:
 
-- ``CASENAME`` should be the same string used to label your model run.
-- ``convention`` describes the variable naming convention your model uses, determined in the previous section.
-- ``FIRSTYR`` and ``LASTYR`` specify the analysis period.
-- ``model`` and ``experiment`` are recorded if given, but not currently used.
+* ``--CASENAME`` <*name*>: Identifier used to label this run of the package. Can be set to any string.
+* ``--experiment`` <*dataset_name*>: The name (subdirectory) you assigned to the data files in the previous section.
+If this option isn't given, its value is set from <*CASENAME*>.
+* ``--convention`` <*convention name*>: The naming convention used to assign the <*variable_name*>s,
+from the previous section.
+* ``--FIRSTYR`` <*YYYY*>: The starting year of the analysis period.
+* ``--LASTYR`` <*YYYY*>: The end year of the analysis period. The analysis period includes all data that falls
+between the start of 1 Jan on <*FIRSTYR*> and the end of 31 Dec on <*LASTYR*>.
+An error will be raised if the data provided for any requested variable doesn't span this date range.
 
-When the framework is run, it determines whether the data each POD needs to run is present in the model data being provided. Specifically, the model must provide all variables needed by a POD at the required frequency. Consult the :doc:`documentation <pod_toc>` for a POD to determine the data it requires.
+If specifying these in a configuration file, these options should given as entry in a list titled ``case_list``
+(following the example in
+`src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/default_tests.jsonc>`__).
+Using the package to compare the results of a list of different experiments is a major feature planned for an upcoming
+release.
 
-If the framework can't find data requested by a POD, an error message will be logged in place of that POD's output that should help you diagnose the problem. We hope to add the ability to transform data (eg, to average daily data to monthly frequency) in order to simplify this process.
+You will also need to specify the list of diagnostics to run. This can be given as a list of POD names (as given in the `diagnostics/ <https://github.com/tsjackson-noaa/MDTF-diagnostics/tree/main/diagnostics>`__ directory), or ``all`` to run all PODs. This list can be given by the ``--pods`` command-line flag, or by a ``pod_list`` attribute in the ``case_list`` entry.
 
-Other framework settings
-------------------------
+Other options
++++++++++++++
 
-The paths to input and output data (described in :ref:`ref-configure`) only need to be modified if the corresponding data is moved, or if you'd like to send output to a new location. Note that the framework doesn't retain default values for paths, so if you don't specify a configuration file, all required paths will need to be given explicitly on the command line.
+Some of the most relevant options which control the package's output are:
 
-Other relevant flags controlling the framework's output are:
+* ``--save-ps``: Set this flag to have PODs save copies of all plots as postscript files (vector graphics)
+in addition to the bitmaps used in the HTML output pages.
+* ``--save-nc``: Set this flag to have PODs retain netCDF files of any intermediate calculations,
+which may be useful if you want to do further analyses with your own tools.
+* ``--make-variab-tar``: Set this flag to save the collection of files (HTML pages and bitmap graphics)
+output by the package as a single .tar file, which can be useful for archival purposes.
 
-- ``save_ps``: set to ``true`` to retain the vector .eps figures generated by PODs, in addition to the bitmap images linked to from the webpage.
-- ``save_nc``: set to ``true`` to retain netcdf files of any data output at intermediate steps by PODs for further analysis.
-- ``make_variab_tar``: set to ``true`` to save the entire output directory as a .tar file, for archival or file transfer purposes.
-- ``overwrite``: set to ``true`` to overwrite previous framework output in ``$OUTPUT_DIR``. By default, output with the same CASENAME and date range is assigned a unique name to ensure preexisting results are never overwritten.
+The full list of configuration options is given at :doc:`ref_cli`.
 
-These can be set as command-line flags each time the framework is run (e.g.,. ``--save_ps``), or as ``true``/``false`` values in the input file (``"save_ps": true``). Note that ``true`` and ``false`` in JSON must be written all lowercase, with no quotes.
+Running the package
++++++++++++++++++++
 
-Modifying POD settings
-----------------------
+From this point, the instructions for running the package are the same as for :ref:`running it on the sample data<ref-execute>`, assuming you've set the configuration options by editing a copy of the configuration file template at `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/default_tests.jsonc>`__. The package is run in the same way:
 
-Individual PODs may provide user-configurable options in the ``"pod_env_vars"`` section of their ``settings.jsonc`` file, which is located in each POD's source code directory under ``/diagnostics``. These only need to be changed in rare or specific cases. Consult the POD's :doc:`documentation <pod_toc>` for details.
+.. code-block:: console
+
+   % cd <CODE_ROOT>
+   % ./mdtf -f <new config file path>
+
+The first few lines of console output will echo the values you've provided for <*CASENAME*>, etc., as confirmation.
+
+The output of the package will be saved as a series of web pages in a directory named
+MDTF\_<*CASENAME*>\_<*FIRSTYR*>\_<*LASTYR*> within <*OUTPUT_DIR*>.
+If you run the package multiple times with the same configuration values,
+it's not necessary to change the <*CASENAME*>: by default, the suffixes ".v1", ".v2", etc. will be added to duplicate
+output directory names so that results aren't accidentally overwritten.
+
+The results of the diagnostics are presented as a series of web pages, with the top-level page named index.html.
+To view the results in a web browser, run (e.g.,)
+
+.. code-block:: console
+
+   % google-chrome <OUTPUT_DIR>/MDTF_<CASENAME>_<FIRSTYR>_<LASTYR>/index.html &

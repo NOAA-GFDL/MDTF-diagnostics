@@ -1,142 +1,172 @@
 // Configuration for command-line arguments for MDTF-diagnostics driver script.
-// This is used by install.py to generate cli.jsonc. 
+// This is used by install.py to generate cli.jsonc.
 // DO NOT modify this file. Instead, edit cli.jsonc.
 //
-// Entries here are used in src/cli.py to configure command-line options 
+// Entries here are used in framework/cli.py to configure command-line options
 // accepted by the script. Syntax is based on python's argparse library, see
-// https://docs.python.org/2.7/library/argparse.html or 
-// https://docs.python.org/2.7/howto/argparse.html. 
+// https://docs.python.org/2.7/library/argparse.html or
+// https://docs.python.org/2.7/howto/argparse.html.
 //
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.)
 {
-  "description" : "Driver script for the NOAA Model Diagnostics Task Force (MDTF) package, which runs process-oriented diagnostics (PODs) on climate model data. See documentation at https://github.com/NOAA-GFDL/MDTF-diagnostics.\n\nThe first form runs diagnostics on data at CASE_ROOT_DIR, using configuration set on the command line or in INPUT_FILE.\nThe second form ('mdtf info') prints information about available diagnostics.",
+  "usage": "mdtf run [options] [CASE_ROOT_DIR]",
+  "description" : "Runs diagnostics in the NOAA Model Diagnostics Task Force (MDTF) package. See documentation at https://mdtf-diagnostics.rtfd.io.\n\nThe scripts runs specified diagnostics on data at CASE_ROOT_DIR, using configuration set on the command line and/or through a file passed via --input_file.",
   "arguments": [ // Top-level args not in any group
     {
-      "name": "version", 
-      "action": "version", 
-      "version": "%(prog)s 3.0 beta 2"
-    },{
-      "name": "input_file",
-      "help": "Path to a user configuration file that sets options listed here. This can be a JSON file of the form given in src/default_tests.jsonc, or a text file containing command-line arguments. Options set explicitly on the command line will still override settings in this file.",
-      "is_positional": true,
-      "nargs" : "?", // 0 or 1 occurrences: might have set this with --input_file
-      "metavar" : "INPUT_FILE"
-    },{
-      "name": "root_dir",
+      "name": "CASE_ROOT_DIR",
       "help": "Root directory of model data to analyze.",
       "is_positional": true,
       "nargs" : "?", // 0 or 1 occurrences: might have set this with --CASE_ROOT_DIR
-      "metavar" : "CASE_ROOT_DIR"
-    },{
-      "name": "input_file",
-      "short_name": "f",
-      "help": "Alternate way to specify user configuration file (with a flag instead of a positional argument.)",
       "type" : "str",
-      "metavar" : "INPUT_FILE",
-      "dest": "flag_input_file"
+      "metavar" : "CASE_ROOT_DIR"
     }
   ],
   "argument_groups" : [
     {
-      "name" : "PATHS",
+      "title" : "PATHS",
       "description" : "Location of input and output data. If a relative path is given, it's resolved relative to the MDTF-diagnostics code directory.",
       "arguments" : [
         {
-          "name": "MODEL_DATA_ROOT",
-          "help": "Parent directory containing results from different models.",
-          "metavar" : "<DIR>",
-          "parse_type": "path"
-        },{
           "name": "OBS_DATA_ROOT",
-          "help": "Parent directory containing observational data used by individual PODs.",
+          "help": "Required setting. Parent directory containing observational data used by individual PODs.",
           "metavar" : "<DIR>",
-          "parse_type": "path"
+          "action": "PathAction"
         },{
-          "name": "OUTPUT_DIR",
-          "short_name" : "o",
-          "help": "Directory to write output files.",
+          "name": "CASE_ROOT_DIR",
+          "help": "Alternate way to specify root directory of model data (with a flag instead of a positional argument.)",
           "metavar" : "<DIR>",
-          "parse_type": "path"
+          "dest": "flag_root_dir"
         },{
           "name": "WORKING_DIR",
           "short_name" : "w",
           "help": "Working directory. Defaults to output directory if unspecified.",
           "metavar" : "<DIR>",
-          "parse_type": "path"
+          "action": "PathAction"
+        },{
+          "name": "OUTPUT_DIR",
+          "short_name" : "o",
+          "help": "Required setting. Directory to write output files.",
+          "metavar" : "<DIR>",
+          "action": "PathAction"
         }
       ]
     },{
-      "name" : "MODEL",
-      "description" : "Settings describing the input model data.",
+      "title" : "DATA",
+      "description" : "Options describing the input model data.",
       "arguments" : [
         {
-          "name": "CASE_ROOT_DIR",
-          "help": "Alternate way to specify root directory of model data (with a flag instead of a positional argument.)",
-          "metavar" : "<DIR>",
-          "type" : "str",
-          "dest": "flag_root_dir"
-        },{
-          "name": "FIRSTYR",
-          "short_name" : "Y",
-          "help": "Starting year of analysis period.",
-          "type" : "int",
-          "metavar" : "<year>"
-        },{
-          "name": "LASTYR",
-          "short_name" : "Z",
-          "help": "Ending year of analysis period (inclusive).",
-          "type" : "int",
-          "metavar" : "<year>"
-        },{
-          "name": "CASENAME",
-          "short_name" : "n",
-          "help": "Identifier used to label the input model dataset.",
-          "type" : "str",
-          "metavar" : "<name>"
-        },{
           "name": "convention",
           "short_name" : "c",
           "help": "Variable name/unit convention used in model data.",
           "default": "CMIP",
           "metavar" : "<convention>"
         },{
-          "name": "model",
-          "short_name" : "m",
-          "help": "Model name (only used in CMIP6 input).",
-          "type": "str",
-          "metavar" : "<source_id>"
+          "name": "large_file",
+          "help": "Set this flag to handle large volumes of input model data. If set, use netCDF4 format in intermediate data files to handle variables >4gb (HDF5 API). Default is to use netCDF4 classic format.",
+          "default" : false
         },{
-          "name": "experiment",
-          "short_name" : "e",
-          "help": "Experiment ID (only used in CMIP6 input).",
-          "type" : "str",
-          "metavar" : "<experiment_id>"
+          "name": "strict",
+          "help": "If set, disables experiment selection heuristics and raises error if experiment not uniquely specified by user input.",
+          "default" : false
         },{
-          "name": "component",
-          "hidden" : true,
-          "help": "",
-          "default" : ""
+          "name": "disable_preprocessor",
+          "help": "If set, disables metadata checks and unit conversion by the framework prior to POD execution. This is only provided as a workaround for input data which is known to have incorrect metadata.",
+          "default" : false
         },{
-          "name": "data_freq",
-          "hidden" : true,
-          "help": "",
-          "default" : ""
+          "name": "overwrite_file_metadata",
+          "help": "If set, overwrites file metadata in the event of conflict with user's specifications (via --convention or --data_manager=ExplicitFile). This is provided as a workaround for input data which is known to have incorrect metadata.",
+          "default" : false
         },{
-          "name": "chunk_freq",
-          "hidden" : true,
-          "help": "",
-          "default" : ""
+          "name": "data_manager",
+          "help": "Source used to query and fetch model data.",
+          "default": "Local_file",
+          "action": "PluginArgAction"
+        },{
+          "name": "data_type",
+          "short_name" : "d",
+          "help": "Type of dataset to analyze: 'single_run' or 'multi_run' ",
+          "default": "single_run",
+          "metavar" : "<data_mode>"
         }
       ]
     },{
-      "name" : "DATA",
-      "description" : "Settings affecting the framework's retrieval of model data.",
+      "title" : "ANALYSIS",
+      "description" : "Settings describing what analyses the package should perform.",
       "arguments" : [
         {
-          "name": "data_manager",
-          "help": "Method used to fetch model data.",
-          "default" : "Local_File"
+          "name": "CASENAME",
+          "short_name" : "n",
+          "help": "Required setting. Identifier used to label the package's output for the selected model data.",
+          "metavar" : "<name>"
+        },{
+          "name": "FIRSTYR",
+          "short_name" : "Y",
+          "help": "Required setting. Starting year of analysis period.",
+          "type" : "int",
+          "metavar" : "<year>"
+        },{
+          "name": "LASTYR",
+          "short_name" : "Z",
+          "help": "Required setting. Ending year of analysis period (inclusive).",
+          "type" : "int",
+          "metavar" : "<year>"
+        },{
+          "name": "pods",
+          "short_name": "p",
+          "help": "Diagnostics to run on model data. This can be 'all', one or more diagnostic names, or one or more modeling  realms. Run `%(prog)s info pods` for a list of recognized values. Terminate list with '--' or another flag.",
+          "default" : "all",
+          "nargs" : "+",
+          //"choices" : "self.get_pods_for_help_text()",
+          //"eval_choices" : true,
+          "metavar" : ""
+        }
+      ]
+    },{
+      "title" : "RUNTIME",
+      "description" : "Options affecting the runtime environment of the PODs.",
+      "arguments" : [
+        {
+          "name": "environment_manager",
+          "help": "Method to manage POD runtime dependencies.",
+          "default" : "Conda",
+          "action": "PluginArgAction"
+        },{
+          "name": "runtime_manager",
+          "hidden" : true,
+          "help": "Method to run PODs.",
+          "default" : "Subprocess",
+          "action": "ClassImportAction"
+        }
+      ]
+    },{
+      "title" : "OUTPUT",
+      "description" : "Options affecting what output is generated.",
+      "arguments" : [
+        {
+          "name": "output_manager",
+          "hidden" : true,
+          "help": "Method to process POD output.",
+          "default" : "HTML",
+          "action": "PluginArgAction"
+        }
+      ]
+    },{
+      "title" : "DEBUG",
+      "description" : "Options used in debugging.",
+      "arguments" : [
+        {
+          "name": "verbose",
+          "short_name": "v",
+          "help": "Increase console log verbosity level. -v prints debug information.",
+          "default" : 0,
+          "action": "count"
+        },{
+          "name": "quiet",
+          "short_name": "q",
+          "help": "Decrease console log verbosity level. -q prints warnings only, -qq prints errors only, and -qqq prints no output.",
+          "default" : 0,
+          "action": "count"
         },{
           "name": "file_transfer_timeout",
           "help": "Time (in seconds) to wait before giving up on transferring a data file to the local filesystem. Set to zero to disable.",
@@ -147,97 +177,6 @@
           "name": "keep_temp",
           "help": "Set to true to retain local temp directories of downloaded data.",
           "default" : false
-        }
-      ]
-    },{
-      "name" : "DIAGNOSTICS",
-      "arguments" : [
-        {
-          "name": "pods",
-          "short_name": "p",
-          "help": "Diagnostics to run on model data. This can be 'all', one or more names, or one or more realms. Run `%(prog)s info pods` for a list of recognized values. Terminate list with '--' or another flag.",
-          "default" : "all",
-          "nargs" : "+",
-          //"choices" : "self.get_pods_for_help_text()",
-          //"eval_choices" : true,
-          "metavar" : ""
-        }
-      ]
-    },{
-      "name" : "RUNTIME",
-      "description" : "Settings affecting the runtime environment of the PODs.",
-      "arguments" : [
-        {
-          "name": "environment_manager",
-          "help": "Method to manage POD runtime dependencies.",
-          "default" : "Conda"
-        },{
-          "name": "conda_root",
-          "help": "Path to the conda installation. Only used if environment_manager = 'Conda'. Set equal to '' to use conda from your system's $PATH.",
-          "default" : "",
-          "metavar" : "<DIR>",
-          "parse_type": "path"
-        },{
-          "name": "conda_env_root",
-          "help": "Root directory for conda environment installs. Only used if environment_manager = 'Conda'. Set equal to '' to install in your system's default location.",
-          "default" : "",
-          "metavar" : "<DIR>",
-          "parse_type": "path"
-        },{
-          "name": "venv_root",
-          "help": "Root directory for python virtual environments. Only used if environment_manager = 'Virtualenv'. Set equal to '' to install in your system's default location.",
-          "default" : "./envs/venv",
-          "metavar" : "<DIR>",
-          "parse_type": "path"
-        },{
-          "name": "r_lib_root",
-          "help": "Root directory for R packages requested by PODs. Only used if environment_manager = 'Virtualenv'. Set equal to '' to install in your system library.",
-          "default" : "./envs/r_libs",
-          "metavar" : "<DIR>",
-          "parse_type": "path"
-        }
-      ]
-    },{
-      "name" : "OUTPUT",
-      "description" : "Settings affecting what output is generated.",
-      "arguments" : [
-        {
-          "name": "save_ps",
-          "help": "Set flag to have PODs save postscript figures in addition to bitmaps.",
-          "default" : false
-        },{
-          "name": "save_nc",
-          "help": "Set flag to have PODs save netCDF files of processed data.",
-          "default" : false
-        },{
-          "name": "save_non_nc",
-          "help": "Set flag to save all processed data except netcdf files.",
-          "default" : false
-        },{
-          "name": "make_variab_tar",
-          "help": "Set flag to save HTML and bitmap plots in a .tar file.",
-          "default" : true
-        },{
-          "name": "convert_flags",
-          "hidden" : true,
-          "help": "Flags to pass to ghostscript PS -> PNG figure conversion.",
-          "default" : "-dSAFER -dBATCH -dNOPAUSE -dEPSCrop -r150 -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4"
-        },{
-          "name": "overwrite",
-          "help": "Set flag to overwrite results in OUTPUT_DIR; otherwise results saved under a unique name.",
-          "default" : false
-        }
-      ]
-    },{
-      "name" : "DEBUG",
-      "description" : "Settings used in debugging.",
-      "arguments" : [
-        {
-          "name": "verbose",
-          "short_name": "v",
-          "help": "Increase log verbosity level.",
-          "default" : 1, 
-          "action": "count" 
         },{
           "name": "test_mode",
           "help": "Set flag for framework test. Data is fetched but PODs are not run.",

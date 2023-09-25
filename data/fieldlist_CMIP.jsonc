@@ -1,0 +1,304 @@
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+  "name" : "CMIP",
+  "models": ["CMIP_GFDL"],
+  "coords" : {
+    // only used for taking slices, unit conversion
+    "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
+    "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
+    "time": {"axis": "T", "standard_name": "time", "units": "days"},
+    // eventually want contents of CMIP6.coordinate.json
+    "plev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "standard_hybrid_sigma": {
+      "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate",
+      "units": "1",
+      "axis": "Z",
+      "positive": "down"
+    },
+    "lev": {
+      "standard_name": "depth",
+      "units": "m",
+      "positive": "down",
+      "axis": "Z"
+    }
+  },
+  "aux_coords": {
+    "deptho": {
+      "standard_name": "sea_floor_depth_below_geoid",
+      "units": "m",
+      "ndim": 2
+    },
+    "thkcello": {
+      "standard_name": "cell_thickness",
+      "units": "m",
+      "ndim": 3
+    }
+  },
+  "variables" : {
+    "ua": {
+      "standard_name": "eastward_wind",
+      "units": "m s-1",
+      "scalar_coord_templates": {"plev": "ua{value}"},
+      "ndim": 4
+    },
+    "va": {
+      "standard_name": "northward_wind",
+      "units": "m s-1",
+      "scalar_coord_templates": {"plev": "va{value}"},
+      "ndim": 4
+    },
+     "wind_speed": {
+      "standard_name": "wind_speed",
+      "units": "m s-1",
+      "scalar_coord_templates": {"plev": "wind_speed{value}"},
+      "ndim": 4
+    },
+    "zg": {
+      "standard_name": "geopotential_height",
+      "units": "m",
+      "scalar_coord_templates": {"plev": "zg{value}"},
+      "ndim": 4
+    },
+    "hus": {
+      "standard_name": "specific_humidity",
+      "units": "1",
+      "ndim": 4
+    },
+    "wap": {
+      "standard_name": "lagrangian_tendency_of_air_pressure",
+      "units": "Pa s-1",
+      "scalar_coord_templates": {"plev": "wap{value}"},
+      "ndim": 4
+    },
+    "o3": {
+      "standard_name": "mole_fraction_of_ozone_in_air",
+      "units": "mol mol-1",
+      "ndim": 4
+    },
+    "ts": {
+      "standard_name": "surface_temperature",
+      "units": "K",
+      "ndim": 3
+    },
+    "huss": {
+      "standard_name": "specific_humidity",
+      "units": "1",
+      "ndim": 3,
+      "modifier": "atmos_height"
+    },
+    "pr": {
+      "standard_name": "precipitation_flux",
+      "units": "kg m-2 s-1",
+      "ndim": 3
+    },
+    "prc": {
+      "standard_name": "convective_precipitation_flux",
+      "units": "kg m-2 s-1",
+      "ndim": 3
+    },
+    "tp": {
+      "standard_name": "total_precipitation",
+      "units": "kg m-2",
+      "ndim": 3
+    },
+    "tas" : {
+      "standard_name": "air_temperature",
+      "units": "K",
+      "ndim": 3,
+      "modifier": "atmos_height"
+    },
+    "tauu": {
+      "standard_name": "surface_downward_eastward_stress",
+      "units": "Pa",
+      "ndim": 3
+    },
+    "tauv": {
+      "standard_name": "surface_downward_northward_stress",
+      "units": "Pa",
+      "ndim": 3
+    },
+    "areacello": {
+      "standard_name": "cell_area",
+      "modifier" : "ocean_realm",
+      "units": "m2",
+      "ndim": 2
+    },
+    "areacella": {
+      "standard_name": "cell_area",
+      "units": "m2",
+      "modifier" : "atmos_realm",
+      "ndim": 2
+    },
+    "ps": {
+      "standard_name": "surface_air_pressure",
+      "units": "Pa",
+      "ndim": 3
+    },
+    "psl": {
+      "standard_name": "air_pressure_at_mean_sea_level",
+      "units": "Pa",
+      "ndim": 3
+    },
+    "sfcWind": {
+      "standard_name": "wind_speed",
+      "units": "m s-1",
+      "modifier": "atmos_height",
+      "ndim": 3
+    },
+    // radiative fluxes:
+    "rsus": {
+      "standard_name": "surface_upwelling_shortwave_flux_in_air",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rsds": {
+      "standard_name": "surface_downwelling_shortwave_flux_in_air",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rsdt": {
+      "standard_name": "toa_incoming_shortwave_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rsut": {
+      "standard_name": "toa_outgoing_shortwave_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rlus": {
+      "standard_name": "surface_upwelling_longwave_flux_in_air",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rlds": {
+      "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rlut": {
+      "standard_name": "toa_outgoing_longwave_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rsdscs": {
+      "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rsuscs": {
+      "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rlutcs": {
+      "standard_name": "toa_outgoing_longwave_flux_assuming_clear_sky",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "rsutcs": {
+      "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "hfss": {
+      "standard_name": "surface_upward_sensible_heat_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "hfls": {
+      "standard_name": "surface_upward_latent_heat_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    // Variables for AMOC_3D_Structure module:
+    "uo": {
+      "standard_name": "sea_water_x_velocity",
+      "units": "m s-1",
+      "ndim": 4
+    },
+    "vo": {
+      "standard_name": "sea_water_y_velocity",
+      "units": "m s-1",
+      "ndim": 4
+    },
+    "so": {
+      "standard_name": "sea_water_salinity",
+      "units": "psu",
+      "ndim": 4
+    },
+    "umo": {
+      "standard_name": "ocean_mass_x_transport",
+      "units": "kg s-1",
+      "ndim": 4
+    },
+    "vmo": {
+      "standard_name": "ocean_mass_y_transport",
+      "units": "kg s-1",
+      "ndim": 4
+    },
+    "thetao": {
+      "standard_name": "sea_water_potential_temperature",
+      "units": "degC",
+      "ndim": 4
+    },
+    // Variables for Convective Transition Diagnostics module:
+    // ta: 3D temperature, units = K:
+    "ta": {
+      "standard_name": "air_temperature",
+      "units": "K",
+      "scalar_coord_templates" : {"plev": "ta{value}"},
+      "ndim": 4
+    },
+    // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
+    "prw": {
+      "standard_name": "atmosphere_mass_content_of_water_vapor",
+      "units": "kg m-2",
+      "ndim": 3
+    },
+    // Variables for SM_ET_coupling module
+    "mrsos": {
+      "standard_name": "mass_content_of_water_in_soil_layer",
+      "units": "kg m-2",
+      "ndim": 3
+    },
+    "evspsbl": {
+      "standard_name": "water_evapotranspiration_flux",
+      "units": "kg m-2 s-1",
+      "ndim": 3
+    },
+    // Ice-Ocean variables
+    "siconc": {
+      "standard_name": "sea_ice_area_fraction",
+      "units": "%",
+      "ndim": 3
+    },
+    "tauuo": {
+      "standard_name": "downward_x_stress_at_sea_water_surface",
+      "units": "N m-2",
+      "ndim": 3
+    },
+    "tauvo": {
+      "standard_name": "downward_y_stress_at_sea_water_surface",
+      "units": "N m-2",
+      "ndim": 3
+    },
+    "zos": {
+      "standard_name": "sea_surface_height_above_geoid",
+      "units": "m",
+      "ndim": 3
+    }
+  },
+  "env_vars" : {
+    // 0 for CMIP/GFDL date index start, 1 for CESM native date index start
+    "date_int_offset" : 0
+  }
+}

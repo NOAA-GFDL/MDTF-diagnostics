@@ -1,3 +1,7 @@
+.. role:: console(code)
+   :language: console
+   :class: highlight
+
 .. _ref-dev-walkthrough:
 
 Walkthrough of framework operation
@@ -14,13 +18,14 @@ We begin with a reminder that there are 2 essential files for the operation of t
 - ``src/default_tests.jsonc``: configuration input for the framework.
 - ``diagnostics/example/settings.jsonc``: settings file for the example POD.
 
+To setup for running the example POD, (1) download the necessary `supporting <ftp://ftp.cgd.ucar.edu/archive/mdtf/obs_data.example.tar>`__ and `NCAR-CAM5.timeslice sample data <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.NCAR-CAM5.timeslice.tar>`__ and unzip them under ``inputdata/``, and (2) open ``default_tests.jsonc``, uncomment the whole ``NCAR-CAM5.timeslice`` section in ``case_list``, and comment out the other cases in the list. We also recommend setting both ``save_ps`` and ``save_nc`` to ``true``.
 
 Step 1: Framework invocation
 ----------------------------
 
 The user runs the framework by executing the framework’s main driver script ``$CODE_ROOT/mdtf``, rather than executing the PODs directly. This is where the user specifies the model run to be analyzed, and chooses which PODs to run via the ``pod_list`` section in ``default_tests.jsonc``.
 
-- Some of the configuration options can be input through command line, see the :doc:`command line reference <ref_cli>` or run ``% $CODE_ROOT/mdtf --help``.
+- Some of the configuration options can be input through command line, see the :doc:`command line reference <ref_cli>` or run :console:`% $CODE_ROOT/mdtf --help`.
 
 At this stage, the framework also creates the directory ``$OUTPUT_DIR/`` (default: ``mdtf/wkdir/``) and all subdirectories therein for hosting the output files by the framework and PODs from each run.
 
@@ -46,7 +51,7 @@ Each POD describes the model data it requires as input in the ``varlist`` sectio
 
 - If no alternates are defined or the alternate variables are also unavailable, the framework will skip executing your POD, and an ``error log`` will be presented in ``index.html``.
 
-Once the framework has determined which PODs are able to run given the model data, it prepares the necessary environment variables, including directory paths and the requested variable names (as defined in ``src/filedlist_$convention.jsonc``) for PODs' operation.
+Once the framework has determined which PODs are able to run given the model data, it prepares the necessary environment variables, including directory paths and the requested variable names (as defined in ``data/fieldlist_$convention.jsonc``) for PODs' operation.
 
 - At this step, the framework also checks the PODs' observational/supporting data under ``inputdata/obs_data/``. If the directory of any of the PODs in ``pod_list`` is missing, the framework would terminate with error messages showing on the terminal. Note that the framework only checks the presence of the directory, but not the files therein.
 
@@ -70,7 +75,7 @@ Furthermore, in the ``runtime_requirements`` section of ``settings.jsonc``, we r
 
 - If there isn't a suitable environment, the POD will be skipped.
 
-Note that the framework's information about the Conda environments all comes from the YMAL (.yml) files under ``src/conda/`` (and their contents) by assuming that the corresponding Conda environments have been installed using (thus are consistent with) the YAML files.
+Note that the framework's information about the Conda environments all comes from the YAML (.yml) files under ``src/conda/`` (and their contents) by assuming that the corresponding Conda environments have been installed using (thus are consistent with) the YAML files.
 
 - The framework doesn't directly check files under ``$CONDA_ENV_DIR/``, where the Conda environments locate.
 
@@ -81,7 +86,7 @@ Example diagnostic
 
 In its ``settings.jsonc``, the example POD lists its `requirements <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/settings.jsonc#L38>`__: Python 3, and the matplotlib, xarray and netCDF4 third-party libraries for Python. In this case, the framework assigns the POD to run in the generic `python3_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__ environment provided by the framework.
 
-- In ``example.log``, under ``Env vars:`` is a comprehensive list of environment variables prepared for the POD by the framework. A great part of them are defined as in `src/fieldlist_CMIP.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/fieldlist_CMIP.jsonc>`__ via setting ``convention`` in ``default_tests.jsonc`` to ``CMIP``. Some of the environment variables are POD-specific as defined under `pod_env_vars <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/settings.jsonc#L29>`__ in the POD's ``settings.jsonc``, e.g., ``EXAMPLE_FAV_COLOR``.
+- In ``example.log``, under ``Env vars:`` is a comprehensive list of environment variables prepared for the POD by the framework. A great part of them are defined as in `data/fieldlist_CMIP.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/data/fieldlist_CMIP.jsonc>`__ via setting ``convention`` in ``default_tests.jsonc`` to ``CMIP``. Some of the environment variables are POD-specific as defined under `pod_env_vars <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/settings.jsonc#L29>`__ in the POD's ``settings.jsonc``, e.g., ``EXAMPLE_FAV_COLOR``.
 
 - In ``example.log``, after ``--- MDTF.py calling POD example``, the framework verifies the Conda-related paths, and makes sure that the ``runtime_requirements`` in ``settings.jsonc`` are met by the python3_base environment via checking `env_python3_base.yml <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_python3_base.yml>`__.
 

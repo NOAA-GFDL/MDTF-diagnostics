@@ -1,4 +1,4 @@
-; This file is part of the MJO_suite module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_suite module of the MDTF code package (see LICENSE.txt)
 
 ;***********************************************************
 ; Combined EOFs
@@ -7,8 +7,11 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"  
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl" 
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 begin
 
+  routine_name = "mjo_EOF_cal.ncl"
    casename = getenv("CASENAME")
    file_dir = getenv("WK_DIR")+"/model/netCDF/"
 
@@ -138,13 +141,13 @@ begin
   eof_cdata    = eofunc_Wrap(cdata   , neof, False)      ; (neof,3*mlon)
   eof_ts_cdata = eofunc_ts_Wrap(cdata,eof_cdata,False)   ; (neof,time)
 
-  print("==============")
-  printVarSummary(eof_cdata)
-  printMinMax(eof_cdata, True)
+;  print("==============")
+;  printVarSummary(eof_cdata)
+;  printMinMax(eof_cdata, True)
 
-  print("==============")
-  printVarSummary(eof_ts_cdata)
-  printMinMax(eof_ts_cdata, True)
+;  print("==============")
+;  printVarSummary(eof_ts_cdata)
+;  printMinMax(eof_ts_cdata, True)
 
 ;************************************************
 ; For clarity, explicitly extract each variable 
@@ -177,14 +180,14 @@ begin
   r_rlut_u200  = escorc(ceof_ts(0,:,:) , ceof_ts(2,:,:) )
   r_u850_u200 = escorc(ceof_ts(1,:,:) , ceof_ts(2,:,:) )
 
-  print("==============")
+;  print("==============")
   do n=0,neof-1
      print("neof="+n \
           +"  r_rlut_u850=" +sprintf("%4.3f",r_rlut_u850(n))  \
           +"  r_rlut_u200=" +sprintf("%4.3f",r_rlut_u200(n))  \
           +"  r_u850_u200="+sprintf("%4.3f",r_u850_u200(n)) )
   end do
-  print("==============")
+;  print("==============")
 
 ;************************************************
 ; Compute cross correlation of the multivariate EOF; EOF 1 vs EOF 2
@@ -242,6 +245,7 @@ begin
   ncdf->MJO_INDEX = mjo_ts_index    
   ncdf->PC1       = PC1     
   ncdf->PC2       = PC2     
+  print(routine_name+" wrote "+filo)
 
 end
 

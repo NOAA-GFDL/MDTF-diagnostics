@@ -11,7 +11,7 @@ The MDTF framework can be viewed as a "wrapper" for your code that handles data 
 - The :doc:`settings file <./dev_settings_quick>` is where your code talks to the framework: when you write your code, you document what model data your code uses (not covered on this page, follow the link for details). 
 - When your code is run, the framework talks to it by setting shell `environment variables <https://en.wikipedia.org/wiki/Environment_variable>`__ containing paths to the data files and other information specific to the run. The framework communicates **all** runtime information this way: this is in order to 1) pass information in a language-independent way, and 2) to make writing diagnostics easier (you don't need to parse command-line settings). 
 
-**Note** that environment variables are always strings. Your script will need to cast non-text data to the appropriate type (eg. the bounds of the analysis time period, ``FIRSTYR``, ``LASTYR``, will need to be converted to integers.)
+**Note** that environment variables are always strings. Your script will need to cast non-text data to the appropriate type (e.g. the bounds of the analysis time period, ``FIRSTYR``, ``LASTYR``, will need to be converted to integers.)
 
 Also note that names of environment variables are case-sensitive.
 
@@ -19,7 +19,7 @@ Paths
 -----
 
 ``OBS_DATA``: 
-  Path to the top-level directory containing any observational or reference data you've provided as the author of your diagnostic. Any data your diagnostic uses that doesn't come from the model being analyzed should go here (ie, you supply it to the framework maintainers, they host it, and the user downloads it when they install the framework). The framework will ensure this is copied to a local filesystem when your diagnostic is run, but this directory should be treated as **read-only**.
+  Path to the top-level directory containing any observational or reference data you've provided as the author of your diagnostic. Any data your diagnostic uses that doesn't come from the model being analyzed should go here (i.e., you supply it to the framework maintainers, they host it, and the user downloads it when they install the framework). The framework will ensure this is copied to a local filesystem when your diagnostic is run, but this directory should be treated as **read-only**.
 
 ``POD_HOME``: 
   Path to the top-level directory containing your diagnostic's source code. This will be of the form ``.../MDTF-diagnostics/diagnostics/<your POD's name>``. This can be used to call sub-scripts from your diagnostic's driver script. This directory should be treated as **read-only**.
@@ -59,15 +59,17 @@ Names of variables and dimensions
 
 These are set depending on the data your diagnostic requests in its :doc:`settings file <./dev_settings_quick>`. Refer to the examples below if you're unfamiliar with how that file is organized.
 
-For each dimension:
-  If <key> is the name of the key labeling the key:value entry for this dimension, the framework will set an environment variable named ``<key>_dim`` equal to the name that dimension has in the data files it's providing.
+*For each dimension:*
+  If <key> is the name of the key labeling the key:value entry for this dimension, the framework will set an environment variable named ``<key>_coord`` equal to the name that dimension has in the data files it's providing.
   
-    - If ``rename_dimensions`` is set to ``true`` in the settings file, this will always be equal to <key>. If If ``rename_dimensions`` is ``false``, this will be whatever the model or data source's native name for this dimension is, and your diagnostic should read the name from this variable. Your diagnostic should **only** use hard-coded names for dimensions if ``rename_dimensions`` is set to ``true`` in its :doc:`settings file <ref_settings>`.
+    - If ``rename_dimensions`` is set to ``true`` in the settings file, this will always be equal to <key>. If ``rename_dimensions`` is ``false``, this will be whatever the model or data source's native name for this dimension is, and your diagnostic should read the name from this variable. Your diagnostic should **only** use hard-coded names for dimensions if ``rename_dimensions`` is set to ``true`` in its :doc:`settings file <ref_settings>`.
 
-For each variable:
+  If the data source has provided (one-dimensional) bounds for this dimension, the name of the netCDF variable containing those bounds will be set in an environment variable named ``<key>_bnds``. If bounds are not provided, this will be set to the empty string. **Note** that multidimensional boundaries (e.g. for horizontal cells) should be listed as separate entries in the varlist section.
+
+*For each variable:*
   If <key> be the name of the key labeling the key:value entry for this variable in the varlist section, the framework will set an environment variable named ``<key>_var`` equal to the name that variable has in the data files it's providing.
   
-    - If ``rename_variables`` is set to ``true`` in the settings file, this will always be equal to <key>. If If ``rename_variables`` is ``false``, this will be whatever the model or data source's native name for this variable is, and your diagnostic should read the name from this variable. Your diagnostic should **only** use hard-coded names for dimensions if ``rename_dimensions`` is set to ``true`` in its :doc:`settings file <ref_settings>`.
+    - If ``rename_variables`` is set to ``true`` in the settings file, this will always be equal to <key>. If ``rename_variables`` is ``false``, this will be whatever the model or data source's native name for this variable is, and your diagnostic should read the name from this variable. Your diagnostic should **only** use hard-coded names for variables if ``rename_variables`` is set to ``true`` in its :doc:`settings file <ref_settings>`.
 
 
 Simple example
@@ -107,11 +109,11 @@ We only give the relevant parts of the :doc:`settings file <ref_settings>` below
 
 The framework will set the following environment variables:
 
-#. ``lat_dim``: Name of the latitude dimension in the model's native format (because ``rename_dimensions`` is false).
-#. ``lon_dim``: Name of the longitude dimension in the model's native format (because ``rename_dimensions`` is false).
-#. ``time_dim``: Name of the time dimension in the model's native format (because ``rename_dimensions`` is false).
+#. ``lat_coord``: Name of the latitude dimension in the model's native format (because ``rename_dimensions`` is false).
+#. ``lon_coord``: Name of the longitude dimension in the model's native format (because ``rename_dimensions`` is false).
+#. ``time_coord``: Name of the time dimension in the model's native format (because ``rename_dimensions`` is false).
 #. ``pr_var``: Name of the precipitation variable in the model's native format (because ``rename_variables`` is false).
-#. ``PR_FILE``: Absolute path to the file containing ``pr`` data, eg. ``/dir/precip.nc``.
+#. ``PR_FILE``: Absolute path to the file containing ``pr`` data, e.g. ``/dir/precip.nc``.
 
 
 More complex example
@@ -156,7 +158,7 @@ Let's elaborate on the previous example, and assume that the diagnostic is being
 
 Comparing this with the previous example:
 
-- ``lat_dim``, ``lon_dim`` and ``time_dim`` will be set to "lat", "lon" and "time", respectively, because ``rename_dimensions`` is true. The framework will have renamed these dimensions to have these names in all data files provided to the diagnostic.
+- ``lat_coord``, ``lon_coord`` and ``time_coord`` will be set to "lat", "lon" and "time", respectively, because ``rename_dimensions`` is true. The framework will have renamed these dimensions to have these names in all data files provided to the diagnostic.
 - ``prc_var`` and ``pr_var`` will be set to the model's native names for these variables. Names for all variables are always set, regardless of which variables are available from the data source.
 - In this example, ``PRC_FILE`` will be set to ``''``, the empty string, because it wasn't found. 
 - ``PR_FILE`` will be set to ``/dir/precip_1980_1989.nc:/dir/precip_1990_1999.nc:/dir/precip_2000_2009.nc``, because ``multi_file_ok`` was set to ``true``.

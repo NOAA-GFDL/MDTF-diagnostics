@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
-# This is a workaround to permit switching conda environments in a 
+# This is a workaround to permit switching conda environments in a
 # non-interactive shell.
-# The script is what's placed in ~/.bashrc by 'conda init bash'; 
-# this doesn't get sourced by bash in non-interactive mode so we have to 
+# The script is what's placed in ~/.bashrc by 'conda init bash';
+# this doesn't get sourced by bash in non-interactive mode so we have to
 # do it manually. See https://github.com/conda/conda/issues/7980 .
 
-# NOTE this has only been tested with conda 4.7.10 and later; I know earlier 
+# NOTE this has only been tested with conda 4.7.10 and later; I know earlier
 # versions had things in different places.
 
-# parse aruments manually
+# parse arguments manually
 _TEMP_CONDA_ROOT=""
 _TEMP_CONDA_EXE=""
 _v=1
@@ -64,10 +64,10 @@ if [ ! -d "$_CONDA_ROOT" ]; then
         if [ $_v -eq 2 ]; then echo "CONDA_ROOT set from environment"; fi
     fi
 fi
-# if not, run user's shell in interactive mode. Subshell output could have 
+# if not, run user's shell in interactive mode. Subshell output could have
 # arbitrary text output in it, since user's init scripts may be setting prompt
-# and generating output in any number of ways. We try to extract the paths by 
-# delimiting them with (hopefully uncommon) vertical tab characters (\v) and 
+# and generating output in any number of ways. We try to extract the paths by
+# delimiting them with (hopefully uncommon) vertical tab characters (\v) and
 # using awk to extract whatever text is found between those two field separators.
 if [ ! -d "$_CONDA_ROOT" ]; then
     if [ $_v -eq 2 ]; then echo "Setting conda from $SHELL -i"; fi

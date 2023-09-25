@@ -1,4 +1,4 @@
-; This file is part of the MJO_teleconnection module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_teleconnection module of the MDTF code package (see LICENSE.txt)
 
 ;-------------------------------------------------------------------------------------
 ;Calculate RMM indices for a given  model data
@@ -23,6 +23,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl" 
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 ;--------------Choose Model--------------
 ;previously used models (already have RMM indices for all of these)
 ;As Multimodel daignostic the RMM following model are already calculated and will be used in diagnostic  
@@ -44,7 +46,6 @@ print("Model: " + Model)
 
 ;------------ Read in zonal wind and olr --------------------
 
-diri    = getenv("DATADIR")+"/day/"     ;Input data directory
 diri1   = getenv("OBS_DATA")+"/"         ;Observed Input data directory
 diro    = getenv("WK_DIR")+"/model/netCDF/" 
 filolr  = getenv("olr_file")          ; input file
@@ -55,10 +56,6 @@ olrvar = getenv("rlut_var")
 u250var = getenv("u250_var")
 u850var = getenv("u850_var")
 
-lev_fac = getenv("pressure_to_Pa_factor")
-lev_factor = stringtointeger(lev_fac)
-
-print("Input data path(Model) :" + diri)
 print("Input data path(obs) :" + diri1)
 print("Output data path :" + diro)
 print("Input data file for OLR :" + filolr)
@@ -73,7 +70,7 @@ print("-------------------------------------------------------------------------
 ;---------------------------------------------------------------------------------------
 
 ;-- Reading U250 data --
-    a  = addfile (diri+filu250 , "r")      
+    a  = addfile (filu250 , "r")      
 ;    print(a)
      latt = a->lat
 ;     print(latt)
@@ -115,15 +112,7 @@ print("-------------------------------------------------------------------------
     print("ymdStrt: "+ymdStrt+" iStrt: "+iStrt+" ymdLast: "+ymdLast+" iLast: "+iLast)
     print("Date range from year "+yeart(iStrt)+" to "+yeart(iLast))
 
-    ; HACK for merging in SPEAR code before we have general level extraction working
-    if (getenv("MDTF_3D_UV").eq."0") then
-      ; extract level from 4D data
-      u250t = a->$u250var$(iStrt:iLast,{25000/lev_factor},lat_ind,:)     ;time,lev,lat,lon , 15N - 15S
-    else
-      ; 3D data
-      u250t = a->$u250var$(iStrt:iLast,lat_ind,:)     ;time,lev,lat,lon , 15N - 15S
-    end if
-    ; end HACK
+    u250t = a->$u250var$(iStrt:iLast,lat_ind,:)     ;time,lev,lat,lon , 15N - 15S
     u250t@_FillValue = -999
 
     delete(temp_time)
@@ -168,18 +157,13 @@ print("Reading data for 250mb wind")
   u250 = u250t(:,:,:); Reading data over the all avaliable time period
   u250@_FillValue = -999
 
-  ; HACK for merging in SPEAR code before we have general level extraction working
-  if (getenv("MDTF_3D_UV").eq."0") then
-    poisson_grid_fill(u250,True,1,1000,1e-2,0.6,0)
-  end if
-  ; end HACK
-  delete(u250t)
+delete(u250t)
 print("U250 data has been read")
 ;----------- 850mb wind --------------
 print("Reading data for 850mb wind")
 ;-------------------------------------
 
-  b = addfile(diri+filu850,"r")
+  b = addfile(filu850,"r")
  
  ;-check lats, lons, and time -
  
@@ -214,16 +198,7 @@ print("Reading data for 850mb wind")
   delete(time2)
  
  ;-read in data-
-  ; HACK for merging in SPEAR code before we have general level extraction working
-  if (getenv("MDTF_3D_UV").eq."0") then
-    ; extract level from 4D data    
-    u850 = b->$u850var$(iStrt:iLast,{85000/lev_factor},lat_ind,:)     ;time,lat,lon , 15N - 15S
-    poisson_grid_fill(u850,True,1,1000,1e-2,0.6,0)
-  else
-    ; 3D data
-    u850 = b->$u850var$(iStrt:iLast,lat_ind,:)     ;time,lat,lon , 15N - 15S
-  end if
-  ; end HACK
+  u850 = b->$u850var$(iStrt:iLast,lat_ind,:)     ;time,lat,lon , 15N - 15S
   u850@_FillValue = -999
 print("U850 data has been read")
 print("-------------------------------------------")
@@ -282,7 +257,7 @@ print("-------------------------------------------")
 print("Now reading OLR data")
 
   
-  b = addfile(diri+filolr,"r")
+  b = addfile(filolr,"r")
 
  ;-check lats, lons, and time -
  
@@ -325,7 +300,6 @@ print("Now reading OLR data")
   ;clean up
   delete(b)
   delete(lat_ind)
-  delete(diri)
 print("OLR data has been read")
 
 print("-------------------------------------------")

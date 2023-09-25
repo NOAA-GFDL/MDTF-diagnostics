@@ -27,16 +27,21 @@
           "EOF_500hPa",
           "MJO_suite",
           "MJO_teleconnection"
-          // "convective_transition_diag"
-          // "precip_diurnal_cycle"
+          // "convective_transition_diag",
+          // "precip_diurnal_cycle",
+          // "ocn_surf_flux_diag",
+          // "mixed_layer_depth",
+          // "tropical_pacific_sea_level",
+          // "temp_extremes_distshape",
+          // "precip_buoy_diag"
       ]
     }
     // {
     //   "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
     //   "model" : "AM4",
-    //   "convention" : "AM4",
-    //   "FIRSTYR" : 1977,
-    //   "LASTYR" : 1981,
+    //   "convention" : "GFDL",
+    //   "FIRSTYR" : 1,
+    //   "LASTYR" : 10,
     //   "pod_list" : ["MJO_prop_amp"]
     // }
     // {
@@ -64,12 +69,12 @@
   // "$" and will be expended to their current values when the framework runs.
 
   // Parent directory containing observational data used by individual PODs.
-  "OBS_DATA_ROOT": "../inputdata/obs_data",
+  "OBS_DATA_ROOT": "../inputdata/obs_data/",
 
   // Parent directory containing results from different models.
   "MODEL_DATA_ROOT": "../inputdata/model/",
 
-  // Working directory. Defaults to working directory if blank.
+  // Working directory. Defaults to OUTPUT_DIR if blank.
   "WORKING_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be
@@ -93,6 +98,10 @@
 
   // Method used to fetch model data.
   "data_manager": "Local_File",
+    
+  // Type of data that POD(s) will analyze
+  // "single_run" (default) or "multi_run"
+  "data_type": "single_run",
 
   // Method used to manage dependencies.
   "environment_manager": "Conda",

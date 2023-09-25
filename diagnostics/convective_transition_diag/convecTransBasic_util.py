@@ -1,4 +1,4 @@
-# This file is part of the convective_transition_diag module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+# This file is part of the convective_transition_diag module of the MDTF code package (see LICENSE.txt)
 
 # ======================================================================
 # convecTransBasic_util.py
@@ -20,7 +20,6 @@
 # ======================================================================
 # Import standard Python packages
 import numpy
-import numba
 import glob
 import os
 from numba import jit
@@ -440,7 +439,7 @@ def convecTransBasic_calc_model(REGION,*argsv):
         pr=numpy.squeeze(numpy.asarray(pr_netcdf.variables[PR_VAR][:,:,:],dtype="float"))
         pr_netcdf.close()
         # Units: mm/s --> mm/h
-        pr=pr[:,numpy.logical_and(lat>=-20.0,lat<=20.0),:]*3.6e3*float(os.environ["pr_conversion_factor"])
+        pr=pr[:,numpy.logical_and(lat>=-20.0,lat<=20.0),:]*3.6e3
         print("      "+pr_list[li]+" Loaded!")
 
         prw_netcdf=Dataset(prw_list[li],"r")
@@ -754,19 +753,19 @@ def convecTransBasic_plot(ret,argsv1,argsv2,*argsv3):
         #  Default: on
         for reg in numpy.arange(P0_obs.shape[0]):
             for Tidx in numpy.arange(P0_obs.shape[2]):
-                if t_reg_I_obs[reg,Tidx]:
-                    G=networkx.DiGraph()
+                if t_reg_I_obs[reg, Tidx]:
+                    dg = networkx.DiGraph()
                     for cwv_idx in numpy.arange(pdf_gt_th_obs.shape[1]-1):
-                        if (pdf_gt_th_obs[reg,cwv_idx,Tidx]>0 and pdf_gt_th_obs[reg,cwv_idx+1,Tidx]>0):
-                            G.add_path([cwv_idx,cwv_idx+1])
-                    largest = max(networkx.weakly_connected_component_subgraphs(G),key=len)
-                    bcc=largest.nodes() # Biggest Connected Component
-                    if (sum(pdf_gt_th_obs[reg,bcc,Tidx])*CWV_BIN_WIDTH_obs>CWV_RANGE_THRESHOLD):
-                        t_reg_I_obs[reg,Tidx]=True
+                        if pdf_gt_th_obs[reg, cwv_idx,Tidx] > 0 and pdf_gt_th_obs[reg, cwv_idx+1, Tidx] > 0:
+                            networkx.add_path(dg, [cwv_idx, cwv_idx+1])
+                    largest = max((dg.subgraph(c) for c in networkx.weakly_connected_components(dg)), key=len)
+                    bcc = largest.nodes()  # Biggest Connected Component
+                    if sum(pdf_gt_th_obs[reg, bcc, Tidx])*CWV_BIN_WIDTH_obs > CWV_RANGE_THRESHOLD:
+                        t_reg_I_obs[reg, Tidx] = True
                         #pdf_gt_th_obs[reg,:,Tidx]=0
                         #pdf_gt_th_obs[reg,bcc,Tidx]=1
                     else:
-                        t_reg_I_obs[reg,Tidx]=False
+                        t_reg_I_obs[reg, Tidx]=False
                         #pdf_gt_th_obs[reg,:,Tidx]=0
         ### End of Connected Component Section    
 

@@ -1,4 +1,4 @@
-; This file is part of the MJO_suite module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_suite module of the MDTF code package (see LICENSE.txt)
 
 undef("mjo_wavenum_freq_season_plot_panel")
 procedure mjo_wavenum_freq_season_plot_panel (wf[*][*],seaName[1]:string\
@@ -220,7 +220,7 @@ begin
   res1@cnMaxLevelValF       =  1.0          ; set max contour level
   res1@cnLevelSpacingF      =  0.1          ; set contour spacing
 
-  res1@cnLabelBarEndLabelsOn= True
+;  res1@cnLabelBarEndLabelsOn= True
   res1@cnLabelBarEndStyle   = "ExcludeOuterBoxes"
   res1@cnInfoLabelOn        = False
 

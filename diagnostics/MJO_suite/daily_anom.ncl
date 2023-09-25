@@ -1,4 +1,4 @@
-; This file is part of the MJO_suite module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt)
+; This file is part of the MJO_suite module of the MDTF code package (see LICENSE.txt)
 
 ; FILE: daily_anom.ncl
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
@@ -6,8 +6,11 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$POD_HOME/calc_utils.ncl"
 
+setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+
 begin
 
+routine_name = "daily_anom"
 casename = getenv("CASENAME")
 time_coord = getenv("time_coord")
 lat_coord = getenv("lat_coord")
@@ -20,35 +23,40 @@ yr2 = stringtointeger(getenv("LASTYR"))
 start_date = yr1*10000+201
 end_date = (yr2+1)*10000+101
 
+delete_existing = False  ;True = overwrite, False = don't overwrite
+if ( delete_existing ) then
+  print("WARNING: daily_anom.ncl deleting existing anom files")
+  system("ls "+file_dir+"/*anom*.nc")
+end if
 
-file_pr = casename+".pr.day.nc"
-file_rlut = casename+".rlut.day.nc"
-file_u200 = casename+".u200.day.nc"
-file_u850 = casename+".u850.day.nc"
-file_v200 = casename+".v200.day.nc"
-file_v850 = casename+".v850.day.nc"
+var_names = (/ "pr","rlut","u200","u850","v200","v850" /)
 
-;file_LANDFRAC = casename+"."+getenv("landfrac_var")+".nc"
-;landfrac_var = getenv("landfrac_var")
+do i=0,dimsizes(var_names)-1
 
+  var_name = var_names(i)
+  print(routine_name+" starting variable "+var_name)
 
-; pr
+  file_in   = file_dir +"/"+casename+"."+var_name+".day.nc"
+  file_out  = file_dir +"/"+casename+"."+var_name+".day.anom.nc"
 
-if( isfilepresent(file_dir+casename+".pr.daily.anom.nc") ) then
-    print(file_dir+casename+".pr.daily.anom.nc already exists!!")
+  if( isfilepresent(file_out) .and. (.not.delete_existing)) then
+    print(file_out+" already exists. To force recalculation, set daily_anom.ncl delete_existing = True")
 
-else
-    print("trying to create "+file_dir+casename+".pr.daily.anom.nc")
-    if( isfilepresent(file_dir+file_pr) ) then
-    	print("reading "+file_dir+file_pr)
-	f = addfile(file_dir+file_pr,"r")
+  else
+
+    if( isfilepresent(file_out) .and. (delete_existing)) then
+      print(file_out+" already exists. Overwriting since delete_existing = "+delete_existing)
+      system("rm "+file_out)
+    end if
+ 
+    if( isfilepresent(file_in) ) then
+    	print("reading "+file_in)
+	f = addfile(file_in,"r")
 	time = f->$time_coord$
 	date = cd_calendar(time,-2)
 
-	print(getfilevarnames(f))
-
 	gw = f->gw
-	invar = f->pr($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
+	invar = f->$var_name$($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
 
 	var = compute_daily_anom(invar)
 	var!0 = "time"
@@ -58,231 +66,29 @@ else
 	var&lat = f->$lat_coord$
 	var&lon = f->$lon_coord$
 
-	var = (/var*1000.0*86400.0/) ; mm/day
-	var@units = "mm/day"
+        ; this was already done in daily_netcdf
+        if (var_name.eq."pr") then
+          var = (/var*1000.0*86400.0/) ; mm/day
+          var@units = "mm/day"
+        end if
 
-	print("writing "+file_dir+casename+".pr.day.anom.nc")
-	fo = addfile(file_dir+casename+".pr.day.anom.nc","c")
+	print("writing "+file_out)
+	fo = addfile(file_out,"c")
 
 	fo->gw = gw
 	fo->date = date
-	fo->pr = var
+	fo->$var_name$ = var
 
 	delete(f)
 	delete(fo)
 	delete(invar)
 	delete(var)
  
-    else
-	print("ERROR: missing daily_netcdf.ncl created file "+file_dir+file_pr)
-    end if ; if( isfilepresent(file_dir+file_pr) ) then
-end if ; isfilepresent(wkdir+ ... anom ...
-
-
-; U200
-if( isfilepresent(file_dir+casename+".u200.day.anom.nc") ) then
-
-print(file_dir+casename+".u200.day.anom.nc already exists")
-
-else
-
-if( isfilepresent(file_dir+file_u200) ) then
-
-f = addfile(file_dir+file_u200,"r")
-time = f->$time_coord$
-date = cd_calendar(time,-2)
-
-
-invar = f->u200($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
+      else
+        print("ERROR: missing file that should have been made by daily_netcdf.ncl "+file_in)
+      end if ; if( isfilepresent(file_in)
+    end if ; isfilepresent(wkdir+ ... anom ...
     
-var = compute_daily_anom(invar)
-var!0 = "time"
-var!1 = "lat"
-var!2 = "lon"
-var&time = time
-var&lat = f->$lat_coord$
-var&lon = f->$lon_coord$
-
-print("writing "+file_dir+casename+".u200.day.anom.nc")
-fo = addfile(file_dir+casename+".u200.day.anom.nc","c")
-
-fo->gw = gw
-fo->date = date
-fo->u200 = var
-
-delete(f)
-delete(fo)
-delete(invar)
-delete(var)
-
-end if
-end if
-
-; u850
-if( isfilepresent(file_dir+casename+".u850.daily.anom.nc") ) then
-
-print(file_dir+casename+".u850.daily.anom.nc exists!")
-
-else
-
-print(get_script_name()+"Creating "+file_dir+casename+".u850.daily.anom.nc")
-if( isfilepresent(file_dir+file_u850) ) then
-
-print("reading "+file_u850)
-f = addfile(file_dir+file_u850,"r")
-time = f->$time_coord$
-date = cd_calendar(time,-2)
-
-
-invar = f->u850($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
-    
-var = compute_daily_anom(invar)
-var!0 = "time"
-var!1 = "lat"
-var!2 = "lon"
-var&time = time
-var&lat = f->$lat_coord$
-var&lon = f->$lon_coord$
-
-print("writing "+file_dir+casename+".u850.day.anom.nc")
-fo = addfile(file_dir+casename+".u850.day.anom.nc","c")
-
-fo->gw = gw
-fo->date = date
-fo->u850 = var
-
-delete(f)
-delete(fo)
-delete(invar)
-delete(var)
-
-end if
-end if
-
-; v200
-if( isfilepresent(file_dir+casename+".v200.day.anom.nc") ) then
-
-print(file_dir+casename+".v200.day.anom.nc already exists")
-
-else
-
-if( isfilepresent(file_dir+file_v200) ) then
-    print(get_script_name()+"Creating "+file_dir+casename+".v200.daily.anom.nc")
-    print("reading "+file_v200)
-    f = addfile(file_dir+file_v200,"r")
-    time = f->$time_coord$
-    date = cd_calendar(time,-2)
-
-    invar = f->v200($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
-    
-    var = compute_daily_anom(invar)
-    var!0 = "time"
-    var!1 = "lat"
-    var!2 = "lon"
-    var&time = time
-    var&lat = f->$lat_coord$
-    var&lon = f->$lon_coord$
-
-    print("writing "+file_dir+casename+".v200.day.anom.nc")
-    fo = addfile(file_dir+casename+".v200.day.anom.nc","c")
-
-    fo->gw = gw
-    fo->date = date
-    fo->v200 = var
-
-    delete(f)
-    delete(fo)
-    delete(invar)
-    delete(var)
-
-else
-    print("UH oh: file doens't exist: "+file_dir+file_v200)
-
-end if
-end if
-
-; v850
-if( isfilepresent(file_dir+casename+".v850.day.anom.nc") ) then
-
-print(file_dir+casename+".v850.day.anom.nc already exists!!")
-
-else
-
-if( isfilepresent(file_dir+file_v850) ) then
-print(get_script_name()+"Creating "+file_dir+casename+".v850.daily.anom.nc")
-print("reading "+file_v850)
-f = addfile(file_dir+file_v850,"r")
-time = f->$time_coord$
-date = cd_calendar(time,-2)
-
-invar = f->v850($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
-    
-var = compute_daily_anom(invar)
-var!0 = "time"
-var!1 = "lat"
-var!2 = "lon"
-var&time = time
-var&lat = f->$lat_coord$
-var&lon = f->$lon_coord$
-
-print("writing "+file_dir+casename+".v850.day.anom.nc")
-fo = addfile(file_dir+casename+".v850.day.anom.nc","c")
-
-fo->gw = gw
-fo->date = date
-fo->v850 = var
-
-delete(f)
-delete(fo)
-delete(invar)
-delete(var)
-
-
-
-end if
-end if
-
-; rlut
-if( isfilepresent(file_dir+casename+".rlut.day.anom.nc") ) then
-
-print(file_dir+casename+".rlut.day.anom.nc exists!!")
-
-else
-
-if( isfilepresent(file_dir+file_rlut) ) then
-
-print("reading "+file_rlut)
-f = addfile(file_dir+file_rlut,"r")
-time = f->$time_coord$
-date = cd_calendar(time,-2)
-
-invar = f->rlut($time_coord$|:,$lat_coord$|:,$lon_coord$|:)
-    
-var = compute_daily_anom(invar)
-var!0 = "time"
-var!1 = "lat"
-var!2 = "lon"
-var&time = time
-var&lat = f->$lat_coord$
-var&lon = f->$lon_coord$
-
-print("writing "+file_dir+casename+".rlut.day.anom.nc")
-fo = addfile(file_dir+casename+".rlut.day.anom.nc","c")
-
-fo->gw = gw
-fo->date = date
-fo->rlut = var
-
-delete(f)
-delete(fo)
-delete(invar)
-delete(var)
-
-
-
-end if
-end if
-
-
+  end do
 
 end

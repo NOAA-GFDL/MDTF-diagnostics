@@ -60,6 +60,7 @@
       "areacello": {
         "standard_name": "cell_area",
         "units": "m2",
+        "modifier" : "ocean_realm",
         "dimensions" : ["lat", "lon"]
         }
   }

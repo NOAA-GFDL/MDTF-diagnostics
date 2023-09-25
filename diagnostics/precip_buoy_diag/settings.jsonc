@@ -1,0 +1,75 @@
+// Convection Transition
+//
+// This requires sub-daily-timescale precipitation rate, air temperature, specific humidity, 
+// and surface pressure (optional).
+// For further documentation and user
+// options, see comments in convective_transition_diag_v1r3.py.
+// This also requires the following Python modules:
+// os, glob, json, cython, xarray, scipy, matplotlib, networkx, warnings,
+// numba.
+// The code is in Python (3.7).
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+{
+	"settings": {
+		"driver": "precip_buoy_diag.py",
+		"long_name": "Precipitation Buoyancy Diagnostics",
+		"realm": "atmos",
+		"description": "Precipitation Buoyancy Diagnostics",
+		// threshold precipitation value to compute precipitating pdfs
+		"pod_env_vars": { "PRECIP_THRESHOLD": "0.25", 
+		// option to handle sigma co-ordinates. Change VERT_TYPE to "sigma"
+		"VERT_TYPE" : "pres"},
+		"runtime_requirements": {
+			"python3": ["numpy", "scipy", "cython", "matplotlib", "xarray", "numba", "networkx"]
+		}
+	},
+	"dimensions": {
+   		       "lat": {"standard_name": "latitude"},
+                       "lon": {"standard_name": "longitude"},
+                       "lev": {
+                               "standard_name": "air_pressure",
+                               "positive": "down"
+                              },
+                       "time": {"standard_name": "time"}
+                      },
+	"varlist": {
+		     "pr": {
+                            "standard_name": "precipitation_flux",
+			    "freq": "1hr",
+			    "requirement": "required",
+			    "units": "kg m-2 s-1",
+                            "dimensions" : ["time", "lat", "lon"],
+                            "multi_file_ok" : true
+		           },
+		   "ta": {
+			   "standard_name": "air_temperature",
+			   "freq": "1hr",
+			   "requirement": "required",
+			   "units": "K",
+                           "dimensions" : ["time", "lev", "lat", "lon"],
+                           "multi_file_ok" : true
+		         },
+		   "qa": {
+			   "standard_name": "specific_humidity",
+			   "freq": "1hr",
+			   "requirement": "required",
+			   "units": "kg/kg",
+                           "dimensions" : ["time", "lev", "lat", "lon"],
+                           "multi_file_ok" : true
+		         },
+		    "ps": {
+			   "standard_name": "surface_air_pressure",
+			   "freq": "1hr",
+			   // this is optional only if height co-ordinates are on pressure levels
+			   // if height co-ordinates are sigma, then surface pressure is required.
+			  "requirement": "optional",
+			  "units": "Pa",
+                          "dimensions" : ["time", "lat", "lon"],
+                          "multi_file_ok" : true
+		         }
+                     }
+}

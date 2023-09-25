@@ -1,0 +1,38 @@
+{
+  "settings" : {
+    "driver" : "eulerian_storm_track.py",
+    "long_name" : "Eulerian Storm Track",
+    "realm" : "atmos",
+    "description" : "Eulerian Storm Track",
+    "pod_env_vars" : {
+      "lat_var": "lat", 
+      "lon_var": "lon" 
+    },
+    "runtime_requirements": {
+        "python3": ["matplotlib", "xarray", "netCDF4", "numpy", "cartopy"]
+    }
+  },
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "time": {"standard_name": "time"},
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    } 
+  },
+  "data": {
+    "frequency": "6hr"
+  },
+  "varlist" : {
+    "v850": {
+      "standard_name" : "northward_wind",
+      "units": "m s-1",
+      "dimensions": ["time", "lat", "lon"], 
+      "use_exact_name": true,
+      "lev" : 850
+    }
+  }
+}

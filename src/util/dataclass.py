@@ -511,6 +511,8 @@ DEFAULT_MDTF_DATACLASS_KWARGS = {'init': True, 'repr': True, 'eq': True,
 
 # declaration to allow calling with and without args: python cookbook 9.6
 # https://github.com/dabeaz/python-cookbook/blob/master/src/9/defining_a_decorator_that_takes_an_optional_argument/example.py
+
+
 def mdtf_dataclass(cls=None, **deco_kwargs):
     """Wrap the Python :py:func:`~dataclasses.dataclass` class decorator to customize
     dataclasses to provide rudimentary type checking and conversion. This
@@ -573,12 +575,13 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
     # Do type coercion after dataclass' __init__, but before user __post_init__
     # Do type check after __init__ and __post_init__
     _old_post_init = cls.__post_init__
+
     @functools.wraps(_old_post_init)
     def _new_post_init(self, *args, **kwargs):
         if hasattr(self, 'log'):
-            _post_init_log = self.log # for object hierarchy
+            _post_init_log = self.log  # for object hierarchy
         else:
-            _post_init_log = _log # fallback: use module-level logger
+            _post_init_log = _log  # fallback: use module-level logger
         _mdtf_dataclass_type_coercion(self, _post_init_log)
         _old_post_init(self, *args, **kwargs)
         _mdtf_dataclass_type_check(self, _post_init_log)
@@ -586,10 +589,12 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
 
     return cls
 
+
 def is_regex_dataclass(obj):
     """Returns True if *obj* is a :func:`regex_dataclass`.
     """
     return hasattr(obj, '_is_regex_dataclass') and obj._is_regex_dataclass == True
+
 
 def _regex_dataclass_preprocess_kwargs(self, kwargs):
     """Edit kwargs going to the auto-generated __init__ method of this dataclass.
@@ -711,6 +716,7 @@ def regex_dataclass(pattern, **deco_kwargs):
         return cls
     return _dataclass_decorator
 
+
 def dataclass_factory(dataclass_decorator, class_name, *parents, **kwargs):
     """Function that returns a dataclass (ie, a decorated class) whose fields
     are the union of the fields in *parents*, which the new dataclass inherits
@@ -734,7 +740,7 @@ def dataclass_factory(dataclass_decorator, class_name, *parents, **kwargs):
         return cls_(**new_kwargs)
 
     def _from_dataclasses(cls_, *other_dcs, **kwargs_):
-        f"""Classmethod to create a new instance of {class_name} from instances
+        f"""Class method to create a new instance of {class_name} from instances
         of its parents, along with any other field values passed in kwargs.
         """
         # above docstring gets templated
@@ -754,7 +760,6 @@ def dataclass_factory(dataclass_decorator, class_name, *parents, **kwargs):
     new_cls = type(class_name, tuple(parents), methods)
     return dataclass_decorator(new_cls, **kwargs)
 
-# ----------------------------------------------------
 
 def filter_dataclass(d, dc, init=False):
     """Return a dict of the subset of fields or entries in *d* that correspond to
@@ -797,6 +802,7 @@ def filter_dataclass(d, dc, init=False):
         )
         ans.update({f.name: d[f.name] for f in init_fields if f.name in d})
     return ans
+
 
 def coerce_to_dataclass(d, dc, **kwargs):
     """Given a dataclass *dc* (may be the class or an instance of it), and a dict,

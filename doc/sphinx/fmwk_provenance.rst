@@ -1,4 +1,0 @@
-Provenance and logging
-======================
-
-TBD

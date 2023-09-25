@@ -50,7 +50,17 @@ This option should only be used if installation was done via the alternative ins
 Runtime managers
 ----------------
 
-The runtime manager is responsible for beginning the execution of each POD's code, and for returning control back to the framework when the PODs have finished running or raised an error. Because only one value for this option has currently been implemented, we don't provide a command-line flag to change it. If you would like the package to support a method of running PODs that hasn't currently been implemented, please make a request in the appropriate GitHub `discussion thread <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/176>`__.
+The runtime manager is responsible for beginning the execution of each POD's code, and for returning control back to the framework when the PODs have finished running or raised an error.
+Two runtime managers are implemented: `single_run` (default) or `multi_run`. The framework determines the runtime
+manager based on the `data_type` option specified at runtime. Both runtime managers launch PODs via the subprocess
+manager.
+
+The `single_run` implementation passes information from a `case` structure to several PODs that analyze a single model
+dataset, and an observational dataset if required. The `multi_run` implementation passes information from a `POD` structure to a single
+POD that analyzes data from multiple model and/or observational datasets. Users can run more than one multi_run POD in a
+single ``./mdtf`` call. At this time, the framework does not support running a mix of `single_run` and `multi_run` PODs at
+once. If you would like the package to support a method of running PODs that hasn't currently been implemented,
+please make a request in the appropriate GitHub `discussion thread <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/176>`__.
 
 Local subprocess runtime manager
 ++++++++++++++++++++++++++++++++

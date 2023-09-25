@@ -78,6 +78,11 @@
       "scalar_coord_templates": {"plev": "wap{value}"},
       "ndim": 4
     },
+    "o3": {
+      "standard_name": "mole_fraction_of_ozone_in_air",
+      "units": "mol mol-1",
+      "ndim": 4
+    },
     "ts": {
       "standard_name": "surface_temperature",
       "units": "K",
@@ -99,6 +104,11 @@
       "units": "kg m-2 s-1",
       "ndim": 3
     },
+    "tp": {
+      "standard_name": "total_precipitation",
+      "units": "kg m-2",
+      "ndim": 3
+    },
     "tas" : {
       "standard_name": "air_temperature",
       "units": "K",
@@ -117,7 +127,14 @@
     },
     "areacello": {
       "standard_name": "cell_area",
+      "modifier" : "ocean_realm",
       "units": "m2",
+      "ndim": 2
+    },
+    "areacella": {
+      "standard_name": "cell_area",
+      "units": "m2",
+      "modifier" : "atmos_realm",
       "ndim": 2
     },
     "ps": {
@@ -238,6 +255,7 @@
     "ta": {
       "standard_name": "air_temperature",
       "units": "K",
+      "scalar_coord_templates" : {"plev": "ta{value}"},
       "ndim": 4
     },
     // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)

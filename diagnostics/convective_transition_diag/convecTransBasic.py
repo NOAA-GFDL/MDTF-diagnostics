@@ -56,7 +56,6 @@
 #  (and change obs_data/convective_transition_diag/region_0.25x0.25_costal2.5degExcluded.mat)
 # ======================================================================
 # Import standard Python packages
-import glob
 import os
 import json
 

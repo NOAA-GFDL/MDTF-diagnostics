@@ -11,6 +11,8 @@
     // only used for taking slices, unit conversion
     "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
     "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
+    "TLONG": {"axis": "X", "standard_name": "array of t-grid longitudes", "units": "degrees_east"},
+    "TLAT": {"axis": "Y", "standard_name": "array of t-grid latitudes", "units": "degrees_north"},
     "plev": {
       "standard_name": "air_pressure",
       "units": "hPa",
@@ -23,6 +25,12 @@
       "positive": "down",
       "axis": "Z"
     },
+    "z_t": {
+      "standard_name": "depth from surface to midpoint of layer",
+      "units": "centimeters",
+      "positive": "down",
+      "axis": "Z"
+   },
     "time": {"axis": "T", "standard_name": "time", "units": "days"}
   },
   "aux_coords": {
@@ -56,6 +64,12 @@
       // note: 4d name is 'Z3' but Z500 = height at 500 mb, etc.
       "scalar_coord_templates": {"plev": "Z{value}"},
       "ndim": 4
+    },
+    "Z500": {
+      "standard_name": "geopotential_height_500mb",
+      "units": "m",
+      // note: 4d name is 'Z3' but Z500 = height at 500 mb, etc.
+      "ndim": 3
     },
     "Q": {
       "standard_name": "specific_humidity",
@@ -148,6 +162,11 @@
       "units": "W m-2",
       "ndim": 3
     },
+     "FLNT": {
+      "standard_name": "net_upward_longwave_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
     "SHFLX": {
       "standard_name": "surface_upward_sensible_heat_flux",
       "units": "W m-2",
@@ -175,6 +194,7 @@
     },
     "areacello": {
       "standard_name": "cell_area",
+      "modifier": "ocean_realm",
       "units": "m2",
       "ndim": 2
     },
@@ -202,6 +222,11 @@
     "THETAL": {
       "standard_name": "sea_water_potential_temperature",
       "units": "K",
+      "ndim": 4
+    },
+    "SST": {
+      "standard_name": "Potential Temperature",
+      "units": "degC",
       "ndim": 4
     },
     // Variables for Convective Transition Diagnostics module:

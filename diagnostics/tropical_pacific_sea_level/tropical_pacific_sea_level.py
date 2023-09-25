@@ -702,7 +702,7 @@ ax1.set_xlim(
 ax1.tick_params(axis="y", labelsize=20, labelcolor="k", rotation=0)
 ax1.tick_params(axis="x", labelsize=20, labelcolor="k", rotation=0)
 ax1.set_title("Linear trend", {"size": "24"}, pad=24)
-ax1.legend(loc="upper left", bbox_to_anchor=(1.05, 1), fontsize=14, frameon=False)
+ax1.legend(loc="upper left", bbox_to_anchor=(1.05, 1), fontsize=14, facecolor=None)
 ax1.grid(linestyle="dashed", alpha=0.5, color="grey")
 
 
@@ -856,22 +856,18 @@ fig.savefig(
     facecolor="w",
     edgecolor="w",
     orientation="portrait",
-    papertype=None,
     format=None,
     transparent=False,
     bbox_inches="tight",
     pad_inches=None,
-    frameon=None,
 )
 fig.savefig(
     os.getenv("WK_DIR") + "/obs/PS/example_obs_plot.eps",
     facecolor="w",
     edgecolor="w",
     orientation="portrait",
-    papertype=None,
     format=None,
     transparent=False,
     bbox_inches="tight",
     pad_inches=None,
-    frameon=None,
 )

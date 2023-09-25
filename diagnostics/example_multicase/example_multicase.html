@@ -1,0 +1,25 @@
+<title>MDTF example diagnostic</title>
+<img src="../mdtf_diag_banner.png">
+<h3>Multi-Case Example Diagnostic: zonal-average near-surface temperature anomaly</h3>
+<p>
+    This POD illustrates how multiple cases (experiments) can be analyzed together.
+    The framework initializes and processes each case, writes the environment variables for the cases
+    to a yaml file (case_info.yaml). The example_multicase POD reads information from the yaml file
+    into a dictionary that it references to ingest data from the output files for each ease.
+</p>
+<p>
+    The example_multicase POD reads near-surface air temperature (TAS) from netcdf output files for multiple cases.
+    The POD time averages the TAS data and calculates the anomaly relative to the global mean.
+    The anomalies are zonally-averaged and the results from all cases are shown on a single plot.
+</p>
+<TABLE>
+    <TR>
+        <TH align=left style="color:navy">Time averages
+        <TH align=left>Model Results
+    <TR>
+        <TH align=left>Zonal-mean near-surface temperature anomalies (K)
+            <!--
+                Relative links to bitmaps of plots made by the diagnostic, see above.
+            -->
+        <TH align=center><A href=model/example_model_plot.png>plot</A>
+</TABLE>

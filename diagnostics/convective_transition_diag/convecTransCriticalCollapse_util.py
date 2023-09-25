@@ -16,7 +16,6 @@
 # ======================================================================
 # Import standard Python packages
 import numpy
-import glob
 from scipy.interpolate import interp1d
 from netCDF4 import Dataset
 import matplotlib.pyplot as mp
@@ -153,17 +152,17 @@ def convecTransCriticalCollapse_fitCritical(argsv1,*argsv2):
         #  Default: on
         for reg in numpy.arange(P0.shape[0]):
             for Tidx in numpy.arange(P0.shape[2]):
-                if t_reg_I[reg,Tidx]:
-                    G=networkx.DiGraph()
+                if t_reg_I[reg, Tidx]:
+                    dg = networkx.DiGraph()
                     for cwv_idx in numpy.arange(pdf_gt_th.shape[1]-1):
-                        if (pdf_gt_th[reg,cwv_idx,Tidx]>0 and pdf_gt_th[reg,cwv_idx+1,Tidx]>0):
-                            G.add_path([cwv_idx,cwv_idx+1])
-                    largest = max(networkx.weakly_connected_component_subgraphs(G),key=len)
-                    bcc=largest.nodes() # Biggest Connected Component
-                    if (sum(pdf_gt_th[reg,bcc,Tidx])*CWV_BIN_WIDTH>CWV_RANGE_THRESHOLD):
-                        t_reg_I[reg,Tidx]=True
-                        pdf_gt_th[reg,:,Tidx]=0
-                        pdf_gt_th[reg,bcc,Tidx]=1
+                        if pdf_gt_th[reg, cwv_idx, Tidx] > 0 and pdf_gt_th[reg, cwv_idx+1, Tidx] > 0:
+                            networkx.add_path(dg, [cwv_idx, cwv_idx+1])
+                    largest = max((dg.subgraph(c) for c in networkx.weakly_connected_components(dg)), key=len)
+                    bcc = largest.nodes()  # Biggest Connected Component
+                    if sum(pdf_gt_th[reg, bcc, Tidx])*CWV_BIN_WIDTH>CWV_RANGE_THRESHOLD:
+                        t_reg_I[reg, Tidx] = True
+                        pdf_gt_th[reg, :, Tidx] = 0
+                        pdf_gt_th[reg, bcc, Tidx] = 1
                     else:
                         t_reg_I[reg,Tidx]=False
                         pdf_gt_th[reg,:,Tidx]=0

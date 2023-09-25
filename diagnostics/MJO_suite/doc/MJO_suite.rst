@@ -62,52 +62,32 @@ More About the Diagnostic
 
 An extensive explanation of the figures and techniques used to achieve them can be found on Dennis Shea’s NCL MJO CLIVAR page​. Some examples are provided below:
 
-.. container:: clearer
-
-|clearfloats|
-
 .. image:: mjo_suite_fig1.png
-   :align: right
-   :width: 50 %
+   :align: center
+   :width: 75 %
 
 **Lag Correlation**: Lag correlation diagram using on 20-100 day band-pass filtered daily data. The reference time series is the central Indian Ocean regional precipitation time series, which is correlated with precipitation and zonal wind anomalies in specified regions at different lags. Lag-longitude and lag-latitude plots of correlation values for different regions are shown. Color is for precipitation correlations while the lagged correlations for the zonal winds are the contours. These are analogous the Figures 5 and 6 in the reference article except they are for one season.
 
-.. container:: clearer
-
-|clearfloats|
-
 .. image:: mjo_suite_fig2.png
-   :align: left
-   :width: 50 %
+   :align: center
+   :width: 75 %
 
 **Wavenumber-Frequency Spectra**: The wavenumber - frequency spectra for each season, with vertical reference lines indicating at for 30 and 80 days.
 
-.. container:: clearer
-
-|clearfloats|
-
-**EOF analysis (univariate)**: Conventional (covariance) univariate EOF analysis for 20-100 day band-pass filtered data of outgoing longwave radiation over 30S to 30N.
 
 .. image:: mjo_suite_fig3.png
    :align: center
    :width: 100 %
 
-.. container:: clearer
 
-|clearfloats|
-
-**Composite Life-cycles**: The first and second principle components of the EOF analysis are used to derive the appropriate MJO phase category. The size of the reference anomaly wind vector is in the upper right. The phase (eg P3, means "Phase 3") and the number of days used to create the composite are at the lower right.
+**EOF analysis (univariate)**: Conventional (covariance) univariate EOF analysis for 20-100 day band-pass filtered data of outgoing longwave radiation over 30S to 30N.
 
 .. image:: mjo_suite_fig4.png
    :align: center
    :width: 100 %
 
-.. 
-   # https://stackoverflow.com/questions/4550021/working-example-of-floating-image-in-restructured-text
+**Composite Life-cycles**: The first and second principle components of the EOF analysis are used to derive the appropriate MJO phase category. The size of the reference anomaly wind vector is in the upper right. The phase (eg P3, means "Phase 3") and the number of days used to create the composite are at the lower right.
 
-.. |clearfloats| raw:: html
-
-   <div class="clearer"></div>
 
 .. |^2| replace:: \ :sup:`2`\ 
 .. |^3| replace:: \ :sup:`3`\ 

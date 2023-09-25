@@ -1,6 +1,7 @@
 """Code specific to the computing environment at NOAA's Geophysical Fluid
 Dynamics Laboratory (Princeton, NJ, USA).
 """
+import abc
 import os
 import io
 import dataclasses
@@ -8,7 +9,8 @@ import shutil
 import tempfile
 import pandas as pd
 from src import (util, core, diagnostic, data_manager, data_sources,
-    preprocessor, environment_manager, output_manager, cmip6)
+                 preprocessor, environment_manager, output_manager, cmip6)
+from src import query_fetch_preprocess as qfp
 from sites.NOAA_GFDL import gfdl_util
 
 import logging
@@ -44,7 +46,7 @@ class GFDLMDTFFramework(core.MDTFFramework):
         self.global_env_vars['MDTF_TMPDIR'] = gfdl_tmp_dir
 
     def _post_parse_hook(self, cli_obj, config, paths):
-        ### call parent class method
+        # call parent class method
         super(GFDLMDTFFramework, self)._post_parse_hook(cli_obj, config, paths)
 
         self.reset_case_pod_list(cli_obj, config, paths)
@@ -126,7 +128,7 @@ class GfdlDiagnostic(diagnostic.Diagnostic):
 
 # ------------------------------------------------------------------------
 
-class GCPFetchMixin(data_manager.AbstractFetchMixin):
+class GCPFetchMixin(qfp.AbstractFetchMixin):
     """Mixin implementing data fetch for netcdf files on filesystems accessible
     from GFDL via GCP. Remote files are copies to a local temp directory. dmgets
     are issued for remote files on tape filesystems.
@@ -147,6 +149,10 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
             paths = set([])
             for var in vars_to_fetch:
                 for d_key in var.iter_data_keys(status=core.ObjectStatus.ACTIVE):
+                    paths.update(d_key.remote_data())
+                for d_key in var.iter_associated_files_keys(
+                    status=core.ObjectStatus.ACTIVE
+                ):
                     paths.update(d_key.remote_data())
 
             self.log.info(f"Start dmget of {len(paths)} files...")
@@ -203,7 +209,7 @@ class GCPFetchMixin(data_manager.AbstractFetchMixin):
 
 
 class GFDL_GCP_FileDataSourceBase(
-    data_manager.OnTheFlyDirectoryHierarchyQueryMixin,
+    qfp.OnTheFlyDirectoryHierarchyQueryMixin,
     GCPFetchMixin,
     data_manager.DataframeQueryDataSourceBase
 ):
@@ -238,6 +244,12 @@ class GFDL_GCP_FileDataSourceBase(
             self.MODEL_WK_DIR = d.MODEL_WK_DIR
             self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
 
+    @abc.abstractmethod
+    def query_associated_files(self, d_key):
+        """abstract method for querying dataframe for associated files"""
+        pass
+
+
 @util.mdtf_dataclass
 class GFDL_UDA_CMIP6DataSourceAttributes(data_sources.CMIP6DataSourceAttributes):
     def __post_init__(self, log=_log, model=None, experiment=None):
@@ -253,7 +265,7 @@ class Gfdludacmip6DataManager(
     _FileRegexClass = cmip6.CMIP6_DRSPath
     _DirectoryRegex = cmip6.drs_directory_regex
     _AttributesClass = GFDL_UDA_CMIP6DataSourceAttributes
-    _fetch_method = "cp" # copy locally instead of symlink due to NFS hanging
+    _fetch_method = "cp"  # copy locally instead of symlink due to NFS hanging
 
 
 @util.mdtf_dataclass
@@ -320,9 +332,10 @@ _pp_static_dir_regex = util.RegexPattern(r"""
         /?                      # maybe initial separator
         (?P<component>[a-zA-Z0-9_-]+)     # component name
     """,
-    defaults={
-        'frequency': util.FXDateFrequency, 'chunk_freq': util.FXDateFrequency
-    }
+                                         defaults={
+                                             'frequency': util.FXDateFrequency,
+                                             'chunk_freq': util.FXDateFrequency
+                                         }
 )
 pp_dir_regex = util.ChainedRegexPattern(
     # try the first regex, and if no match, try second
@@ -340,25 +353,27 @@ _pp_ts_regex = util.RegexPattern(r"""
         (?P<variable>[a-zA-Z0-9_-]+)\.       # field name
         nc                      # netCDF file extension
     """
-)
+                                 )
 _pp_static_regex = util.RegexPattern(r"""
         /?                      # maybe initial separator
         (?P<component>[a-zA-Z0-9_-]+)/     # component name
         (?P=component)     # component name (again)
         \.static\.nc             # static frequency, netCDF file extension
     """,
-    defaults={
-        'variable': 'static',
-        'start_date': util.FXDateMin, 'end_date': util.FXDateMax,
-        'frequency': util.FXDateFrequency, 'chunk_freq': util.FXDateFrequency
-    }
-)
+                                     defaults={
+                                         'variable': 'static',
+                                         'start_date': util.FXDateMin, 'end_date': util.FXDateMax,
+                                         'frequency': util.FXDateFrequency, 'chunk_freq': util.FXDateFrequency
+                                     }
+                                     )
 pp_path_regex = util.ChainedRegexPattern(
     # try the first regex, and if no match, try second
     _pp_ts_regex, _pp_static_regex,
     input_field="remote_path",
     match_error_filter=pp_ignore_regex
 )
+
+
 @util.regex_dataclass(pp_path_regex)
 class PPTimeseriesDataFile():
     """Dataclass describing catalog entries for /pp/ directory timeseries data.
@@ -387,7 +402,8 @@ class PPTimeseriesDataFile():
             self.date_range = util.DateRange(self.start_date, self.end_date)
             if self.frequency.is_static:
                 raise util.DataclassParseError(("Inconsistent filename parse: "
-                    f"cannot determine if '{self.remote_path}' represents static data."))
+                                                f"cannot determine if '{self.remote_path}' represents static data."))
+
 
 @util.mdtf_dataclass
 class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
@@ -400,36 +416,46 @@ class PPDataSourceAttributes(data_manager.DataSourceAttributesBase):
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
     # convention: str
+
     convention: str = "GFDL"
     CASE_ROOT_DIR: str = ""
     component: str = ""
-    chunk_freq: util.DateFrequency = None
+    # chunk_freq: util.DateFrequency = None # THIS IS THE PROBLEM LINE FOPR THE GFDL SITE BUILD!!!
 
-    def __post_init__(self):
+    #  This method overrides dataclass.mdtf_dataclass._old_post_init.
+    # _old_post_init has the parms *args, and **kwargs. Excluding these parms
+    # from the super().__post_init__() call, therefore, caused an error that 1
+    # positional argument (self) was specified, but 2 were given during the self.atts definition
+    # in data_manager.DataSourceBase.__init__()
+    # I resolved the problem (I think) using the example here:
+    # https://stackoverflow.com/questions/66995998/how-can-i-take-the-variable-from-the-parent-class-constructor-and-use-it-in-the
+    # after another post stated that an error like this could be caused by class override issues.
+    def __post_init__(self, *args, **kwargs):
         """Validate user input.
         """
-        super(PPDataSourceAttributes, self).__post_init__()
+        super(PPDataSourceAttributes, self).__post_init__(*args, **kwargs)
         config = core.ConfigManager()
 
-    pass
 
 gfdlppDataManager_any_components_col_spec = data_manager.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
-    expt_cols = data_manager.DataFrameQueryColumnGroup([]),
-    pod_expt_cols = data_manager.DataFrameQueryColumnGroup([]),
-    var_expt_cols = data_manager.DataFrameQueryColumnGroup(['chunk_freq', 'component']),
-    daterange_col = "date_range"
+    expt_cols=data_manager.DataFrameQueryColumnGroup([]),
+    pod_expt_cols=data_manager.DataFrameQueryColumnGroup([]),
+    var_expt_cols=data_manager.DataFrameQueryColumnGroup(['chunk_freq', 'component']),
+    daterange_col="date_range"
 )
 
 gfdlppDataManager_same_components_col_spec = data_manager.DataframeQueryColumnSpec(
     # Catalog columns whose values must be the same for all variables.
-    expt_cols = data_manager.DataFrameQueryColumnGroup([]),
-    pod_expt_cols = data_manager.DataFrameQueryColumnGroup(['component']),
-    var_expt_cols = data_manager.DataFrameQueryColumnGroup(['chunk_freq']),
-    daterange_col = "date_range"
+    expt_cols=data_manager.DataFrameQueryColumnGroup([]),
+    pod_expt_cols=data_manager.DataFrameQueryColumnGroup(['component']),
+    var_expt_cols=data_manager.DataFrameQueryColumnGroup(['chunk_freq']),
+    daterange_col="date_range"
 )
 
+
 class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
+    # extends GFDL_GCP_FileDataSourceBase
     _FileRegexClass = PPTimeseriesDataFile
     _DirectoryRegex = pp_dir_regex
     _AttributesClass = PPDataSourceAttributes
@@ -454,18 +480,7 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         # any_components = True (set to False with --component_only)
         config = core.ConfigManager()
         self.frepp_mode = config.get('frepp', False)
-        # if no model component set, consider data from any components
-        self.any_components = not(self.attrs.component)
-
-    @property
-    def expt_key_cols(self):
-        """Catalog columns whose values must be the same for all data used in
-        this run of the package.
-        """
-        if not self.frepp_mode and not self.any_components:
-            return ('component', )
-        else:
-            return tuple()
+        self.any_components = config.get('any_components', False)
 
     @property
     def pod_expt_key_cols(self):
@@ -473,9 +488,21 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         differ for different PODs.
         """
         if self.frepp_mode and not self.any_components:
-            return ('component', )
+            return 'component'
         else:
             return tuple()
+
+    def query_associated_files(self, d_key):
+        """Infers static file from variable's component and assigns data key
+        to the associated_files property"""
+        df = self.df
+        component = df.iloc[[d_key.value[0]]]["component"].values[0]
+        group = df.loc[(df["component"] == component) & (df["variable"] == "static")]
+        if len(group) == 1:
+            result = self.data_key(group, expt_key=d_key.expt_key)
+        else:
+            result = None
+        return result
 
     @property
     def var_expt_key_cols(self):
@@ -486,9 +513,9 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         # of frepp_mode. This is the default behavior when called from the FRE
         # wrapper.
         if self.any_components:
-            return ('chunk_freq', 'component')
+            return 'chunk_freq', 'component'
         else:
-            return ('chunk_freq', )
+            return 'chunk_freq'
 
     # these have to be supersets of their *_key_cols counterparts; for this use
     # case they're all just the same set of attributes.
@@ -506,12 +533,13 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
         assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CASE_ROOT_DIR'))
         return self.attrs.CASE_ROOT_DIR
 
-    def _filter_column(self, df, col_name, func, obj_name):
+    def _filter_column(self, df, col_name, func, obj_name, preferred=None):
         values = list(df[col_name].drop_duplicates())
         if len(values) <= 1:
             # unique value, no need to filter
             return df
-        filter_val = func(values)
+        args = {"preferred": preferred} if preferred is not None else {}
+        filter_val = func(values, **args)
         self.log.debug("Selected experiment attribute %s='%s' for %s (out of %s).",
             col_name, filter_val, obj_name, values)
         return df[df[col_name] == filter_val]
@@ -543,8 +571,11 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             component with the fewest words (separated by '_'), or, failing that,
             the shortest overall name.
         """
-        def _heuristic_tiebreaker(str_list):
+        def _heuristic_tiebreaker(str_list, preferred=None):
+            """Internal function to resolve multiple possible attributes"""
+
             def _heuristic_tiebreaker_sub(strs):
+                """sub-function to selected the shortest attribute"""
                 min_len = min(len(s.split('_')) for s in strs)
                 strs2 = [s for s in strs if (len(s.split('_')) == min_len)]
                 if len(strs2) == 1:
@@ -552,14 +583,47 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
                 else:
                     return min(strs2, key=len)
 
+            # filter by the preferred list if provided
+            if preferred is not None:
+                assert isinstance(preferred, list)
+                str_list = [x for x in preferred if x in str_list]
+
+                # select the first matching value from the preferred list
+                if len(str_list) >= 1:
+                    str_list = [str_list[0]]
+
+            # determine if any of the attributes contain the text `cmip`
             cmip_list = [s for s in str_list if ('cmip' in s.lower())]
+
+            # give preference to attributes that contain the substring `cmip`
             if cmip_list:
                 return _heuristic_tiebreaker_sub(cmip_list)
+
+            # otherwise, select the shortest attribute
             else:
                 return _heuristic_tiebreaker_sub(str_list)
 
         if 'component' in self.col_spec.pod_expt_cols.cols:
-            df = self._filter_column(df, 'component', _heuristic_tiebreaker, obj.name)
+
+            # loop over pods and get the preferred components
+            preferred = []
+            for pod in self.pods.values():
+                for var in pod.varlist.vars:
+                    _component = var.component
+                    if len(_component) > 0:
+                        _component = str(_component).split(",")
+                        preferred = preferred + _component
+
+            # find the intersection of preferred components
+            if len(preferred) > 0:
+                # preserves preference order
+                preferred = list(dict.fromkeys(preferred))
+            else:
+                preferred = None
+
+            # filter the dataframe of possible components
+            df = self._filter_column(df, 'expt_key', _heuristic_tiebreaker, obj.name, preferred=preferred)
+
         # otherwise no-op
         return df
 
@@ -570,19 +634,37 @@ class GfdlppDataManager(GFDL_GCP_FileDataSourceBase):
             outside of the query date range.
         """
         df = self._filter_column_min(df, obj.name, 'chunk_freq')
+
+        # if a preferred component is specified, select it at the var level
         if 'component' in self.col_spec.var_expt_cols.cols:
             col_name = 'component'
+            if obj.component is not None:
+                preferred = obj.component.split(",")
+                for comp in preferred:
+                    _df = df[df["component"] == comp]
+                    if len(_df) > 0:
+                        df = _df
+                        break
+
+            # select the first entry
             df = df.sort_values(col_name).iloc[[0]]
+
             self.log.debug("Selected experiment attribute '%s'='%s' for %s.",
-                col_name, df[col_name].iloc[0], obj.name)
+                           col_name, df[col_name].iloc[0], obj.name)
+
         return df
 
-class GfdlautoDataManager(object):
+
+class GfdlAutoDataManager(object):
     """Wrapper for dispatching DataManager based on user input. If CASE_ROOT_DIR
     ends in "pp", use :class:`GfdlppDataManager`, otherwise use CMIP6 data on
     /uda via :class:`Gfdludacmip6DataManager`.
     """
-    def __new__(cls, case_dict, *args, **kwargs):
+    # Note, object is explicitly defined as a parameter for Python 2/3
+    # compatibility reasons; omitting object in Python2 yields "old-style" classes
+    # All classes are "new-style" in Python3 by default.
+    # TODO: Since WE DO NOT SUPPORT PYTHON2, remove object parm and verify that it doesn't destroy everything
+    def __new__(cls, case_dict, parent, *args, **kwargs):
         """Dispatch DataManager instance creation based on the contents of
         case_dict."""
         config = core.ConfigManager()
@@ -595,9 +677,9 @@ class GfdlautoDataManager(object):
             # /uda as a fallback
 
         _log.debug("%s: Dispatched DataManager to %s.",
-            cls.__name__, dispatched_cls.__name__)
+                   cls.__name__, dispatched_cls.__name__)
         obj = dispatched_cls.__new__(dispatched_cls)
-        obj.__init__(case_dict)
+        obj.__init__(case_dict, parent)
         return obj
 
     def __init__(self, *args, **kwargs):

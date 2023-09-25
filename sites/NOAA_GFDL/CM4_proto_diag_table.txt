@@ -1,6 +1,6 @@
-﻿# REQUIRED FIELDS TO RUN MDTF DIAGNOSTICS on supported atmosphere and land PODs                                                                                                                                                                                                                                                                  
-                                                                                                                                                                                                                                                                       
-#--------------------------------------------------------------------------------------------------                                                                                                                                                      
+# REQUIRED FIELDS TO RUN MDTF DIAGNOSTICS on supported atmosphere and land PODs
+
+#--------------------------------------------------------------------------------------------------
 #-- grid_spec
 #--------------------------------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@
 "dynamics",      "temp",   "temp",           "atmos_month",   "all",  .true.,  "none", 2
 "dynamics",      "sphum",  "sphum",          "atmos_month",   "all",  .true.,  "none", 2
 "moist",         "pr",      "pr",            "atmos_month",   "all",  .true.,  "none", 2
-"moist",         "prw",     "pw",            "atmos_month",   "all",  .true.,  "none", 2
+"moist",         "prw",     "prw",            "atmos_month",   "all",  .true.,  "none", 2
 "flux",          "evspsbl", "evspsbl",       "atmos_month",   "all",  .true.,  "none", 2
 "flux",          "psl",     "psl",           "atmos_month",   "all",  .true.,  "none", 2
 "flux",          "t_surf",  "t_surf",        "atmos_month",   "all",  .true.,  "none", 2
@@ -58,11 +58,12 @@
 "land_month_cmip",          1, "months",    1,  "days",  "time",
 
 
-"land",        "geolon_t",   "geolon_t",    "land_month_cmip", "all", .false., "none", 1
-"land",        "geolat_t",   "geolat_t",    "land_month_cmip", "all", .false., "none", 1
-"cmor_land",   "mrsos",      "mrsos",       "land_month_cmip",    "all",  .true.,  "none", 2
+"land",        "geolon_t",   "geolon_t",    "land_month_cmip", "all", .false.,  "none", 1
+"land",        "geolat_t",   "geolat_t",    "land_month_cmip", "all", .false.,  "none", 1
+"land",       "area_land",  "land_area",    "land_month_cmip", "all",  .true.,  "none", 2
+"cmor_land",   "mrsos",      "mrsos",       "land_month_cmip", "all",  .true.,  "none", 2
 
---------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
 #-- Daily Data
 #--------------------------------------------------------------------------------------------------
 

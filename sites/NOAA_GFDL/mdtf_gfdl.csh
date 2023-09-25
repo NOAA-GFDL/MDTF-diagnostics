@@ -25,10 +25,24 @@ set dataendyr
 set datachunk
 set staticfile
 set fremodule
+set conv = GFDL
+set model = "modelname"
+
+# Please enter the POD lists below. This gets filled in to the MDTF input json automatically if using frepp
+
+#pod_list contains list of all PODS in the framework for reference. Please edit the pod_list as needed for your simulation.
+set pod_list = '"Wheeler_Kiladis","EOF_500hPa","convective_transition_diag","MJO_suite","MJO_teleconnection","MJO_prop_amp","precip_diurnal_cycle","SM_ET_coupling"'
+
 set script_path
 
 ## set paths to site installation
-set REPO_DIR="/home/oar.gfdl.mdtf/mdtfmdtf/MDTF-diagnostics"
+set CONDA_ROOT="/home/oar.gfdl.mdtf/miniconda3"
+set REPO_DIR="/home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics"
+
+#YOUR mdtf-frepp template jsonc should be in ${TEMPLATE_DIR}/sites/NOAA_GFDL/mdtf_frepp_template.jsonc
+
+set TEMPLATE_DIR = $REPO_DIR
+
 set OBS_DATA_DIR="/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data"
 # output is always written to $out_dir; set a path below to GCP a copy of output
 # for purposes of serving from a website
@@ -143,26 +157,45 @@ wipetmp
 
 ## run the command
 echo "mdtf_gfdl.csh: conda activate"
-source "${REPO_DIR}/src/conda/conda_init.sh" -q "/home/oar.gfdl.mdtf/miniconda3"
-conda activate "${REPO_DIR}/envs/_MDTF_base"
+source /home/oar.gfdl.mdtf/miniconda3/etc/profile.d/conda.csh
+conda activate _MDTF_base
 
 echo "mdtf_gfdl.csh: MDTF start"
 
-"${REPO_DIR}/mdtf_framework.py" \
---site="NOAA_GFDL" \
-$frepp_flag:q \
---MODEL_DATA_ROOT "${INPUT_DIR}/model" \
---OBS_DATA_ROOT "${INPUT_DIR}/obs_data" \
---WORKING_DIR "$WK_DIR" \
---OUTPUT_DIR "$out_dir" \
---data_manager "GFDL_PP" \
---environment_manager "GFDL_conda" \
---CASENAME "$descriptor" \
---CASE_ROOT_DIR "$PP_DIR" \
---FIRSTYR $yr1 \
---LASTYR $yr2 \
-$passed_args:q
+###### workaround to create input json based on a template json and the frepp template variables ####
+set template_jsonc = ${TEMPLATE_DIR}/sites/NOAA_GFDL/mdtf_frepp_template.jsonc
 
+gcp -cd $template_jsonc $WK_DIR/
+echo "A copy of the input json can be found in outputdir as well ${out_dir}/" #TODO move under corresponding exp directory
+
+
+set input_jsonc = ${WK_DIR}/mdtf_frepp_template.jsonc
+
+sed -i 's/CASENAME1/'${descriptor}'/g' $input_jsonc
+sed -i 's/MODEL1/'${model}'/g' $input_jsonc
+sed -i 's|PPDIR1|'{$PP_DIR}'|' $input_jsonc
+sed -i 's/FIRSTYR1/'${yr1}'/g' $input_jsonc
+sed -i 's/LASTYR1/'${yr2}'/g' $input_jsonc
+sed -i 's|OUTPUTDIR1|'${out_dir}'|' $input_jsonc
+sed -i 's/CONVENTION1/'${conv}'/g' $input_jsonc
+sed -i 's/POD_LIST/'${pod_list}'/g' $input_jsonc
+
+echo "Filled in input settings json and using this for the MDTF run $input_jsonc"
+
+gcp -cd $input_jsonc ${out_dir}/
+
+if (! -d $in_data_dir) then
+  echo "QUIT if in_data_dir is not valid"
+endif
+
+if (! -d $PP_DIR) then
+  echo "QUIT if PP_DIR is not valid"
+endif
+echo "Running ${REPO_DIR}/mdtf_framework.py -f ${input_jsonc} --site NOAA_GFDL -v "
+${REPO_DIR}/mdtf_framework.py -f ${input_jsonc} --site NOAA_GFDL -v
+
+
+##workaround ends
 pkg_status=$?
 echo "mdtf_gfdl.csh: MDTF finish; exit={$pkg_status}"
 

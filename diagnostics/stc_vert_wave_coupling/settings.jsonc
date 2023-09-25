@@ -1,0 +1,78 @@
+// Strat-Trop Coupling: Vertical Wave Coupling
+//
+// This POD requires daily-frequency 50 hPa meridional winds and temperatures,
+// and geopotential heights at 10 and 500 hPa.
+//
+{
+    "settings" : {
+      "driver" : "stc_vert_wave_coupling.py",
+      "long_name" : "Seasonality and Extremes of Vertically Propagating Planetary Waves",
+      "realm" : "atmos",
+      "description" : "Assess the representation of planetary wave coupling between the troposphere and stratosphere",
+      "pod_env_vars" : {
+        // The first and last years of the obs data to use. 
+        // Only considered if USE_CONSISTENT_YEARS is false.
+        "OBS_FIRSTYR" : 1979,
+        "OBS_LASTYR" : 2019,
+
+        // Try to use the same years as for the model data?
+        // If true, ignores OBS_FIRSTYR and OBS_LASTYR and uses the 
+        // FIRSTYR and LASTYR environment variables to subset the
+        // obs data. Defaults to false.
+        "USE_CONSISTENT_YEARS": false,
+
+        // Use the model's own eddy heat flux extreme thresholds?
+        // Defaults to false to use the values derived from obs
+        "USE_MODEL_EHF_THRESH": false, 
+
+        // Save the derived data to netcdf files? Defaults to true
+        "SAVE_DERIVED_DATA" : true
+      },
+      "runtime_requirements": {
+        "python3": ["matplotlib", "numpy", "pandas", "xarray"]
+      }
+    },
+    "dimensions": {
+      "lat": {"standard_name": "latitude"},
+      "lon": {"standard_name": "longitude"},
+      "lev": {
+        "standard_name": "air_pressure",
+        "units": "hPa",
+        "positive": "down",
+        "axis": "Z"
+      },
+      "time": {"standard_name": "time"}
+    },
+    "varlist": {
+      "va50": {
+        "standard_name": "northward_wind",
+        "units": "m s-1",
+        "frequency": "day",
+        "dimensions": ["time", "lat", "lon"],
+        "scalar_coordinates": {"lev": 50}
+        //"alternates" : ["va"]
+      },
+      "ta50": {
+        "standard_name": "air_temperature",
+        "units": "K",
+        "frequency": "day",
+        "dimensions": ["time", "lat", "lon"],
+        "scalar_coordinates": {"lev": 50}
+        //"alternates" : ["ta"]
+      },
+      "zg10": {
+        "standard_name" : "geopotential_height",
+        "units" : "m",
+        "frequency": "day",
+        "dimensions": ["time", "lat", "lon"],
+        "scalar_coordinates": {"lev": 10}
+      },
+      "zg500": {
+        "standard_name" : "geopotential_height",
+        "units" : "m",
+        "frequency": "day",
+        "dimensions": ["time", "lat", "lon"],
+        "scalar_coordinates": {"lev": 500}
+      }
+    }
+  }

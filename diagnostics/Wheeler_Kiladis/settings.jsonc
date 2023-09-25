@@ -41,8 +41,8 @@
       "dimensions": ["time", "lat", "lon"]
     },
     "pr": {
-      "standard_name": "precipitation_flux",
-      "units": "kg m-2 s-1",
+      "standard_name": "precipitation_rate",
+      "units": "m s-1",
       "dimensions": ["time", "lat", "lon"]
     },
     "omega500": {

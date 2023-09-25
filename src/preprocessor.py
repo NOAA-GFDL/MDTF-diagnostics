@@ -778,20 +778,29 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         Args:
             varlist (:class:`~src.varlist_util.varlist`): POD varlist
                 instance with variable information used to query the data catalog
+            case_dict: dictionary of case names
             data_catalog: path to data catalog header file
 
         Returns:
             Modified *dataset*.
         """
+        # create filter lists for POD variables
+        var_names = [v for v in varlist.iter_vars()]
+        freq = list(dict.fromkeys([v['frequency'] for v in varlist.iter_vars()]))
+        realm = list(dict.fromkeys([v['realm'] for v in varlist.iter_vars()]))
+        standard_name = list(dict.fromkeys([v['standard_name'] for v in varlist.iter_vars()]))
         # open the csv file using information provided by the catalog definition file
         cat = intake.open_esm_datastore(data_catalog)
-        for v in varlist.iter_vars():
-            print(v)
-            # filter catalog by desired variables and output frequency
-            v_subset = cat.search(variable_id=v, frequency=v['frequency'])
+        for case_name, case_d in case_dict.items():
+            cat_subset = cat.search(activity_id=case_d['convention'],
+                                    standard_name=standard_name,
+                                    frequency=freq,
+                                    realm=realm,
+                                    path="(?i)(?<!\\S)"+case_name+"+(?!\\S+)"
+)
         # examine assets for a specific file
         # convert tas_subset catalog to an xarray dataset dict
-        tas_dict = tas_subset.to_dataset_dict(
+        cat_dict = cat_subset.to_dataset_dict(
             xarray_open_kwargs={"decode_times": True, "use_cftime": True}
         )
 

@@ -95,9 +95,10 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         # run custom scripts on dataset
         if any([s for s in ctx.config.user_pp_scripts]):
             pod_obj.add_user_pp_scripts(ctx.config)
-            data_pp.process(pod_obj.pod_vars,
-                            pod_obj.cases,
-                            ctx.config.DATA_CATALOG)
+        pod_obj.log.info(f"Preprocessing data for {pod_name}")
+        data_pp.process(pod_obj.pod_vars,
+                        pod_obj.cases,
+                        ctx.config.DATA_CATALOG)
 
     # close the main log file
     log._log_handler.close()

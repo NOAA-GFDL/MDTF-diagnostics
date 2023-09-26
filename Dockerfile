@@ -44,5 +44,5 @@ ENV PATH="${PATH}:/proj/MDTF-diagnostics/"
 #RUN /proj/MDTF-diagnostics/mdtf_framework.py --help
 # Run mdtf on src/default_tests.jsonc
 # CMD ["${CODE_ROOT}/mdtf", "-f","${CODE_ROOT}/src/default_tests.jsonc"]
-ENTRYPOINT ["/usr/bin/micromamba activate _MDTF_base"]
-CMD ["/bin/bash"]
+ENTRYPOINT ["/bin/bash"]
+CMD ["source /proj/MDTF-diagnostics/src/conda/micromamba_init.sh;micromamba activate /opt/conda/envs/_MDTF_base"]

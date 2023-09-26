@@ -39,10 +39,10 @@ RUN micromamba create -f /proj/MDTF-diagnostics/src/conda/env_NCL_base.yml
 
 
 ENV PATH="${PATH}:/proj/MDTF-diagnostics/"
-#cRUN micromamba activate _MDTF_base
+RUN micromamba activate _MDTF_base
 # Verify installation
 #RUN /proj/MDTF-diagnostics/mdtf_framework.py --help
 # Run mdtf on src/default_tests.jsonc
 # CMD ["${CODE_ROOT}/mdtf", "-f","${CODE_ROOT}/src/default_tests.jsonc"]
 ENTRYPOINT ["/bin/bash"]
-CMD ["source /proj/MDTF-diagnostics/src/conda/micromamba_init.sh;micromamba activate /opt/conda/envs/_MDTF_base"]
+#CMD ["source /proj/MDTF-diagnostics/src/conda/micromamba_init.sh;micromamba activate /opt/conda/envs/_MDTF_base"]

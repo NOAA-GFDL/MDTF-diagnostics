@@ -8,9 +8,6 @@ USER root
 
 RUN micromamba info
 
-
-#RUN micromamba shell hook --shell bash
-
 ##
 # Container Metadata
 LABEL maintainer="mdtf-leads-AR"
@@ -33,13 +30,7 @@ ENV CONDA_ENV_DIR=/opt/conda/envs
 RUN micromamba create -f /proj/MDTF-diagnostics/src/conda/env_base.yml
 RUN micromamba create -f /proj/MDTF-diagnostics/src/conda/env_NCL_base.yml
 
-
 ENV PATH="${PATH}:/proj/MDTF-diagnostics/"
-RUN eval "$(micromamba shell hook --shell bash )";micromamba activate _MDTF_base
+#RUN eval "$(micromamba shell hook --shell bash )";micromamba activate _MDTF_base
+ENV PATH=$PATH:"/opt/conda/envs/_MDTF_NCL_base/bin/"
 
-# Verify installation
-#RUN /proj/MDTF-diagnostics/mdtf_framework.py --help
-# Run mdtf on src/default_tests.jsonc
-# CMD ["${CODE_ROOT}/mdtf", "-f","${CODE_ROOT}/src/default_tests.jsonc"]
-#ENTRYPOINT ["/bin/bash"]
-#CMD ["source /proj/MDTF-diagnostics/src/conda/micromamba_init.sh;micromamba activate /opt/conda/envs/_MDTF_base"]

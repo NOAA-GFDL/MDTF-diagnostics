@@ -19,22 +19,6 @@ import logging.config
 import logging.handlers
 _log = logging.getLogger(__name__)
 
-ObjectStatus = basic.MDTFEnum(
-    'ObjectStatus',
-    'NOTSET ACTIVE INACTIVE FAILED SUCCEEDED',
-    module=__name__
-)
-ObjectStatus.__doc__ = """
-:class:`util.MDTFEnum` used to track the status of an object hierarchy object:
-- *NOTSET*: the object hasn't been fully initialized.
-- *ACTIVE*: the object is currently being processed by the framework.
-- *INACTIVE*: the object has been initialized, but isn't being processed (e.g.,
-  alternate :class:`~diagnostic.VarlistEntry`\s).
-- *FAILED*: processing of the object has encountered an error, and no further
-  work will be done.
-- *SUCCEEDED*: Processing finished successfully.
-"""
-
 
 class MDTFConsoleHandler(logging.StreamHandler):
     """Dummy class to designate logging to stdout or stderr from the root logger.
@@ -851,7 +835,7 @@ class MDTFObjectBase(metaclass=basic.MDTFABCMeta):
     _id: basic.MDTF_ID = None
     name: str = dataclass.MANDATORY
     _parent: typing.Any = dc.field(default=dataclass.MANDATORY, compare=False)
-    status: ObjectStatus = dc.field(default=ObjectStatus.NOTSET, compare=False)
+    status: basic.ObjectStatus = dc.field(default=basic.ObjectStatus.NOTSET, compare=False)
 
     def __post_init__(self):
         if self._id is None:
@@ -878,11 +862,11 @@ class MDTFObjectBase(metaclass=basic.MDTFABCMeta):
 
     @property
     def failed(self):
-        return self.status == ObjectStatus.FAILED # abbreviate
+        return self.status == basic.ObjectStatus.FAILED # abbreviate
 
     @property
     def active(self):
-        return self.status == ObjectStatus.ACTIVE # abbreviate
+        return self.status == basic.ObjectStatus.ACTIVE # abbreviate
 
     @property
     @abc.abstractmethod
@@ -926,7 +910,7 @@ class MDTFObjectBase(metaclass=basic.MDTFABCMeta):
 
         # if all children have failed, deactivate self
         if not self.failed and \
-            next(self.iter_children(status_neq=ObjectStatus.FAILED), None) is None:
+            next(self.iter_children(status_neq=basic.ObjectStatus.FAILED), None) is None:
             self.deactivate(exceptions.ChildFailureEvent(self), level=None)
 
     # level at which to log deactivation events
@@ -936,18 +920,18 @@ class MDTFObjectBase(metaclass=basic.MDTFABCMeta):
         # always log exceptions, even if we've already failed
         self.log.store_exception(exc)
 
-        if not (self.failed or self.status == ObjectStatus.SUCCEEDED):
+        if not (self.failed or self.status == basic.ObjectStatus.SUCCEEDED):
             # only need to log and update on status change for still-active objs
             if level is None:
                 level = self._deactivation_log_level  # default level for child class
             self.log.log(level, "Deactivated %s due to %r.", self.full_name, exc)
 
             # update status on self
-            self.status = ObjectStatus.FAILED
+            self.status = basic.ObjectStatus.FAILED
             if self._parent is not None:
                 # call handler on parent, which may change parent and/or siblings
                 self._parent.child_deactivation_handler(self, exc)
                 self._parent.child_status_update()
             # update children (deactivate all)
-            for obj in self.iter_children(status_neq=ObjectStatus.FAILED):
+            for obj in self.iter_children(status_neq=basic.ObjectStatus.FAILED):
                 obj.deactivate(exceptions.PropagatedEvent(exc=exc, parent=self), level=None)

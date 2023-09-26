@@ -10,7 +10,7 @@ import re
 import textwrap
 import unittest.mock
 import uuid
-from . import exceptions
+from . import exceptions, PropagatedEvent
 
 import logging
 
@@ -422,6 +422,22 @@ class MDTFIntEnum(_MDTFEnumMixin, enum.IntEnum):
     pass
 
 
+ObjectStatus = MDTFEnum(
+    'ObjectStatus',
+    'NOTSET ACTIVE INACTIVE FAILED SUCCEEDED',
+    module=__name__
+)
+ObjectStatus.__doc__ = """
+:class:`util.MDTFEnum` used to track the status of an object hierarchy object:
+- *NOTSET*: the object hasn't been fully initialized.
+- *ACTIVE*: the object is currently being processed by the framework.
+- *INACTIVE*: the object has been initialized, but isn't being processed (e.g.,
+  alternate :class:`~diagnostic.VarlistEntry`\s).
+- *FAILED*: processing of the object has encountered an error, and no further
+  work will be done.
+- *SUCCEEDED*: Processing finished successfully.
+"""
+
 def sentinel_object_factory(obj_name):
     """Return a unique singleton object/class (same difference for singletons).
     For implementation, see `python docs
@@ -685,6 +701,31 @@ def iterdict(d):
         else:
             return k, v, level
 
+
+# level at which to log deactivation events
+    _deactivation_log_level = logging.ERROR
+
+
+def deactivate(obj, exc, level=None):
+    """Deactivate an object and dependencies and set object status"""
+    # always log exceptions, even if we've already failed
+    obj.log.store_exception(exc)
+
+    if not (obj.failed or obj.status == ObjectStatus.SUCCEEDED):
+        # only need to log and update on status change for still-active objs
+        if level is None:
+            level = obj._deactivation_log_level # default level for child class
+        obj.log.log(level, "Deactivated %s due to %r.", obj.full_name, exc)
+
+        # update status on self
+        obj.status = ObjectStatus.FAILED
+        if obj._parent is not None:
+            # call handler on parent, which may change parent and/or siblings
+            obj._parent.child_deactivation_handler(obj, exc)
+            obj._parent.child_status_update()
+        # update children (deactivate all)
+        for obj in obj.iter_children(status_neq=ObjectStatus.FAILED):
+            obj.deactivate(PropagatedEvent(exc=exc, parent=obj), level=None)
 
 class RegexDict(dict):
     """ Utilities to find dictionary entries using regular expressions

@@ -312,10 +312,10 @@ class Fieldlist:
                                   f"not uniquely determined by coordinate {coord.name}."))
             new_coord = coords[0]
         else:
-            if coord.standard_name not in lut1:
+            if coord.standard_name not in lut1.values():
                 raise KeyError((f"Coordinate {coord.name} with standard name "
                                 f"'{coord.standard_name}' not defined in convention '{self.name}'."))
-            new_coord = lut1[coord.standard_name]
+            new_coord = [k for k in lut1.keys() if lut1[k]==coord.standard_name][0]
 
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             new_coord = copy.deepcopy(new_coord)
@@ -354,7 +354,7 @@ class Fieldlist:
         if len(new_scalars) > 1:
             raise NotImplementedError()
         elif len(new_scalars) == 1:
-            assert not var.use_exact_name
+            assert not var.use_exact_name, "assertion error: var.use_exact_name set to true for " + var.full_name
             # change translated name to request the slice instead of the full var
             # keep the scalar_coordinate value attribute on the translated var
             new_name = fl_entry.scalar_name(

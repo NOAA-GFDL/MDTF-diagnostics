@@ -31,7 +31,7 @@
       "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231":
         {
           "model": "test",
-          "convention": "GFDL",
+          "convention": "CMIP",
           "startdate": "19800101",
           "enddate": "19841231"
         }
@@ -51,7 +51,7 @@
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
   // Full path to model data ESM-intake catalog header file
-  "DATA_CATALOG": "/local2/home/mdtf/diagnostics/example_multicase/esm_catalog_CMIP_Synthetic_r1i1p1f1_gr1.json",
+  "DATA_CATALOG": "/local2/home/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
   // Backwards compatibility
   "MODEL_DATA_ROOT": "../inputdata/mdtf_test_data",
   // Parent directory containing observational data used by individual PODs.

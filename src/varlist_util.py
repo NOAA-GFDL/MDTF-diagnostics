@@ -362,7 +362,7 @@ class VarlistEntryMixin:
         if self.stage >= VarlistEntryStage.QUERIED and not self.data:
             # all DataKeys obtained for this var during query have
             # been eliminated, so need to deactivate var
-            self.deactivate(util.ChildFailureEvent(self))
+            util.deactivate(self, util.ChildFailureEvent(self))
 
     @property
     def local_data(self):

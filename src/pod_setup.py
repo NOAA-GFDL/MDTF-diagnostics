@@ -301,7 +301,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             for v in self.cases[case_name].iter_children():
                 # deactivate failed variables now that alternates are fully specified
                 if v.last_exception is not None and not v.failed:
-                    v.deactivate(v.last_exception, level=logging.WARNING)
+                    util.deactivate(v, v.last_exception, level=logging.WARNING)
             if self.cases[case_name].status == util.ObjectStatus.NOTSET and \
                     any(v.status == util.ObjectStatus.ACTIVE for v in self.cases[case_name].iter_children()):
                 self.cases[case_name].status = util.ObjectStatus.ACTIVE

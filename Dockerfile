@@ -10,17 +10,13 @@ RUN micromamba info
 
 
 RUN micromamba shell hook --shell bash
-#RUN micromamba create -f /proj/MDTF-diagnostics/src/conda/env_base.yml
 
 ##
 # Container Metadata
-LABEL maintainer="20195932+wrongkindofdoctor@users.noreply.github.com"
-LABEL version="alpha-01"
+LABEL maintainer="mdtf-leads-AR"
+LABEL version="test-01"
 LABEL description="This is a docker image for the MDTF-diagnostics package"
-# Disable Prompt During Packages Installation
-#ARG DEBIAN_FRONTEND=noninteractive
-
-# Copy the MDTF-diagnostics package contents from local machine to image
+# Copy the MDTF-diagnostics package contents from local machine to image 
 ENV CODE_ROOT=/proj/MDTF-diagnostics
 COPY src ${CODE_ROOT}/src                          
 COPY data ${CODE_ROOT}/data
@@ -39,7 +35,9 @@ RUN micromamba create -f /proj/MDTF-diagnostics/src/conda/env_NCL_base.yml
 
 
 ENV PATH="${PATH}:/proj/MDTF-diagnostics/"
-RUN micromamba activate _MDTF_base
+#RUN micromamba activate _MDTF_base
+RUN "source /proj/MDTF-diagnostics/src/conda/micromamba_init.sh;micromamba activate /opt/conda/envs/_MDTF_base"
+
 # Verify installation
 #RUN /proj/MDTF-diagnostics/mdtf_framework.py --help
 # Run mdtf on src/default_tests.jsonc

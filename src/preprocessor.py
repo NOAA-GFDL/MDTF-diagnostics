@@ -11,6 +11,7 @@ import cftime
 import intake
 import numpy as np
 import xarray as xr
+import re
 
 import logging
 
@@ -121,15 +122,16 @@ class PreprocessorFunctionBase(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def process(self, varlist: varlist_util.Varlist,
+    def process(self, varlist: dict,
+                case_dict: dict,
                 data_catalog: str,
                 *args):
         """Apply the format conversion implemented in this PreprocessorFunction
         to the input dataset *dataset*, according to the request made in *var*.
 
         Args:
-            varlist (:class:`~src.varlist_util.varlist`): POD varlist
-                instance with variable information used to query the data catalog
+            varlist: dictionary of variable information
+            case_dict: dictionary with case information
             data_catalog: path to data catalog header file
 
         Returns:
@@ -460,7 +462,7 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
 class AssociatedVariablesFunction(PreprocessorFunctionBase):
     """Preprocessor class to copy associated variables to wkdir"""
 
-    def process(self, var, ds, casename: str):
+    def process(self, var, ds, catalog, case_name: str):
 
         try:
             # get string labels from variable object
@@ -768,7 +770,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
          ]
 
 
-    def query_catalog(self, varlist: varlist_util.Varlist,
+    def query_catalog(self, varlist: dict,
                       case_dict: dict,
                       data_catalog: str,
                       *args):
@@ -784,25 +786,33 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         Returns:
             Modified *dataset*.
         """
-        # create filter lists for POD variables
-        var_names = [v for v in varlist.iter_vars()]
-        freq = list(dict.fromkeys([v['frequency'] for v in varlist.iter_vars()]))
-        realm = list(dict.fromkeys([v['realm'] for v in varlist.iter_vars()]))
-        standard_name = list(dict.fromkeys([v['standard_name'] for v in varlist.iter_vars()]))
         # open the csv file using information provided by the catalog definition file
         cat = intake.open_esm_datastore(data_catalog)
-        for case_name, case_d in case_dict.items():
-            cat_subset = cat.search(activity_id=case_d['convention'],
-                                    standard_name=standard_name,
-                                    frequency=freq,
-                                    realm=realm,
-                                    path="(?i)(?<!\\S)"+case_name+"+(?!\\S+)"
-)
-        # examine assets for a specific file
-        # convert tas_subset catalog to an xarray dataset dict
-        cat_dict = cat_subset.to_dataset_dict(
-            xarray_open_kwargs={"decode_times": True, "use_cftime": True}
-        )
+        # create filter lists for POD variables
+        var_names = [v for v in varlist.keys()]
+        cat_dict = {}
+        for n in var_names:
+            freq = varlist[n]['frequency']
+            realm = varlist[n]['realm']
+            standard_name = varlist[n]['standard_name']
+            for case_name, case_d in case_dict.items():
+                #path_regex = "(?i)(?<!\\S)" + case_name + "(?!\\S+)"
+                path_regex = case_name + "*"
+
+                cat_subset = cat.search(activity_id=case_d.convention,
+                                        standard_name=standard_name,
+                                        frequency=freq,
+                                        realm=realm,
+                                        path=path_regex
+                                        )
+                if cat_subset.df is None:
+                    case_d.log.error(f"No data catalog assets found for {case_name} in {data_catalog}")
+                # convert subset catalog to an xarray dataset dict
+                # and concatenate the result with the final dict
+                cat_dict = cat_dict | cat_subset.to_dataset_dict(
+                                xarray_open_kwargs={"decode_times": True, "use_cftime": True}
+                                )
+        return cat_dict
 
     def edit_request(self, pod):
         """Top-level method to edit *pod*\'s data request, based on the child
@@ -1070,15 +1080,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                  util.DataPreprocessEvent)
         del ds  # shouldn't be necessary
 
-    def process(self, var, casename: str):
+    def process(self,
+                varlist: dict,
+                caselist: dict,
+                data_catalog: str):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with the POD variable *var*.
         """
-        var.log.info("Preprocessing %s.", var)
-        ds = self.load_ds(var)
-        ds = self.process_ds(var, ds, casename)
-        self.write_ds(var, ds)
-        var.log.debug("Successful preprocessor exit on %s.", var)
+        data_subset = self.query_catalog(varlist, caselist, data_catalog)
 
 
 class SingleVarFilePreprocessor(MDTFPreprocessorBase):
@@ -1111,11 +1120,15 @@ class NullPreprocessor(MDTFPreprocessorBase):
         """
         pass
 
-    def process(self, var, ds):
+    def process(self, varlist: varlist_util.Varlist,
+                      case_dict: dict,
+                      data_catalog: str,
+                      *args):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with the POD variable *var*.
         """
-        var.log.debug("Skipping preprocessing for %s.", var)
+        for var in varlist.iter_vars():
+            var.log.debug("Skipping preprocessing for %s.", var)
 
 
 class DaskMultiFilePreprocessor(MDTFPreprocessorBase):

@@ -62,30 +62,29 @@ def edit_request_wrapper(wrapped_edit_request_func):
     """
 
     @functools.wraps(wrapped_edit_request_func)
-    def wrapped_edit_request(self, case_info):
-        for case_name, case_d in case_info.items():
-            new_varlist = []
-            for v in case_d.varlist.iter_contents():
-                new_v = wrapped_edit_request_func(self, v)
-                if new_v is None:
-                    # no change, pass through VE unaltered
-                    new_varlist.append(v)
-                    continue
-                else:
-                    # insert new_v between v itself and v's old alternate sets
-                    # in varlist query order
-                    new_v.alternates = v.alternates
-                    v.alternates = [[new_v]]
-                    new_v_t_name = (str(new_v.translation)
-                                    if getattr(new_v, 'translation', None) is not None
-                                    else "(not translated)")
-                    v_t_name = (str(v.translation) if getattr(v, 'translation', None)
-                                                      is not None else "(not translated)")
-                    case_d.log.debug("%s for %s: add translated %s as alternate for %s.",
-                                     self.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
-                    new_varlist.append(v)
-                    new_varlist.append(new_v)
-            case_d.varlist = varlist_util.Varlist(contents=new_varlist)
+    def wrapped_edit_request(self, varlist):
+        new_varlist = []
+        for v in varlist.iter_contents():
+            new_v = wrapped_edit_request_func(self, v)
+            if new_v is None:
+                # no change, pass through VE unaltered
+                new_varlist.append(v)
+                continue
+            else:
+                # insert new_v between v itself and v's old alternate sets
+                # in varlist query order
+                new_v.alternates = v.alternates
+                v.alternates = [[new_v]]
+                new_v_t_name = (str(new_v.translation)
+                                if getattr(new_v, 'translation', None) is not None
+                                else "(not translated)")
+                v_t_name = (str(v.translation) if getattr(v, 'translation', None)
+                                                  is not None else "(not translated)")
+                v.log.debug("%s for %s: add translated %s as alternate for %s.",
+                            self.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
+                new_varlist.append(v)
+                new_varlist.append(new_v)
+        varlist = varlist_util.Varlist(contents=new_varlist)
 
     return wrapped_edit_request
 
@@ -122,9 +121,9 @@ class PreprocessorFunctionBase(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def process(self, varlist: dict,
+    def execute(self, var: dict,
                 case_dict: dict,
-                data_catalog: str,
+                xr_dataset,
                 *args):
         """Apply the format conversion implemented in this PreprocessorFunction
         to the input dataset *dataset*, according to the request made in *var*.
@@ -132,7 +131,7 @@ class PreprocessorFunctionBase(abc.ABC):
         Args:
             varlist: dictionary of variable information
             case_dict: dictionary with case information
-            data_catalog: path to data catalog header file
+            xr_dataset: xarray dataset with information from ESM intake catalog
 
         Returns:
             Modified *dataset*.
@@ -165,7 +164,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         """
         pass
 
-    def process(self, var, ds, *args):
+    def execute(self, var, case_dict, ds, *args):
         """Parse quantities related to the calendar for time-dependent data and
         truncate the date range of model dataset *ds*.
 
@@ -270,7 +269,8 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
     _flux_d = {tup[1]: tup[0] for tup in _std_name_tuples}
 
     @edit_request_wrapper
-    def edit_request(self, v, pod, data_convention: str):
+    def edit_request(self, v: varlist_util.Varlist,
+                     data_convention: str):
         """Edit *pod*\'s Varlist prior to query. If the
         :class:`~src.diagnostic.VarlistEntry` *v* has a ``standard_name`` in the
         recognized list, insert an alternate VarlistEntry whose translation
@@ -305,15 +305,15 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         try:
             new_tv = translate.translate(data_convention, v_to_translate)
         except KeyError as exc:
-            pod.log.debug(('%s edit_request on %s: caught %r when trying to '
-                           'translate \'%s\'; varlist unaltered.'), self.__class__.__name__,
+            v.log.debug(('%s edit_request on %s: caught %r when trying to '
+                         'translate \'%s\'; varlist unaltered.'), self.__class__.__name__,
                           v.full_name, exc, v_to_translate.standard_name)
             return None
         new_v = copy_as_alternate(v)
         new_v.translation = new_tv
         return new_v
 
-    def process(self, var, ds, *args):
+    def execute(self, var, case_dict, ds, *args):
         """Convert units of dependent variable *ds* between precip rate and
         precip flux, as specified by the desired units given in *var*. If the
         ``standard_name`` of *ds* is not in the recognized list, return it
@@ -364,7 +364,7 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
         """
         pass
 
-    def process(self, var, ds, *args):
+    def execute(self, var, case_dict, ds, *args):
         """Convert units on the dependent variable and coordinates of var from
         what's specified in the dataset attributes to what's given in the
         VarlistEntry *var*. Units attributes are updated on the
@@ -416,7 +416,7 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
         """
         pass
 
-    def process(self, var, ds, *args):
+    def execute(self, var, case_dict, ds, *args):
         """Change the names of the DataArrays with Dataset *ds* to the names
         specified by the :class:`~src.diagnostic.VarlistEntry` *var*. Names of
         the dependent variable and all dimension coordinates and scalar
@@ -514,7 +514,8 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
     """
 
     @edit_request_wrapper
-    def edit_request(self, v, data_convention:str):
+    def edit_request(self, v: varlist_util.Varlist,
+                     data_convention: str):
         """Edit the *pod*'s :class:`~src.diagnostic.Varlist` prior to data query.
         If given a :class:`~src.diagnostic.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
@@ -555,7 +556,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         new_v.translation = new_tv
         return new_v
 
-    def process(self, var, ds, *args):
+    def execute(self, var, case_dict, ds, *args):
         """Determine if level extraction is needed (if *var* has a scalar Z
         coordinate and Dataset *ds* is 3D). If so, return the appropriate 2D
         slice of *ds*, otherwise pass through *ds* unaltered.
@@ -638,7 +639,9 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
     """
 
     @edit_request_wrapper
-    def edit_request(self, v, data_convention: str, *args):
+    def edit_request(self, v: varlist_util.Varlist,
+                     data_convention: str,
+                     *args):
         """Edit the *pod*'s :class:`~src.diagnostic.Varlist` prior to data query.
         If given a :class:`~src.MultirunDiagnostic.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
@@ -679,7 +682,7 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
         new_v.translation = new_tv
         return new_v
 
-    def process(self, var, ds, *args):
+    def execute(self, var, case_dict, ds, *args):
         """Retrieve the ``scale_factor`` and ``add_offset`` attributes from the
         dependent variable of *ds*, and if set, apply the linear transformation
         to the dependent variable. If both are set, the scaling is applied first
@@ -721,7 +724,7 @@ class UserDefinedPreprocessorFunction(PreprocessorFunctionBase):
     def edit_request(self, v, data_convention: str, args):
         pass
 
-    def process(self, var, ds, *args):
+    def execute(self, var, case_dict, ds, *args):
         pass
 
 
@@ -769,40 +772,34 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             AssociatedVariablesFunction
          ]
 
-
-    def query_catalog(self, varlist: dict,
+    def query_catalog(self,
                       case_dict: dict,
                       data_catalog: str,
-                      *args):
+                      *args) -> dict:
         """Apply the format conversion implemented in this PreprocessorFunction
         to the input dataset *dataset*, according to the request made in *var*.
 
         Args:
-            varlist (:class:`~src.varlist_util.varlist`): POD varlist
-                instance with variable information used to query the data catalog
             case_dict: dictionary of case names
             data_catalog: path to data catalog header file
 
         Returns:
-            Modified *dataset*.
+            Dictionary of xarray datasets with catalog information for each case
         """
         # open the csv file using information provided by the catalog definition file
         cat = intake.open_esm_datastore(data_catalog)
         # create filter lists for POD variables
-        var_names = [v for v in varlist.keys()]
         cat_dict = {}
-        for n in var_names:
-            freq = varlist[n]['frequency']
-            realm = varlist[n]['realm']
-            standard_name = varlist[n]['standard_name']
-            for case_name, case_d in case_dict.items():
-                #path_regex = "(?i)(?<!\\S)" + case_name + "(?!\\S+)"
-                path_regex = case_name + "*"
+        for case_name, case_d in case_dict.items():
+            #path_regex = "(?i)(?<!\\S)" + case_name + "(?!\\S+)"
+            path_regex = case_name + "*"
+            freq = case_d.varlist.T.frequency
+            for v in case_d.varlist.iter_vars():
 
                 cat_subset = cat.search(activity_id=case_d.convention,
-                                        standard_name=standard_name,
+                                        standard_name=v.standard_name,
                                         frequency=freq,
-                                        realm=realm,
+                                        realm=v.realm,
                                         path=path_regex
                                         )
                 if cat_subset.df is None:
@@ -814,13 +811,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                 )
         return cat_dict
 
-    def edit_request(self, pod):
+    def edit_request(self, varlist: varlist_util.Varlist,
+                     data_convention: str):
         """Top-level method to edit *pod*\'s data request, based on the child
         class's functionality. Calls the :meth:`~PreprocessorFunctionBase.edit_request`
         method on all included PreprocessorFunctions.
         """
         for func in self.file_preproc_functions:
-            func.edit_request(pod)
+            func.edit_request(varlist, data_convention)
 
     def setup(self, pod):
         """Method to do additional configuration immediately before :meth:`process`
@@ -1081,13 +1079,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         del ds  # shouldn't be necessary
 
     def process(self,
-                varlist: dict,
                 caselist: dict,
                 data_catalog: str):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with the POD variable *var*.
         """
-        data_subset = self.query_catalog(varlist, caselist, data_catalog)
+        # get the initial model data subset from the ESM-intake catalog
+        data_subset = self.query_catalog(caselist, data_catalog)
+
+        for case_d in caselist.values():
+            self.edit_request(case_d.varlist, case_d.convention)
 
 
 class SingleVarFilePreprocessor(MDTFPreprocessorBase):
@@ -1109,7 +1110,6 @@ class NullPreprocessor(MDTFPreprocessorBase):
     """A class that skips preprocessing and just symlinks files from the input dir to the wkdir
     """
 
-
     def edit_request(self, *args):
         """Dummy implementation of edit_request to meet abstract base class requirements
         """
@@ -1121,9 +1121,9 @@ class NullPreprocessor(MDTFPreprocessorBase):
         pass
 
     def process(self, varlist: varlist_util.Varlist,
-                      case_dict: dict,
-                      data_catalog: str,
-                      *args):
+                case_dict: dict,
+                data_catalog: str,
+                *args):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with the POD variable *var*.
         """
@@ -1144,15 +1144,16 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         super().__init__(model_paths)
         self.file_preproc_functions = [f for f in self._functions]
 
-
-    def edit_request(self, *args):
+    def edit_request(self, varlist: varlist_util.Varlist,
+                     data_convention: str,
+                     *args):
         """Edit *pod*\'s data request, based on the child class's functionality. If
         the child class has a function that can transform data in format *X* to
         format *Y* and the POD requests *X*, this method should insert a
         backup/fallback request for *Y*.
         """
         for func in self.file_preproc_functions:
-            func.edit_request(*args)
+            func.edit_request(varlist, data_convention, *args)
 
     def read_dataset(self, var):
         """Open multi-file Dataset specified by the ``local_data`` attribute of

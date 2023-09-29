@@ -205,8 +205,8 @@ class VarlistEntryMixin:
 
     @property
     def _children(self):
-            """Iterable of child objects associated with this object."""
-            return []  # leaves of object hierarchy
+        """Iterable of child objects associated with this object."""
+        return []  # leaves of object hierarchy
 
     @property
     def name_in_model(self):

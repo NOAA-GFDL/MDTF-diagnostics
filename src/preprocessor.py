@@ -62,10 +62,10 @@ def edit_request_wrapper(wrapped_edit_request_func):
     """
 
     @functools.wraps(wrapped_edit_request_func)
-    def wrapped_edit_request(self, varlist):
+    def wrapped_edit_request(self, varlist, data_convention):
         new_varlist = []
         for v in varlist.iter_contents():
-            new_v = wrapped_edit_request_func(self, v)
+            new_v = wrapped_edit_request_func(self, v, data_convention)
             if new_v is None:
                 # no change, pass through VE unaltered
                 new_varlist.append(v)
@@ -81,7 +81,7 @@ def edit_request_wrapper(wrapped_edit_request_func):
                 v_t_name = (str(v.translation) if getattr(v, 'translation', None)
                                                   is not None else "(not translated)")
                 v.log.debug("%s for %s: add translated %s as alternate for %s.",
-                            self.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
+                            v.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
                 new_varlist.append(v)
                 new_varlist.append(new_v)
         varlist = varlist_util.Varlist(contents=new_varlist)
@@ -110,7 +110,7 @@ class PreprocessorFunctionBase(abc.ABC):
         """Called during Preprocessor's init."""
         pass
 
-    def edit_request(self, *args):
+    def edit_request(self, varlist:varlist_util.Varlist, *args):
         """Edit the data requested in *pod*'s :class:`~src.diagnostic.Varlist`
         queue, based on the transformations the functionality can perform (in
         :meth:`process`). If the function can transform data in format *X* to
@@ -121,7 +121,7 @@ class PreprocessorFunctionBase(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def execute(self, var: dict,
+    def execute(self, var: varlist_util.VarlistEntry,
                 case_dict: dict,
                 xr_dataset,
                 *args):
@@ -129,7 +129,7 @@ class PreprocessorFunctionBase(abc.ABC):
         to the input dataset *dataset*, according to the request made in *var*.
 
         Args:
-            varlist: dictionary of variable information
+            var: dictionary of variable information
             case_dict: dictionary with case information
             xr_dataset: xarray dataset with information from ESM intake catalog
 
@@ -158,11 +158,6 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         tt = (getattr(t, attr_) for attr_ in
               ('tm_year', 'tm_mon', 'tm_mday', 'tm_hour', 'tm_min', 'tm_sec'))
         return cftime.datetime(*tt, calendar=calendar)
-
-    def edit_request(self):
-        """No-op for this PreprocessorFunction, since no alternate data is needed.
-        """
-        pass
 
     def execute(self, var, case_dict, ds, *args):
         """Parse quantities related to the calendar for time-dependent data and
@@ -359,11 +354,6 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
     :doc:`src.units`.
     """
 
-    def edit_request(self):
-        """No-op for this PreprocessorFunction, since no alternate data is needed.
-        """
-        pass
-
     def execute(self, var, case_dict, ds, *args):
         """Convert units on the dependent variable and coordinates of var from
         what's specified in the dataset attributes to what's given in the
@@ -411,11 +401,6 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
     """Renames dependent variables and coordinates to what's expected by the POD.
     """
 
-    def edit_request(self):
-        """No-op for this PreprocessorFunction, since no alternate data is needed.
-        """
-        pass
-
     def execute(self, var, case_dict, ds, *args):
         """Change the names of the DataArrays with Dataset *ds* to the names
         specified by the :class:`~src.diagnostic.VarlistEntry` *var*. Names of
@@ -462,7 +447,7 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
 class AssociatedVariablesFunction(PreprocessorFunctionBase):
     """Preprocessor class to copy associated variables to wkdir"""
 
-    def process(self, var, ds, catalog, case_name: str):
+    def execute(self, var, case_dict, ds, **kwargs):
 
         try:
             # get string labels from variable object
@@ -501,6 +486,7 @@ class AssociatedVariablesFunction(PreprocessorFunctionBase):
             )
 
         return ds
+
 
 class ExtractLevelFunction(PreprocessorFunctionBase):
     """Extract a requested pressure level from a Dataset containing a 3D variable.
@@ -640,8 +626,7 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
 
     @edit_request_wrapper
     def edit_request(self, v: varlist_util.Varlist,
-                     data_convention: str,
-                     *args):
+                     data_convention: str):
         """Edit the *pod*'s :class:`~src.diagnostic.Varlist` prior to data query.
         If given a :class:`~src.MultirunDiagnostic.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
@@ -721,7 +706,7 @@ class UserDefinedPreprocessorFunction(PreprocessorFunctionBase):
         """Called during Preprocessor's init."""
         self.user_defined_script = pp_script
 
-    def edit_request(self, v, data_convention: str, args):
+    def edit_request(self, v, data_convention: str):
         pass
 
     def execute(self, var, case_dict, ds, *args):
@@ -749,11 +734,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         metadata cleaning done by xr_parser.
     """
     file_preproc_functions = util.abstract_attribute()
+
     def __init__(self, model_paths: util.ModelDataPathManager):
         self.WORK_DIR = model_paths.MODEL_WORK_DIR
         # initialize PreprocessorFunctionBase objects
         self.file_preproc_functions = []
-
 
     @property
     def _functions(self):
@@ -818,7 +803,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         method on all included PreprocessorFunctions.
         """
         for func in self.file_preproc_functions:
-            func.edit_request(varlist, data_convention)
+            func.edit_request(self, varlist, data_convention)
 
     def setup(self, pod):
         """Method to do additional configuration immediately before :meth:`process`
@@ -1110,7 +1095,7 @@ class NullPreprocessor(MDTFPreprocessorBase):
     """A class that skips preprocessing and just symlinks files from the input dir to the wkdir
     """
 
-    def edit_request(self, *args):
+    def edit_request(self, varlist, data_convention):
         """Dummy implementation of edit_request to meet abstract base class requirements
         """
         pass
@@ -1120,15 +1105,11 @@ class NullPreprocessor(MDTFPreprocessorBase):
         """
         pass
 
-    def process(self, varlist: varlist_util.Varlist,
-                case_dict: dict,
-                data_catalog: str,
-                *args):
+    def process(self, case_list: dict, data_catalog: str, *args):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with the POD variable *var*.
         """
-        for var in varlist.iter_vars():
-            var.log.debug("Skipping preprocessing for %s.", var)
+        pass
 
 
 class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
@@ -1138,22 +1119,10 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
     """
 
-
     def __init__(self, model_paths: util.ModelDataPathManager):
         # initialize PreprocessorFunctionBase objects
         super().__init__(model_paths)
         self.file_preproc_functions = [f for f in self._functions]
-
-    def edit_request(self, varlist: varlist_util.Varlist,
-                     data_convention: str,
-                     *args):
-        """Edit *pod*\'s data request, based on the child class's functionality. If
-        the child class has a function that can transform data in format *X* to
-        format *Y* and the POD requests *X*, this method should insert a
-        backup/fallback request for *Y*.
-        """
-        for func in self.file_preproc_functions:
-            func.edit_request(varlist, data_convention, *args)
 
     def read_dataset(self, var):
         """Open multi-file Dataset specified by the ``local_data`` attribute of

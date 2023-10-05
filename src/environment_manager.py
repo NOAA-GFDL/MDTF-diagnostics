@@ -239,19 +239,11 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         # conda_init for bash defines conda as a shell function; will get error
         # if we try to call the conda executable directly
         try:
-            conda_info = util.run_shell_command(
-                f"{self.conda_dir}/conda_init.sh {paths.get('conda_root','')}",
-                log=self.log
-            )
-            for line in conda_info:
-                key, val = line.split('=')
-                if key == '_CONDA_EXE':
-                    self.conda_exe = val
-                    assert os.path.exists(self.conda_exe)
-                elif key == '_CONDA_ROOT':
-                    self.conda_root = val
+                print('Looking for micromamba') 
+                self.conda_exe = 'micromamba'
+                self.conda_root = '/opt/conda' 
         except Exception as exc:
-            raise util.PodRuntimeError("Can't find conda.") from exc
+                raise util.PodRuntimeError("Can't find conda.") from exc
 
         # find where environments are installed
         if 'conda_env_root' in paths and paths.conda_env_root:
@@ -332,10 +324,10 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         # if we try to call the conda executable directly
         conda_prefix = os.path.join(self.conda_env_root, env_name)
         return [
-            f'source {self.conda_dir}/conda_init.sh {self.conda_root}',
-            f'conda activate {conda_prefix}'
+            f'source {self.conda_dir}/micromamba_init.sh',
+            f'micromamba activate {conda_prefix}'
         ]
-
+   
     def deactivate_env_commands(self, env_name):
         return []
 
@@ -531,12 +523,14 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             self.env_mgr.create_environment(env)
 
     def spawn_subprocess(self, p, env_vars_base):
+        print("SPAWN SUBPROCESS")
         run_cmds = p.validate_commands() + p.run_commands()
         if self.test_mode:
             run_cmds = ['echo "TEST MODE: call {}"'.format('; '.join(run_cmds))]
         commands = self.env_mgr.activate_env_commands(p.env) \
             + run_cmds \
             + self.env_mgr.deactivate_env_commands(p.env)
+        print(commands)
         if self.test_mode:
             for cmd in commands:
                 print('\tTEST MODE: call {}'.format(cmd))

@@ -39,56 +39,6 @@ def copy_as_alternate(old_v, **kwargs):
     return new_v
 
 
-def edit_request_wrapper(wrapped_edit_request_func):
-    """Decorator implementing the most typical use case for
-    :meth:`~PreprocessorFunctionBase.edit_request` in multirun preprocessor functions, in
-    which we loop through each case, look at each variable request  in the varlist separately and,
-    optionally, insert a new alternate :class:`~src.varlist.VarlistEntry`
-    after it, based on that variable.
-
-    This decorator wraps a function (wrapped_edit_request_func*) which either
-    constructs and returns the desired new alternate
-    :class:`~src.varlist.VarlistEntry`, or returns None if no alternates are
-    to be added for the given variable request. It adds logic for updating the
-    list of alternates for each cases varlist.
-
-    .. note::
-
-       This decorator alters the signature of the decorated function, which is
-       not in keeping with Python best practices. The expected signature of
-       *wrapped_edit_request_func* is (:class:`~src.varlist.VarlistEntry` *v*), while the
-       signature of the returned function is that of
-       :meth:`PreprocessorFunctionBase.edit_request`.
-    """
-
-    @functools.wraps(wrapped_edit_request_func)
-    def wrapped_edit_request(self, varlist, data_convention):
-        new_varlist = []
-        for v in varlist.iter_contents():
-            new_v = wrapped_edit_request_func(self, v, varlist, data_convention)
-            if new_v is None:
-                # no change, pass through VE unaltered
-                new_varlist.append(v)
-                continue
-            else:
-                # insert new_v between v itself and v's old alternate sets
-                # in varlist query order
-                new_v.alternates = v.alternates
-                v.alternates = [[new_v]]
-                new_v_t_name = (str(new_v.translation)
-                                if getattr(new_v, 'translation', None) is not None
-                                else "(not translated)")
-                v_t_name = (str(v.translation) if getattr(v, 'translation', None)
-                                                  is not None else "(not translated)")
-                v.log.debug("%s for %s: add translated %s as alternate for %s.",
-                            v.__class__.__name__, v.full_name, new_v_t_name, v_t_name)
-                new_varlist.append(v)
-                new_varlist.append(new_v)
-        varlist = varlist_util.Varlist(contents=new_varlist)
-
-    return wrapped_edit_request
-
-
 class PreprocessorFunctionBase(abc.ABC):
     """Abstract interface for implementing a specific preprocessing functionality.
     As described in :doc:`fmwk_preprocess`, each preprocessing operation is
@@ -110,7 +60,7 @@ class PreprocessorFunctionBase(abc.ABC):
         """Called during Preprocessor's init."""
         pass
 
-    def edit_request(self, v: varlist_util.VarlistEntry):
+    def edit_request(self, v: varlist_util.VarlistEntry, *args):
         """Edit the data requested in *pod*'s :class:`~src.diagnostic.Varlist`
         queue, based on the transformations the functionality can perform (in
         :meth:`process`). If the function can transform data in format *X* to
@@ -262,7 +212,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
     _rate_d = {tup[0]: tup[1] for tup in _std_name_tuples}
     _flux_d = {tup[1]: tup[0] for tup in _std_name_tuples}
 
-    def edit_request(self, v: varlist_util.VarlistEntry):
+    def edit_request(self, v: varlist_util.VarlistEntry, *args):
         """Edit *pod*\'s Varlist prior to query. If the
         :class:`~src.diagnostic.VarlistEntry` *v* has a ``standard_name`` in the
         recognized list, insert an alternate VarlistEntry whose translation
@@ -294,12 +244,14 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             )
 
         translate = translation.VariableTranslator()
+        to_convention = [arg for arg in args if arg == 'to_convention'][0]
+        assert to_convention, 'to_convention not defined in *args of PrecipRatetoFLuxConversion'
         try:
-            new_tv = translate.translate(data_convention, v_to_translate)
+            new_tv = translate.translate(to_convention, v_to_translate)
         except KeyError as exc:
             v.log.debug(('%s edit_request on %s: caught %r when trying to '
                          'translate \'%s\'; varlist unaltered.'), self.__class__.__name__,
-                          v.full_name, exc, v_to_translate.standard_name)
+                        v.full_name, exc, v_to_translate.standard_name)
             return None
         new_v = copy_as_alternate(v)
         new_v.translation = new_tv
@@ -496,7 +448,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
        :meth:`process` raises a KeyError.
     """
 
-    def edit_request(self, v: varlist_util.VarlistEntry):
+    def edit_request(self, v: varlist_util.VarlistEntry, *args):
         """Edit the *pod*'s :class:`~src.diagnostic.Varlist` prior to data query.
         If given a :class:`~src.diagnostic.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
@@ -617,7 +569,7 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
        that are known to be incorrect.
     """
 
-    def edit_request(self, v: varlist_util.VarlistEntry):
+    def edit_request(self, v: varlist_util.VarlistEntry, *args):
         """Edit the *pod*'s :class:`~src.diagnostic.Varlist` prior to data query.
         If given a :class:`~src.MultirunDiagnostic.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
@@ -746,7 +698,39 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             PrecipRateToFluxFunction, ConvertUnitsFunction,
             ExtractLevelFunction, RenameVariablesFunction,
             AssociatedVariablesFunction
-         ]
+        ]
+
+    def check_group_daterange(self, group_df, expt_key=None, log=_log):
+        """Sort the files found for each experiment by date, verify that
+        the date ranges contained in the files are contiguous in time and that
+        the date range of the files spans the query date range.
+        """
+        date_col = self.col_spec.daterange_col  # abbreviate
+        if not self.col_spec.has_date_info or date_col not in group_df:
+            return group_df
+
+        d_key = self.data_key(group_df, expt_key=expt_key)
+        try:
+            sorted_df = group_df.sort_values(by=date_col)
+            # method throws ValueError if ranges aren't contiguous
+            files_date_range = util.DateRange.from_contiguous_span(
+                *(sorted_df[date_col].to_list())
+            )
+            # throws AssertionError if we don't span the query range
+            assert files_date_range.contains(self.attrs.date_range)
+            return sorted_df
+        except ValueError:
+            self._query_error_handler(
+                "Non-contiguous or malformed date range in files:", d_key, log=log
+            )
+        except AssertionError:
+            log.debug(("Eliminating expt_key since date range of files (%s) doesn't "
+                       "span query range (%s)."), files_date_range, self.attrs.date_range)
+        except Exception as exc:
+            self._query_error_handler(f"Caught exception {repr(exc)}:", d_key,
+                                      log=log)
+        # hit an exception; return empty DataFrame to signify failure
+        return pd.DataFrame(columns=group_df.columns)
 
     def query_catalog(self,
                       case_dict: dict,
@@ -767,7 +751,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # create filter lists for POD variables
         cat_dict = {}
         for case_name, case_d in case_dict.items():
-            #path_regex = "(?i)(?<!\\S)" + case_name + "(?!\\S+)"
+            # path_regex = "(?i)(?<!\\S)" + case_name + "(?!\\S+)"
             path_regex = case_name + "*"
             freq = case_d.varlist.T.frequency
             for v in case_d.varlist.iter_vars():
@@ -783,8 +767,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict
                 cat_dict = cat_dict | cat_subset.to_dataset_dict(
-                                xarray_open_kwargs={"decode_times": True, "use_cftime": True}
-                                )
+                    xarray_open_kwargs={"decode_times": True, "use_cftime": True}
+                )
         return cat_dict
 
     def edit_request(self, v: varlist_util.VarlistEntry):
@@ -800,8 +784,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """Method to launch pp routines on xarray datasets associated with required variables"""
         for func in self.file_preproc_functions:
             func.execute(func, v, xarray_ds)
-
-
 
     def setup(self, pod):
         """Method to do additional configuration immediately before :meth:`process`
@@ -836,18 +818,18 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             "format": self.nc_format
         }
 
-    def read_one_file(self, var, data_catalog_path: str):
+    def read_one_file(self, var, catalog_subset: dict):
         """Wraps xarray `open_dataset()
         <https://xarray.pydata.org/en/stable/generated/xarray.open_dataset.html>`__
         to load a single netCDF file.
         """
-        return xr.open_dataset(
-            path_list[0],
-            **self.open_dataset_kwargs
-        )
+        for k, v in catalog_subset:
+            pass
+
+        return xr_dataset
 
     @abc.abstractmethod
-    def read_dataset(self, var):
+    def read_dataset(self, var, catalog_subset: dict):
         """Abstract method to load downloaded model data into an xarray Dataset,
         to be implemented by child classes.
 
@@ -855,6 +837,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             var (:class:`~src.diagnostic.VarlistEntry`): POD varlist entry
                 instance describing POD's data request, which is the desired end
                 result of the conversion implemented by this method.
+            catalog_subset: dict with entries corresponding to cases returned by query_catalog
 
         Returns:
             xarray Dataset containing the model data requested by *var*.
@@ -1073,7 +1056,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         for case_d in caselist.values():
             for v in case_d.varlist.iter_vars():
                 self.edit_request(v)
-                self.read_dataset(v)
+                self.read_dataset(v, data_subset)
                 self.execute_pp_functions(v, data_subset)
 
 
@@ -1085,11 +1068,11 @@ class SingleVarFilePreprocessor(MDTFPreprocessorBase):
     bring in dask as an external dependency.
     """
 
-    def read_dataset(self, var: varlist_util.Varlist):
+    def read_dataset(self, var: varlist_util.Varlist, catalog_subset: dict):
         """Read a single file Dataset specified by the ``local_data`` attribute of
         *var*, using :meth:`read_one_file`.
         """
-        return self.read_one_file(var, var.local_data)
+        return self.read_one_file(var, catalog_subset)
 
 
 class NullPreprocessor(MDTFPreprocessorBase):
@@ -1101,7 +1084,7 @@ class NullPreprocessor(MDTFPreprocessorBase):
         """
         pass
 
-    def read_dataset(self, var):
+    def read_dataset(self, var, catalog_subset):
         """Dummy implementation of read_dataset to meet abstract base class requirements
         """
         pass
@@ -1125,7 +1108,8 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         super().__init__(model_paths)
         self.file_preproc_functions = [f for f in self._functions]
 
-    def read_dataset(self, var: varlist_util.VarlistEntry):
+    def read_dataset(self, var: varlist_util.VarlistEntry,
+                     catalog_subset: dict):
         """Open multi-file Dataset specified by the ``local_data`` attribute of
         *var*, wrapping xarray `open_mfdataset()
         <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
@@ -1133,33 +1117,11 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
 
         def _file_preproc(ds):
             for f in self.file_preproc_functions:
-                ds = f.process(var, ds)
+                ds = f.execute(var, ds)
             return ds
 
-        assert var.local_data
-        if len(var.local_data) == 1:
-            ds = self.read_one_file(var, var.local_data)
-            return _file_preproc(ds)
-        else:
-            assert not var.is_static  # just to be safe
-            var.log.debug("Loaded multi-file dataset of %d files:\n%s",
-                          len(var.local_data),
-                          '\n'.join(4 * ' ' + f"'{f}'" for f in var.local_data),
-                          tags=util.ObjectLogTag.IN_FILE
-                          )
-            return xr.open_mfdataset(
-                var.local_data,
-                combine="by_coords",
-                # only time-dependent variables and coords are concat'ed:
-                data_vars="minimal", coords="minimal",
-                # all non-concat'ed vars must be the same; global attrs can differ
-                # from file to file; values in ds are taken from first file
-                compat="equals",
-                join="exact",  # raise ValueError if non-time dims conflict
-                parallel=True,  # use dask
-                preprocess=_file_preproc,
-                **self.open_dataset_kwargs
-            )
+        ds_in = self.read_one_file(var, catalog_subset)
+        return _file_preproc(ds_in)
 
 
 def init_preprocessor(model_paths: util.ModelDataPathManager,

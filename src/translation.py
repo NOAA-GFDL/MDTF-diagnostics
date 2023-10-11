@@ -488,7 +488,7 @@ class VariableTranslator(metaclass=util.Singleton):
             conv_name = self.get_convention_name(conv_name)
             return self.conventions[conv_name]
 
-    def _fieldlist_method(self, conv_name: str, method_name, *args, **kwargs):
+    def _fieldlist_method(self, conv_name: str, method_name: str, *args, **kwargs):
         """Wrapper which determines the requested convention and calls the
         requested *method_name* on the :class:`Fieldlist` object for that
         convention.
@@ -502,7 +502,7 @@ class VariableTranslator(metaclass=util.Singleton):
     def to_CF_name(self, conv_name: str, name: str):
         return self._fieldlist_method(conv_name, 'to_CF_name', name)
 
-    def from_CF(self, conv_name, standard_name, modifier=None):
+    def from_CF(self, conv_name: str, standard_name: str, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF',
                                       standard_name, modifier=modifier)
 

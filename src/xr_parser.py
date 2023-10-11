@@ -420,13 +420,11 @@ class DefaultDatasetParser:
     Top-level methods are :meth:`parse` and :meth:`get_unmapped_names`.
     """
 
-    def __init__(self, data_mgr, pod):
+    def __init__(self, data_mgr):
         """Constructor.
 
         Args:
             data_mgr: DataSource instance calling the preprocessor.
-            pod (:class:`~src.diagnostic.Diagnostic`): POD whose variables are
-                being preprocessed.
         """
         config = {}
         self.disable = config.get('disable_preprocessor', False)
@@ -435,19 +433,6 @@ class DefaultDatasetParser:
 
         self.fallback_cal = 'proleptic_gregorian'  # CF calendar used if no attribute found
         self.attrs_backup = dict()
-        self.log = pod.log  # temporary
-
-    def setup(self, data_mgr, pod):
-        """Hook for use by child classes (currently unused) to do additional
-        configuration immediately before :meth:`parse` is called on each
-        variable for *pod*.
-
-        Args:
-            data_mgr: DataSource instance calling the preprocessor.
-            pod (:class:`~src.diagnostic.Diagnostic`): POD whose variables are
-                being preprocessed.
-        """
-        pass
 
     # --- Methods for initial munging, prior to xarray.decode_cf -------------
 
@@ -1319,27 +1304,3 @@ class DefaultDatasetParser:
             if (ref not in all_arr_names) and (ref not in all_attr_names):
                 missing_refs[ref] = lookup[ref]
         return missing_refs
-
-
-class MultirunDefaultDatasetParser(DefaultDatasetParser):
-    """Class containing MDTF-specific methods for cleaning and normalizing
-    xarray metadata. Methods reference data_mgr only. The data_mgr references the pod
-    object that contains the cases, rather than a case object with all of the pods.
-
-    Top-level methods are :meth:`parse` and :meth:`get_unmapped_names`.
-    """
-
-    def __init__(self, data_mgr):
-        """Constructor.
-
-        Args:
-            data_mgr: DataSource instance calling the preprocessor: src.diagnostic.MultirunDiagnostic
-        """
-        config = {}
-        self.disable = config.get('disable_preprocessor', False)
-        self.overwrite_ds = config.get('overwrite_file_metadata', False)
-        self.guess_names = False
-
-        self.fallback_cal = 'proleptic_gregorian'  # CF calendar used if no attribute found
-        self.attrs_backup = dict()
-        self.log = data_mgr.log  # temporary

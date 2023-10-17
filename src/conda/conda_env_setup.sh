@@ -108,13 +108,19 @@ popd > /dev/null   # restore CWD
 # setup conda for non-interactive shell
 # NB: 'conda' isn't an executable; it's created as a shell alias. This is why we
 # invoke it as 'conda' below, instead of the absolute path in $CONDA_EXE.
-if [[ -z "$_MDTF_CONDA_ROOT" && -n "$_MDTF_MICROMAMBA_ROOT" ]]; then
+if [[ -z "$_MDTF_CONDA_ROOT" && -z "$_MDTF_MICROMAMBA_ROOT" ]]; then
     set -- # clear cmd line
+    echo "calling conda_init.sh"
     . "${script_dir}/conda_init.sh" -v
 
-elif [ -z "$_MDTF_MICROMAMBA_ROOT" ]; then
+elif [[ -z "$_MDTF_MICROMAMBA_ROOT" && -n "$_MDTF_CONDA_ROOT" ]]; then
     # pass conda installation dir to setup script
+    echo "calling conda_init.sh on conda_root"
     . "${script_dir}/conda_init.sh" -v "$_MDTF_CONDA_ROOT"
+elif [[ -n "$_MDTF_MICROMAMBA_ROOT" && -z "$_MDTF_CONDA_ROOT" ]]; then
+    # pass conda installation dir to setup script
+    echo "calling conda_init.sh on micromamba_root"
+    . "${script_dir}/conda_init.sh" -v "$_MDTF_MICROMAMBA_ROOT"
 fi
 
 if [ "$make_envs" = "true" ]; then
@@ -185,6 +191,7 @@ if [ "$make_envs" = "true" ]; then
 fi
 
 # create script wrapper to activate base environment
+echo "creating mdtf wrapper"
 _CONDA_WRAPPER="${repo_dir}/mdtf"
 if [ -e "$_CONDA_WRAPPER" ]; then
     rm -f "$_CONDA_WRAPPER"

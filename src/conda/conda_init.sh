@@ -93,6 +93,9 @@ if [[ -d "$_CONDA_ROOT" && ! -x "$CONDA_EXE" ]]; then
     elif [ -x "${_CONDA_ROOT}/condabin/conda" ]; then
         CONDA_EXE="${_CONDA_ROOT}/condabin/conda"
         if [ $_v -eq 2 ]; then echo "Found CONDA_EXE"; fi
+    elif [ -x "${_CONDA_ROOT}/bin/micromamba" ]; then
+        CONDA_EXE="${_CONDA_ROOT}/bin/micromamba"
+        if [ $_v -eq 2 ]; then echo "Found CONDA_EXE--using micromamba"; fi
     fi
 fi
 # found exe but not root
@@ -128,14 +131,24 @@ fi
 # https://github.com/conda/conda/issues/9392#issuecomment-617345019
 unset CONDA_SHLVL
 # finally run conda's init script
-__conda_setup="$( $CONDA_EXE 'shell.bash' 'hook' 2> /dev/null )"
+
+if [ -x "eval conda info" ]; then
+    __conda_setup="$( $CONDA_EXE 'shell.bash' 'hook' 2> /dev/null )"
+fi
+
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
     if [ -f "${_CONDA_ROOT}/etc/profile.d/conda.sh" ]; then
+        echo "calling conda.sh"
         . "${_CONDA_ROOT}/etc/profile.d/conda.sh"
+
+    elif [ -f "${_CONDA_ROOT}/micromamba/etc/profile.d/micromamba.sh" ]; then
+        echo "calling micromamba.sh"
+        . "${_CONDA_ROOT}/micromamba/etc/profile.d/micromamba.sh"
     else
         export PATH="${_CONDA_ROOT}/bin:$PATH"
+
     fi
 fi
 unset __conda_setup

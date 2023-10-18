@@ -112,7 +112,6 @@ if [[ -z "$_MDTF_CONDA_ROOT" && -z "$_MDTF_MICROMAMBA_ROOT" ]]; then
     set -- # clear cmd line
     echo "calling conda_init.sh"
     . "${script_dir}/conda_init.sh" -v
-
 elif [[ -z "$_MDTF_MICROMAMBA_ROOT" && -n "$_MDTF_CONDA_ROOT" ]]; then
     # pass conda installation dir to setup script
     echo "calling conda_init.sh on conda_root"
@@ -154,12 +153,13 @@ if [ "$make_envs" = "true" ]; then
       fi
     elif [ -n "$_MDTF_MICROMAMBA_ROOT" ]; then
         # not set, create conda env without --prefix
-        echo "Installing envs with microomamba"
+        echo "Installing envs with micromamba"
+        . "${_CONDA_ROOT}/micromamba/etc/profile.d/micromamba.sh"
          _INSTALL_EXE=$( command -v micromamba ) || true
-          if [[ ! -x "$_INSTALL_EXE" ]]; then
-          echo "Error: micromamba not found."
-          exit 1
-      fi
+         if [[ -z "$_INSTALL_EXE" ]]; then
+            echo "Error: micromamba not found."
+            exit 1
+         fi
     fi
 
     # create all envs in a loop
@@ -172,13 +172,18 @@ if [ "$make_envs" = "true" ]; then
             # need to set manually, otherwise mamba will install in a subdir
             # of its env's directory
            conda_prefix="${_CONDA_ROOT}/envs/${env_name}"
-        elif [[ -z "$_CONDA_ENV_ROOT" && -n "$_MDTF_MICROMAMBA_ROOT" ]]; then
+           echo "Creating conda env ${env_name} in ${conda_prefix}..."
+           "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
+        elif [ -n "$_MDTF_MICROMAMBA_ROOT" ]; then
            conda_prefix="${_MDTF_MICROMAMBA_ROOT}/envs/${env_name}"
+           echo "Creating conda env ${env_name} in ${conda_prefix}..."
+           "$_INSTALL_EXE" create -q -p "$conda_prefix" -f "$env_file"
         else
            conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
+           echo "Creating conda env ${env_name} in ${conda_prefix}..."
+           "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
         fi
-        echo "Creating conda env ${env_name} in ${conda_prefix}..."
-        "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
+
         echo "... conda env ${env_name} created."
     done
     "$_INSTALL_EXE" clean -aqy

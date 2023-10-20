@@ -1,0 +1,88 @@
+<!-- 
+    This file is the HTML output template for the example diagnostic and shows
+    how you should describe and link to the plots your diagnostic generates.
+    The framework will "fill in the blanks" corresponding to environment
+    variables and copy the file to <WK_DIR>.
+        
+    EPS or PS files saved by your diagnostic are converted by the framework into
+    bitmaps in the following locations:
+    <WK_DIR>/model/PS/<plot_name>.eps -> <WK_DIR>/model/<plot_name>.png
+    <WK_DIR>/obs/PS/<plot_name>.eps -> <WK_DIR>/obs/<plot_name>.png
+    so the target of each link only needs to be the relative path, 
+    eg. "model/<plot_name>.png".
+-->
+<title>MDTF example diagnostic</title>
+<img src="../mdtf_diag_banner.png">
+<h3>Example diagnostic: time-averaged near-surface temperature</h3>
+<p>
+If this were a real diagnostic, this would be where you'd give a brief summary
+of what your diagnostic computes and how to interpret the output plots it 
+generated, which will be linked below. You can include hyperlinks to journal 
+articles, etc. for more detailed documentation on your methods or sources of 
+observational data.
+</p>
+<p>
+The names of any environment variables set for the diagnostic (enclosed in 
+curly braces) will be replaced by the same values they had when the diagnostic 
+was run. For example, this diagnostic's favorite color is "{{EXAMPLE_FAV_COLOR}}."
+</p>
+<TABLE>
+<TR>
+<TH align=left><font color=navy>Time averages, {{FIRSTYR}}-{{LASTYR}}
+<TH align=left>{{CASENAME}}
+<TH align=left>MODEL
+<TR>
+<TH align=left>SST (degC)
+<TH align=center><A href=model/example_model_SST_plot.png>plot</A>
+<TR>
+<TH align=left>Top layer salt (psu)
+<TH align=center><A href=model/example_model_SALT_plot.png>plot</A>
+
+<TR>
+<TH align=left><font color=navy>Bias plots, {{FIRSTYR}}-{{LASTYR}}
+<TH align=left>{{CASENAME}}
+<TH align=left>MODEL
+<TR>
+<TH align=left>SST (degC)
+<TH align=center><A href=model/example_model_SST_plot.png>plot</A>
+<TR>
+<TH align=left>Top layer salt (psu)
+<TH align=center><A href=model/example_model_SALT_plot.png>plot</A>
+
+<TR>
+<TH align=left><font color=navy>WMT plots, {{FIRSTYR}}-{{LASTYR}}
+<TH align=left>{{CASENAME}}
+<TH align=left>MODEL
+<TR>
+<TH align=left>SST (degC)
+<TH align=center><A href=model/example_model_SST_plot.png>plot</A>
+<TR>
+<TH align=left>Top layer salt (psu)
+<TH align=center><A href=model/example_model_SALT_plot.png>plot</A>
+
+<TR>
+<TH align=left><font color=navy>MOC plots, {{FIRSTYR}}-{{LASTYR}}
+<TH align=left>{{CASENAME}}
+<TH align=left>MODEL
+<TR>
+<TH align=left>SST (degC)
+<TH align=center><A href=model/example_model_SST_plot.png>plot</A>
+<TR>
+<TH align=left>Top layer salt (psu)
+<TH align=center><A href=model/example_model_SALT_plot.png>plot</A>
+
+<TR>
+<TH align=left><font color=navy>Synthesis plots, {{FIRSTYR}}-{{LASTYR}}
+<TH align=left>{{CASENAME}}
+<TH align=left>MODEL
+<TR>
+<TH align=left>SST (degC)
+<TH align=center><A href=model/example_model_SST_plot.png>plot</A>
+<TR>
+<TH align=left>Top layer salt (psu)
+<TH align=center><A href=model/example_model_SALT_plot.png>plot</A>
+
+
+
+</TABLE>
+

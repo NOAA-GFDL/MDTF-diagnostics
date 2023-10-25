@@ -128,6 +128,8 @@ tarea_var_name = os.environ["TAREA_var"]
 # named "time":
 time_coord_name = os.environ["time_coord"]
 depth_coord_name = os.environ["z_t_coord"]
+lat_coord_name = os.environ["TLAT_coord"]
+lon_coord_name = os.environ["TLONG_coord"]
 
 # Set variable arrays
 sst_data = sst_dataset[sst_var_name]
@@ -153,9 +155,9 @@ wmt_ds['wfo'] = sfwf_data
 wmt_ds['wet'] = xr.where(~np.isnan(wmt_ds.tos),1,0)
 wmt_ds['sfdsi'] = xr.zeros_like(wmt_ds['hfds']).rename('sfdsi')
 wmt_ds['areacello'] = tarea_data/100e2
-wmt_ds = wmt_ds.drop({'ULAT','ULONG'})
-wmt_ds = wmt_ds.rename({'nlat': 'y', 'nlon':'x', 'TLAT':'lat', 'TLONG':'lon'})
-
+#wmt_ds = wmt_ds.drop({'ULAT','ULONG'})
+wmt_ds = wmt_ds.rename({'nlat': 'y', 'nlon':'x', lat_coord_name:'lat', lon_coord_name:'lon'})
+#wmt_ds = wmt_ds.rename({lat_coord_name:'lat', lon_coord_name:'lon'})
 #2)Calculate WMT
 model_mean_wmt = wmt_calc(wmt_ds)
 

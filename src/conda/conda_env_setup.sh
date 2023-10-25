@@ -65,6 +65,7 @@ while (( "$#" )); do
             fi
             cd "$2"
             export _CONDA_ENV_ROOT="$PWD"
+            echo "$_CONDA_ENV_ROOT"
             shift 2
             ;;
         -cr|--conda_root)
@@ -154,7 +155,8 @@ if [ "$make_envs" = "true" ]; then
     elif [ -n "$_MDTF_MICROMAMBA_ROOT" ]; then
         # not set, create conda env without --prefix
         echo "Installing envs with micromamba"
-        . "${_CONDA_ROOT}/micromamba/etc/profile.d/micromamba.sh"
+        #. "${_CONDA_ROOT}/micromamba/etc/profile.d/micromamba.sh"
+        source "$HOME"/.bash_profile
          _INSTALL_EXE=$( command -v micromamba ) || true
          if [[ -z "$_INSTALL_EXE" ]]; then
             echo "Error: micromamba not found."
@@ -175,9 +177,14 @@ if [ "$make_envs" = "true" ]; then
            echo "Creating conda env ${env_name} in ${conda_prefix}..."
            "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
         elif [ -n "$_MDTF_MICROMAMBA_ROOT" ]; then
-           conda_prefix="${_MDTF_MICROMAMBA_ROOT}/envs/${env_name}"
+           echo "MICROMAMBA"
+           if [ -n "$_CONDA_ENV_ROOT" ]; then
+              conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
+           else
+              conda_prefix="${_MDTF_MICROMAMBA_ROOT}/envs/${env_name}"
+           fi
            echo "Creating conda env ${env_name} in ${conda_prefix}..."
-           "$_INSTALL_EXE" create -q -p "$conda_prefix" -f "$env_file"
+           "$_INSTALL_EXE" create -q -y -p "$conda_prefix" -f "$env_file"
         else
            conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
            echo "Creating conda env ${env_name} in ${conda_prefix}..."

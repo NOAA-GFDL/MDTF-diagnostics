@@ -75,12 +75,12 @@ jobs:
       run: |
         echo "Installing Conda Environments"
         # MDTF-specific setup: install all conda envs
-        micromamba create -f ./src/conda/env_base.yml
-        micromamba create -f ./src/conda/env_python3_base.yml
-        micromamba create -f ./src/conda/env_NCL_base.yml
-        micromamba create -f ./src/conda/env_R_base.yml
+        micromamba create -y -f ./src/conda/env_base.yml
+        micromamba create -y -f ./src/conda/env_python3_base.yml
+        micromamba create -y -f ./src/conda/env_NCL_base.yml
+        micromamba create -y -f ./src/conda/env_R_base.yml
         echo "Creating the _MDTF_synthetic_data environment"
-        micromamba create -f ./src/conda/_env_synthetic_data.yml
+        micromamba create -y -f ./src/conda/_env_synthetic_data.yml
     - name: Generate Model Data
       run: |
         cd ../

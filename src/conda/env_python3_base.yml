@@ -12,7 +12,7 @@ dependencies:
 - netCDF4=1.6.4
 - cftime=1.6.2
 - xarray=2023.8.0
-- matplotlib=3.7.2
+- matplotlib=3.8.0
 - pandas=2.1.0
 - cartopy=0.22.0
 - cython=3.0.2

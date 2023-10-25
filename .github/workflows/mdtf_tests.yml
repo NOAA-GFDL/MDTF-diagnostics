@@ -128,7 +128,7 @@ jobs:
         ./mdtf_framework.py --version
         # run the test PODs
         ./mdtf_framework.py -v -f ${{matrix.json-file}}
-        cat ../wkdir/NCAR.Synthetic/Wheeler_Kiladis/Wheeler_Kiladis.log
+        cat /home/runner/work/MDTF-diagnostics/wkdir/MDTF_NCAR.Synthetic_1975_1981/Wheeler_Kiladis/Wheeler_Kiladis.log
     - name: Get observational data for set 2
       run: |
         echo "${PWD}"

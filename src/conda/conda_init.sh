@@ -124,8 +124,8 @@ else
     if [ ! -d "$_CONDA_ROOT" ]; then
         echo "ERROR: search for conda base dir failed (${_CONDA_ROOT})" 1>&2
     fi
+
     conda_check=$( $CONDA_EXE info )
-    echo "$conda_check"
 
     if [ -z "$conda_check" ]; then
         echo "ERROR: search for conda executable failed (${CONDA_EXE})" 1>&2

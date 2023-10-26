@@ -184,7 +184,6 @@ if [ "$make_envs" = "true" ]; then
            echo "Creating conda env ${env_name} in ${conda_prefix}..."
            "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
         elif [ -n "$_MDTF_MICROMAMBA_ROOT" ]; then
-           echo "MICROMAMBA"
            if [ -n "$_CONDA_ENV_ROOT" ]; then
               conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
            else

@@ -119,7 +119,7 @@ elif [[ -z "$_MDTF_MICROMAMBA_ROOT" && -n "$_MDTF_CONDA_ROOT" ]]; then
     . "${script_dir}/conda_init.sh" -v "$_MDTF_CONDA_ROOT"
 elif [[ -n "$_MDTF_MICROMAMBA_ROOT" && -z "$_MDTF_CONDA_ROOT" ]]; then
     # pass conda installation dir to setup script
-    echo "calling conda_init.sh on micromamba_root"
+    echo "calling conda_init.sh on $_MDTF_MICROMAMBA_ROOT"
     . "${script_dir}/conda_init.sh" -v "$_MDTF_MICROMAMBA_ROOT"
 fi
 

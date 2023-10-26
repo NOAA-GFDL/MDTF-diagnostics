@@ -1,0 +1,60 @@
+// runoff sensitivities MDTF diagnostic settings file
+// This should be an ascii text file in JSON format
+// (https://en.wikipedia.org/wiki/JSON#Data_types_and_syntax), with the addition
+// that all text to the  right of a "//" is a comment and ignored (sometimes
+// called "JSONC" format).
+{
+  "settings" : {
+    "driver" : "runoff_sensitivities_diag.py",
+    "long_name" : "diagnostic for the runoff sensitivities",
+    "realm" : ["atmos","land"],
+    "description" : "runoff sensitivity diagnostics",
+
+    "pod_env_vars" : {
+      "EXAMPLE_FAV_COLOR": "blue"
+    },
+
+    "runtime_requirements": {
+        "python3": ["matplotlib", "netCDF4", "scipy", "numpy", "sklearn", "cartopy"]
+    }
+  },
+
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "time": {"standard_name": "time"}
+  },
+
+  "varlist" : {
+
+    "tas": {
+      "standard_name" : "air_temperature",
+      "units": "K",
+      "frequency" : "mon",
+      "modifier": "atmos_height",
+      "dimensions": ["time", "lat", "lon"],
+      "path_variable": "TAS_FILE" 
+    },
+    "pr": {
+      "standard_name" : "precipitation_flux",
+      "units": "kg m-2 s-1",
+      "frequency" : "mon",
+      "dimensions": ["time", "lat", "lon"],
+      "path_variable": "PR_FILE"
+    },
+    "hfls": {
+      "standard_name" : "surface_upward_latent_heat_flux",
+      "units": "W m-2",
+      "frequency" : "mon",
+      "dimensions": ["time", "lat", "lon"],
+      "path_variable": "HFLS_FILE"
+    },
+    "mrro": {
+      "standard_name" : "runoff_flux",
+      "units": "kg m-2 s-1",
+      "frequency" : "mon",
+      "dimensions": ["time", "lat", "lon"],
+      "path_variable": "MRRO_FILE"
+    } // "mrro" field needs to be added on "MDTF-diagnostics/data/fieldlist_CMIP.jsonc"
+  }
+}

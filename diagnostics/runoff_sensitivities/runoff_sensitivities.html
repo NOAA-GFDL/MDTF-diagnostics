@@ -1,0 +1,241 @@
+<!-- 
+    This file is the HTML output template for the example diagnostic and shows
+    how you should describe and link to the plots your diagnostic generates.
+    The framework will "fill in the blanks" corresponding to environment
+    variables and copy the file to <WK_DIR>.
+        
+    EPS or PS files saved by your diagnostic are converted by the framework into
+    bitmaps in the following locations:
+    <WK_DIR>/model/PS/<plot_name>.eps -> <WK_DIR>/model/<plot_name>.png
+    <WK_DIR>/obs/PS/<plot_name>.eps -> <WK_DIR>/obs/<plot_name>.png
+    so the target of each link only needs to be the relative path, 
+    eg. "model/<plot_name>.png".
+-->
+<title>runoff sensitivity diagnostic</title>
+<img src="../mdtf_diag_banner.png">
+<h3>
+Inter-annual sensitivity of runoff to surface air temperature and precipitation
+</h3>
+
+<p>
+General discription: <br />
+In this diagnostic, temperature and precipitation sensitivity of target model are calculated
+and compared with corresponding observational estimations (GRUN-ENSEMBLE) and CMIP5/6 models. <br />
+The sensitivities are calculated for 78 global river basins with water-year average. <br />
+For each basin, we define different water-year, with the start month which maximizes the inter-annual correlation between precipitation and runoff in GRUN-ENSEMBLE. <br />
+The uncertainty ranges from internal variability, observational uncertainty, 
+and inter-model spread are shown for specific river basins. <br />
+Note that sensitivities are calculated for period of (1905-2005), which can be extracted from GRUN-ENSEMBLE as well as CMIP5/6 historical simulations.
+</p>
+<p>
+References: <br />
+runoff sensitivities - Lehner, F., Wood, A. W., Vano, J. A., Lawrence, D. M., Clark, M. P., and Mankin, J. S. (2019). 
+The potential to reduce uncertainty in regional runoff projections from climate models. Nature Climate Change, 9(12), 926-933.<br />
+OBS estimations (GRUN-ENSEMBLE) -  Ghiggi, G., Humphrey, V., Seneviratne, S. I., & Gudmundsson, L. (2021). 
+G‐RUN ENSEMBLE: A multi‐forcing observation‐based global runoff reanalysis. Water Resources Research, 57(5), e2020WR028787.
+</p>
+<p>
+Caution: <br />
+For some models, water budget closure (Precipitation - Evaporation = Runoff) in long-term average is not kept well. <br />
+To evaluate the water budget closure (WBC) for period ({{FIRSTYR}}-{{LASTYR}}), we calculate the fraction of river basins in which WBC is kept within 5% error. <br />
+For example, WBC = 0.96 for CESM2, and it means that WBC is kept for 96% of 78 global river basins in CESM2. <br />
+if WBC < 0.8, we consider the model's runoff data is not appropriate; there could be issues with runoff output and the sensitivities from those models are less credible. <br />
+WBC value is shown in the plots of MODEL runoff sensitivities (title).
+</p>
+<p>
+Casename: <br />
+{{CASENAME}}
+</p>
+
+<p><br /></p>
+
+<TABLE>
+<TR>
+<TH align=left><font color=navy>runoff sensitivities
+<TH align=left>&emsp;OBS
+<TH align=left>&emsp;MODEL
+<TH align=left>&emsp;MODEL-OBS
+<TH align=left>&emsp;CMIP6-OBS
+</TR>
+<TR>
+<TH align=left>T sensitivity (%/K)
+<TH align=center>&emsp;<A href=obs/tsens_obs.png>plot</A>
+<TH align=center>&emsp;<A href=model/tsens_model.png>plot</A>
+<TH align=center>&emsp;<A href=model/tsens_model_bias.png>plot</A>
+<TH align=center>&emsp;<A href=obs/tsens_hist6_bias.png>plot</A>
+</TR>
+<TR>
+<TH align=left>P sensitivity (%/%)
+<TH align=center>&emsp;<A href=obs/prsens_obs.png>plot</A>
+<TH align=center>&emsp;<A href=model/prsens_model.png>plot</A>
+<TH align=center>&emsp;<A href=model/prsens_model_bias.png>plot</A>
+<TH align=center>&emsp;<A href=obs/prsens_hist6_bias.png>plot</A>
+</TR>
+</TABLE>
+
+<p><br /></p>
+
+<TABLE>
+<TR>
+<TH align=left><font color=navy>summary
+</TR>
+<TR>
+<TH align=left>Prediction accuracy
+<TH align=left>&emsp;T sensitivity
+<TH align=left>&emsp;P sensitivity
+</TR>
+<TR>
+<TH align=center><A href=model/summary_prediction_accuracy.png>plot</A>
+<TH align=center>&emsp;<A href=model/summary_tsens.png>plot</A>
+<TH align=center>&emsp;<A href=model/summary_prsens.png>plot</A>
+</TR>
+</TABLE>
+
+<p><br /></p>
+
+<TABLE>
+<TR>
+<TH align=left><font color=navy>Sensitivities with uncertainty ranges
+</TR>
+<TR>
+<TH align=left>for specific river basins:&nbsp; 
+<TH align=left><A href=obs/basin_info.png>global map of river basins</A>
+</TR>
+<TR>
+<TH align=left>&emsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific1.png>1:Indigirka</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific2.png>2:Kolyma</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific3.png>3:Yenisey</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific4.png>4:Mackenzie</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific5.png>5:Yukon</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific6.png>6:N.Dvina</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific7.png>7:Kuskokwim</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific8.png>8:Volga</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific9.png>9:Saskatchewan-Nelson</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific10.png>10:Amur</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific11.png>11:Dnieper</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific12.png>12:Neman</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific13.png>13:Fraser</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific14.png>14:Oder</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific15.png>15:Don</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific16.png>16:Vistula</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific17.png>17:Elbe</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific18.png>18:Columbia</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific19.png>19:Rhine</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific20.png>20:St.Lawrence</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific21.png>21:Danube</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific22.png>22:Seine</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific23.png>23:Mississippi</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific24.png>24:Loire</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific25.png>25:St.SyrDarya</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific26.png>26:AmuDarya</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific27.png>27:Colorado</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific28.png>28:Tarim(Yarkand)</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific29.png>29:Kura-Araks</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific30.png>30:Sacramento</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific31.png>31:HwangHo</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific32.png>32:Tagus</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific33.png>33:Murghab</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific34.png>34:RioGrande</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific35.png>35:Alabama</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific36.png>36:Yangtze</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific37.png>37:Mekong</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific38.png>38:Salween</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific39.png>39:Ganges-Brahmaputra</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific40.png>40:Nile</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific41.png>41:Irrawaddy</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific42.png>42:Si</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific43.png>43:SongHong</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific44.png>44:Niger</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific45.png>45:Mahanadi</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific46.png>46:Santiago-Lerma-Chap</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific47.png>47:Godavari</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific48.png>48:Balsas</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific49.png>49:ChaoPhraya</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific50.png>50:Krishna</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific51.png>51:Volta</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific52.png>52:Magdalena</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific53.png>53:Orinoco</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific54.png>54:Zaire</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific55.png>55:OmoWenz</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific56.png>56:Sanaga</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific57.png>57:Amazon</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific58.png>58:Ogooue</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific59.png>59:Mahakam</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific60.png>60:Kapuas</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific61.png>61:Mamberamo</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific62.png>62:Tocantins</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific63.png>63:Parnaiba</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific64.png>64:Rufiji</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific65.png>65:SaoFrancisco</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific66.png>66:Zambezi</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific67.png>67:Okavango</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific68.png>68:Cunene</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific69.png>69:Parana</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific70.png>70:Save</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific71.png>71:Limpopo</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific72.png>72:Orange</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific73.png>73:Murray-Darling</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific74.png>74:Uruguay</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific75.png>75:Negro</A>&nbsp;&nbsp;
+</TR>
+<TR>
+<TH align=left>&emsp;</A>
+<TH align=left><A href=model/basin_specific76.png>76:LakeChad</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific77.png>77:Lena</A>&nbsp;&nbsp;
+<TH align=left><A href=model/basin_specific78.png>78:Ob</A>&nbsp;&nbsp;
+</TR>
+</TABLE>
+
+<p>
+For each river basin, the uncertainty ranges for OBS, MODEL, CMIP5, CMIP6 are defined as below: <br />
+OBS - average of 95% confidence intervals of regression coefficients, from regressions with 5 different atmospheric forcings (5 small black dots) <br />
+MODEL - 95% confidence interval of regression coefficients using t-test <br />
+CMIP5 - 95% confidence interval of inter-model spread using t-test (21 models as 21 small green dots) <br />
+CMIP6 - 95% confidence interval of inter-model spread using t-test (26 models as 26 small blue dots) <br />
+</p>

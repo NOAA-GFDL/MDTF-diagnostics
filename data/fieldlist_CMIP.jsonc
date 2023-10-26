@@ -295,6 +295,11 @@
       "standard_name": "sea_surface_height_above_geoid",
       "units": "m",
       "ndim": 3
+    },
+    "mrro": {
+      "standard_name": "runoff_flux",
+      "units": "kg m-2 s-1",
+      "ndim": 3
     }
   },
   "env_vars" : {

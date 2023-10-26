@@ -174,11 +174,11 @@ class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
         if self.r_lib_root != '':
             env_path = os.path.join(self.r_lib_root, env_name)
             if not os.path.isdir(env_path):
-                os.makedirs(env_path) # recursive mkdir if needed
+                os.makedirs(env_path)  # recursive mkdir if needed
             cmds = [
                 f'export R_LIBS_USER="{env_path}"',
-                f'Rscript -e \'install.packages(c({r_pkg_str}), ' \
-                    + 'lib=Sys.getenv("R_LIBS_USER"))\''
+                f'Rscript -e \'install.packages(c({r_pkg_str}), '
+                + 'lib=Sys.getenv("R_LIBS_USER"))\''
             ]
         else:
             cmds = [f'Rscript -e \'install.packages(c({r_pkg_str}))\'']
@@ -258,7 +258,7 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
             self.conda_env_root = paths.conda_env_root
             if not os.path.isdir(self.conda_env_root):
                 self.log.warning("Conda env directory '%s' not found; creating.",
-                    self.conda_env_root)
+                                 self.conda_env_root)
                 os.makedirs(self.conda_env_root)  # recursive mkdir if needed
         else:
             # only true in default anaconda install, may need to fix
@@ -342,6 +342,8 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
                 env_config_file = os.path.join(home_dir, '.cshrc')
             elif os.path.isfile(os.path.join(home_dir, '.tcshrc')):
                 env_config_file = os.path.join(home_dir, '.tcshrc')
+            elif os.path.isfile(os.path.join(home_dir, '.zshrc')):
+                env_config_file = os.path.join(home_dir, '.zshrc')
             else:
                 env_config_file = ""
             return [

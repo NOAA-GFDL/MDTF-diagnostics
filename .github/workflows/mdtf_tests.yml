@@ -68,19 +68,26 @@ jobs:
       run: |
         echo "Installing XQuartz"
         brew install --cask xquartz
+        echo "CONDA_ROOT=$(echo /Users/runner/micromamba_bin)" >> $GITHUB_ENV
+        echo "CONDA_ENV_DIR=$(echo /Users/runner/micromamba/envs)" >> $GITHUB_ENV
     - name: Set environment variables
       run: |
         echo "POD_OUTPUT=$(echo $PWD/../wkdir/GFDL.Synthetic)" >> $GITHUB_ENV
+      if: ${{ matrix.os == 'ubuntu-latest'}}
+        echo "CONDA_ROOT=$(echo /home/runner/micromamba_bin)" >> $GITHUB_ENV
+        echo "CONDA_ENV_DIR=$(echo /home/runner/micromamba/envs)" >> $GITHUB_ENV
     - name: Install Conda Environments
       run: |
         echo "Installing Conda Environments"
         # MDTF-specific setup: install all conda envs
-        micromamba create -y -f ./src/conda/env_base.yml
+        ./src/conda/conda_env_setup.sh -e base --conda_root ${CONDA_ROOT} --env_dir ${CONDA_ENV_DIR}
+        #micromamba create -y -f ./src/conda/env_base.yml
         micromamba create -y -f ./src/conda/env_python3_base.yml
         micromamba create -y -f ./src/conda/env_NCL_base.yml
         micromamba create -y -f ./src/conda/env_R_base.yml
         echo "Creating the _MDTF_synthetic_data environment"
         micromamba create -y -f ./src/conda/_env_synthetic_data.yml
+        ls ${CONDA_ENV_DIR}
     - name: Generate Model Data
       run: |
         cd ../

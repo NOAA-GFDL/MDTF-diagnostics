@@ -156,12 +156,19 @@ if [ "$make_envs" = "true" ]; then
         # not set, create conda env without --prefix
         echo "Installing envs with micromamba"
         #. "${_CONDA_ROOT}/micromamba/etc/profile.d/micromamba.sh"
-        source "$HOME"/.bash_profile
+        if [ -f "$HOME/.bash_profile" ]; then
+           source "$HOME/.bash_profile"
+        elif [ -f "$HOME/.bashrc" ]; then
+           source "$HOME/.bashrc"
+        else
+           echo "adding ${_CONDA_ROOT}/bin to \$PATH"
+           export PATH="${_CONDA_ROOT}/bin:$PATH"
+        fi
          _INSTALL_EXE=$( command -v micromamba ) || true
-         if [[ -z "$_INSTALL_EXE" ]]; then
-            echo "Error: micromamba not found."
-            exit 1
-         fi
+        if [[ -z "$_INSTALL_EXE" ]]; then
+           echo "Error: micromamba not found."
+           exit 1
+        fi
     fi
 
     # create all envs in a loop

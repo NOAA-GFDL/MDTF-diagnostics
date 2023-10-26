@@ -68,13 +68,15 @@ jobs:
       run: |
         echo "Installing XQuartz"
         brew install --cask xquartz
-        echo "CONDA_ROOT=$(echo /Users/runner/micromamba_bin)" >> $GITHUB_ENV
+        echo "CONDA_ROOT=$(echo /Users/runner/micromamba-bin)" >> $GITHUB_ENV
         echo "CONDA_ENV_DIR=$(echo /Users/runner/micromamba/envs)" >> $GITHUB_ENV
     - name: Set environment variables
       run: |
         echo "POD_OUTPUT=$(echo $PWD/../wkdir/GFDL.Synthetic)" >> $GITHUB_ENV
-      if: ${{ matrix.os == 'ubuntu-latest'}}
-        echo "CONDA_ROOT=$(echo /home/runner/micromamba_bin)" >> $GITHUB_ENV
+    - name: Set conda vars
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        echo "CONDA_ROOT=$(echo /home/runner/micromamba-bin)" >> $GITHUB_ENV
         echo "CONDA_ENV_DIR=$(echo /home/runner/micromamba/envs)" >> $GITHUB_ENV
     - name: Install Conda Environments
       run: |

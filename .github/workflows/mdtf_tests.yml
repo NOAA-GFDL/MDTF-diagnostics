@@ -79,8 +79,10 @@ jobs:
     - name: Install Conda Environments
       run: |
         echo "Installing Conda Environments"
+        echo "conda root ${CONDA_ROOT}"
+        echo "env dir  ${CONDA_ENV_DIR}"
         # MDTF-specific setup: install all conda envs
-        ./src/conda/conda_env_setup.sh -e base --conda_root ${CONDA_ROOT} --env_dir ${CONDA_ENV_DIR}
+        ./src/conda/conda_env_setup.sh -e base --micromamba_root ${CONDA_ROOT} --env_dir ${CONDA_ENV_DIR}
         #micromamba create -y -f ./src/conda/env_base.yml
         micromamba create -y -f ./src/conda/env_python3_base.yml
         micromamba create -y -f ./src/conda/env_NCL_base.yml

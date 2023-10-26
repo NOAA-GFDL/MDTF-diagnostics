@@ -349,7 +349,7 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
             return [
                 f'source {self.conda_dir}/conda_init.sh {self.conda_root}',
                 f'source {env_config_file}',
-                f'eval "$(micromamba shell hook --shell bash)',
+                f'eval "$(micromamba shell hook --shell bash)"',
                 f'micromamba activate {conda_prefix}'
             ]
         else:

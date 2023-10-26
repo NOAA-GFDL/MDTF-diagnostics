@@ -139,8 +139,7 @@ jobs:
         # run the test PODs
         ./mdtf -v -f ${{matrix.json-file}}
       # Debug
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-        cat /home/runner/work/MDTF-diagnostics/wkdir/MDTF_NCAR.Synthetic_1975_1981/Wheeler_Kiladis/Wheeler_Kiladis.log
+        cat ${POD_OUTPUT}/MDTF_NCAR.Synthetic_1975_1981/Wheeler_Kiladis/Wheeler_Kiladis.log
     - name: Get observational data for set 2
       run: |
         echo "${PWD}"

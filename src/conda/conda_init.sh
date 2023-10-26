@@ -96,6 +96,9 @@ if [[ -d "$_CONDA_ROOT" && ! -x "$CONDA_EXE" ]]; then
     elif [ -x "${_CONDA_ROOT}/bin/micromamba" ]; then
         CONDA_EXE="${_CONDA_ROOT}/bin/micromamba"
         if [ $_v -eq 2 ]; then echo "Found CONDA_EXE--using micromamba"; fi
+    elif [ -x "${_CONDA_ROOT}/micromamba" ]; then
+        CONDA_EXE="${_CONDA_ROOT}/micromamba"
+        if [ $_v -eq 2 ]; then echo "Found CONDA_EXE--using micromamba"; fi
     fi
 fi
 # found exe but not root

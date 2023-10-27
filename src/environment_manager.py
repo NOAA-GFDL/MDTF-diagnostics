@@ -331,8 +331,10 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         # conda_init for bash defines conda as a shell function; will get error
         # if we try to call the conda executable directly
         conda_prefix = os.path.join(self.conda_env_root, env_name)
-
+        env_config_file = ""
         if os.path.split(self.conda_exe)[-1] == 'micromamba':
+            # micromamba appends env info to the shell config file
+            # that needs to be sourced in the sub-shell for each POD process
             home_dir = os.path.expanduser('~')
             if os.path.isfile(os.path.join(home_dir, '.bashrc')):
                 env_config_file = os.path.join(home_dir, '.bashrc')
@@ -344,8 +346,6 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
                 env_config_file = os.path.join(home_dir, '.tcshrc')
             elif os.path.isfile(os.path.join(home_dir, '.zshrc')):
                 env_config_file = os.path.join(home_dir, '.zshrc')
-            else:
-                env_config_file = ""
             return [
                 f'source {self.conda_dir}/conda_init.sh {self.conda_root}',
                 f'source {env_config_file}',

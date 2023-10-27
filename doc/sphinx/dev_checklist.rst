@@ -120,7 +120,7 @@ ftp://ftp.cgd.ucar.edu/archive/mdtf/obs_data_latest/{$pod_name}.latest.tar
 with 'latest' pointing to the date-or-version-tagged tar file
 
 
-Note that, previous to version 3, obs_data from all PODs was consolidated in one
+Note that prior to version 3, obs_data from all PODs was consolidated in one
 tar file. To assist in usability as the number of PODs grow, they will now
 be available individually, with the responsiblity for creating the tar
 files on the developer.

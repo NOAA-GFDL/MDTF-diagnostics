@@ -16,20 +16,18 @@
 # ======================================================================
 
 # Import standard Python packages
-import os
 import numpy
-from netCDF4 import Dataset,num2date
+from netCDF4 import Dataset
 import cftime
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as mplt
-from matplotlib import cm
 import matplotlib.colors as mcolors
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from scipy.interpolate import NearestNDInterpolator
 import scipy
-import cartopy
-from scipy import io
 from scipy import signal
+from scipy.interpolate import NearestNDInterpolator
+import cartopy
 
 # ======================================================================
 ### Region_Mask
@@ -135,7 +133,7 @@ def Seasonal_Anomalies(model_netcdf_filename,lon_var,lat_var,field_var,time_var,
     ### Subset temperature to season specified by "monthsub" vector
     moinds=numpy.in1d(mo,monthsub)
     moinds=(numpy.where(moinds)[0])
-    moinds=[numpy.int(indval) for indval in moinds]
+    moinds=[int(indval) for indval in moinds]
     leapstr=leapstr[moinds]
     var_data=var_data[:,:,moinds]
     datecf=datecf[moinds]
@@ -272,6 +270,7 @@ def ShiftRatio_Plot(model_netcdf_filename,lon_var,colormap_file,lat,shiftratio,m
         cbar.ax.set_xticklabels(['1/2','1','2'])
     cbar.ax.tick_params(labelsize=20)
     ax.text(0.02, 0.02, monthstr,fontsize=14,transform=ax.transAxes,weight='bold')
+    fig.canvas.draw()
     fig.savefig(fig_dir+'/'+fig_name, bbox_inches="tight")
 
     print("...Completed!")

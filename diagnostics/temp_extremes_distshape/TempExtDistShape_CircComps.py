@@ -32,6 +32,8 @@
 import glob
 import os
 import json
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as mplt
 import numpy
 import cartopy.crs as ccrs
@@ -39,7 +41,6 @@ import cartopy.crs as ccrs
 # Import Python functions specific to Non-Gaussian Circulation Composites
 from TempExtDistShape_CircComps_util import Seasonal_Subset
 from TempExtDistShape_CircComps_util import Variable_Anomaly
-from TempExtDistShape_CircComps_util import Labfunc
 from TempExtDistShape_CircComps_util import Circ_Comp_Lags
 from TempExtDistShape_CircComps_util import Plot_Circ_Comp_Lags
 from TempExtDistShape_CircComps_util import Set_Colorbars
@@ -108,6 +109,7 @@ Set_Colorbars(circ_data["Z500minval"],circ_data["Z500maxval"],circ_data["Z500cba
 fig.subplots_adjust(wspace=0.06, hspace=0.02)
 
 ### Save figure to png
+fig.canvas.draw()
 fig.savefig(circ_data["FIG_OUTPUT_DIR"]+"/"+circ_data["FIG_OUTPUT_FILENAME"],bbox_inches='tight')
 
 print("...Completed!")

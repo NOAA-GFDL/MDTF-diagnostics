@@ -11,8 +11,8 @@ import sys
 from enum import Enum
 
 # do version check before anything else
-if sys.version_info.major != 3 or sys.version_info.minor < 10:
-    sys.exit("ERROR: The MDTF-diagnostics package requires python >= 3.10. Please check "
+if sys.version_info.major != 3 or sys.version_info.minor < 11:
+    sys.exit("ERROR: The MDTF package requires python >= 3.11. Please check "
              "which version of python is on your $PATH (e.g. with `which python`.)\n"
              f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports

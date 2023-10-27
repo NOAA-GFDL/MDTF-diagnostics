@@ -11,7 +11,6 @@
 #
 import json
 import os
-import glob
 
 # ======================================================================
 # START USER SPECIFIED SECTION

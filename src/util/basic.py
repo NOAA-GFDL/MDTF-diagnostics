@@ -646,15 +646,13 @@ def deserialize_class(name):
         t = q.popleft()
         if t.__name__ == name:
             return t
-        try:  # keep looking
-            q.extend(t.__subclasses__())
-        except TypeError:
-            # type.__subclasses__ needs an argument, for whatever reason.
-            if t is type:
-                continue
-            else:
-                raise
-    raise ValueError('No such type: %r' % name)
+        else:
+            try:  # keep looking
+                q.extend(t.__subclasses__())
+            except TypeError:
+                pass
+        if not type(t):
+            raise ValueError('No such type: %r' % name)
 
 
 def canonical_arg_name(str_):
@@ -739,11 +737,4 @@ class RegexDict(dict):
     def get_all_matching_values(self, queries: list):
         """Return a tuple of all matching values corresponding to each entry in a list of queries"""
         return (match for query in queries for match in self.get_matching_value(query))
-
-
-
-
-
-
-
 

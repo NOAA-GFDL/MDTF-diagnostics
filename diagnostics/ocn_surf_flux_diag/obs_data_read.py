@@ -72,15 +72,15 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
 
                 # latitude
                 if loc[lat_index] in ['n']:
-                    lat_loc = np.float(loc[:lat_index])
+                    lat_loc = float(loc[:lat_index])
                 else :
-                    lat_loc = -np.float(loc[:lat_index])
+                    lat_loc = -float(loc[:lat_index])
 
                 # longitude
                 if loc[-1] in ['e']:
-                    lon_loc = np.float(loc[lat_index+1:-1])
+                    lon_loc = float(loc[lat_index+1:-1])
                 else:
-                    lon_loc = -np.float(loc[lat_index+1:-1])+360.
+                    lon_loc = -float(loc[lat_index+1:-1])+360.
 
                 # make sure station in the region limit
                 if lon_loc >= np.array(lon_lim).min() and lon_loc <= np.array(lon_lim).max():
@@ -206,15 +206,15 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
 
         # latitude
         if loc[lat_index] in ['n']:
-            lat_loc = np.float(loc[:lat_index])
+            lat_loc = float(loc[:lat_index])
         else :
-            lat_loc = -np.float(loc[:lat_index])
+            lat_loc = -float(loc[:lat_index])
 
         # longitude
         if loc[-1] in ['e']:
-            lon_loc = np.float(loc[lat_index+1:-1])
+            lon_loc = float(loc[lat_index+1:-1])
         else:
-            lon_loc = -np.float(loc[lat_index+1:-1])+360.
+            lon_loc = -float(loc[lat_index+1:-1])+360.
             
         location.append([lon_loc,lat_loc])
     
@@ -295,15 +295,15 @@ def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
 
                 # latitude
                 if loc[lat_index] in ['n']:
-                    lat_loc = np.float(loc[:lat_index])
+                    lat_loc = float(loc[:lat_index])
                 else :
-                    lat_loc = -np.float(loc[:lat_index])
+                    lat_loc = -float(loc[:lat_index])
 
                 # longitude
                 if loc[-1] in ['e']:
-                    lon_loc = np.float(loc[lat_index+1:-1])
+                    lon_loc = float(loc[lat_index+1:-1])
                 else:
-                    lon_loc = -np.float(loc[lat_index+1:-1])+360.
+                    lon_loc = -float(loc[lat_index+1:-1])+360.
 
                 # make sure station in the region limit
                 if lon_loc >= np.array(lon_lim).min() and lon_loc <= np.array(lon_lim).max():
@@ -424,15 +424,15 @@ def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
 
         # latitude
         if loc[lat_index] in ['n']:
-            lat_loc = np.float(loc[:lat_index])
+            lat_loc = float(loc[:lat_index])
         else :
-            lat_loc = -np.float(loc[:lat_index])
+            lat_loc = -float(loc[:lat_index])
 
         # longitude
         if loc[-1] in ['e']:
-            lon_loc = np.float(loc[lat_index+1:-1])
+            lon_loc = float(loc[lat_index+1:-1])
         else:
-            lon_loc = -np.float(loc[lat_index+1:-1])+360.
+            lon_loc = -float(loc[lat_index+1:-1])+360.
             
         location.append([lon_loc,lat_loc])
         

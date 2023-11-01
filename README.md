@@ -1,11 +1,11 @@
 # MDTF-diagnostics: A Portable Framework for Weather and Climate Model Data Analysis
 
-[![MDTF_test](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/mdtf_tests.yml/badge.svg)](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/mdtf_tests.yml) [![CodeQL](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/codeql.yml/badge.svg)](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/codeql.yml) [![Documentation Status](https://readthedocs.org/projects/mdtf-diagnostics/badge/?version=main)](https://mdtf-diagnostics.readthedocs.io/en/main/?badge=main) [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/NOAA-GFDL/MDTF-diagnostics.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/NOAA-GFDL/MDTF-diagnostics/context:python)
+[![MDTF_test](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/mdtf_tests.yml/badge.svg)](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/mdtf_tests.yml) [![CodeQL](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/codeql.yml/badge.svg)](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/codeql.yml) [![Documentation Status](https://readthedocs.org/projects/mdtf-diagnostics/badge/?version=main)](https://mdtf-diagnostics.readthedocs.io/en/main/?badge=main)
 
 The MDTF-diagnostics package is a portable framework for running process-oriented diagnostics (PODs) on weather and climate model data.
 
 ## What is a POD?
-![MDTF_logo](<./doc/img/CPO_MAPP_MDTF_Logo.jpg>)
+![MDTF_logo](<./doc/img/logo_MDTF.png>)
 Each process-oriented diagnostic [POD; [Maloney et al.(2019)](#citations)] targets a specific physical process or emergent behavior to determine how well one or more models represent the process, ensure that models produce the right answers for the right reasons, and identify gaps in the understanding of phenomena. Each POD is independent of other PODs. PODs generate diagnostic figures that can be viewed as an html file using a web browser.
 
 ## Available and Planned Diagnostics
@@ -33,6 +33,7 @@ and a link to the full documentation for each currently-supported POD.
 | [Stratosphere-Troposphere Coupling: Annular Modes](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_annular_modes/doc/stc_annular_modes.rst) | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL) |
 | [Stratosphere-Troposphere Coupling: Eddy Heat Fluxes](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_eddy_heat_fluxes/doc/stc_eddy_heat_fluxes.rst) | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL) |
 | [Stratosphere-Troposphere Coupling: Stratospheric Ozone and Circulation](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_eddy_heat_fluxes/doc/stc_ozone.rst) | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL) |
+| [Stratosphere-Troposphere Coupling: Stratospheric Polar Vortex Extremes](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_spv_extremes/doc/stc_spv_extremes.rst) | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL) |
 | [Stratosphere-Troposphere Coupling: Vertical Wave Coupling](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_vert_wave_coupling/doc/stc_vert_wave_coupling.rst) | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL) |
 | [Surface Albedo Feedback](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/albedofb/doc/surface_albedo_feedback.rst) | Cecilia Bitz (U. Washington), Aaron Donahoe (U. Washington), Ed Blanchard, Wei Cheng, Lettie Roach |
 | [Surface Temperature Extremes and Distribution Shape](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/temp_extremes_distshape/doc/temp_extremes_distshape.rst)                                      | J. David Neelin (UCLA), Paul C Loikith (PSU), Arielle Catalano (PSU) |
@@ -59,8 +60,15 @@ and a link to the full documentation for each currently-supported POD.
 #### Visit the [GFDL Youtube Channel](https://www.youtube.com/channel/UCCVFLbjYix7RCz1GgKG2QxA) for tutorials on package installation and other MDTF-diagnostics-related topics
 
 ## Prerequisites
-- [Anaconda3](https://docs.anaconda.com/anaconda/install/) or [Miniconda3](https://docs.conda.io/en/latest/miniconda.html). Installation instructions are available [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html).
-- MDTF-diagnositics is developed for macOS and Linux systems. The package has been tested on, but is not fully supported for, the Windows Subsystem for Linux.
+- [Anaconda3](https://docs.anaconda.com/anaconda/install/), [Miniconda3](https://docs.conda.io/en/latest/miniconda.html), 
+or [micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html). 
+
+- Installation instructions are available [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html).
+- MDTF-diagnositics is developed for macOS and Linux systems. The package has been tested on, but is not fully supported
+for, the Windows Subsystem for Linux.
+- **Attention macOS M-series chip users**: the MDTF-diagnostics base and python3 conda environments will only build with micromamba on
+machines running Apple M-series chips. The NCL and R environments will NOT build on M-series machines because the conda
+packages do not support them at this time.
 ## Notes
 - `$` indicates strings to be substituted, e.g., the string `$CODE_ROOT` should be substituted by the actual path to the MDTF-diagnostics directory.
 - Consult the [Getting started](https://mdtf-diagnostics.readthedocs.io/en/main/sphinx/start_toc.html) section to learn how to run the framework on your own data and configure general settings.
@@ -76,10 +84,20 @@ and a link to the full documentation for each currently-supported POD.
 - Check out the latest official release: `git checkout tags/[version name]`
 - Run `% conda info --base` to determine the location of your Conda installation. This path will be referred to as `$CONDA_ROOT`.
 - `cd $CODE_ROOT`, then run
+### ANACONADA/MINICONDA
 `% ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`
-  - Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, and `$CONDA_ENV_DIR`.
+### MICROMAMBA on machines that do NOT have Apple M-series chips
+`% ./src/conda/conda_env_setup.sh --all --micromamba_root $MICROMAMBA_ROOT --env_dir $CONDA_ENV_DIR`
+### MICROMAMBA on machines with Apple M-series chips
+`% ./src/conda/conda_env_setup.sh --e base --micromamba_root $MICROMAMBA_ROOT --env_dir $CONDA_ENV_DIR`
 
-  - The `--env_dir` flag allows you to put the program files in a designated location `$CONDA_ENV_DIR` (for space reasons, or if you don’t have write access). You can omit this flag, and the environments will be installed within `$CONDA_ROOT/envs/` by default.
+`% ./src/conda/conda_env_setup.sh --e python3_base --micromamba_root $MICROMAMBA_ROOT --env_dir $CONDA_ENV_DIR`
+
+  - Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, `$MICROMAMBA_ROOT`, and `$CONDA_ENV_DIR`.
+  -`$MICROMAMBA_ROOT` is location of the micromamba executable on your machine (e.g., /home/${USER}/.local/bin)
+  - The `--env_dir` flag allows you to put the program files in a designated location `$CONDA_ENV_DIR` 
+  (for space reasons, or if you don’t have write access).
+  You can omit this flag, and the environments will be installed within `$CONDA_ROOT/envs/` by default.
 
 ## 2. Download the sample data
 

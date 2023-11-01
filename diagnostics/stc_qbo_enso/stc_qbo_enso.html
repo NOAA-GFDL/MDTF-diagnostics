@@ -1,0 +1,185 @@
+<!-- 
+    This file is the HTML output template for the example diagnostic and shows
+    how you should describe and link to the plots your diagnostic generates.
+    The framework will "fill in the blanks" corresponding to environment
+    variables and copy the file to <WK_DIR>.
+        
+    EPS or PS files saved by your diagnostic are converted by the framework into
+    bitmaps in the following locations:
+    <WK_DIR>/model/PS/<plot_name>.eps -> <WK_DIR>/model/<plot_name>.png
+    <WK_DIR>/obs/PS/<plot_name>.eps -> <WK_DIR>/obs/<plot_name>.png
+    so the target of each link only needs to be the relative path, 
+    eg. "model/<plot_name>.png".
+-->
+<title>MDTF example diagnostic</title>
+<img src="../mdtf_diag_banner.png">
+<h3>Example diagnostic: time-averaged near-surface temperature</h3>
+<p>
+This POD does calculations to evaluate the representation of QBO and ENSO
+teleconnections proceeding through the stratosphere and troposphere. This 
+POD evaluates whether or not a model dataset includes a QBO by checking the 
+10 hPa monthly zonal mean zonal winds for oscillatory processes. If a QBO is
+found, this POD retrieves characteristics of that QBO (e.g.,its latitudinal 
+width, amplitude, etc.) and it evaluates the representation 
+of QBO teleconnections and surface impacts. Poor representation of QBOs in 
+model precludes using the "gold standard" zonal mean 50 hPa tropical zonal 
+winds to define easterly vs. westerly QBO phases. By default, this POD uses 
+a 10 hPa QBO index, but an alternate QBO indexing method is offered for 
+finer control over QBO indexing. The zonal mean zonal winds, its variance
+and the eddy heat flux (v'T') are binned by QBO phase to visualize 
+the QBO's influence on the atmospheric circulation and resolved waves. 
+The aforementioned fields can also be parsed by ENSO phase. This POD allows 
+ENSO to be defined using a few standard indices (e.g., NINO1-4), derived from 
+monthly tropical sea surface temperatures. The surface impacts of different
+QBO and ENSO phases are visualized using monthly sea level pressure. Finally,
+the number of sudden stratospheric warmings binned by QBO/ENSO phase is 
+retrieved by this POD. Please see the references for the scientific 
+foundations of this POD.
+</p>
+<p>
+The names of any environment variables set for the diagnostic (enclosed in 
+curly braces) will be replaced by the same values they had when the diagnostic 
+was run. For example, this diagnostic's favorite color is "{{EXAMPLE_FAV_COLOR}}."
+</p>
+
+<h3>{{CASENAME}}</h3>
+<font color=navy>ENSO teleconnections northern hemisphere
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-enso34-uzm-NH.png>Model zonal mean zonal wind</A>
+    <TH align=center><A href=obs/obs-enso34-uzm-{{FIRSTYR}}-{{LASTYR}}-NH.png>Reanalysis zonal mean zonal wind</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-enso34-vt-NH.png>Model eddy heat flux</A>
+    <TH align=center><A href=obs/obs-enso34-vt-{{FIRSTYR}}-{{LASTYR}}-NH.png>Reanalysis eddy heat flux</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-enso34-psl-NH.png>Model sea level pressure</A>
+    <TH align=center><A href=obs/obs-enso34-psl-{{FIRSTYR}}-{{LASTYR}}-NH.png>Reanalysis sea level pressure</A>
+</TR>
+</TABLE>
+
+<p></p>
+
+<font color=navy>ENSO teleconnections southern hemisphere
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-enso34-uzm-SH.png>Model zonal mean zonal wind</A>
+    <TH align=center><A href=obs/obs-enso34-uzm-{{FIRSTYR}}-{{LASTYR}}-SH.png>Reanalysis zonal mean zonal wind</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-enso34-vt-SH.png>Model eddy heat flux</A>
+    <TH align=center><A href=obs/obs-enso34-vt-{{FIRSTYR}}-{{LASTYR}}-SH.png>Reanalysis eddy heat flux</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-enso34-psl-SH.png>Model sea level pressure</A>
+    <TH align=center><A href=obs/obs-enso34-psl-{{FIRSTYR}}-{{LASTYR}}-SH.png>Reanalysis sea level pressure</A>
+</TR>
+</TABLE>
+
+<p></p>
+
+<font color=navy>QBO teleconnections northern hemisphere
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-qbo{{QBOisobar}}hPa-uzm-NH.png>Model zonal mean zonal wind</A>
+    <TH align=center><A href=obs/obs-qbo{{QBOisobar}}hPa-uzm-{{FIRSTYR}}-{{LASTYR}}-NH.png>Reanalysis zonal mean zonal wind</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-qbo{{QBOisobar}}hPa-vt-NH.png>Model eddy heat flux</A>
+    <TH align=center><A href=obs/obs-qbo{{QBOisobar}}hPa-vt-{{FIRSTYR}}-{{LASTYR}}-NH.png>Reanalysis eddy heat flux</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-qbo{{QBOisobar}}hPa-psl-NH.png>Model sea level pressure</A>
+    <TH align=center><A href=obs/obs-qbo{{QBOisobar}}hPa-psl-{{FIRSTYR}}-{{LASTYR}}-NH.png>Reanalysis sea level pressure</A>
+</TR>
+</TABLE>
+
+<p></p>
+
+<font color=navy>QBO teleconnections southern hemisphere
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-qbo{{QBOisobar}}hPa-uzm-SH.png>Model zonal mean zonal wind</A>
+    <TH align=center><A href=obs/obs-qbo{{QBOisobar}}hPa-uzm-{{FIRSTYR}}-{{LASTYR}}-SH.png>Reanalysis zonal mean zonal wind</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-qbo{{QBOisobar}}hPa-vt-SH.png>Model eddy heat flux</A>
+    <TH align=center><A href=obs/obs-qbo{{QBOisobar}}hPa-vt-{{FIRSTYR}}-{{LASTYR}}-SH.png>Reanalysis eddy heat flux</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-qbo{{QBOisobar}}hPa-psl-SH.png>Model sea level pressure</A>
+    <TH align=center><A href=obs/obs-qbo{{QBOisobar}}hPa-psl-{{FIRSTYR}}-{{LASTYR}}-SH.png>Reanalysis sea level pressure</A>
+</TR>
+</TABLE>
+
+<p></p>
+

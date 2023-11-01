@@ -164,6 +164,11 @@
       "modifier": "atmos_height",
       "ndim": 3
     },
+    "tos": {
+      "standard_name": "sea_surface_temperature",
+      "units": "K",
+      "ndim": 3
+    },
     // radiative fluxes:
     "rsus": {
       "standard_name": "surface_upwelling_shortwave_flux_in_air",

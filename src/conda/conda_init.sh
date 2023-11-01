@@ -143,9 +143,7 @@ unset CONDA_SHLVL
 conda_check=$( $CONDA_EXE info )
 __conda_setup=""
 if [ -n "$conda_check" ]; then
-   if [[ "$CONDA_EXE" -eq "${_CONDA_ROOT}/bin/conda" || "$CONDA_EXE" -eq "${_CONDA_ROOT}/condabin/conda" ]]; then
       __conda_setup="$( $CONDA_EXE 'shell.bash' 'hook' 2> /dev/null )"
-   fi
 fi
 
 if [[ $? -eq 0 && -n "$__conda_setup" ]]; then

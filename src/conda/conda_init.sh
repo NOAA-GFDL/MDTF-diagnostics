@@ -138,7 +138,8 @@ fi
 unset CONDA_SHLVL
 # finally run conda's init script
 
-if [ -x "eval conda info" ]; then
+conda_check=$( $CONDA_EXE info )
+if [ -n "$conda_check" ]; then
     __conda_setup="$( $CONDA_EXE 'shell.bash' 'hook' 2> /dev/null )"
 fi
 

@@ -12,6 +12,7 @@
 # parse arguments manually
 _TEMP_CONDA_ROOT=""
 _TEMP_CONDA_EXE=""
+_TEMP_CONDA_ENV_DIR=""
 _v=1
 while (( "$#" )); do
     case "$1" in
@@ -23,6 +24,7 @@ while (( "$#" )); do
             _v=0 # suppress output
             shift 1
             ;;
+
         ?*)
             # Assume nonempty input is user-specified CONDA_ROOT
             if [ ! -d "$1" ]; then
@@ -139,11 +141,14 @@ unset CONDA_SHLVL
 # finally run conda's init script
 
 conda_check=$( $CONDA_EXE info )
+__conda_setup=""
 if [ -n "$conda_check" ]; then
-    __conda_setup="$( $CONDA_EXE 'shell.bash' 'hook' 2> /dev/null )"
+   if [[ "$CONDA_EXE" -eq "${_CONDA_ROOT}/bin/conda" || "$CONDA_EXE" -eq "${_CONDA_ROOT}/condabin/conda" ]]; then
+      __conda_setup="$( $CONDA_EXE 'shell.bash' 'hook' 2> /dev/null )"
+   fi
 fi
 
-if [ $? -eq 0 ]; then
+if [[ $? -eq 0 && -n "$__conda_setup" ]]; then
     eval "$__conda_setup"
 else
     if [ -f "${_CONDA_ROOT}/etc/profile.d/conda.sh" ]; then
@@ -153,6 +158,7 @@ else
     elif [ -f "${_CONDA_ROOT}/etc/profile.d/micromamba.sh" ]; then
         echo "calling micromamba.sh"
         . "${_CONDA_ROOT}/etc/profile.d/micromamba.sh"
+        alias micromamba="$CONDA_EXE"
     else
         echo "adding ${_CONDA_ROOT}/bin to \$PATH"
         export PATH="${_CONDA_ROOT}/bin:$PATH"

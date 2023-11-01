@@ -165,7 +165,6 @@ if [ "$make_envs" = "true" ]; then
         elif [ -f "$HOME/.bashrc" ]; then
            source "$HOME/.bashrc"
         else
-           echo "adding ${_CONDA_ROOT}/bin to \$PATH"
            export PATH="${_CONDA_ROOT}/bin:$PATH"
         fi
          _INSTALL_EXE=$( command -v micromamba ) || true

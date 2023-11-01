@@ -160,7 +160,6 @@ else
         . "${_CONDA_ROOT}/etc/profile.d/micromamba.sh"
         alias micromamba="$CONDA_EXE"
     else
-        echo "adding ${_CONDA_ROOT}/bin to \$PATH"
         export PATH="${_CONDA_ROOT}/bin:$PATH"
 
     fi

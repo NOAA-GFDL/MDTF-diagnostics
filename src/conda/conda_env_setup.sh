@@ -186,7 +186,7 @@ if [ "$make_envs" = "true" ]; then
             # of its env's directory
            conda_prefix="${_CONDA_ROOT}/envs/${env_name}"
            echo "Creating conda env ${env_name} in ${conda_prefix}..."
-           "$_INSTALL_EXE" env create --force -q -- prefix "$conda_prefix" -f "$env_file"
+           "$_INSTALL_EXE" env create --force -q --prefix "$conda_prefix" -f "$env_file"
         elif [ -n "$_MDTF_MICROMAMBA_ROOT" ]; then
            if [ -n "$_CONDA_ENV_ROOT" ]; then
               conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"

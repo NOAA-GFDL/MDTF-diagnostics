@@ -1178,7 +1178,7 @@ class MDTFFramework(MDTFObjectBase):
                                "execution."), self.full_name, case_name)
 
                 out_mgr = self.OutputManager(case)
-                out_mgr.make_output()
+                out_mgr.make_output(run_mgr.env_mgr)
             tempdirs = TempDirManager()
             tempdirs.cleanup()
             print_summary(self)

@@ -1,0 +1,95 @@
+{
+  "pod_list" : [
+     "example_multicase"
+   ],
+  "case_list" : [
+     {
+       "CASENAME" : "c384L65_am5f3b1r0_amip",
+       "model" : "test",
+       "convention" : "CMIP",
+       "startdate" : 19810101,
+       "enddate" : 19821231
+     },
+     {
+       "CASENAME": "c96L65_am5f3b1r0_pdclim1850F",
+       "model" : "test",
+       "convention" : "CMIP",
+       "startdate" : 00050101,
+       "enddate" : 00061231
+     }
+  ],
+  // PATHS ---------------------------------------------------------------------
+  // Location of supporting data downloaded when the framework was installed.
+  // If a relative path is given, it's resolved relative to the MDTF-diagnostics
+  // code directory. Environment variables (eg, $HOME) can be referenced with a
+  // "$" and will be expended to their current values when the framework runs.
+  // Full path to model data ESM-intake catalog header file
+  "DATA_CATALOG": "/home/a1r/github/aparna/MDTF-diagnostics/diagnostics/example_multicase/amip_c96L65_am5f3b1r0_pdclim1850F_combined.json"
+
+  // Backwards compatibility
+  "MODEL_DATA_ROOT": "../mdtf_test_data",
+
+  // Parent directory containing observational data used by individual PODs.
+  "OBS_DATA_ROOT": "../inputdata/obs_data",
+
+  // Working directory.
+  "WORK_DIR": "../wkdir",
+
+  // Directory to write output. The results of each run of the framework will be
+  // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.
+  "OUTPUT_DIR": "../wkdir",
+
+  // Location of the Anaconda/miniconda or micromamba installation to use for managing
+  // dependencies (path returned by running `[conda | micromamba] info`.) If empty,
+  // framework will attempt to determine location of system's conda installation.
+  "conda_root": "~/.local/bin",
+
+
+  // Directory containing the framework-specific conda environments. This should
+  // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
+  // blank, the framework will look for its environments in conda_root/envs
+  "conda_env_root": "~/miniconda3/envs",
+
+  // SETTINGS ------------------------------------------------------------------
+  // Any command-line option recognized by the mdtf script (type `mdtf --help`)
+  // can be set here, in the form "flag name": "desired setting".
+  //
+  // Type of data for the framework to process: `single_run` (default)
+  // for PODs that compare output from a single simulation to observational data
+  // or `multi_run` for PODs that analyze output from multiple simulations and/or
+  // observational datasets
+  "data_type": "multi_run",
+
+  // Method used to fetch model data.
+  "data_manager": "Local_File",
+
+  // Method used to manage dependencies.
+  "environment_manager": "Conda",
+
+  // Settings affecting what output is generated:
+
+  // Set to true to have PODs save postscript figures in addition to bitmaps.
+  "save_ps": false,
+
+  // Set to true to have PODs save netCDF files of processed data.
+  "save_nc": false,
+
+  // Set to true to save HTML and bitmap plots in a .tar file.
+  "make_variab_tar": false,
+
+  // Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
+  // under a unique name.
+  "overwrite": false,
+
+  // Settings used in debugging:
+
+  // Log verbosity level.
+  "verbose": 1,
+
+  // Set to true for framework test. Data is fetched but PODs are not run.
+  "test_mode": false,
+
+  // Set to true for framework test. No external commands are run and no remote
+  // data is copied. Implies test_mode.
+  "dry_run": false
+}

@@ -31,32 +31,33 @@
        "CASENAME" : "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231",
        "model" : "test",
        "convention" : "CMIP",
-       "FIRSTYR" : 1980,
-       "LASTYR" : 1984
+       "startdate" : 19800101,
+       "enddate" : 19841231
      },
      {
        "CASENAME": "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231",
        "model" : "test",
        "convention" : "CMIP",
-       "FIRSTYR" : 1985,
-       "LASTYR" : 1989
+       "startdate" : 19850101,
+       "enddate" : 19891231
      }
   ],
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
-
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
+  // Full path to model data ESM-intake catalog header file
+  "DATA_CATALOG": "/local2/home/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
+
+  // Backwards compatibility
+  "MODEL_DATA_ROOT": "../mdtf_test_data",
 
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
-  // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "../mdtf_test_data",
-
   // Working directory.
-  "WORKING_DIR": "../wkdir",
+  "WORK_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be
   // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.
@@ -65,13 +66,13 @@
   // Location of the Anaconda/miniconda or micromamba installation to use for managing
   // dependencies (path returned by running `[conda | micromamba] info`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  "conda_root": "",
+  "conda_root": "~/.local/bin",
+
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
-  // blank, the framework will look for its environments in the system default
-  // location.
-  "conda_env_root": "",
+  // blank, the framework will look for its environments in conda_root/envs
+  "conda_env_root": "~/miniconda3/envs",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)

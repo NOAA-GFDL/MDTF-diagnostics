@@ -13,6 +13,7 @@
 _TEMP_CONDA_ROOT=""
 _TEMP_CONDA_EXE=""
 _TEMP_CONDA_ENV_DIR=""
+_TEMP_MICROMAMBA_EXE=""
 _v=1
 while (( "$#" )); do
     case "$1" in
@@ -24,20 +25,32 @@ while (( "$#" )); do
             _v=0 # suppress output
             shift 1
             ;;
-
-        ?*)
-            # Assume nonempty input is user-specified CONDA_ROOT
-            if [ ! -d "$1" ]; then
-                echo "ERROR: \"$1\" not a directory" 1>&2
+        --conda_root)
+            if [ ! -d "$2" ]; then
+                echo "ERROR: \"$2\" not a directory" 1>&2
                 exit 1
             fi
-            _TEMP_CONDA_ROOT="$1"
-            shift 1
+            _TEMP_CONDA_ROOT="$2"
+            shift 2
+            ;;
+        --micromamba_exe)
+            # path to micromamba executable
+            if [ ! -x "$2" ]; then
+                echo "ERROR: can't find micromamba executable $2"
+                exit 1
+            fi
+            export _TEMP_MICROMAMBA_EXE="$2"
+            shift 2
             ;;
         *) # Default case: No more options, so break out of the loop.
             break
     esac
 done
+
+if [ -x "$_TEMP_MICROMAMBA_EXE" ]; then
+   echo "micromamba_exe = $_TEMP_MICROMAMBA_EXE"
+   CONDA_EXE="$_TEMP_MICROMAMBA_EXE"
+fi
 
 # if we got _TEMP_CONDA_ROOT from command line, see if that works
 if [ -d "$_TEMP_CONDA_ROOT" ]; then
@@ -47,10 +60,13 @@ if [ -d "$_TEMP_CONDA_ROOT" ]; then
         echo "WARNING: overriding ${_CONDA_ROOT} with ${_TEMP_CONDA_ROOT}" 1>&2
     fi
     _CONDA_ROOT="$_TEMP_CONDA_ROOT"
-    if [[ $_v -eq 2 && -x "$CONDA_EXE" ]]; then
-        echo "WARNING: user supplied CONDA_ROOT so unsetting existing CONDA_EXE" 1>&2
+    echo "_CONDA_ROOT = $_CONDA_ROOT"
+    if [ -z "$_TEMP_MICROMAMBA_EXE" ]; then
+        if [[ $_v -eq 2 && -x "$CONDA_EXE" ]]; then
+           echo "WARNING: user supplied CONDA_ROOT so unsetting existing CONDA_EXE" 1>&2
+        fi
+        CONDA_EXE=""
     fi
-    CONDA_EXE=""
     if [ $_v -eq 2 ]; then echo "CONDA_ROOT set from command line"; fi
 fi
 # if not, maybe we were run from an interactive shell and inherited the info
@@ -143,8 +159,12 @@ unset CONDA_SHLVL
 conda_check=$( $CONDA_EXE info )
 __conda_setup=""
 if [ -n "$conda_check" ]; then
-   if [[ "$CONDA_EXE" -eq "${_CONDA_ROOT}/bin/conda" || "$CONDA_EXE" -eq "${_CONDA_ROOT}/condabin/conda" ]]; then
-      __conda_setup="$( $CONDA_EXE 'shell.bash' 'hook' 2> /dev/null )"
+   if [[ "$CONDA_EXE" == "${_CONDA_ROOT}/bin/conda" || "$CONDA_EXE" == "${_CONDA_ROOT}/condabin/conda" ]]; then
+      __conda_setup="$( "$CONDA_EXE" shell hook --shell bash 2> /dev/null )"
+   else
+      if [ -n "$_TEMP_MICROMAMBA_EXE" ]; then
+         __conda_setup="$( "$CONDA_EXE" shell hook --shell bash --root-prefix "${_CONDA_ROOT}" 2> /dev/null )"
+      fi
    fi
 fi
 
@@ -154,10 +174,9 @@ else
     if [ -f "${_CONDA_ROOT}/etc/profile.d/conda.sh" ]; then
         echo "calling conda.sh"
         . "${_CONDA_ROOT}/etc/profile.d/conda.sh"
-
-    elif [ -f "${_CONDA_ROOT}/etc/profile.d/micromamba.sh" ]; then
-        echo "calling micromamba.sh"
-        . "${_CONDA_ROOT}/etc/profile.d/micromamba.sh"
+    elif [ -n "$_TEMP_MICROMAMBA_EXE" ]; then
+        #echo "calling micromamba.sh"
+        #. "${_CONDA_ROOT}/etc/profile.d/micromamba.sh"
         alias micromamba="$CONDA_EXE"
     else
         export PATH="${_CONDA_ROOT}/bin:$PATH"

@@ -102,6 +102,8 @@ else:  # iMac path
 # Regular grid defined by developer
 xlon = np.arange(0, 361, 1.5)
 ylat = np.arange(-90, 91, 1.5)
+print(f"Use xlon: {xlon}")
+print(f"Use ylat: {ylat}")
 
 
 # === Define functions ===

@@ -376,7 +376,7 @@ if __name__ == '__main__':
         # plt.savefig(plot_path, bbox_inches='tight')
         sampled_dataset = model_dataset.sel(
             time=model_dataset.time.dt.month.isin(selected_months)) \
-            .resample(time="1D").first()
+            .resample(time="1D", skipna=False).first()
             #.resample(time="1D").mean(dim="time")
         gridfill_file_path, done_interpolation_onto_lat_grid = implement_gridfill(sampled_dataset=sampled_dataset)
         intermediate_dataset: xr.Dataset = compute_from_sampled_data(

@@ -51,6 +51,7 @@ import os
 
 import gridfill
 import matplotlib
+from matplotlib import gridspec
 from collections import namedtuple
 import socket
 
@@ -77,7 +78,7 @@ from hn2016_falwa.constant import SCALE_HEIGHT, P_GROUND
 # Here <variable_name> and frequency are requested in the "varlist" part of 
 # settings.json.
 load_environ = (socket.gethostname() == 'otc')
-if load_environ:
+if load_environ:  # otc path
     uvt_path = os.environ["UVT_FILE"]
     u_var_name = os.environ["U_VAR"]
     v_var_name = os.environ["V_VAR"]
@@ -87,8 +88,7 @@ if load_environ:
     lat_name = os.environ["LAT_COORD"]
     lon_name = os.environ["LON_COORD"]
     wk_dir = os.environ["WK_DIR"]
-else:
-    # iMac path
+else:  # iMac path
     uvt_path = f"{os.environ['HOME']}/Dropbox/GitHub/mdtf/MDTF-diagnostics/diagnostics/finite_amplitude_wave_diag/GFDL-CM3_historical_r1i1p1_20050101-20051231_10tslice.nc"
     u_var_name = "ua"
     v_var_name = "va"
@@ -204,23 +204,18 @@ def compute_from_sampled_data(sampled_dataset):
         qgfield=QGFieldNH18,
         qgfield_kwargs={"dz": dz, "kmax": kmax})
     gridfilled_dataset.close()
-    uvtinterp = qgds.interpolate_fields()[['interpolated_u']] \
-        .interp(coords={
-        "xlon": (lon_name, original_grid[lon_name].data),
-        "ylat": (lat_name, original_grid[lat_name].data)})  # No variables needed from this dataset
-    refstates = qgds.compute_reference_states()[['uref']].interp(coords={
-        "ylat": (lat_name, original_grid[lat_name].data)})
-    # TODO: determine whether to interpolate back to plev grid
-    lwadiags = qgds.compute_lwa_and_barotropic_fluxes()[['lwa_baro', 'u_baro', 'lwa']] \
-        .interp(coords={
-        "xlon": (lon_name, original_grid[lon_name].data),
-        "ylat": (lat_name, original_grid[lat_name].data)})
+    # Compute reference states and LWA
+    qgds.interpolate_fields(return_dataset=False)
+    qgds.compute_reference_states(return_dataset=False)
+    qgds.compute_lwa_and_barotropic_fluxes(return_dataset=False)
     output_dataset = xr.Dataset(data_vars={
-        'zonal_mean_u': uvtinterp.interpolated_u.mean(axis=-1),
-        'uref': refstates.uref,
-        'zonal_mean_lwa': lwadiags.lwa.mean(axis=-1),
-        'lwa_baro': lwadiags.lwa_baro,
-        'u_baro': lwadiags.u_baro})
+        'uref': qgds.uref,
+        'zonal_mean_u': qgds.interpolated_u.mean(axis=-1),
+        'zonal_mean_lwa': qgds.lwa.mean(axis=-1),
+        'lwa_baro': qgds.lwa_baro,
+        'u_baro': qgds.u_baro}).interp(coords={
+        "xlon": (lon_name, original_grid[lon_name].data),
+        "ylat": (lat_name, original_grid[lat_name].data)})
     return output_dataset
 
 
@@ -269,9 +264,12 @@ def time_average_processing(dataset: xr.Dataset):
 def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plot_path):
     cmap = "jet"
     fig = plt.figure(figsize=(9, 12))
+    # create grid for different subplots
+    spec = gridspec.GridSpec(
+        ncols=2, nrows=3, width_ratios=[1, 2], wspace=0.3, hspace=0.3, height_ratios=[1, 1, 1])
     fig.suptitle(title_str)
     # *** Zonal mean U ***
-    ax1 = fig.add_subplot(3, 2, 1)
+    ax1 = fig.add_subplot(spec[0])
     fig1 = ax1.contourf(
         original_grid['lat'], np.arange(0, 1000 * 33, 1000),
         seasonal_average_data.zonal_mean_u,
@@ -281,7 +279,7 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plo
     ax1.set_xlim([-80, 80])
 
     # *** FAWA ***
-    ax3 = fig.add_subplot(3, 2, 3)
+    ax3 = fig.add_subplot(spec[2])
     fig3 = ax3.contourf(
         original_grid['lat'], np.arange(0, 1000 * 33, 1000),
         seasonal_average_data.zonal_mean_lwa,
@@ -291,7 +289,7 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plo
     ax3.set_xlim([-80, 80])
 
     # *** Uref ***
-    ax2 = fig.add_subplot(3, 2, 5)
+    ax2 = fig.add_subplot(spec[4])
     fig2 = ax2.contourf(
         original_grid['lat'], np.arange(0, 1000 * 33, 1000),
         seasonal_average_data.uref,
@@ -301,7 +299,7 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plo
     ax2.set_xlim([-80, 80])
 
     # *** U baro ***
-    ax5 = fig.add_subplot(3, 2, 2, projection=ccrs.PlateCarree(180))
+    ax5 = fig.add_subplot(spec[1], projection=ccrs.PlateCarree(180))
     ax5.coastlines(color='black', alpha=0.7)
     ax5.set_aspect('auto', adjustable=None)
     fig5 = ax5.contourf(
@@ -314,7 +312,7 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plo
     ax5.set_title('U baro')
 
     # *** LWA baro ***
-    ax4 = fig.add_subplot(3, 2, 4, projection=ccrs.PlateCarree(180))
+    ax4 = fig.add_subplot(spec[3], projection=ccrs.PlateCarree(180))
     ax4.coastlines(color='black', alpha=0.7)
     ax4.set_aspect('auto', adjustable=None)
     fig4 = ax4.contourf(
@@ -326,7 +324,7 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plo
     ax4.set_title('LWA baro')
 
     # *** Covariance between LWA and U ***
-    ax6 = fig.add_subplot(3, 2, 6, projection=ccrs.PlateCarree(180))
+    ax6 = fig.add_subplot(spec[5], projection=ccrs.PlateCarree(180))
     ax6.coastlines(color='black', alpha=0.7)
     ax6.set_aspect('auto', adjustable=None)
     fig6 = ax6.contourf(
@@ -338,7 +336,7 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plo
     fig.colorbar(fig6, ax=ax6)
     ax6.set_title('Covariance between LWA and U(baro)')
     plt.tight_layout()
-    # plt.show()
+    plt.show()
     plt.savefig(plot_path, bbox_inches='tight')
 
 
@@ -351,8 +349,8 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plo
 
 # *** Produce data by season, daily ***
 if __name__ == '__main__':
-    season_dict = {"DJF": [1, 2, 12], "MAM": [3, 4, 5], "JJA": [6, 7, 8], "SON": [9, 10, 11]}
-    # season_dict = {"DJF": [1, 2, 12]}
+    # season_dict = {"DJF": [1, 2, 12], "MAM": [3, 4, 5], "JJA": [6, 7, 8], "SON": [9, 10, 11]}
+    season_dict = {"DJF": [1, 2, 12]}
     out_paths = {key: f"{wk_dir}/intermediate_{key}.nc" for key, value in season_dict.items()}
     for season in season_dict:
         selected_months = season_dict.get(season)
@@ -399,8 +397,7 @@ if __name__ == '__main__':
         plot_axes.set_title(title_string)
         # save the plot in the right location
         plot_path = "{WK_DIR}/{model_or_obs}/PS/example_{model_or_obs}_plot.eps".format(
-            model_or_obs=model_or_obs, **os.environ
-        )
+            model_or_obs=model_or_obs, **os.environ)
         plt.savefig(plot_path, bbox_inches='tight')
 
 

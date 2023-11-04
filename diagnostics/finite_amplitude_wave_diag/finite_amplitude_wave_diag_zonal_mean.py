@@ -374,10 +374,9 @@ if __name__ == '__main__':
         # plot_path = "{WK_DIR}/{model_or_obs}/PS/example_{model_or_obs}_plot.eps".format(
         #     model_or_obs=model_or_obs, **os.environ)
         # plt.savefig(plot_path, bbox_inches='tight')
-        sampled_dataset = model_dataset.sel(
-            time=model_dataset.time.dt.month.isin(selected_months)) \
-            .resample(time="1D", skipna=False).first()
-            #.resample(time="1D").mean(dim="time")
+        sampled_dataset = model_dataset.where(
+            model_dataset.time.dt.month.isin(selected_months), drop=True) \
+            .groupby("time.day").mean("time")
         gridfill_file_path, done_interpolation_onto_lat_grid = implement_gridfill(sampled_dataset=sampled_dataset)
         intermediate_dataset: xr.Dataset = compute_from_sampled_data(
             gridfill_file_path=gridfill_file_path, done_interpolation_onto_lat_grid=done_interpolation_onto_lat_grid)

@@ -365,8 +365,8 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plo
 
 # *** Produce data by season, daily ***
 if __name__ == '__main__':
-    # season_dict = {"DJF": [1, 2, 12], "MAM": [3, 4, 5], "JJA": [6, 7, 8], "SON": [9, 10, 11]}
-    season_dict = {"DJF": [1, 2, 12]}
+    season_dict = {"DJF": [1, 2, 12], "MAM": [3, 4, 5], "JJA": [6, 7, 8], "SON": [9, 10, 11]}
+    # season_dict = {"DJF": [1, 2, 12]}
     out_paths = {key: f"{wk_dir}/intermediate_{key}.nc" for key, value in season_dict.items()}
     for season in season_dict:
         selected_months = season_dict.get(season)
@@ -402,7 +402,7 @@ if __name__ == '__main__':
     # we don't want to repeat ourselves.
 
     # set an informative title using info about the analysis set in env vars
-    title_string = "{CASENAME}: mean {tas_var} ({FIRSTYR}-{LASTYR})".format(**os.environ)
+    # title_string = "{CASENAME}: mean {tas_var} ({FIRSTYR}-{LASTYR})".format(**os.environ)
     # Plot the model data:
     # plot_and_save_figure("model", title_string, model_dataset)
 

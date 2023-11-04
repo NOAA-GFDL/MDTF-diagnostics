@@ -100,8 +100,8 @@ else:  # iMac path
     lon_name = "lon"
     wk_dir = "/Users/claresyhuang/Dropbox/GitHub/hn2016_falwa/github_data_storage"
 # Regular grid defined by developer
-xlon = np.arange(0, 361, 1.0)
-ylat = np.arange(-90, 91, 1.0)
+xlon = np.arange(0, 361, 1.5)
+ylat = np.arange(-90, 91, 1.5)
 
 
 # === Define functions ===

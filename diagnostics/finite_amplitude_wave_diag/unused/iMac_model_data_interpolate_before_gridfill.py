@@ -30,7 +30,7 @@ coord_file.close()
 
 run_gridfill = True
 
-all_files = xr.open_dataset("GFDL-CM3_historical_r1i1p1_20050101-20051231_1tslice.nc")
+all_files = xr.open_dataset("../GFDL-CM3_historical_r1i1p1_20050101-20051231_1tslice.nc")
 all_files = all_files\
     .assign_coords({'plev': all_files.plev // 100})\
     .interp(

@@ -17,53 +17,27 @@
 #   The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt).
 # ================================================================================
 #   Functionality (not written yet)
-# 
-#   In this section you should summarize the stages of the calculations your 
-#   diagnostic performs, and how they translate to the individual source code files 
-#   provided in your submission. This will, e.g., let maintainers fixing a bug or 
-#   people with questions about how your code works know where to look.
 # ================================================================================
 #   Required programming language and libraries (not written yet)
-# 
-#   In this section you should summarize the programming languages and third-party 
-#   libraries used by your diagnostic. You also provide this information in the 
-#   ``settings.jsonc`` file, but here you can give helpful comments to human 
-#   maintainers (eg, "We need at least version 1.5 of this library because we call
-#   this function.")
 # ================================================================================
 #   Required model output variables (not written yet)
-# 
-#   In this section you should describe each variable in the input data your 
-#   diagnostic uses. You also need to provide this in the ``settings.jsonc`` file, 
-#   but here you should go into detail on the assumptions your diagnostic makes 
-#   about the structure of the data.
 # ================================================================================
 #   References (not written yet)
-# 
-#   Here you should cite the journal articles providing the scientific basis for 
-#   your diagnostic.
-# 
-#      Maloney, E. D, and Co-authors, 2019: Process-oriented evaluation of climate
-#         and wether forcasting models. BAMS, 100(9), 1665-1686,
-#         doi:10.1175/BAMS-D-18-0042.1.
 # ================================================================================
 import os
+import socket
 from typing import Tuple
 
 import gridfill
 import matplotlib
 from matplotlib import gridspec
 from collections import namedtuple
-import socket
-
-from xarray import Dataset
 
 if socket.gethostname() == 'otc':
     matplotlib.use('Agg')  # non-X windows backend
 # Commands to load third-party libraries. Any code you don't include that's 
 # not part of your language's standard library should be listed in the 
 # settings.jsonc file.
-import netCDF4
 import numpy as np
 import xarray as xr  # python library we use to read netcdf files
 import matplotlib.pyplot as plt  # python library we use to make plots
@@ -102,8 +76,8 @@ else:  # iMac path
     lon_name = "lon"
     wk_dir = "/Users/claresyhuang/Dropbox/GitHub/hn2016_falwa/github_data_storage"
 # Regular grid defined by developer
-xlon = np.arange(0, 361, 1.5)
-ylat = np.arange(-90, 91, 1.5)
+xlon = np.arange(0, 361, 1.0)
+ylat = np.arange(-90, 91, 1.0)
 print(f"Use xlon: {xlon}")
 print(f"Use ylat: {ylat}")
 
@@ -354,6 +328,7 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plo
     plt.tight_layout()
     plt.show()
     plt.savefig(plot_path, bbox_inches='tight')
+    plt.savefig(plot_path.replace(".eps", ".png"), bbox_inches='tight')
 
 
 # === 3) Saving output data ===

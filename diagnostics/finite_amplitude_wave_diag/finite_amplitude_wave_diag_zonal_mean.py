@@ -48,6 +48,7 @@
 #         doi:10.1175/BAMS-D-18-0042.1.
 # ================================================================================
 import os
+from typing import Tuple
 
 import gridfill
 import matplotlib
@@ -77,6 +78,7 @@ from hn2016_falwa.constant import SCALE_HEIGHT, P_GROUND
 # <DATADIR>/<frequency>/<CASENAME>.<variable_name>.<frequency>.nc
 # Here <variable_name> and frequency are requested in the "varlist" part of 
 # settings.json.
+already_done_gridfill = True
 load_environ = (socket.gethostname() == 'otc')
 if load_environ:  # otc path
     uvt_path = os.environ["UVT_FILE"]
@@ -166,11 +168,12 @@ original_grid = {
     lon_name: model_dataset.coords[lon_name]}
 
 
-def compute_from_sampled_data(sampled_dataset):
+def implement_gridfill(sampled_dataset) -> Tuple[str, bool]:
     # === 2.1) GRIDFILL: Check if any NaN exist. If yes, do gridfill. ===
     num_of_nan = sampled_dataset[u_var_name].isnull().sum().values
-    do_gridfill = True if num_of_nan > 0 else False  # Boolean
-    if do_gridfill:
+    need_gridfill = True if num_of_nan > 0 else False  # Boolean
+    done_interpolation_onto_lat_grid = False
+    if need_gridfill:
         print("NaN detected in u/v/T field. Do gridfill with poisson solver.")
         gridfill_file_path = "gridfill_{var}.nc"
         args_tuple = [u_var_name, v_var_name, t_var_name]
@@ -181,19 +184,29 @@ def compute_from_sampled_data(sampled_dataset):
                 input_core_dims=(('lat', 'lon'),),
                 output_core_dims=(('lat', 'lon'),),
                 vectorize=True, dask="allowed")
+            # Do interpolation to reduce space needed
+            field_at_all_level = field_at_all_level.interp(
+                coords={lat_name: ylat, lon_name: xlon}, method="linear", kwargs={"fill_value": "extrapolate"})
+            done_interpolation_onto_lat_grid = True
+            print("Interpolated onto regular lat grid.")
             field_at_all_level.to_netcdf(gridfill_file_path.format(var=var_name))
             field_at_all_level.close()
             print(f"Finished outputing {var_name} to {gridfill_file_path.format(var=var_name)}")
-        print("Finished gridfill")
         gridfill_file_path = gridfill_file_path.format(var="*")
+        print(f"Finished gridfill. Filepath: {gridfill_file_path}")
     else:
         gridfill_file_path = uvt_path  # Original file
         print(f"No gridfill is necessary. Continue to work on {gridfill_file_path}")
+    return gridfill_file_path, done_interpolation_onto_lat_grid
+
+
+def compute_from_sampled_data(gridfill_file_path: str, done_interpolation_onto_lat_grid: bool):
 
     # === 2.2) INTERPOLATION: Interpolate onto regular grid for simplicity ===
     gridfilled_dataset = xr.open_mfdataset(gridfill_file_path)
-    gridfilled_dataset = gridfilled_dataset.interp(
-        coords={lat_name: ylat, lon_name: xlon}, method="linear", kwargs={"fill_value": "extrapolate"})
+    if not done_interpolation_onto_lat_grid:
+        gridfilled_dataset = gridfilled_dataset.interp(
+            coords={lat_name: ylat, lon_name: xlon}, method="linear", kwargs={"fill_value": "extrapolate"})
 
     # === 2.3) VERTICAL RESOLUTION: determine the maximum pseudo-height this calculation can handle ===
     dz = 1000  # TODO Variable to set earlier?
@@ -363,8 +376,11 @@ if __name__ == '__main__':
         # plt.savefig(plot_path, bbox_inches='tight')
         sampled_dataset = model_dataset.sel(
             time=model_dataset.time.dt.month.isin(selected_months)) \
-            .resample(time="1D").mean(dim="time")
-        intermediate_dataset: xr.Dataset = compute_from_sampled_data(sampled_dataset)
+            .resample(time="1D").first()
+            #.resample(time="1D").mean(dim="time")
+        gridfill_file_path, done_interpolation_onto_lat_grid = implement_gridfill(sampled_dataset=sampled_dataset)
+        intermediate_dataset: xr.Dataset = compute_from_sampled_data(
+            gridfill_file_path=gridfill_file_path, done_interpolation_onto_lat_grid=done_interpolation_onto_lat_grid)
         out_path = out_paths[season]  # TODO set it
         intermediate_dataset.to_netcdf(out_path)
         print(f"Finished outputing intermediate dataset: {out_path}")
@@ -375,7 +391,6 @@ if __name__ == '__main__':
             plot_path=plot_path)
         print(f"Finishing outputting {plot_path}.")
     print("Finish the whole process")
-
 
     # === 4) Saving output plots (TODO not yet finished) ===
     #

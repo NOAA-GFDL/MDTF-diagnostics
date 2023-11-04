@@ -89,7 +89,8 @@ if load_environ:  # otc path
     lon_name = os.environ["LON_COORD"]
     wk_dir = os.environ["WK_DIR"]
 else:  # iMac path
-    uvt_path = f"{os.environ['HOME']}/Dropbox/GitHub/mdtf/MDTF-diagnostics/diagnostics/finite_amplitude_wave_diag/GFDL-CM3_historical_r1i1p1_20050101-20051231_10tslice.nc"
+    uvt_path = f"{os.environ['HOME']}/Dropbox/GitHub/mdtf/MDTF-diagnostics/diagnostics/finite_amplitude_wave_diag/" + \
+               "GFDL-CM3_historical_r1i1p1_20050101-20051231_10tslice.nc"
     u_var_name = "ua"
     v_var_name = "va"
     t_var_name = "ta"
@@ -355,7 +356,9 @@ if __name__ == '__main__':
     for season in season_dict:
         selected_months = season_dict.get(season)
         plot_path = f"FAWA_Diag_{season}.eps"
-        # plot_path = "{WK_DIR}/{model_or_obs}/PS/example_{model_or_obs}_plot.eps"
+        # plot_path = "{WK_DIR}/{model_or_obs}/PS/example_{model_or_obs}_plot.eps".format(
+        #     model_or_obs=model_or_obs, **os.environ)
+        # plt.savefig(plot_path, bbox_inches='tight')
         sampled_dataset = model_dataset.sel(
             time=model_dataset.time.dt.month.isin(selected_months)) \
             .resample(time="1D").mean(dim="time")
@@ -382,27 +385,6 @@ if __name__ == '__main__':
     # Define a python function to make the plot, since we'll be doing it twice and
     # we don't want to repeat ourselves.
 
-    def plot_and_save_figure(model_or_obs, title_string, final_dataset):
-        """
-        Args:
-            model_or_obs(str): shall either be 'model' or 'obs_data'
-            title_string(str): title of the main plot
-            final_dataset: processed dataset (mean already taken)
-        """
-        # initialize the plot
-        plt.figure(figsize=(12, 6))
-        plot_axes = plt.subplot(1, 1, 1)
-        # actually plot the data (makes a lat-lon colormap)
-        final_dataset.plot(ax=plot_axes)
-        plot_axes.set_title(title_string)
-        # save the plot in the right location
-        plot_path = "{WK_DIR}/{model_or_obs}/PS/example_{model_or_obs}_plot.eps".format(
-            model_or_obs=model_or_obs, **os.environ)
-        plt.savefig(plot_path, bbox_inches='tight')
-
-
-    # end of function
-
     # set an informative title using info about the analysis set in env vars
     title_string = "{CASENAME}: mean {tas_var} ({FIRSTYR}-{LASTYR})".format(**os.environ)
     # Plot the model data:
@@ -415,6 +397,7 @@ if __name__ == '__main__':
     #
     model_dataset.close()
 
+
 ### 7) Error/Exception-Handling Example ########################################
 # nonexistent_file_path = "{DATADIR}/mon/nonexistent_file.nc".format(**os.environ)
 # try:
@@ -422,6 +405,7 @@ if __name__ == '__main__':
 # except IOError as error:
 #     print(error)
 #     print("This message is printed by the example POD because exception-handling is working!")
+
 
 ### 8) Confirm POD executed sucessfully ########################################
 # print("Last log message by Example POD: finished successfully!")

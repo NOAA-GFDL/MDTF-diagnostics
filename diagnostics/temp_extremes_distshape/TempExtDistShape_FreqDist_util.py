@@ -20,6 +20,8 @@ import os
 import numpy
 from netCDF4 import Dataset,num2date
 import cftime
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as mplt
 import math
 import scipy
@@ -82,7 +84,7 @@ def Seasonal_Anomalies(model_netcdf_filename,lon_var,lat_var,field_var,time_var,
     ### Subset temperature to season specified by "monthsub" vector
     moinds=numpy.in1d(mo,monthsub[statind])
     moinds=(numpy.where(moinds)[0])
-    moinds=[numpy.int(indval) for indval in moinds]
+    moinds=[int(indval) for indval in moinds]
     leapstr=leapstr[moinds]
     var_data=var_data[:,:,moinds]
 

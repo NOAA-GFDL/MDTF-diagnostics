@@ -11,7 +11,7 @@ Mac OS, and the Windows Subsystem for Linux.
 
 You will need to download the source code, digested observational data, and sample model data (:numref:`ref-download`).
 Afterwards, we describe how to install software dependencies using the `conda <https://docs.conda.io/en/latest/>`__
-package manager (:numref:`ref-conda-install`) and run the framework on sample model data (:numref:`ref-configure` and
+package manager (:numref:`ref-conda-install`) or `micromamba <https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html>`__ (:numref:`ref-micromamba-install`) and run the framework on sample model data (:numref:`ref-configure` and
 :numref:`ref-execute`).
 
 Throughout this document, :console:`%` indicates the shell prompt and is followed by commands to be executed in a
@@ -192,14 +192,21 @@ implemented.
 
 - Start a new shell to reload the updated shell login script.
 
+Installing micromamba
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _ref-micromamba-install:
+
+`Micromamaba installation instructions <https://mamba.readthedocs.io/en/latest/micromamba-installation.html#>`__
+
+
 Installing the package's conda environments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In this section we use conda to install the versions of the language interpreters and third-party libraries required
 by the package's diagnostics.
 
-- First, determine the location of your conda installation by running :console:`% conda info --base` as the user
-who will be using the package. This path will be referred to as <*CONDA_ROOT*> below.
+- First, determine the location of your conda/micromamba installation by running :console:`% conda info --base` or :console:`% micromamba info --base`
+as the user who will be using the package. This path will be referred to as <*CONDA_ROOT*> below.
 
 - If you don't have write access to <*CONDA_ROOT*>
 (for example, if conda has been installed for all users of a multi-user system),
@@ -207,7 +214,7 @@ you will need to tell conda to install its files in a different, writable locati
 You can also choose to do this out of convenience, e.g. to keep all files and programs used by the MDTF package together
 in the ``mdtf`` directory for organizational purposes. This location will be referred to as <*CONDA_ENV_DIR*> below.
 
-- Install all the package's conda environments by running
+- Install all the package's conda environments with anaconda/miniconda by running
 
   .. code-block:: console
 
@@ -219,6 +226,27 @@ in the ``mdtf`` directory for organizational purposes. This location will be ref
   - Substitute the paths identified above for <*CONDA_ROOT*> and <*CONDA_ENV_DIR*>.
 
   - If the ``--env_dir`` flag is omitted, the environment files will be installed in your system's conda's default location (usually <*CONDA_ROOT*>/envs).
+
+- Install all the package's conda environments with micromamba by running
+
+  .. code-block:: console
+
+      % cd <CODE_ROOT>
+      % ./src/conda/conda_env_setup.sh --all --micromamba_root <MICROMAMBA_ROOT> --env_dir <CONDA_ENV_DIR>
+  <*MICROMAMBA_ROOT*> is the path to the micromamba executable on your system (e.g., /home/${USER/.local/bin)
+
+.. note::
+
+   Micromamba is required to install the conda environments on machines with Apple M-series chips.
+   NCL and R do not provide package support these systems, and only
+   python-based environments and PODs will work. Install the base and python3_base environments individually on M-series
+   Macs by running
+
+   .. code-block:: console
+
+      % cd <CODE_ROOT>
+      % ./src/conda/conda_env_setup.sh -e base --micromamba_root <MICROMAMBA_ROOT> --env_dir <CONDA_ENV_DIR>
+      % ./src/conda/conda_env_setup.sh -e python3_ ase --micromamba_root <MICROMAMBA_ROOT> --env_dir <CONDA_ENV_DIR>
 
 .. note::
 
@@ -248,7 +276,7 @@ The output should be
 
    === Starting <CODE_ROOT>/mdtf_framework.py
 
-   mdtf 3.0
+   mdtf [version number]
 
 .. _ref-configure:
 

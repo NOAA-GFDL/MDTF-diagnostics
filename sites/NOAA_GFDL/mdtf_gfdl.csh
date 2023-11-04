@@ -196,16 +196,18 @@ ${REPO_DIR}/mdtf_framework.py -f ${input_jsonc} --site NOAA_GFDL -v
 
 
 ##workaround ends
-pkg_status=$?
-echo "mdtf_gfdl.csh: MDTF finish; exit={$pkg_status}"
+set pkg_status = $status
+echo "mdtf_gfdl.csh: MDTF finish; exit=$pkg_status"
 
 # ----------------------------------------------------
 # copy/link output files to website directory, if requested
 
 if ( ! $?WEBSITE_OUTPUT_DIR ) then
     exit $pkg_status
-else if ( "$WEBSITE_OUTPUT_DIR" == "" )
-    exit $pkg_status
+else
+    if ( "$WEBSITE_OUTPUT_DIR" == "" ) then
+        exit $pkg_status
+    else
 endif
 
 # test for write access -- don't trust -w test

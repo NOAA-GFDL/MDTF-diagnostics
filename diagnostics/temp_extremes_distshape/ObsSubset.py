@@ -48,7 +48,7 @@ subprocess.call(['./Seasonal_NCfile.sh'])
 
 # ======================================================================
 ### Load user-specified parameters
-print(("Load user-specified parameters..."), end=' ')
+print("Load user-specified parameters...", end=' ')
 os.system("python "+os.environ["POD_HOME"]+"/ObsSubset_usp.py")
 with open(os.environ["WK_DIR"]+"/ObsSubset_parameters.json") as outfile:
     sub_data=json.load(outfile)

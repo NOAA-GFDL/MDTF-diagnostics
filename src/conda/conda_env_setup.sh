@@ -24,8 +24,9 @@ script_dir="$( cd -P "$( dirname "$_source" )" >/dev/null 2>&1 && pwd )"
 repo_dir="$( cd -P "$script_dir" >/dev/null 2>&1 && cd ../../ && pwd )"
 
 pushd "$PWD" > /dev/null
-# parse aruments manually
+# parse arguments manually
 _MDTF_CONDA_ROOT=""
+_MDTF_MICROMAMBA_ROOT=""
 _CONDA_ENV_ROOT=""
 make_envs="true"
 env_glob=""
@@ -64,9 +65,10 @@ while (( "$#" )); do
             fi
             cd "$2"
             export _CONDA_ENV_ROOT="$PWD"
+            echo "$_CONDA_ENV_ROOT"
             shift 2
             ;;
-        -c|--conda_root)
+        -cr|--conda_root)
             # manually specify path to conda installation; resolve path first
             cd "$repo_dir"
             if [ ! -d "$2" ]; then
@@ -75,6 +77,17 @@ while (( "$#" )); do
             fi
             cd "$2"
             export _MDTF_CONDA_ROOT="$PWD"
+            shift 2
+            ;;
+         -mr|--micromamba_root)
+            # manually specify path to micromamba installation; resolve path first
+            cd "$repo_dir"
+            if [ ! -d "$2" ]; then
+                echo "ERROR: can't find micromamba directory $2"
+                exit 1
+            fi
+            cd "$2"
+            export _MDTF_MICROMAMBA_ROOT="$PWD"
             shift 2
             ;;
         --wrapper-only)
@@ -96,12 +109,18 @@ popd > /dev/null   # restore CWD
 # setup conda for non-interactive shell
 # NB: 'conda' isn't an executable; it's created as a shell alias. This is why we
 # invoke it as 'conda' below, instead of the absolute path in $CONDA_EXE.
-if [ -z "$_MDTF_CONDA_ROOT" ]; then
+if [[ -z "$_MDTF_CONDA_ROOT" && -z "$_MDTF_MICROMAMBA_ROOT" ]]; then
     set -- # clear cmd line
+    echo "calling conda_init.sh"
     . "${script_dir}/conda_init.sh" -v
-else
+elif [[ -z "$_MDTF_MICROMAMBA_ROOT" && -n "$_MDTF_CONDA_ROOT" ]]; then
     # pass conda installation dir to setup script
+    echo "calling conda_init.sh on conda_root"
     . "${script_dir}/conda_init.sh" -v "$_MDTF_CONDA_ROOT"
+elif [[ -n "$_MDTF_MICROMAMBA_ROOT" && -z "$_MDTF_CONDA_ROOT" ]]; then
+    # pass conda installation dir to setup script
+    echo "calling conda_init.sh on $_MDTF_MICROMAMBA_ROOT"
+    . "${script_dir}/conda_init.sh" -v "$_MDTF_MICROMAMBA_ROOT"
 fi
 
 if [ "$make_envs" = "true" ]; then
@@ -117,20 +136,39 @@ if [ "$make_envs" = "true" ]; then
     # install envs with mamba (https://github.com/mamba-org/mamba) for
     # performance reasons; need to find mamba executable, or install it if not
     # present
-    _INSTALL_EXE=$( command -v mamba ) || true
-    mamba_temp="false"
-    if [[ ! -x "$_INSTALL_EXE" ]]; then
-        echo "Couldn't find mamba executable; installing in temp environment."
-        mamba_temp="true"
-        conda create --force -qy -n _MDTF_install_temp
-        conda install -qy mamba -n _MDTF_install_temp -c conda-forge
-        # still no idea why this works but "conda activate" doesn't
-        conda activate _MDTF_install_temp
-        _INSTALL_EXE=$( command -v mamba ) || true
-    fi
-    if [[ ! -x "$_INSTALL_EXE" ]]; then
-        echo "Mamba installation failed."
-        exit 1
+    if [ -n "$_MDTF_CONDA_ROOT" ]; then
+      _INSTALL_EXE=$( command -v mamba ) || true
+      mamba_temp="false"
+      if [[ ! -x "$_INSTALL_EXE" ]]; then
+          echo "Couldn't find mamba executable; installing in temp environment."
+          mamba_temp="true"
+          conda create --force -qy -n _MDTF_install_temp
+          conda install -qy mamba -n _MDTF_install_temp -c conda-forge
+          # still no idea why this works but "conda activate" doesn't
+          conda activate _MDTF_install_temp
+          _INSTALL_EXE=$( command -v mamba ) || true
+      fi
+      if [[ ! -x "$_INSTALL_EXE" ]]; then
+          echo "Mamba installation failed."
+          exit 1
+      fi
+    elif [ -n "$_MDTF_MICROMAMBA_ROOT" ]; then
+        # not set, create conda env without --prefix
+        echo "Installing envs with micromamba"
+        #. "${_CONDA_ROOT}/micromamba/etc/profile.d/micromamba.sh"
+        if [ -f "$HOME/.bash_profile" ]; then
+           source "$HOME/.bash_profile"
+        elif [ -f "$HOME/.bashrc" ]; then
+           source "$HOME/.bashrc"
+        else
+           echo "adding ${_CONDA_ROOT}/bin to \$PATH"
+           export PATH="${_CONDA_ROOT}/bin:$PATH"
+        fi
+         _INSTALL_EXE=$( command -v micromamba ) || true
+        if [[ -z "$_INSTALL_EXE" ]]; then
+           echo "Error: micromamba not found."
+           exit 1
+        fi
     fi
 
     # create all envs in a loop
@@ -139,15 +177,26 @@ if [ "$make_envs" = "true" ]; then
         [ -e "$env_file" ] || continue # catch the case where nothing matches
         # get env name from reading "name:" attribute of yaml file
         env_name=$( sed -n "s/^[[:space:]]*name:[[:space:]]*\([[:alnum:]_\-]*\)[[:space:]]*/\1/p" "$env_file" )
-        if [ -z "$_CONDA_ENV_ROOT" ]; then
+        if [[ -z "$_CONDA_ENV_ROOT" && -z "$_MDTF_MICROMAMBA_ROOT" ]]; then
             # need to set manually, otherwise mamba will install in a subdir
             # of its env's directory
-            conda_prefix="${_CONDA_ROOT}/envs/${env_name}"
+           conda_prefix="${_CONDA_ROOT}/envs/${env_name}"
+           echo "Creating conda env ${env_name} in ${conda_prefix}..."
+           "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
+        elif [ -n "$_MDTF_MICROMAMBA_ROOT" ]; then
+           if [ -n "$_CONDA_ENV_ROOT" ]; then
+              conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
+           else
+              conda_prefix="${_MDTF_MICROMAMBA_ROOT}/envs/${env_name}"
+           fi
+           echo "Creating conda env ${env_name} in ${conda_prefix}..."
+           "$_INSTALL_EXE" create -q -y -p "$conda_prefix" -f "$env_file"
         else
-            conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
+           conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
+           echo "Creating conda env ${env_name} in ${conda_prefix}..."
+           "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
         fi
-        echo "Creating conda env ${env_name} in ${conda_prefix}..."
-        "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
+
         echo "... conda env ${env_name} created."
     done
     "$_INSTALL_EXE" clean -aqy
@@ -160,6 +209,7 @@ if [ "$make_envs" = "true" ]; then
 fi
 
 # create script wrapper to activate base environment
+echo "creating mdtf wrapper"
 _CONDA_WRAPPER="${repo_dir}/mdtf"
 if [ -e "$_CONDA_WRAPPER" ]; then
     rm -f "$_CONDA_WRAPPER"
@@ -168,8 +218,10 @@ echo '#!/usr/bin/env bash' > "$_CONDA_WRAPPER"
 echo "# This wrapper script is generated by conda_env_setup.sh." >> "$_CONDA_WRAPPER"
 echo "_mdtf=\"${repo_dir}\"" >> "$_CONDA_WRAPPER"
 echo "source \"\${_mdtf}/src/conda/conda_init.sh\" -q \"${_CONDA_ROOT}\"" >> "$_CONDA_WRAPPER"
-if [ -z "$_CONDA_ENV_ROOT" ]; then
+if [[ -z "$_CONDA_ENV_ROOT" && -z "$_MDTF_MICROMAMBA_ROOT" ]]; then
     echo "conda activate _MDTF_base" >> "$_CONDA_WRAPPER"
+elif [[ -n "$_MDTF_MICROMAMBA_ROOT" ]]; then
+    echo "micromamba activate _MDTF_base" >> "$_CONDA_WRAPPER"
 else
     echo "conda activate ${_CONDA_ENV_ROOT}/_MDTF_base" >> "$_CONDA_WRAPPER"
 fi

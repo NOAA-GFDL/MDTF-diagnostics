@@ -136,7 +136,7 @@ def mainmonthlystats(field=None, firstyr=1979, lastyr=2014):
     trend, intercept = xr.apply_ufunc(_lrm, field.year, field,
                            input_core_dims=[['year'], ['year']],
                            output_core_dims=[[],[]],
-                           output_dtypes=[np.float, np.float],
+                           output_dtypes=[float, float],
                            vectorize=True)
                            #dask='parallelized')
 
@@ -179,7 +179,7 @@ def lagcorr(residuals, lag=1):
         input_core_dims=[['year','month']],
         kwargs={'lag': lag},
         output_core_dims=[['month']],
-        output_dtypes=[np.float],
+        output_dtypes=[float],
         vectorize=True)
         # dask='parallelized')
 

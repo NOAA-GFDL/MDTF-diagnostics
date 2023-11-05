@@ -8,6 +8,7 @@ import glob
 import io
 import shutil
 
+
 import src.environment_manager
 from src import util, core, verify_links
 
@@ -163,7 +164,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         # Flags to pass to ghostscript for PS -> PNG conversion (in particular
         # bitmap resolution.)
         eps_convert_flags = ("-dSAFER -dBATCH -dNOPAUSE -dEPSCrop -r150 "
-        "-sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4")
+                             "-sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4")
 
         abs_src_subdir = os.path.join(self.WK_DIR, src_subdir)
         abs_dest_subdir = os.path.join(self.WK_DIR, dest_subdir)
@@ -171,23 +172,27 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             abs_src_subdir,
             ['*.ps', '*.PS', '*.eps', '*.EPS', '*.pdf', '*.PDF']
         )
-        conda_prefix = os.path.join(env_mgr.conda_env_root, '_MDTF_python3_base')
+        conda_prefix = os.path.join(env_mgr.conda_env_root, '_MDTF_base')
         if os.path.split(env_mgr.conda_exe)[-1] == 'micromamba':
-            env_cmd = f"{env_mgr.conda_exe} activate {conda_prefix}"
+            env_cmd = [
+                        f'source {env_mgr.conda_dir}/conda_init.sh --micromamba_exe {env_mgr.conda_exe} --conda_root {env_mgr.conda_root}',
+                        f'micromamba activate {conda_prefix}'
+            ]
         else:
-            env_cmd = f"conda activate {conda_prefix}"
+            env_cmd = [
+                        f'source {env_mgr.conda_dir}/conda_init.sh --conda_root {env_mgr.conda_root}',
+                        f'conda activate {conda_prefix}'
+            ]
         for f in files:
             f_stem, _ = os.path.splitext(f)
             # Append "_MDTF_TEMP" + page number to output files ("%d" = ghostscript's
             # template for multi-page output). If input .ps/.pdf file has multiple
             # pages, this will generate 1 png per page, counting from 1.
             f_out = f_stem + '_MDTF_TEMP_%d.png'
+            cmd = env_cmd
+            cmd += [f'gs {eps_convert_flags} -sOutputFile="{f_out}" {f}']
             try:
-                util.run_shell_command(
-                    [
-                      env_cmd,
-                      f'gs {eps_convert_flags} -sOutputFile="{f_out}" {f}'
-                    ]
+                util.run_shell_command(cmd
                 )
             except Exception as exc:
                 self.obj.log.error("%s produced malformed plot: %s",

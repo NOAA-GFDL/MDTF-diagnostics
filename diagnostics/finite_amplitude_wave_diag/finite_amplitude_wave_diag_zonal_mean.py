@@ -115,7 +115,7 @@ class DataPreprocessor:
         self._yz_mask = dataset[self._u_var_name].isel({self._new_time_coord_name: 0})\
             .to_masked_array().mask.sum(axis=-1).astype(bool)
         self._xy_mask = dataset[self._u_var_name].isel({self._new_time_coord_name: 0})\
-            .to_masked_array().mask.sum(axis=0).astype(bool)
+            .to_masked_array().mask[:, :, :].sum(axis=0).astype(bool)
 
     def _save_preprocessed_data(self, dataset, output_path):
         dataset.to_netcdf(output_path)
@@ -310,7 +310,19 @@ def time_average_processing(dataset: xr.Dataset):
     return seasonal_avg_data
 
 
-def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, analysis_height_array, title_str, plot_path):
+def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, analysis_height_array, title_str, plot_path,
+                                           xy_mask=None, yz_mask=None):
+    if xy_mask is None:
+        xy_mask = np.zeros_like(seasonal_average_data.u_baro)
+        yland, xland = [], []
+    else:
+        yland, xland = np.where(xy_mask)
+    if yz_mask is None:
+        yz_mask = np.zeros_like(seasonal_average_data.zonal_mean_u)
+    lon_range = np.arange(-180, 181, 60)
+    lat_range = np.arange(-90, 91, 30)
+
+
     cmap = "jet"
     fig = plt.figure(figsize=(9, 12))
     # create grid for different subplots
@@ -348,40 +360,44 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, analysis_heigh
     ax2.set_xlim([-80, 80])
 
     # *** U baro ***
-    ax5 = fig.add_subplot(spec[1], projection=ccrs.PlateCarree(180))
+    ax5 = fig.add_subplot(spec[1], projection=ccrs.PlateCarree())
     ax5.coastlines(color='black', alpha=0.7)
     ax5.set_aspect('auto', adjustable=None)
     fig5 = ax5.contourf(
         original_grid['lon'], original_grid['lat'],
         seasonal_average_data.u_baro,
         30, cmap=cmap)
-    ax5.set_xticks(np.arange(0, 361, 60), crs=ccrs.PlateCarree())
-    ax5.set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
+    ax5.scatter(original_grid['lon'][xland], original_grid['lat'][yland], s=1, c='gray')
+    ax5.set_xticks(lon_range, crs=ccrs.PlateCarree())
+    ax5.set_yticks(lat_range, crs=ccrs.PlateCarree())
     fig.colorbar(fig5, ax=ax5)
     ax5.set_title('U baro')
 
     # *** LWA baro ***
-    ax4 = fig.add_subplot(spec[3], projection=ccrs.PlateCarree(180))
+    ax4 = fig.add_subplot(spec[3], projection=ccrs.PlateCarree())
     ax4.coastlines(color='black', alpha=0.7)
     ax4.set_aspect('auto', adjustable=None)
     fig4 = ax4.contourf(
         original_grid['lon'], original_grid['lat'],
-        seasonal_average_data.lwa_baro, 30, cmap=cmap)
-    ax4.set_xticks(np.arange(0, 361, 60), crs=ccrs.PlateCarree())
-    ax4.set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
+        seasonal_average_data.lwa_baro,
+        30, cmap=cmap)
+    ax4.scatter(original_grid['lon'][xland], original_grid['lat'][yland], s=1, c='gray')
+    ax4.set_xticks(lon_range, crs=ccrs.PlateCarree())
+    ax4.set_yticks(lat_range, crs=ccrs.PlateCarree())
     fig.colorbar(fig4, ax=ax4)
     ax4.set_title('LWA baro')
 
     # *** Covariance between LWA and U ***
-    ax6 = fig.add_subplot(spec[5], projection=ccrs.PlateCarree(180))
+    ax6 = fig.add_subplot(spec[5], projection=ccrs.PlateCarree())
     ax6.coastlines(color='black', alpha=0.7)
     ax6.set_aspect('auto', adjustable=None)
     fig6 = ax6.contourf(
         original_grid['lon'], original_grid['lat'],
         seasonal_average_data.covariance_lwa_u_baro,
         30, cmap="Purples_r")
-    ax6.set_xticks(np.arange(0, 361, 60), crs=ccrs.PlateCarree())
-    ax6.set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
+    ax6.scatter(original_grid['lon'][xland], original_grid['lat'][yland], s=1, c='gray')
+    ax6.set_xticks(lon_range, crs=ccrs.PlateCarree())
+    ax6.set_yticks(lat_range, crs=ccrs.PlateCarree())
     fig.colorbar(fig6, ax=ax6)
     ax6.set_title('Covariance between LWA and U(baro)')
     plt.tight_layout()
@@ -429,7 +445,9 @@ if __name__ == '__main__':
             seasonal_avg_data,
             analysis_height_array,
             title_str=f'Finite-amplitude diagnostic plots for {season}',
-            plot_path=plot_path)
+            plot_path=plot_path,
+            xy_mask=data_preprocessor._xy_mask,
+            yz_mask=data_preprocessor._yz_mask)
         print(f"Finishing outputting {plot_path}.")
 
         # Close xarray datasets

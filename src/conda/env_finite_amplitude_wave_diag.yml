@@ -15,4 +15,5 @@ dependencies:
 - gridfill
 - bottleneck
 - pip:
-  - hn2016_falwa==0.7.2
+  - --extra-index-url https://test.pypi.org/simple/
+  - falwa==1.0.0a0

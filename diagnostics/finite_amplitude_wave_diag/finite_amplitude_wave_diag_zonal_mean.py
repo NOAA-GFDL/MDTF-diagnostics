@@ -26,7 +26,7 @@
 # ================================================================================
 import os
 import socket
-from typing import Tuple
+from typing import Tuple, Optional
 
 import gridfill
 import matplotlib
@@ -43,8 +43,154 @@ import xarray as xr  # python library we use to read netcdf files
 import matplotlib.pyplot as plt  # python library we use to make plots
 from cartopy import crs as ccrs
 from hn2016_falwa.xarrayinterface import QGDataset
-from hn2016_falwa.oopinterface import QGFieldNHN22, QGFieldNH18
+from hn2016_falwa.oopinterface import QGFieldNH18
 from hn2016_falwa.constant import SCALE_HEIGHT, P_GROUND
+
+
+class DataPreprocessor:
+    def __init__(
+            self, wk_dir, xlon, ylat, u_var_name, v_var_name, t_var_name, plev_name, lat_name, lon_name, time_coord_name):
+
+        self._wk_dir = wk_dir
+        self._xlon: np.array = xlon  # user input
+        self._ylat: np.array = ylat  # user input
+        self._u_var_name: str = u_var_name
+        self._v_var_name: str = v_var_name
+        self._t_var_name: str = t_var_name
+        self._plev_name: str = plev_name
+        self._lat_name: str = lat_name
+        self._lon_name: str = lon_name
+        self._original_plev = None
+        self._original_lat = None
+        self._original_lon = None
+        self._original_time_coord = None
+        self._time_coord_name: str = time_coord_name
+        self._sampled_dataset = None  # Shall be xarray. Set type later
+        self._gridfill_needed: Optional[bool] = None
+        self._yz_mask = None
+        self._xy_mask = None
+
+    def _save_original_coordinates(self, dataset):
+        self._original_plev = dataset.coords[plev_name]
+        self._original_lat = dataset.coords[lat_name]
+        self._original_lon = dataset.coords[lon_name]
+
+    def _check_if_gridfill_is_needed(self, sampled_dataset):
+        num_of_nan = sampled_dataset[self._u_var_name].isnull().sum().values
+        if num_of_nan > 0:
+            self._gridfill_needed = True
+            self._do_save_mask(sampled_dataset)
+        else:
+            self._gridfill_needed = False
+
+    def _do_save_mask(self, dataset):
+        self._yz_mask = dataset[self._u_var_name].isel({self._time_coord_name: 0})\
+            .to_masked_array().mask.sum(axis=-1).astype(np.bool)
+        self._xy_mask = dataset[self._u_var_name].isel({self._time_coord_name: 0})\
+            .to_masked_array().mask.sum(axis=0).astype(np.bool)
+
+    def _save_preprocessed_data(self, dataset, output_path):
+        dataset.to_netcdf(output_path)
+        print(f"Finished outputing intermediate dataset: {output_path}")
+
+    def _interpolate_onto_regular_grid(self, dataset):
+        dataset = dataset.interp(
+            coords={self._lat_name: self._ylat, self._lon_name: self._xlon},
+            method="linear",
+            kwargs={"fill_value": "extrapolate"})
+        return dataset
+
+    def _implement_gridfill(self, dataset: xr.Dataset):
+        if not self._gridfill_needed:
+            print("No NaN values detected. Gridfill not needed. Bypass DataPreprocessor._implement_gridfill.")
+            return dataset
+        # *** Implement gridfill procedure ***
+        print(f"self._gridfill_needed = True. Do gridfill with poisson solver.")
+        args_tuple = [self._u_var_name, self._v_var_name, self._t_var_name]
+        gridfill_file_path = self._wk_dir + "/gridfill_{var}.nc"
+        for var_name in args_tuple:
+            field_at_all_level = xr.apply_ufunc(
+                gridfill_each_level,
+                *[sampled_dataset[var_name]],
+                input_core_dims=((self._lat_name, self._lon_name),),
+                output_core_dims=((self._lat_name, self._lon_name),),
+                vectorize=True, dask="allowed")
+            field_at_all_level.to_netcdf(gridfill_file_path.format(var=var_name))
+            field_at_all_level.close()
+            print(f"Finished outputing {var_name} to {gridfill_file_path.format(var=var_name)}")
+        load_gridfill_path = gridfill_file_path.format(var="*")
+        gridfilled_dataset = xr.open_mfdataset(load_gridfill_path)
+        return gridfilled_dataset
+
+    def output_preprocess_data(self, sampled_dataset, output_path):
+        """
+        Main procedure executed by this class
+        """
+        self._save_original_coordinates(sampled_dataset)
+        self._check_if_gridfill_is_needed(sampled_dataset)
+        dataset = self._implement_gridfill(sampled_dataset)
+        dataset = self._interpolate_onto_regular_grid(dataset)  # Interpolate onto regular grid
+        self._save_preprocessed_data(dataset, output_path)  # Save preprocessed data
+        return dataset
+
+
+"""
+def implement_gridfill(sampled_dataset) -> Tuple[str, bool]:
+    # === 2.1) GRIDFILL: Check if any NaN exist. If yes, do gridfill. ===
+    num_of_nan = sampled_dataset[u_var_name].isnull().sum().values
+    need_gridfill = True if num_of_nan > 0 else False  # Boolean
+    done_interpolation_onto_lat_grid = False
+    if need_gridfill:
+        print("NaN detected in u/v/T field. Do gridfill with poisson solver.")
+        gridfill_file_path = "gridfill_{var}.nc"
+        args_tuple = [u_var_name, v_var_name, t_var_name]
+        for var_name in args_tuple:
+            field_at_all_level = xr.apply_ufunc(
+                gridfill_each_level,
+                *[sampled_dataset[var_name]],
+                input_core_dims=(('lat', 'lon'),),
+                output_core_dims=(('lat', 'lon'),),
+                vectorize=True, dask="allowed")
+            # Do interpolation to reduce space needed
+            field_at_all_level = field_at_all_level.interp(
+                coords={lat_name: ylat, lon_name: xlon}, method="linear", kwargs={"fill_value": "extrapolate"})
+            done_interpolation_onto_lat_grid = True
+            print("Interpolated onto regular lat grid.")
+            field_at_all_level.to_netcdf(gridfill_file_path.format(var=var_name))
+            field_at_all_level.close()
+            print(f"Finished outputing {var_name} to {gridfill_file_path.format(var=var_name)}")
+        gridfill_file_path = gridfill_file_path.format(var="*")
+        print(f"Finished gridfill. Filepath: {gridfill_file_path}")
+    else:
+        gridfill_file_path = uvt_path  # Original file
+        print(f"No gridfill is necessary. Continue to work on {gridfill_file_path}")
+    return gridfill_file_path, done_interpolation_onto_lat_grid
+"""
+
+
+def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
+    """
+    Fill missing values in lat-lon grids with values derived by solving Poisson's equation
+    using a relaxation scheme.
+
+    Args:
+        lat_lon_field(np.ndarray): 2D array to apply gridfill on
+        itermax(int): maximum iteration for poisson solver
+        verbose(bool): verbose level of poisson solver
+
+    Returns:
+        A 2D array of the same dimension with all nan filled.
+    """
+    if np.isnan(lat_lon_field).sum() == 0:
+        return lat_lon_field
+
+    lat_lon_filled, converged = gridfill.fill(
+        grids=np.ma.masked_invalid(lat_lon_field), xdim=1, ydim=0, eps=0.01,
+        cyclic=True, itermax=itermax, verbose=verbose)
+
+    return lat_lon_filled
+
+
 
 # 1) Loading model data files:
 #
@@ -82,52 +228,6 @@ print(f"Use xlon: {xlon}")
 print(f"Use ylat: {ylat}")
 
 
-# === Define functions ===
-def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
-    """
-    Fill missing values in lat-lon grids with values derived by solving Poisson's equation
-    using a relaxation scheme.
-
-    Args:
-        lat_lon_field(np.ndarray): 2D array to apply gridfill on
-        itermax(int): maximum iteration for poisson solver
-        verbose(bool): verbose level of poisson solver
-
-    Returns:
-        A 2D array of the same dimension with all nan filled.
-    """
-    if np.isnan(lat_lon_field).sum() == 0:
-        return lat_lon_field
-
-    lat_lon_filled, converged = gridfill.fill(
-        grids=np.ma.masked_invalid(lat_lon_field), xdim=1, ydim=0, eps=0.01,
-        cyclic=True, itermax=itermax, verbose=verbose)
-
-    return lat_lon_filled
-
-def convert_pseudoheight_to_hPa(height_array):
-    """
-    Args:
-        height_array(np.array): pseudoheight in [m]
-
-    Returns:
-        np.array which contains pressure levels in [hPa]
-    """
-    p_array = P_GROUND * np.exp(- height_array / SCALE_HEIGHT)
-    return p_array
-
-
-def convert_hPa_to_pseudoheight(p_array):
-    """
-    Args:
-        height_array(np.array): pseudoheight in [m]
-
-    Returns:
-        np.array which contains pressure levels in [hPa]
-    """
-    height_array = - SCALE_HEIGHT * np.log(p_array / P_GROUND)
-    return height_array
-
 # 2) Doing computations:
 model_dataset = xr.open_mfdataset(uvt_path)  # command to load the netcdf file
 if model_dataset[plev_name].units == 'Pa':  # Pa shall be divided by 100 to become hPa
@@ -142,38 +242,7 @@ original_grid = {
     lon_name: model_dataset.coords[lon_name]}
 
 
-def implement_gridfill(sampled_dataset) -> Tuple[str, bool]:
-    # === 2.1) GRIDFILL: Check if any NaN exist. If yes, do gridfill. ===
-    num_of_nan = sampled_dataset[u_var_name].isnull().sum().values
-    need_gridfill = True if num_of_nan > 0 else False  # Boolean
-    done_interpolation_onto_lat_grid = False
-    if need_gridfill:
-        print("NaN detected in u/v/T field. Do gridfill with poisson solver.")
-        gridfill_file_path = "gridfill_{var}.nc"
-        args_tuple = [u_var_name, v_var_name, t_var_name]
-        for var_name in args_tuple:
-            field_at_all_level = xr.apply_ufunc(
-                gridfill_each_level,
-                *[sampled_dataset[var_name]],
-                input_core_dims=(('lat', 'lon'),),
-                output_core_dims=(('lat', 'lon'),),
-                vectorize=True, dask="allowed")
-            # Do interpolation to reduce space needed
-            field_at_all_level = field_at_all_level.interp(
-                coords={lat_name: ylat, lon_name: xlon}, method="linear", kwargs={"fill_value": "extrapolate"})
-            done_interpolation_onto_lat_grid = True
-            print("Interpolated onto regular lat grid.")
-            field_at_all_level.to_netcdf(gridfill_file_path.format(var=var_name))
-            field_at_all_level.close()
-            print(f"Finished outputing {var_name} to {gridfill_file_path.format(var=var_name)}")
-        gridfill_file_path = gridfill_file_path.format(var="*")
-        print(f"Finished gridfill. Filepath: {gridfill_file_path}")
-    else:
-        gridfill_file_path = uvt_path  # Original file
-        print(f"No gridfill is necessary. Continue to work on {gridfill_file_path}")
-    return gridfill_file_path, done_interpolation_onto_lat_grid
-
-
+"""
 def compute_from_sampled_data(gridfill_file_path: str, done_interpolation_onto_lat_grid: bool):
 
     # === 2.2) INTERPOLATION: Interpolate onto regular grid for simplicity ===
@@ -207,6 +276,7 @@ def compute_from_sampled_data(gridfill_file_path: str, done_interpolation_onto_l
         "xlon": (lon_name, original_grid[lon_name].data),
         "ylat": (lat_name, original_grid[lat_name].data)})
     return output_dataset
+"""
 
 
 def calculate_covariance(lwa_baro, u_baro):
@@ -343,21 +413,26 @@ if __name__ == '__main__':
     season_dict = {"DJF": [1, 2, 12], "MAM": [3, 4, 5], "JJA": [6, 7, 8], "SON": [9, 10, 11]}
     # season_dict = {"DJF": [1, 2, 12]}
     out_paths = {key: f"{wk_dir}/intermediate_{key}.nc" for key, value in season_dict.items()}
+
+    # Construct data preprocessor
+    data_preprocessor = DataPreprocessor(
+        wk_dir=wk_dir, xlon=xlon, ylat=ylat, u_var_name=u_var_name, v_var_name=v_var_name, t_var_name=t_var_name,
+        plev_name=plev_name, lat_name=lat_name, lon_name=lon_name, time_coord_name=time_coord_name)
+
     for season in season_dict:
         selected_months = season_dict.get(season)
-        plot_path = f"FAWA_Diag_{season}.eps"
+        plot_path = f"FAWA_Diag_{season}_new.eps"
         # plot_path = "{WK_DIR}/{model_or_obs}/PS/example_{model_or_obs}_plot.eps".format(
         #     model_or_obs=model_or_obs, **os.environ)
         # plt.savefig(plot_path, bbox_inches='tight')
+
+        # Do temporal sampling to reduce the data size
         sampled_dataset = model_dataset.where(
             model_dataset.time.dt.month.isin(selected_months), drop=True) \
             .groupby("time.day").mean("time")
-        gridfill_file_path, done_interpolation_onto_lat_grid = implement_gridfill(sampled_dataset=sampled_dataset)
-        intermediate_dataset: xr.Dataset = compute_from_sampled_data(
-            gridfill_file_path=gridfill_file_path, done_interpolation_onto_lat_grid=done_interpolation_onto_lat_grid)
-        out_path = out_paths[season]  # TODO set it
-        intermediate_dataset.to_netcdf(out_path)
-        print(f"Finished outputing intermediate dataset: {out_path}")
+        intermediate_output_path = out_paths[season]  # TODO set it
+        intermediate_dataset: xr.Dataset = data_preprocessor.output_preprocess_data(
+            sampled_dataset=sampled_dataset, output_path=intermediate_output_path)
         seasonal_avg_data = time_average_processing(intermediate_dataset)
         plot_finite_amplitude_wave_diagnostics(
             seasonal_avg_data,

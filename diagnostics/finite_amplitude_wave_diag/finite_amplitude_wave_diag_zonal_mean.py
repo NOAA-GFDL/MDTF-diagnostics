@@ -45,7 +45,33 @@ import matplotlib.pyplot as plt  # python library we use to make plots
 from cartopy import crs as ccrs
 from hn2016_falwa.xarrayinterface import QGDataset
 from hn2016_falwa.oopinterface import QGFieldNH18
-from hn2016_falwa.constant import SCALE_HEIGHT, P_GROUND
+from hn2016_falwa.constant import P_GROUND, SCALE_HEIGHT
+
+
+def convert_pseudoheight_to_hPa(height_array):
+    """
+    Args:
+        height_array(np.array): pseudoheight in [m]
+
+    Returns:
+        np.array which contains pressure levels in [hPa]
+    """
+    p_array = P_GROUND * np.exp(- height_array / SCALE_HEIGHT)
+    return p_array
+
+
+def convert_hPa_to_pseudoheight(p_array):
+    """
+    Args:
+        height_array(np.array): pseudoheight in [m]
+
+    Returns:
+        np.array which contains pressure levels in [hPa]
+    """
+    height_array = - SCALE_HEIGHT * np.log(p_array / P_GROUND)
+    return height_array
+
+
 
 
 class DataPreprocessor:
@@ -138,40 +164,6 @@ class DataPreprocessor:
         dataset.close()
 
 
-"""
-def implement_gridfill(sampled_dataset) -> Tuple[str, bool]:
-    # === 2.1) GRIDFILL: Check if any NaN exist. If yes, do gridfill. ===
-    num_of_nan = sampled_dataset[u_var_name].isnull().sum().values
-    need_gridfill = True if num_of_nan > 0 else False  # Boolean
-    done_interpolation_onto_lat_grid = False
-    if need_gridfill:
-        print("NaN detected in u/v/T field. Do gridfill with poisson solver.")
-        gridfill_file_path = "gridfill_{var}.nc"
-        args_tuple = [u_var_name, v_var_name, t_var_name]
-        for var_name in args_tuple:
-            field_at_all_level = xr.apply_ufunc(
-                gridfill_each_level,
-                *[sampled_dataset[var_name]],
-                input_core_dims=(('lat', 'lon'),),
-                output_core_dims=(('lat', 'lon'),),
-                vectorize=True, dask="allowed")
-            # Do interpolation to reduce space needed
-            field_at_all_level = field_at_all_level.interp(
-                coords={lat_name: ylat, lon_name: xlon}, method="linear", kwargs={"fill_value": "extrapolate"})
-            done_interpolation_onto_lat_grid = True
-            print("Interpolated onto regular lat grid.")
-            field_at_all_level.to_netcdf(gridfill_file_path.format(var=var_name))
-            field_at_all_level.close()
-            print(f"Finished outputing {var_name} to {gridfill_file_path.format(var=var_name)}")
-        gridfill_file_path = gridfill_file_path.format(var="*")
-        print(f"Finished gridfill. Filepath: {gridfill_file_path}")
-    else:
-        gridfill_file_path = uvt_path  # Original file
-        print(f"No gridfill is necessary. Continue to work on {gridfill_file_path}")
-    return gridfill_file_path, done_interpolation_onto_lat_grid
-"""
-
-
 def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
     """
     Fill missing values in lat-lon grids with values derived by solving Poisson's equation
@@ -252,6 +244,7 @@ def compute_from_sampled_data(gridfilled_dataset: xr.Dataset):
     dz = 1000  # TODO Variable to set earlier?
     hmax = -SCALE_HEIGHT * np.log(gridfilled_dataset[plev_name].min() / P_GROUND)
     kmax = int(hmax // dz) + 1
+    original_pseudoheight = convert_hPa_to_pseudoheight(original_grid[plev_name]).rename("height")
 
     # === 2.4) WAVE ACTIVITY COMPUTATION: Compute Uref, FAWA, barotropic components of u and LWA ===
     qgds = QGDataset(
@@ -317,7 +310,7 @@ def time_average_processing(dataset: xr.Dataset):
     return seasonal_avg_data
 
 
-def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plot_path):
+def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, analysis_height_array, title_str, plot_path):
     cmap = "jet"
     fig = plt.figure(figsize=(9, 12))
     # create grid for different subplots
@@ -327,7 +320,7 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plo
     # *** Zonal mean U ***
     ax1 = fig.add_subplot(spec[0])
     fig1 = ax1.contourf(
-        original_grid['lat'], np.arange(0, 1000 * 33, 1000),
+        original_grid['lat'], analysis_height_array,
         seasonal_average_data.zonal_mean_u,
         30, cmap=cmap)
     fig.colorbar(fig1, ax=ax1)
@@ -337,7 +330,7 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plo
     # *** FAWA ***
     ax3 = fig.add_subplot(spec[2])
     fig3 = ax3.contourf(
-        original_grid['lat'], np.arange(0, 1000 * 33, 1000),
+        original_grid['lat'], analysis_height_array,
         seasonal_average_data.zonal_mean_lwa,
         30, cmap=cmap)
     fig.colorbar(fig3, ax=ax3)
@@ -347,7 +340,7 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plo
     # *** Uref ***
     ax2 = fig.add_subplot(spec[4])
     fig2 = ax2.contourf(
-        original_grid['lat'], np.arange(0, 1000 * 33, 1000),
+        original_grid['lat'], analysis_height_array,
         seasonal_average_data.uref,
         30, cmap=cmap)
     fig.colorbar(fig2, ax=ax2)
@@ -407,7 +400,6 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, title_str, plo
 # *** Produce data by season, daily ***
 if __name__ == '__main__':
     season_dict = {"DJF": [1, 2, 12], "MAM": [3, 4, 5], "JJA": [6, 7, 8], "SON": [9, 10, 11]}
-    # season_dict = {"DJF": [1, 2, 12]}
     out_paths = {key: f"{wk_dir}/intermediate_{key}.nc" for key, value in season_dict.items()}
 
     for season in season_dict:
@@ -431,15 +423,19 @@ if __name__ == '__main__':
             sampled_dataset=sampled_dataset, output_path=preprocessed_output_path)
         intermediate_dataset = xr.open_mfdataset(preprocessed_output_path)
         fawa_diagnostics_dataset = compute_from_sampled_data(intermediate_dataset)
+        analysis_height_array = fawa_diagnostics_dataset.coords['height'].data
         seasonal_avg_data = time_average_processing(fawa_diagnostics_dataset)
         plot_finite_amplitude_wave_diagnostics(
             seasonal_avg_data,
+            analysis_height_array,
             title_str=f'Finite-amplitude diagnostic plots for {season}',
             plot_path=plot_path)
+        print(f"Finishing outputting {plot_path}.")
+
+        # Close xarray datasets
         sampled_dataset.close()
         intermediate_dataset.close()
         fawa_diagnostics_dataset.close()
-        print(f"Finishing outputting {plot_path}.")
         gc.collect()
     print("Finish the whole process")
     model_dataset.close()
@@ -463,8 +459,7 @@ if __name__ == '__main__':
     #
     # In addition to your language's normal housekeeping, don't forget to delete any
     # temporary/scratch files you created in step 4).
-    #
-    model_dataset.close()
+
 
 
 ### 7) Error/Exception-Handling Example ########################################

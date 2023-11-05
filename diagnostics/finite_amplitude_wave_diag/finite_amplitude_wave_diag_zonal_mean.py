@@ -121,8 +121,7 @@ class DataPreprocessor:
             field_at_all_level.close()
             print(f"Finished outputing {var_name} to {gridfill_file_path.format(var=var_name)}")
         load_gridfill_path = gridfill_file_path.format(var="*")
-        gridfilled_dataset = xr.open_mfdataset(load_gridfill_path)
-        return gridfilled_dataset
+        return load_gridfill_path
 
     def output_preprocess_data(self, sampled_dataset, output_path):
         """
@@ -130,8 +129,10 @@ class DataPreprocessor:
         """
         self._save_original_coordinates(sampled_dataset)
         self._check_if_gridfill_is_needed(sampled_dataset)
-        dataset = self._implement_gridfill(sampled_dataset)
-        dataset = self._interpolate_onto_regular_grid(dataset)  # Interpolate onto regular grid
+        gridfill_path = self._implement_gridfill(sampled_dataset)
+        gridfilled_dataset = xr.open_mfdataset(gridfill_path)
+        dataset = self._interpolate_onto_regular_grid(gridfilled_dataset)  # Interpolate onto regular grid
+        gridfilled_dataset.close()
         self._save_preprocessed_data(dataset, output_path)  # Save preprocessed data
         return dataset
 

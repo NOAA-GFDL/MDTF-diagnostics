@@ -86,12 +86,13 @@ class DataPreprocessor:
 
     def _do_save_mask(self, dataset):
         self._yz_mask = dataset[self._u_var_name].isel({self._new_time_coord_name: 0})\
-            .to_masked_array().mask.sum(axis=-1).astype(np.bool)
+            .to_masked_array().mask.sum(axis=-1).astype(bool)
         self._xy_mask = dataset[self._u_var_name].isel({self._new_time_coord_name: 0})\
-            .to_masked_array().mask.sum(axis=0).astype(np.bool)
+            .to_masked_array().mask.sum(axis=0).astype(bool)
 
     def _save_preprocessed_data(self, dataset, output_path):
         dataset.to_netcdf(output_path)
+        dataset.close()
         print(f"Finished outputing intermediate dataset: {output_path}")
 
     def _interpolate_onto_regular_grid(self, dataset):

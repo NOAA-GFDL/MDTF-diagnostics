@@ -48,7 +48,7 @@ while (( "$#" )); do
 done
 
 if [ -x "$_TEMP_MICROMAMBA_EXE" ]; then
-   echo "micromamba_exe = $_TEMP_MICROMAMBA_EXE"
+   echo "CONDA_EXE=$_TEMP_MICROMAMBA_EXE"
    CONDA_EXE="$_TEMP_MICROMAMBA_EXE"
 fi
 
@@ -171,7 +171,7 @@ if [[ $? -eq 0 && -n "$__conda_setup" ]]; then
     eval "$__conda_setup"
 else
     if [ -f "${_CONDA_ROOT}/etc/profile.d/conda.sh" ]; then
-        echo "calling conda.sh"
+       # echo "calling conda.sh"
         . "${_CONDA_ROOT}/etc/profile.d/conda.sh"
     elif [ -n "$_TEMP_MICROMAMBA_EXE" ]; then
         alias micromamba="$CONDA_EXE"

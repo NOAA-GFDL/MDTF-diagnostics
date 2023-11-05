@@ -25,6 +25,7 @@
 #   References (not written yet)
 # ================================================================================
 import os
+import gc
 import socket
 from typing import Tuple, Optional
 
@@ -93,7 +94,7 @@ class DataPreprocessor:
     def _save_preprocessed_data(self, dataset, output_path):
         dataset.to_netcdf(output_path)
         dataset.close()
-        print(f"Finished outputing intermediate dataset: {output_path}")
+        print(f"Finished outputing preprocessed dataset: {output_path}")
 
     def _interpolate_onto_regular_grid(self, dataset):
         dataset = dataset.interp(
@@ -409,12 +410,12 @@ if __name__ == '__main__':
     # season_dict = {"DJF": [1, 2, 12]}
     out_paths = {key: f"{wk_dir}/intermediate_{key}.nc" for key, value in season_dict.items()}
 
-    # Construct data preprocessor
-    data_preprocessor = DataPreprocessor(
-        wk_dir=wk_dir, xlon=xlon, ylat=ylat, u_var_name=u_var_name, v_var_name=v_var_name, t_var_name=t_var_name,
-        plev_name=plev_name, lat_name=lat_name, lon_name=lon_name, time_coord_name=time_coord_name)
-
     for season in season_dict:
+        # Construct data preprocessor
+        data_preprocessor = DataPreprocessor(
+            wk_dir=wk_dir, xlon=xlon, ylat=ylat, u_var_name=u_var_name, v_var_name=v_var_name, t_var_name=t_var_name,
+            plev_name=plev_name, lat_name=lat_name, lon_name=lon_name, time_coord_name=time_coord_name)
+
         selected_months = season_dict.get(season)
         plot_path = f"FAWA_Diag_{season}_new.eps"
         # plot_path = "{WK_DIR}/{model_or_obs}/PS/example_{model_or_obs}_plot.eps".format(
@@ -425,20 +426,23 @@ if __name__ == '__main__':
         sampled_dataset = model_dataset.where(
             model_dataset.time.dt.month.isin(selected_months), drop=True) \
             .groupby("time.day").mean("time")
-        intermediate_output_path = out_paths[season]  # TODO set it
+        preprocessed_output_path = out_paths[season]  # TODO set it
         data_preprocessor.output_preprocess_data(
-            sampled_dataset=sampled_dataset, output_path=intermediate_output_path)
-        intermediate_dataset = xr.open_mfdataset(intermediate_output_path)
+            sampled_dataset=sampled_dataset, output_path=preprocessed_output_path)
+        intermediate_dataset = xr.open_mfdataset(preprocessed_output_path)
         fawa_diagnostics_dataset = compute_from_sampled_data(intermediate_dataset)
         seasonal_avg_data = time_average_processing(fawa_diagnostics_dataset)
         plot_finite_amplitude_wave_diagnostics(
             seasonal_avg_data,
             title_str=f'Finite-amplitude diagnostic plots for {season}',
             plot_path=plot_path)
+        sampled_dataset.close()
         intermediate_dataset.close()
         fawa_diagnostics_dataset.close()
         print(f"Finishing outputting {plot_path}.")
+        gc.collect()
     print("Finish the whole process")
+    model_dataset.close()
 
     # === 4) Saving output plots (TODO not yet finished) ===
     #

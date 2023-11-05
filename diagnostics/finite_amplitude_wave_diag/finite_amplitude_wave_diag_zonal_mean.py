@@ -243,14 +243,7 @@ original_grid = {
     lon_name: model_dataset.coords[lon_name]}
 
 
-"""
-def compute_from_sampled_data(gridfill_file_path: str, done_interpolation_onto_lat_grid: bool):
-
-    # === 2.2) INTERPOLATION: Interpolate onto regular grid for simplicity ===
-    gridfilled_dataset = xr.open_mfdataset(gridfill_file_path)
-    if not done_interpolation_onto_lat_grid:
-        gridfilled_dataset = gridfilled_dataset.interp(
-            coords={lat_name: ylat, lon_name: xlon}, method="linear", kwargs={"fill_value": "extrapolate"})
+def compute_from_sampled_data(gridfilled_dataset: xr.Dataset):
 
     # === 2.3) VERTICAL RESOLUTION: determine the maximum pseudo-height this calculation can handle ===
     dz = 1000  # TODO Variable to set earlier?
@@ -277,7 +270,6 @@ def compute_from_sampled_data(gridfill_file_path: str, done_interpolation_onto_l
         "xlon": (lon_name, original_grid[lon_name].data),
         "ylat": (lat_name, original_grid[lat_name].data)})
     return output_dataset
-"""
 
 
 def calculate_covariance(lwa_baro, u_baro):
@@ -434,7 +426,8 @@ if __name__ == '__main__':
         intermediate_output_path = out_paths[season]  # TODO set it
         intermediate_dataset: xr.Dataset = data_preprocessor.output_preprocess_data(
             sampled_dataset=sampled_dataset, output_path=intermediate_output_path)
-        seasonal_avg_data = time_average_processing(intermediate_dataset)
+        fawa_diagnostics_dataset = compute_from_sampled_data(intermediate_dataset)
+        seasonal_avg_data = time_average_processing(fawa_diagnostics_dataset)
         plot_finite_amplitude_wave_diagnostics(
             seasonal_avg_data,
             title_str=f'Finite-amplitude diagnostic plots for {season}',

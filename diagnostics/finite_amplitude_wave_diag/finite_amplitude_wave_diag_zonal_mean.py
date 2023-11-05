@@ -65,6 +65,7 @@ class DataPreprocessor:
         self._original_lon = None
         self._original_time_coord = None
         self._time_coord_name: str = time_coord_name
+        self._new_time_coord_name: str = "day"
         self._sampled_dataset = None  # Shall be xarray. Set type later
         self._gridfill_needed: Optional[bool] = None
         self._yz_mask = None
@@ -84,9 +85,9 @@ class DataPreprocessor:
             self._gridfill_needed = False
 
     def _do_save_mask(self, dataset):
-        self._yz_mask = dataset[self._u_var_name].isel({self._time_coord_name: 0})\
+        self._yz_mask = dataset[self._u_var_name].isel({self._new_time_coord_name: 0})\
             .to_masked_array().mask.sum(axis=-1).astype(np.bool)
-        self._xy_mask = dataset[self._u_var_name].isel({self._time_coord_name: 0})\
+        self._xy_mask = dataset[self._u_var_name].isel({self._new_time_coord_name: 0})\
             .to_masked_array().mask.sum(axis=0).astype(np.bool)
 
     def _save_preprocessed_data(self, dataset, output_path):

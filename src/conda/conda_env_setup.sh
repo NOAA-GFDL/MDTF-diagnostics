@@ -251,9 +251,9 @@ if [[ -z "$_MDTF_MICROMAMBA_ROOT" && -z "$_MDTF_MICROMAMBA_EXE" ]]; then
     echo "source \"\${_mdtf}/src/conda/conda_init.sh\" -q --conda_root \"${_CONDA_ROOT}\"" >> "$_CONDA_WRAPPER"
 else
     if [ -n "$_MDTF_MICROMAMBA_EXE" ]; then
-       echo "source \"\${_mdtf}/src/conda/conda_init.sh\" -q --micromamba_root \"${_CONDA_ROOT}\" --micromamba_exe \"${_MDTF_MICROMAMBA_EXE}\"" >> "$_CONDA_WRAPPER"
+       echo "source \"\${_mdtf}/src/conda/conda_init.sh\" -q --conda_root \"${_CONDA_ROOT}\" --micromamba_exe \"${_MDTF_MICROMAMBA_EXE}\"" >> "$_CONDA_WRAPPER"
     else
-       echo "source \"\${_mdtf}/src/conda/conda_init.sh\" -q --micromamba_root \"${_CONDA_ROOT}\"" >> "$_CONDA_WRAPPER"
+       echo "source \"\${_mdtf}/src/conda/conda_init.sh\" -q --conda_root \"${_CONDA_ROOT}\"" >> "$_CONDA_WRAPPER"
     fi
 fi
 if [[ -z "$_CONDA_ENV_ROOT" && -z "$_MDTF_MICROMAMBA_ROOT" ]]; then

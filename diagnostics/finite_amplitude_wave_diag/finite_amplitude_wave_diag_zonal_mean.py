@@ -134,7 +134,7 @@ class DataPreprocessor:
         dataset = self._interpolate_onto_regular_grid(gridfilled_dataset)  # Interpolate onto regular grid
         gridfilled_dataset.close()
         self._save_preprocessed_data(dataset, output_path)  # Save preprocessed data
-        return dataset
+        dataset.close()
 
 
 """
@@ -426,14 +426,17 @@ if __name__ == '__main__':
             model_dataset.time.dt.month.isin(selected_months), drop=True) \
             .groupby("time.day").mean("time")
         intermediate_output_path = out_paths[season]  # TODO set it
-        intermediate_dataset: xr.Dataset = data_preprocessor.output_preprocess_data(
+        data_preprocessor.output_preprocess_data(
             sampled_dataset=sampled_dataset, output_path=intermediate_output_path)
+        intermediate_dataset = xr.open_mfdataset(intermediate_output_path)
         fawa_diagnostics_dataset = compute_from_sampled_data(intermediate_dataset)
         seasonal_avg_data = time_average_processing(fawa_diagnostics_dataset)
         plot_finite_amplitude_wave_diagnostics(
             seasonal_avg_data,
             title_str=f'Finite-amplitude diagnostic plots for {season}',
             plot_path=plot_path)
+        intermediate_dataset.close()
+        fawa_diagnostics_dataset.close()
         print(f"Finishing outputting {plot_path}.")
     print("Finish the whole process")
 

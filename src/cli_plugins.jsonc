@@ -110,8 +110,7 @@
             "name": "micromamba_exe",
             "help": "Path to micromamba executable",
             "default" : "",
-            "metavar" : "<DIR>",
-            "action": "PathAction"
+            "metavar" : "<DIR>"
           }
         ]
       }

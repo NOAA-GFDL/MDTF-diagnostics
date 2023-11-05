@@ -235,6 +235,10 @@ class PathManager(util.Singleton, util.NameSpace):
             # in its definition in the .jsonc file
             cli_paths = [act.dest for act in cli_obj.iter_actions()
                          if isinstance(act, cli.PathAction)]
+            if 'micromamba_exe' in d:
+                if os.path.exists(d['micromamba_exe']):
+                    cli_paths.append('micromamba_exe')
+
             if not cli_paths:
                 _log.warning("Didn't get list of paths from CLI.")
             for key in cli_paths:

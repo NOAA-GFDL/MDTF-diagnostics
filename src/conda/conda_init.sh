@@ -60,7 +60,6 @@ if [ -d "$_TEMP_CONDA_ROOT" ]; then
         echo "WARNING: overriding ${_CONDA_ROOT} with ${_TEMP_CONDA_ROOT}" 1>&2
     fi
     _CONDA_ROOT="$_TEMP_CONDA_ROOT"
-    echo "_CONDA_ROOT = $_CONDA_ROOT"
     if [ -z "$_TEMP_MICROMAMBA_EXE" ]; then
         if [[ $_v -eq 2 && -x "$CONDA_EXE" ]]; then
            echo "WARNING: user supplied CONDA_ROOT so unsetting existing CONDA_EXE" 1>&2
@@ -175,8 +174,6 @@ else
         echo "calling conda.sh"
         . "${_CONDA_ROOT}/etc/profile.d/conda.sh"
     elif [ -n "$_TEMP_MICROMAMBA_EXE" ]; then
-        #echo "calling micromamba.sh"
-        #. "${_CONDA_ROOT}/etc/profile.d/micromamba.sh"
         alias micromamba="$CONDA_EXE"
     else
         export PATH="${_CONDA_ROOT}/bin:$PATH"

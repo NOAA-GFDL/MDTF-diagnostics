@@ -101,14 +101,16 @@
   // Settings affecting the runtime environment of the PODs.
   "environment_manager": "conda",
 
-  // Path to the Anaconda installation. Only used if environment_manager='Conda'.
-  // Set equal to "" to use conda from your system's $PATH.
+  // Path to the Anaconda, miniconda, or micromamba installation.
+  // Only used if environment_manager='Conda'.
   "conda_root": "/home/oar.gfdl.mdtf/miniconda3",
 
   // Root directory for Anaconda environment installs. Only used if
-  // environment_manager = 'Conda'. Set equal to '' to install in your system's
-  // default location.
+  // environment_manager = 'Conda'.
   "conda_env_root": "/home/oar.gfdl.mdtf/miniconda3/envs",
+
+  // Path to micromamba executable. Required if using micromamba to manage environments
+  "micromamba_exe": "",
 
   // Root directory for python virtual environments. Only used if
   // environment_manager = 'Virtualenv'. Set equal to '' to install in your

@@ -162,7 +162,7 @@ jobs:
         micromamba activate _MDTF_base
         # run the test PODs
         ./mdtf_framework.py -v -f ${{matrix.json-file-set2}}
-       # Uncomment the following line for debugging
+        # Uncomment the following line for debugging
         cat ../wkdir/MDTF_GFDL.Synthetic_1_10/MJO_prop_amp/MJO_prop_amp.log
     - name: Get observational data for set 3
       run: |

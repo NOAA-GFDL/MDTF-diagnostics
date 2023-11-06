@@ -128,6 +128,7 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False, log=_log)
     else:
         return stdout.splitlines()
 
+
 def run_shell_command(command, env=None, cwd=None, dry_run=False, log=_log):
     """Subprocess wrapper to facilitate running shell commands. See documentation
     for :py:class:`~subprocess.Popen`.
@@ -165,12 +166,11 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False, log=_log):
     retcode = 1
     stderr = ''
     try:
-        proc = subprocess.Popen(
-            command,
-            shell=True, executable=bash_exec,
-            env=env, cwd=cwd,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            universal_newlines=True, bufsize=1
+        proc = subprocess.Popen(command, shell=True,
+                                executable=bash_exec,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                env=env, universal_newlines=True,
+                                cwd=cwd, text=True, bufsize=1
         )
         pid = proc.pid
         (stdout, stderr) = proc.communicate()

@@ -12,6 +12,7 @@ from src import util, core, verify_links
 import logging
 _log = logging.getLogger(__name__)
 
+
 class AbstractOutputManager(abc.ABC):
     """Abstract interface for any OutputManager."""
     def __init__(self, case): pass

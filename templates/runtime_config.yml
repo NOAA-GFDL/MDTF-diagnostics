@@ -40,6 +40,8 @@ conda_root": ""
 # be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
 # blank, the framework will look for its environments in conda_root/envs
 conda_env_root": ""
+# Location of micromamba executable; REQUIRED if using micromamba
+micromamba_exe: ""
 ### Data type settings ###
 # set to true to handle data files > 4 GB
 large_file: False

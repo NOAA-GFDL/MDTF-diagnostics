@@ -64,14 +64,17 @@
   // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.
   "OUTPUT_DIR": "../wkdir",
 
-  // Location of the Anaconda/miniconda installation to use for managing
-  // dependencies (path returned by running `conda info --base`.)
+  // Location of the Anaconda/miniconda or micromamba installation to use for managing
+  // dependencies (path returned by running `conda info --base` or `micromamba info`.)
   "conda_root": "/net/jml/miniconda3",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in conda_root/envs
   "conda_env_root": "/net/jml/miniconda3/envs",
+
+  // Location of the micromamba executable. Required if using micromamba
+  "micromamba_exe": "",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)

@@ -86,7 +86,7 @@ jobs:
         echo "conda root ${CONDA_ROOT}"
         echo "env dir  ${CONDA_ENV_DIR}"
         # MDTF-specific setup: install all conda envs
-        ./src/conda/conda_env_setup.sh --all --micromamba_root ${CONDA_ROOT} --micromamba_exe ${MICROMAMBA_EXE} --env_dir ${CONDA_ENV_DIR}
+        ./src/conda/micromamba_env_setup.sh --all --micromamba_root ${CONDA_ROOT} --micromamba_exe ${MICROMAMBA_EXE} --env_dir ${CONDA_ENV_DIR}
         echo "Creating the _MDTF_synthetic_data environment"
         micromamba create -y -f ./src/conda/_env_synthetic_data.yml
     - name: Generate Model Data

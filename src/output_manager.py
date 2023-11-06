@@ -175,12 +175,12 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         conda_prefix = os.path.join(env_mgr.conda_env_root, '_MDTF_base')
         if os.path.split(env_mgr.conda_exe)[-1] == 'micromamba':
             env_cmd = [
-                        f'source {env_mgr.conda_dir}/conda_init.sh --micromamba_exe {env_mgr.conda_exe} --conda_root {env_mgr.conda_root}',
+                        f'source {env_mgr.conda_dir}/micromamba_init.sh --micromamba_exe {env_mgr.conda_exe} --micromamba_root {env_mgr.conda_root}',
                         f'micromamba activate {conda_prefix}'
             ]
         else:
             env_cmd = [
-                        f'source {env_mgr.conda_dir}/conda_init.sh --conda_root {env_mgr.conda_root}',
+                        f'source {env_mgr.conda_dir}/conda_init.sh {env_mgr.conda_root}',
                         f'conda activate {conda_prefix}'
             ]
         for f in files:
@@ -189,11 +189,12 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             # template for multi-page output). If input .ps/.pdf file has multiple
             # pages, this will generate 1 png per page, counting from 1.
             f_out = f_stem + '_MDTF_TEMP_%d.png'
-            cmd = env_cmd
-            cmd += [f'gs {eps_convert_flags} -sOutputFile="{f_out}" {f}']
+            #cmd = env_cmd
+            #cmd += [f'gs {eps_convert_flags} -sOutputFile="{f_out}" {f}']
+            cmd = f'gs {eps_convert_flags} -sOutputFile="{f_out}" {f}'
             try:
                 util.run_shell_command(cmd
-                )
+                                       )
             except Exception as exc:
                 self.obj.log.error("%s produced malformed plot: %s",
                                    self.obj.full_name, f[len(abs_src_subdir):])

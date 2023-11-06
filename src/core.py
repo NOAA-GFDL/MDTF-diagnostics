@@ -7,19 +7,15 @@ import abc
 import collections
 import copy
 import dataclasses as dc
-import glob
 import shutil
 import signal
 import tempfile
 import traceback
 import typing
-from src import util, cli, mdtf_info, data_model, units
-from src.units import Units
+from src import util, cli, mdtf_info
 
 import logging
 _log = logging.getLogger(__name__)
-
-
 
 
 @util.mdtf_dataclass
@@ -36,7 +32,7 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
     _id: util.MDTF_ID = None
     name: str = util.MANDATORY
     _parent: typing.Any = dc.field(default=util.MANDATORY, compare=False)
-    status: ObjectStatus = dc.field(default=ObjectStatus.NOTSET, compare=False)
+    status: util.ObjectStatus = dc.field(default=util.ObjectStatus.NOTSET, compare=False)
 
     def __post_init__(self):
         if self._id is None:
@@ -63,11 +59,11 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
 
     @property
     def failed(self):
-        return self.status == ObjectStatus.FAILED # abbreviate
+        return self.status == util.ObjectStatus.FAILED # abbreviate
 
     @property
     def active(self):
-        return self.status == ObjectStatus.ACTIVE # abbreviate
+        return self.status == util.ObjectStatus.ACTIVE # abbreviate
 
     @property
     @abc.abstractmethod
@@ -111,7 +107,7 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
 
         # if all children have failed, deactivate self
         if not self.failed and \
-            next(self.iter_children(status_neq=ObjectStatus.FAILED), None) is None:
+            next(self.iter_children(status_neq=util.ObjectStatus.FAILED), None) is None:
             self.deactivate(util.ChildFailureEvent(self), level=None)
 
     # level at which to log deactivation events
@@ -121,20 +117,20 @@ class MDTFObjectBase(metaclass=util.MDTFABCMeta):
         # always log exceptions, even if we've already failed
         self.log.store_exception(exc)
 
-        if not (self.failed or self.status == ObjectStatus.SUCCEEDED):
+        if not (self.failed or self.status == util.ObjectStatus.SUCCEEDED):
             # only need to log and update on status change for still-active objs
             if level is None:
                 level = self._deactivation_log_level # default level for child class
             self.log.log(level, "Deactivated %s due to %r.", self.full_name, exc)
 
             # update status on self
-            self.status = ObjectStatus.FAILED
+            self.status = util.ObjectStatus.FAILED
             if self._parent is not None:
                 # call handler on parent, which may change parent and/or siblings
                 self._parent.child_deactivation_handler(self, exc)
                 self._parent.child_status_update()
             # update children (deactivate all)
-            for obj in self.iter_children(status_neq=ObjectStatus.FAILED):
+            for obj in self.iter_children(status_neq=util.ObjectStatus.FAILED):
                 obj.deactivate(util.PropagatedEvent(exc=exc, parent=self), level=None)
 
 # -----------------------------------------------------------------------------
@@ -184,9 +180,6 @@ class ConfigManager(util.Singleton, util.NameSpace):
             backup_filename='config_save.json',
             contents=d
         )
-
-
-
 
 
 class TempDirManager(util.Singleton):
@@ -246,7 +239,7 @@ class MDTFFramework(MDTFObjectBase):
         super(MDTFFramework, self).__init__(
             name=self.__class__.__name__,
             _parent=None,
-            status=ObjectStatus.ACTIVE
+            status=util.ObjectStatus.ACTIVE
         )
         self.code_root = cli_obj.code_root
         self.pod_list = []
@@ -290,11 +283,11 @@ class MDTFFramework(MDTFObjectBase):
         # init singletons
         config = ConfigManager(cli_obj, pod_info_tuple,
             self.global_env_vars, self.cases, log_config)
-        paths = PathManager(cli_obj)
+        paths = util.PathManager(cli_obj)
         self.verify_paths(config, paths)
         _ = TempDirManager(paths.TEMP_DIR_ROOT, self.global_env_vars)
-        translate = VariableTranslator(self.code_root)
-        translate.read_conventions(self.code_root)
+        #translate = translate.VariableTranslator(self.code_root)
+        #translate.read_conventions(self.code_root)
 
         # config should be read-only from here on
         self._post_parse_hook(cli_obj, config, paths)
@@ -532,7 +525,7 @@ class MDTFFramework(MDTFObjectBase):
             return (not hasattr(obj, 'failed')) or obj.failed
 
         # should be unnecessary if we've been propagating status correctly
-        if self.status == ObjectStatus.FAILED or not self.cases:
+        if self.status == util.ObjectStatus.FAILED or not self.cases:
             return True
         for case in self.iter_children():
             if _failed(case) or not hasattr(case, 'pods') or not case.pods:
@@ -715,4 +708,4 @@ def print_multirun_summary(fmwk):
             _log.info(f"Summary for {case_name}:")
             _log.info(f"\tAll PODs exited normally.")
             _log.info(f"\tOutput written to {tup[2]}")
-        fmwk.status = ObjectStatus.SUCCEEDED
+        fmwk.status = util.ObjectStatus.SUCCEEDED

@@ -74,6 +74,8 @@
   // blank, the framework will look for its environments in conda_root/envs
   "conda_env_root": "~/miniconda3/envs",
 
+  // Path to micromamba executable if using micromamba
+  "micromamba_exe": "",
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
   // can be set here, in the form "flag name": "desired setting".

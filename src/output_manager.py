@@ -7,9 +7,6 @@ import datetime
 import glob
 import io
 import shutil
-
-
-import src.environment_manager
 from src import util, core, verify_links
 
 import logging
@@ -142,7 +139,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             overwrite=True
         )
 
-    def convert_pod_figures(self, src_subdir: str, dest_subdir: str,  env_mgr: src.environment_manager.CondaEnvironmentManager):
+    def convert_pod_figures(self, src_subdir: str, dest_subdir: str):
         """Convert all vector graphics in ``$POD_WK_DIR/`` *src\_subdir* to .png
         files using `ghostscript <https://www.ghostscript.com/>`__ (included in
         the \_MDTF\_base conda environment).
@@ -159,7 +156,6 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
                 graphics files.
             dest_subdir: Subdirectory tree of ``$POD_WK_DIR`` to move converted
                 bitmap files to.
-            env_mgr: conda env manager object
         """
         # Flags to pass to ghostscript for PS -> PNG conversion (in particular
         # bitmap resolution.)
@@ -172,29 +168,15 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             abs_src_subdir,
             ['*.ps', '*.PS', '*.eps', '*.EPS', '*.pdf', '*.PDF']
         )
-        conda_prefix = os.path.join(env_mgr.conda_env_root, '_MDTF_base')
-        if os.path.split(env_mgr.conda_exe)[-1] == 'micromamba':
-            env_cmd = [
-                        f'source {env_mgr.conda_dir}/micromamba_init.sh --micromamba_exe {env_mgr.conda_exe} --micromamba_root {env_mgr.conda_root}',
-                        f'micromamba activate {conda_prefix}'
-            ]
-        else:
-            env_cmd = [
-                        f'source {env_mgr.conda_dir}/conda_init.sh {env_mgr.conda_root}',
-                        f'conda activate {conda_prefix}'
-            ]
         for f in files:
             f_stem, _ = os.path.splitext(f)
             # Append "_MDTF_TEMP" + page number to output files ("%d" = ghostscript's
             # template for multi-page output). If input .ps/.pdf file has multiple
             # pages, this will generate 1 png per page, counting from 1.
             f_out = f_stem + '_MDTF_TEMP_%d.png'
-            #cmd = env_cmd
-            #cmd += [f'gs {eps_convert_flags} -sOutputFile="{f_out}" {f}']
             cmd = f'gs {eps_convert_flags} -sOutputFile="{f_out}" {f}'
             try:
-                util.run_shell_command(cmd
-                                       )
+                util.run_shell_command(cmd)
             except Exception as exc:
                 self.obj.log.error("%s produced malformed plot: %s",
                                    self.obj.full_name, f[len(abs_src_subdir):])
@@ -263,7 +245,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             for f in util.find_files(self.WK_DIR, '*.nc'):
                 os.remove(f)
 
-    def make_output(self, env_mgr):
+    def make_output(self):
         """Top-level method to make POD-specific output, post-init. Split off
         into its own method to make subclassing easier.
 
@@ -277,8 +259,8 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         self.write_data_log_file()
         if not self.obj.failed:
             self.make_pod_html()
-            self.convert_pod_figures(os.path.join('model', 'PS'), 'model', env_mgr)
-            self.convert_pod_figures(os.path.join('obs', 'PS'), 'obs', env_mgr)
+            self.convert_pod_figures(os.path.join('model', 'PS'), 'model')
+            self.convert_pod_figures(os.path.join('obs', 'PS'), 'obs')
             self.cleanup_pod_files()
 
 
@@ -439,7 +421,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             raise
         shutil.move(self.WK_DIR, self.OUT_DIR)
 
-    def make_output(self, env_mgr):
+    def make_output(self):
         """Top-level method for doing all output activity post-init. Spun into a
         separate method to make subclassing easier.
         """
@@ -448,7 +430,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         for pod in self.obj.iter_children():
             try:
                 pod_output = self._PodOutputManagerClass(pod, self)
-                pod_output.make_output(env_mgr)
+                pod_output.make_output()
                 if not pod.failed:
                     self.verify_pod_links(pod)
             except Exception as exc:

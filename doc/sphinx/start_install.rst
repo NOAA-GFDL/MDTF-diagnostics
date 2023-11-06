@@ -214,12 +214,14 @@ you will need to tell conda to install its files in a different, writable locati
 You can also choose to do this out of convenience, e.g. to keep all files and programs used by the MDTF package together
 in the ``mdtf`` directory for organizational purposes. This location will be referred to as <*CONDA_ENV_DIR*> below.
 
-To display information about all of the options in the conda_env_setup.sh environment installation script, run
+To display information about all of the options in the conda_env_setup.sh and
+micromamba_env_setup.sh environment installation scripts, run
 
 .. code-block:: console
 
       % cd <CODE_ROOT>
       % ./src/conda/conda_env_setup.sh [-h|--help]
+      % ./src/conda/micromamba_env_setup.sh [-h|--help]
 
 - Install all the package's conda environments with anaconda/miniconda by running
 
@@ -239,7 +241,7 @@ To display information about all of the options in the conda_env_setup.sh enviro
   .. code-block:: console
 
       % cd <CODE_ROOT>
-      % ./src/conda/conda_env_setup.sh --all --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
+      % ./src/conda/micromamba_env_setup.sh --all --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
   <*MICROMAMBA_ROOT*> is the path to the micromamba installation on your system (e.g., /home/${USER}/micromamba)
 
   <*MICROMAMBA_EXE*> is the path to the micromamba executable on your system (e.g., /home/${USER}/.local/bin/micromamba)
@@ -253,8 +255,8 @@ To display information about all of the options in the conda_env_setup.sh enviro
    .. code-block:: console
 
       % cd <CODE_ROOT>
-      % ./src/conda/conda_env_setup.sh -e base --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
-      % ./src/conda/conda_env_setup.sh -e python3_base --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
+      % ./src/conda/micromamba_env_setup.sh -e base --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
+      % ./src/conda/micromamba_env_setup.sh -e python3_base --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
 
 .. note::
 

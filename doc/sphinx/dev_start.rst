@@ -34,6 +34,7 @@ Regardless of development language, we strongly recommend that developers use co
 
 Python-based PODs should be written in Python 3.11 or newer. We provide a developer version of the python3_base environment (described below) that includes Jupyter and other developer-specific tools. This is not installed by default, and must be requested by passing the ``--all`` flag to the conda setup script:
 
+If you are using Anaconda or miniconda to manage the conda environments, run:
 .. code-block:: console
 
    % cd $CODE_ROOT
@@ -45,17 +46,19 @@ Installing dependencies via Micromamba
 Micromamba is a lightweight version of Anaconda. It is required to install the base and python3_base conda enviroments on macOS machines with Apple M-series chips.
 Installation instructions are available in the `Micromamba Documentation <https://mamba.readthedocs.io/en/latest/micromamba-installation.html>`__,
 Once Micromamba is installed on your system, run the following to install all conda environments if you are NOT using an
-Apple M-series machine, where `$MICROMAMBA_ROOT` is the location of the micromamba executable on your system:
+Apple M-series machine, where `$MICROMAMBA_ROOT` is the location of the micromamba installation, and
+`MICROMAMBA_EXE` is the path to the micromamba executable on your system:
 
 .. code-block:: console
 
    % cd $CODE_ROOT
-   % ./src/conda/conda_env_setup.sh --all --conda_root $MICROMAMBA_ROOT --env_dir $CONDA_ENV_DIR
+   % ./src/conda/micromamba_env_setup.sh --all --conda_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR
 
-If you are using an Apple M-series machine, you can install just the base and python3_base environnents:
+If you are using an Apple M-series machine, you can install just the base and python3_base environments:
+
 .. code-block:: console
-   % ./src/conda/conda_env_setup.sh -e base --micromamba_root $MICROMAMBA_ROOT --env_dir $CONDA_ENV_DIR
-   % ./src/conda/conda_env_setup.sh -e python3_base --micromamba_root $MICROMAMBA_ROOT --env_dir $CONDA_ENV_DIR
+   % ./src/conda/micromamba_env_setup.sh -e base --micromamba_root $MICROMAMBA_ROOT --mircromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR
+   % ./src/conda/micromamba_env_setup.sh -e python3_base --micromamba_root $MICROMAMBA_ROOT --mircromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR
 
 POD development using existing Conda environments
 -------------------------------------------------

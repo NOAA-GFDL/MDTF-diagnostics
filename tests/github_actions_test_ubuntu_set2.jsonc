@@ -37,7 +37,7 @@
     // dependencies (path returned lsby running `conda info --base`.) If empty,
     // framework will attempt to determine location of system's conda installation.
     //"conda_root": "/usr/share/miniconda3",
-   "conda_root": "/home/runner/micromamba",
+    "conda_root": "/home/runner/micromamba",
 
     "micromamba_exe": "/home/runner/micromamba-bin/micromamba",
 

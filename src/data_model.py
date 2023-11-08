@@ -616,7 +616,10 @@ class _DMDimensionsMixin(object):
             # validate that we don't have duplicate axes
             d = util.WormDict()
             verify_d = util.WormDict()
+            print (verify_d, "verify_d")
             for c in itertools.chain(*coords):
+                print (c, "c here")
+                print (' ')
                 if c.axis != 'OTHER' and c.axis in verify_d:
                     err_name = getattr(self, 'name', self.__class__.__name__)
                     raise ValueError((f"Duplicate definition of {c.axis} axis in "

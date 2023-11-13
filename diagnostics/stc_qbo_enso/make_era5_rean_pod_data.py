@@ -149,7 +149,6 @@ print ('psl_ds')
 print (' ')
 
 
-
 # Merge DataArrays into output dataset
 out_ds = xr.merge([ehf, uzm, psl_out])
 print (out_ds)

@@ -35,7 +35,7 @@ def qbo_uzm(uzm,negative_indices,positive_indices,isobar,hemisphere):
 	October through March. Statistical significance testing is 
 	done using a two-sided student's t-test and anomalies 
 	corresponding to p-values <= 0.05 are deemed statistically 
-	significant and stippled on the figure."""
+	significant and stippled on the figures."""
 	
 	if hemisphere == 'NH':
 		titles = ['October','November','December','January','February']

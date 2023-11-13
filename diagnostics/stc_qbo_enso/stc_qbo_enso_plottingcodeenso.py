@@ -4,7 +4,7 @@ This module contains functions used in the Stratospheric QBO and ENSO POD.
 Contains:
 	enso_slp: plots sea level pressure response to ENSO as a function of month and ENSO phase
 	enso_uzm: plots the zonal-mean zonal wind response to ENSO as a function of month and ENSO phase
-	enso_vt: plots the zonally averaged eddy heat flux response to the ENSO as a function of month and ENSO phase
+	enso_vt: plots the zonally averaged eddy heat flux responses to the ENSO as a function of month and ENSO phase
 '''
 
 

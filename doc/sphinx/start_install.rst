@@ -142,7 +142,7 @@ this installation needs to be done as a manual step.
 Managing dependencies with the conda package manager
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The MDTF framework code is written in Python 3.10,
+The MDTF framework code is written in Python 3.11,
 but supports running PODs written in a variety of scripting languages and combinations of libraries.
 To ensure that the correct versions of these dependencies are installed and available,
 we use `conda <https://docs.conda.io/en/latest/>`__, a free, open-source package manager.
@@ -157,8 +157,8 @@ flags described below.
 
 Users may install their own copies of Anaconda/Miniconda on their machine, or use a
 centrally-installed version managed by their institution. Note that installing your own copy of Anaconda/Miniconda
-will re-define the default locations of the conda executable and environment directory defined in your `.bashrc` or
-`.cshrc` file if you have previously used a version of conda managed by your institution,
+will re-define the default locations of the conda executable and environment directory defined in your `.bash_profile`,
+.bashrc`, or `.cshrc` file if you have previously used a version of conda managed by your institution,
 so you will have to re-create any environments made using central conda installations.
 
 If these space requirements are prohibitive, we provide an alternate method of installation which makes
@@ -205,14 +205,23 @@ Installing the package's conda environments
 In this section we use conda to install the versions of the language interpreters and third-party libraries required
 by the package's diagnostics.
 
-- First, determine the location of your conda/micromamba installation by running :console:`% conda info --base` or :console:`% micromamba info --base`
-as the user who will be using the package. This path will be referred to as <*CONDA_ROOT*> below.
+- First, determine the location of your conda/micromamba installation by running :console:`% conda info --base` or :console:`% micromamba info`
+as the user who will be using the package. This path will be referred to as <*CONDA_ROOT*> or <*MICROMAMBA_ROOT*> below.
 
-- If you don't have write access to <*CONDA_ROOT*>
+- If you don't have write access to <*CONDA_ROOT*>/<*MICROMAMBA_ROOT*>
 (for example, if conda has been installed for all users of a multi-user system),
 you will need to tell conda to install its files in a different, writable location.
 You can also choose to do this out of convenience, e.g. to keep all files and programs used by the MDTF package together
 in the ``mdtf`` directory for organizational purposes. This location will be referred to as <*CONDA_ENV_DIR*> below.
+
+To display information about all of the options in the conda_env_setup.sh and
+micromamba_env_setup.sh environment installation scripts, run
+
+.. code-block:: console
+
+      % cd <CODE_ROOT>
+      % ./src/conda/conda_env_setup.sh [-h|--help]
+      % ./src/conda/micromamba_env_setup.sh [-h|--help]
 
 - Install all the package's conda environments with anaconda/miniconda by running
 
@@ -232,9 +241,10 @@ in the ``mdtf`` directory for organizational purposes. This location will be ref
   .. code-block:: console
 
       % cd <CODE_ROOT>
-      % ./src/conda/conda_env_setup.sh --all --micromamba_root <MICROMAMBA_ROOT> --env_dir <CONDA_ENV_DIR>
-  <*MICROMAMBA_ROOT*> is the path to the micromamba executable on your system (e.g., /home/${USER/.local/bin)
+      % ./src/conda/micromamba_env_setup.sh --all --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
+  <*MICROMAMBA_ROOT*> is the path to the micromamba installation on your system (e.g., /home/${USER}/micromamba)
 
+  <*MICROMAMBA_EXE*> is the path to the micromamba executable on your system (e.g., /home/${USER}/.local/bin/micromamba)
 .. note::
 
    Micromamba is required to install the conda environments on machines with Apple M-series chips.
@@ -245,8 +255,8 @@ in the ``mdtf`` directory for organizational purposes. This location will be ref
    .. code-block:: console
 
       % cd <CODE_ROOT>
-      % ./src/conda/conda_env_setup.sh -e base --micromamba_root <MICROMAMBA_ROOT> --env_dir <CONDA_ENV_DIR>
-      % ./src/conda/conda_env_setup.sh -e python3_ ase --micromamba_root <MICROMAMBA_ROOT> --env_dir <CONDA_ENV_DIR>
+      % ./src/conda/micromamba_env_setup.sh -e base --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
+      % ./src/conda/micromamba_env_setup.sh -e python3_base --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
 
 .. note::
 

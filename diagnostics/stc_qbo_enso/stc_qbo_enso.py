@@ -70,7 +70,7 @@
 #	(6) Runs the QBO metric code using the default definition of the QBO at 30 hPa.
 #		If a QBO is detected (some models cannot simulate one), proceeds to compute 
 #		model QBO indices and composite the zonal-mean zonal wind, zonal-mean eddy heat
-#		flux, and sea level pressure around easterly and westerly QBO years.
+#		flux, and sea level pressure around easterly and westerly QBO years. string
 #
 # ==============================================================================
 #   Required programming language and libraries

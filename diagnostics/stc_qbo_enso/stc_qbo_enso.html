@@ -13,33 +13,29 @@
 -->
 <title>MDTF example diagnostic</title>
 <img src="../mdtf_diag_banner.png">
-<h3>Example diagnostic: time-averaged near-surface temperature</h3>
+<h3>STC QBO and ENSO stratospheric teleconnections</h3>
 <p>
-This POD does calculations to evaluate the representation of QBO and ENSO
-teleconnections proceeding through the stratosphere and troposphere. This 
-POD evaluates whether or not a model dataset includes a QBO by checking the 
-10 hPa monthly zonal mean zonal winds for oscillatory processes. If a QBO is
-found, this POD retrieves characteristics of that QBO (e.g.,its latitudinal 
-width, amplitude, etc.) and it evaluates the representation 
-of QBO teleconnections and surface impacts. Poor representation of QBOs in 
-model precludes using the "gold standard" zonal mean 50 hPa tropical zonal 
-winds to define easterly vs. westerly QBO phases. By default, this POD uses 
-a 10 hPa QBO index, but an alternate QBO indexing method is offered for 
-finer control over QBO indexing. The zonal mean zonal winds, its variance
-and the eddy heat flux (v'T') are binned by QBO phase to visualize 
-the QBO's influence on the atmospheric circulation and resolved waves. 
-The aforementioned fields can also be parsed by ENSO phase. This POD allows 
-ENSO to be defined using a few standard indices (e.g., NINO1-4), derived from 
-monthly tropical sea surface temperatures. The surface impacts of different
-QBO and ENSO phases are visualized using monthly sea level pressure. Finally,
-the number of sudden stratospheric warmings binned by QBO/ENSO phase is 
-retrieved by this POD. Please see the references for the scientific 
-foundations of this POD.
-</p>
-<p>
-The names of any environment variables set for the diagnostic (enclosed in 
-curly braces) will be replaced by the same values they had when the diagnostic 
-was run. For example, this diagnostic's favorite color is "{{EXAMPLE_FAV_COLOR}}."
+This script and its helper scripts (“stc_qbo_enso_plottingcodeqbo.py” and “stc_qbo_enso_plottingcodeenso.py”) do 
+calculations to assess the representation of stratospheric telconnections associated with the Quasi-Biennial
+Oscillation (QBO) and the El Nino Southern Oscillation (ENSO). This POD uses monthly 4D (time x plev x lat x lon) 
+zonal wind, 4D meridional wind, 4D temperature, 3D (time x lat x lon) sea level pressure, and 3D sea surface 
+temperature data. Coupling between the QBO and the boreal polar stratosphere takes place during boreal fall and 
+winter whereas coupling between the QBO and the austral polar stratosphere takes place mainly during austral 
+spring and summer. By default, the POD defines the QBO for NH (SH) analyses using the Oct-Nov (Jul-Aug) 5S-5N 
+30 hPa zonal winds. The QBO is thought to influence the polar stratospheres, the so-called “polar route,” by 
+modulating the lower stratospheric (~100-50 hPa) and middle stratospheric (~20-5 hPa) mid-latitude circulation. The  
+aforementioned lower stratospheric teleconnection is also associated with a change in the strength and position of 
+the tropospheric jet; the so-called “subtropical route.” In addition, evidence continues to show that the QBO directly 
+influences the underlying tropical tropospheric circulation, referred to as the “tropical route.” These three  
+teleconnections allow the QBO to elicit surface impacts globally. Said teleconnections are visualized herein by using 
+a metric of planetary wave propagation (eddy heat flux), circulation response (zonal wind), and surface impact (sea 
+level pressure). Additionally, metrics of model QBOs (e.g., amplitude, height, width) are produced. ENSO’s coupling 
+with the polar stratospheres takes place as the amplitude of ENSO maximizes during boreal fall and winter. By 
+default, the POD defines ENSO for NH (SH) analyses using the Nov-Mar (Sep-Jan) Nino3.4 SSTs. Though ENSO’s 
+teleconnections are truly global, it interacts with the stratosphere by stimulating tropical-extratropical Rossby waves 
+that constructively interfere with the climatological extratropical stationary wave, promoting enhanced upward 
+planetary wave propagation into the stratosphere. Similar to the QBO code, ENSO’s teleconnections are visualized 
+using the eddy heat flux, the zonal wind, and the sea level pressure.
 </p>
 
 <h3>{{CASENAME}}</h3>

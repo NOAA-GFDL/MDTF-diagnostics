@@ -54,7 +54,6 @@ def main(argv):
         return 0 # will actually exit from print_help
     else:
         # case where we run the actual framework
-        print ('HERE')
         print(f"=== Starting {os.path.realpath(__file__)}\n")
         validate_base_environment()
 

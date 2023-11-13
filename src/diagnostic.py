@@ -483,7 +483,6 @@ class Varlist(data_model.DMDataSet, ABC):
             for alts in v.alternates:
                 linked_alts.append([vlist_vars[v_name] for v_name in alts])
             v.alternates = linked_alts
-        print (list(vlist_vars.values()), "list(vlist_vars.values())")
         return cls(contents=list(vlist_vars.values()))
 
     def find_var(self, v):
@@ -874,7 +873,6 @@ class Diagnostic(core.MDTFObjectBase, util.PODLoggerMixin):
                                       pod_name) from exc
         try:
             pod.varlist = Varlist.from_struct(d, parent=pod)
-            print (pod.varlist, "pod.varlist")
         except Exception as exc:
             raise util.PodConfigError("Caught exception while parsing varlist",
                                       pod_name) from exc

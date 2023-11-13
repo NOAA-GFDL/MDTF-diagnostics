@@ -964,10 +964,11 @@ slp_out.name = 'slp_out'
 slp_out.attrs['units'] = 'hPa'
 slp_out.attrs['long_name'] = 'Pole to 20N/S sea level pressure'
 
-qbo_out = uas.ua.interp(lat=[-5,-2.5,0,2.5,5]).sel(lev=10)
+qbo_out = uas.ua.interp(lat=[-5,-2.5,0,2.5,5]).sel(lev=QBOisobar)
 qbo_out.name = 'qbo_out'
 qbo_out.attrs['units'] = 'm s**-1'
 qbo_out.attrs['long_name'] = f'5S to 5N {QBOisobar} hPa zonal-mean zonal wind'
+print (qbo_out, 'qbo_out')
 
 out_ds = xr.merge([vt_out,uzm_out,slp_out,qbo_out])
 print ('OUT_DS')

@@ -238,9 +238,14 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         # find conda executable
         # conda_init for bash defines conda as a shell function; will get error
         # if we try to call the conda executable directly
+        if any(paths.get('micromamba_exe','')):
+            cmd = f"{self.conda_dir}/micromamba_init.sh --micromamba_root {paths.get('conda_root','')} --micromamba_exe {paths.get('micromamba_exe','')}"
+        else:
+            cmd = f"{self.conda_dir}/conda_init.sh {paths.get('conda_root','')}"
+
         try:
             conda_info = util.run_shell_command(
-                f"{self.conda_dir}/conda_init.sh {paths.get('conda_root','')}",
+                cmd,
                 log=self.log
             )
             for line in conda_info:
@@ -331,25 +336,9 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         # conda_init for bash defines conda as a shell function; will get error
         # if we try to call the conda executable directly
         conda_prefix = os.path.join(self.conda_env_root, env_name)
-        env_config_file = ""
         if os.path.split(self.conda_exe)[-1] == 'micromamba':
-            # micromamba appends env info to the shell config file
-            # that needs to be sourced in the sub-shell for each POD process
-            home_dir = os.path.expanduser('~')
-            if os.path.isfile(os.path.join(home_dir, '.bashrc')):
-                env_config_file = os.path.join(home_dir, '.bashrc')
-            elif os.path.isfile(os.path.join(home_dir, '.bash_profile')):
-                env_config_file = os.path.join(home_dir, '.bash_profile')
-            elif os.path.isfile(os.path.join(home_dir, '.cshrc')):
-                env_config_file = os.path.join(home_dir, '.cshrc')
-            elif os.path.isfile(os.path.join(home_dir, '.tcshrc')):
-                env_config_file = os.path.join(home_dir, '.tcshrc')
-            elif os.path.isfile(os.path.join(home_dir, '.zshrc')):
-                env_config_file = os.path.join(home_dir, '.zshrc')
             return [
-                f'source {self.conda_dir}/conda_init.sh {self.conda_root}',
-                f'source {env_config_file}',
-                f'eval "$(micromamba shell hook --shell bash)"',
+                f'source {self.conda_dir}/micromamba_init.sh --micromamba_exe {self.conda_exe} --conda_root {self.conda_root}',
                 f'micromamba activate {conda_prefix}'
             ]
         else:

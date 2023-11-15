@@ -45,7 +45,9 @@
   // dependencies (path returned lsby running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
    //"conda_root": "/Users/runner/miniconda3",
-  "conda_root": "/Users/runner/micromamba-bin",
+  "conda_root": "/Users/runner/micromamba",
+
+  "micromamba_exe": "/Users/runner/micromamba-bin/micromamba",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left

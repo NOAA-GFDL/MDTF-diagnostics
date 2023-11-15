@@ -186,7 +186,8 @@ def Gaussfit_Est(T2Manom_data,lat,lon,statind,statlats,statlons,citynames,binwid
 # -----  monthstr are seasons associated with each cityname
 # -----  statind is city index from loop calling function for each specified location
 # -----  plotrows and plotcols are rows and columns of subplots to figure
-def Gaussfit_Plot(fig,bin_centers,bin_counts,bin_centers_gauss,gauss_fit,Tanom_stat,ptile,citynames,monthstr,statind,plotrows,plotcols):
+def Gaussfit_Plot(fig, bin_centers, bin_counts, bin_centers_gauss, gauss_fit, Tanom_stat, ptile,
+                  citynames, monthstr, statind, plotrows, plotcols):
     ax=fig.add_subplot(int(str(plotrows)+str(plotcols)+str(statind+1)))
     ax.scatter(bin_centers,bin_counts,color='blue',marker='o',facecolors='none',s=13)
     ax.plot(bin_centers_gauss,gauss_fit,color='blue',linewidth=1)
@@ -194,12 +195,9 @@ def Gaussfit_Plot(fig,bin_centers,bin_counts,bin_centers_gauss,gauss_fit,Tanom_s
     ax.set_xlim(-mxval-numpy.nanstd(Tanom_stat),mxval+numpy.nanstd(Tanom_stat))
     ax.set_ylim(bin_counts[0]-numpy.true_divide(bin_counts[0],10),1.05)
     ax.set_yscale('log')
-    for tick in ax.xaxis.get_major_ticks():
-        tick.label.set_fontsize(11) 
-    for tick in ax.yaxis.get_major_ticks():
-        tick.label.set_fontsize(11)
+    ax.tick_params(labelsize=11)
     ax.set_title(citynames[statind],fontdict={'fontsize': 14, 'fontweight': 'heavy'})
-    ax.text(0.91, 0.92, monthstr[statind],fontsize=10,transform=ax.transAxes,weight='bold')
+    ax.text(0.91, 0.92, monthstr[statind], fontsize=10, transform=ax.transAxes, weight='bold')
 
     ### Plot binned values exceeding the percentile threshold as open circles and the rest filled
     pthresh=numpy.nanpercentile(Tanom_stat,ptile,interpolation='midpoint')

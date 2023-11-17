@@ -59,6 +59,10 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         self.pod_env_vars = os.environ.copy()
         self.pod_env_vars['RGB'] = os.path.join(runtime_config.CODE_ROOT, 'shared', 'rgb')
         self.pod_env_vars['CONDA_ROOT'] = os.path.expandvars(runtime_config.conda_root)
+        if any(runtime_config.micromamba_exe):
+            self.pod_env_vars['MICROMAMBA_EXE'] = runtime_config.micromamba_exe
+        else:
+            self.pod_env_vars['MICROMAMBA_EXE'] = ""
         # globally enforce non-interactive matplotlib backend
         # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
         self.pod_env_vars['MPLBACKEND'] = "Agg"
@@ -142,6 +146,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 env_name = '_MDTF_' + pod_env.lower() + '_base'
             conda_root = self.pod_env_vars['CONDA_ROOT']
             e = os.path.join(conda_root, 'envs', env_name)
+
             env_dir = util.resolve_path(e,
                                         env_vars=self.pod_env_vars,
                                         log=self.log)
@@ -151,10 +156,18 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 pass
             else:
                 self.log.info(f"Checking {e} for {self.name} package requirements")
-                args = [os.path.join(conda_root, "bin/conda"),
-                        'list',
-                        '-n',
-                        env_name]
+                if os.path.exists(os.path.join(conda_root, "bin/conda")):
+                    args = [os.path.join(conda_root, "bin/conda"),
+                            'list',
+                            '-n',
+                            env_name]
+                elif os.path.exists(self.pod_env_vars['MICROMAMBA_EXE']):
+                    args = [self.pod_env_vars['MICROMAMBA_EXE'],
+                            'list',
+                            '-n',
+                            env_name]
+                else:
+                    raise util.PodConfigError('Could not find conda or micromamba executable')
 
                 p1 = subprocess.run(args,
                                     universal_newlines=True,

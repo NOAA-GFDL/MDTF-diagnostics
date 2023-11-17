@@ -62,7 +62,6 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # Cache log info in memory until log file is set up
     util.logs.initial_log_config()
 
-    conda_utils.verify_conda_env('_MDTF_base')
     # print(f"=== Starting {os.path.realpath(__file__)}\n")
     # NameSpace allows dictionary keys to be referenced with dot notation
     ctx.config = util.NameSpace()
@@ -73,7 +72,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     ctx.config.CODE_ROOT = os.path.dirname(os.path.realpath(__file__))
     cli.verify_runtime_config_options(ctx.config)
     # Initialize the model path object and define the model data output paths
-    make_new_work_dir = not(ctx.config.overwrite)
+    make_new_work_dir = not ctx.config.overwrite
     model_paths = util.ModelDataPathManager(ctx.config,
                                             new_work_dir=make_new_work_dir)
     model_paths.setup_data_paths(ctx.config.case_list)

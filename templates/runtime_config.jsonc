@@ -51,7 +51,8 @@
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
   // Full path to model data ESM-intake catalog header file
-  "DATA_CATALOG": "/net/jml/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
+  //"DATA_CATALOG": "/net/jml/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
+  "DATA_CATALOG": "/Users/jess/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
   // Backwards compatibility
   "MODEL_DATA_ROOT": "../inputdata/mdtf_test_data",
   // Parent directory containing observational data used by individual PODs.
@@ -66,15 +67,17 @@
 
   // Location of the Anaconda/miniconda or micromamba installation to use for managing
   // dependencies (path returned by running `conda info --base` or `micromamba info`.)
-  "conda_root": "/net/jml/miniconda3",
+  //"conda_root": "/net/jml/miniconda3",
+  "conda_root": "/Users/jess/micromamba",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in conda_root/envs
-  "conda_env_root": "/net/jml/miniconda3/envs",
+  //"conda_env_root": "/net/jml/miniconda3/envs",
+  "conda_env_root": "/Users/jess/micromamba/envs",
 
   // Location of the micromamba executable. Required if using micromamba
-  "micromamba_exe": "",
+  "micromamba_exe": "/Users/jess/.local/bin/micromamba",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)

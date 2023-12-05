@@ -43,9 +43,9 @@ import numpy as np
 import xarray as xr  # python library we use to read netcdf files
 import matplotlib.pyplot as plt  # python library we use to make plots
 from cartopy import crs as ccrs
-from hn2016_falwa.xarrayinterface import QGDataset
-from hn2016_falwa.oopinterface import QGFieldNH18
-from hn2016_falwa.constant import P_GROUND, SCALE_HEIGHT
+from falwa.xarrayinterface import QGDataset
+from falwa.oopinterface import QGFieldNH18
+from falwa.constant import P_GROUND, SCALE_HEIGHT
 
 
 def convert_pseudoheight_to_hPa(height_array):

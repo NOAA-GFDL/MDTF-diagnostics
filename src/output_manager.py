@@ -139,7 +139,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             overwrite=True
         )
 
-    def convert_pod_figures(self, src_subdir, dest_subdir):
+    def convert_pod_figures(self, src_subdir: str, dest_subdir: str):
         """Convert all vector graphics in ``$POD_WK_DIR/`` *src\_subdir* to .png
         files using `ghostscript <https://www.ghostscript.com/>`__ (included in
         the \_MDTF\_base conda environment).
@@ -160,7 +160,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         # Flags to pass to ghostscript for PS -> PNG conversion (in particular
         # bitmap resolution.)
         eps_convert_flags = ("-dSAFER -dBATCH -dNOPAUSE -dEPSCrop -r150 "
-        "-sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4")
+                             "-sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4")
 
         abs_src_subdir = os.path.join(self.WK_DIR, src_subdir)
         abs_dest_subdir = os.path.join(self.WK_DIR, dest_subdir)
@@ -174,10 +174,9 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             # template for multi-page output). If input .ps/.pdf file has multiple
             # pages, this will generate 1 png per page, counting from 1.
             f_out = f_stem + '_MDTF_TEMP_%d.png'
+            cmd = f'gs {eps_convert_flags} -sOutputFile="{f_out}" {f}'
             try:
-                util.run_shell_command(
-                    f'gs {eps_convert_flags} -sOutputFile="{f_out}" {f}'
-                )
+                util.run_shell_command(cmd)
             except Exception as exc:
                 self.obj.log.error("%s produced malformed plot: %s",
                                    self.obj.full_name, f[len(abs_src_subdir):])

@@ -675,7 +675,7 @@ class DateRange(AtomicInterval, DateMixin):
     @classmethod
     def from_contiguous_span(cls, *args):
         """Given multiple DateRanges, return interval containing them
-        only if their time intervals are continguous and nonoverlapping.
+        only if their time intervals are contiguous and non-overlapping.
         """
         if len(args) == 1 and isinstance(args[0], DateRange):
             return args[0]

@@ -13,7 +13,8 @@ from .basic import (
     ConsistentDict, WormDefaultDict, NameSpace, MDTFEnum, MDTFIntEnum,
     sentinel_object_factory, MDTF_ID, deactivate, ObjectStatus,
     is_iterable, to_iter, from_iter, remove_prefix, RegexDict,
-    remove_suffix, filter_kwargs, splice_into_list, deserialize_class
+    remove_suffix, filter_kwargs, splice_into_list, deserialize_class,
+    insert_dataframe_row
 )
 from .dataclass import (
     RegexPatternBase, RegexPattern, RegexPatternWithTemplate, ChainedRegexPattern,

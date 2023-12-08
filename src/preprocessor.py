@@ -7,6 +7,8 @@ import abc
 import dataclasses
 import datetime
 import functools
+
+import pandas as pd
 from src import util, varlist_util, translation, xr_parser, units
 import cftime
 import intake
@@ -739,37 +741,48 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             AssociatedVariablesFunction
         ]
 
-    def check_group_daterange(self, group_df, expt_key=None, log=_log):
+    def check_group_daterange(self, group_df: pd.DataFrame, log=_log):
         """Sort the files found for each experiment by date, verify that
         the date ranges contained in the files are contiguous in time and that
         the date range of the files spans the query date range.
-        """
-        date_col = self.col_spec.daterange_col  # abbreviate
-        if not self.col_spec.has_date_info or date_col not in group_df:
-            return group_df
 
-        d_key = self.data_key(group_df, expt_key=expt_key)
+        Args:
+            group_df (Pandas Dataframe):
+            log: log file
+        """
+        date_col = "date_range"
         try:
-            sorted_df = group_df.sort_values(by=date_col)
             # method throws ValueError if ranges aren't contiguous
+            dates_df = group_df.loc[:, ['start_time', 'end_time']]
+            date_range_vals = []
+            for idx, x in enumerate(group_df.values):
+                st = dates_df.at[idx, 'start_time']
+                en = dates_df.at[idx, 'end_time']
+                date_range_vals.append(util.DateRange(st, en))
+
+            group_df = group_df.assign(date_range=date_range_vals)
+            sorted_df = group_df.sort_values(by=date_col)
+
             files_date_range = util.DateRange.from_contiguous_span(
                 *(sorted_df[date_col].to_list())
             )
             # throws AssertionError if we don't span the query range
-            assert files_date_range.contains(self.attrs.date_range)
+            # TODO: define self.attrs.DateRange from runtime config info
+            # assert files_date_range.contains(self.attrs.date_range)
             return sorted_df
         except ValueError:
             self._query_error_handler(
-                "Non-contiguous or malformed date range in files:", d_key, log=log
+                "Non-contiguous or malformed date range in files:", sorted_df[date_col], log=log
             )
         except AssertionError:
             log.debug(("Eliminating expt_key since date range of files (%s) doesn't "
                        "span query range (%s)."), files_date_range, self.attrs.date_range)
         except Exception as exc:
-            self._query_error_handler(f"Caught exception {repr(exc)}:", d_key,
+            self._query_error_handler(f"Caught exception {repr(exc)}:", sorted_df[date_col],
                                       log=log)
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
+
 
     def query_catalog(self,
                       case_dict: dict,
@@ -789,26 +802,35 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         cat = intake.open_esm_datastore(data_catalog)
         # create filter lists for POD variables
         cat_dict = {}
+        # Instantiate dataframe to hold catalog subset information
+        df = pd.DataFrame(columns=cat.df.columns)
+        count = 0
         for case_name, case_d in case_dict.items():
             # path_regex = "(?i)(?<!\\S)" + case_name + "(?!\\S+)"
             path_regex = case_name + "*"
             freq = case_d.varlist.T.frequency
             for v in case_d.varlist.iter_vars():
-
+                realm_regex = v.realm + "*"
                 cat_subset = cat.search(activity_id=case_d.convention,
                                         standard_name=v.standard_name,
                                         frequency=freq,
-                                        realm=v.realm,
+                                        realm=realm_regex,
                                         path=path_regex
                                         )
                 if cat_subset.df is None:
                     case_d.log.error(f"No data catalog assets found for {case_name} in {data_catalog}")
+                # Get files in specified date range
+                cat_subset.df = self.check_group_daterange(cat_subset.df)
+                new_row = [v for v in cat_subset.df.values][0]
+                df = util.insert_dataframe_row(count, df, new_row)
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict
                 cat_dict = cat_dict | cat_subset.to_dataset_dict(
                     xarray_open_kwargs={"decode_times": True, "use_cftime": True}
                 )
-        return cat_dict
+                count += 1
+
+        return cat_dict, df_new
 
     def edit_request(self, v: varlist_util.VarlistEntry):
         """Top-level method to edit *pod*\'s data request, based on the child

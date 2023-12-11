@@ -144,6 +144,22 @@ def verify_dirpath(dirpath: str, code_root: str) -> str:
     return new_dirpath
 
 
+def check_date_format(date_string: str):
+    """ Check that the input start and end dates adhere to accepted formats
+        Credit: https://stackoverflow.com/questions/23581128/how-to-format-date-string-via-multiple-formats-in-python
+    """
+
+    for fmt in ('%Y-%m-%d', '%Y-%m-%d:%H:%M:%S', '%Y%m%d:%H%M%S', '%Y-%m-%d:%H-%M-%S', '%Y%m%d', '%Y%m%d%H%M%S'):
+        try:
+            return datetime.strptime(date_string, fmt)
+        except ValueError:
+            pass
+    raise util.exceptions.MDTFBaseException(
+                f"Input date string {date_string} does not match accepted formats: YYYY-mm-dd, YYYYmmdd,"
+                f"YYYYmmdd:HHMMSS, YYYY-mm-dd:HH:MM:SS, YYYY-mm-dd:HH-MM-SS"
+            )
+
+
 def verify_case_atts(case_list: util.NameSpace):
     # required case attributes
     case_attrs = ['convention', 'startdate', 'enddate']
@@ -161,23 +177,8 @@ def verify_case_atts(case_list: util.NameSpace):
             raise util.exceptions.MDTFBaseException(
                 f"Convention {att_dict['convention']} not supported"
             )
-        if len(att_dict.startdate) == 8 and len(att_dict.enddate) == 8:
-            try:
-                st = datetime.strptime(att_dict.startdate, '%Y%m%d')
-                ed = datetime.strptime(att_dict.enddate, '%Y%m%d')
-            except KeyError:
-                raise util.exceptions.MDTFBaseException(
-                    f"Expected {att_dict.startdate} and {att_dict.enddate} to have yyyymmdd format"
-                )
-        else:
-            try:
-                st = datetime.strptime(att_dict.startdate, '%Y%m%d:%H%M%S')
-                ed = datetime.strptime(att_dict.enddate, '%Y%m%d:%H%M%S')
-            except KeyError:
-                raise util.exceptions.MDTFBaseException(
-                    f"{att_dict.startdate} and {att_dict.enddate} "
-                    f"must have yyyymmdd or yyyymmdd:HHMMSS format."
-                )
+        st = check_date_format(att_dict.startdate)
+        en = check_date_format(att_dict.enddate)
 
 
 def update_config(config: util.NameSpace, key: str, new_value):

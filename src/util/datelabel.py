@@ -532,17 +532,17 @@ class DateRange(AtomicInterval, DateMixin):
 
         Args:
             start (str or datetime): Start date of the interval as a
-                :py:class:`~datetime.datetime` object, or string in YYYYMMDD...
-                or YYYY-MM-DD formats, or a two-item collection or string defining
-                *both* endpoints of the interval as strings in YYYYMMDD... format
-                separated by a single hyphen.
+                :py:class:`~datetime.datetime` object, or string in YYYYmmdd...
+                YYYY-MM-DD, or YYYY:MM:DD formats, or a two-item collection or string defining
+                *both* endpoints of the interval as strings in YYYYmmdd... format
+                separated by a single hyphen or colon.
             end (str or datetime): Optional. End date of the interval as a
-                :py:class:`~datetime.datetime` object, or string in YYYYMMDD...
-                or YYYY-MM-DD formats. Ignored if the entire range was specified
+                :py:class:`~datetime.datetime` object, or string in YYYYmmdd...,
+                YYYY-mm-dd, or YYYY:mm:dd formats. Ignored if the entire range was specified
                 as a string in *start*.
             precision (int or :class:`DatePrecision`): Optional. Manually set
                 precision of date endpoints defining the range. If not supplied,
-                set based on the length of the YYYYMMDD... strings supplied in
+                set based on the length of the YYYYmmdd... strings supplied in
                 *start* and *end*.
 
         Raises:
@@ -554,7 +554,7 @@ class DateRange(AtomicInterval, DateMixin):
         """
         if not end:
             if isinstance(start, str):
-                (start, end) = start.split(self._range_sep)
+                (start, end) = re.split('[-, :]', start)
             elif len(start) == 2:
                 (start, end) = start
             else:
@@ -600,13 +600,13 @@ class DateRange(AtomicInterval, DateMixin):
             warnings.warn('Expected precisions {} to be identical'.format(
                 args
             ))
-        return (min_, max_)
+        return min_, max_
 
     @staticmethod
     def _coerce_to_datetime(dt, is_lower):
         if isinstance(dt, datetime.datetime):
             # datetime specifies time to within second
-            return (dt, DatePrecision.SECOND)
+            return dt, DatePrecision.SECOND
         if isinstance(dt, datetime.date):
             # date specifies time to within day
             return (
@@ -724,11 +724,11 @@ class DateRange(AtomicInterval, DateMixin):
         """
         item = self._coerce_to_self(item)
         left_gt = item._lower > self._lower
-        left_eq = self.start.overlaps(item.start) \
-                  and (item._left == self._left or self._left == self.CLOSED)
+        left_eq = (self.start.overlaps(item.start)
+                   and (item._left == self._left or self._left == self.CLOSED))
         right_lt = item._upper < self._upper
-        right_eq = self.end.overlaps(item.end) \
-                   and (item._right == self._right or self._right == self.CLOSED)
+        right_eq = (self.end.overlaps(item.end)
+                    and (item._right == self._right or self._right == self.CLOSED))
         return (left_gt or left_eq) and (right_lt or right_eq)
 
     contains = __contains__
@@ -861,10 +861,11 @@ class Date(DateRange):
 
     @classmethod
     def _parse_input_string(cls, s):
-        """Parse date strings in `YYYY-MM-DD` or `YYYYMMDDHH` formats.
+        """Parse date strings in `YYYY-MM-DD:HH:MM:SS` or `YYYYMMDDHHMMSS` formats.
         """
-        if '-' in s:
-            return tuple([int(ss) for ss in s.split('-')])
+
+        if '-' in s or ':' in s:
+            return tuple([int(ss) for ss in re.split('[-:s+]', s)])
         ans = [int(s[0:4])]
         for i in list(range(4, len(s), 2)):
             ans.append(int(s[i:(i + 2)]))

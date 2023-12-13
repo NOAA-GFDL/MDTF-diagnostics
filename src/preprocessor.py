@@ -741,7 +741,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             AssociatedVariablesFunction
         ]
 
-    def check_group_daterange(self, group_df: pd.DataFrame, log=_log):
+    def check_group_daterange(self, group_df: pd.DataFrame, log=_log) -> pd.DataFrame:
         """Sort the files found for each experiment by date, verify that
         the date ranges contained in the files are contiguous in time and that
         the date range of the files spans the query date range.
@@ -783,7 +783,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
 
-
     def query_catalog(self,
                       case_dict: dict,
                       data_catalog: str,
@@ -803,8 +802,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # create filter lists for POD variables
         cat_dict = {}
         # Instantiate dataframe to hold catalog subset information
-        df = pd.DataFrame(columns=cat.df.columns)
-        count = 0
+        cols = list(cat.df.columns.values)
+        if 'date_range' not in [c.lower() for c in cols]:
+            cols.append('date_range')
         for case_name, case_d in case_dict.items():
             # path_regex = "(?i)(?<!\\S)" + case_name + "(?!\\S+)"
             path_regex = case_name + "*"
@@ -820,17 +820,15 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 if cat_subset.df is None:
                     case_d.log.error(f"No data catalog assets found for {case_name} in {data_catalog}")
                 # Get files in specified date range
-                cat_subset.df = self.check_group_daterange(cat_subset.df)
-                new_row = [v for v in cat_subset.df.values][0]
-                df = util.insert_dataframe_row(count, df, new_row)
+                # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
+                cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict
                 cat_dict = cat_dict | cat_subset.to_dataset_dict(
-                    xarray_open_kwargs={"decode_times": True, "use_cftime": True}
+                    xarray_open_kwargs=self.open_dataset_kwargs
                 )
-                count += 1
 
-        return cat_dict, df_new
+        return cat_dict
 
     def edit_request(self, v: varlist_util.VarlistEntry):
         """Top-level method to edit *pod*\'s data request, based on the child
@@ -841,7 +839,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             func.edit_request(func, v)
 
     def execute_pp_functions(self, v: varlist_util.VarlistEntry,
-                             xarray_ds):
+                             xarray_ds: xarray.Dataset):
         """Method to launch pp routines on xarray datasets associated with required variables"""
         for func in self.file_preproc_functions:
             func.execute(func, v, xarray_ds)
@@ -1111,14 +1109,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with the POD variable *var*.
         """
-        # get the initial model data subset from the ESM-intake catalog
-        data_subset = self.query_catalog(caselist, data_catalog)
-
-        for case_d in caselist.values():
+        # edit variable information if necessary
+        for case_name, case_d in caselist.items():
+            save_varlist = case_d.varlist  # NOTE: assume that each case varlist contains the same variables
             for v in case_d.varlist.iter_vars():
                 self.edit_request(v)
-                self.read_dataset(v, data_subset)
-                self.execute_pp_functions(v, data_subset)
+        # get the initial model data subset from the ESM-intake catalog
+        cat_subset = self.query_catalog(caselist, data_catalog)
+        for case_name, case_xr_dataset in cat_subset.items():
+            for v in save_varlist.iter_vars():
+                self.execute_pp_functions(v, case_xr_dataset[v.name])
 
 
 class SingleVarFilePreprocessor(MDTFPreprocessorBase):

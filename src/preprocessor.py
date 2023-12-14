@@ -14,7 +14,7 @@ import cftime
 import intake
 import numpy as np
 import xarray as xr
-import re
+import collections
 
 import logging
 
@@ -719,10 +719,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     """
     file_preproc_functions = util.abstract_attribute()
 
-    def __init__(self, model_paths: util.ModelDataPathManager):
+    def __init__(self, model_paths: util.ModelDataPathManager, config:util.NameSpace):
         self.WORK_DIR = model_paths.MODEL_WORK_DIR
         # initialize PreprocessorFunctionBase objects
         self.file_preproc_functions = []
+        # initialize xarray parser
+        self.parser = self._XarrayParserClass(config)
 
     @property
     def _functions(self):
@@ -822,6 +824,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
                 cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
+                v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict
                 cat_dict = cat_dict | cat_subset.to_dataset_dict(
@@ -839,7 +842,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             func.edit_request(func, v)
 
     def execute_pp_functions(self, v: varlist_util.VarlistEntry,
-                             xarray_ds: xarray.Dataset):
+                             xarray_ds: xr.Dataset):
         """Method to launch pp routines on xarray datasets associated with required variables"""
         for func in self.file_preproc_functions:
             func.execute(func, v, xarray_ds)
@@ -877,31 +880,19 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             "format": self.nc_format
         }
 
-    def read_one_file(self, var, catalog_subset: dict):
-        """Wraps xarray `open_dataset()
-        <https://xarray.pydata.org/en/stable/generated/xarray.open_dataset.html>`__
-        to load a single netCDF file.
-        """
-        for k, v in catalog_subset:
-            pass
+    def rename_dataset_keys(self, ds: dict, case_list: dict) -> collections.OrderedDict:
+        """Rename dataset keys output by ESM intake catalog query to case names`"""
+        def rename_key(old_dict: dict, new_dict: collections.OrderedDict, old_key, new_key):
+            """Credit:  https://stackoverflow.com/questions/16475384/rename-a-dictionary-key"""
+            new_dict[new_key] = old_dict[old_key]
 
-        return xr_dataset
+        new_dict = collections.OrderedDict()
+        case_names = [c for c in case_list.keys()]
+        for old_key, case_d in ds.items():
+            (path, filename) = os.path.split(case_d.attrs['intake_esm_attrs:path'])
+            rename_key(ds, new_dict, old_key, [c for c in case_names if c in filename][0])
+        return new_dict
 
-    @abc.abstractmethod
-    def read_dataset(self, var, catalog_subset: dict):
-        """Abstract method to load downloaded model data into an xarray Dataset,
-        to be implemented by child classes.
-
-        Args:
-            var (:class:`~src.diagnostic.VarlistEntry`): POD varlist entry
-                instance describing POD's data request, which is the desired end
-                result of the conversion implemented by this method.
-            catalog_subset: dict with entries corresponding to cases returned by query_catalog
-
-        Returns:
-            xarray Dataset containing the model data requested by *var*.
-        """
-        pass  # return ds
 
     def clean_nc_var_encoding(self, var, name, ds_obj):
         """Clean up the ``attrs`` and ``encoding`` dicts of *ds_obj*
@@ -1044,17 +1035,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         )
         ds.close()
 
-    def load_ds(self, var):
+    def parse_ds(self,
+                 var: varlist_util.VarlistEntry,
+                 ds: xr.Dataset,
+                 config: util.NameSpace) -> xr.Dataset:
         """Top-level method to load dataset and parse metadata; spun out so that
         child classes can modify it. Calls the :meth:`read_dataset` method
         implemented by the child class.
         """
-        try:
-            ds = self.read_dataset(var)
-        except Exception as exc:
-            raise util.chain_exc(exc, (f"loading "
-                                       f"dataset for {var.full_name}."), util.DataPreprocessEvent)
-        var.log.debug("Read %d mb for %s.", ds.nbytes / (1024 * 1024), var.full_name)
         try:
             ds = self.parser.parse(var, ds)
         except Exception as exc:
@@ -1105,19 +1093,18 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
     def process(self,
                 caselist: dict,
-                data_catalog: str):
+                config: util.NameSpace):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with the POD variable *var*.
         """
-        # edit variable information if necessary
-        for case_name, case_d in caselist.items():
-            save_varlist = case_d.varlist  # NOTE: assume that each case varlist contains the same variables
-            for v in case_d.varlist.iter_vars():
-                self.edit_request(v)
         # get the initial model data subset from the ESM-intake catalog
-        cat_subset = self.query_catalog(caselist, data_catalog)
-        for case_name, case_xr_dataset in cat_subset.items():
-            for v in save_varlist.iter_vars():
+        cat_subset = self.query_catalog(caselist, config.DATA_CATALOG)
+        # rename cat_subset case dict keys to case names
+        cat_subset_rename = self.rename_dataset_keys(cat_subset, caselist)
+        for case_name, case_xr_dataset in cat_subset_rename.items():
+            for v in caselist[case_name].varlist.iter_vars():
+                self.edit_request(v)
+                case_xr_dataset[v.name] = self.parse_ds(v, case_xr_dataset[v.name], config)
                 self.execute_pp_functions(v, case_xr_dataset[v.name])
 
 
@@ -1164,9 +1151,11 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
     """
 
-    def __init__(self, model_paths: util.ModelDataPathManager):
+    def __init__(self,
+                 model_paths: util.ModelDataPathManager,
+                 config: util.NameSpace):
         # initialize PreprocessorFunctionBase objects
-        super().__init__(model_paths)
+        super().__init__(model_paths, config)
         self.file_preproc_functions = [f for f in self._functions]
 
     def read_dataset(self, var: varlist_util.VarlistEntry,
@@ -1186,10 +1175,11 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
 
 
 def init_preprocessor(model_paths: util.ModelDataPathManager,
+                      config: util.NameSpace,
                       run_pp: bool = True):
     """Initialize the data preprocessor class using runtime configuration specs
     """
     if not run_pp:
         return NullPreprocessor(model_paths)
     else:
-        return DaskMultiFilePreprocessor(model_paths)
+        return DaskMultiFilePreprocessor(model_paths, config)

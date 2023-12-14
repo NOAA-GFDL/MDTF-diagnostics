@@ -420,13 +420,12 @@ class DefaultDatasetParser:
     Top-level methods are :meth:`parse` and :meth:`get_unmapped_names`.
     """
 
-    def __init__(self, data_mgr):
+    def __init__(self, config: util.NameSpace):
         """Constructor.
 
         Args:
-            data_mgr: DataSource instance calling the preprocessor.
+            config: runtime configuration
         """
-        config = {}
         self.disable = config.get('disable_preprocessor', False)
         self.overwrite_ds = config.get('overwrite_file_metadata', False)
         self.guess_names = False
@@ -436,10 +435,14 @@ class DefaultDatasetParser:
 
     # --- Methods for initial munging, prior to xarray.decode_cf -------------
 
-    def guess_attr(self, attr_desc, attr_name, options, default=None,
-                   comparison_func=None):
+    def guess_attr(self,
+                   attr_desc: str,
+                   attr_name: str,
+                   options,
+                   default: str = None,
+                   comparison_func: str = None):
         """Select and return element of *options* equal to *attr_name*.
-        If none are equal, try a case-insensititve string match.
+        If none are equal, try a case-insensitive string match.
 
         Args:
             attr_desc (str): Description of the attribute (only used for log
@@ -1240,7 +1243,7 @@ class DefaultDatasetParser:
 
     # --- Top-level methods -----------------------------------------------
 
-    def parse(self, var, ds):
+    def parse(self, var, ds: xr.Dataset):
         """Calls the above metadata parsing functions in the intended order;
         intended to be called immediately after the Dataset *ds* is opened.
 

@@ -431,6 +431,7 @@ class DatePrecision(enum.IntEnum):
     HOUR = 4
     MINUTE = 5
     SECOND = 6
+    MICROSECOND = 7
 
 
 class DateMixin(object):
@@ -503,6 +504,8 @@ class DateMixin(object):
             td = datetime.timedelta(minutes=delta)
         elif precision == DatePrecision.SECOND:
             td = datetime.timedelta(seconds=delta)
+        elif precision == DatePrecision.MICROSECOND:
+            td = datetime.timedelta(microseconds=delta)
         else:
             # prec == 2 case handled in calling logic
             raise ValueError(f"Malformed input: {repr(dt)} prec={precision} delta={delta}")

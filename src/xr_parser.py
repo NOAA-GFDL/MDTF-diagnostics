@@ -412,7 +412,7 @@ with warnings.catch_warnings():
 
 # ========================================================================
 
-
+@util.mdtf_dataclass
 class DefaultDatasetParser:
     """Class containing MDTF-specific methods for cleaning and normalizing
     xarray metadata.
@@ -432,6 +432,12 @@ class DefaultDatasetParser:
 
         self.fallback_cal = 'proleptic_gregorian'  # CF calendar used if no attribute found
         self.attrs_backup = dict()
+
+        self.log = util.MDTFObjectLogger.get_logger(self._log_name)
+
+    @property
+    def _log_name(self):
+        return f"xr_parser_default_data_parser"
 
     # --- Methods for initial munging, prior to xarray.decode_cf -------------
 
@@ -540,7 +546,7 @@ class DefaultDatasetParser:
             # key was found with expected name; copy to new_attr_d
             new_attr_d[key_name] = d[key_name]
 
-    def normalize_calendar(self, attr_d):
+    def normalize_calendar(self, attr_d: dict):
         """Finds the calendar attribute, if present, and normalizes it to one of
         the values in the CF standard before `xarray.decode_cf()
         <https://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__
@@ -609,7 +615,7 @@ class DefaultDatasetParser:
                                 # log warning but still update attrs
                                 self.log.warning("%s: discrepancy for attr '%s': '%s' != '%s'.",
                                                  name, k, vv, attrs_d[k])
-                    elif hasattr(v, '__iter__') and not isinstance(v, str) and v.any() not in attrs_d[k] \
+                    elif hasattr(v, '__iter__') and not isinstance(v, str) and v not in attrs_d[k] \
                             or v != attrs_d[k]:
                         self.log.warning("%s: discrepancy for attr '%s': '%s' != '%s'.",
                                          name, k, v, attrs_d[k])
@@ -1273,19 +1279,18 @@ class DefaultDatasetParser:
             Except in specific cases, attributes of *var* are updated to reflect
             the 'ground truth' of data in *ds*.
         """
-        if var is not None:
-            self.log = var.log
+
         self.normalize_pre_decode(ds)
         ds = xr.decode_cf(ds,
                           decode_coords=True,  # parse coords attr
                           decode_times=True,
                           use_cftime=True  # use cftime instead of np.datetime64
                           )
-        ds = ds.cf.guess_coord_axis()
+        # ds = ds.cf.guess_coord_axis()  # may not need this
         self.restore_attrs_backup(ds)
-        self.normalize_metadata(var, ds)
+        #self.normalize_metadata(var, ds)
         self.check_calendar(ds)
-        self._post_normalize_hook(var, ds)
+        #self._post_normalize_hook(var, ds)
 
         if self.disable:
             return ds  # stop here; don't attempt to reconcile

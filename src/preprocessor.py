@@ -211,16 +211,16 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
             var.log.info(("Requested dates for %s coincide with range of dataset "
                           "'%s -- %s'; left unmodified."),
                          var.full_name,
-                         nt_values[0].strftime('%Y-%m-%d'),
-                         nt_values[-1].strftime('%Y-%m-%d'),
+                         nt_values[0].strftime('%Y-%m-%d:%H-%M-%S'),
+                         nt_values[-1].strftime('%Y-%m-%d:%H-%M-%S'),
                          )
         else:
             var.log.info("Cropped date range of %s from '%s -- %s' to '%s -- %s'.",
                          var.full_name,
-                         t_start.strftime('%Y-%m-%d'),
-                         t_end.strftime('%Y-%m-%d'),
-                         nt_values[0].strftime('%Y-%m-%d'),
-                         nt_values[-1].strftime('%Y-%m-%d'),
+                         t_start.strftime('%Y-%m-%d:%H-%M-%S'),
+                         t_end.strftime('%Y-%m-%d:%H-%M-%S'),
+                         nt_values[0].strftime('%Y-%m-%d:%H-%M-%S'),
+                         nt_values[-1].strftime('%Y-%m-%d:%H-%M-%S'),
                          tags=util.ObjectLogTag.NC_HISTORY
                          )
         return ds
@@ -474,6 +474,7 @@ class AssociatedVariablesFunction(PreprocessorFunctionBase):
             var.log.debug(
                 f"Error encountered with preprocessing associated files: {exc}"
             )
+            pass
 
         return ds
 
@@ -739,9 +740,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         return [
             CropDateRangeFunction,
             PrecipRateToFluxFunction, ConvertUnitsFunction,
-            ExtractLevelFunction, RenameVariablesFunction,
-            AssociatedVariablesFunction
+            ExtractLevelFunction, RenameVariablesFunction
         ]
+    #             AssociatedVariablesFunction  # TODO: rework
 
     def check_group_daterange(self, group_df: pd.DataFrame, log=_log) -> pd.DataFrame:
         """Sort the files found for each experiment by date, verify that
@@ -893,7 +894,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             rename_key(ds, new_dict, old_key, [c for c in case_names if c in filename][0])
         return new_dict
 
-
     def clean_nc_var_encoding(self, var, name, ds_obj):
         """Clean up the ``attrs`` and ``encoding`` dicts of *ds_obj*
         prior to writing to a netCDF file, as a workaround for the following
@@ -1037,17 +1037,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
     def parse_ds(self,
                  var: varlist_util.VarlistEntry,
-                 ds: xr.Dataset,
-                 config: util.NameSpace) -> xr.Dataset:
-        """Top-level method to load dataset and parse metadata; spun out so that
-        child classes can modify it. Calls the :meth:`read_dataset` method
-        implemented by the child class.
+                 ds: xr.Dataset) -> xr.Dataset:
+        """Top-level method to parse metadata; spun out so that child classes can modify it.
         """
         try:
             ds = self.parser.parse(var, ds)
         except Exception as exc:
-            raise util.chain_exc(exc, (f"parsing file "
-                                       f"metadata for {var.full_name}."), util.DataPreprocessEvent)
+            raise util.chain_exc(exc, f"parsing dataset metadata", util.DataPreprocessEvent)
         return ds
 
     def process_ds(self, var, ds):
@@ -1059,7 +1055,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             try:
                 var.log.debug("Calling %s on %s.", f.__class__.__name__,
                               var.full_name)
-                ds = f.process(var, ds, casename)
+                ds = f.process(var, ds)
             except Exception as exc:
                 raise util.chain_exc(exc, (f'Preprocessing on {var.full_name} '
                                            f'failed at {f.__class__.__name__}.'),
@@ -1104,23 +1100,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         for case_name, case_xr_dataset in cat_subset_rename.items():
             for v in caselist[case_name].varlist.iter_vars():
                 self.edit_request(v)
-                case_xr_dataset[v.name] = self.parse_ds(v, case_xr_dataset[v.name], config)
-                self.execute_pp_functions(v, case_xr_dataset[v.name])
-
-
-class SingleVarFilePreprocessor(MDTFPreprocessorBase):
-    """A Preprocessor class for preprocessing model data that's provided as a
-    single netCDF file per variable, for example the POD's sample model data.
-
-    Implemented separately in the event that we (or the user) doesn't want to
-    bring in dask as an external dependency.
-    """
-
-    def read_dataset(self, var: varlist_util.Varlist, catalog_subset: dict):
-        """Read a single file Dataset specified by the ``local_data`` attribute of
-        *var*, using :meth:`read_one_file`.
-        """
-        return self.read_one_file(var, catalog_subset)
+                case_xr_dataset = self.parse_ds(v, case_xr_dataset)
+                self.execute_pp_functions(v, case_xr_dataset)
 
 
 class NullPreprocessor(MDTFPreprocessorBase):
@@ -1129,11 +1110,6 @@ class NullPreprocessor(MDTFPreprocessorBase):
 
     def edit_request(self, v):
         """Dummy implementation of edit_request to meet abstract base class requirements
-        """
-        pass
-
-    def read_dataset(self, var, catalog_subset):
-        """Dummy implementation of read_dataset to meet abstract base class requirements
         """
         pass
 

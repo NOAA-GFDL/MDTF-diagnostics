@@ -40,12 +40,12 @@ class CMIP6_CVs(metaclass=util.Singleton):
         else:
             paths = util.PathManager()
             file_ = os.path.join(paths.CODE_ROOT, 'data',
-                'cmip6-cmor-tables','Tables','CMIP6_CV.json')
+                                 'cmip6-cmor-tables', 'Tables', 'CMIP6_CV.json')
         self._contents = util.read_json(file_, log=_log)
         self._contents = self._contents['CV']
-        for k in ['product','version_metadata','required_global_attributes',
-            'further_info_url','Conventions','license']:
-            # remove unecessary information
+        for k in ['product', 'version_metadata', 'required_global_attributes',
+                  'further_info_url', 'Conventions', 'license']:
+            # remove unnecessary information
             del self._contents[k]
 
         # munge table_ids
@@ -87,7 +87,7 @@ class CMIP6_CVs(metaclass=util.Singleton):
         if util.is_iterable(items):
             return [(item in self.cv[category]) for item in items]
         else:
-            return (items in self.cv[category])
+            return items in self.cv[category]
 
     def get_lookup(self, source, dest):
         """Find the appropriate lookup table to convert values in *source* (keys)
@@ -171,8 +171,8 @@ class CMIP6_CVs(metaclass=util.Singleton):
         self._make_cv()
         assert 'table_id' in self.cv
         d = self.cv['table_id'] # abbreviate
-        return [tbl for tbl, tbl_d in d.items() \
-            if tbl_d.get('frequency', None) == frequency]
+        return [tbl for tbl, tbl_d in d.items()
+                if tbl_d.get('frequency', None) == frequency]
 
 
 class CMIP6DateFrequency(util.DateFrequency):
@@ -186,8 +186,8 @@ class CMIP6DateFrequency(util.DateFrequency):
     """
     _precision_lookup = {
         'fx': 0, 'yr': 1, 'mo': 2, 'day': 3,
-        'hr': 5, # includes minutes
-        'min': 6, # = subhr, minutes and seconds
+        'hr': 5,  # includes minutes
+        'min': 6,  # = subhr, minutes and seconds
         }
     _regex = re.compile(r"""
         ^
@@ -229,7 +229,7 @@ class CMIP6DateFrequency(util.DateFrequency):
                 md['avg'] = 'Clim'
 
             md['precision'] = cls._precision_lookup[md['unit']]
-            return (cls._get_timedelta_kwargs(md['quantity'], md['unit']), md)
+            return cls._get_timedelta_kwargs(md['quantity'], md['unit']), md
         else:
             raise ValueError("Malformed input {} {}".format(quantity, unit))
 
@@ -278,8 +278,8 @@ variant_label_regex = util.RegexPattern(r"""
         (p(?P<physics_index>\d+))?        # (optional) int prefixed with 'p'
         (f(?P<forcing_index>\d+))?        # (optional) int prefixed with 'f'
     """,
-    input_field="variant_label"
-)
+                                        input_field="variant_label"
+                                        )
 
 
 @util.regex_dataclass(variant_label_regex)
@@ -303,6 +303,7 @@ class CMIP6_VariantLabel:
     forcing_index: int = None
     """Forcing index (integer following the letter ``f``.)"""
 
+
 mip_table_regex = util.RegexPattern(r"""
         # ^ # start of line
         (?P<table_prefix>(A|CF|E|I|AER|O|L|LI|SI)?)
@@ -312,8 +313,8 @@ mip_table_regex = util.RegexPattern(r"""
         (?P<table_qualifier>(Pt|Z|Off)?)
         # $ # end of line - necessary for lazy capture to work
     """,
-    input_field="table_id"
-)
+                                    input_field="table_id"
+                                    )
 
 
 @util.regex_dataclass(mip_table_regex)
@@ -372,6 +373,7 @@ class CMIP6_MIPTable:
         else:
             self.region = None
 
+
 grid_label_regex = util.RegexPattern(r"""
         g
         (?P<global_mean>m?)
@@ -380,8 +382,8 @@ grid_label_regex = util.RegexPattern(r"""
         (?P<region>a|g?)
         (?P<zonal_mean>z?)
     """,
-    input_field="grid_label"
-)
+                                     input_field="grid_label"
+                                     )
 
 
 @util.regex_dataclass(grid_label_regex)
@@ -433,6 +435,7 @@ class CMIP6_GridLabel:
         else:
             self.region = None
 
+
 drs_directory_regex = util.RegexPattern(r"""
         /?                      # maybe initial separator
         (CMIP6/)?
@@ -447,8 +450,8 @@ drs_directory_regex = util.RegexPattern(r"""
         v(?P<version_date>\d+)
         /? # maybe final separator
     """,
-    input_field="directory"
-)
+                                        input_field="directory"
+                                        )
 
 
 @util.regex_dataclass(drs_directory_regex)
@@ -503,8 +506,8 @@ _drs_static_filename_regex = util.RegexPattern(r"""
         (?P<grid_label>\w+)
         \.nc                      # netCDF file extension, no dates
     """,
-    defaults={'start_date': util.FXDateMin, 'end_date': util.FXDateMax},
-)
+                                               defaults={'start_date': util.FXDateMin, 'end_date': util.FXDateMax},
+                                               )
 
 drs_filename_regex = util.ChainedRegexPattern(
     # try the first regex, and if no match, try second
@@ -545,25 +548,26 @@ class CMIP6_DRSFilename(CMIP6_VariantLabel, CMIP6_MIPTable, CMIP6_GridLabel):
 
     def __post_init__(self, *args):
         if self.start_date == util.FXDateMin \
-            and self.end_date == util.FXDateMax:
+                and self.end_date == util.FXDateMax:
             # Assume we're dealing with static/fx-frequency data, so use special
             # placeholder values
             self.date_range = util.FXDateRange
-            if not self.frequency.is_static: # frequency inferred from table_id
+            if not self.frequency.is_static:  # frequency inferred from table_id
                 raise util.DataclassParseError(("Inconsistent filename parse: "
-                    f"cannot determine if '{self.filename}' represents static data."))
+                                                f"cannot determine if '{self.filename}' represents static data."))
         else:
             self.date_range = util.DateRange(self.start_date, self.end_date)
-            if self.frequency.is_static: # frequency inferred from table_id
+            if self.frequency.is_static:  # frequency inferred from table_id
                 raise util.DataclassParseError(("Inconsistent filename parse: "
-                    f"cannot determine if '{self.filename}' represents static data."))
+                                                f"cannot determine if '{self.filename}' represents static data."))
+
 
 drs_path_regex = util.RegexPattern(r"""
     (?P<directory>\S+)/   # any non-whitespace
     (?P<filename>[^/\s]+) # nonwhitespace and not directory separator
     """,
-    input_field="path"
-)
+                                   input_field="path"
+                                   )
 
 
 @util.regex_dataclass(drs_path_regex)

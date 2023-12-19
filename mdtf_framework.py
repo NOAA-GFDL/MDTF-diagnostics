@@ -87,7 +87,8 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # initialize the preprocessor (dummy pp object if run_pp=False)
     data_pp = preprocessor.init_preprocessor(model_paths,
                                              ctx.config,
-                                             ctx.config.run_pp)
+                                             ctx.config.run_pp
+                                             )
     # configure pod object(s)
     for pod_name in ctx.config.pod_list:
         pod_obj = pod_setup.PodObject(pod_name, ctx.config)
@@ -96,8 +97,9 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         if any([s for s in ctx.config.user_pp_scripts]):
             pod_obj.add_user_pp_scripts(ctx.config)
         pod_obj.log.info(f"Preprocessing data for {pod_name}")
-        data_pp.process(pod_obj.cases,
-                        ctx.config)
+        ds = data_pp.process(pod_obj.cases,
+                             ctx.config)
+        data_pp.write_ds(pod_obj.cases, ds, pod_obj.runtime_requirements)
 
     # close the main log file
     log._log_handler.close()

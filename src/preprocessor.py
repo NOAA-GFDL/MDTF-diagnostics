@@ -6,7 +6,6 @@ import shutil
 import abc
 import dataclasses
 import datetime
-import functools
 
 import pandas as pd
 from src import util, varlist_util, translation, xr_parser, units
@@ -82,7 +81,6 @@ class PreprocessorFunctionBase(abc.ABC):
 
         Args:
             var: dictionary of variable information
-            case_dict: dictionary with case information
             xr_dataset: xarray dataset with information from ESM intake catalog
 
         Returns:
@@ -719,8 +717,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         metadata cleaning done by xr_parser.
     """
     file_preproc_functions = util.abstract_attribute()
+    output_to_ncl: bool = False
 
-    def __init__(self, model_paths: util.ModelDataPathManager, config:util.NameSpace):
+    def __init__(self,
+                 model_paths: util.ModelDataPathManager,
+                 config: util.NameSpace):
         self.WORK_DIR = model_paths.MODEL_WORK_DIR
         # initialize PreprocessorFunctionBase objects
         self.file_preproc_functions = []
@@ -832,7 +833,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     xarray_open_kwargs=self.open_dataset_kwargs
                 )
 
-        return cat_dict
+        # rename cat_subset case dict keys to case names
+        cat_dict_rename = self.rename_dataset_keys(cat_dict, case_dict)
+
+        return cat_dict_rename
 
     def edit_request(self, v: varlist_util.VarlistEntry):
         """Top-level method to edit *pod*\'s data request, based on the child
@@ -953,7 +957,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             if k in attrs:
                 del attrs[k]
 
-    def clean_output_attrs(self, var, ds):
+    def clean_output_attrs(self,
+                           var: varlist_util.VarlistEntry,
+                           ds: xr.Dataset):
         """Calls :meth:`clean_nc_var_encoding` on all sets of attributes in the
         Dataset *ds*.
         """
@@ -1063,19 +1069,35 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                      )
         return ds
 
-    def write_ds(self, var, ds):
+    def process(self,
+                case_list: dict,
+                config: util.NameSpace) -> xr.Dataset:
+        """Top-level wrapper method for doing all preprocessing of data files
+        associated with each case in the case_list dictionary
+        """
+        # get the initial model data subset from the ESM-intake catalog
+        cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
+
+        for case_name, case_xr_dataset in cat_subset.items():
+            for v in case_list[case_name].varlist.iter_vars():
+                self.edit_request(v)
+                case_xr_dataset = self.parse_ds(v, case_xr_dataset)
+                self.execute_pp_functions(v, case_xr_dataset)
+        return case_xr_dataset
+
+    def write_ds(self, case_list: dict,
+                 ds: xr.Dataset,
+                 pod_reqs):
         """Top-level method to write out processed dataset *ds*; spun out so
         that child classes can modify it. Calls the :meth:`write_dataset` method
         implemented by the child class.
         """
-        for casename, wkdir in self.WK_DIR.items():
-            if wkdir in var.dest_path:
-                break
-
-        path_str = util.abbreviate_path(var.dest_path, wkdir, '$WORK_DIR')
-        var.log.info("Writing %d mb to %s", ds.nbytes / (1024 * 1024), path_str)
+        self.output_to_ncl = ('ncl' in pod_reqs)
+        for case_name, case_dict in case_list.items():
+            for var in case_dict.varlist.iter_vars():
+                var.log.info("Writing %d mb to %s", ds.nbytes / (1024 * 1024), var.dest_path)
         try:
-            ds = self.clean_output_attrs(var, ds)
+            ds = self.clean_output_attrs(var, ds, pod_reqs)
             ds = self.log_history_attr(var, ds)
         except Exception as exc:
             raise util.chain_exc(exc, (f"cleaning attributes to "
@@ -1087,37 +1109,32 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                  util.DataPreprocessEvent)
         del ds  # shouldn't be necessary
 
-    def process(self,
-                caselist: dict,
-                config: util.NameSpace):
-        """Top-level wrapper method for doing all preprocessing of data files
-        associated with the POD variable *var*.
-        """
-        # get the initial model data subset from the ESM-intake catalog
-        cat_subset = self.query_catalog(caselist, config.DATA_CATALOG)
-        # rename cat_subset case dict keys to case names
-        cat_subset_rename = self.rename_dataset_keys(cat_subset, caselist)
-        for case_name, case_xr_dataset in cat_subset_rename.items():
-            for v in caselist[case_name].varlist.iter_vars():
-                self.edit_request(v)
-                case_xr_dataset = self.parse_ds(v, case_xr_dataset)
-                self.execute_pp_functions(v, case_xr_dataset)
-
 
 class NullPreprocessor(MDTFPreprocessorBase):
     """A class that skips preprocessing and just symlinks files from the input dir to the wkdir
     """
+    def __init__(self,
+                 model_paths: util.ModelDataPathManager,
+                 config: util.NameSpace):
+        # initialize PreprocessorFunctionBase objects
+        super().__init__(model_paths, config)
+        self.file_preproc_functions = []
 
     def edit_request(self, v):
         """Dummy implementation of edit_request to meet abstract base class requirements
         """
         pass
 
-    def process(self, v, ds, *args):
+    def process(self, case_list: dict,
+                config: util.NameSpace):
         """Top-level wrapper method for doing all preprocessing of data files
-        associated with the POD variable *var*.
+        associated with each case in the caselist dictionary
         """
-        pass
+        # get the initial model data subset from the ESM-intake catalog
+        cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
+        for case_name, case_xr_dataset in cat_subset.items():
+            for v in case_list[case_name].varlist.iter_vars():
+                case_xr_dataset = self.parse_ds(v, case_xr_dataset)
 
 
 class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
@@ -1134,21 +1151,6 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         super().__init__(model_paths, config)
         self.file_preproc_functions = [f for f in self._functions]
 
-    def read_dataset(self, var: varlist_util.VarlistEntry,
-                     catalog_subset: dict):
-        """Open multi-file Dataset specified by the ``local_data`` attribute of
-        *var*, wrapping xarray `open_mfdataset()
-        <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
-        """
-
-        def _file_preproc(ds):
-            for f in self.file_preproc_functions:
-                ds = f.execute(var, ds)
-            return ds
-
-        ds_in = self.read_one_file(var, catalog_subset)
-        return _file_preproc(ds_in)
-
 
 def init_preprocessor(model_paths: util.ModelDataPathManager,
                       config: util.NameSpace,
@@ -1156,6 +1158,6 @@ def init_preprocessor(model_paths: util.ModelDataPathManager,
     """Initialize the data preprocessor class using runtime configuration specs
     """
     if not run_pp:
-        return NullPreprocessor(model_paths)
+        return NullPreprocessor(model_paths, config)
     else:
         return DaskMultiFilePreprocessor(model_paths, config)

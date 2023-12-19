@@ -44,7 +44,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     overwrite: bool = False
     # explict 'program' attribute in settings
     _interpreters = dict()
-    runtime_requirements: dict = dc.field(default_factory=dict)
+    runtime_requirements: util.NameSpace
     driver: str = ""
     program: str = ""
     pod_env_vars: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict)
@@ -82,9 +82,6 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         util.MDTFObjectBase.__post_init__(self)
         # set up log (PODLoggerMixin)
         self.init_log(log_dir=self.paths.POD_WORK_DIR)
-
-        # for k, v in self.runtime_requirements.items():
-        #    self.runtime_requirements[k] = util.to_iter(v)
 
     @property
     def _log_name(self):
@@ -273,6 +270,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         # and that required packages are installed in the target Conda environment
         self.verify_pod_settings()
         self.set_interpreter(pod_input.settings)
+        self.runtime_requirements = pod_input.settings['runtime_requirements']
         pod_convention = self.pod_settings['convention'].lower()
 
         for case_name, case_dict in runtime_config.case_list.items():
@@ -290,7 +288,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 data_convention = 'no_translation'
                 self.log.info(f'POD convention and data convention are both {data_convention}. '
                               f'No data translation will be performed for case {case_name}.')
-            # A 'noTranslationFieldlist' will be defined for the varlistentry translation attribute
+            # A 'noTranslationFieldlist' will be defined for the varlistEntry translation attribute
             self.cases[case_name].translate_varlist(model_paths,
                                                     case_name,
                                                     data_convention)

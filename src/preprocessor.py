@@ -62,7 +62,7 @@ class PreprocessorFunctionBase(abc.ABC):
         """Called during Preprocessor's init."""
         pass
 
-    def edit_request(self, v: varlist_util.VarlistEntry, *args):
+    def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
         """Edit the data requested in *pod*'s :class:`~src.diagnostic.Varlist`
         queue, based on the transformations the functionality can perform (in
         :meth:`process`). If the function can transform data in format *X* to
@@ -75,7 +75,7 @@ class PreprocessorFunctionBase(abc.ABC):
     @abc.abstractmethod
     def execute(self, var: varlist_util.VarlistEntry,
                 xr_dataset,
-                *args):
+                **kwargs):
         """Apply the format conversion implemented in this PreprocessorFunction
         to the input dataset *dataset*, according to the request made in *var*.
 
@@ -109,7 +109,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
               ('tm_year', 'tm_mon', 'tm_mday', 'tm_hour', 'tm_min', 'tm_sec'))
         return cftime.datetime(*tt, calendar=calendar)
 
-    def execute(self, var, ds, *args):
+    def execute(self, var, ds, **kwargs):
         """Parse quantities related to the calendar for time-dependent data and
         truncate the date range of model dataset *ds*.
 
@@ -251,7 +251,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
     _rate_d = {tup[0]: tup[1] for tup in _std_name_tuples}
     _flux_d = {tup[1]: tup[0] for tup in _std_name_tuples}
 
-    def edit_request(self, v: varlist_util.VarlistEntry, *args):
+    def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
         """Edit *pod*\'s Varlist prior to query. If the
         :class:`~src.diagnostic.VarlistEntry` *v* has a ``standard_name`` in the
         recognized list, insert an alternate VarlistEntry whose translation
@@ -283,7 +283,11 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             )
 
         translate = translation.VariableTranslator()
-        to_convention = [arg for arg in args if arg == 'to_convention'][0]
+        for key, val in kwargs:
+            if 'convention' in key:
+                to_convention = val
+            else:
+                to_convention = None
         assert to_convention, 'to_convention not defined in *args of PrecipRatetoFLuxConversion'
         try:
             new_tv = translate.translate(to_convention, v_to_translate)
@@ -296,7 +300,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         new_v.translation = new_tv
         return new_v
 
-    def execute(self, var, ds, *args):
+    def execute(self, var, ds, **kwargs):
         """Convert units of dependent variable *ds* between precip rate and
         precip flux, as specified by the desired units given in *var*. If the
         ``standard_name`` of *ds* is not in the recognized list, return it
@@ -342,7 +346,7 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
     :doc:`src.units`.
     """
 
-    def execute(self, var, ds, *args):
+    def execute(self, var, ds, **kwargs):
         """Convert units on the dependent variable and coordinates of var from
         what's specified in the dataset attributes to what's given in the
         VarlistEntry *var*. Units attributes are updated on the
@@ -389,7 +393,7 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
     """Renames dependent variables and coordinates to what's expected by the POD.
     """
 
-    def execute(self, var, ds, *args):
+    def execute(self, var, ds, **kwargs):
         """Change the names of the DataArrays with Dataset *ds* to the names
         specified by the :class:`~src.diagnostic.VarlistEntry` *var*. Names of
         the dependent variable and all dimension coordinates and scalar
@@ -436,10 +440,14 @@ class AssociatedVariablesFunction(PreprocessorFunctionBase):
     """Preprocessor class to copy associated variables to wkdir"""
 
     def execute(self, var, ds, **kwargs):
-
+        casename = ""
+        pod_wkdir = ""
+        for k, v in kwargs.items():
+            if 'work_dir' in k:
+                pod_wkdir = v
+            elif 'case_name' in k:
+                casename = v
         try:
-            # get string labels from variable object
-            pod_wkdir = var._parent.POD_WORK_DIR
 
             # iterate over active associated files and get current local paths
             associated_files = list(
@@ -488,7 +496,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
        :meth:`process` raises a KeyError.
     """
 
-    def edit_request(self, v: varlist_util.VarlistEntry, *args):
+    def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
         """Edit the *pod*'s :class:`~src.diagnostic.Varlist` prior to data query.
         If given a :class:`~src.diagnostic.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
@@ -497,6 +505,10 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         variable for *v*.
 
         """
+        for key, val in kwargs.items():
+            if 'convention' in key:
+                data_convention = val
+
         if not v.translation:
             # hit this if VE not defined for this model naming convention;
             # do nothing for this v
@@ -527,7 +539,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         new_v.translation = new_tv
         return new_v
 
-    def execute(self, var, ds, *args):
+    def execute(self, var, ds, **kwargs):
         """Determine if level extraction is needed (if *var* has a scalar Z
         coordinate and Dataset *ds* is 3D). If so, return the appropriate 2D
         slice of *ds*, otherwise pass through *ds* unaltered.
@@ -609,7 +621,7 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
        that are known to be incorrect.
     """
 
-    def edit_request(self, v: varlist_util.VarlistEntry, *args):
+    def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
         """Edit the *pod*'s :class:`~src.diagnostic.Varlist` prior to data query.
         If given a :class:`~src.MultirunDiagnostic.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
@@ -620,6 +632,11 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
         The signature of this method is altered by the :func:`multirun_edit_request_wrapper`
         decorator.
         """
+        for key, val in kwargs.items():
+            if 'convention' in key:
+                data_convention = val
+            else:
+                data_convention = None
         if not v.translation:
             # hit this if VE not defined for this model naming convention;
             # do nothing for this v
@@ -650,7 +667,7 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
         new_v.translation = new_tv
         return new_v
 
-    def execute(self, var, ds, *args):
+    def execute(self, var, ds, **kwargs):
         """Retrieve the ``scale_factor`` and ``add_offset`` attributes from the
         dependent variable of *ds*, and if set, apply the linear transformation
         to the dependent variable. If both are set, the scaling is applied first
@@ -689,10 +706,10 @@ class UserDefinedPreprocessorFunction(PreprocessorFunctionBase):
         """Called during Preprocessor's init."""
         self.user_defined_script = pp_script
 
-    def edit_request(self, v):
+    def edit_request(self, v, **kwargs):
         pass
 
-    def execute(self, var, ds, *args):
+    def execute(self, var, ds, **kwargs):
         pass
 
 
@@ -718,6 +735,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     """
     file_preproc_functions = util.abstract_attribute()
     output_to_ncl: bool = False
+    nc_format: str
 
     def __init__(self,
                  model_paths: util.ModelDataPathManager,
@@ -727,6 +745,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         self.file_preproc_functions = []
         # initialize xarray parser
         self.parser = self._XarrayParserClass(config)
+        if config.large_file:
+            self.nc_format = "NETCDF4_CLASSIC"
+        else:
+            self.nc_format = "NETCDF4"
 
     @property
     def _functions(self):
@@ -739,11 +761,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """
         # normal operation: run all functions
         return [
-            CropDateRangeFunction,
+            CropDateRangeFunction, AssociatedVariablesFunction,
             PrecipRateToFluxFunction, ConvertUnitsFunction,
-            ExtractLevelFunction, RenameVariablesFunction
+            ExtractLevelFunction, RenameVariablesFunction,
         ]
-    #             AssociatedVariablesFunction  # TODO: rework
 
     def check_group_daterange(self, group_df: pd.DataFrame, log=_log) -> pd.DataFrame:
         """Sort the files found for each experiment by date, verify that
@@ -838,19 +859,19 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         return cat_dict_rename
 
-    def edit_request(self, v: varlist_util.VarlistEntry):
+    def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
         """Top-level method to edit *pod*\'s data request, based on the child
         class's functionality. Calls the :meth:`~PreprocessorFunctionBase.edit_request`
         method on all included PreprocessorFunctions.
         """
         for func in self.file_preproc_functions:
-            func.edit_request(func, v)
+            func.edit_request(func, v, **kwargs)
 
     def execute_pp_functions(self, v: varlist_util.VarlistEntry,
-                             xarray_ds: xr.Dataset):
+                             xarray_ds: xr.Dataset, **kwargs):
         """Method to launch pp routines on xarray datasets associated with required variables"""
         for func in self.file_preproc_functions:
-            func.execute(func, v, xarray_ds)
+            func.execute(func, v, xarray_ds, **kwargs)
 
     def setup(self, pod):
         """Method to do additional configuration immediately before :meth:`process`
@@ -926,10 +947,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         attrs_to_delete = set([])
 
         # mark attrs with sentinel value for deletion
-        for k, v in attrs.items():
-            if v == xr_parser.ATTR_NOT_FOUND:
-                var.log.debug("Caught unset attribute '%s' of '%s'.", k, name)
-                attrs_to_delete.add(k)
+        for key, val in attrs.items():
+            if val == xr_parser.ATTR_NOT_FOUND:
+                var.log.debug("Caught unset attribute '%s' of '%s'.", key, name)
+                attrs_to_delete.add(key)
         # clean up _FillValue
         old_fillvalue = encoding.get('_FillValue', np.nan)
         if name != var.translation.name \
@@ -1041,6 +1062,31 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         )
         ds.close()
 
+    def write_ds(self, case_list: dict,
+                 catalog_subset: collections.OrderedDict,
+                 pod_reqs):
+        """Top-level method to write out processed dataset *ds*; spun out so
+        that child classes can modify it. Calls the :meth:`write_dataset` method
+        implemented by the child class.
+        """
+        self.output_to_ncl = ('ncl' in pod_reqs)
+
+        for case_name, ds in catalog_subset.items():
+            for var in case_list[case_name].varlist.iter_vars():
+                var.log.info("Writing %d mb to %s", ds[var.name].variable.nbytes / (1024 * 1024), var.dest_path)
+                try:
+                    ds = self.clean_output_attrs(var, ds)
+                    ds = self.log_history_attr(var, ds)
+                except Exception as exc:
+                    raise util.chain_exc(exc, (f"cleaning attributes to "
+                                               f"write data for {var.full_name}."), util.DataPreprocessEvent)
+                try:
+                    self.write_dataset(var, ds)
+                except Exception as exc:
+                    raise util.chain_exc(exc, f"writing data for {var.full_name}.",
+                                         util.DataPreprocessEvent)
+    #   del ds  # shouldn't be necessary
+
     def parse_ds(self,
                  var: varlist_util.VarlistEntry,
                  ds: xr.Dataset) -> xr.Dataset:
@@ -1071,7 +1117,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
     def process(self,
                 case_list: dict,
-                config: util.NameSpace) -> xr.Dataset:
+                config: util.NameSpace,
+                model_work_dir: dict) -> collections.OrderedDict:
         """Top-level wrapper method for doing all preprocessing of data files
         associated with each case in the case_list dictionary
         """
@@ -1080,34 +1127,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         for case_name, case_xr_dataset in cat_subset.items():
             for v in case_list[case_name].varlist.iter_vars():
-                self.edit_request(v)
-                case_xr_dataset = self.parse_ds(v, case_xr_dataset)
-                self.execute_pp_functions(v, case_xr_dataset)
-        return case_xr_dataset
-
-    def write_ds(self, case_list: dict,
-                 ds: xr.Dataset,
-                 pod_reqs):
-        """Top-level method to write out processed dataset *ds*; spun out so
-        that child classes can modify it. Calls the :meth:`write_dataset` method
-        implemented by the child class.
-        """
-        self.output_to_ncl = ('ncl' in pod_reqs)
-        for case_name, case_dict in case_list.items():
-            for var in case_dict.varlist.iter_vars():
-                var.log.info("Writing %d mb to %s", ds.nbytes / (1024 * 1024), var.dest_path)
-        try:
-            ds = self.clean_output_attrs(var, ds, pod_reqs)
-            ds = self.log_history_attr(var, ds)
-        except Exception as exc:
-            raise util.chain_exc(exc, (f"cleaning attributes to "
-                                       f"write data for {var.full_name}."), util.DataPreprocessEvent)
-        try:
-            self.write_dataset(var, ds)
-        except Exception as exc:
-            raise util.chain_exc(exc, f"writing data for {var.full_name}.",
-                                 util.DataPreprocessEvent)
-        del ds  # shouldn't be necessary
+                self.edit_request(v, convention=cat_subset[case_name].convention)
+                cat_subset[case_name] = self.parse_ds(v, case_xr_dataset)
+                self.execute_pp_functions(v,
+                                          cat_subset[case_name],
+                                          work_dir=model_work_dir[case_name],
+                                          case_name=case_name)
+        return cat_subset
 
 
 class NullPreprocessor(MDTFPreprocessorBase):
@@ -1120,13 +1146,14 @@ class NullPreprocessor(MDTFPreprocessorBase):
         super().__init__(model_paths, config)
         self.file_preproc_functions = []
 
-    def edit_request(self, v):
+    def edit_request(self, v, **kwargs):
         """Dummy implementation of edit_request to meet abstract base class requirements
         """
         pass
 
     def process(self, case_list: dict,
-                config: util.NameSpace):
+                config: util.NameSpace,
+                model_work_dir: dict) -> collections.OrderedDict:
         """Top-level wrapper method for doing all preprocessing of data files
         associated with each case in the caselist dictionary
         """
@@ -1134,7 +1161,10 @@ class NullPreprocessor(MDTFPreprocessorBase):
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
             for v in case_list[case_name].varlist.iter_vars():
-                case_xr_dataset = self.parse_ds(v, case_xr_dataset)
+                self.edit_request(v, convention=cat_subset[case_name].convention)
+                cat_subset[case_name] = self.parse_ds(v, case_xr_dataset)
+
+        return cat_subset
 
 
 class DaskMultiFilePreprocessor(MDTFPreprocessorBase):

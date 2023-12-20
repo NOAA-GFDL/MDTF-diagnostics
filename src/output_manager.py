@@ -7,7 +7,7 @@ import datetime
 import glob
 import io
 import shutil
-from src import util, core, verify_links
+from src import util, verify_links
 
 import logging
 _log = logging.getLogger(__name__)
@@ -17,21 +17,21 @@ class AbstractOutputManager(abc.ABC):
     """Abstract interface for any OutputManager."""
     def __init__(self, case): pass
 
-def html_templating_dict(pod):
+
+def html_templating_dict(pod, config):
     """Returns the dict of recognized substitutions to perform in html templating
     for *pod*.
     """
-    config = core.ConfigManager()
     template = config.global_env_vars.copy()
     template.update(pod.pod_env_vars)
-    d = {str(k): str(v) for k,v in template.items()}
+    d = {str(k): str(v) for k, v in template.items()}
     for attr in ('name', 'long_name', 'description', 'convention', 'realm'):
         d[attr] = str(getattr(pod, attr, ""))
     return d
 
 
 class HTMLSourceFileMixin:
-    """Convienience method to define location of html templates in one place.
+    """Convenience method to define location of html templates in one place.
     """
 
     @property
@@ -40,7 +40,6 @@ class HTMLSourceFileMixin:
         to as PODs finish.
         """
         return os.path.join(self.WK_DIR, '_MDTF_pod_output_temp.html')
-
 
     def html_src_file(self, file_name):
         """Returns full path to a framework-supplied html template *file_name*
@@ -79,7 +78,7 @@ class HTMLSourceFileMixin:
 
         log_file.write(f"\n# Preprocessed files used as input to {str_2}:\n")
         log_file.write(("# (Depending on CLI flags, these will have been deleted "
-            "if the package exited successfully.)\n"))
+                        "if the package exited successfully.)\n"))
         assert hasattr(self.obj, '_out_file_log')
         log_file.write(self.obj._out_file_log.buffer_contents())
         log_file.close()
@@ -89,7 +88,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
     """Performs cleanup tasks specific to a single POD when that POD has
     finished running.
     """
-    def __init__(self, pod, output_mgr):
+    def __init__(self, pod, config, output_mgr):
         """Copy configuration info from :class:`~src.diagnostic.Diagnostic`
         object *pod*.
 
@@ -99,7 +98,6 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             output_mgr: Parent OutputManager handling the overall processing of
                 output files from all PODs.
         """
-        config = core.ConfigManager()
         try:
             self.save_ps = config['save_ps']
             self.save_nc = config['save_nc']
@@ -276,8 +274,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
     _PodOutputManagerClass = HTMLPodOutputManager
     _html_file_name = 'index.html'
 
-    def __init__(self, case):
-        config = core.ConfigManager()
+    def __init__(self, case, config):
         try:
             self.make_variab_tar = config['make_variab_tar']
             self.dry_run = config['dry_run']
@@ -292,7 +289,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
 
     @property
     def _tarball_file_path(self):
-        paths = core.PathManager()
+        paths = util.PathManager()
         assert hasattr(self, 'WK_DIR')
         file_name = self.WK_DIR + '.tar'
         return os.path.join(paths.OUTPUT_DIR, file_name)
@@ -372,11 +369,10 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
             os.remove(self.CASE_TEMP_HTML)
         shutil.copy2(self.html_src_file('mdtf_diag_banner.png'), self.WK_DIR)
 
-    def backup_config_files(self):
+    def backup_config_files(self, config):
         """Record user input configuration in a file named ``config_save.json``
         for rerunning.
         """
-        config = core.ConfigManager()
         for config_tup in config._configs.values():
             if config_tup.backup_filename is None:
                 continue
@@ -447,7 +443,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
                 continue
             pod.close_log_file(log=True)
             if not pod.failed:
-                pod.status = core.ObjectStatus.SUCCEEDED
+                pod.status = util.ObjectStatus.SUCCEEDED
 
         self.make_html()
         self.backup_config_files()
@@ -457,7 +453,7 @@ class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
         self.copy_to_output()
         if not self.obj.failed \
                 and not any(p.failed for p in self.obj.iter_children()):
-            self.obj.status = core.ObjectStatus.SUCCEEDED
+            self.obj.status = util.ObjectStatus.SUCCEEDED
 
 
 class MultirunHTMLOutputManager(HTMLOutputManager,
@@ -472,8 +468,7 @@ class MultirunHTMLOutputManager(HTMLOutputManager,
     _PodOutputManagerClass = HTMLPodOutputManager
     _html_file_name = 'index.html'
 
-    def __init__(self, pod):
-        config = core.ConfigManager()
+    def __init__(self, pod, config):
         try:
             self.make_variab_tar = config['make_variab_tar']
             self.dry_run = config['dry_run']
@@ -536,7 +531,7 @@ class MultirunHTMLOutputManager(HTMLOutputManager,
             pod.deactivate(exc)
         pod.close_log_file(log=True)
         if not pod.failed:
-            pod.status = core.ObjectStatus.SUCCEEDED
+            pod.status = util.ObjectStatus.SUCCEEDED
 
         self.make_html()
         self.backup_config_files()
@@ -546,7 +541,7 @@ class MultirunHTMLOutputManager(HTMLOutputManager,
         self.copy_to_output()
         if not self.obj.failed \
                 and not any(p.failed for p in self.obj.iter_children()):
-            self.obj.status = core.ObjectStatus.SUCCEEDED
+            self.obj.status = util.ObjectStatus.SUCCEEDED
 
     def make_html(self, cleanup=True):
         """Add header and footer to the temporary output file at CASE_TEMP_HTML.

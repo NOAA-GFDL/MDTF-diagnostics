@@ -97,9 +97,8 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         if any([s for s in ctx.config.user_pp_scripts]):
             pod_obj.add_user_pp_scripts(ctx.config)
         pod_obj.log.info(f"Preprocessing data for {pod_name}")
-        ds = data_pp.process(pod_obj.cases,
-                             ctx.config)
-        data_pp.write_ds(pod_obj.cases, ds, pod_obj.runtime_requirements)
+        cat_subset = data_pp.process(pod_obj.cases, ctx.config, model_paths.MODEL_WORK_DIR)
+        data_pp.write_ds(pod_obj.cases, cat_subset, pod_obj.runtime_requirements)
 
     # close the main log file
     log._log_handler.close()

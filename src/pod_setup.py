@@ -84,6 +84,14 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         self.init_log(log_dir=self.paths.POD_WORK_DIR)
 
     @property
+    def failed(self):
+        return self.status == util.ObjectStatus.FAILED
+
+    @property
+    def active(self):
+        return self.status == util.ObjectStatus.ACTIVE
+
+    @property
     def _log_name(self):
         # POD loggers sit in a subtree of the DataSource logger distinct from
         # the DataKey loggers; the two subtrees are distinguished by class name

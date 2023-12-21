@@ -18,8 +18,7 @@ if sys.version_info.major != 3 or sys.version_info.minor < 10:
 # passed; continue with imports
 import os
 import click
-from src import util, cli, pod_setup, preprocessor, translation
-from src.conda import conda_utils
+from src import util, cli, pod_setup, preprocessor, translation, environment_manager, output_manager
 import dataclasses
 import logging
 import datetime
@@ -89,16 +88,30 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
                                              ctx.config,
                                              ctx.config.run_pp
                                              )
+
+    pods = dict.fromkeys(ctx.config.pod_list, [])
     # configure pod object(s)
     for pod_name in ctx.config.pod_list:
-        pod_obj = pod_setup.PodObject(pod_name, ctx.config)
-        pod_obj.setup_pod(ctx.config, model_paths)
+
+        pods[pod_name] = pod_setup.PodObject(pod_name, ctx.config)
+        pods[pod_name].setup_pod(ctx.config, model_paths)
         # run custom scripts on dataset
         if any([s for s in ctx.config.user_pp_scripts]):
-            pod_obj.add_user_pp_scripts(ctx.config)
-        pod_obj.log.info(f"Preprocessing data for {pod_name}")
-        cat_subset = data_pp.process(pod_obj.cases, ctx.config, model_paths.MODEL_WORK_DIR)
-        data_pp.write_ds(pod_obj.cases, cat_subset, pod_obj.runtime_requirements)
+            pods[pod_name].add_user_pp_scripts(ctx.config)
+        pods[pod_name].log.info(f"Preprocessing data for {pod_name}")
+        cat_subset = data_pp.process(pods[pod_name].cases, ctx.config, model_paths.MODEL_WORK_DIR)
+        data_pp.write_ds(pods[pod_name].cases, cat_subset, pods[pod_name].runtime_requirements)
+
+    if not any(p.failed for p in pods.values()):
+        log.log.info("### %s: running pods '%s'.", [p for p in pods.keys()])
+        run_mgr = environment_manager.SubprocessRuntimeManager(pods,
+                                                               environment_manager.CondaEnvironmentManager)
+        run_mgr.setup()
+        run_mgr.run()
+    else:
+        for p in pods.values:
+            if any(p.failed):
+                log.log.info("Data request for pod '%s' failed; skipping  execution.", p)
 
     # close the main log file
     log._log_handler.close()

@@ -133,7 +133,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             self.WK_DIR,
             copy_function=(
                 lambda src, dest: util.append_html_template(
-                src, dest, template_dict=template_d, append=False
+                    src, dest, template_dict=template_d, append=False
             )),
             overwrite=True
         )
@@ -263,202 +263,8 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             self.cleanup_pod_files()
 
 
-class HTMLOutputManager(AbstractOutputManager, HTMLSourceFileMixin):
-    """OutputManager that collects the output of all PODs run as a part of *case*
-    as html pages. Currently the only value for the OutputManager plugin, so it's
-    selected by default.
-
-    Instantiates :class:`HTMLPodOutputManager` objects to handle processing the
-    output of each POD.
-    """
-    _PodOutputManagerClass = HTMLPodOutputManager
-    _html_file_name = 'index.html'
-
-    def __init__(self, case, config):
-        try:
-            self.make_variab_tar = config['make_variab_tar']
-            self.dry_run = config['dry_run']
-            self.overwrite = config['overwrite']
-            self.file_overwrite = self.overwrite # overwrite both config and .tar
-        except KeyError as exc:
-            case.log.exception("Caught %r", exc)
-        self.CODE_ROOT = case.code_root
-        self.WK_DIR = case.MODEL_WK_DIR       # abbreviate
-        self.OUT_DIR = case.MODEL_OUT_DIR     # abbreviate
-        self.obj = case
-
-    @property
-    def _tarball_file_path(self):
-        paths = util.PathManager()
-        assert hasattr(self, 'WK_DIR')
-        file_name = self.WK_DIR + '.tar'
-        return os.path.join(paths.OUTPUT_DIR, file_name)
-
-    def append_result_link(self, pod):
-        """Update the top level index.html page with a link to *pod*'s results.
-
-        This simply appends one of two html fragments to index.html:
-        ``src/html/pod_result_snippet.html`` if *pod* completed successfully,
-        or ``src/html/pod_error_snippet.html`` if an exception was raised during
-        *pod*'s setup or execution.
-        """
-        template_d = html_templating_dict(pod)
-        # add a warning banner if needed
-        assert(hasattr(pod, '_banner_log'))
-        banner_str = pod._banner_log.buffer_contents()
-        if banner_str:
-            banner_str = banner_str.replace('\n', '<br>\n')
-            src = self.html_src_file('warning_snippet.html')
-            template_d['MDTF_WARNING_BANNER_TEXT'] = banner_str
-            util.append_html_template(src, self.CASE_TEMP_HTML, template_d)
-
-        # put in the link to results
-        if pod.failed:
-            # report error
-            src = self.html_src_file('pod_error_snippet.html')
-            # template_d['error_text'] = pod.format_log(children=True)
-        else:
-            # normal exit
-            src = self.html_src_file('pod_result_snippet.html')
-        util.append_html_template(src, self.CASE_TEMP_HTML, template_d)
-
-    def verify_pod_links(self, pod):
-        """Check for missing files linked to from POD's html page.
-
-        See documentation for :class:`~src.verify_links.LinkVerifier`. This method
-        calls :class:`~src.verify_links.LinkVerifier` to check existence of all
-        files linked to from the POD's own top-level html page (after templating).
-        If any files are missing, an error message listing them is written to
-        the run's ``index.html`` page (located in ``src/html/pod_missing_snippet.html``).
-        """
-        pod.log.info('Checking linked output files for %s.', pod.full_name)
-        verifier = verify_links.LinkVerifier(
-            self.POD_HTML(pod),  # root html file to start search at
-            self.WK_DIR,         # root directory to resolve relative paths
-            verbose=False,
-            log=pod.log
-        )
-        missing_out = verifier.verify_pod_links(pod.name)
-        if missing_out:
-            pod.deactivate(
-                util.MDTFFileNotFoundError(f'Missing {len(missing_out)} files.')
-            )
-        else:
-            pod.log.info('\tNo files are missing.')
-
-    def make_html(self, cleanup=True):
-        """Add header and footer to the temporary output file at CASE_TEMP_HTML.
-        """
-        dest = os.path.join(self.WK_DIR, self._html_file_name)
-        if os.path.isfile(dest):
-            self.obj.log.warning("%s: '%s' exists, deleting.",
-                                 self._html_file_name, self.obj.name)
-            os.remove(dest)
-
-        template_dict = self.obj.env_vars.copy()
-        template_dict['DATE_TIME'] = \
-            datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
-        util.append_html_template(
-            self.html_src_file('mdtf_header.html'), dest, template_dict
-        )
-        util.append_html_template(self.CASE_TEMP_HTML, dest, {})
-        util.append_html_template(
-            self.html_src_file('mdtf_footer.html'), dest, template_dict
-        )
-        if cleanup:
-            os.remove(self.CASE_TEMP_HTML)
-        shutil.copy2(self.html_src_file('mdtf_diag_banner.png'), self.WK_DIR)
-
-    def backup_config_files(self, config):
-        """Record user input configuration in a file named ``config_save.json``
-        for rerunning.
-        """
-        for config_tup in config._configs.values():
-            if config_tup.backup_filename is None:
-                continue
-            out_file = os.path.join(self.WK_DIR, config_tup.backup_filename)
-            if not self.file_overwrite:
-                out_file, _ = util.bump_version(out_file)
-            elif os.path.exists(out_file):
-                self.obj.log.info("%s: Overwriting '%s'.",
-                                  self.obj.full_name, out_file)
-            util.write_json(config_tup.contents, out_file, log=self.obj.log)
-
-    def make_tar_file(self):
-        """Make tar file of web/bitmap output.
-        """
-        out_path = self._tarball_file_path
-        if not self.file_overwrite:
-            out_path, _ = util.bump_version(out_path)
-            self.obj.log.info("%s: Creating '%s'.", self.obj.full_name, out_path)
-        elif os.path.exists(out_path):
-            self.obj.log.info("%s: Overwriting '%s'.", self.obj.full_name, out_path)
-        tar_flags = [f"--exclude=.{s}" for s in ('netCDF','nc','ps','PS','eps')]
-        tar_flags = ' '.join(tar_flags)
-        util.run_shell_command(
-            f'tar {tar_flags} -czf {out_path} -C {self.WK_DIR} .',
-            dry_run = self.dry_run
-        )
-        return out_path
-
-    def copy_to_output(self):
-        """Copy all files to the user-specified output directory (``$OUTPUT_DIR``).
-        """
-        if self.WK_DIR == self.OUT_DIR:
-            return # no copying needed
-        self.obj.log.debug("%s: Copy '%s' to '%s'.", self.obj.full_name,
-                           self.WK_DIR, self.OUT_DIR)
-        try:
-            if os.path.exists(self.OUT_DIR):
-                if not self.overwrite:
-                    self.obj.log.error("%s: '%s' exists, overwriting.",
-                                       self.obj.full_name, self.OUT_DIR)
-                shutil.rmtree(self.OUT_DIR)
-        except Exception:
-            raise
-        shutil.move(self.WK_DIR, self.OUT_DIR)
-
-    def make_output(self):
-        """Top-level method for doing all output activity post-init. Spun into a
-        separate method to make subclassing easier.
-        """
-        # create empty text file for PODs to append to; equivalent of 'touch'
-        open(self.CASE_TEMP_HTML, 'w').close()
-        for pod in self.obj.iter_children():
-            try:
-                pod_output = self._PodOutputManagerClass(pod, self)
-                pod_output.make_output()
-                if not pod.failed:
-                    self.verify_pod_links(pod)
-            except Exception as exc:
-                pod.deactivate(exc)
-                continue
-        for pod in self.obj.iter_children():
-            try:
-                self.append_result_link(pod)
-            except Exception as exc:
-                # won't go into the html output, but will be present in the
-                # summary for the case
-                pod.deactivate(exc)
-                continue
-            pod.close_log_file(log=True)
-            if not pod.failed:
-                pod.status = util.ObjectStatus.SUCCEEDED
-
-        self.make_html()
-        self.backup_config_files()
-        self.write_data_log_file()
-        if self.make_variab_tar:
-            _ = self.make_tar_file()
-        self.copy_to_output()
-        if not self.obj.failed \
-                and not any(p.failed for p in self.obj.iter_children()):
-            self.obj.status = util.ObjectStatus.SUCCEEDED
-
-
-class MultirunHTMLOutputManager(HTMLOutputManager,
-                                AbstractOutputManager,
-                                HTMLSourceFileMixin):
+class HTMLOutputManager(AbstractOutputManager,
+                        HTMLSourceFileMixin):
     """OutputManager that collects the output of all PODs run in multirun mode
     as html pages.
 
@@ -477,10 +283,17 @@ class MultirunHTMLOutputManager(HTMLOutputManager,
         except KeyError as exc:
             self.log.exception("Caught %r", exc)
 
-        self.CODE_ROOT = pod._parent.code_root
+        self.CODE_ROOT = config.CODE_ROOT
         self.WK_DIR = pod.POD_WK_DIR       # abbreviate
         self.OUT_DIR = pod.POD_OUT_DIR     # abbreviate
         self.obj = pod
+
+    @property
+    def _tarball_file_path(self):
+            paths = util.PathManager()
+            assert hasattr(self, 'WK_DIR')
+            file_name = self.WK_DIR + '.tar'
+            return os.path.join(paths.OUTPUT_DIR, file_name)
 
     def append_result_link(self, pod):
         """Update the top level index.html page with a link to *pod*'s results.
@@ -543,6 +356,57 @@ class MultirunHTMLOutputManager(HTMLOutputManager,
                 and not any(p.failed for p in self.obj.iter_children()):
             self.obj.status = util.ObjectStatus.SUCCEEDED
 
+    def generate_html_file_case_loop(self, output_file_name: str, case_info: dict):
+        """generate_html_file: write the case information into
+        the html template
+
+        Arguments: f (file handle)
+                   case_dict (nested dict  [case1, [casename,firstyr,lastyr],
+                                            case2, [ ... ], ..., caseN, [ ... ]]
+
+        Note: safe_substitute could be used; it leaves unmodified anything that doesn't have a match (instead of crashing)
+        Note: any other case info in the dict can be replaced, eg:
+        case_template = Template("<TD style='width: 200px' align=center><A href=model/block_freq_anncycle.$CASENAME.png>$CASENAME ($FIRSTYR-$LASTYR)</A>")
+
+        """
+        from string import Template
+
+        case_template = Template(pod_plot_html_file)
+        for case_name, case_settings in case_info:
+            html_template = case_template.substitute(case_settings)
+            output_file_name.write(html_template)
+
+        # finalize the figure table, start the case settings table
+        html_template = """
+        </TABLE>
+        </p>
+        </p><b> Case settings</b>
+        <TABLE>
+
+        """
+        output_file_name.write(html_template)
+
+        # write the settings per case. First header.
+        #           This prints the whole thing    html_template = str(case_dict)
+
+        case_template = Template("<TR><TD style='width: 100px' align=center><b>$CASENAME")
+        settings_template = Template("<TD style='width: 100px' align=center>$FIRSTYR - $LASTYR ")
+
+        for case_name, case_settings in case_info:
+            html_template = case_template.safe_substitute(case_settings)
+            output_file_name.write(html_template)
+
+            html_template = settings_template.safe_substitute(case_settings)
+            output_file_name.write(html_template)
+
+        html_template = """
+        </TABLE>
+        </p>
+        <TABLE>
+        <TR><TH align=left>POD Settings
+        """
+        output_file_name.write(html_template)
+
     def make_html(self, cleanup=True):
         """Add header and footer to the temporary output file at CASE_TEMP_HTML.
         """
@@ -567,3 +431,75 @@ class MultirunHTMLOutputManager(HTMLOutputManager,
             os.remove(self.CASE_TEMP_HTML)
         shutil.copy2(self.html_src_file('mdtf_diag_banner.png'), self.WK_DIR)
 
+    def backup_config_files(self, config):
+        """Record user input configuration in a file named ``config_save.json``
+        for rerunning.
+        """
+        for config_tup in config._configs.values():
+            if config_tup.backup_filename is None:
+                continue
+            out_file = os.path.join(self.WK_DIR, config_tup.backup_filename)
+            if not self.file_overwrite:
+                out_file, _ = util.bump_version(out_file)
+            elif os.path.exists(out_file):
+                self.obj.log.info("%s: Overwriting '%s'.",
+                                  self.obj.full_name, out_file)
+            util.write_json(config_tup.contents, out_file, log=self.obj.log)
+
+    def make_tar_file(self):
+        """Make tar file of web/bitmap output.
+        """
+        out_path = self._tarball_file_path
+        if not self.file_overwrite:
+            out_path, _ = util.bump_version(out_path)
+            self.obj.log.info("%s: Creating '%s'.", self.obj.full_name, out_path)
+        elif os.path.exists(out_path):
+            self.obj.log.info("%s: Overwriting '%s'.", self.obj.full_name, out_path)
+        tar_flags = [f"--exclude=.{s}" for s in ('netCDF','nc','ps','PS','eps')]
+        tar_flags = ' '.join(tar_flags)
+        util.run_shell_command(
+            f'tar {tar_flags} -czf {out_path} -C {self.WK_DIR} .',
+            dry_run=self.dry_run
+        )
+        return out_path
+
+    def copy_to_output(self):
+        """Copy all files to the user-specified output directory (``$OUTPUT_DIR``).
+        """
+        if self.WK_DIR == self.OUT_DIR:
+            return # no copying needed
+        self.obj.log.debug("%s: Copy '%s' to '%s'.", self.obj.full_name,
+                           self.WK_DIR, self.OUT_DIR)
+        try:
+            if os.path.exists(self.OUT_DIR):
+                if not self.overwrite:
+                    self.obj.log.error("%s: '%s' exists, overwriting.",
+                                       self.obj.full_name, self.OUT_DIR)
+                shutil.rmtree(self.OUT_DIR)
+        except Exception:
+            raise
+        shutil.move(self.WK_DIR, self.OUT_DIR)
+
+    def verify_pod_links(self, pod):
+        """Check for missing files linked to from POD's html page.
+
+        See documentation for :class:`~src.verify_links.LinkVerifier`. This method
+        calls :class:`~src.verify_links.LinkVerifier` to check existence of all
+        files linked to from the POD's own top-level html page (after templating).
+        If any files are missing, an error message listing them is written to
+        the run's ``index.html`` page (located in ``src/html/pod_missing_snippet.html``).
+        """
+        pod.log.info('Checking linked output files for %s.', pod.full_name)
+        verifier = verify_links.LinkVerifier(
+            self.POD_HTML(pod),  # root html file to start search at
+            self.WK_DIR,         # root directory to resolve relative paths
+            verbose=False,
+            log=pod.log
+        )
+        missing_out = verifier.verify_pod_links(pod.name)
+        if missing_out:
+            pod.deactivate(
+                util.MDTFFileNotFoundError(f'Missing {len(missing_out)} files.')
+            )
+        else:
+            pod.log.info('\tNo files are missing.')

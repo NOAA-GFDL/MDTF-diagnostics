@@ -8,7 +8,6 @@
 # created during installation.
 
 import sys
-from enum import Enum
 
 # do version check before anything else
 if sys.version_info.major != 3 or sys.version_info.minor < 10:
@@ -92,7 +91,6 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     pods = dict.fromkeys(ctx.config.pod_list, [])
     # configure pod object(s)
     for pod_name in ctx.config.pod_list:
-
         pods[pod_name] = pod_setup.PodObject(pod_name, ctx.config)
         pods[pod_name].setup_pod(ctx.config, model_paths)
         # run custom scripts on dataset
@@ -104,14 +102,19 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
 
     if not any(p.failed for p in pods.values()):
         log.log.info("### %s: running pods '%s'.", [p for p in pods.keys()])
-        run_mgr = environment_manager.SubprocessRuntimeManager(pods,
-                                                               environment_manager.CondaEnvironmentManager)
+        run_mgr = environment_manager.SubprocessRuntimeManager(pods, ctx.config, log)
         run_mgr.setup()
-        run_mgr.run()
+        run_mgr.run(log)
     else:
         for p in pods.values:
             if any(p.failed):
                 log.log.info("Data request for pod '%s' failed; skipping  execution.", p)
+
+    for p in pods.values():
+        out_mgr = output_manager.OutputManager(p)
+        out_mgr.make_output(p)
+    tempdirs = util.TempDirManager()
+    tempdirs.cleanup()
 
     # close the main log file
     log._log_handler.close()

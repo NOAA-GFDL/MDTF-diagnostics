@@ -457,6 +457,7 @@ class VarlistEntry(VarlistEntryMixin, VarlistEntryBase, util.MDTFObjectBase, dat
     )
 
     _deactivation_log_level = logging.INFO  # default log level for failure
+    associated_files: dict
 
     @property
     def env_vars(self):

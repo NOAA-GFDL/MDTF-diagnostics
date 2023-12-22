@@ -442,11 +442,18 @@ class AssociatedVariablesFunction(PreprocessorFunctionBase):
     def execute(self, var, ds, **kwargs):
         casename = ""
         pod_wkdir = ""
+        query_associated_files = False
         for k, v in kwargs.items():
             if 'work_dir' in k:
                 pod_wkdir = v
             elif 'case_name' in k:
                 casename = v
+            elif 'query_associated_files' in k:
+                query_associated_files = v
+
+        if not query_associated_files or not var.associated_files:
+            return ds
+
         try:
 
             # iterate over active associated files and get current local paths
@@ -1073,7 +1080,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         for case_name, ds in catalog_subset.items():
             for var in case_list[case_name].varlist.iter_vars():
-                var.log.info("Writing %d mb to %s", ds[var.name].variable.nbytes / (1024 * 1024), var.dest_path)
+                # var.log.info("Writing %d mb to %s", ds[var.name].variable.nbytes / (1024 * 1024), var.dest_path)
                 try:
                     ds = self.clean_output_attrs(var, ds)
                     ds = self.log_history_attr(var, ds)
@@ -1085,7 +1092,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 except Exception as exc:
                     raise util.chain_exc(exc, f"writing data for {var.full_name}.",
                                          util.DataPreprocessEvent)
-    #   del ds  # shouldn't be necessary
+            del ds  # shouldn't be necessary
 
     def parse_ds(self,
                  var: varlist_util.VarlistEntry,

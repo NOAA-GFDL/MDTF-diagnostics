@@ -26,8 +26,8 @@ This is the "beta test" version, used for testing changes before releasing them 
 
 Developers may download the code from GitHub as described in :ref:`ref-download`, but we strongly recommend that you clone the repo in order to keep up with changes in the main branch, and to simplify submitting pull requests with your POD's code. Instructions for how to do this are given in :doc:`dev_git_intro`.
 
-Installing dependencies via conda
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Installing dependencies with Conda
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Regardless of development language, we strongly recommend that developers use conda to manage their language and library versions. Note that Conda is not Python-specific, but allows coexisting versioned environments of most scripting languages, including, `R <https://anaconda.org/conda-forge/r-base>`__, `NCL <https://anaconda.org/conda-forge/ncl>`__, `Ruby <https://anaconda.org/conda-forge/ruby>`__, `PyFerret <https://anaconda.org/conda-forge/pyferret>`__, and more.
 
@@ -41,8 +41,8 @@ If you are using Anaconda or miniconda to manage the conda environments, run:
    % ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
 
 
-Installing dependencies via Micromamba
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Installing dependencies with Micromamba
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Micromamba is a lightweight version of Anaconda. It is required to install the base and python3_base conda enviroments on macOS machines with Apple M-series chips.
 Installation instructions are available in the `Micromamba Documentation <https://mamba.readthedocs.io/en/latest/micromamba-installation.html>`__,
 Once Micromamba is installed on your system, run the following to install all conda environments if you are NOT using an
@@ -102,7 +102,7 @@ If your POD requires languages that aren't available in an existing environment 
 
 - We recommend specifying versions as little as possible, out of consideration for end-users: if each POD specifies exact versions of all its dependencies, conda will need to install multiple versions of the same libraries. In general, specifying a version should only be needed in cases where backward compatibility was broken (e.g., Python 2 vs. 3) or a bug affecting your POD was fixed (e.g., postscript font rendering on Mac OS with older NCL). Conda installs the latest version of each package that's consistent with all other dependencies.
 
-Framework interaction with conda environments
+Framework interaction with Conda environments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As  described in :ref:`ref-execute`, when you run the ``mdtf`` executable, among other things, it reads ``pod_list`` in ``default_tests.jsonc`` and executes POD codes accordingly. For a POD included in the list (referred to as $POD_NAME):

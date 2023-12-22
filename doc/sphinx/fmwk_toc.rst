@@ -43,14 +43,12 @@ Main framework modules
 ^^^^^^^^^^^^^^^^^^^^^^
 
 .. autosummary::
-
-   src.core
-   src.data_manager
+   src.pod_setup
    src.data_sources
-   src.diagnostic
    src.environment_manager
-   src.preprocessor
+   src.translation
    src.output_manager
+   src.preprocessor
 
 Supporting framework modules
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -62,6 +60,7 @@ Supporting framework modules
    src.data_model
    src.mdtf_info
    src.units
+   src.varlist_util
    src.verify_links
    src.xr_parser
 
@@ -78,14 +77,6 @@ The ``src.util`` subpackage provides non-MDTF-specific utility functionality use
    src.util.exceptions
    src.util.filesystem
    src.util.logs
+   src.util.path_utils
    src.util.processes
 
-Currently unused modules
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-The following modules implement features moved to, or intended for, future releases. They can be removed from the current production branch with no effect.
-
-.. autosummary::
-
-   src.conflict_resolution
-   src.install

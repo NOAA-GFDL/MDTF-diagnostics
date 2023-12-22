@@ -9,10 +9,13 @@ import glob
 import json
 import re
 import shutil
+import signal
 import string
+import tempfile
 from . import basic
 from . import exceptions
-import yaml
+from . import signal_logger
+from . import Singleton
 
 import logging
 _log = logging.getLogger(__name__)
@@ -405,6 +408,7 @@ def find_json(dir_, file_name, exit_if_missing=True, log=_log):
                 file_name, dir_)
             return dict()
 
+
 def write_json(struct, file_path, sort_keys=False, log=_log):
     """Serializes *struct* to a JSON file at *file_path*.
 
@@ -439,6 +443,7 @@ def pretty_print_json(struct, sort_keys=False):
 # HTML TEMPLATING
 # ---------------------------------------------------------
 
+
 class _DoubleBraceTemplate(string.Template):
     """Private class used by :func:`~util.append_html_template` to do
     string templating with double curly brackets as delimiters, since single
@@ -465,6 +470,7 @@ class _DoubleBraceTemplate(string.Template):
         (?P<invalid>)
         )
     """
+
 
 def append_html_template(template_file, target_file, template_dict={},
     create=True, append=True):
@@ -516,3 +522,53 @@ def append_html_template(template_file, target_file, template_dict={},
             mode = 'w'
     with io.open(target_file, mode, encoding='utf-8') as f:
         f.write(html_str)
+
+
+class TempDirManager(Singleton):
+    _prefix = 'MDTF_temp_'
+
+    def __init__(self, temp_root=None, unittest=False):
+        self._unittest = unittest
+        if not temp_root:
+            temp_root = tempfile.gettempdir()
+        if not self._unittest:
+            assert os.path.isdir(temp_root)
+        self._root = temp_root
+        self._dirs = []
+
+        # delete temp files if we're killed
+        signal.signal(signal.SIGTERM, self.tempdir_cleanup_handler)
+        signal.signal(signal.SIGINT, self.tempdir_cleanup_handler)
+
+    def make_tempdir(self, hash_obj=None):
+        if hash_obj is None:
+            new_dir = tempfile.mkdtemp(prefix=self._prefix, dir=self._root)
+        elif isinstance(hash_obj, str):
+            new_dir = os.path.join(self._root, self._prefix+hash_obj)
+        else:
+            # nicer-looking hash representation
+            hash_ = hex(hash(hash_obj))[2:]
+            assert isinstance(hash_, str)
+            new_dir = os.path.join(self._root, self._prefix+hash_)
+        if not os.path.isdir(new_dir):
+            os.makedirs(new_dir)
+        assert new_dir not in self._dirs
+        self._dirs.append(new_dir)
+        return new_dir
+
+    def rm_tempdir(self, path):
+        assert path in self._dirs
+        self._dirs.remove(path)
+        _log.debug("Cleaning up temp dir %s", path)
+        shutil.rmtree(path)
+
+    def cleanup(self, config):
+        if not config.get('keep_temp', False):
+            for d in self._dirs:
+                self.rm_tempdir(d)
+
+    def tempdir_cleanup_handler(self, signum=None, frame=None):
+        # delete temp files
+        signal_logger(self.__class__.__name__, signum, frame, log=_log)
+        self.cleanup()
+

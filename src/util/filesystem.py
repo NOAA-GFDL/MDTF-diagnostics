@@ -473,7 +473,7 @@ class _DoubleBraceTemplate(string.Template):
 
 
 def append_html_template(template_file, target_file, template_dict={},
-    create=True, append=True):
+                         create=True, append=True):
     """Perform substitutions on *template_file* and write result to *target_file*.
 
     Variable substitutions are done with custom
@@ -527,7 +527,7 @@ def append_html_template(template_file, target_file, template_dict={},
 class TempDirManager(Singleton):
     _prefix = 'MDTF_temp_'
 
-    def __init__(self, temp_root=None, unittest=False):
+    def __init__(self, config, temp_root=None, unittest=False):
         self._unittest = unittest
         if not temp_root:
             temp_root = tempfile.gettempdir()
@@ -537,8 +537,8 @@ class TempDirManager(Singleton):
         self._dirs = []
 
         # delete temp files if we're killed
-        signal.signal(signal.SIGTERM, self.tempdir_cleanup_handler)
-        signal.signal(signal.SIGINT, self.tempdir_cleanup_handler)
+        signal.signal(signal.SIGTERM, self.tempdir_cleanup_handler(config))
+        signal.signal(signal.SIGINT, self.tempdir_cleanup_handler(config))
 
     def make_tempdir(self, hash_obj=None):
         if hash_obj is None:
@@ -567,8 +567,7 @@ class TempDirManager(Singleton):
             for d in self._dirs:
                 self.rm_tempdir(d)
 
-    def tempdir_cleanup_handler(self, signum=None, frame=None):
+    def tempdir_cleanup_handler(self, config, signum=None, frame=None):
         # delete temp files
         signal_logger(self.__class__.__name__, signum, frame, log=_log)
-        self.cleanup()
-
+        self.cleanup(config)

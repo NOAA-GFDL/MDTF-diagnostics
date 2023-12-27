@@ -120,6 +120,7 @@ class MDTFHeaderFileHandler(HeaderFileHandler):
     """:py:class:`~logging.FileHandler` which adds a header to log files with
     system information, git repo status etc. provided by :func:`mdtf_log_header`.
     """
+
     def _log_header(self):
         return mdtf_log_header("MDTF PACKAGE LOG")
 
@@ -331,6 +332,7 @@ class MDTFObjectLogger(logging.Logger):
         super(MDTFObjectLogger, self).__init__(name)
         self._exceptions = []
         self._tracebacks = []
+        self._log_buffer = io.StringIO()
 
     def log(self, level, msg, *args, **kw):
         # add "tags" attribute to all emitted LogRecords
@@ -434,9 +436,7 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
         """
         if fmt is None:
             fmt = '%(levelname)s: %(message)s'
-
         assert hasattr(self, 'log'), 'class is missing required `log` attribute'
-
         if log_dir is not None:
             self._log_handler = MDTFHeaderFileHandler(
                 filename=os.path.join(log_dir, f"{self.name}.log"),
@@ -477,11 +477,11 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
         # list exceptions before anything else:
         if self.log.has_exceptions:
             exc_strs = [''.join(exc.format()) for exc in self.log._tracebacks]
-            exc_strs = [f"*** caught exception (#{i+1}):\n{exc}" \
-                for i, exc in enumerate(exc_strs)]
+            exc_strs = [f"*** caught exception (#{i+1}):\n{exc}"
+                        for i, exc in enumerate(exc_strs)]
             str_ += "".join(exc_strs) + '\n'
         # then log contents:
-        str_ += self._log_handler.buffer_contents().rstrip()
+        #str_ += self._log_handler.buffer_contents().rstrip()
         # then contents of children:
         if children:
             str_ += '\n'
@@ -539,7 +539,6 @@ class PODLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixin):
     """Mixin providing per-object logging for :class:`~diagnostic.Diagnostic`
     (POD objects.)
     """
-    pass
 
 
 class CaseLoggerMixin(_CaseAndPODHandlerMixin, MDTFObjectLoggerMixin):

@@ -72,7 +72,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         # Initialize the POD path object and define the POD output paths
         self.paths = util.PodPathManager(runtime_config,
                                          env=self.pod_env_vars,
-                                         new_work_dir=False)
+                                         new_work_dir=True)
         self.paths.setup_pod_paths(self.name)
         util.MDTFObjectBase.__init__(self, name=self.name, _parent=None)
 
@@ -285,7 +285,9 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             # instantiate the data_source class instance for the specified convention
             self.cases[case_name] = data_sources.data_source[case_dict.convention.upper() +
                                                              "DataSource"](case_name,
-                                                                           self.paths, parent=self)
+                                                                           case_dict,
+                                                                           self.paths,
+                                                                           parent=self)
             self.cases[case_name].set_date_range(case_dict.startdate, case_dict.enddate)
             self.cases[case_name].read_varlist(self)
             # Translate the data if desired and the pod convention does not match the case convention

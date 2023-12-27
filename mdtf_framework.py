@@ -111,7 +111,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
                 log.log.info("Data request for pod '%s' failed; skipping  execution.", p)
 
     for p in pods.values():
-        out_mgr = output_manager.OutputManager(p)
+        out_mgr = output_manager.HTMLOutputManager(p, ctx.config)
         out_mgr.make_output(p)
     tempdirs = util.TempDirManager()
     tempdirs.cleanup()

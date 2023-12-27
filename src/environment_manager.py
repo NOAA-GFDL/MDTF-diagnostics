@@ -26,12 +26,6 @@ class AbstractEnvironmentManager(abc.ABC):
     def __init__(self, log=_log):
         self.log = log  # log to case's logger
 
-    def setup(self):
-        """Performs any initialization tasks common to the EnvironmentManager
-        as a whole (called once.)
-        """
-        pass
-
     @abc.abstractmethod
     def create_environment(self, env_name):
         """Install or otherwise create the POD runtime environment identified by
@@ -227,9 +221,6 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
                 return self.env_name_prefix + 'R_base'
             elif 'ncl' in langs:
                 return self.env_name_prefix + 'NCL_base'
-            elif 'python2' in langs:
-                raise NotImplementedError('Python 2 not supported for new PODs.')
-                # return self.env_name_prefix + 'python2_base'
             elif 'python3' in langs:
                 return self.env_name_prefix + 'python3_base'
             else:
@@ -328,7 +319,7 @@ class SubprocessRuntimePODWrapper(object):
                           self.pod.full_name, self.pod.program, self.env)
 
         self.pod.log.debug("%s", self.pod.format_log(children=True))
-        self.pod._log_handler.reset_buffer()
+    #    self.pod._log_handler.reset_buffer()
         self.write_case_env_file(self.pod.cases)
         self.setup_env_vars()
 
@@ -342,7 +333,7 @@ class SubprocessRuntimePODWrapper(object):
             else:
                 return str(x)
 
-        skip_items = ['FIRSTYR', 'LASTYR', 'CASENAME']  # Omit per-case environment variables
+        skip_items = ['enddate', 'startdate', 'casename']  # Omit per-case environment variables
         self.env_vars = {k: _envvar_format(v)
                          for k, v in self.pod.pod_env_vars.items() if k not in skip_items}
 
@@ -352,7 +343,7 @@ class SubprocessRuntimePODWrapper(object):
         self.pod.log_file.write("\n\n")
 
     def write_case_env_file(self, case_list):
-        out_file = os.path.join(self.pod.POD_WK_DIR, 'case_info.yaml')
+        out_file = os.path.join(self.pod.paths.POD_WORK_DIR, 'case_info.yaml')
         self.pod.pod_env_vars["case_env_file"] = out_file
         case_info = dict()
 
@@ -361,7 +352,7 @@ class SubprocessRuntimePODWrapper(object):
                                     for k, v in case.env_vars.items()}
             
             # append case environment vars
-            for v in case.iter_vars_only(case, active=True):
+            for v in case.iter_vars_only(active=True):
                 for kk, vv in v.env_vars.items():
                     if v.name.lower() + '_var' in kk.lower():
                         case_info[case_name][kk] = v.name
@@ -404,10 +395,10 @@ class SubprocessRuntimePODWrapper(object):
             (:py:obj:`str`): Command-line invocation to validate the POD's
                 runtime environment.
         """
-        paths = util.PathManager()
+        paths = self.pod.paths
         command_path = os.path.join(paths.CODE_ROOT,
                                     'src', 'validate_environment.sh')
-        reqs = self.pod.runtime_requirements # abbreviate
+        reqs = self.pod.runtime_requirements
         command = [
             command_path,
             ' -v',
@@ -495,7 +486,6 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         yield from filter((lambda p: p.pod.active), self.pods)
 
     def setup(self):
-        self.env_mgr.setup()
         for p in self.iter_active_pods():
             p.env = self.env_mgr.get_pod_env(p.pod)
         envs = set([p.env for p in self.pods if p.env])
@@ -504,8 +494,6 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
 
     def spawn_subprocess(self, p, env_vars_base):
         run_cmds = p.validate_commands() + p.run_commands()
-        if self.test_mode:
-            run_cmds = ['echo "TEST MODE: call {}"'.format('; '.join(run_cmds))]
         commands = self.env_mgr.activate_env_commands(p.env) \
             + run_cmds \
             + self.env_mgr.deactivate_env_commands(p.env)
@@ -513,7 +501,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         # '&&' so we abort if any command in the sequence fails.
         commands = ' && '.join([s for s in commands if s])
 
-        assert os.path.isdir(p.pod.POD_WK_DIR)
+        assert os.path.isdir(p.pod.paths.POD_WORK_DIR)
         env_vars = env_vars_base.copy()
         env_vars.update(p.env_vars)
         # Need to run bash explicitly because 'conda activate' sources
@@ -521,7 +509,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         return subprocess.Popen(
             commands,
             shell=True, executable=self.bash_exec,
-            env=env_vars, cwd=p.pod.POD_WK_DIR,
+            env=env_vars, cwd=p.pod.paths.POD_WORK_DIR,
             stdout=p.pod.log_file, stderr=p.pod.log_file,
             universal_newlines=True, bufsize=1
         )
@@ -576,11 +564,9 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         by receiving  ``SIGINT`` or ``SIGTERM``.
         """
         # try to clean up everything
-        util.signal_logger(self.__class__.__name__, signum, frame, log=self.case.log)
         for p in self.pods:
             util.signal_logger(self.__class__.__name__, signum, frame, log=p.pod.log)
             p.tear_down()
             p.pod.close_log_file(log=True)
         self.tear_down()
-        self.case.close_log_file()
         util.exit_handler(code=1)

@@ -894,6 +894,16 @@ class DMDataSet(_DMDimensionsMixin):
         """
         yield from itertools.chain(self.vars, self.aux_coords)
 
+    def iter_vars_only(self, active=None):
+        """Generator iterating over variables
+        """
+        iter_ = yield from itertools.chain(self.vars)
+        if active:
+            iter_ = filter((lambda x: x.status == util.ObjectStatus.ACTIVE), self.vars)
+            yield from list(iter_)
+        else:
+            return iter_
+
     def _classify(self, v):
         assert isinstance(v, DMDependentVariable)
         if isinstance(v, DMVariable):

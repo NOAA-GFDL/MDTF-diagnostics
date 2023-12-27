@@ -2,7 +2,6 @@
 the user via ``--data_manager``; see :doc:`ref_data_sources` and
 :doc:`fmwk_datasources`.
 """
-import abc
 import os
 import io
 import dataclasses
@@ -83,8 +82,10 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     date_range: util.DateRange = dataclasses.field(init=False)
     varlist: varlist_util.Varlist = None
     log_file: io.IOBase = dataclasses.field(default=None, init=False)
+    env_vars: util.WormDict()
 
     def __init__(self, case_name: str,
+                 case_dict: dict,
                  path_obj: util.PodPathManager,
                  parent):
         # _id = util.MDTF_ID()        # attrs inherited from util.logs.MDTFObjectBase
@@ -97,13 +98,20 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         util.MDTFObjectBase.__init__(self, name=case_name, _parent=parent)
         # set up log (CaseLoggerMixin)
         self.init_log(log_dir=path_obj.POD_WORK_DIR)
-
+        # configure case-specific env vars
+        self.env_vars = util.WormDict.from_struct({
+            k: case_dict[k] for k in ("startdate", "enddate", "convention")
+        })
+        self.env_vars.update({"case_name": case_name})
 
     @property
     def _children(self):
         """Iterable of the multirun varlist that is associated with the data source object
         """
         yield from self.varlist.iter_vars()
+
+    def iter_vars_only(self, active=None):
+        yield from self.varlist.iter_vars_only(active=active)
 
     def read_varlist(self, parent):
         self.varlist=varlist_util.Varlist.from_struct(parent)
@@ -118,61 +126,6 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         for v in self.varlist.iter_vars():
             self.varlist.setup_var(model_paths, case_name, v, to_convention, self.date_range)
             print(v)
-
-
-    def query_dataset(self, var):
-        """Find all rows of the catalog matching relevant attributes of the
-            DataSource and of the variable (:class:`~diagnostic.VarlistEntry`).
-            Group these by experiments, and for each experiment make the corresponding
-            :class:`DataFrameDataKey` and store it in var's *data* attribute.
-            Specifically, the *data* attribute is a dict mapping experiments
-            (labeled by experiment_keys) to data found for that variable
-            by this query (labeled by the DataKeys).
-            Finally, verify that only a single file was found for each case.
-        """
-        query_df = self._query_catalog(var)
-        # assign set of sets of catalog row indices to var's data attr
-        # filter out empty entries = queries that failed.
-        expt_groups = query_df.groupby(
-            by=(lambda idx: self.col_spec.expt_key(query_df, idx))
-        )
-        var.data = util.ConsistentDict()
-        for expt_key, group in expt_groups:
-            group = self.check_group_daterange(group, expt_key=expt_key, log=var.log)
-            if group.empty:
-                var.log.debug('Expt_key %s eliminated by _check_group_daterange',
-                              expt_key)
-                continue
-            group = self._query_group_hook(group)
-            if group.empty:
-                var.log.debug('Expt_key %s eliminated by _query_group_hook', expt_key)
-                continue
-            d_key = self.data_key(group, expt_key=expt_key)
-            var.log.debug('Query found <expt_key=%s, %s> for %s',
-                          expt_key, d_key, var.full_name)
-            var.data[expt_key] = d_key
-
-            if not isinstance(var.associated_files, dict):
-                var.associated_files = {}
-
-            # Query for associated files - if the object contains a
-            # `query_associated_fields` method, we call it here. This is currently
-            # implemented for the gfdl `GFDL_GCP_FileDataSourceBase`, but any
-            # class that inherits ` DataframeQueryDataSourceBase` can define this
-            # method to populate the `VarlistEntry.associated_files` attribute.
-            # Otherwise, this attribute is set to an empty dictionary here.
-            if not hasattr(self, "query_associated_files") or not var.associated_files:
-                continue
-            try:
-                var.associated_files[expt_key] = self.query_associated_files(d_key)
-            except Exception as exc:
-                var.log.debug(f"Unable to query associated files: {exc}")
-        for d_key in var.data.values():
-            if len(d_key.value) != 1:
-                self._query_error_handler(
-                    "Query found multiple files when one was expected:",
-                    d_key, log=var.log
-                )
 
 
 # instantiate the class maker so that the convention-specific classes can be instantiated using

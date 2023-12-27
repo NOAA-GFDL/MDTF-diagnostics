@@ -60,13 +60,10 @@ class HTMLSourceFileMixin:
         """Writes \*.data.log file to output containing info on data files used.
         """
         log_file = io.open(
-            os.path.join(self.WK_DIR, self.obj.name+".data.log"),
+            os.path.join(self.WORK_DIR, self.obj.name+".data.log"),
             'w', encoding='utf-8'
         )
-        if isinstance(self, HTMLPodOutputManager) or isinstance(self, MultirunHTMLOutputManager):
-            str_1 = f"POD {self.obj.name}"
-            str_2 = 'this POD'
-        elif isinstance(self, HTMLOutputManager):
+        if isinstance(self, HTMLOutputManager):
             str_1 = f"case {self.obj.name}"
             str_2 = 'PODs'
         else:
@@ -277,22 +274,21 @@ class HTMLOutputManager(AbstractOutputManager,
     def __init__(self, pod, config):
         try:
             self.make_variab_tar = config['make_variab_tar']
-            self.dry_run = config['dry_run']
             self.overwrite = config['overwrite']
             self.file_overwrite = self.overwrite  # overwrite both config and .tar
         except KeyError as exc:
             self.log.exception("Caught %r", exc)
 
         self.CODE_ROOT = config.CODE_ROOT
-        self.WK_DIR = pod.POD_WK_DIR       # abbreviate
-        self.OUT_DIR = pod.POD_OUT_DIR     # abbreviate
+        self.WORK_DIR = pod.paths.POD_WORK_DIR
+        self.OUT_DIR = pod.paths.POD_OUTPUT_DIR
         self.obj = pod
 
     @property
-    def _tarball_file_path(self):
-            paths = util.PathManager()
-            assert hasattr(self, 'WK_DIR')
-            file_name = self.WK_DIR + '.tar'
+    def _tarball_file_path(self, pod):
+            paths = pod.paths
+            assert hasattr(self, 'WORK_DIR')
+            file_name = self.WORK_DIR + '.tar'
             return os.path.join(paths.OUTPUT_DIR, file_name)
 
     def append_result_link(self, pod):

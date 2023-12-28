@@ -303,21 +303,6 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                                                     case_name,
                                                     data_convention)
 
-
-        # ref for dict comparison
-        # https://stackoverflow.com/questions/20578798/python-find-matching-values-in-nested-dictionary
-
-        # cat_subset = self.get_pod_data_subset(runtime_config.CATALOG_PATH, runtime_config.case_list)
-
-        # self.setup_var(v, case_dict.attrs.date_range, case_name)
-
-        # preprocessor will edit case varlist alternates, depending on enabled functions
-        # self is the Mul
-        # self.preprocessor = self._PreprocessorClass(self)
-        # self=MulirunDiagnostic instance, and is passed as data_mgr parm to access
-        # cases
-        # self.preprocessor.edit_request(self)
-
         for case_name in self.cases.keys():
             for v in self.cases[case_name].iter_children():
                 # deactivate failed variables now that alternates are fully specified

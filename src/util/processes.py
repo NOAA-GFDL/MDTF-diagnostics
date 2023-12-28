@@ -11,11 +11,15 @@ from . import exceptions
 import logging
 _log = logging.getLogger(__name__)
 
+
 class ExceptionPropagatingThread(threading.Thread):
     """Class to propagate exceptions raised in a child thread back to the caller
     thread when the child is join()ed. Adapted from
     `<https://stackoverflow.com/a/31614591>`__.
     """
+    ret = None
+    exc = None
+
     def run(self):
         self.ret = None
         self.exc = None
@@ -54,7 +58,7 @@ def poll_command(command, shell=False, env=None):
     return rc
 
 
-def run_command(command, env=None, cwd=None, timeout=0, dry_run=False, log=_log):
+def run_command(command, env=None, cwd=None, timeout=0, log=_log):
     """Subprocess wrapper to facilitate running a single command without starting
     a shell.
 
@@ -89,9 +93,6 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False, log=_log)
     if isinstance(command, str):
         command = shlex.split(command)
     cmd_str = ' '.join(command)
-    if dry_run:
-        log.info('DRY_RUN: call %s', cmd_str)
-        return
     proc = None
     pid = None
     retcode = 1
@@ -129,15 +130,16 @@ def run_command(command, env=None, cwd=None, timeout=0, dry_run=False, log=_log)
         return stdout.splitlines()
 
 
-def run_shell_command(command, env=None, cwd=None, dry_run=False, log=_log):
+def run_shell_command(command, env=None, cwd=None, log=_log):
     """Subprocess wrapper to facilitate running shell commands. See documentation
     for :py:class:`~subprocess.Popen`.
 
     Args:
-        commands (list of str): List of commands to execute.
+        command (list of str): List of commands to execute.
         env (dict): Optional. Environment variables to set.
         cwd (str): Optional. Child processes' working directory. Default is `None`,
             which uses the current working directory.
+        log: log file
 
     Returns:
         List of str containing output that was written to stdout
@@ -158,9 +160,6 @@ def run_shell_command(command, env=None, cwd=None, dry_run=False, log=_log):
 
     if not isinstance(command, str):
         command = ' '.join(command)
-    if dry_run:
-        log.info('DRY_RUN: call %s', command)
-        return
     proc = None
     pid = None
     retcode = 1

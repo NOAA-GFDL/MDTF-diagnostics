@@ -112,7 +112,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
 
     for p in pods.values():
         out_mgr = output_manager.HTMLOutputManager(p, ctx.config)
-        out_mgr.make_output(p)
+        out_mgr.make_output(p, ctx.config)
     tempdirs = util.TempDirManager()
     tempdirs.cleanup()
 

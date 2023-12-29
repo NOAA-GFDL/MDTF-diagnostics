@@ -18,15 +18,16 @@ class AbstractOutputManager(abc.ABC):
     def __init__(self, case): pass
 
 
-def html_templating_dict(pod, config):
+def html_templating_dict(pod) -> dict:
     """Returns the dict of recognized substitutions to perform in html templating
     for *pod*.
     """
-    template = config.global_env_vars.copy()
-    template.update(pod.pod_env_vars)
+    template = pod.pod_env_vars.copy()
     d = {str(k): str(v) for k, v in template.items()}
     for attr in ('name', 'long_name', 'description', 'convention', 'realm'):
-        d[attr] = str(getattr(pod, attr, ""))
+        d[attr] = str(pod.pod_settings.get(attr, ""))
+        if not any(d[attr]):
+            d[attr] = str(getattr(pod, attr, ""))
     return d
 
 
@@ -54,7 +55,7 @@ class HTMLSourceFileMixin:
 
     def POD_HTML(self, pod):
         """Path to *pod*\'s html output file in the working directory."""
-        return os.path.join(pod.POD_WK_DIR, self.pod_html_template_file_name(pod))
+        return os.path.join(pod.paths.POD_WORK_DIR, self.pod_html_template_file_name(pod))
 
     def write_data_log_file(self):
         """Writes \*.data.log file to output containing info on data files used.
@@ -63,10 +64,10 @@ class HTMLSourceFileMixin:
             os.path.join(self.WORK_DIR, self.obj.name+".data.log"),
             'w', encoding='utf-8'
         )
-        if isinstance(self, HTMLPodOutputManager):
+        if isinstance(self, HTMLOutputManager):
             str_1 = f"{self.obj.name} POD"
         else:
-            raise AssertionError("self is not an instance of HTMLPodOutputManager")
+            raise AssertionError("self is not an instance of HTMLOutputManager")
 
         log_file.write(f"# Input model data files used in this run of {str_1}:\n")
         assert hasattr(self.obj, '_in_file_log'), "could not find obj attribute _in_file_log"
@@ -118,7 +119,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
 
         Wraps :func:`~util.append_html_template`. Looks for all
         html files in ``$POD_CODE_DIR``, templates them, and copies them to
-        ``$POD_WK_DIR``, respecting subdirectory structure (see
+        ``$POD_WORK_DIR``, respecting subdirectory structure (see
         :func:`~util.recursive_copy`).
         """
         test_path = os.path.join(
@@ -137,26 +138,26 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             copy_function=(
                 lambda src, dest: util.append_html_template(
                     src, dest, template_dict=template_d, append=False
-            )),
+                )),
             overwrite=True
         )
 
     def convert_pod_figures(self, src_subdir: str, dest_subdir: str):
-        """Convert all vector graphics in ``$POD_WK_DIR/`` *src\_subdir* to .png
+        """Convert all vector graphics in ``$POD_WORK_DIR/`` *src\_subdir* to .png
         files using `ghostscript <https://www.ghostscript.com/>`__ (included in
         the \_MDTF\_base conda environment).
 
         All vector graphics files (identified by extension) in any subdirectory
-        of ``$POD_WK_DIR/`` *src\_subdir* are converted to .png files by running
+        of ``$POD_WORK_DIR/`` *src\_subdir* are converted to .png files by running
         ghostscript in a subprocess. Afterwards, any bitmap files (identified by
-        extension) in any subdirectory of ``$POD_WK_DIR/`` *src\_subdir* are
-        moved to ``$POD_WK_DIR/`` *dest\_subdir*, preserving subdirectories (via
+        extension) in any subdirectory of ``$POD_WORK_DIR/`` *src\_subdir* are
+        moved to ``$POD_WORK_DIR/`` *dest\_subdir*, preserving subdirectories (via
         :func:`~util.recursive_copy`.)
 
         Args:
-            src_subdir: Subdirectory tree of ``$POD_WK_DIR`` to search for vector
+            src_subdir: Subdirectory tree of ``$POD_WORK_DIR`` to search for vector
                 graphics files.
-            dest_subdir: Subdirectory tree of ``$POD_WK_DIR`` to move converted
+            dest_subdir: Subdirectory tree of ``$POD_WOR_DIR`` to move converted
                 bitmap files to.
         """
         # Flags to pass to ghostscript for PS -> PNG conversion (in particular
@@ -214,40 +215,37 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         )
 
     def cleanup_pod_files(self):
-        """Copy and remove remaining files to ``$POD_WK_DIR``.
+        """Copy and remove remaining files to ``$POD_WORK_DIR``.
 
         In order, this 1) copies any bitmap figures in any subdirectory of
-        ``$POD_OBS_DATA`` to ``$POD_WK_DIR/obs`` (needed for legacy PODs without
+        ``$POD_OBS_DATA`` to ``$POD_WORK_DIR/obs`` (needed for legacy PODs without
         digested observational data), 2) removes vector graphics if requested,
-        3) removes netCDF scratch files in ``$POD_WK_DIR`` if requested.
-
-        Settings are set at runtime, when :class:`~core.ConfigManager` is
-        initialized.
+        3) removes netCDF scratch files in ``$POD_WORK_DIR`` if requested.
         """
         # copy premade figures (if any) to output
         files = util.find_files(
-            self.obj.POD_OBS_DATA, ['*.gif', '*.png', '*.jpg', '*.jpeg']
+            self.obj.paths.POD_OBS_DATA, ['*.gif', '*.png', '*.jpg', '*.jpeg']
         )
         for f in files:
-            shutil.copy2(f, os.path.join(self.WK_DIR, 'obs'))
+            shutil.copy2(f, os.path.join(self.WORK_DIR, 'obs'))
 
         # remove .eps files if requested (actually, contents of any 'PS' subdirs)
         if not self.save_ps:
-            for d in util.find_files(self.WK_DIR, 'PS'+os.sep):
+            for d in util.find_files(self.WORK_DIR, 'PS'+os.sep):
                 shutil.rmtree(d)
         # delete netCDF files, keep everything else
         if self.save_non_nc:
-            for f in util.find_files(self.WK_DIR, '*.nc'):
+            for f in util.find_files(self.WORK_DIR, '*.nc'):
                 os.remove(f)
         # delete all generated data
         # actually deletes contents of any 'netCDF' subdirs
         elif not self.save_nc:
-            for d in util.find_files(self.WK_DIR, 'netCDF'+os.sep):
+            for d in util.find_files(self.WORK_DIR, 'netCDF'+os.sep):
                 shutil.rmtree(d)
-            for f in util.find_files(self.WK_DIR, '*.nc'):
+            for f in util.find_files(self.WORK_DIR, '*.nc'):
                 os.remove(f)
 
-    def make_output(self):
+    def make_output(self, config: util.NameSpace):
         """Top-level method to make POD-specific output, post-init. Split off
         into its own method to make subclassing easier.
 
@@ -308,7 +306,7 @@ class HTMLOutputManager(AbstractOutputManager,
         or ``src/html/pod_error_snippet.html`` if an exception was raised during
         *pod*'s setup or execution.
         """
-        template_d = html_templating_dict(pod, config)
+        template_d = html_templating_dict(pod)
         # add a warning banner if needed
         assert(hasattr(pod, '_banner_log'))
         banner_str = pod._banner_log.buffer_contents()
@@ -336,7 +334,7 @@ class HTMLOutputManager(AbstractOutputManager,
         open(self.CASE_TEMP_HTML, 'w').close()
         try:
             pod_output = self._PodOutputManagerClass(pod, config, self)
-            pod_output.make_output()
+            pod_output.make_output(config)
             if not pod.failed:
                 self.verify_pod_links(pod)
         except Exception as exc:

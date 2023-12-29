@@ -524,15 +524,17 @@ def append_html_template(template_file, target_file, template_dict={},
         f.write(html_str)
 
 
-class TempDirManager(Singleton):
+class TempDirManager:
     _prefix = 'MDTF_temp_'
 
-    def __init__(self, config, temp_root=None, unittest=False):
-        self._unittest = unittest
-        if not temp_root:
+    def __init__(self, config):
+        self._unittest = config.unit_test
+        if not hasattr(config, 'TEMP_DIR_ROOT'):
             temp_root = tempfile.gettempdir()
+        else:
+            temp_root = config.TEMP_DIR_ROOT
         if not self._unittest:
-            assert os.path.isdir(temp_root)
+            assert os.path.isdir(temp_root), "Could not find temp_root directory"
         self._root = temp_root
         self._dirs = []
 

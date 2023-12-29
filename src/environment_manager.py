@@ -286,7 +286,7 @@ class SubprocessRuntimePODWrapper(object):
         pod.pod_env_vars.update({
             "POD_HOME": pod.paths.POD_CODE_DIR,  # location of POD's code
             "OBS_DATA": pod.paths.POD_OBS_DATA,  # POD's observational data
-            "WK_DIR": pod.paths.POD_WORK_DIR,  # POD's subdir within working directory
+            "WORK_DIR": pod.paths.POD_WORK_DIR,  # POD's subdir within working directory
             "DATADIR": pod.paths.POD_WORK_DIR  # synonym so we don't need to change docs
         })
 

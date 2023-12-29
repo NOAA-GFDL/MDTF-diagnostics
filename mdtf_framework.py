@@ -16,14 +16,23 @@ if sys.version_info.major != 3 or sys.version_info.minor < 10:
              f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports
 import os
+import copy
 import click
 from src import util, cli, pod_setup, preprocessor, translation, environment_manager, output_manager
 import dataclasses
 import logging
 import datetime
+import collections
 
 
 _log = logging.getLogger(__name__)
+
+ConfigTuple = collections.namedtuple(
+    'ConfigTuple', 'name backup_filename contents'
+)
+ConfigTuple.__doc__ = """
+    Class wrapping general structs used for configuration.
+"""
 
 
 class MainLogger(util.MDTFObjectLoggerMixin, util.MDTFObjectLogger):
@@ -56,6 +65,20 @@ class MainLogger(util.MDTFObjectLoggerMixin, util.MDTFObjectLogger):
 def main(ctx, configfile: str, verbose: bool = False) -> int:
     """A community-developed package to run Process Oriented Diagnostics on weather and climate data
     """
+
+    def backup_config(config):
+        """Copy serializable version of parsed settings, in order to write
+        backup config file.
+        """
+        d = copy.deepcopy(config)
+        d = {k: v for k, v in d.items() if not k.endswith('_is_default_')}
+        d['case_list'] = copy.deepcopy(config.case_list)
+        return ConfigTuple(
+            name='backup_config',
+            backup_filename='config_save.json',
+            contents=d
+        )
+
     status: util.ObjectStatus = dataclasses.field(default=util.ObjectStatus.NOTSET, compare=False)
     # Cache log info in memory until log file is set up
     util.logs.initial_log_config()
@@ -68,12 +91,28 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # Test ctx.config
     print(ctx.config.WORK_DIR)
     ctx.config.CODE_ROOT = os.path.dirname(os.path.realpath(__file__))
+    ctx.config.TEMP_DIR_ROOT = ctx.config.WORK_DIR
+    log_config = cli.read_config_file(
+        ctx.config.CODE_ROOT, "logging.jsonc"
+    )
+    if not hasattr(ctx.config, "unit_test"):
+        ctx.config.unit_test = False
     cli.verify_runtime_config_options(ctx.config)
     # Initialize the model path object and define the model data output paths
     make_new_work_dir = not ctx.config.overwrite
     model_paths = util.ModelDataPathManager(ctx.config,
                                             new_work_dir=make_new_work_dir)
     model_paths.setup_data_paths(ctx.config.case_list)
+
+    backup_config = backup_config(ctx.config)
+    ctx.config._configs = dict()
+    ctx.config._configs[backup_config.name] = backup_config
+    ctx.config._configs['log_config'] = ConfigTuple(
+        name='log_config',
+        backup_filename=None,
+        contents=log_config
+    )
+
     # Set up main logger
     log = MainLogger(log_dir=model_paths.WORK_DIR)
     if verbose:
@@ -113,7 +152,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     for p in pods.values():
         out_mgr = output_manager.HTMLOutputManager(p, ctx.config)
         out_mgr.make_output(p, ctx.config)
-    tempdirs = util.TempDirManager()
+    tempdirs = util.TempDirManager(ctx.config)
     tempdirs.cleanup()
 
     # close the main log file

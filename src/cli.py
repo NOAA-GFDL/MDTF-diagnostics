@@ -26,12 +26,12 @@ import logging
 _log = logging.getLogger(__name__)
 
 
-def read_config_files(CODE_ROOT, file_name, site=""):
+def read_config_files(code_root: str, file_name: str, site=""):
     """Utility function to read a pair of configuration files: one for the
     framework defaults, another optional one for site-specific configuration.
 
     Args:
-        CODE_ROOT (str): Code repo directory.
+        code_root (str): Code repo directory.
         file_name (str): Name of file to search for. We search for the file
             in all subdirectories of :meth:`CLIConfigManager.site_dir`
             and :meth:`CLIConfigManager.framework_dir`, respectively.
@@ -42,8 +42,8 @@ def read_config_files(CODE_ROOT, file_name, site=""):
         site specific file (empty dict if that file isn't found) and second
         is the framework file (if not found, fatal error and exit immediately.)
     """
-    src_dir = os.path.join(CODE_ROOT, 'src')
-    site_dir = os.path.join(CODE_ROOT, 'sites', site)
+    src_dir = os.path.join(code_root, 'src')
+    site_dir = os.path.join(code_root, 'sites', site)
     site_d = util.find_json(site_dir, file_name, exit_if_missing=False, log=_log)
     fmwk_d = util.find_json(src_dir, file_name, exit_if_missing=True, log=_log)
     return site_d, fmwk_d

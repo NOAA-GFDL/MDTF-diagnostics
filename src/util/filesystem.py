@@ -526,6 +526,11 @@ def append_html_template(template_file, target_file, template_dict={},
 
 class TempDirManager:
     _prefix = 'MDTF_temp_'
+    keep_temp: bool = False
+    temp_root: str = ""
+    _dirs: list
+    _root: str = ""
+    _unittest: bool = False
 
     def __init__(self, config):
         self._unittest = config.unit_test
@@ -537,10 +542,11 @@ class TempDirManager:
             assert os.path.isdir(temp_root), "Could not find temp_root directory"
         self._root = temp_root
         self._dirs = []
+        self.keep_temp = config.get('keep_temp', False)
 
         # delete temp files if we're killed
-        signal.signal(signal.SIGTERM, self.tempdir_cleanup_handler(config))
-        signal.signal(signal.SIGINT, self.tempdir_cleanup_handler(config))
+        signal.signal(signal.SIGTERM, self.tempdir_cleanup_handler)
+        signal.signal(signal.SIGINT, self.tempdir_cleanup_handler)
 
     def make_tempdir(self, hash_obj=None):
         if hash_obj is None:
@@ -564,12 +570,12 @@ class TempDirManager:
         _log.debug("Cleaning up temp dir %s", path)
         shutil.rmtree(path)
 
-    def cleanup(self, config):
-        if not config.get('keep_temp', False):
+    def cleanup(self):
+        if not self.keep_temp and any(self._dirs):
             for d in self._dirs:
                 self.rm_tempdir(d)
 
-    def tempdir_cleanup_handler(self, config, signum=None, frame=None):
+    def tempdir_cleanup_handler(self, frame=None, signum=None):
         # delete temp files
         signal_logger(self.__class__.__name__, signum, frame, log=_log)
-        self.cleanup(config)
+        self.cleanup()

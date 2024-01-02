@@ -654,19 +654,20 @@ def mdtf_log_header(title):
     return str_ + (80 * '-') + '\n\n'
 
 
-def signal_logger(caller_name, signum=None, frame=None, log=_log):
+def signal_logger(caller_name: str, signum=None, frame=None, log=_log):
     """Lookup signal name from number and write to log. Taken from
     `<https://stackoverflow.com/a/2549950>`__.
 
     Args:
         caller_name (str): Calling function name, only used in log message.
-        signum: Signal number of the signal we recieved.
-        frame: Parameters of the signal we recieved.
+        signum: Signal number of the signal we received.
+        frame: parameters of received signal
+        log: log file
     """
     if signum:
         sig_lookup = {
-            k:v for v, k in reversed(sorted(list(signal.__dict__.items()))) \
-                if v.startswith('SIG') and not v.startswith('SIG_')
+            k: v for v, k in reversed(sorted(list(signal.__dict__.items())))
+            if v.startswith('SIG') and not v.startswith('SIG_')
         }
         log.info(
             "%s caught signal %s (%s)",

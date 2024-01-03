@@ -127,11 +127,11 @@ class ModelDataPathManager(PathManagerBase):
         # define directory paths for multirun mode
         # Each case directory is a subdirectory in wk_dir/pod_name
         for case_name, case_dict in case_list.items():
-            startdate = case_dict.startdate.format(precision=1)
-            enddate = case_dict.enddate.format(precision=1)
-            if startdate in case_name and enddate in case_name:
+            if case_dict.startdate in case_name and case_dict.enddate in case_name:
                 case_wk_dir = 'MDTF_{}'.format(case_name)
             else:
+                startdate = case_dict.startdate.format(precision=1)
+                enddate = case_dict.enddate.format(precision=1)
                 case_wk_dir = 'MDTF_{}_{}_{}'.format(case_name, startdate, enddate)
             # TODO: Remove refs to MODEL_DATA_ROOT when catalogs are implemented in
             # older PODs

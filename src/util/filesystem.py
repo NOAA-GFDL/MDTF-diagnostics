@@ -174,42 +174,42 @@ def find_files(src_dirs, filename_globs, n_files=None):
     return list(files)
 
 
-def check_dir(dir_, attr_name="", create=False):
+def check_dir(dir_path, attr_name="", create=False):
     """Check existence of directories. No action is taken for directories that
     already exist; nonexistent directories either raise a
     :class:`~util.MDTFFileNotFoundError` or cause the creation of that directory.
 
     Args:
-        dir\_: If a string, the absolute path to check; otherwise, assume the
+        dir_path: If a string, the absolute path to check; otherwise, assume the
             path to check is given by the *attr_name* attribute on this object.
         attr_name: Name of the attribute being checked (used in log messages).
         create: (bool, default False): if True, nonexistent directories are
             created.
     """
-    if not isinstance(dir_, str):
-        dir_ = getattr(dir_, attr_name, None)
-    if not isinstance(dir_, str):
-        raise ValueError(f"Expected string, received {repr(dir_)}.")
+    if not isinstance(dir_path, str):
+        dir_path = getattr(dir_path, attr_name, None)
+    if not isinstance(dir_path, str):
+        raise ValueError(f"Expected string, received {repr(dir_path)}.")
     try:
-        if not os.path.isdir(dir_):
+        if not os.path.isdir(dir_path):
             if create:
-                os.makedirs(dir_, exist_ok=False)
+                os.makedirs(dir_path, exist_ok=False)
             else:
-                raise exceptions.MDTFFileNotFoundError(dir_)
+                raise exceptions.MDTFFileNotFoundError(dir_path)
     except Exception as exc:
         if isinstance(exc, FileNotFoundError):
             path = getattr(exc, 'filename', '')
             if attr_name:
-                if not os.path.exists(dir_):
+                if not os.path.exists(dir_path):
                     raise exceptions.MDTFFileNotFoundError(
                         f"{attr_name} not found at '{path}'.")
                 else:
                     raise exceptions.MDTFFileNotFoundError(
-                        f"{attr_name}: Path '{dir_}' exists but is not a directory.")
+                        f"{attr_name}: Path '{dir_path}' exists but is not a directory.")
             else:
                 raise exceptions.MDTFFileNotFoundError(path)
         else:
-            raise OSError(f"Caught exception when checking {attr_name}={dir_}: {repr(exc)}") \
+            raise OSError(f"Caught exception when checking {attr_name}={dir_path}: {repr(exc)}") \
                 from exc
 
 
@@ -238,9 +238,9 @@ def bump_version(path, new_v=None, extra_dirs=None):
             $                      # end of string
             """, file_, re.VERBOSE)
         if match:
-            return (match.group('file_base'), match.group('version'))
+            return match.group('file_base'), match.group('version')
         else:
-            return (file_, '')
+            return file_, ''
 
     def _reassemble(dir_, file_, version, ext_, final_sep):
         if version:
@@ -285,11 +285,12 @@ def bump_version(path, new_v=None, extra_dirs=None):
         while _path_exists(dir_list, file_, new_v, ext_, final_sep):
             new_v = new_v + 1
         new_path = _reassemble(dir_, file_, new_v, ext_, final_sep)
-    return (new_path, new_v)
+    return new_path, new_v
 
 # ---------------------------------------------------------
 # CONFIG FILE PARSING
 # ---------------------------------------------------------
+
 
 def strip_comments(str_, delimiter=None):
     """Remove comments from *str\_*. Comments are taken to start with an
@@ -327,7 +328,7 @@ def strip_comments(str_, delimiter=None):
     line_nos = [i for i, s in enumerate(lines) if (s and not s.isspace())]
     # join lines, stripping blank lines
     new_str = '\n'.join([s for s in lines if (s and not s.isspace())])
-    return (new_str, line_nos)
+    return new_str, line_nos
 
 
 def parse_json(str_):

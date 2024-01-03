@@ -189,22 +189,21 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         else:
             conda_prefix = os.path.join(self.conda_env_root, env_name)
             self.log.info("Creating conda env '%s' in '%s'.", env_name, conda_prefix)
-        command = (
+        cmd = (
             f'source {self.conda_dir}/conda_init.sh {self.conda_root} && '
             f'{self.conda_exe} env create --force -q -p "{conda_prefix}" -f "{path}"'
         )
         try:
-            _ = util.run_shell_command(command, log=self.log)
+            _ = util.run_shell_command(cmd, log=self.log)
         except Exception:
             raise
 
     def create_all_environments(self):
         try:
-            _ = util.run_shell_command((
-                f'{self.conda_dir}/conda_env_setup.sh -c "{self.conda_exe}" '
-                f'-d "{self.conda_env_root}" --all'
-                ), log=self.log
-            )
+            cmd = (f'{self.conda_dir}/conda_env_setup.sh -c "{self.conda_exe}" '
+                   f'-d "{self.conda_env_root}" --all'
+                   )
+            _ = util.run_shell_command(cmd, log=self.log)
         except Exception:
             raise
 

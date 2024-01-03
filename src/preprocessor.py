@@ -1077,7 +1077,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         implemented by the child class.
         """
         self.output_to_ncl = ('ncl' in pod_reqs)
-
+        pp_catalog =
         for case_name, ds in catalog_subset.items():
             for var in case_list[case_name].varlist.iter_vars():
                 # var.log.info("Writing %d mb to %s", ds[var.name].variable.nbytes / (1024 * 1024), var.dest_path)
@@ -1092,7 +1092,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 except Exception as exc:
                     raise util.chain_exc(exc, f"writing data for {var.full_name}.",
                                          util.DataPreprocessEvent)
-            del ds  # shouldn't be necessary
+        try:
+            self.write_pp_catalog(ds)
+        except Exception as exc:
+            raise util.chain_exc(exc, f"Writing data catalog for preprocessed data.",
+                                 util.DataPreprocessEvent)
+
+            #del ds  # shouldn't be necessary
 
     def parse_ds(self,
                  var: varlist_util.VarlistEntry,
@@ -1142,9 +1148,15 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                           case_name=case_name)
         return cat_subset
 
+    def write_pp_catalog(self, ds):
+        """ Write a new data catalog for the preprocessed data
+        to the POD output directory
+        """
+        pass
+
 
 class NullPreprocessor(MDTFPreprocessorBase):
-    """A class that skips preprocessing and just symlinks files from the input dir to the wkdir
+    """A class that skips preprocessing and just symlinks files from the input dir to the work dir
     """
     def __init__(self,
                  model_paths: util.ModelDataPathManager,

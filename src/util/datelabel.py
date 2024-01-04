@@ -902,7 +902,7 @@ class Date(DateRange):
         if self.is_static or getattr(other, 'is_static', False):
             if func == op.eq:
                 # True only if both values are FXDates
-                return (self.is_static and getattr(other, 'is_static', False))
+                return self.is_static and getattr(other, 'is_static', False)
             else:
                 raise util.FXDateException(func_name='_tuple_compare')
         if not isinstance(other, self.__class__):
@@ -936,7 +936,7 @@ class Date(DateRange):
             return False
 
     def __ne__(self, other):
-        return (not self.__eq__(other))  # more foolproof
+        return not self.__eq__(other)  # more foolproof
 
     def __hash__(self):
         return hash((self.__class__, self.lower, self.upper, self.precision))

@@ -8,7 +8,7 @@ import dataclasses
 import datetime
 
 import pandas as pd
-from src import util, varlist_util, translation, xr_parser, units
+from src import util, cli, varlist_util, translation, xr_parser, units
 import cftime
 import intake
 import numpy as np
@@ -1077,7 +1077,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         implemented by the child class.
         """
         self.output_to_ncl = ('ncl' in pod_reqs)
-        pp_catalog =
         for case_name, ds in catalog_subset.items():
             for var in case_list[case_name].varlist.iter_vars():
                 # var.log.info("Writing %d mb to %s", ds[var.name].variable.nbytes / (1024 * 1024), var.dest_path)
@@ -1092,13 +1091,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 except Exception as exc:
                     raise util.chain_exc(exc, f"writing data for {var.full_name}.",
                                          util.DataPreprocessEvent)
-        try:
-            self.write_pp_catalog(ds)
-        except Exception as exc:
-            raise util.chain_exc(exc, f"Writing data catalog for preprocessed data.",
-                                 util.DataPreprocessEvent)
 
-            #del ds  # shouldn't be necessary
+            # del ds  # shouldn't be necessary
 
     def parse_ds(self,
                  var: varlist_util.VarlistEntry,
@@ -1148,12 +1142,61 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                           case_name=case_name)
         return cat_subset
 
-    def write_pp_catalog(self, ds):
-        """ Write a new data catalog for the preprocessed data
-        to the POD output directory
-        """
-        pass
+    def define_pp_catalog(self, input_catalog, config):
+        """ Define the version and attributes for the post-processed data catalog"""
+        cmip6_cv_info = cli.read_config_file(config.CODE_ROOT,
+                                             "data/cmip6-cmor-tables/Tables",
+                                             "CMIP6_CV.json")
 
+        cat_dict = {'esmcat_version': '2023.11.10', 'id': 'MDTF_PP_data',
+                    'description': f'Post-processed dataset for cases:{[case_name for case_name in input_catalog.keys()]}',
+                    "attributes": []
+        }
+
+        for att in cmip6_cv_info['CV']['required_global_attributes']:
+            if att == 'Conventions':
+                att = "convention"
+            cat_dict["attributes"].append(
+                dict(column_name=att,
+                     vocabulary=f"https://github.com/WCRP-CMIP/CMIP6_CVs/blob/master/"
+                                f"CMIP6_required_global_attributes.json"
+                     )
+            )
+
+        cat_dict["assets"] = {
+            "column_name": "path",
+            "format": "netcdf"
+        }
+        cat_dict["aggregation_control"] = {
+            "variable_column_name": "variable_id",
+            "groupby_attrs": [
+                "activity_id",
+                "institution_id"
+            ],
+            "aggregations": [
+                {
+                    "type": "union",
+                    "attribute_name": "variable_id"
+                },
+                {
+                    "type": "join_existing",
+                    "attribute_name": "time_range",
+                    "options": {"dim": "time", "coords": "minimal", "compat": "override"}
+                }
+            ]
+        }
+
+        return cat_dict
+
+    def write_pp_catalog(self, input_catalog, config: util.NameSpace):
+        """ Write a new data catalog for the preprocessed data
+            to the POD output directory
+        """
+        new_cat = self.define_pp_catalog(input_catalog, config)
+        file_list = util.get_file_list(config.OUTPUT_DIR)
+        entries = list(map(util.mdtf_pp_parser, file_list))
+        df1 = pd.DataFrame(entries)
+        df1.head()
 
 class NullPreprocessor(MDTFPreprocessorBase):
     """A class that skips preprocessing and just symlinks files from the input dir to the work dir

@@ -70,9 +70,10 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         self.nc_largefile = runtime_config.large_file
         self.bash_exec = find_executable('bash')
         # Initialize the POD path object and define the POD output paths
+        # Don't need a new working directory since one is created when the model data directories are initialized
         self.paths = util.PodPathManager(runtime_config,
                                          env=self.pod_env_vars,
-                                         new_work_dir=True)
+                                         new_work_dir=False)
         self.paths.setup_pod_paths(self.name)
         util.MDTFObjectBase.__init__(self, name=self.name, _parent=None)
 

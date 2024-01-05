@@ -26,47 +26,20 @@ import logging
 _log = logging.getLogger(__name__)
 
 
-def read_config_files(code_root: str, file_name: str, site=""):
-    """Utility function to read a pair of configuration files: one for the
-    framework defaults, another optional one for site-specific configuration.
-
-    Args:
-        code_root (str): Code repo directory.
-        file_name (str): Name of file to search for. We search for the file
-            in all subdirectories of :meth:`CLIConfigManager.site_dir`
-            and :meth:`CLIConfigManager.framework_dir`, respectively.
-        site (str): Name of the site-specific directory (in ``/sites``) to search.
-
-    Returns:
-        A tuple of the two files' contents. First element is the
-        site specific file (empty dict if that file isn't found) and second
-        is the framework file (if not found, fatal error and exit immediately.)
-    """
-    src_dir = os.path.join(code_root, 'src')
-    site_dir = os.path.join(code_root, 'sites', site)
-    site_d = util.find_json(site_dir, file_name, exit_if_missing=False, log=_log)
-    fmwk_d = util.find_json(src_dir, file_name, exit_if_missing=True, log=_log)
-    return site_d, fmwk_d
-
-
-def read_config_file(code_root: str, file_name: str, site: str = ""):
+def read_config_file(code_root: str, file_dir: str, file_name: str) -> str:
     """Return the site's config file if present, else the framework's file. Wraps
     :func:`read_config_files`.
 
     Args:
         code_root (str): Code repo directory.
-        file_name (str): Name of file to search for. We search for the file
-            in all subdirectories of :meth:`CLIConfigManager.site_dir`
-            and :meth:`CLIConfigManager.framework_dir`, respectively.
-        site (str): Name of the site-specific directory (in ``/sites``) to search.
+        file_dir (str): subdirectory name or path in code_root that contains target file
+        file_name (str): Name of file to search for.
 
     Returns:
         Path to the configuration file.
     """
-    site_d, fmwk_d = read_config_files(code_root, file_name, site=site)
-    if not site_d:
-        return fmwk_d
-    return site_d
+    file_dir = os.path.join(code_root, file_dir, file_name)
+    return util.find_json(file_dir, exit_if_missing=True, log=_log)
 
 
 def load_yaml_config(config: str) -> util.NameSpace:

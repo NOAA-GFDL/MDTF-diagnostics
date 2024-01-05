@@ -388,26 +388,26 @@ def read_json(file_path, log=_log):
     return parse_json(str_)
 
 
-def find_json(dir_, file_name, exit_if_missing=True, log=_log):
-    """Reads a JSONC file *file_name* anywhere within the root directory *dir\_*.
+def find_json(file_path, exit_if_missing=True, log=_log):
+    """Reads a JSONC file
 
     Args:
-        dir\_ (str): Root directory to search (using :func:`find_files`).
-        file_name (str): Filename to search for.
+        file_path (str): Filename to search for.
         exit_if_missing (bool): Optional, default True. Exit with error code 1
             if *file_name* not found.
+        log: log file
     """
     try:
-        f = find_files(dir_, file_name, n_files=1)
-        return read_json(f[0])
+        os.path.isfile(file_path)
     except exceptions.MDTFFileNotFoundError:
         if exit_if_missing:
-            _log.critical("Couldn't find file %s in %s.", file_name, dir_)
+            _log.critical("Couldn't find file %s.", file_path)
             exit(1)
         else:
-            log.debug("Couldn't find file %s in %s; continuing.",
-                file_name, dir_)
+            log.debug("Couldn't find file %s; continuing.",
+                      file_path)
             return dict()
+    return read_json(file_path)
 
 
 def write_json(struct, file_path, sort_keys=False, log=_log):

@@ -1177,7 +1177,7 @@ class DateFrequency(datetime.timedelta):
             return super(DateFrequency, self).__eq__(other)
 
     def __ne__(self, other):
-        return (not self.__eq__(other))  # more foolproof
+        return not self.__eq__(other)  # more foolproof
 
     def __copy__(self):
         return self.__class__.__new__(self.__class__, self.quantity, unit=self.unit)

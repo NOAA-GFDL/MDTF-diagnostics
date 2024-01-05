@@ -147,7 +147,7 @@ class ModelDataPathManager(PathManagerBase):
             filesystem.check_dir(self.MODEL_OUTPUT_DIR[case_name], 'MODEL_OUTPUT_DIR', create=True)
 
 
-def verify_paths(self, config, p):
+def verify_paths(config, p):
     # needs to be here, instead of PathManager, because we subclass it in
     # NOAA_GFDL
     keep_temp = config.get('keep_temp', False)

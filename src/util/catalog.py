@@ -21,23 +21,83 @@ import logging
 
 _log = logging.getLogger(__name__)
 
-mdtf_cv = dict()
-mdtf_cv["frequency"] = {"subhrPt": "sub-hourly",
-                        "6hr": "4x-daily",
-                        "6hrPt": "4x-daily",
-                        "hr": "hourly",
-                        "day": "daily",
-                        "mon": "monthly"}
-mdtf_cv["startdate"] = ""
-mdtf_cv["enddate"] = ""
-mdtf_cv["cell_methods"] = []
-def get_file_list(output_dir: str) -> list:  # , depth=0, extension='*.nc'):
-    depth = 1
-    from dask.diagnostics import ProgressBar
 
+def _reverse_filename_format(file_basename, filename_template=None, gridspec_template=None):
+    """
+    Uses intake's ``reverse_format`` utility to reverse the string method format.
+    Given format_string and resolved_string, find arguments
+    that would give format_string.format(arguments) == resolved_string
+    """
+    try:
+        return reverse_format(filename_template, file_basename)
+    except ValueError:
+        try:
+            return reverse_format(gridspec_template, file_basename)
+        except Exception as exc:
+            print(
+                f'Failed to parse file: {file_basename} using patterns: {filename_template}: {exc}'
+            )
+            return {}
+
+
+def _extract_attr_with_regex(input_str, regex, strip_chars=None):
+    pattern = re.compile(regex, re.IGNORECASE)
+    match = re.findall(pattern, input_str)
+    if match:
+        match = max(match, key=len)
+        if strip_chars:
+            match = match.strip(strip_chars)
+
+        else:
+            match = match.strip()
+
+        return match
+
+    else:
+        return None
+
+
+exclude_patterns = ['*/files/*', '*/latest/*']
+
+
+def _filter_func(path):
+    return not any(
+        fnmatch.fnmatch(path, pat=exclude_pattern) for exclude_pattern in exclude_patterns
+    )
+
+
+def mdtf_pp_parser(file_path: str):
+    """ Extract attributes of a file using information from MDTF OUTPUT DRS
+    """
+
+    freq_regex = r'/1hr/|/3hr/|/6hr/|/day/|/fx/|/mon/|/monClim/|/subhr/|/seas/|/yr/'
+
+    file_basename = os.path.basename(file_path)
+
+    filename_template = (
+        '{dataset_name}.{variable}.{frequency}.nc'
+    )
+
+    f = _reverse_filename_format(file_basename, filename_template=filename_template)
+    fileparts = dict()
+    fileparts.update(f)
+    frequency = _extract_attr_with_regex(file_path, regex=freq_regex, strip_chars='/')
+    fileparts['frequency'] = frequency
+    fileparts['path'] = file_path
+    try:
+        part1, part2 = os.path.dirname(file_path).split(fileparts['dataset_name'])
+        part1 = part1.strip('_').split('_')
+    except Exception as exc:
+        print(exc)
+        pass
+
+    return fileparts
+
+
+def get_file_list(output_dir: str) -> list:
     # dirs=[p for p in Path(root_path).glob("*/*/") if p.is_dir()]
 
-    cmd = ['find', output_dir, '-mindepth', '4', '-maxdepth', '4', '-type', "d"]
+    cmd = ['find', output_dir, '-mindepth', '2', '-maxdepth', '5', '-type', "d"]
     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     output = proc.stdout.read().decode('utf-8').split()
     dirs = [Path(entry) for entry in output]
@@ -45,7 +105,7 @@ def get_file_list(output_dir: str) -> list:  # , depth=0, extension='*.nc'):
     @dask.delayed
     def _file_dir_files(directory):
         try:
-            cmd = ['find', '-L', directory.as_posix(), '-name', '*.nc', '-type', "f", "-perm", "-444"]
+            cmd = ['find', '-L', directory.as_posix(), '-name', '*.nc', '-type', "f"]
             proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
             output = proc.stdout.read().decode('utf-8').split()
         except Exception as exc:
@@ -54,10 +114,9 @@ def get_file_list(output_dir: str) -> list:  # , depth=0, extension='*.nc'):
         return output
 
     print('Getting list of assets...\n')
-    filelist = [_file_dir_files(directory) for directory in dirs]
+    filelist = [_file_dir_files(d) for d in dirs]
     # watch progress
-    with ProgressBar():
-        filelist = dask.compute(*filelist)
+    filelist = dask.compute(*filelist)
 
     filelist = list(itertools.chain(*filelist))
     return filelist

@@ -40,16 +40,15 @@ def _reverse_filename_format(file_basename, filename_template=None, gridspec_tem
             return {}
 
 
-def _extract_attr_with_regex(input_str, regex, strip_chars=None):
+def _extract_attr_with_regex(input_str: str, regex, strip_chars=None):
     pattern = re.compile(regex, re.IGNORECASE)
     match = re.findall(pattern, input_str)
     if match:
         match = max(match, key=len)
+        if isinstance(match, tuple):
+            match = ''.join(match)
         if strip_chars:
             match = match.strip(strip_chars)
-
-        else:
-            match = match.strip()
 
         return match
 
@@ -60,18 +59,27 @@ def _extract_attr_with_regex(input_str, regex, strip_chars=None):
 exclude_patterns = ['*/files/*', '*/latest/*']
 
 
-def _filter_func(path):
+def _filter_func(path: str) -> bool:
     return not any(
         fnmatch.fnmatch(path, pat=exclude_pattern) for exclude_pattern in exclude_patterns
     )
 
 
-def mdtf_pp_parser(file_path: str):
+def mdtf_pp_parser(file_path: str) -> dict:
     """ Extract attributes of a file using information from MDTF OUTPUT DRS
     """
 
     freq_regex = r'/1hr/|/3hr/|/6hr/|/day/|/fx/|/mon/|/monClim/|/subhr/|/seas/|/yr/'
-
+    # YYYYMMDD:HHMMSS-YYYYMMDD:HHMMSS
+    # (word boundary ([numbers in range 0-9 ]{repeat previous exactly 4 time})([numbers in range 0-1]
+    # [numbers in range 0-9])([numbers in range 0-3][numbers in range 0-9])
+    # (optional colon)(([numbers in range 0-2][numbers in range 0-3])([numbers in range 0-5][numbers in range 0-9])
+    # {repeat previous exactly 2 times})*=0 or more of the HHMMSS group, word boundary
+    # -[repeat the same regex for the second date string in the date range
+    time_range_regex = (r'([0-9]{4}[0-1][0-9][0-3][0-9])'
+                        r'(:?)(([0-2][0-3])([0-5][0-9]){2})*'
+                        r'(-)([0-9]{4}[0-1][0-9][0-3][0-9])'
+                        r'(:?)(([0-2][0-3])([0-5][0-9]){2})*')
     file_basename = os.path.basename(file_path)
 
     filename_template = (
@@ -81,8 +89,9 @@ def mdtf_pp_parser(file_path: str):
     f = _reverse_filename_format(file_basename, filename_template=filename_template)
     fileparts = dict()
     fileparts.update(f)
-    frequency = _extract_attr_with_regex(file_path, regex=freq_regex, strip_chars='/')
-    fileparts['frequency'] = frequency
+    fileparts['frequency'] = _extract_attr_with_regex(file_path, regex=freq_regex, strip_chars='/')
+    fileparts['time_range'] = _extract_attr_with_regex(fileparts['dataset_name'], regex=time_range_regex)
+
     fileparts['path'] = file_path
     try:
         part1, part2 = os.path.dirname(file_path).split(fileparts['dataset_name'])
@@ -130,8 +139,8 @@ def parse_filename(file_path: str) -> dict:
         stem = file.stem
         # split the file name into components based on _
         split = stem.split('.')
-        realm = split[0]
-        time_range = split[1]
+        realm = ""
+        time_range = ""
         variable_id = file.parts[1]
         source_type = ""
         member_id = ""

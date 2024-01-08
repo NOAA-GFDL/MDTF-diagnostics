@@ -4,21 +4,9 @@ and implement the dynamic CLI; see :doc:`fmwk_cli`.
 Familiarity with the python :py:mod:`argparse` module is recommended.
 """
 import os
-import sys
-import io
-import click
 import pathlib
-import collections
-import dataclasses
-import importlib
-import itertools
-import json
-import operator
-
-import typing
 import yaml
-import intake
-from datetime import datetime, date
+from datetime import datetime
 from src import util
 
 import logging

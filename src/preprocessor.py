@@ -1142,61 +1142,28 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                           case_name=case_name)
         return cat_subset
 
-    def define_pp_catalog(self, input_catalog, config):
-        """ Define the version and attributes for the post-processed data catalog"""
-        cmip6_cv_info = cli.read_config_file(config.CODE_ROOT,
-                                             "data/cmip6-cmor-tables/Tables",
-                                             "CMIP6_CV.json")
-
-        cat_dict = {'esmcat_version': '2023.11.10', 'id': 'MDTF_PP_data',
-                    'description': f'Post-processed dataset for cases:{[case_name for case_name in input_catalog.keys()]}',
-                    "attributes": []
-        }
-
-        for att in cmip6_cv_info['CV']['required_global_attributes']:
-            if att == 'Conventions':
-                att = "convention"
-            cat_dict["attributes"].append(
-                dict(column_name=att,
-                     vocabulary=f"https://github.com/WCRP-CMIP/CMIP6_CVs/blob/master/"
-                                f"CMIP6_required_global_attributes.json"
-                     )
-            )
-
-        cat_dict["assets"] = {
-            "column_name": "path",
-            "format": "netcdf"
-        }
-        cat_dict["aggregation_control"] = {
-            "variable_column_name": "variable_id",
-            "groupby_attrs": [
-                "activity_id",
-                "institution_id"
-            ],
-            "aggregations": [
-                {
-                    "type": "union",
-                    "attribute_name": "variable_id"
-                },
-                {
-                    "type": "join_existing",
-                    "attribute_name": "time_range",
-                    "options": {"dim": "time", "coords": "minimal", "compat": "override"}
-                }
-            ]
-        }
-
-        return cat_dict
-
-    def write_pp_catalog(self, input_catalog, config: util.NameSpace):
+    def write_pp_catalog(self, input_catalog_ds: xr.Dataset, config: util.NameSpace):
         """ Write a new data catalog for the preprocessed data
             to the POD output directory
         """
-        new_cat = self.define_pp_catalog(input_catalog, config)
+        new_cat = util.define_pp_catalog(input_catalog_ds, config)
         file_list = util.get_file_list(config.OUTPUT_DIR)
+        # fill in catalog information from pp file name
         entries = list(map(util.mdtf_pp_parser, file_list))
+        # copy information from input catalog to pp catalog entries
+        global_attrs = ['convention', 'realm']
+        for e in entries:
+            ds_match = input_catalog_ds[e['dataset_name']]
+            for att in global_attrs:
+                e[att] = ds_match.attrs.get(att, '')
+            ds_var = ds_match.data_vars.get(e['variable_id'])
+            for key, val in ds_var.attrs.items():
+                e[key] = val
+
         df1 = pd.DataFrame(entries)
         df1.head()
+        print('test')
+
 
 class NullPreprocessor(MDTFPreprocessorBase):
     """A class that skips preprocessing and just symlinks files from the input dir to the work dir

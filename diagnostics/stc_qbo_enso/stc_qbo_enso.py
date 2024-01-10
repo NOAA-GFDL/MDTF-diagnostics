@@ -132,13 +132,9 @@ import xesmf as xe
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import matplotlib.path as mpath
-from cartopy.util import add_cyclic_point
 
-from scipy.fft import fft,fftfreq,ifft
-from scipy import interpolate,stats
-from scipy.optimize import curve_fit
+from scipy.fft import fft,fftfreq
+from scipy import interpolate
 
 from stc_qbo_enso_plottingcodeqbo import qbo_uzm
 from stc_qbo_enso_plottingcodeqbo import qbo_vt
@@ -216,33 +212,23 @@ def qbo_metrics(ds,qbo_isobar_in_hPa):
 	print ("Running the QBO metrics function 'qbo_metrics'")
 	print (ds)
 	
-	# Check to see if the pressure levels are in hPa or Pa
-	if np.nanmax(ds.lev.values) > 2000:
-		qbo_defined = qbo_isobar_in_hPa*100 # Pa
-		sfc = 100000 # Pa
-	if np.nanmax(ds.lev.values) <= 2000:
-		qbo_defined = qbo_isobar_in_hPa # hPa
-		sfc = 1000 # hPa
+	if ds.lev.values[-1] > ds.lev.values[0]:
+		ds = ds.reindex(lev=list(reversed(ds.lev)))
+	
+	qbo_defined = qbo_isobar_in_hPa # hPa
+	sfc = 1000 # hPa
 
 	# Check to see if the latitudes are organized north to south or south to north
 	lat_first = ds.lat.values[0]
 	lat_end = ds.lat.values[-1]
 
-	if lat_first > lat_end:
-		lats = np.linspace(90,-90,num=73)
-	if lat_end > lat_first:
-		lats = np.linspace(-90,90,num=73)
-
 	vt = ds.ua.values
 	
 	# Subset for 10 hPa #
-	subset = ds.sel(lev=qbo_defined)
+	subset = ds.sel(lev=qbo_isobar_in_hPa)
 
-	# Select 5S-5N winds #
-	if lat_first > lat_end:
-		tropical_subset = subset.sel(lat=slice(5,-5))
-	if lat_end > lat_first:
-		tropical_subset = subset.sel(lat=slice(-5,5))
+	# Select 5S-5N winds #		
+	tropical_subset = subset.isel(lat = np.logical_and(subset.lat >= -5, subset.lat <= 5))
 
 	# Latitudinally weight and averaged betwteen 5S-5N
 	
@@ -290,8 +276,6 @@ def qbo_metrics(ds,qbo_isobar_in_hPa):
 			if len(concat) >= 14:		
 				cycles.append(concat)
 				periods.append(len(concat))
-
-	cycles = np.array(cycles)
 
 	# Retrieve the minimum/maximum/average QBO cycle duration #
 	period_min = np.round(np.nanmin(periods),1)
@@ -353,8 +337,6 @@ def qbo_metrics(ds,qbo_isobar_in_hPa):
 	from palettable.colorbrewer.diverging import RdBu_11
 	x2,y2 = np.meshgrid(ds.lat.values,ds.lev.values)
 
-	fig, ax = plt.subplots()
-
 	plt.title('Ratio of QBO power spectrum\n to zonal wind spectrum (%)')
 	plt.contourf(x2,y2,filtered*100,vmin=vmin,vmax=vmax,levels=vlevs,cmap='coolwarm')
 	plt.semilogy()
@@ -378,10 +360,7 @@ def qbo_metrics(ds,qbo_isobar_in_hPa):
 	hmax = np.where(ds.lev.values == qbo.lev.values)[0]
 
 	# Retreive the indices of lats between 5S and 5N #
-	if lat_first > lat_end: # 90N -> 90S #
-		lat_hits = [i for i,v in enumerate(ds.lat.values) if v >= -5 and v <=5]
-	if lat_end > lat_first: # 90S -> 90N #
-		lat_hits = [i for i,v in enumerate(ds.lat.values) if v <= 5 and v >=-5]
+	lat_hits = [i for i,v in enumerate(ds.lat.values) if v >= -5 and v <=5]
 
 	# Retrieve the Fourier amplitude profile averaged latitudinally (w/weighting) between 5S and 5N #
 	weights = np.cos(np.deg2rad(ds.lat.values[lat_hits]))
@@ -424,20 +403,13 @@ def qbo_metrics(ds,qbo_isobar_in_hPa):
 	topz = np.log(top/sfc)*-7000
 
 	# Obtain the vertical extent by differencing the bottomz and topz. #
-	if ds.lev.values[0] > ds.lev.values[-1]:
-		vertical_extent = (topz - bottomz)/1000
-	if ds.lev.values[-1] > ds.lev.values[0]:
-		vertical_extent = (bottomz - topz)/1000
+	vertical_extent = (topz - bottomz)/1000
 	vertical_extent = np.round(vertical_extent,1)
 	print (vertical_extent, "vertical_extent")
 
 	# Retrieve the lowest lev the QBO extends to using 10% of the maximum Fourier amplitude #
 	# "lower" for CMIP6 datasets and "upper" for ERA5 reanalysis
-	if ds.lev.values[0] > ds.lev.values[-1]:
-		lowest_lev = (lower_portion_isobar[(np.abs(lower_portion - qbo_base)).argmin()])
-	if ds.lev.values[-1] > ds.lev.values[0]:
-		lowest_lev = (upper_portion_isobar[(np.abs(upper_portion - qbo_base)).argmin()])
-		
+	lowest_lev = (lower_portion_isobar[(np.abs(lower_portion - qbo_base)).argmin()])
 	lowest_lev = np.round(lowest_lev,1)
 	print (lowest_lev, "lowest_lev")
 
@@ -488,13 +460,13 @@ def qbo_metrics(ds,qbo_isobar_in_hPa):
 	
 	print (latitudinal_extent, "latitudinal_extent")
 	
-	
-	if period_min == period_max:
-		print ('Persistent stratospheric easterlies detected - dataset likely does not have QBO')
-		qbo_switch = 0
+
 	if period_min != period_max:
 		print ('Based on period statistics, dataset is likely to have a QBO')
 		qbo_switch = 1
+	else:
+		print ('Persistent stratospheric easterlies detected - dataset likely does not have QBO')
+		qbo_switch = 0
 		
 	metrics = ['minimum period: %s (months)' % period_min, 
 			   'mean period: %s (months)' % period_mean,
@@ -572,121 +544,19 @@ def compute_total_eddy_heat_flux(v, T):
         ehf = (regridder(v - v_zm)*(T - T_zm)).mean('lon')
 
     return ehf
-	
-	
-def enso_indexing(ds_sst,hemisphere):
-
-	# ENSO definitions from: https://climatedataguide.ucar.edu/climate-data/nino-sst-indices-nino-12-3-34-4-oni-and-tni
-	# Nino 3.4 #
-	
-	date_first = ds_sst.time[0]
-	date_last = ds_sst.time[-1]
-
-	# Check to see if the lats are organized north to south or south to north
-	lat_first = ds_sst.lat.values[0]
-	lat_end = ds_sst.lat.values[-1]
-
-	if lat_first > lat_end:
-		ENSO = ds_sst.sel(lat=slice(5,-5))
-	if lat_end > lat_first:
-		ENSO = ds_sst.sel(lat=slice(-5,5))
-
-	# Check to see if the lons are organized -180/180 or 0 to 360
-	lon_first = ds_sst.lon.values[0]
-
-	if lon_first < 0:
-		ENSO = ENSO.sel(lon=slice(-170,-120))
-	if lon_first >= 0:
-		ENSO = ENSO.sel(lon=slice(190,240))
-
-	weighted_mean = ENSO.mean('lat')
-
-	# Spatial averaging
-	weights = np.cos(np.deg2rad(ENSO.lat.values))
-	interim = np.multiply(ENSO.tos.values,weights[np.newaxis,:,np.newaxis])
-	interim = np.nansum(interim,axis=1)
-	interim = np.true_divide(interim,np.sum(weights))
-
-	weighted_mean.tos.values[:] = interim[:]
-	
-	if hemisphere == 'NH':
-		subset = weighted_mean.sel(time=slice('%s-11-01' % date_first.dt.year.values, '%s-03-31' % date_last.dt.year.values))
-		seasonal = subset.sel(time=subset.time.dt.month.isin([11,12,1,2,3])).mean('lon')
 		
-		# Work on raw values to get standardized seasonal index. Consider the different # days comprising each month #
-		raw = seasonal.tos.values
-		a = len(raw)
-		tmp = np.reshape(raw,(int(a/5),5))
-		day_in_month_weights = np.array([30/151,31/151,31/151,28/151,31/151])[np.newaxis,:]
-		tmp = np.multiply(tmp,day_in_month_weights)
-		tmp = np.nanmean(tmp,axis=1)
-
-		clim = np.nanmean(tmp)
-		std = np.nanstd(tmp)
-		anom = np.subtract(tmp,clim)
-		anom = np.true_divide(anom,std)
-		
-	if hemisphere == 'SH':
-		subset = weighted_mean.sel(time=slice('%s-09-01' % date_first.dt.year.values, '%s-01-31' % date_last.dt.year.values))
-		seasonal = subset.sel(time=subset.time.dt.month.isin([9,10,11,12,1])).mean('lon')
-		
-		# Work on raw values to get standardized seasonal index. Consider the different # days comprising each month #
-		raw = seasonal.tos.values
-		a = len(raw)
-		tmp = np.reshape(raw,(int(a/5),5))
-		day_in_month_weights = np.array([30/153,31/153,30/153,31/153,31/153])[np.newaxis,:]
-		tmp = np.multiply(tmp,day_in_month_weights)
-		tmp = np.nanmean(tmp,axis=1)
-
-		clim = np.nanmean(tmp)
-		std = np.nanstd(tmp)
-		anom = np.subtract(tmp,clim)
-		anom = np.true_divide(anom,std)
-
-	# Get the unique years from "seasonal" and then remove the last one, which is not needed
-	years = set(np.sort(seasonal.time.dt.year.values))
-	years = [v for v in years][:-1]
-
-	nina = [i for i,v in enumerate(anom) if v <= -1]
-	nino = [i for i,v in enumerate(anom) if v >= 1]
-
-	nina_years = [years[i] for i in nina]
-	nino_years = [years[i] for i in nino]
-	
-	return nina_years, nino_years
-	
-	ds_sst.close()
-	ENSO.close()
-	weighted_mean.close()
-	subset.close()
-	seasonal.close()
-	
-	
-	
 ##################################################################################################
 ##################################################################################################
 ##################################################################################################
 
 def qbo_indexing(ds,qbo_isobar_in_hPa,hemisphere):
 
-	# Check to see if the pressure levels are in hPa or Pa
-	if np.nanmax(ds.lev.values) > 2000:
-		qbo_defined = qbo_isobar_in_hPa*100 # Pa
-	if np.nanmax(ds.lev.values) <= 2000:
-		qbo_defined = qbo_isobar_in_hPa # hPa
-		sfc = 1000 # hPa
-
 	# Check to see if the latitudes are organized north to south or south to north
 	lat_first = ds.lat.values[0]
 	lat_end = ds.lat.values[-1]
 
-	if lat_first > lat_end:
-		lats = np.linspace(90,-90,num=73)
-	if lat_end > lat_first:
-		lats = np.linspace(-90,90,num=73)
-
 	# Subset for 10 hPa #
-	subset = ds.sel(lev=qbo_defined)
+	subset = ds.sel(lev=qbo_isobar_in_hPa)
 
 	# Select 5S-5N winds #
 	if lat_first > lat_end:
@@ -773,8 +643,6 @@ print (' ')
 ################################ observations #############################
 ###########################################################################
 
-'''
-
 print(f'*** Now working on obs data\n------------------------------')
 obs_file_atm = OBS_DATA+'/stc-qbo-enso-obs-atm.nc'
 obs_file_ocn = OBS_DATA+'/stc-qbo-enso-obs-ocn.nc'
@@ -789,7 +657,6 @@ obs_sst = xr.open_dataset(obs_file_ocn)
 
 print (obs_sst, 'obs_sst')
 
-
 # Subset the data for the user defined first and last years #
 
 obs_atm = obs_atm.sel(time=slice(str(FIRSTYR),str(LASTYR)))
@@ -799,18 +666,81 @@ obs_sst = obs_sst.sel(time=slice(str(FIRSTYR),str(LASTYR)))
 
 plot_dir = f'{WK_DIR}/obs/'
 
+################################################
+print ('*** Running the observed ENSO indexing')
+################################################
+
+# Extract the tropical domain #
+ENSO = obs_sst.isel(lat = np.logical_and(obs_sst.lat >= -5, obs_sst.lat <= 5))
+
+# Extract date and longitude info from ENSO dataset #
+date_first = obs_sst.time[0]
+date_last = obs_sst.time[-1]
+lon_first = ENSO.lon.values[0]
+
+# Identify the correct ENSO longitudinal grid #
+if lon_first < 0:
+	ENSO = ENSO.sel(lon=slice(-170,-120))
+else:
+	ENSO = ENSO.sel(lon=slice(190,240))
+
+# Latitudinally average the ENSO data #
+weighted_mean = ENSO.mean('lat')
+weights = np.cos(np.deg2rad(ENSO.lat.values))
+interim = np.multiply(ENSO.tos.values,weights[np.newaxis,:,np.newaxis])
+interim = np.nansum(interim,axis=1)
+interim = np.true_divide(interim,np.sum(weights))
+weighted_mean.tos.values[:] = interim[:]
+
+def enso_index(seasonal):
+
+    # Create 5-month seasonally averaged standardized ENSO anomalies. Weight each month by number of days comprising month #
+    day_in_month_weights = seasonal.time.dt.days_in_month.values[:5]/np.sum(seasonal.time.dt.days_in_month.values[:5])
+    sstindex = np.reshape(seasonal.tos.values,(int(len(seasonal.tos.values)/5),5))
+    sstindex = np.nanmean(np.multiply(sstindex,day_in_month_weights[np.newaxis,:]),axis=1)
+    anom = np.subtract(sstindex,np.nanmean(sstindex))
+    anom = np.true_divide(anom,np.nanstd(sstindex))
+
+    # Get the unique years from "seasonal" and then remove the last one, which is not needed
+    years = [v for v in set(np.sort(seasonal.time.dt.year.values))][:-1]
+    nina_years = [years[i] for i,v in enumerate(anom) if v <= -1]
+    nino_years = [years[i] for i,v in enumerate(anom) if v >= 1]
+    
+    return nina_years, nino_years
+
+# Subsample ENSO data for NH #
+seasonal = weighted_mean.sel(time=slice('%s-11-01' % date_first.dt.year.values, '%s-03-31' % date_last.dt.year.values))
+seasonal = seasonal.sel(time=seasonal.time.dt.month.isin([11,12,1,2,3])).mean('lon')
+nh_nina, nh_nino = enso_index(seasonal)
+seasonal.close()
+
+# Subsample ENSO data for SH #
+seasonal = weighted_mean.sel(time=slice('%s-09-01' % date_first.dt.year.values, '%s-01-31' % date_last.dt.year.values))
+seasonal = seasonal.sel(time=seasonal.time.dt.month.isin([9,10,11,12,1])).mean('lon')
+sh_nina, sh_nino = enso_index(seasonal)
+seasonal.close()
+
+# Store the Nina/Nino years in a dictionary to call later #
+enso_dict = {}
+enso_dict['NH'] = nh_nina, nh_nino
+enso_dict['SH'] = sh_nina, sh_nino
+
 hemispheres = ['NH','SH']
 
 for hemi in hemispheres:
 
-
-	print ('*** Running the observed ENSO indexing')
-	obs_nina, obs_nino, obs_enso = enso_indexing(obs_sst,hemi)
+	###############################################
+	print ('*** Calling the observed ENSO indices')
+	###############################################
+	obs_nina, obs_nino = enso_dict[hemi]
 	
 	print (obs_nina,'obs_nina')
 	print (obs_nino, 'obs_nino')
 
+	###################################################################
 	print ('*** Running the observed ENSO zonal mean zonal wind calcs')
+	###################################################################
+
 	obstos_plot = f'{plot_dir}/obs-enso34-uzm-{FIRSTYR}-{LASTYR}-%s.png' % hemi
 	out_fig, out_ax = enso_uzm(obs_atm.ua,obs_nina,obs_nino,hemi)
 	out_fig.savefig(obstos_plot,dpi=700)
@@ -854,7 +784,7 @@ with open(filepath, 'w') as file_handler:
 	for item in metricsout:
 		file_handler.write(f"{item}\n")
 		
-'''
+
 ###########################################################################
 ################################ model #############################
 ###########################################################################

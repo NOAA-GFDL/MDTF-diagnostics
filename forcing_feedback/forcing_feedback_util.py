@@ -53,10 +53,10 @@ def var_anom4D(var_pert, var_base):
     else:
        #Prep variable to analyze on a monthly-basis
 
-       var_pert_re = np.reshape(var_pert, (int(sp[0]/12),12,sp[1],sp[2],sp[3]))
-       var_base_re = np.reshape(var_base, (int(sb[0]/12),12,sb[1],sb[2],sb[3]))
+       var_pert_re = np.reshape(var_pert, (np.int(sp[0]/12),12,sp[1],sp[2],sp[3]))
+       var_base_re = np.reshape(var_base, (np.int(sb[0]/12),12,sb[1],sb[2],sb[3]))
        var_base_tmean = np.repeat(np.squeeze(np.nanmean(var_base_re,axis=0))[np.newaxis,:,:,:], \
-             int(sp[0]/12),axis=0)
+             np.int(sp[0]/12),axis=0)
        var_anom = da.from_array(var_pert_re - var_base_tmean,chunks=(5,5,sp[1],sp[2],sp[3]))
 
     return var_anom
@@ -179,20 +179,20 @@ def fluxanom_calc_3D(var_pert_tot, var_base_tot, tot_kern, clr_kern, var_pert_cl
     skt = tot_kern.shape
     skc = clr_kern.shape
 
-    flux_sfc_tot = np.zeros((int(sp[0]/12),12,sp[1],sp[2]))
-    flux_sfc_clr = np.zeros((int(sp[0]/12),12,sp[1],sp[2]))
+    flux_sfc_tot = np.zeros((np.int(sp[0]/12),12,sp[1],sp[2]))
+    flux_sfc_clr = np.zeros((np.int(sp[0]/12),12,sp[1],sp[2]))
     if len(skt)!=3 or len(skc)!=3 or len(sp)!=3 or len(sb)!=3:
        print("An input variable is not 3D! Function will not execute")
     else:
 
        #Prep variable to analyze on a monthly-basis
-       var_pert_tot_re = np.reshape(var_pert_tot, (int(sp[0]/12),12,sp[1],sp[2]))
-       var_base_tot_re = np.reshape(var_base_tot, (int(sb[0]/12),12,sb[1],sb[2]))
+       var_pert_tot_re = np.reshape(var_pert_tot, (np.int(sp[0]/12),12,sp[1],sp[2]))
+       var_base_tot_re = np.reshape(var_base_tot, (np.int(sb[0]/12),12,sb[1],sb[2]))
      
        if var_pert_clr is not None:
-          var_pert_clr_re = np.reshape(var_pert_clr, (int(sp[0]/12),12,sp[1],sp[2]))
+          var_pert_clr_re = np.reshape(var_pert_clr, (np.int(sp[0]/12),12,sp[1],sp[2]))
        if var_base_clr is not None:
-          var_base_clr_re = np.reshape(var_base_clr, (int(sb[0]/12),12,sb[1],sb[2]))
+          var_base_clr_re = np.reshape(var_base_clr, (np.int(sb[0]/12),12,sb[1],sb[2]))
 
        for m in range(0,12):
 
@@ -206,19 +206,19 @@ def fluxanom_calc_3D(var_pert_tot, var_base_tot, tot_kern, clr_kern, var_pert_cl
               var_pert_clr_m = np.squeeze(var_pert_clr_re[:,m,:,:])
 
            #Compute anomalies
-           var_tot_anom = var_pert_tot_m - np.repeat(var_base_tot_m_tmean[np.newaxis,:,:],int(sp[0]/12),axis=0)
+           var_tot_anom = var_pert_tot_m - np.repeat(var_base_tot_m_tmean[np.newaxis,:,:],np.int(sp[0]/12),axis=0)
 
            if var_base_clr is not None:
-              var_clr_anom = var_pert_clr_m - np.repeat(var_base_clr_m_tmean[np.newaxis,:,:],int(sp[0]/12),axis=0)
+              var_clr_anom = var_pert_clr_m - np.repeat(var_base_clr_m_tmean[np.newaxis,:,:],np.int(sp[0]/12),axis=0)
 
            #Compute flux anomaly - total-sky
-           flux_sfc_tot[:,m,:,:] = np.squeeze(np.repeat(tot_kern[np.newaxis,m,:,:],int(sp[0]/12),axis=0)) * var_tot_anom
+           flux_sfc_tot[:,m,:,:] = np.squeeze(np.repeat(tot_kern[np.newaxis,m,:,:],np.int(sp[0]/12),axis=0)) * var_tot_anom
 
            #Compute flux anomaly - clear-sky
            if var_base_clr is not None:
-              flux_sfc_clr[:,m,:,:] = np.squeeze(np.repeat(clr_kern[np.newaxis,m,:,:],int(sp[0]/12),axis=0)) * var_clr_anom
+              flux_sfc_clr[:,m,:,:] = np.squeeze(np.repeat(clr_kern[np.newaxis,m,:,:],np.int(sp[0]/12),axis=0)) * var_clr_anom
            else:
-              flux_sfc_clr[:,m,:,:] = np.squeeze(np.repeat(clr_kern[np.newaxis,m,:,:],int(sp[0]/12),axis=0)) * var_tot_anom
+              flux_sfc_clr[:,m,:,:] = np.squeeze(np.repeat(clr_kern[np.newaxis,m,:,:],np.int(sp[0]/12),axis=0)) * var_tot_anom
     
     #Reshape flux anomalies
     flux_sfc_tot = np.reshape(flux_sfc_tot,(sp[0],sp[1],sp[2]))
@@ -399,9 +399,9 @@ def feedback_regress(fluxanom,tspert,tsclimo,lat,lon,fbname):
     sc = tsclimo.shape
 
     tsclimo_re = np.squeeze(np.nanmean(np.reshape(tsclimo, \
-                (int(sc[0]/12),12,sc[1],sc[2])),axis=0))
+                (np.int(sc[0]/12),12,sc[1],sc[2])),axis=0))
 
-    tsanom = tspert - np.reshape(np.repeat(tsclimo_re[np.newaxis,...],int(sp[0]/12), \
+    tsanom = tspert - np.reshape(np.repeat(tsclimo_re[np.newaxis,...],np.int(sp[0]/12), \
                axis=0),(sp[0],sp[1],sp[2]))
     
     weights = np.repeat(np.cos(np.deg2rad(lat))[np.newaxis,:],sp[0],axis=0)
@@ -476,8 +476,8 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
     
     axs[0, 0].set_title(var1_name+' - Model')
     if ((np.max(model_origlon)>300)): #convert 0-360 lon to -180-180 lon for plotting
-       start1a = var1_model[...,0:int(len(model_origlon)/2)]
-       start1b = var1_model[...,int(len(model_origlon)/2):]
+       start1a = var1_model[...,0:np.int(len(model_origlon)/2)]
+       start1b = var1_model[...,np.int(len(model_origlon)/2):]
        var1_model = np.concatenate((start1b,start1a),axis=1)
     var1_model, lon_m180 = add_cyclic_point(var1_model,coord=lon_m)
     cs = axs[0, 0].contourf(lon_m180,lat_m,var1_model,cmap=plt.cm.RdBu_r, \
@@ -507,8 +507,8 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
 
     axs[1, 0].set_title(var2_name+' - Model')
     if ((np.max(model_origlon)>300)): #convert 0-360 lon to -180-180 lon for plotting
-       start1a = var2_model[...,0:int(len(model_origlon)/2)]
-       start1b = var2_model[...,int(len(model_origlon)/2):]
+       start1a = var2_model[...,0:np.int(len(model_origlon)/2)]
+       start1b = var2_model[...,np.int(len(model_origlon)/2):]
        var2_model = np.concatenate((start1b,start1a),axis=1)
     var2_model, lon_m180 = add_cyclic_point(var2_model,coord=lon_m)
     cs = axs[1, 0].contourf(lon_m180,lat_m,var2_model,cmap=plt.cm.RdBu_r, \
@@ -567,8 +567,8 @@ def map_plotting_2subs(cbar_levs,var_name,var_model, \
 
     axs[0].set_title(var_name+' - Model')
     if ((np.max(model_origlon)>300)): #convert 0-360 lon to -180-180 lon for plotting
-       start1a = var_model[...,0:int(len(model_origlon)/2)]
-       start1b = var_model[...,int(len(model_origlon)/2):]
+       start1a = var_model[...,0:np.int(len(model_origlon)/2)]
+       start1b = var_model[...,np.int(len(model_origlon)/2):]
        var_model = np.concatenate((start1b,start1a),axis=1)
     var_model, lon_m180 = add_cyclic_point(var_model,coord=lon_m)
     axs[0].contourf(lon_m180,lat_m,var_model,cmap=plt.cm.RdBu_r, \

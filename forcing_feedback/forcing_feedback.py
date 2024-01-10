@@ -57,7 +57,7 @@ if not os.path.isfile(os.environ["OBS_DATA"]+"/forcing_feedback_kernels.nc"):
 else:
 
     try:
-       os.system("python "+os.environ["POD_HOME"]+"/"+"forcing_feedback_kernelcalcs.py")
+       os.system("python "+os.environ["POD_HOME"]+"/"+"forcing_feedback_kernelcalcs_tropseperate_dask2.py")
        print('Working Directory is '+os.environ['WK_DIR'])
        print('Forcing Feedback POD is executing')
     except RuntimeError as e1:

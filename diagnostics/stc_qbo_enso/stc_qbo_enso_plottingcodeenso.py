@@ -8,21 +8,14 @@ Contains:
 '''
 
 
-
-import os
-import xarray as xr
 import numpy as np
-import xesmf as xe
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import matplotlib.path as mpath
 from cartopy.util import add_cyclic_point
-
-from scipy.fft import fft,fftfreq,ifft
-from scipy import interpolate,stats
-from scipy.optimize import curve_fit
+from scipy import stats
 
 ##################################################################################################
 ##################################################################################################
@@ -211,7 +204,7 @@ def enso_uzm(UZM,negative_indices,positive_indices,hemisphere):
 
 		sig_levs = [0.95,1]
 		mpl.rcParams['hatch.linewidth'] = 0.2
-		hatching = plt.contourf(x,y,sigs_out[i],colors='black',vmin=0.95,vmax=1,levels=sig_levs,hatches=['......','......'],alpha=0.0)
+		plt.contourf(x,y,sigs_out[i],colors='black',vmin=0.95,vmax=1,levels=sig_levs,hatches=['......','......'],alpha=0.0)
 	
 		if i == 4:
 			ax2 = ax1.twinx()
@@ -300,14 +293,6 @@ def enso_vt(VT,negative_indices,positive_indices,hemisphere):
 	fig, ax = plt.subplots()
 	
 	mpl.rcParams['font.sans-serif'].insert(0, 'Arial')
-
-	vmin = -50
-	vmax = 50
-	vlevs = np.linspace(vmin,vmax,num=21)
-	vlevs = [v for v in vlevs if v != 0]
-	ticks = [vmin,vmin/2,0,vmax/2,vmax]
-
-	vthesh = 250
 
 	blevs = []
 
@@ -441,7 +426,7 @@ def enso_vt(VT,negative_indices,positive_indices,hemisphere):
 
 		sig_levs = [0.95,1]
 		mpl.rcParams['hatch.linewidth'] = 0.2
-		hatching = plt.contourf(x,y,sigs_out[i],colors='black',vmin=0.95,vmax=1,levels=sig_levs,hatches=['......','......'],alpha=0.0)
+		plt.contourf(x,y,sigs_out[i],colors='black',vmin=0.95,vmax=1,levels=sig_levs,hatches=['......','......'],alpha=0.0)
 	
 		if i == 4:
 			ax2 = ax1.twinx()
@@ -697,7 +682,7 @@ def enso_slp(PS,negative_indices,positive_indices,hemisphere):
 		sig_levs = [0.95,1]
 		mpl.rcParams['hatch.linewidth'] = 0.2
 		cyclic_sig, cyclic_lontmp = add_cyclic_point(sigs_out[i], coord=lons)
-		hatching = ax1.contourf(cyclic_lon, lats, cyclic_sig,transform=ccrs.PlateCarree(),colors='black',vmin=0.95,vmax=1,levels=sig_levs,hatches=['......','......'],alpha=0.0,zorder=2)
+		ax1.contourf(cyclic_lon, lats, cyclic_sig,transform=ccrs.PlateCarree(),colors='black',vmin=0.95,vmax=1,levels=sig_levs,hatches=['......','......'],alpha=0.0,zorder=2)
 
 		# Overlay the climatology #
 		

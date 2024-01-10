@@ -17,8 +17,6 @@
 # air temperature
 # geopotential (this is post-processed to geopot height by dividing by 9.80665)
 
-import os
-
 import numpy as np
 import xarray as xr
 import xesmf as xe
@@ -43,7 +41,7 @@ def field_regridding(ds,latname,lonname):
 	lat_first = ds[latname].values[0]
 	lat_end = ds[latname].values[-1]
 
-	if lat_first > lat_end:
+	if lat_first >= lat_end:
 		lats = np.linspace(90,-90,num=73)
 	if lat_end > lat_first:
 		lats = np.linspace(-90,90,num=73)
@@ -157,6 +155,8 @@ out_ds.attrs['reanalysis'] = 'ERA5'
 out_ds.attrs['notes'] = 'Fields derived from monthly-mean ERA5 data on pressure levels'
 
 out_ds.psl.attrs['units'] = 'Pa'
+out_ds.ua.lev.attrs['units'] = 'hPa'
+out_ds.ehf.lev.attrs['units'] = 'hPa'
 
 sst_out_ds = sst_regridded
 sst_out_ds.attrs['reanalysis'] = 'HadiSST'

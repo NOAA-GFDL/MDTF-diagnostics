@@ -87,11 +87,21 @@ packages do not support them at this time.
 ### ANACONADA/MINICONDA
 `% ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`
 <<<<<<< HEAD
+<<<<<<< HEAD
   - Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, and `$CONDA_ENV_DIR`.
   - The `--env_dir` flag allows you to put the program files in a designated location `$CONDA_ENV_DIR` (for space reasons, or if you don’t have write access). You can omit this flag, and the environments will be installed within `$CONDA_ROOT/envs/` by default.
 ||||||| 437d3059
   - Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, and `$CONDA_ENV_DIR`.
+||||||| 437d3059
+  - Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, and `$CONDA_ENV_DIR`.
+=======
+### MICROMAMBA on machines that do NOT have Apple M-series chips
+`% ./src/conda/micromamba_env_setup.sh --all --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR`
+### MICROMAMBA on machines with Apple M-series chips
+`% ./src/conda/micromamba_env_setup.sh --e base --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR`
+>>>>>>> main
 
+<<<<<<< HEAD
   - The `--env_dir` flag allows you to put the program files in a designated location `$CONDA_ENV_DIR` (for space reasons, or if you don’t have write access). You can omit this flag, and the environments will be installed within `$CONDA_ROOT/envs/` by default.
 =======
 ### MICROMAMBA on machines that do NOT have Apple M-series chips
@@ -99,6 +109,21 @@ packages do not support them at this time.
 ### MICROMAMBA on machines with Apple M-series chips
 `% ./src/conda/micromamba_env_setup.sh --e base --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR`
 
+`% ./src/conda/micromamba_env_setup.sh --e python3_base --micromamba_root $MICROMAMBA_ROOT ---micromamba_exe $MICROMAMBA_EXE -env_dir $CONDA_ENV_DIR`
+
+  - Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, `$MICROMAMBA_ROOT`, `MICROMAMBA_EXE`, and `$CONDA_ENV_DIR`.
+  - `$MICROMAMBA_ROOT` is the path to micromamba installation on your system
+     (e.g., /home/${USER}/micromamba). This is defined by the `$MAMBA_ROOT_PREFIX` environment variable on your system 
+     when micromamba is installed
+  - `$MICROMAMBA_EXE` is full path to the micromamba executable on your system
+     (e.g., /home/${USER}/.local/bin/micromamba). This is defined by the `MAMBA_EXE` environment variable on your system
+  - The `--env_dir` flag allows you to put the program files in a designated location `$CONDA_ENV_DIR` 
+  (for space reasons, or if you don’t have write access).
+  You can omit this flag, and the environments will be installed within `$CONDA_ROOT/envs/` by default.
+>>>>>>> main
+||||||| 437d3059
+  - The `--env_dir` flag allows you to put the program files in a designated location `$CONDA_ENV_DIR` (for space reasons, or if you don’t have write access). You can omit this flag, and the environments will be installed within `$CONDA_ROOT/envs/` by default.
+=======
 `% ./src/conda/micromamba_env_setup.sh --e python3_base --micromamba_root $MICROMAMBA_ROOT ---micromamba_exe $MICROMAMBA_EXE -env_dir $CONDA_ENV_DIR`
 
   - Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, `$MICROMAMBA_ROOT`, `MICROMAMBA_EXE`, and `$CONDA_ENV_DIR`.

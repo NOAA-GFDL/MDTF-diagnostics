@@ -336,13 +336,7 @@ class MDTFInstaller(object):
         # determine runtime setup
         d.pods = 'all'
         d.conda_envmgr = True
-        if d.env_setup == 'conda-basic':
-            d.conda_envs = [self.settings.conda['framework_env'], 'NCL_base']
-            d.environment_manager = "Conda"
-            d.pods = ["Wheeler_Kiladis", "EOF_500hPa", "MJO_suite", "MJO_teleconnection","blocking_neale"]
-            if 'model_am4' in d.downloads_list:
-                d.downloads_list.remove('model_am4')
-        elif d.env_setup == 'conda-full':
+        if d.env_setup == 'conda-full':
             d.conda_envs = ['all']
             d.environment_manager = "Conda"
         elif d.env_setup == 'no-conda':
@@ -381,17 +375,17 @@ class MDTFInstaller(object):
             path = self.config[key]
             if path:
                 if not os.path.isdir(path):
-                    os.makedirs(path) # recursive mkdir if needed
+                    os.makedirs(path)  # recursive mkdir if needed
                 elif delete_existing:
                     shutil.rmtree(path) # overwrite everything
 
     def install(self):
-        d = self.config # abbreviation
+        d = self.config  # abbreviation
         if not d.no_downloads:
             self.makedirs(self._data_paths, delete_existing=True)
             ftp_download(self.settings.ftp, self.settings.data, d)
             untar_data(self.settings.data, d)
-        self.makedirs(self._env_paths, delete_existing=False) # both conda and non-conda envs
+        self.makedirs(self._env_paths, delete_existing=False)  # both conda and non-conda envs
         if not d.no_conda_install:
             conda_env_create(d.conda_envs, self.code_root, self.settings.conda)
 
@@ -401,6 +395,7 @@ class MDTFInstaller(object):
             framework_verify(self.code_root, run_output)
 
 # ------------------------------------------------------------------------------
+
 
 if __name__ == '__main__':
     # get dir of currently executing script:

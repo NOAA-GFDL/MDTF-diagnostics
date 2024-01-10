@@ -62,8 +62,8 @@
   // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.
   "OUTPUT_DIR": "../wkdir",
 
-  // Location of the Anaconda/miniconda installation to use for managing
-  // dependencies (path returned by running `conda info --base`.) If empty,
+  // Location of the Anaconda/miniconda or micromamba installation to use for managing
+  // dependencies (path returned by running `[conda | micromamba] info`.) If empty,
   // framework will attempt to determine location of system's conda installation.
   "conda_root": "",
 
@@ -73,6 +73,8 @@
   // location.
   "conda_env_root": "",
 
+  // Path to micromamba executable if using micromamba
+  "micromamba_exe": "",
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
   // can be set here, in the form "flag name": "desired setting".

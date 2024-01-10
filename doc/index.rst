@@ -6,7 +6,7 @@
 Welcome to the documentation for the MDTF diagnostics!
 ======================================================
 
-.. figure:: img/CPO_MAPP_MDTF_Logo.jpg
+.. figure:: img/logo_MDTF.png
    :align: center
    :width: 100 %
 

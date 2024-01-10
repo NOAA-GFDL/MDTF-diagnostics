@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{matrix.os}}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-12, macos-13]
         json-file: ["tests/github_actions_test_ubuntu_set1.jsonc","tests/github_actions_test_macos_set1.jsonc"]
         json-file-set2: ["tests/github_actions_test_ubuntu_set2.jsonc", "tests/github_actions_test_macos_set2.jsonc"]
         json-file-set3: ["tests/github_actions_test_ubuntu_set3.jsonc", "tests/github_actions_test_macos_set3.jsonc"]
@@ -31,15 +31,30 @@ jobs:
             json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
           - os: ubuntu-latest
             json-file-set3: "tests/github_actions_test_macos_set3.jsonc"
-          - os: macos-latest
+          - os: macos-12
             json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
-          - os: macos-latest
+          - os: macos-12
             json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
-          - os: macos-latest
+          - os: macos-12
             json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
-      max-parallel: 2
+          - os: macos-13
+            json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
+          - os: macos-13
+            json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
+          - os: macos-13
+            json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
+      max-parallel: 3
     steps:
     - uses: actions/checkout@v3
+    #- name: Download Miniconda 3
+    #  uses: conda-incubator/setup-miniconda@v2
+    #  with:
+    #    miniconda-version: "latest"
+    #    python-version: 3.11.0
+    #    channels: conda-forge
+    #- name: Conda info
+    #  shell: bash -el {0}
+    #  run: conda info
    # Set up Micromamba
     - uses: mamba-org/setup-micromamba@v1
       with:
@@ -47,29 +62,33 @@ jobs:
         condarc: |
           channels:
             - conda-forge
-            - defaults
-    - name: Initialize and verify miniconda installation
-      run: |
-        conda init bash
-        conda info -a
+
     - name: Install XQuartz if macOS
-      if: ${{ matrix.os == 'macos-latest'}}
+      if: ${{ matrix.os == 'macos-12' || matrix.os == 'macos-13'}}
       run: |
         echo "Installing XQuartz"
         brew install --cask xquartz
+        echo "CONDA_ROOT=$(echo /Users/runner/micromamba)" >> $GITHUB_ENV
+        echo "MICROMAMBA_EXE=$(echo /Users/runner/micromamba-bin/micromamba)" >> $GITHUB_ENV
+        echo "CONDA_ENV_DIR=$(echo /Users/runner/micromamba/envs)" >> $GITHUB_ENV
     - name: Set environment variables
       run: |
-        echo "POD_OUTPUT=$(echo $PWD/../wkdir/GFDL.Synthetic)" >> $GITHUB_ENV
+        echo "POD_OUTPUT=$(echo $PWD/../wkdir)" >> $GITHUB_ENV
+    - name: Set conda vars
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        echo "MICROMAMBA_EXE=$(echo /home/runner/micromamba-bin/micromamba)" >> $GITHUB_ENV
+        echo "CONDA_ROOT=$(echo /home/runner/micromamba)" >> $GITHUB_ENV
+        echo "CONDA_ENV_DIR=$(echo /home/runner/micromamba/envs)" >> $GITHUB_ENV
     - name: Install Conda Environments
       run: |
         echo "Installing Conda Environments"
+        echo "conda root ${CONDA_ROOT}"
+        echo "env dir  ${CONDA_ENV_DIR}"
         # MDTF-specific setup: install all conda envs
-        micromamba create -f ./src/conda/env_base.yml
-        micromamba create -f ./src/conda/env_python3_base.yml
-        micromamba create -f ./src/conda/env_NCL_base.yml
-        micromamba create -f ./src/conda/env_R_base.yml
+        ./src/conda/micromamba_env_setup.sh --all --micromamba_root ${CONDA_ROOT} --micromamba_exe ${MICROMAMBA_EXE} --env_dir ${CONDA_ENV_DIR}
         echo "Creating the _MDTF_synthetic_data environment"
-        micromamba create -f ./src/conda/_env_synthetic_data.yml
+        micromamba create -y -f ./src/conda/_env_synthetic_data.yml
     - name: Generate Model Data
       run: |
         cd ../
@@ -82,6 +101,8 @@ jobs:
         mdtf_synthetic.py -c CMIP --startyear 1990 --nyears 20
         cd ../
         mkdir wkdir
+        ## make input data directories
+        mkdir -p inputdata/obs_data
     - name: Get Observational Data for Set 1
       run: |
         echo "${PWD}"
@@ -97,8 +118,6 @@ jobs:
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/MJO_teleconnection_obs_data.tar --output MJO_teleconnection_obs_data.tar
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/MJO_suite_obs_data.tar --output MJO_suite_obs_data.tar
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/precip_diurnal_cycle_obs_data.tar --output precip_diurnal_cycle_obs_data.tar
-        ## make input data directories
-        mkdir -p inputdata/obs_data
         echo "Untarring set 1 NCAR/CESM standard test files"
         tar -xvf convective_transition_diag_obs_data.tar
         tar -xvf EOF_500hPa_obs_data.tar
@@ -116,7 +135,9 @@ jobs:
         # trivial check that install script worked
         ./mdtf_framework.py --version
         # run the test PODs
-        ./mdtf_framework.py -v -f ${{matrix.json-file}}
+        ./mdtf -v -f ${{matrix.json-file}}
+        # Debug POD log(s)
+        # cat ${POD_OUTPUT}/MDTF_NCAR.Synthetic_1975_1981/Wheeler_Kiladis/Wheeler_Kiladis.log
     - name: Get observational data for set 2
       run: |
         echo "${PWD}"
@@ -148,9 +169,9 @@ jobs:
       run: |
         micromamba activate _MDTF_base
         # run the test PODs
-        ./mdtf_framework.py -v -f ${{matrix.json-file-set2}}
-       # Uncomment the following line for debugging
-       # cat ../wkdir/MDTF_GFDL.Synthetic_1_10/MJO_prop_amp/MJO_prop_amp.log
+        ./mdtf -v -f ${{matrix.json-file-set2}}
+        # Uncomment the following line for debugging
+        #cat ../wkdir/MDTF_GFDL.Synthetic_1_10/MJO_prop_amp/MJO_prop_amp.log
     - name: Get observational data for set 3
       run: |
         echo "${PWD}"
@@ -166,6 +187,7 @@ jobs:
         # allow 20 min for transfer before timeout; Github actions allows 6 hours for individual
         # jobs, but we don't want to max out resources that are shared by the NOAA-GFDL repos.
 <<<<<<< HEAD
+<<<<<<< HEAD
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/temp_extremes_distshape_obs_data.tar --output temp_extremes_distshape_obs_data.tar
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/tropical_pacific_sea_level_obs_data.tar.gz --output tropical_pacific_sea_level_obs_data.tar.gz
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/mixed_layer_depth_obs_data.tar --output mixed_layer_depth_obs_data.tar
@@ -180,15 +202,30 @@ jobs:
 =======
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/temp_extremes_distshape_obs_data.tar --output temp_extremes_distshape_obs_data.tar
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/tropical_pacific_sea_level_obs_data.tar.gz --output tropical_pacific_sea_level_obs_data.tar.gz
+||||||| 437d3059
+        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/temp_extremes_distshape_obs_data.tar --output temp_extremes_distshape_obs_data.tar
+        curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/tropical_pacific_sea_level_obs_data.tar.gz --output tropical_pacific_sea_level_obs_data.tar.gz
+=======
+        #curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/temp_extremes_distshape_obs_data.tar --output temp_extremes_distshape_obs_data.tar
+        #curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/tropical_pacific_sea_level_obs_data.tar.gz --output tropical_pacific_sea_level_obs_data.tar.gz
+>>>>>>> main
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/mixed_layer_depth_obs_data.tar --output mixed_layer_depth_obs_data.tar
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/ocn_surf_flux_diag_obs_data.tar --output ocn_surf_flux_diag_obs_data.tar
         # curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/albedofb_obs_data.tar --output albedofb_obs_data.tar
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/seaice_suite_obs_data.tar --output seaice_suite_obs_data.tar
         curl --verbose --ipv4 --connect-timeout 8 --max-time 1200 --retry 128 --ftp-ssl --ftp-pasv -u "anonymous:anonymous" ftp://ftp.gfdl.noaa.gov/perm/oar.gfdl.mdtf/stc_eddy_heat_fluxes_obs_data.tar --output stc_eddy_heat_fluxes_obs_data.tar
         echo "Untarring set 3 CMIP standard test files"
+<<<<<<< HEAD
 >>>>>>> 437d30590c45e8b7dd0cd01a3dc67066a2137115
         tar -xvf temp_extremes_distshape_obs_data.tar
         tar -zxvf tropical_pacific_sea_level_obs_data.tar.gz
+||||||| 437d3059
+        tar -xvf temp_extremes_distshape_obs_data.tar
+        tar -zxvf tropical_pacific_sea_level_obs_data.tar.gz
+=======
+        #tar -xvf temp_extremes_distshape_obs_data.tar
+        #tar -zxvf tropical_pacific_sea_level_obs_data.tar.gz
+>>>>>>> main
         tar -xvf mixed_layer_depth_obs_data.tar
         tar -xvf ocn_surf_flux_diag_obs_data.tar
         # tar -xvf albedofb_obs_data.tar
@@ -201,7 +238,7 @@ jobs:
       run: |
         micromamba activate _MDTF_base
         # run the test PODs
-        ./mdtf_framework.py -v -f ${{matrix.json-file-set3}}
+        ./mdtf -v -f ${{matrix.json-file-set3}}
     - name: Run unit tests
       run: |
        micromamba activate _MDTF_base

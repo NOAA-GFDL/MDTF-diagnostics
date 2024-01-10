@@ -21,10 +21,10 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-from forcing_feedback_util_tropseperate_dask2 import globemean_2D
-from forcing_feedback_util_tropseperate_dask2 import bargraph_plotting
-from forcing_feedback_util_tropseperate_dask2 import map_plotting_4subs
-from forcing_feedback_util_tropseperate_dask2 import map_plotting_2subs
+from forcing_feedback_util import globemean_2D
+from forcing_feedback_util import bargraph_plotting
+from forcing_feedback_util import map_plotting_4subs
+from forcing_feedback_util import map_plotting_2subs
 
 # Read in observational data
 nc_obs = xr.open_dataset(os.environ["OBS_DATA"]+"/forcing_feedback_obs.nc")

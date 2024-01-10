@@ -18,12 +18,12 @@ import xarray as xr
 from scipy.interpolate import interp1d
 
 #Import functions specific to this toolkit
-from forcing_feedback_util_tropseperate_dask2 import var_anom4D
-from forcing_feedback_util_tropseperate_dask2 import fluxanom_calc_4D
-from forcing_feedback_util_tropseperate_dask2 import fluxanom_calc_3D
-from forcing_feedback_util_tropseperate_dask2 import esat_coef
-from forcing_feedback_util_tropseperate_dask2 import latlonr3_3D4D
-from forcing_feedback_util_tropseperate_dask2 import feedback_regress
+from forcing_feedback_util import var_anom4D
+from forcing_feedback_util import fluxanom_calc_4D
+from forcing_feedback_util import fluxanom_calc_3D
+from forcing_feedback_util import esat_coef
+from forcing_feedback_util import latlonr3_3D4D
+from forcing_feedback_util import feedback_regress
 # ======================================================================
 
 #Read in radiative kernels
@@ -144,7 +144,7 @@ dp_sfc[ps_kern_TOA>=pt[0]] = 0
 
 
 #Repeat lowest layer thicknesses to match size of model data for kernel calculations
-dp_sfc = np.repeat(dp_sfc[np.newaxis,:,:,:],np.int(sp[0]/12),axis=0)
+dp_sfc = np.repeat(dp_sfc[np.newaxis,:,:,:],int(sp[0]/12),axis=0)
 
 #Compute lapse rate and uniform warming
 ta_pert = np.asarray(model_mainvar_pert[os.environ["ta_var"]])
@@ -180,15 +180,15 @@ hus_climo[hus_climo<0] = 0
 
 #Calculations necessary to convert units of water vapor change to match kernels
 shp = ta_climo.shape
-ta_ratio_climo = np.squeeze(np.nanmean(np.reshape(ta_climo, (np.int(shp[0]/12),12,shp[1],shp[2],shp[3])), axis=0))
+ta_ratio_climo = np.squeeze(np.nanmean(np.reshape(ta_climo, (int(shp[0]/12),12,shp[1],shp[2],shp[3])), axis=0))
 es_ratio = esat_coef(ta_ratio_climo+1)/esat_coef(ta_ratio_climo)
 
-es_ratio_pert = np.reshape(np.repeat(es_ratio[np.newaxis,...],np.int(ta_pert.shape[0]/12),axis=0), \
+es_ratio_pert = np.reshape(np.repeat(es_ratio[np.newaxis,...],int(ta_pert.shape[0]/12),axis=0), \
                 (ta_pert.shape[0],shp[1],shp[2],shp[3]))
 
 #Log of water vapor
 q_pert = np.log(hus_pert)/(es_ratio_pert-1)
-es_ratio_climo = np.reshape(np.repeat(es_ratio[np.newaxis,...],np.int(shp[0]/12),axis=0), \
+es_ratio_climo = np.reshape(np.repeat(es_ratio[np.newaxis,...],int(shp[0]/12),axis=0), \
                 (shp[0],shp[1],shp[2],shp[3]))
 
 q_climo = np.log(hus_climo)/(es_ratio_climo-1)

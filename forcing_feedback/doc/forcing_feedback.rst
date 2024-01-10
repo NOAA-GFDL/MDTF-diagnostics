@@ -1,6 +1,6 @@
 Forcing Feedback Diagnostic Package
 ============================================================
-Last update: 9/5/2023
+Last update: 12/21/2023
 
 The Forcing Feedback Diagnostic package evaluates a model's radiative forcing and radiative feedbacks. This is a commong framework for understanding the radiative constraints on a model's climate sensitivity and is outlined in detail by :ref:`Sherwood et al. (2015) <1>`, among many others. To compute radiative feedbacks, anomalies of temperature, specific humidity and surface albedo are translated into radiative anomalies by multiplying them by radiative kernels developed from the CloudSat/CALIPSO Fluxes and Heating Rates product (:ref:`Kramer et al. 2019 <2>`).These radiative anomalies are regressed against the model's global-mean surface temperature anomalies to estimate the radiative feedbacks. Cloud radiative feedbacks are computed as the change in cloud radiative effects from the model's TOA radiative flux variables, corrected for cloud masking using the kernel-derived non-cloud radiative feedbacks (:ref:`Soden et al. 2008 <3>`).  The Instantaneous Radiative Forcing is computed first under clear-sky conditions by subtracting kernel-derivred clear-sky radiative feedbacks from the clear-sky TOA radiative imbalance diagnosed from the model's radiative flux variables. The all-sky Instantaneous Radiative Forcing is estimated by dividing the clear-sky Instantaneous Radiative Forcing by a cloud masking constant (:ref:`Kramer et al. 2021 <4>`). All radiative quantities in this package are defined at the TOA and positive represents an increase in net downwelling or a radiative heating of the planet.
 
@@ -85,9 +85,9 @@ References
 
    .. _4:
 
-4. Kramer, R.J, He, H., Soden, B.J., Oreopoulos, R.J., Myhre, G., Forster, P.F., & Smith, C.J. (2021) Observational Evidence of Increasing Global Radiative Forcing. *Geophys. Res. Lett.*, Submitted
+4. Kramer, R.J, He, H., Soden, B.J., Oreopoulos, R.J., Myhre, G., Forster, P.F., & Smith, C.J. (2021) Observational Evidence of Increasing Global Radiative Forcing. *Geophys. Res. Lett.*, **48** (7), e2020GL091585. https://doi.org/10.1029/2020GL091585
 
    .. _5:
 
-5. He, H., Kramer, R.J., & Soden, B.J. (2021) Constraining the Intermodel Spread in Cloud and Water Vapor Feedback. *Geophys. Res. Lett.*, Submitted
+5. He, H., Kramer, R.J., & Soden, B.J. (2021) Evaluating Observational Constraints on Intermodel Spread in Cloud, Temperature and Humidity Feedbacks. *Geophys. Res. Lett.*, **48**, e2020GL092309. https://doi.org/10.1029/2020GL092309
 

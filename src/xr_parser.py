@@ -727,6 +727,18 @@ class DefaultDatasetParser:
 
     # --- Methods for comparing Dataset attrs against our record  ---
 
+    def approximate_attribute_value(self, our_name: str, ds_name: str) -> bool:
+        """Determine if the dataset attribute value is an approximate match to the expected attribute value"""
+        exclude = ["with", "on", "in", "of", "at", "near"]
+        our_name_split = [i for i in our_name.split('_') if i not in exclude]
+        ds_name_split = [i for i in ds_name.split('_') if i not in exclude]
+        isect = set(our_name_split).intersection(ds_name_split)
+
+        if len(isect) >= len(our_name_split)-2 and len(isect) > 0:
+            return True
+        else:
+            return False
+
     def compare_attr(self, our_attr_tuple, ds_attr_tuple, comparison_func=None,
                      fill_ours=True, fill_ds=False, overwrite_ours=None):
         """Worker function to compare two attributes (on *our_var*, the
@@ -758,6 +770,7 @@ class DefaultDatasetParser:
         ds_var, ds_attr_name, ds_attr = ds_attr_tuple
         if comparison_func is None:
             comparison_func = (lambda x, y: x == y)
+
         # told to update our metadata, but only do so if we weren't told to
         # ignore ds's metadata and the metadata is actually present on ds
         fill_ours = (fill_ours and ds_attr is not ATTR_NOT_FOUND)
@@ -801,8 +814,13 @@ class DefaultDatasetParser:
                 if fill_ours:
                     # update our attr with value from ds, but also raise error
                     setattr(our_var, our_attr_name, ds_attr)
-                raise util.MetadataEvent((f"Unexpected {our_attr_name} for variable "
-                                          f"'{our_var.name}': '{ds_attr}' (expected '{our_attr}')."))
+                comparison_func = self.approximate_attribute_value(our_attr, ds_attr)
+                if not comparison_func:
+                    raise util.MetadataEvent((f"Unexpected {our_attr_name} for variable "
+                                              f"'{our_var.name}': '{ds_attr}' (expected '{our_attr}')."))
+                else:
+                    self.log.warning(f"Could not find exact match for {our_var.name} attribute {our_attr_name}"
+                                     f"{our_attr}; data processing will proceed with approximate match {ds_attr}")
             elif overwrite_ours:
                 # set our attr to ds value
                 self.log.debug("Updating %s for '%s' to value '%s' from dataset.",

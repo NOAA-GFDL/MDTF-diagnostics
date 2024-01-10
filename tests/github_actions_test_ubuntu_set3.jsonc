@@ -10,13 +10,13 @@
       "FIRSTYR" : 1990,
       "LASTYR" : 2009,
       "pod_list": [
-         "temp_extremes_distshape",
-         "tropical_pacific_sea_level",
+         //"temp_extremes_distshape", // needs matplotlib 3.7.3, not on conda yet
+        //"tropical_pacific_sea_level"
          "ocn_surf_flux_diag",
          "mixed_layer_depth",
          "seaice_suite",
          "stc_eddy_heat_fluxes"
-         // "albedofb"
+         //"albedofb"
       ]
     }
   ],
@@ -43,14 +43,15 @@
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned lsby running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  "conda_root": "/usr/share/miniconda",
+  //"conda_root": "/usr/share/miniconda3",
+  "conda_root": "/home/runner/micromamba",
 
+  "micromamba_exe": "/home/runner/micromamba-bin/micromamba",
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in the system default
   // location.
   "conda_env_root": "/home/runner/micromamba/envs",
-
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
   // can be set here, in the form "flag name": "desired setting".

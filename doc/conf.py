@@ -73,7 +73,7 @@ author = u'Model Diagnostics Task Force'
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'3.3'
+release = u'3.4'
 
 # only used for resolving relative links in markdown docs
 _project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/'

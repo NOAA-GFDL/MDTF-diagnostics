@@ -51,7 +51,6 @@
 # ======================================================================
 # Import standard Python packages
 import os
-import glob
 
 ##### Functionalities in Surface Temperature Extremes and Distribution Shape Package #####
 

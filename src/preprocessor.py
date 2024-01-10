@@ -5,6 +5,7 @@ import os
 import shutil
 import abc
 import dataclasses
+import datetime
 import functools
 from src import util, core, varlistentry_util, diagnostic, xr_parser, units
 import cftime
@@ -200,7 +201,7 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
     """
 
     @staticmethod
-    def cast_to_cftime(dt, calendar):
+    def cast_to_cftime(dt: datetime.datetime, calendar):
         """Workaround to cast a python :py:class:`~datetime.datetime` object *dt*
         to a
         `cftime.datetime <https://unidata.github.io/cftime/api.html#cftime.datetime>`__
@@ -251,10 +252,48 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         # lower/upper are earliest/latest datetimes consistent with the date we
         # were given, up to the precision that was specified (eg lower for "2000"
         # would be Jan 1, 2000, and upper would be Dec 31).
-        dt_start_lower = self.cast_to_cftime(dt_range.start.lower, cal)
-        dt_start_upper = self.cast_to_cftime(dt_range.start.upper, cal)
-        dt_end_lower = self.cast_to_cftime(dt_range.end.lower, cal)
-        dt_end_upper = self.cast_to_cftime(dt_range.end.upper, cal)
+
+        # match date range hours to dataset hours if necessary
+        # this is a kluge to support the timeslice data and similar datasets that
+        # do not begin at hour zero
+        if dt_range.start.lower.hour != t_start.hour:
+            var.log.info("Variable %s data starts at hour %s", var.full_name, t_start.hour)
+            dt_start_upper_new = datetime.datetime(dt_range.start.upper.year,
+                                                   dt_range.start.upper.month,
+                                                   dt_range.start.upper.day,
+                                                   t_start.hour,
+                                                   t_start.minute,
+                                                   t_start.second)
+            dt_start_lower_new = datetime.datetime(dt_range.start.lower.year,
+                                                   dt_range.start.lower.month,
+                                                   dt_range.start.lower.day,
+                                                   t_start.hour,
+                                                   t_start.minute,
+                                                   t_start.second)
+            dt_start_lower = self.cast_to_cftime(dt_start_lower_new, cal)
+            dt_start_upper = self.cast_to_cftime(dt_start_upper_new, cal)
+        else:
+            dt_start_lower = self.cast_to_cftime(dt_range.start.lower, cal)
+            dt_start_upper = self.cast_to_cftime(dt_range.start.upper, cal)
+        if dt_range.end.lower.hour != t_end.hour:
+            var.log.info("Variable %s data ends at hour %s", var.full_name, t_end.hour)
+            dt_end_lower_new = datetime.datetime(dt_range.end.lower.year,
+                                                 dt_range.end.lower.month,
+                                                 dt_range.end.lower.day,
+                                                 t_end.hour,
+                                                 t_end.minute,
+                                                 t_end.second)
+            dt_end_upper_new = datetime.datetime(dt_range.end.upper.year,
+                                                 dt_range.end.upper.month,
+                                                 dt_range.end.upper.day,
+                                                 t_end.hour,
+                                                 t_end.minute,
+                                                 t_end.second)
+            dt_end_lower = self.cast_to_cftime(dt_end_lower_new, cal)
+            dt_end_upper = self.cast_to_cftime(dt_end_upper_new, cal)
+        else:
+            dt_end_lower = self.cast_to_cftime(dt_range.end.lower, cal)
+            dt_end_upper = self.cast_to_cftime(dt_range.end.upper, cal)
 
         if t_start > dt_start_upper:
             err_str = (f"Error: dataset start ({t_start}) is after "

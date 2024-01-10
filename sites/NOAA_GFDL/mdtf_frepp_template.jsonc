@@ -103,6 +103,9 @@
   // default location.
   "conda_env_root": "/home/oar.gfdl.mdtf/miniconda3/envs",
 
+  // Path to micromamba executable if using micromamba
+  "micromamba_exe": "",
+
   // Root directory for python virtual environments. Only used if
   // environment_manager = 'Virtualenv'. Set equal to '' to install in your
   // system's default location.

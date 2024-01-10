@@ -13,7 +13,7 @@ operating system(s) you ran your tests on.
 
 **Checklist:**
 - [ ] My branch is up-to-date with the NOAA-GFDL main branch, and all merge conflicts are resolved
-- [ ] The scripts are written in Python 3.10 or above (preferred; required if funded by a CPO grant), NCL, or R
+- [ ] The scripts are written in Python 3.11 or above (preferred; required if funded by a CPO grant), NCL, or R
 - [ ] All of my scripts are in the diagnostics/[POD short name] subdirectory, and include a main_driver script, template html, and settings.jsonc file
 - [ ] I have made corresponding changes to the documentation in the POD's doc/ subdirectory
 - [ ] I have requested that the framework developers add packages required by my POD to the python3, NCL, or R environment yaml file if necessary, and my environment builds with `conda_env_setup.sh` 

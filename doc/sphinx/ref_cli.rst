@@ -61,6 +61,7 @@ General options
    |
    | The default value for this setting is ``local``. The sites/local/ directory is left empty in order to enable any installation to be customized (e.g. settings the paths to where supporting data was installed) without needing to alter the framework code. For more information on how to do this, see the documentation for the `'local' site <../sphinx_sites/local.html>`__.
 
+
 -f, --input-file <input_file>    Path to a user configuration file that sets options listed here. This can be a JSON file of the form given in `src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/default_tests.jsonc>`__ (which is intended to be copied and used as a template), or a text file containing flags and command-line arguments as they would be entered in the shell. Additional options set explicitly on the command line will still override settings in this file.
 
 Path settings
@@ -99,6 +100,13 @@ Options that describe the input model data and how it should be obtained.
    | that analyze output from a single model simulation and an (optional) observational dataset
    | Use ``"multi_run"`` for PODs that analyze output from 2 or more model simulations and/or observational datasets (cases).
    | See the example_multicase POD and config files for an example of a ``multi_run`` type POD.
+
+Conda/micromamba settings
++++++++++++++++++++++++++
+--conda_root     path to anaconda, miniconda, or micromamba installation
+--conda_env_root     path to directory with conda enviroments
+--micromamba_exe     path to the micromamba executable. REQUIRED if using micromamba
+
 Analysis settings
 +++++++++++++++++
 
@@ -130,7 +138,6 @@ Options that control how the package is deployed (how code dependencies are mana
 
    .. note::
       The values used for this option and its settings must be compatible with how the package was set up during :doc:`installation<start_install>`. Missing code dependencies are not installed at runtime; instead any POD with missing dependencies raises an error and is not run.
-
 Output options
 ++++++++++++++
 

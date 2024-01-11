@@ -1142,14 +1142,21 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                           case_name=case_name)
         return cat_subset
 
-    def write_pp_catalog(self, input_catalog_ds: xr.Dataset, config: util.NameSpace):
+    def write_pp_catalog(self, input_catalog_ds: xr.Dataset, config: util.PodPathManager):
         """ Write a new data catalog for the preprocessed data
             to the POD output directory
         """
-        new_cat = util.define_pp_catalog(input_catalog_ds, config)
+        cat_file_name = "MDTF_postprocessed_data"
+        pp_cat_assets = util.define_pp_catalog_assets(input_catalog_ds, config, cat_file_name)
         file_list = util.get_file_list(config.OUTPUT_DIR)
         # fill in catalog information from pp file name
         entries = list(map(util.mdtf_pp_parser, file_list))
+        # append columns defined in assets
+        columns = [att['column_name'] for att in pp_cat_assets['attributes']]
+        for col in columns:
+            for e in entries:
+                if col not in e.keys():
+                    e[col] = ""
         # copy information from input catalog to pp catalog entries
         global_attrs = ['convention', 'realm']
         for e in entries:
@@ -1158,7 +1165,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 e[att] = ds_match.attrs.get(att, '')
             ds_var = ds_match.data_vars.get(e['variable_id'])
             for key, val in ds_var.attrs.items():
-                e[key] = val
+                if key in columns:
+                    e[key] = val
 
         df1 = pd.DataFrame(entries)
         df1.head()

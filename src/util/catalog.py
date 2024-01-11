@@ -3,7 +3,7 @@
  https://gitlab.dkrz.de/data-infrastructure-services/intake-esm/-/blob/master/builder/notebooks/dkrz_era5_disk_catalog.ipynb
 """
 import fnmatch
-import dask.dataframe as dd
+import datetime
 import dask
 from intake.source.utils import reverse_format
 import os
@@ -80,6 +80,9 @@ def mdtf_pp_parser(file_path: str) -> dict:
     )
 
     f = _reverse_filename_format(file_basename, filename_template=filename_template)
+    #  ^..^
+    # /o  o\
+    # oo--oo~~~
     cat_entry = dict()
     cat_entry.update(f)
     cat_entry['path'] = file_path
@@ -118,14 +121,17 @@ def get_file_list(output_dir: str) -> list:
     return filelist
 
 
-def define_pp_catalog(input_catalog, config) -> dict:
+def define_pp_catalog_assets(input_catalog, config, cat_file_name: str) -> dict:
     """ Define the version and attributes for the post-processed data catalog"""
+    cat_file_path = os.path.join(config.OUTPUT_DIR, cat_file_name, '.csv')
     cmip6_cv_info = cli.read_config_file(config.CODE_ROOT,
                                          "data/cmip6-cmor-tables/Tables",
                                          "CMIP6_CV.json")
 
-    cat_dict = {'esmcat_version': '2023.11.10', 'id': 'MDTF_PP_data',
+    cat_dict = {'esmcat_version': datetime.datetime.today().strftime('%Y-%m-%d'),
+                'id': 'MDTF_PP_data',
                 'description': f'Post-processed dataset for cases:{[case_name for case_name in input_catalog.keys()]}',
+                "catalog_file": f'file://{cat_file_path}',
                 "attributes": []
     }
 
@@ -148,12 +154,21 @@ def define_pp_catalog(input_catalog, config) -> dict:
         "groupby_attrs": [
             "activity_id",
             "institution_id",
-            "experiment_id"
+            "source_id",
+            "experiment_id",
+            "frequency",
+            "member_id",
+            "table_id",
+            "grid_label",
+            "realm",
+            "variant_label",
+            "time_range"
         ],
         "aggregations": [
             {
                 "type": "union",
-                "attribute_name": "variable_id"
+                "attribute_name": "variable_id",
+                "options": {}
             },
             {
                 "type": "join_existing",

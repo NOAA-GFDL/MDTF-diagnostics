@@ -1,8 +1,6 @@
 # List public symbols for package import.
 from .exceptions import *
 
-from .catalog import *
-
 from .logs import (
     OBJ_LOG_ROOT, ObjectLogTag, MDTFObjectLogger, MDTFObjectLoggerMixin,
     VarlistEntryLoggerMixin, PODLoggerMixin, CaseLoggerMixin,
@@ -44,3 +42,5 @@ from .processes import (
 from .path_utils import (
     PodPathManager, ModelDataPathManager
 )
+
+from .catalog import *

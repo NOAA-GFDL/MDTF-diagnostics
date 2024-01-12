@@ -93,7 +93,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     ctx.config.CODE_ROOT = os.path.dirname(os.path.realpath(__file__))
     ctx.config.TEMP_DIR_ROOT = ctx.config.WORK_DIR
     log_config = cli.read_config_file(
-        ctx.config.CODE_ROOT, "logging.jsonc"
+        ctx.config.CODE_ROOT, "src", "logging.jsonc"
     )
     if not hasattr(ctx.config, "unit_test"):
         ctx.config.unit_test = False
@@ -103,7 +103,9 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     model_paths = util.ModelDataPathManager(ctx.config,
                                             new_work_dir=make_new_work_dir)
     model_paths.setup_data_paths(ctx.config.case_list)
-
+    ctx.config.update({'WORK_DIR': model_paths.WORK_DIR})
+    ctx.config.update({'OUTPUT_DIR': model_paths.OUTPUT_DIR})
+    # TODO: update paths in ctx.config so that POD paths are placed in the correct sub-directories
     backup_config = backup_config(ctx.config)
     ctx.config._configs = dict()
     ctx.config._configs[backup_config.name] = backup_config
@@ -138,6 +140,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         pods[pod_name].log.info(f"Preprocessing data for {pod_name}")
         cat_subset = data_pp.process(pods[pod_name].cases, ctx.config, model_paths.MODEL_WORK_DIR)
         data_pp.write_ds(pods[pod_name].cases, cat_subset, pods[pod_name].runtime_requirements)
+        data_pp.write_pp_catalog(cat_subset, pods[pod_name].paths)
 
     if not any(p.failed for p in pods.values()):
         log.log.info("### %s: running pods '%s'.", [p for p in pods.keys()])
@@ -153,7 +156,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         out_mgr = output_manager.HTMLOutputManager(p, ctx.config)
         out_mgr.make_output(p, ctx.config)
     tempdirs = util.TempDirManager(ctx.config)
-    tempdirs.cleanup()
+ #   tempdirs.cleanup()
 
     # close the main log file
     log._log_handler.close()

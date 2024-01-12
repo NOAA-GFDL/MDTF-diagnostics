@@ -1168,8 +1168,17 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 if key in columns:
                     e[key] = val
 
-        df1 = pd.DataFrame(entries)
-        df1.head()
+        # create a Pandas dataframe rom the the catalog entries
+        cat_df = pd.DataFrame(entries)
+        #cat_df.head()
+        # validate the catalog
+        validated_cat = intake.open_esm_datastore(
+            obj=dict(
+                df=cat_df,
+                esmcat=pp_cat_assets
+            )
+        )
+        validated_cat
         print('test')
 
 

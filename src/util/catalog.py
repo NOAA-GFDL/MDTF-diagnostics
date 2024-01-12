@@ -96,7 +96,7 @@ def mdtf_pp_parser(file_path: str) -> dict:
 def get_file_list(output_dir: str) -> list:
     """Get a list of files in a directory"""
 
-    cmd = ['find', output_dir, '-mindepth', '2', '-maxdepth', '5', '-type', "d"]
+    cmd = ['find', output_dir, '-mindepth', '1', '-maxdepth', '5', '-type', "d"]
     proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     output = proc.stdout.read().decode('utf-8').split()
     dirs = [Path(entry) for entry in output]
@@ -117,8 +117,9 @@ def get_file_list(output_dir: str) -> list:
 
     filelist = dask.compute(*filelist)
 
-    filelist = list(itertools.chain(*filelist))
-    return filelist
+    filelist = set(list(itertools.chain(*filelist)))
+    new_filelist = list(filelist)
+    return new_filelist
 
 
 def define_pp_catalog_assets(input_catalog, config, cat_file_name: str) -> dict:
@@ -130,7 +131,7 @@ def define_pp_catalog_assets(input_catalog, config, cat_file_name: str) -> dict:
 
     cat_dict = {'esmcat_version': datetime.datetime.today().strftime('%Y-%m-%d'),
                 'id': 'MDTF_PP_data',
-                'description': f'Post-processed dataset for cases:{[case_name for case_name in input_catalog.keys()]}',
+                'description': 'Post-processed dataset for MDTF-diagnostics package',
                 "catalog_file": f'file://{cat_file_path}',
                 "attributes": []
     }

@@ -123,7 +123,7 @@ def get_file_list(output_dir: str) -> list:
 
 def define_pp_catalog_assets(input_catalog, config, cat_file_name: str) -> dict:
     """ Define the version and attributes for the post-processed data catalog"""
-    cat_file_path = os.path.join(config.OUTPUT_DIR, cat_file_name, '.csv')
+    cat_file_path = os.path.join(config.OUTPUT_DIR, cat_file_name + '.csv')
     cmip6_cv_info = cli.read_config_file(config.CODE_ROOT,
                                          "data/cmip6-cmor-tables/Tables",
                                          "CMIP6_CV.json")

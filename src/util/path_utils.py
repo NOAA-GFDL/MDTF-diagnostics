@@ -42,16 +42,23 @@ class PathManagerBase(metaclass=Singleton):
             # set following explicitly: redundant, but keeps linter from complaining
             if hasattr(config, "OBS_DATA_ROOT"):
                 self.OBS_DATA_ROOT = self._init_path('OBS_DATA_ROOT', config, env=env)
-            self.WORK_DIR = os.path.join(self._init_path('WORK_DIR', config, env=env),
-                                         'MDTF_output')
+            if 'MDTF_output' not in config.WORK_DIR:
+                self.WORK_DIR = os.path.join(self._init_path('WORK_DIR', config, env=env),
+                                             'MDTF_output')
+            else:
+                self.WORK_DIR = os.path.join(self._init_path('WORK_DIR', config, env=env))
 
             if not hasattr(config, 'OUTPUT_DIR'):
                 self.OUTPUT_DIR = self.WORK_DIR
             elif len(config['OUTPUT_DIR']) < 1:
                 self.OUTPUT_DIR = self.WORK_DIR
             else:
-                self.OUTPUT_DIR = os.path.join(self._init_path('OUTPUT_DIR', config, env=env),
-                                               'MDTF_output')
+                if 'MDTF_output' not in config.WORK_DIR:
+                    self.OUTPUT_DIR = os.path.join(self._init_path('OUTPUT_DIR', config, env=env),
+                                                   'MDTF_output')
+                else:
+                    self.OUTPUT_DIR = os.path.join(self._init_path('OUTPUT_DIR', config, env=env))
+
             if new_work_dir:
                 self.WORK_DIR, ver = filesystem.bump_version(
                     self.WORK_DIR, extra_dirs=[self.OUTPUT_DIR])

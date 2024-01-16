@@ -12,6 +12,8 @@ import subprocess
 from pathlib import Path
 import itertools
 import logging
+import fsspec
+import json
 from src import cli
 
 _log = logging.getLogger(__name__)
@@ -122,7 +124,7 @@ def get_file_list(output_dir: str) -> list:
     return new_filelist
 
 
-def define_pp_catalog_assets(input_catalog, config, cat_file_name: str) -> dict:
+def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
     """ Define the version and attributes for the post-processed data catalog"""
     cat_file_path = os.path.join(config.OUTPUT_DIR, cat_file_name + '.csv')
     cmip6_cv_info = cli.read_config_file(config.CODE_ROOT,
@@ -130,10 +132,10 @@ def define_pp_catalog_assets(input_catalog, config, cat_file_name: str) -> dict:
                                          "CMIP6_CV.json")
 
     cat_dict = {'esmcat_version': datetime.datetime.today().strftime('%Y-%m-%d'),
-                'id': 'MDTF_PP_data',
+                'id': 'MDTF-PP-data',
                 'description': 'Post-processed dataset for MDTF-diagnostics package',
-                "catalog_file": f'file://{cat_file_path}',
-                "attributes": []
+                # "catalog_file": f'file://{cat_file_path}',
+                'attributes': []
     }
 
     for att in cmip6_cv_info['CV']['required_global_attributes']:
@@ -181,3 +183,35 @@ def define_pp_catalog_assets(input_catalog, config, cat_file_name: str) -> dict:
 
     return cat_dict
 
+
+def save_cat(cat,
+             file_name: str,
+             output_dir: None,
+             to_csv_kwargs: dict = {}):
+    data = cat.esmcat.copy()
+    for key in {'catalog_dict', 'catalog_file'}:
+        data.pop(key, None)
+    data['id'] = file_name
+    data['last_updated'] = datetime.datetime.now().utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    if output_dir:
+        csv_file_name = os.path.join(output_dir, file_name + '.csv')
+        json_file_name = os.path.join(output_dir, file_name + '.csv')
+    else:
+        csv_file_name = os.path.join(os.getcwd(), file_name + '.csv')
+        json_file_name = os.path.join(os.getcwd(), file_name + '.json')
+
+    csv_kwargs = {'index': False}
+    csv_kwargs.update(to_csv_kwargs or {})
+    compression = csv_kwargs.get('compression')
+    extensions = {'gzip': '.gz', 'bz2': '.bz2', 'zip': '.zip', 'xz': '.xz', None: ''}
+    csv_file_name = f'{csv_file_name}{extensions[compression]}'
+    data['catalog_file'] = str(csv_file_name)
+
+    mapper = fsspec.get_mapper(f'{output_dir}')
+    fs = mapper.fs
+    with fs.open(csv_file_name, 'wb') as csv_outfile:
+        cat.df.to_csv(csv_outfile, **csv_kwargs)
+
+    with fs.open(json_file_name, 'w') as outfile:
+        json_kwargs = {'indent': 2}
+        json.dump(data, outfile, **json_kwargs)

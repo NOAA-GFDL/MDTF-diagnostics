@@ -1147,7 +1147,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             to the POD output directory
         """
         cat_file_name = "MDTF_postprocessed_data"
-        pp_cat_assets = util.define_pp_catalog_assets(input_catalog_ds, config, cat_file_name)
+        pp_cat_assets = util.define_pp_catalog_assets(config, cat_file_name)
         file_list = util.get_file_list(config.OUTPUT_DIR)
         # fill in catalog information from pp file name
         entries = list(map(util.mdtf_pp_parser, file_list))
@@ -1170,7 +1170,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         # create a Pandas dataframe rom the the catalog entries
         cat_df = pd.DataFrame(entries)
-        #cat_df.head()
+        cat_df.head()
         # validate the catalog
         validated_cat = intake.open_esm_datastore(
             obj=dict(
@@ -1178,8 +1178,15 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 esmcat=pp_cat_assets
             )
         )
-        validated_cat
+        #validated_cat.serialize(cat_file_name,
+        #                        directory=config.OUTPUT_DIR,
+        #                        catalog_type="file")
+
+        util.save_cat(validated_cat,
+                      cat_file_name,
+                      output_dir=config.OUTPUT_DIR)
         print('test')
+
 
 
 class NullPreprocessor(MDTFPreprocessorBase):

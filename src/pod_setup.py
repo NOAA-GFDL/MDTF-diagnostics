@@ -6,7 +6,7 @@ import io
 from pathlib import Path
 import subprocess
 
-from src import cli, util, data_sources
+from src import cli, util
 import dataclasses as dc
 from distutils.spawn import find_executable
 
@@ -21,7 +21,8 @@ class PodBaseClass(metaclass=util.MDTFABCMeta):
         pass
 
     def setup_pod(self, config: util.NameSpace,
-                  model_paths: util.ModelDataPathManager):
+                  model_paths: util.ModelDataPathManager,
+                  case_list: dict):
         pass
 
     def setup_var(self, pod, v):
@@ -51,6 +52,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     log_file: io.IOBase = dc.field(default=None, init=False)
     nc_largefile: bool = False
     bash_exec: str
+    global_env_vars: dict()
 
     def __init__(self, name: str, runtime_config: util.NameSpace):
         self.name = name
@@ -266,7 +268,8 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 self.log.error(f"User-defined post-processing file {s} not found")
 
     def setup_pod(self, runtime_config: util.NameSpace,
-                  model_paths: util.ModelDataPathManager):
+                  model_paths: util.ModelDataPathManager,
+                  cases: dict):
         """Update POD information from settings and runtime configuration files
         """
         # Parse the POD settings file
@@ -283,14 +286,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         pod_convention = self.pod_settings['convention'].lower()
 
         for case_name, case_dict in runtime_config.case_list.items():
-            # instantiate the data_source class instance for the specified convention
-            self.cases[case_name] = data_sources.data_source[case_dict.convention.upper() +
-                                                             "DataSource"](case_name,
-                                                                           case_dict,
-                                                                           self.paths,
-                                                                           parent=self)
-            self.cases[case_name].set_date_range(case_dict.startdate, case_dict.enddate)
-            self.cases[case_name].read_varlist(self)
+            cases[case_name].read_varlist(self)
             # Translate the data if desired and the pod convention does not match the case convention
             data_convention = case_dict.convention.lower()
             if runtime_config.translate_data and pod_convention != data_convention:
@@ -300,21 +296,21 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 self.log.info(f'POD convention and data convention are both {data_convention}. '
                               f'No data translation will be performed for case {case_name}.')
             # A 'noTranslationFieldlist' will be defined for the varlistEntry translation attribute
-            self.cases[case_name].translate_varlist(model_paths,
-                                                    case_name,
-                                                    data_convention)
+            cases[case_name].translate_varlist(model_paths,
+                                               case_name,
+                                               data_convention)
 
-        for case_name in self.cases.keys():
-            for v in self.cases[case_name].iter_children():
+        for case_name in cases.keys():
+            for v in cases[case_name].iter_children():
                 # deactivate failed variables now that alternates are fully specified
                 if v.last_exception is not None and not v.failed:
                     util.deactivate(v, v.last_exception, level=logging.WARNING)
-            if self.cases[case_name].status == util.ObjectStatus.NOTSET and \
-                    any(v.status == util.ObjectStatus.ACTIVE for v in self.cases[case_name].iter_children()):
-                self.cases[case_name].status = util.ObjectStatus.ACTIVE
+            if cases[case_name].status == util.ObjectStatus.NOTSET and \
+                    any(v.status == util.ObjectStatus.ACTIVE for v in cases[case_name].iter_children()):
+                cases[case_name].status = util.ObjectStatus.ACTIVE
         # set MultirunDiagnostic object status to Active if all case statuses are Active
         if self.status == util.ObjectStatus.NOTSET and \
-                all(case_dict.status == util.ObjectStatus.ACTIVE for case_name, case_dict in self.cases.items()):
+                all(case_dict.status == util.ObjectStatus.ACTIVE for case_name, case_dict in cases.items()):
             self.status = util.ObjectStatus.ACTIVE
 
 

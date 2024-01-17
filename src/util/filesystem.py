@@ -420,7 +420,9 @@ def write_json(struct, file_path, sort_keys=False, log=_log):
     log.debug('Writing file %s', file_path)
     try:
         str_ = json.dumps(struct,
-            sort_keys=sort_keys, indent=2, separators=(',', ': '))
+                          sort_keys=sort_keys,
+                          indent=2,
+                          separators=(',', ': '))
         with io.open(file_path, 'w', encoding='utf-8') as file_:
             file_.write(str_)
     except IOError:

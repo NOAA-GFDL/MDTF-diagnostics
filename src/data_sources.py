@@ -86,8 +86,8 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
 
     def __init__(self, case_name: str,
                  case_dict: dict,
-                 path_obj: util.PodPathManager,
-                 parent):
+                 path_obj: util.ModelDataPathManager,
+                 parent: None):
         # _id = util.MDTF_ID()        # attrs inherited from util.logs.MDTFObjectBase
         # name: str
         # _parent: object
@@ -97,7 +97,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         # initialize MDTF logging object associated with this case
         util.MDTFObjectBase.__init__(self, name=case_name, _parent=parent)
         # set up log (CaseLoggerMixin)
-        self.init_log(log_dir=path_obj.POD_WORK_DIR)
+        self.init_log(log_dir=path_obj.WORK_DIR)
         # configure case-specific env vars
         self.env_vars = util.WormDict.from_struct({
             k: case_dict[k] for k in ("startdate", "enddate", "convention")

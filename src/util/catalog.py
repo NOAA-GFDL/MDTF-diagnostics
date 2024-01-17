@@ -126,15 +126,12 @@ def get_file_list(output_dir: str) -> list:
 
 def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
     """ Define the version and attributes for the post-processed data catalog"""
-    cat_file_path = os.path.join(config.OUTPUT_DIR, cat_file_name + '.csv')
     cmip6_cv_info = cli.read_config_file(config.CODE_ROOT,
                                          "data/cmip6-cmor-tables/Tables",
                                          "CMIP6_CV.json")
 
     cat_dict = {'esmcat_version': datetime.datetime.today().strftime('%Y-%m-%d'),
-                'id': 'MDTF-PP-data',
                 'description': 'Post-processed dataset for MDTF-diagnostics package',
-                # "catalog_file": f'file://{cat_file_path}',
                 'attributes': []
     }
 
@@ -184,18 +181,33 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
     return cat_dict
 
 
-def save_cat(cat,
-             file_name: str,
-             output_dir: None,
-             to_csv_kwargs: dict = {}):
-    data = cat.esmcat.copy()
+def save_esm_catalog(esm_ds,
+                     file_name: str,
+                     output_dir: None,
+                     to_csv_kwargs: dict = {}):
+    """ Save the contents of a validated ESM datastore to a csv file and json dictionary.
+    This method mirrors the intake_esm/cat.py save method, but uses the string file_path instead
+    of the mapper object to set the csv and json file names to avoid errors with the mapper path definitions
+
+    Parameters
+        esm_ds: esm_datastore
+            The validated esm_datastore object
+        file_name: str
+            base name of the csv and json files
+        output_dir: str, optional
+            output directory where files are written. If not defined, current working directory is used
+        to_csv_kwargs: dict, optional
+            additional keyword arguments to use when writing the csv file
+
+    """
+    data = esm_ds.esmcat.dict().copy()
     for key in {'catalog_dict', 'catalog_file'}:
         data.pop(key, None)
     data['id'] = file_name
     data['last_updated'] = datetime.datetime.now().utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
     if output_dir:
         csv_file_name = os.path.join(output_dir, file_name + '.csv')
-        json_file_name = os.path.join(output_dir, file_name + '.csv')
+        json_file_name = os.path.join(output_dir, file_name + '.json')
     else:
         csv_file_name = os.path.join(os.getcwd(), file_name + '.csv')
         json_file_name = os.path.join(os.getcwd(), file_name + '.json')
@@ -205,13 +217,13 @@ def save_cat(cat,
     compression = csv_kwargs.get('compression')
     extensions = {'gzip': '.gz', 'bz2': '.bz2', 'zip': '.zip', 'xz': '.xz', None: ''}
     csv_file_name = f'{csv_file_name}{extensions[compression]}'
-    data['catalog_file'] = str(csv_file_name)
+    data['catalog_file'] = csv_file_name
 
     mapper = fsspec.get_mapper(f'{output_dir}')
     fs = mapper.fs
     with fs.open(csv_file_name, 'wb') as csv_outfile:
-        cat.df.to_csv(csv_outfile, **csv_kwargs)
+        esm_ds.df.to_csv(csv_outfile, **csv_kwargs)
 
-    with fs.open(json_file_name, 'w') as outfile:
+    with fs.open(json_file_name, 'w') as json_outfile:
         json_kwargs = {'indent': 2}
-        json.dump(data, outfile, **json_kwargs)
+        json.dump(data, json_outfile, **json_kwargs)

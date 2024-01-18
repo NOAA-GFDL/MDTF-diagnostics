@@ -128,6 +128,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
                                              ctx.config,
                                              ctx.config.run_pp
                                              )
+    # set up the case data source dictionary
     cases = dict()
     for case_name, case_dict in ctx.config.case_list.items():
         # instantiate the data_source class instance for the specified convention
@@ -138,7 +139,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         cases[case_name].set_date_range(case_dict.startdate, case_dict.enddate)
 
     pods = dict.fromkeys(ctx.config.pod_list, [])
-    pod_runtime_reqs = util.NameSpace
+    pod_runtime_reqs = dict()
     # configure pod object(s)
     for pod_name in ctx.config.pod_list:
         pods[pod_name] = pod_setup.PodObject(pod_name, ctx.config)
@@ -149,19 +150,19 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         pods[pod_name].log.info(f"Preprocessing data for {pod_name}")
         for k, v in pods[pod_name].runtime_requirements.items():
             if not hasattr(pod_runtime_reqs, k):
-                pod_runtime_reqs.k = v
+                pod_runtime_reqs[k] = v
     # read the subset of data for the cases and date range(s) and preprocess the data
     cat_subset = data_pp.process(cases, ctx.config, model_paths.MODEL_WORK_DIR)
     # write the preprocessed files
     data_pp.write_ds(cases, cat_subset, pod_runtime_reqs)
     # write the ESM intake catalog for the preprocessed  files
-    data_pp.write_pp_catalog(cat_subset, model_paths)
-
+    data_pp.write_pp_catalog(cat_subset, model_paths, log.log)
+    # configure the runtime environments and run the POD(s)
     if not any(p.failed for p in pods.values()):
         log.log.info("### %s: running pods '%s'.", [p for p in pods.keys()])
         run_mgr = environment_manager.SubprocessRuntimeManager(pods, ctx.config, log)
         run_mgr.setup()
-        run_mgr.run(log)
+        run_mgr.run(cases, log)
     else:
         for p in pods.values:
             if any(p.failed):

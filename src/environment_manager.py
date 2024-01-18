@@ -277,7 +277,7 @@ class SubprocessRuntimePODWrapper(object):
     env_vars: dict = dataclasses.field(default_factory=dict)
     process: typing.Any = dataclasses.field(default=None, init=False)
 
-    def set_pod_env_vars(self, pod):
+    def set_pod_env_vars(self, pod, cases: dict):
         """Sets all environment variables for the POD: paths and names of each
         variable and coordinate. Raise a :class:`~src.util.exceptions.WormKeyError`
         if any of these definitions conflict.
@@ -289,7 +289,7 @@ class SubprocessRuntimePODWrapper(object):
             "DATADIR": pod.paths.POD_WORK_DIR  # synonym so we don't need to change docs
         })
 
-        for case_name, case_dict in pod.cases.items():
+        for case_name, case_dict in cases.items():
             for var in case_dict.iter_children(status_neq=util.ObjectStatus.ACTIVE):
                 # define env vars for varlist entries without data. Name collisions
                 # are OK in this case.
@@ -298,7 +298,7 @@ class SubprocessRuntimePODWrapper(object):
                 except util.WormKeyError:
                     continue
 
-    def pre_run_setup(self):
+    def pre_run_setup(self, cases: dict):
         self.pod.log_file = io.open(
             os.path.join(self.pod.paths.POD_WORK_DIR, self.pod.name+".log"),
             'w', encoding='utf-8'
@@ -309,7 +309,7 @@ class SubprocessRuntimePODWrapper(object):
 
         self.pod.log.info('### Starting %s', self.pod.full_name)
         try:
-            self.set_pod_env_vars(self.pod)
+            self.set_pod_env_vars(self.pod, cases)
             self.pod.set_entry_point()
         except Exception as exc:
             raise util.PodRuntimeError("Caught exception during pre_run_setup",
@@ -319,7 +319,7 @@ class SubprocessRuntimePODWrapper(object):
 
         self.pod.log.debug("%s", self.pod.format_log(children=True))
     #    self.pod._log_handler.reset_buffer()
-        self.write_case_env_file(self.pod.cases)
+        self.write_case_env_file(cases)
         self.setup_env_vars()
 
     def setup_env_vars(self):
@@ -345,7 +345,8 @@ class SubprocessRuntimePODWrapper(object):
         out_file = os.path.join(self.pod.paths.POD_WORK_DIR, 'case_info.yaml')
         self.pod.pod_env_vars["case_env_file"] = out_file
         case_info = dict()
-
+        case_info['CATALOG_FILE'] = os.path.join(self.pod.paths.WORK_DIR, 'MDTF_postprocessed_data.json')
+        assert os.path.isfile(case_info['CATALOG_FILE']), 'CATALOG_FILE json not found in WORK_DIR'
         for case_name, case in case_list.items():
             case_info[case_name] = {k: v
                                     for k, v in case.env_vars.items()}
@@ -361,7 +362,7 @@ class SubprocessRuntimePODWrapper(object):
                         case_info[case_name][kk] = vv
         
         f = open(out_file, 'w+')
-        assert (os.path.isfile(out_file))
+        assert os.path.isfile(out_file), f"Could not find case env file {out_file}"
         yaml.dump(case_info, f, allow_unicode=True, default_flow_style=False)
         self.pod.multi_case_dict = case_info
 
@@ -513,7 +514,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             universal_newlines=True, bufsize=1
         )
 
-    def run(self, _log):
+    def run(self, cases: dict, _log):
         # Call cleanup method if we're killed
         signal.signal(signal.SIGTERM, self.runtime_terminate)
         signal.signal(signal.SIGINT, self.runtime_terminate)
@@ -528,7 +529,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         for p in self.iter_active_pods():
             p.pod.log.info('%s: run %s.', self.__class__.__name__, p.pod.full_name)
             try:
-                p.pre_run_setup()
+                p.pre_run_setup(cases)
             except Exception as exc:
                 p.setup_exception_handler(exc)
                 continue

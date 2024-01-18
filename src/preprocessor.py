@@ -1071,12 +1071,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
     def write_ds(self, case_list: dict,
                  catalog_subset: collections.OrderedDict,
-                 pod_reqs):
+                 pod_reqs: dict):
         """Top-level method to write out processed dataset *ds*; spun out so
         that child classes can modify it. Calls the :meth:`write_dataset` method
         implemented by the child class.
         """
-        self.output_to_ncl = ('ncl' in pod_reqs)
+        for k, v in pod_reqs.items():
+            if 'ncl' in v:
+                self.output_to_ncl = True
         for case_name, ds in catalog_subset.items():
             for var in case_list[case_name].varlist.iter_vars():
                 # var.log.info("Writing %d mb to %s", ds[var.name].variable.nbytes / (1024 * 1024), var.dest_path)
@@ -1142,7 +1144,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                           case_name=case_name)
         return cat_subset
 
-    def write_pp_catalog(self, input_catalog_ds: xr.Dataset, config: util.PodPathManager):
+    def write_pp_catalog(self,
+                         input_catalog_ds: xr.Dataset,
+                         config: util.PodPathManager,
+                         log: logging.log):
         """ Write a new data catalog for the preprocessed data
             to the POD output directory
         """
@@ -1172,21 +1177,29 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         cat_df = pd.DataFrame(entries)
         cat_df.head()
         # validate the catalog
-        validated_cat = intake.open_esm_datastore(
-            obj=dict(
-                df=cat_df,
-                esmcat=pp_cat_assets
+        try:
+            log.debug('Validating pp data catalog')
+            validated_cat = intake.open_esm_datastore(
+                obj=dict(
+                    df=cat_df,
+                    esmcat=pp_cat_assets
+                )
             )
-        )
+        except Exception as exc:
+            log.error(f'Unable to validate esm intake catalog for pp data: {exc}')
+        # ecgtools uses serialize to save the catalog to a csv file, but the esm_intake save method that serialize
+        # does not produce the correct output file paths. Catalog output is saved using a modified version of
+        # esm_intake.cat.save
         #validated_cat.serialize(cat_file_name,
         #                        directory=config.OUTPUT_DIR,
         #                        catalog_type="file")
-
-        util.save_cat(validated_cat,
-                      cat_file_name,
-                      output_dir=config.OUTPUT_DIR)
-        print('test')
-
+        try:
+            log.debug(f'Writing pp data catalog {cat_file_name} csv and json files to {config.OUTPUT_DIR}')
+            util.save_esm_catalog(validated_cat,
+                                  cat_file_name,
+                                  output_dir=config.OUTPUT_DIR)
+        except Exception as exc:
+            log.error(f'Unable to save esm intake catalog for pp data: {exc}')
 
 
 class NullPreprocessor(MDTFPreprocessorBase):

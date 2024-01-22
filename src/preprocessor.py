@@ -1187,17 +1187,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             )
         except Exception as exc:
             log.error(f'Unable to validate esm intake catalog for pp data: {exc}')
-        # ecgtools uses serialize to save the catalog to a csv file, but the esm_intake save method that serialize
-        # does not produce the correct output file paths. Catalog output is saved using a modified version of
-        # esm_intake.cat.save
-        #validated_cat.serialize(cat_file_name,
-        #                        directory=config.OUTPUT_DIR,
-        #                        catalog_type="file")
         try:
             log.debug(f'Writing pp data catalog {cat_file_name} csv and json files to {config.OUTPUT_DIR}')
-            util.save_esm_catalog(validated_cat,
-                                  cat_file_name,
-                                  output_dir=config.OUTPUT_DIR)
+            validated_cat.serialize(cat_file_name,
+                                    directory=config.OUTPUT_DIR,
+                                    catalog_type="file")
         except Exception as exc:
             log.error(f'Unable to save esm intake catalog for pp data: {exc}')
 

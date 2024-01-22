@@ -28,7 +28,9 @@ dependencies:
 #- enso_metrics=3.1.1 Required by pcmdi_metrics, but no support for python>3.10
 #- pcmdi_metrics=3.0.2 Not used by current PODs-implement later
 - h5py=3.9.0
+- intake=0.7.0
 - intake-xarray=0.7.0
+- intake-esm=2023.11.10
 - nc-time-axis=1.4.1
 - pyyaml=6.0.1
 - networkx=3.1

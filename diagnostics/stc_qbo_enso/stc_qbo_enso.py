@@ -35,7 +35,7 @@
 # ==============================================================================
 #   Version, Contact Info, and License
 # ==============================================================================
-#   - Version/revision information: v1.0 (2023-10-03)
+#   - Version/revision information: v1.0 (2024-01-23)
 #   - PIs: Amy H. Butler, NOAA CSL & Zachary D. Lawrence, CIRES + CU Boulder /NOAA PSL
 #   - Developer/point of contact: Dillon Elsbury, dillon.elsbury@noaa.gov
 #   - Other contributors: Zachary D. Lawrence, CIRES + CU Boulder / NOAA PSL, 

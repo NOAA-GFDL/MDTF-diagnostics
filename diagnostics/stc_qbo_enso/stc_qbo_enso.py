@@ -39,7 +39,7 @@
 #   - PIs: Amy H. Butler, NOAA CSL & Zachary D. Lawrence, CIRES + CU Boulder /NOAA PSL
 #   - Developer/point of contact: Dillon Elsbury, dillon.elsbury@noaa.gov
 #   - Other contributors: Zachary D. Lawrence, CIRES + CU Boulder / NOAA PSL, 
-#     zachary.lawrence@noaa.gov; Amy H. Butler, NOAA CSL
+#	 zachary.lawrence@noaa.gov; Amy H. Butler, NOAA CSL
 #
 #  The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt).
 #
@@ -132,6 +132,7 @@ import xesmf as xe
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
 
 from scipy.fft import fft,fftfreq
 from scipy import interpolate
@@ -148,10 +149,8 @@ mpl.rcParams['font.family'] = 'sans-serif'
 mpl.rcParams['font.sans-serif'] = 'Roboto'
 mpl.rcParams['font.size'] = 12
 mpl.rcParams['hatch.color']='gray'
-	
-#	 return period_min, period_mean, period_max, easterly_amp, westerly_amp, qbo_amp, lowest_lev, latitudinal_extent
 
-def qbo_metrics(ds,qbo_isobar_in_hPa):
+def qbo_metrics(ds,QBOisobar):
 
 	r""" Calculates Quasi-Biennial Oscillation (QBO) metrics for the  an input
 	zonal wind dataset (dimensions = time x level x latitude x longitude)
@@ -175,11 +174,11 @@ def qbo_metrics(ds,qbo_isobar_in_hPa):
 		
 	easterly_amp: scalar
 		The average easterly amplitude, arrived at by averaging together the minimum latitudinally
-		averaged 5S-5N 10 hPa zonal wind observation (a single month) from each QBO cycle
+		averaged 5S-5N 10 hPa monthly zonal wind from each QBO cycle
 		
 	westerly_amp: scalar
-		The average westerly amplitude, arrived at by averaging together the maximum latitudinally
-		averaged 5S-5N 10 hPa zonal wind observation (a single month) from every QBO cycle
+		The average westerly amplitude, arrived at by averaging together the minimum latitudinally
+		averaged 5S-5N 10 hPa monthly zonal wind from each QBO cycle
 		
 	qbo_amp: scalar
 		The total QBO amplitude, which is estimated by adding half of the mean easterly amplitude
@@ -206,52 +205,38 @@ def qbo_metrics(ds,qbo_isobar_in_hPa):
 	up being equal to 12 months. Then the annual cycle zonal wind variability would be deemed
 	"QBO-like" and annual cycle variability would be incorporated into the QBO Fourier amplitude
 	calculations, rendering the Fourier amplitude and all of the QBO spatial metrics useless.
-
 	"""
 	
 	print ("Running the QBO metrics function 'qbo_metrics'")
-	print (ds)
 	
 	if ds.lev.values[-1] > ds.lev.values[0]:
 		ds = ds.reindex(lev=list(reversed(ds.lev)))
-	
-	qbo_defined = qbo_isobar_in_hPa # hPa
-	sfc = 1000 # hPa
 
-	# Check to see if the latitudes are organized north to south or south to north
-	lat_first = ds.lat.values[0]
-	lat_end = ds.lat.values[-1]
-
-	vt = ds.ua.values
+	uwnd = ds.ua.values
 	
 	# Subset for 10 hPa #
-	subset = ds.sel(lev=qbo_isobar_in_hPa)
+	subset = ds.sel(lev=QBOisobar)
 
 	# Select 5S-5N winds #		
 	tropical_subset = subset.isel(lat = np.logical_and(subset.lat >= -5, subset.lat <= 5))
 
 	# Latitudinally weight and averaged betwteen 5S-5N
-	
 	qbo = tropical_subset.mean('lat')
-
-	# Spatial averaging
 	weights = np.cos(np.deg2rad(tropical_subset.lat.values))
 	interim = np.multiply(tropical_subset.ua.values,weights[np.newaxis,:])
 	interim = np.nansum(interim,axis=1)
 	interim = np.true_divide(interim,np.sum(weights))
-
 	qbo.ua.values[:] = interim[:]
 	
 	# Smooth with five month running mean #
-	
 	qbo = qbo.rolling(time=5, center=True).mean()
 	
 	# Identify the indices corresponding to QBO phase changes (e.g., + zonal wind (westerly) -> - zonal wind (easterly))
 	zero_crossings = np.where(np.diff(np.sign(qbo.ua.values)))[0]
 
-	# Using the phase change indices, identify QBO cycles: a set of easterlies and westerlies. By doing this, #
+	# Using the phase change indices, identify QBO cycles: a set of easterlies and westerlies. After doing this, #
 	# the minimum/maximum/average QBO cycle duration will be retrieved. The first phase change index from #
-	# zero_crossings is excluded in the event that the QBO is close to making a phase change, which would bias #
+	# zero_crossings is excluded in the event that the first QBO cycle is close to making a phase change, which would bias #
 	# the QBO duration statistics low. #
 	store = []
 	cycles = []
@@ -307,15 +292,15 @@ def qbo_metrics(ds,qbo_isobar_in_hPa):
 	#################################################################################################################
 
 	# Standard deviation across entire zonal wind dataset #
-	std = np.nanstd(vt,axis=0)
+	std = np.nanstd(uwnd,axis=0)
 
 	# Define Fourier frequencies comprising data and filter for frequencies between minimum/maximum QBO cycle duration #
-	freq = 1/fftfreq(len(vt))
+	freq = 1/fftfreq(len(uwnd))
 	arr = np.where((freq > period_min) & (freq < period_max))[0]
 
 	# FFT of entire zonal wind dataset. Square and sum Fourier coefficients. np.abs applies unneeded square root, hence #
 	# np.power to power 2 is used to undo this #
-	y = fft(vt,axis=0)
+	y = fft(uwnd,axis=0)
 	amplitudes = np.power(np.abs(y)[:len(y)//2],2)
 
 	# Calculate ratio of QBO power spectrum to full zonal wind power spectrum #
@@ -399,6 +384,7 @@ def qbo_metrics(ds,qbo_isobar_in_hPa):
 	top =  upper_portion_isobar[upper_vertical_extent]
 
 	# Convert the isobars into altitudes in meters. #
+	sfc = 1000 # hPa
 	bottomz = np.log(bottom/sfc)*-7000
 	topz = np.log(top/sfc)*-7000
 
@@ -482,143 +468,72 @@ def qbo_metrics(ds,qbo_isobar_in_hPa):
 	
 	
 def compute_total_eddy_heat_flux(v, T):
-    r""" Compute the total zonal mean eddy heat flux from meridonal winds 
-    and temperatures. The eddy heat flux is calculated as: 
-        ehf = zonal_mean( (v - zonal_mean(v)) * (T - zonal_mean(T)))
+	r""" Compute the total zonal mean eddy heat flux from meridonal winds 
+	and temperatures. The eddy heat flux is calculated as: 
+		ehf = zonal_mean( (v - zonal_mean(v)) * (T - zonal_mean(T)))
 
-    Parameters
-    ----------
-    v : `xarray.DataArray`
-        The meridional wind component. Assumed to have the same dimensions as T
-    
-    T : `xarray.DataArray`
-        The air temperature. Assumed to have the same dimensions as v
-
-    Returns
-    -------
-    ehf : `xarray.DataArray`
-        The zonal mean eddy heat flux
-
-    Notes
-    -----
-    The input fields v and T are assumed to have dimensions named "lat" 
-    and "lon". E.g., if your data has dimensions "latitude" and/or "longitude",
-    use the rename method:
-        ds.rename({'latitude':'lat','longitude':'lon'})
-
-    Ideally v and T would be provided on the same latitude/longitude grid. 
-    In practice this is not necessarily the case as some models provide 
-    different variables at cell-centers and cell-edges. If this is found 
-    to be the case, this function will use xesmf to do bilinear regridding 
-    of the meridional wind component to match the grid of the temperatures.
-
-    """
-   
-    # Take the zonal means of v and T
-    v_zm = v.mean('lon')
-    T_zm = T.mean('lon')
-
-    # If v and T are on same grid, can multiply the eddies and take zonal mean
-    if (np.array_equal(v.lat,T.lat)) and (np.array_equal(v.lon, T.lon)):
-        ehf = ((v - v_zm) * (T - T_zm)).mean('lon')
-
-    # If v and T are on different grids, interpolate v to T's grid beforehand
-    else:
-        # Set up xESMF regridder with necessary grid-defining datasets
-        print('*** Interpolating v to same grid as T')
-        in_grid = xr.Dataset(
-            {
-                "lat": (["lat"], v.lat.values),
-                "lon": (["lon"], v.lon.values),
-            }
-        )
-
-        out_grid = xr.Dataset(
-            {
-                "lat": (["lat"], T.lat.values),
-                "lon": (["lon"], T.lon.values),
-            }
-        )
-        regridder = xe.Regridder(in_grid, out_grid, "bilinear")
-
-        ehf = (regridder(v - v_zm)*(T - T_zm)).mean('lon')
-
-    return ehf
-		
-##################################################################################################
-##################################################################################################
-##################################################################################################
-
-def qbo_indexing(ds,qbo_isobar_in_hPa,hemisphere):
-
-	# Check to see if the latitudes are organized north to south or south to north
-	lat_first = ds.lat.values[0]
-	lat_end = ds.lat.values[-1]
-
-	# Subset for 10 hPa #
-	subset = ds.sel(lev=qbo_isobar_in_hPa)
-
-	# Select 5S-5N winds #
-	if lat_first > lat_end:
-		tropical_subset = subset.interp(lat=[5,2.5,0,-2.5,-5])
-	if lat_end > lat_first:
-		tropical_subset = subset.interp(lat=[-5,-2.5,0,2.5,5])
-		
-	qbo = tropical_subset.mean('lat')
+	Parameters
+	----------
+	v : `xarray.DataArray`
+		The meridional wind component. Assumed to have the same dimensions as T
 	
-	# Latitudinally weight and average #
-	weights = np.cos(np.deg2rad(tropical_subset.lat.values))
-	interim = np.multiply(tropical_subset.values,weights[np.newaxis,:])
-	interim = np.nansum(interim,axis=1)
-	interim = np.true_divide(interim,np.sum(weights))
-	qbo.values[:] = interim[:]
+	T : `xarray.DataArray`
+		The air temperature. Assumed to have the same dimensions as v
 
-	# Index QBO. Sets to October-November for N. Hemisphere focused results #
-	# or sets to August-September for S. Hemisphere focused results. #
+	Returns
+	-------
+	ehf : `xarray.DataArray`
+		The zonal mean eddy heat flux
 
-	if hemisphere == 'NH':
-		seasonal = qbo.sel(time=qbo.time.dt.month.isin([10,11]))
+	Notes
+	-----
+	The input fields v and T are assumed to have dimensions named "lat" 
+	and "lon". E.g., if your data has dimensions "latitude" and/or "longitude",
+	use the rename method:
+		ds.rename({'latitude':'lat','longitude':'lon'})
+
+	Ideally v and T would be provided on the same latitude/longitude grid. 
+	In practice this is not necessarily the case as some models provide 
+	different variables at cell-centers and cell-edges. If this is found 
+	to be the case, this function will use xesmf to do bilinear regridding 
+	of the meridional wind component to match the grid of the temperatures.
+
+	"""
+   
+	# Take the zonal means of v and T
+	v_zm = v.mean('lon')
+	T_zm = T.mean('lon')
+
+	# If v and T are on same grid, can multiply the eddies and take zonal mean
+	if (np.array_equal(v.lat,T.lat)) and (np.array_equal(v.lon, T.lon)):
+		ehf = ((v - v_zm) * (T - T_zm)).mean('lon')
+
+	# If v and T are on different grids, interpolate v to T's grid beforehand
+	else:
+		# Set up xESMF regridder with necessary grid-defining datasets
+		print('*** Interpolating v to same grid as T')
+		in_grid = xr.Dataset(
+			{
+				"lat": (["lat"], v.lat.values),
+				"lon": (["lon"], v.lon.values),
+			}
+		)
+
+		out_grid = xr.Dataset(
+			{
+				"lat": (["lat"], T.lat.values),
+				"lon": (["lon"], T.lon.values),
+			}
+		)
+		regridder = xe.Regridder(in_grid, out_grid, "bilinear")
+
+		ehf = (regridder(v - v_zm)*(T - T_zm)).mean('lon')
+
+	return ehf
 		
-		qbo_raw = seasonal.values
-		a = len(qbo_raw)
-		qbo_raw = np.reshape(qbo_raw,(int(a/2),2))
-		day_in_month_weights = np.array([31/61,30/61])[np.newaxis,:]
-		tmp = np.multiply(qbo_raw,day_in_month_weights)
-		tmp = np.nanmean(tmp,axis=1)
-
-		clim = np.nanmean(tmp)
-		std = np.nanstd(tmp)
-
-		anomraw = np.subtract(tmp,clim)
-		anom = np.true_divide(anomraw,std)
-		
-	if hemisphere == 'SH':
-		seasonal = qbo.sel(time=qbo.time.dt.month.isin([7,8]))
-		
-		qbo_raw = seasonal.values
-		a = len(qbo_raw)
-		qbo_raw = np.reshape(qbo_raw,(int(a/2),2))
-		day_in_month_weights = np.array([31/62,31/62])[np.newaxis,:]
-		tmp = np.multiply(qbo_raw,day_in_month_weights)
-		tmp = np.nanmean(tmp,axis=1)
-
-		clim = np.nanmean(tmp)
-		std = np.nanstd(tmp)
-
-		anomraw = np.subtract(tmp,clim)
-		anom = np.true_divide(anomraw,std)
-
-	# Get the unique years from "seasonal" #
-	years = set(np.sort(seasonal.time.dt.year.values))
-	years = [v for v in years]
-
-	eqbo = [i for i,v in enumerate(anom) if v <= -1]
-	wqbo = [i for i,v in enumerate(anom) if v >= 1]
-
-	eqbo_years = [years[i] for i in eqbo]
-	wqbo_years = [years[i] for i in wqbo]
-
-	return eqbo_years, wqbo_years
+##################################################################################################
+##################################################################################################
+##################################################################################################
 
 ########################
 # --- BEGIN SCRIPT --- #
@@ -635,9 +550,6 @@ LASTYR = os.environ['LASTYR']
 WK_DIR = os.environ['WK_DIR']
 OBS_DATA = os.environ['OBS_DATA']
 QBOisobar = os.environ['QBOisobar']
-
-print (QBOisobar, "QBOisobar")
-print (' ')
 
 ###########################################################################
 ################################ observations #############################
@@ -676,7 +588,7 @@ ENSO = obs_sst.isel(lat = np.logical_and(obs_sst.lat >= -5, obs_sst.lat <= 5))
 # Extract date and longitude info from ENSO dataset #
 date_first = obs_sst.time[0]
 date_last = obs_sst.time[-1]
-lon_first = ENSO.lon.values[0]
+lon_first = obs_sst.lon.values[0]
 
 # Identify the correct ENSO longitudinal grid #
 if lon_first < 0:
@@ -694,19 +606,19 @@ weighted_mean.tos.values[:] = interim[:]
 
 def enso_index(seasonal):
 
-    # Create 5-month seasonally averaged standardized ENSO anomalies. Weight each month by number of days comprising month #
-    day_in_month_weights = seasonal.time.dt.days_in_month.values[:5]/np.sum(seasonal.time.dt.days_in_month.values[:5])
-    sstindex = np.reshape(seasonal.tos.values,(int(len(seasonal.tos.values)/5),5))
-    sstindex = np.nanmean(np.multiply(sstindex,day_in_month_weights[np.newaxis,:]),axis=1)
-    anom = np.subtract(sstindex,np.nanmean(sstindex))
-    anom = np.true_divide(anom,np.nanstd(sstindex))
+	# Create 5-month seasonally averaged standardized ENSO anomalies. Weight each month by number of days comprising month #
+	day_in_month_weights = seasonal.time.dt.days_in_month.values[:5]/np.sum(seasonal.time.dt.days_in_month.values[:5])
+	sstindex = np.reshape(seasonal.tos.values,(int(len(seasonal.tos.values)/5),5))
+	sstindex = np.nanmean(np.multiply(sstindex,day_in_month_weights[np.newaxis,:]),axis=1)
+	anom = np.subtract(sstindex,np.nanmean(sstindex))
+	anom = np.true_divide(anom,np.nanstd(sstindex))
 
-    # Get the unique years from "seasonal" and then remove the last one, which is not needed
-    years = [v for v in set(np.sort(seasonal.time.dt.year.values))][:-1]
-    nina_years = [years[i] for i,v in enumerate(anom) if v <= -1]
-    nino_years = [years[i] for i,v in enumerate(anom) if v >= 1]
-    
-    return nina_years, nino_years
+	# Get the unique years from "seasonal" and then remove the last one, which is not needed
+	years = [v for v in set(np.sort(seasonal.time.dt.year.values))]
+	nina_years = [years[i] for i,v in enumerate(anom) if v <= -1]
+	nino_years = [years[i] for i,v in enumerate(anom) if v >= 1]
+	
+	return nina_years, nino_years
 
 # Subsample ENSO data for NH #
 seasonal = weighted_mean.sel(time=slice('%s-11-01' % date_first.dt.year.values, '%s-03-31' % date_last.dt.year.values))
@@ -725,6 +637,126 @@ enso_dict = {}
 enso_dict['NH'] = nh_nina, nh_nino
 enso_dict['SH'] = sh_nina, sh_nino
 
+##########################################################################
+# Define ENSO plotting parameters to be passed to the plotting functions #
+##########################################################################
+
+nh_enso_uzm = obs_atm.ua.sel(time=slice('%s-11-01' % date_first.dt.year.values, '%s-03-31' % date_last.dt.year.values))
+nh_enso_vtzm = obs_atm.ehf.sel(time=slice('%s-11-01' % date_first.dt.year.values, '%s-03-31' % date_last.dt.year.values))
+nh_enso_psl = obs_atm.psl.sel(time=slice('%s-11-01' % date_first.dt.year.values, '%s-03-31' % date_last.dt.year.values))
+nh_enso_titles = ['November','December','January','February','March']
+nh_enso_plot_months = [11,12,1,2,3]
+nh_enso_axes = [0,90,1000,1]
+nh_enso_psl_axes = [-180, 180, 20, 90]
+
+sh_enso_uzm = obs_atm.ua.sel(time=slice('%s-09-01' % date_first.dt.year.values, '%s-01-31' % date_last.dt.year.values))
+sh_enso_vtzm = obs_atm.ehf.sel(time=slice('%s-09-01' % date_first.dt.year.values, '%s-01-31' % date_last.dt.year.values))
+sh_enso_psl = obs_atm.psl.sel(time=slice('%s-09-01' % date_first.dt.year.values, '%s-01-31' % date_last.dt.year.values))
+sh_enso_titles = ['September','October','November','December','January']
+sh_enso_plot_months = [9,10,11,12,1]
+sh_enso_axes = [-90,0,1000,1]
+sh_enso_psl_axes = [-180, 180, -90, -20]
+
+uzm_dict = {}
+uzm_dict['NH'] = nh_enso_uzm, nh_enso_titles, nh_enso_plot_months, nh_enso_axes
+uzm_dict['SH'] = sh_enso_uzm, sh_enso_titles, sh_enso_plot_months, sh_enso_axes
+
+vtzm_dict = {}
+vtzm_dict['NH'] = nh_enso_vtzm, nh_enso_titles, nh_enso_plot_months, nh_enso_axes
+vtzm_dict['SH'] = sh_enso_vtzm, sh_enso_titles, sh_enso_plot_months, sh_enso_axes
+
+psl_dict = {}
+psl_dict['NH'] = nh_enso_psl, nh_enso_titles, nh_enso_plot_months, ccrs.NorthPolarStereo(), nh_enso_psl_axes
+psl_dict['SH'] = sh_enso_psl, sh_enso_titles, sh_enso_plot_months, ccrs.SouthPolarStereo(), sh_enso_psl_axes
+
+###############################################
+print ('*** Running the observed QBO indexing')
+###############################################
+
+print (QBOisobar, "QBOisobar")
+
+# Subset atmospheric data for user defined isobar #
+subset = obs_atm.sel(lev=QBOisobar)
+
+# Select 5S-5N winds #
+tropical_subset = subset.interp(lat=[-5,-2.5,0,2.5,5])
+
+# Latitudinally weight and average #
+qbo = tropical_subset.mean('lat')
+weights = np.cos(np.deg2rad(tropical_subset.lat.values))
+interim = np.multiply(tropical_subset.ua.values,weights[np.newaxis,:])
+interim = np.nansum(interim,axis=1)
+interim = np.true_divide(interim,np.sum(weights))
+qbo.ua.values[:] = interim[:]
+
+def qbo_index(seasonal):
+
+	# Create 2-month seasonally averaged standardized QBO anomalies. Weight each month by number of days comprising month #
+	day_in_month_weights = seasonal.time.dt.days_in_month.values[:2]/np.sum(seasonal.time.dt.days_in_month.values[:2])
+	qboindex = np.reshape(seasonal.ua.values,(int(len(seasonal.ua.values)/2),2))
+	qboindex = np.nanmean(np.multiply(qboindex,day_in_month_weights[np.newaxis,:]),axis=1)
+	anom = np.subtract(qboindex,np.nanmean(qboindex))
+	anom = np.true_divide(anom,np.nanstd(qboindex))
+
+	# Get the unique years from "seasonal" and then remove the last one, which is not needed
+	years = [v for v in set(np.sort(seasonal.time.dt.year.values))]
+	eqbo_years = [years[i] for i,v in enumerate(anom) if v <= -1]
+	wqbo_years = [years[i] for i,v in enumerate(anom) if v >= 1]
+
+	return eqbo_years, wqbo_years
+
+# Subsample QBO data for NH #
+seasonal = qbo.sel(time=qbo.time.dt.month.isin([10,11])).mean('lon')
+nh_eqbo, nh_wqbo = qbo_index(seasonal)
+seasonal.close()
+
+# Subsample QBO data for SH #
+seasonal = qbo.sel(time=qbo.time.dt.month.isin([7,8])).mean('lon')
+sh_eqbo, sh_wqbo = qbo_index(seasonal)
+seasonal.close()
+
+# Store the Nina/Nino years in a dictionary to call later #
+qbo_dict = {}
+qbo_dict['NH'] = nh_eqbo, nh_wqbo
+qbo_dict['SH'] = sh_eqbo, sh_wqbo
+
+# Extract date and longitude info from QBO dataset #
+date_first = obs_atm.time[0]
+date_last = obs_atm.time[-1]
+lon_first = obs_atm.lon.values[0]
+
+#########################################################################
+# Define QBO plotting parameters to be passed to the plotting functions #
+#########################################################################
+
+nh_qbo_uzm = obs_atm.ua.sel(time=slice('%s-10-01' % date_first.dt.year.values, '%s-02-28' % date_last.dt.year.values))
+nh_qbo_vtzm = obs_atm.ehf.sel(time=slice('%s-10-01' % date_first.dt.year.values, '%s-02-28' % date_last.dt.year.values))
+nh_qbo_psl = obs_atm.psl.sel(time=slice('%s-10-01' % date_first.dt.year.values, '%s-02-28' % date_last.dt.year.values))
+nh_qbo_titles = ['October','November','December','January','February']
+nh_qbo_plot_months = [10,11,12,1,2]
+nh_qbo_axes = [0,90,1000,1]
+nh_qbo_psl_axes = [-180, 180, 20, 90]
+
+sh_qbo_uzm = obs_atm.ua.sel(time=slice('%s-07-01' % date_first.dt.year.values, '%s-11-30' % date_last.dt.year.values))
+sh_qbo_vtzm = obs_atm.ehf.sel(time=slice('%s-07-01' % date_first.dt.year.values, '%s-11-30' % date_last.dt.year.values))
+sh_qbo_psl = obs_atm.psl.sel(time=slice('%s-07-01' % date_first.dt.year.values, '%s-11-30' % date_last.dt.year.values))
+sh_qbo_titles = ['July','August','September','October','November']
+sh_qbo_plot_months = [7,8,9,10,11]
+sh_qbo_axes = [-90,0,1000,1]
+sh_qbo_psl_axes = [-180, 180, -90, -20]
+
+uzm_qbo_dict = {}
+uzm_qbo_dict['NH'] = nh_qbo_uzm, nh_qbo_titles, nh_qbo_plot_months, nh_qbo_axes
+uzm_qbo_dict['SH'] = sh_qbo_uzm, sh_qbo_titles, sh_qbo_plot_months, sh_qbo_axes
+
+vtzm_qbo_dict = {}
+vtzm_qbo_dict['NH'] = nh_qbo_vtzm, nh_qbo_titles, nh_qbo_plot_months, nh_qbo_axes
+vtzm_qbo_dict['SH'] = sh_qbo_vtzm, sh_qbo_titles, sh_qbo_plot_months, sh_qbo_axes
+
+psl_qbo_dict = {}
+psl_qbo_dict['NH'] = nh_qbo_psl, nh_qbo_titles, nh_qbo_plot_months, ccrs.NorthPolarStereo(), nh_qbo_psl_axes
+psl_qbo_dict['SH'] = sh_qbo_psl, sh_qbo_titles, sh_qbo_plot_months, ccrs.SouthPolarStereo(), sh_qbo_psl_axes
+
 hemispheres = ['NH','SH']
 
 for hemi in hemispheres:
@@ -742,35 +774,50 @@ for hemi in hemispheres:
 	###################################################################
 
 	obstos_plot = f'{plot_dir}/obs-enso34-uzm-{FIRSTYR}-{LASTYR}-%s.png' % hemi
-	out_fig, out_ax = enso_uzm(obs_atm.ua,obs_nina,obs_nino,hemi)
+	out_fig, out_ax = enso_uzm(uzm_dict[hemi][0],obs_nina,obs_nino,uzm_dict[hemi][1],uzm_dict[hemi][2],uzm_dict[hemi][3])
 	out_fig.savefig(obstos_plot,dpi=700)
 
+	############################################################
 	print ('*** Running the observed ENSO eddy heat flux calcs')
+	############################################################
 	obsvt_plot = f'{plot_dir}/obs-enso34-vt-{FIRSTYR}-{LASTYR}-%s.png' % hemi
-	out_fig, out_ax = enso_vt(obs_atm.ehf,obs_nina,obs_nino,hemi)
+	out_fig, out_ax = enso_vt(vtzm_dict[hemi][0],obs_nina,obs_nino,vtzm_dict[hemi][1],vtzm_dict[hemi][2],vtzm_dict[hemi][3])
 	out_fig.savefig(obsvt_plot,dpi=700)
 
+	##########################################################
 	print ('*** Running the observed ENSO sea level pressure')
+	##########################################################
 	obsps_plot = f'{plot_dir}/obs-enso34-psl-{FIRSTYR}-{LASTYR}-%s.png' % hemi
-	out_fig, out_ax = enso_slp(obs_atm,obs_nina,obs_nino,hemi)
+	out_fig, out_ax = enso_slp(psl_dict[hemi][0],obs_nina,obs_nino,psl_dict[hemi][1],psl_dict[hemi][2],psl_dict[hemi][3],psl_dict[hemi][4])
 	out_fig.savefig(obsps_plot,dpi=700)
 	
-	print ('*** Running the observed QBO indexing')
-	obs_eqbo,obs_wqbo = qbo_indexing(obs_atm.ua,QBOisobar,'NH')
-
+	##############################################
+	print ('*** Calling the observed QBO indices')
+	##############################################
+	obs_eqbo, obs_wqbo = qbo_dict[hemi]
+	
+	print (obs_eqbo,'obs_eqbo')
+	print (obs_wqbo, 'obs_wqbo')
+	
+	#####################################################################
 	print ('*** Running the observed QBO zonal mean zonal wind plotting')
+	#####################################################################
 	uzm_plot = f'{plot_dir}/obs-qbo{QBOisobar}hPa-uzm-{FIRSTYR}-{LASTYR}-%s.png' % hemi
-	out_fig, out_ax = qbo_uzm(obs_atm.ua,obs_eqbo,obs_wqbo,QBOisobar,hemi)
+	out_fig, out_ax = qbo_uzm(uzm_qbo_dict[hemi][0],obs_eqbo,obs_wqbo,QBOisobar,uzm_qbo_dict[hemi][1],uzm_qbo_dict[hemi][2],uzm_qbo_dict[hemi][3])
 	out_fig.savefig(uzm_plot,dpi=700)
 
+	#########################################################################
 	print ('*** Running the observed QBO zonal mean eddy heat flux plotting')
+	#########################################################################
 	vtzm_plot = f'{plot_dir}/obs-qbo{QBOisobar}hPa-vt-{FIRSTYR}-{LASTYR}-%s.png' % hemi
-	out_fig, out_ax = qbo_vt(obs_atm.ehf,obs_eqbo,obs_wqbo,QBOisobar,hemi)
+	out_fig, out_ax = qbo_vt(vtzm_qbo_dict[hemi][0],obs_eqbo,obs_wqbo,QBOisobar,vtzm_qbo_dict[hemi][1],vtzm_qbo_dict[hemi][2],vtzm_qbo_dict[hemi][3])
 	out_fig.savefig(vtzm_plot,dpi=700)
 	
+	##################################################################
 	print ('*** Running the observed QBO sea level pressure plotting')
+	##################################################################
 	psl_plot = f'{plot_dir}/obs-qbo{QBOisobar}hPa-psl-{FIRSTYR}-{LASTYR}-%s.png' % hemi
-	out_fig, out_ax = qbo_slp(obs_atm,obs_eqbo,obs_wqbo,QBOisobar,hemi)
+	out_fig, out_ax = qbo_slp(psl_qbo_dict[hemi][0],obs_eqbo,obs_wqbo,QBOisobar,psl_qbo_dict[hemi][1],psl_qbo_dict[hemi][2],psl_qbo_dict[hemi][3],psl_qbo_dict[hemi][4])
 	out_fig.savefig(psl_plot,dpi=700)
 	
 
@@ -784,11 +831,33 @@ with open(filepath, 'w') as file_handler:
 	for item in metricsout:
 		file_handler.write(f"{item}\n")
 		
+###############################################
+# Tidy up by closing the open xarray datasets #
+###############################################
+
+obs_atm.close()
+obs_sst.close()
+ENSO.close()
+weighted_mean.close()
+nh_enso_uzm.close()
+nh_enso_vtzm.close()
+nh_enso_psl.close()
+sh_enso_uzm.close()
+sh_enso_vtzm.close()
+sh_enso_psl.close()
+subset.close()
+tropical_subset.close()
+qbo.close()
+nh_qbo_uzm.close()
+nh_qbo_vtzm.close()
+nh_qbo_psl.close()
+sh_qbo_uzm.close()
+sh_qbo_vtzm.close()
+sh_qbo_psl.close()
 
 ###########################################################################
-################################ model #############################
+################################## model ##################################
 ###########################################################################
-
 
 plot_dir = f'{WK_DIR}/model/'
 
@@ -838,40 +907,264 @@ if getattr(ps.psl,'units') == 'Pa':
 # Create the POD figures directory
 plot_dir = f'{WK_DIR}/model/'
 
+#############################################
+print ('*** Running the model ENSO indexing')
+#############################################
+
+# Extract the tropical domain #
+ENSO = toss.isel(lat = np.logical_and(toss.lat >= -5, toss.lat <= 5))
+
+# Extract date and longitude info from ENSO dataset #
+date_first = toss.time[0]
+date_last = toss.time[-1]
+lon_first = toss.lon.values[0]
+
+# Identify the correct ENSO longitudinal grid #
+if lon_first < 0:
+	ENSO = ENSO.sel(lon=slice(-170,-120))
+else:
+	ENSO = ENSO.sel(lon=slice(190,240))
+
+# Latitudinally average the ENSO data #
+weighted_mean = ENSO.mean('lat')
+weights = np.cos(np.deg2rad(ENSO.lat.values))
+interim = np.multiply(ENSO.tos.values,weights[np.newaxis,:,np.newaxis])
+interim = np.nansum(interim,axis=1)
+interim = np.true_divide(interim,np.sum(weights))
+weighted_mean.tos.values[:] = interim[:]
+	
+# Subsample ENSO data for NH #
+seasonal = weighted_mean.sel(time=slice('%s-11-01' % date_first.dt.year.values, '%s-03-31' % date_last.dt.year.values))
+seasonal = seasonal.sel(time=seasonal.time.dt.month.isin([11,12,1,2,3])).mean('lon')
+nh_nina, nh_nino = enso_index(seasonal)
+seasonal.close()
+
+# Subsample ENSO data for SH #
+seasonal = weighted_mean.sel(time=slice('%s-09-01' % date_first.dt.year.values, '%s-01-31' % date_last.dt.year.values))
+seasonal = seasonal.sel(time=seasonal.time.dt.month.isin([9,10,11,12,1])).mean('lon')
+sh_nina, sh_nino = enso_index(seasonal)
+seasonal.close()
+
+# Store the Nina/Nino years in a dictionary to call later #
+model_enso_dict = {}
+model_enso_dict['NH'] = nh_nina, nh_nino
+model_enso_dict['SH'] = sh_nina, sh_nino
+
+##########################################################################
+# Define ENSO plotting parameters to be passed to the plotting functions #
+##########################################################################
+
+#########################################################
+print ('*** Doing the model eddy heat flux calculations')
+#########################################################
+vt = compute_total_eddy_heat_flux(vas.va,tas.ta)
+
+model_nh_enso_uzm = uas.ua.sel(time=slice('%s-11-01' % date_first.dt.year.values, '%s-03-31' % date_last.dt.year.values))
+model_nh_enso_vtzm = vt.sel(time=slice('%s-11-01' % date_first.dt.year.values, '%s-03-31' % date_last.dt.year.values))
+model_nh_enso_psl = ps.psl.sel(time=slice('%s-11-01' % date_first.dt.year.values, '%s-03-31' % date_last.dt.year.values))
+model_nh_enso_titles = ['November','December','January','February','March']
+model_nh_enso_plot_months = [11,12,1,2,3]
+model_nh_enso_axes = [0,90,1000,1]
+model_nh_enso_psl_axes = [-180, 180, 20, 90]
+
+model_sh_enso_uzm = uas.ua.sel(time=slice('%s-09-01' % date_first.dt.year.values, '%s-01-31' % date_last.dt.year.values))
+model_sh_enso_vtzm = vt.sel(time=slice('%s-09-01' % date_first.dt.year.values, '%s-01-31' % date_last.dt.year.values))
+model_sh_enso_psl = ps.psl.sel(time=slice('%s-09-01' % date_first.dt.year.values, '%s-01-31' % date_last.dt.year.values))
+model_sh_enso_titles = ['September','October','November','December','January']
+model_sh_enso_plot_months = [9,10,11,12,1]
+model_sh_enso_axes = [-90,0,1000,1]
+model_sh_enso_psl_axes = [-180, 180, -90, -20]
+
+model_uzm_dict = {}
+model_uzm_dict['NH'] = model_nh_enso_uzm, model_nh_enso_titles, model_nh_enso_plot_months, model_nh_enso_axes
+model_uzm_dict['SH'] = model_sh_enso_uzm, model_sh_enso_titles, model_sh_enso_plot_months, model_sh_enso_axes
+
+model_vtzm_dict = {}
+model_vtzm_dict['NH'] = model_nh_enso_vtzm, model_nh_enso_titles, model_nh_enso_plot_months, model_nh_enso_axes
+model_vtzm_dict['SH'] = model_sh_enso_vtzm, model_sh_enso_titles, model_sh_enso_plot_months, model_sh_enso_axes
+
+model_psl_dict = {}
+model_psl_dict['NH'] = model_nh_enso_psl, model_nh_enso_titles, model_nh_enso_plot_months, ccrs.NorthPolarStereo(), model_nh_enso_psl_axes
+model_psl_dict['SH'] = model_sh_enso_psl, model_sh_enso_titles, model_sh_enso_plot_months, ccrs.SouthPolarStereo(), model_sh_enso_psl_axes
+
+#########################################################################
+# Define QBO plotting parameters to be passed to the plotting functions #
+#########################################################################
+
+model_nh_qbo_uzm = uas.ua.sel(time=slice('%s-10-01' % date_first.dt.year.values, '%s-02-28' % date_last.dt.year.values))
+model_nh_qbo_vtzm = vt.sel(time=slice('%s-10-01' % date_first.dt.year.values, '%s-02-28' % date_last.dt.year.values))
+model_nh_qbo_psl = ps.psl.sel(time=slice('%s-10-01' % date_first.dt.year.values, '%s-02-28' % date_last.dt.year.values))
+model_nh_qbo_titles = ['October','November','December','January','February']
+model_nh_qbo_plot_months = [10,11,12,1,2]
+model_nh_qbo_axes = [0,90,1000,1]
+model_nh_qbo_psl_axes = [-180, 180, 20, 90]
+
+model_sh_qbo_uzm = uas.ua.sel(time=slice('%s-07-01' % date_first.dt.year.values, '%s-11-30' % date_last.dt.year.values))
+model_sh_qbo_vtzm = vt.sel(time=slice('%s-07-01' % date_first.dt.year.values, '%s-11-30' % date_last.dt.year.values))
+model_sh_qbo_psl = ps.psl.sel(time=slice('%s-07-01' % date_first.dt.year.values, '%s-11-30' % date_last.dt.year.values))
+model_sh_qbo_titles = ['July','August','September','October','November']
+model_sh_qbo_plot_months = [7,8,9,10,11]
+model_sh_qbo_axes = [-90,0,1000,1]
+model_sh_qbo_psl_axes = [-180, 180, -90, -20]
+
+model_uzm_qbo_dict = {}
+model_uzm_qbo_dict['NH'] = model_nh_qbo_uzm, model_nh_qbo_titles, model_nh_qbo_plot_months, model_nh_qbo_axes
+model_uzm_qbo_dict['SH'] = model_sh_qbo_uzm, model_sh_qbo_titles, model_sh_qbo_plot_months, model_sh_qbo_axes
+print (model_uzm_qbo_dict)
+
+model_vtzm_qbo_dict = {}
+model_vtzm_qbo_dict['NH'] = model_nh_qbo_vtzm, model_nh_qbo_titles, model_nh_qbo_plot_months, model_nh_qbo_axes
+model_vtzm_qbo_dict['SH'] = model_sh_qbo_vtzm, model_sh_qbo_titles, model_sh_qbo_plot_months, model_sh_qbo_axes
+print (model_vtzm_qbo_dict)
+
+model_psl_qbo_dict = {}
+model_psl_qbo_dict['NH'] = model_nh_qbo_psl, model_nh_qbo_titles, model_nh_qbo_plot_months, ccrs.NorthPolarStereo(), model_nh_qbo_psl_axes
+model_psl_qbo_dict['SH'] = model_sh_qbo_psl, model_sh_qbo_titles, model_sh_qbo_plot_months, ccrs.SouthPolarStereo(), model_sh_qbo_psl_axes
+print (model_psl_qbo_dict)
+
+
 hemispheres = ['NH','SH']
 
 for hemi in hemispheres:
 
-	print ('*** Running the model ENSO indexing')
-	model_nina, model_nino = enso_indexing(toss,hemi)
+	############################################
+	print ('*** Calling the model ENSO indices')
+	############################################
+	model_nina, model_nino = model_enso_dict[hemi]
 	
-	###############
+	print (model_nina,'model_nina')
+	print (model_nino, 'model_nino')
 	
+	################################################################
 	print ('*** Running the model ENSO zonal mean zonal wind calcs')
+	################################################################
 	out_plot = f'{plot_dir}/{CASENAME}-{FIRSTYR}-{LASTYR}-enso34-uzm-%s.png' % hemi
-	out_fig, out_ax = enso_uzm(uas.ua,model_nina,model_nino,hemi)
+	out_fig, out_ax = enso_uzm(model_uzm_dict[hemi][0],model_nina,model_nino,model_uzm_dict[hemi][1],model_uzm_dict[hemi][2],model_uzm_dict[hemi][3])
 	out_fig.savefig(out_plot,dpi=700)
-	
-	print ('*** Doing the model eddy heat flux calculations')
-	vt = compute_total_eddy_heat_flux(vas.va,tas.ta)
 
-	print ('*** Running the observed ENSO eddy heat flux calcs')
+	#########################################################
+	print ('*** Running the model ENSO eddy heat flux calcs')
+	#########################################################
 	out_plot = f'{plot_dir}/{CASENAME}-{FIRSTYR}-{LASTYR}-enso34-vt-%s.png' % hemi
-	out_fig, out_ax = enso_vt(vt,model_nina,model_nino,hemi)
+	out_fig, out_ax = enso_vt(model_vtzm_dict[hemi][0],model_nina,model_nino,model_vtzm_dict[hemi][1],model_vtzm_dict[hemi][2],model_vtzm_dict[hemi][3])
 	out_fig.savefig(out_plot,dpi=700)
 
-	print ('*** Running the observed ENSO sea level pressure')
+	#######################################################
+	print ('*** Running the model ENSO sea level pressure')
+	#######################################################
 	out_plot = f'{plot_dir}/{CASENAME}-{FIRSTYR}-{LASTYR}-enso34-psl-%s.png' % hemi
-	out_fig, out_ax = enso_slp(ps,model_nina,model_nino,hemi)
+	out_fig, out_ax = enso_slp(model_psl_dict[hemi][0],model_nina,model_nino,model_psl_dict[hemi][1],model_psl_dict[hemi][2],model_psl_dict[hemi][3],model_psl_dict[hemi][4])
 	out_fig.savefig(out_plot,dpi=700)
 
-# Prepare the output dictionaries
+##########################################
+print('*** Running the model QBO metrics')
+##########################################
+metricsout, switch = qbo_metrics(uas,QBOisobar)
+
+filepath = f'{plot_dir}/{CASENAME}-{FIRSTYR}-{LASTYR}-qbo{QBOisobar}hPa-metrics.txt'
+with open(filepath, 'w') as file_handler:
+	file_handler.write(f"{'QBO metrics: periodicity and spatial characteristics'}\n")
+	file_handler.write(f"{' '}\n")
+	for item in metricsout:
+		file_handler.write(f"{item}\n")
+
+if switch == 1:
+
+	###################################################################################
+	print ('*** A model QBO was detected so POD is now running the model QBO indexing')
+	###################################################################################
+
+	print (QBOisobar, "QBOisobar")
+
+	# Subset atmospheric data for user defined isobar #
+	subset = uas.sel(lev=QBOisobar)
+
+	# Select 5S-5N winds #
+	tropical_subset = subset.interp(lat=[-5,-2.5,0,2.5,5])
+
+	# Latitudinally weight and average #
+	qbo = tropical_subset.mean('lat')
+	weights = np.cos(np.deg2rad(tropical_subset.lat.values))
+	interim = np.multiply(tropical_subset.ua.values,weights[np.newaxis,:])
+	interim = np.nansum(interim,axis=1)
+	interim = np.true_divide(interim,np.sum(weights))
+	qbo.ua.values[:] = interim[:]
+
+	def qbo_index(seasonal):
+
+		# Create 2-month seasonally averaged standardized QBO anomalies. Weight each month by number of days comprising month #
+		day_in_month_weights = seasonal.time.dt.days_in_month.values[:2]/np.sum(seasonal.time.dt.days_in_month.values[:2])
+		qboindex = np.reshape(seasonal.ua.values,(int(len(seasonal.ua.values)/2),2))
+		qboindex = np.nanmean(np.multiply(qboindex,day_in_month_weights[np.newaxis,:]),axis=1)
+		anom = np.subtract(qboindex,np.nanmean(qboindex))
+		anom = np.true_divide(anom,np.nanstd(qboindex))
+
+		# Get the unique years from "seasonal" and then remove the last one, which is not needed
+		years = [v for v in set(np.sort(seasonal.time.dt.year.values))]
+		eqbo_years = [years[i] for i,v in enumerate(anom) if v <= -1]
+		wqbo_years = [years[i] for i,v in enumerate(anom) if v >= 1]
+
+		return eqbo_years, wqbo_years
+
+	# Subsample QBO data for NH #
+	seasonal = qbo.sel(time=qbo.time.dt.month.isin([10,11]))
+	model_nh_eqbo, model_nh_wqbo = qbo_index(seasonal)
+	seasonal.close()
+
+	# Subsample QBO data for SH #
+	seasonal = qbo.sel(time=qbo.time.dt.month.isin([7,8]))
+	model_sh_eqbo, model_sh_wqbo = qbo_index(seasonal)
+	seasonal.close()
+	
+	for hemi in hemispheres:
+
+		# Store the Nina/Nino years in a dictionary to call later #
+		model_qbo_dict = {}
+		model_qbo_dict['NH'] = model_nh_eqbo, model_nh_wqbo
+		model_qbo_dict['SH'] = model_sh_eqbo, model_sh_wqbo
+	
+		############################################
+		print ('*** Running the model QBO indexing')
+		############################################
+		model_eqbo, model_wqbo = model_qbo_dict[hemi]
+	
+		print (model_eqbo, 'model_eqbo')
+		print (model_wqbo, 'model_wqbo')
+	
+		##################################################################
+		print ('*** Running the model QBO zonal mean zonal wind plotting')
+		##################################################################
+		out_plot = f'{plot_dir}/{CASENAME}-{FIRSTYR}-{LASTYR}-qbo{QBOisobar}hPa-uzm-%s.png' % hemi
+		out_fig, out_ax = qbo_uzm(model_uzm_qbo_dict[hemi][0],model_eqbo,model_wqbo,QBOisobar,model_uzm_qbo_dict[hemi][1],model_uzm_qbo_dict[hemi][2],model_uzm_qbo_dict[hemi][3])
+		out_fig.savefig(out_plot,dpi=700)
+
+		######################################################################
+		print ('*** Running the model QBO zonal mean eddy heat flux plotting')
+		######################################################################
+		out_plot = f'{plot_dir}/{CASENAME}-{FIRSTYR}-{LASTYR}-qbo{QBOisobar}hPa-vt-%s.png' % hemi
+		out_fig, out_ax = qbo_vt(model_vtzm_qbo_dict[hemi][0],model_eqbo,model_wqbo,QBOisobar,model_vtzm_qbo_dict[hemi][1],model_vtzm_qbo_dict[hemi][2],model_vtzm_qbo_dict[hemi][3])
+		out_fig.savefig(out_plot,dpi=700)
+
+		print ('*** Running the model QBO sea level pressure plotting')
+		out_plot = f'{plot_dir}/{CASENAME}-{FIRSTYR}-{LASTYR}-qbo{QBOisobar}hPa-psl-%s.png' % hemi
+		out_fig, out_ax = qbo_slp(model_psl_qbo_dict[hemi][0],model_eqbo,model_wqbo,QBOisobar,model_psl_qbo_dict[hemi][1],model_psl_qbo_dict[hemi][2],model_psl_qbo_dict[hemi][3],model_psl_qbo_dict[hemi][4])
+		out_fig.savefig(out_plot,dpi=700)
+		
+if switch == 0:
+
+	print ("No QBO detected in the model data. As a result, QBO Ubar, v'T', ans SLP plots were not made.")
+	
+###################################
+# Prepare the output dictionaries #
+###################################
 
 vt_data = {}
 uzm_data = {}
 slp_data = {}
 
+###########################
 # Saving some of the data #
+###########################
 
 vt_data['NH'] = vt.sel(lat = np.logical_and(vt.lat >= 0, vt.lat <= 90))
 vt_data['SH'] = vt.sel(lat = np.logical_and(vt.lat >= -90, vt.lat <= 0))
@@ -911,52 +1204,12 @@ data_dir = f'{WK_DIR}/model/netCDF'
 outfile = data_dir+f'/{CASENAME}_qbo-enso_diagnostics.nc'
 
 encoding = {'vt_out':  {'dtype':'float32'},
-            'uzm_out':  {'dtype':'float32'},
-            'slp_out':  {'dtype':'float32'},
-            'qbo_out': {'dtype':'float32'}}
+			'uzm_out':  {'dtype':'float32'},
+			'slp_out':  {'dtype':'float32'},
+			'qbo_out': {'dtype':'float32'}}
 
 print(f'*** Saving qbo-enso diagnostic data to {outfile}')
 out_ds.to_netcdf(outfile, encoding=encoding)
-	
-print('*** Running the model QBO metrics')
-metricsout, switch = qbo_metrics(uas,QBOisobar)
-
-filepath = f'{plot_dir}/{CASENAME}-{FIRSTYR}-{LASTYR}-qbo{QBOisobar}hPa-metrics.txt'
-with open(filepath, 'w') as file_handler:
-	file_handler.write(f"{'QBO metrics: periodicity and spatial characteristics'}\n")
-	file_handler.write(f"{' '}\n")
-	for item in metricsout:
-		file_handler.write(f"{item}\n")
-		
-if switch == 1:
-
-	print ("QBO detected in the model data. Making QBO Ubar, v'T', ans SLP plots.")
-
-	for hemi in hemispheres:
-	
-		###############
-	
-		print ('*** Running the model QBO indexing')
-		model_eqbo,model_wqbo = qbo_indexing(uas.ua,QBOisobar,hemi)
-
-		print ('*** Running the model QBO zonal mean zonal wind plotting')
-		out_plot = f'{plot_dir}/{CASENAME}-{FIRSTYR}-{LASTYR}-qbo{QBOisobar}hPa-uzm-%s.png' % hemi
-		out_fig, out_ax = qbo_uzm(uas.ua,model_eqbo,model_wqbo,QBOisobar,hemi)
-		out_fig.savefig(out_plot,dpi=700)
-
-		print ('*** Running the model QBO zonal mean eddy heat flux plotting')
-		out_plot = f'{plot_dir}/{CASENAME}-{FIRSTYR}-{LASTYR}-qbo{QBOisobar}hPa-vt-%s.png' % hemi
-		out_fig, out_ax = qbo_vt(vt,model_eqbo,model_wqbo,QBOisobar,hemi)
-		out_fig.savefig(out_plot,dpi=700)
-	
-		print ('*** Running the model QBO sea level pressure plotting')
-		out_plot = f'{plot_dir}/{CASENAME}-{FIRSTYR}-{LASTYR}-qbo{QBOisobar}hPa-psl-%s.png' % hemi
-		out_fig, out_ax = qbo_slp(ps,model_eqbo,model_wqbo,QBOisobar,hemi)
-		out_fig.savefig(out_plot,dpi=700)
-		
-if switch == 0:
-
-	print ("No QBO detected in the model data. As a result, QBO Ubar, v'T', ans SLP plots were not made.")
 
 
 print('\n=====================================')

@@ -9,7 +9,6 @@ Contains:
 
 
 import numpy as np
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
@@ -21,24 +20,47 @@ from scipy import stats
 ##################################################################################################
 ##################################################################################################
 
-def enso_uzm(UZM,negative_indices,positive_indices,hemisphere):
+def enso_uzm(uzm,negative_indices,positive_indices,titles,plot_months,axes):
 
-	date_first = UZM.time[0]
-	date_last = UZM.time[-1]
+	r""" Compute the zonal mean zonal wind response to ENSO. Anomalies are defined as 
+	deviations from the seasonal cycle and composites of anomalies are made during La Nina years,
+	El Nino years, and then their difference is shown. Stippling is used to denote statistical
+	significance on the La Nina minus El Nino composites.
 
-	if hemisphere == 'NH':
-		uzm = UZM.sel(time=slice('%s-11-01' % date_first.dt.year.values, '%s-03-31' % date_last.dt.year.values))
-		titles = ['November','December','January','February','March']
-		plot_months = [11,12,1,2,3]
-	if hemisphere == 'SH':
-		uzm = UZM.sel(time=slice('%s-09-01' % date_first.dt.year.values, '%s-01-31' % date_last.dt.year.values))
-		titles = ['September','October','November','December','January']
-		plot_months = [9,10,11,12,1]
+	Parameters
+	----------
+	uzm : xarray.DataArray
+		The zonal mean zonal wind.
 		
-	# Check to see if the pressure levels are in hPa or Pa
-	if np.nanmax(uzm.lev.values) > 2000:
-		uzm.lev.values[:] = np.true_divide(uzm.lev.values,100)
-	
+	negative_indices : list
+		A list of La Nina years.
+		
+	positive_indices : list
+		A list of El Nino years.
+		
+	titles : list of strings
+		A list of month names that will be used as the titles for each column of subplots
+		
+	plot_months : list
+		A list of numbers corresponding to each month (e.g., 10 = october)
+		
+	axes : A list of numbers used to set the pressure and latitude limits of the subplots.
+		  [0,90,1000,1] are used for the N. hemisphere and [-90,0,1000,1] for S. hemisphere
+
+	Returns
+	-------
+	3 row by 6 column plot of La Nina uzm anomalies (top row), El Nino uzm anomalies (middle),
+	and their difference (bottom row) with stippling highlighting differences between El Nino
+	and La Nina winds statistically significant at the 95% level using a two-sided t-test.
+
+	Notes
+	-----
+	The input field uzm is assumed to have dimensions named "lat" and "lev". 
+	E.g., if your data has dimensions "latitude" and/or "level",
+	use the rename method:
+		ds.rename({'latitude':'lat','level':'lev'})
+	"""
+
 	nina_out = []
 	nino_out = []
 	diff_out = []
@@ -49,16 +71,16 @@ def enso_uzm(UZM,negative_indices,positive_indices,hemisphere):
 
 		clim = uzm.sel(time=uzm.time.dt.month.isin([mon]))
 		clim_out.append(clim.mean('time').values)
-	
+
 		anom = clim.groupby("time.month") - clim.groupby("time.month").mean("time")
-	
+
 		if mon == 7 or mon == 8 or mon == 9 or mon == 10 or mon == 11 or mon == 12:
 			tmp_negative_indices = np.add(negative_indices,0)
 			tmp_positive_indices = np.add(positive_indices,0)
 		if mon == 1 or mon == 2 or mon == 3:
 			tmp_negative_indices = np.add(negative_indices,1)
 			tmp_positive_indices = np.add(positive_indices,1)
-		
+
 		nina_tmp = anom.sel(time=anom.time.dt.year.isin([tmp_negative_indices]))
 		nino_tmp = anom.sel(time=anom.time.dt.year.isin([tmp_positive_indices]))
 
@@ -80,11 +102,11 @@ def enso_uzm(UZM,negative_indices,positive_indices,hemisphere):
 	diff_out = np.array(diff_out)
 	sigs_out = np.array(sigs_out)
 	clim_out = np.array(clim_out)
-	
+
 	############# Begin the plotting ############
-	
+
 	fig, ax = plt.subplots()
-	
+
 	mpl.rcParams['font.sans-serif'].insert(0, 'Arial')
 
 	vmin = -10
@@ -104,13 +126,13 @@ def enso_uzm(UZM,negative_indices,positive_indices,hemisphere):
 	from palettable.colorbrewer.diverging import RdBu_11
 	cmap1=RdBu_11.mpl_colormap.reversed()
 
-	x, y = np.meshgrid(UZM.lat.values,UZM.lev.values)
-	UZM.close()
+	x, y = np.meshgrid(uzm.lat.values,uzm.lev.values)
+	uzm.close()
 
 	cols = [0,1,2,3,4]
 
 	for i in cols:
-	
+
 		print (i)
 
 		# Nina #
@@ -131,13 +153,10 @@ def enso_uzm(UZM,negative_indices,positive_indices,hemisphere):
 		xticks = [-90,-60,-30,0,30,60,90]
 		plt.xticks(xticks,xticks,fontsize=6,fontweight='normal')
 		plt.gca().invert_yaxis()
-		if hemisphere == 'NH':
-			plt.axis([0,90,1000,1])
-		if hemisphere == 'SH':
-			plt.axis([-90,0,1000,1])
+		plt.axis(axes)
 		if i == 0:
 			plt.ylabel('Pressure (hPa)',fontsize=8,fontweight='normal')
-		
+
 		if i == 4:
 			ax2 = ax1.twinx()
 			yticks = [0,0.5,1.0]
@@ -163,10 +182,7 @@ def enso_uzm(UZM,negative_indices,positive_indices,hemisphere):
 		xticks = [-90,-60,-30,0,30,60,90]
 		plt.xticks(xticks,xticks,fontsize=6,fontweight='normal')
 		plt.gca().invert_yaxis()
-		if hemisphere == 'NH':
-			plt.axis([0,90,1000,1])
-		if hemisphere == 'SH':
-			plt.axis([-90,0,1000,1])
+		plt.axis(axes)
 		if i == 0:
 			plt.ylabel('Pressure (hPa)',fontsize=8,fontweight='normal')
 		if i == 4:
@@ -194,10 +210,7 @@ def enso_uzm(UZM,negative_indices,positive_indices,hemisphere):
 		xticks = [-90,-60,-30,0,30,60,90]
 		plt.xticks(xticks,xticks,fontsize=6,fontweight='normal')
 		plt.gca().invert_yaxis()
-		if hemisphere == 'NH':
-			plt.axis([0,90,1000,1])
-		if hemisphere == 'SH':
-			plt.axis([-90,0,1000,1])
+		plt.axis(axes)
 		if i == 0:
 			plt.ylabel('Pressure (hPa)',fontsize=8,fontweight='normal')	
 		plt.xlabel('Latitude',fontsize=8,fontweight='normal')
@@ -205,7 +218,7 @@ def enso_uzm(UZM,negative_indices,positive_indices,hemisphere):
 		sig_levs = [0.95,1]
 		mpl.rcParams['hatch.linewidth'] = 0.2
 		plt.contourf(x,y,sigs_out[i],colors='black',vmin=0.95,vmax=1,levels=sig_levs,hatches=['......','......'],alpha=0.0)
-	
+
 		if i == 4:
 			ax2 = ax1.twinx()
 			yticks = [0,0.5,1.0]
@@ -228,24 +241,48 @@ def enso_uzm(UZM,negative_indices,positive_indices,hemisphere):
 ##################################################################################################
 ##################################################################################################
 	
-def enso_vt(VT,negative_indices,positive_indices,hemisphere):
+def enso_vt(vt,negative_indices,positive_indices,titles,plot_months,axes):
 
-	date_first = VT.time[0]
-	date_last = VT.time[-1]
+	r""" Compute the zonal mean eddy heat flux response to ENSO. Anomalies are defined as 
+	deviations from the seasonal cycle and composites of anomalies are made during La Nina years,
+	El Nino years, and then their difference is shown. Stippling is used to denote statistical
+	significance on the La Nina minus El Nino composites.
 
-	if hemisphere == 'NH':
-		vt = VT.sel(time=slice('%s-11-01' % date_first.dt.year.values, '%s-03-31' % date_last.dt.year.values))
-		titles = ['November','December','January','February','March']
-		plot_months = [11,12,1,2,3]
-	if hemisphere == 'SH':
-		vt = VT.sel(time=slice('%s-09-01' % date_first.dt.year.values, '%s-01-31' % date_last.dt.year.values))
-		titles = ['September','October','November','December','January']
-		plot_months = [9,10,11,12,1]
+	Parameters
+	----------
+	vt : xarray.DataArray
+		The zonal mean eddy heat flux. This quantity is calculated using the 
+		compute_total_eddy_heat_flux function given in the driver script stc_qbo_enso.py
 		
-	# Check to see if the pressure levels are in hPa or Pa
-	if np.nanmax(vt.lev.values) > 2000:
-		vt.lev.values[:] = np.true_divide(vt.lev.values,100)
-	
+	negative_indices : list
+		A list of La Nina years.
+		
+	positive_indices : list
+		A list of El Nino years.
+		
+	titles : list of strings
+		A list of month names that will be used as the titles for each column of subplots
+		
+	plot_months : list
+		A list of numbers corresponding to each month (e.g., 10 = october)
+		
+	axes : A list of numbers used to set the pressure and latitude limits of the subplots.
+		  [0,90,1000,1] are used for the N. hemisphere and [-90,0,1000,1] for S. hemisphere
+
+	Returns
+	-------
+	3 row by 6 column plot of La Nina vt anomalies (top row), El Nino vt anomalies (middle),
+	and their difference (bottom row) with stippling highlighting differences between El Nino
+	and La Nina winds statistically significant at the 95% level using a two-sided t-test.
+
+	Notes
+	-----
+	The input field vt is assumed to have dimensions named "lat" and "lev". 
+	E.g., if your data has dimensions "latitude" and/or "level",
+	use the rename method:
+		ds.rename({'latitude':'lat','level':'lev'})
+	"""
+
 	nina_out = []
 	nino_out = []
 	diff_out = []
@@ -256,16 +293,16 @@ def enso_vt(VT,negative_indices,positive_indices,hemisphere):
 
 		clim = vt.sel(time=vt.time.dt.month.isin([mon]))
 		clim_out.append(clim.mean('time').values)
-	
+
 		anom = clim.groupby("time.month") - clim.groupby("time.month").mean("time")
-	
+
 		if mon == 7 or mon == 8 or mon == 9 or mon == 10 or mon == 11 or mon == 12:
 			tmp_negative_indices = np.add(negative_indices,0)
 			tmp_positive_indices = np.add(positive_indices,0)
 		if mon == 1 or mon == 2 or mon == 3:
 			tmp_negative_indices = np.add(negative_indices,1)
 			tmp_positive_indices = np.add(positive_indices,1)
-		
+
 		nina_tmp = anom.sel(time=anom.time.dt.year.isin([tmp_negative_indices]))
 		nino_tmp = anom.sel(time=anom.time.dt.year.isin([tmp_positive_indices]))
 
@@ -287,11 +324,11 @@ def enso_vt(VT,negative_indices,positive_indices,hemisphere):
 	diff_out = np.array(diff_out)
 	sigs_out = np.array(sigs_out)
 	clim_out = np.array(clim_out)
-	
+
 	############# Begin the plotting ############
-	
+
 	fig, ax = plt.subplots()
-	
+
 	mpl.rcParams['font.sans-serif'].insert(0, 'Arial')
 
 	blevs = []
@@ -327,12 +364,12 @@ def enso_vt(VT,negative_indices,positive_indices,hemisphere):
 	from palettable.colorbrewer.diverging import RdBu_11
 	cmap1=RdBu_11.mpl_colormap.reversed()
 
-	x, y = np.meshgrid(VT.lat.values,VT.lev.values)
+	x, y = np.meshgrid(vt.lat.values,vt.lev.values)
 
 	cols = [0,1,2,3,4]
 
 	for i in cols:
-	
+
 		print (i)
 
 		# Nina #
@@ -353,13 +390,10 @@ def enso_vt(VT,negative_indices,positive_indices,hemisphere):
 		xticks = [-90,-60,-30,0,30,60,90]
 		plt.xticks(xticks,xticks,fontsize=6,fontweight='normal')
 		plt.gca().invert_yaxis()
-		if hemisphere == 'NH':
-			plt.axis([0,90,1000,1])
-		if hemisphere == 'SH':
-			plt.axis([-90,0,1000,1])
+		plt.axis(axes)
 		if i == 0:
 			plt.ylabel('Pressure (hPa)',fontsize=8,fontweight='normal')
-		
+
 		if i == 4:
 			ax2 = ax1.twinx()
 			yticks = [0,0.5,1.0]
@@ -385,10 +419,7 @@ def enso_vt(VT,negative_indices,positive_indices,hemisphere):
 		xticks = [-90,-60,-30,0,30,60,90]
 		plt.xticks(xticks,xticks,fontsize=6,fontweight='normal')
 		plt.gca().invert_yaxis()
-		if hemisphere == 'NH':
-			plt.axis([0,90,1000,1])
-		if hemisphere == 'SH':
-			plt.axis([-90,0,1000,1])
+		plt.axis(axes)
 		if i == 0:
 			plt.ylabel('Pressure (hPa)',fontsize=8,fontweight='normal')
 		if i == 4:
@@ -416,10 +447,7 @@ def enso_vt(VT,negative_indices,positive_indices,hemisphere):
 		xticks = [-90,-60,-30,0,30,60,90]
 		plt.xticks(xticks,xticks,fontsize=6,fontweight='normal')
 		plt.gca().invert_yaxis()
-		if hemisphere == 'NH':
-			plt.axis([0,90,1000,1])
-		if hemisphere == 'SH':
-			plt.axis([-90,0,1000,1])
+		plt.axis(axes)
 		if i == 0:
 			plt.ylabel('Pressure (hPa)',fontsize=8,fontweight='normal')	
 		plt.xlabel('Latitude',fontsize=8,fontweight='normal')
@@ -427,7 +455,7 @@ def enso_vt(VT,negative_indices,positive_indices,hemisphere):
 		sig_levs = [0.95,1]
 		mpl.rcParams['hatch.linewidth'] = 0.2
 		plt.contourf(x,y,sigs_out[i],colors='black',vmin=0.95,vmax=1,levels=sig_levs,hatches=['......','......'],alpha=0.0)
-	
+
 		if i == 4:
 			ax2 = ax1.twinx()
 			yticks = [0,0.5,1.0]
@@ -452,30 +480,62 @@ def enso_vt(VT,negative_indices,positive_indices,hemisphere):
 ##################################################################################################
 	
 	
-def enso_slp(PS,negative_indices,positive_indices,hemisphere):
+def enso_slp(ps,negative_indices,positive_indices,titles,plot_months,projection,axes):
 
-	date_first = PS.time[0]
-	date_last = PS.time[-1]
+	r""" Compute the sea level pressure response to ENSO. Anomalies are defined as 
+	deviations from the seasonal cycle and composites of anomalies are made during La Nina years,
+	El Nino years, and then their difference is shown. Stippling is used to denote statistical
+	significance on the La Nina minus El Nino composites.
 
-	if hemisphere == 'NH':
-		ps = PS.sel(time=slice('%s-11-01' % date_first.dt.year.values, '%s-03-31' % date_last.dt.year.values))
-		titles = ['November','December','January','February','March']
-		plot_months = [11,12,1,2,3]
-	if hemisphere == 'SH':
-		ps = PS.sel(time=slice('%s-09-01' % date_first.dt.year.values, '%s-01-31' % date_last.dt.year.values))
-		titles = ['September','October','November','December','January']
-		plot_months = [9,10,11,12,1]
-	
-	if getattr(ps.psl,'units') == 'Pa':
-		print(f'**Converting pressure levels to hPa')
-		ps.psl.attrs['units'] = 'hPa'
-		ps.psl.values[:] = ps.psl.values/100.
+	Parameters
+	----------
+	ps : xarray.DataArray
+		The sea level pressure. 
 		
-	print (np.nanmin(ps.psl.values))
-	print (np.nanmedian(ps.psl.values))
-	print (np.nanmean(ps.psl.values))
-	print (np.nanmax(ps.psl.values))
-	
+	negative_indices : list
+		A list of La Nina years.
+		
+	positive_indices : list
+		A list of El Nino years.
+		
+	titles : list of strings
+		A list of month names that will be used as the titles for each column of subplots
+		
+	plot_months : list
+		A list of numbers corresponding to each month (e.g., 10 = october)
+		
+	projection : ccrs.NorthPolarStereo() or ccrs.SouthPolarStereo()
+		
+	axes : A list of numbers used to set the longitude and latitude bounds of the subplots.
+		  [-180, 180, 20, 90] are used for the N. hemisphere and [-180, 180, -90, -20] for S. hemisphere
+
+	Returns
+	-------
+	3 row by 6 column plot of La Nina ps anomalies (top row), El Nino ps anomalies (middle),
+	and their difference (bottom row) with stippling highlighting differences between El Nino
+	and La Nina winds statistically significant at the 95% level using a two-sided t-test.
+
+	Notes
+	-----
+	The input field ps is assumed to have dimensions named "lat" and "lon". 
+	E.g., if your data has dimensions "latitude" and/or "level",
+	use the rename method:
+		ds.rename({'latitude':'lat','longitude':'lon'})
+		
+	The input field ps is expected to have units of hPa. Directly below, the code
+	will check to see if the units are Pa instead, and if they are, convert them to hPa.
+	"""
+
+	if getattr(ps,'units') == 'Pa':
+		print(f'**Converting pressure levels to hPa')
+		ps.attrs['units'] = 'hPa'
+		ps.values[:] = ps.values/100.
+
+	print (np.nanmin(ps.values))
+	print (np.nanmedian(ps.values))
+	print (np.nanmean(ps.values))
+	print (np.nanmax(ps.values))
+
 	nina_out = []
 	nino_out = []
 	diff_out = []
@@ -485,26 +545,26 @@ def enso_slp(PS,negative_indices,positive_indices,hemisphere):
 	for mon in plot_months:
 
 		clim = ps.sel(time=ps.time.dt.month.isin([mon]))
-		clim_out.append(clim.mean('time').psl.values)
-	
+		clim_out.append(clim.mean('time').values)
+
 		anom = clim.groupby("time.month") - clim.groupby("time.month").mean("time")
-	
+
 		if mon == 7 or mon == 8 or mon == 9 or mon == 10 or mon == 11 or mon == 12:
 			tmp_negative_indices = np.add(negative_indices,0)
 			tmp_positive_indices = np.add(positive_indices,0)
 		if mon == 1 or mon == 2 or mon == 3:
 			tmp_negative_indices = np.add(negative_indices,1)
 			tmp_positive_indices = np.add(positive_indices,1)
-		
+
 		nina_tmp = anom.sel(time=anom.time.dt.year.isin([tmp_negative_indices]))
 		nino_tmp = anom.sel(time=anom.time.dt.year.isin([tmp_positive_indices]))
 
-		t,p = stats.ttest_ind(nina_tmp.psl.values,nino_tmp.psl.values,axis=0,nan_policy='omit')
+		t,p = stats.ttest_ind(nina_tmp.values,nino_tmp.values,axis=0,nan_policy='omit')
 
 		sigs_out.append(np.subtract(1,p))
-		diff_out.append(np.subtract(nina_tmp.mean('time').psl.values,nino_tmp.mean('time').psl.values))
-		nina_out.append(nina_tmp.mean('time').psl.values)
-		nino_out.append(nino_tmp.mean('time').psl.values)
+		diff_out.append(np.subtract(nina_tmp.mean('time').values,nino_tmp.mean('time').values))
+		nina_out.append(nina_tmp.mean('time').values)
+		nino_out.append(nino_tmp.mean('time').values)
 
 		clim.close()
 		anom.close()
@@ -517,11 +577,11 @@ def enso_slp(PS,negative_indices,positive_indices,hemisphere):
 	diff_out = np.array(diff_out)
 	sigs_out = np.array(sigs_out)
 	clim_out = np.array(clim_out)
-	
+
 	############# Begin the plotting ############
-	
+
 	fig, ax = plt.subplots()
-	
+
 	mpl.rcParams['font.sans-serif'].insert(0, 'Arial')
 
 	vmin = -10
@@ -529,7 +589,7 @@ def enso_slp(PS,negative_indices,positive_indices,hemisphere):
 	vlevs = np.linspace(vmin,vmax,num=21)
 	vlevs = [v for v in vlevs if v != 0]
 	ticks = [vmin,vmin/2,0,vmax/2,vmax]
-	
+
 	cmin = 900
 	cmax = 1100
 	clevs = np.linspace(cmin,cmax,num=21)
@@ -537,34 +597,30 @@ def enso_slp(PS,negative_indices,positive_indices,hemisphere):
 	plt.suptitle('Nina - Nino sea level pressure (hPa)',fontsize=12,fontweight='normal')
 
 	# Add colormap #
-	
+
 	from palettable.colorbrewer.diverging import RdBu_11
 	cmap1=RdBu_11.mpl_colormap.reversed()
-	
+
 	lons = ps.lon.values
 	lats = ps.lat.values
-	
+
 	cols = [0,1,2,3,4]
 
 	for i in cols:
-	
+
 		print (i)
 
 		########
 		# Nina #
 		########
-		
-		if hemisphere == 'NH':
-			ax1 = plt.subplot2grid(shape=(3,5), loc=(0,cols[i]), projection=ccrs.NorthPolarStereo())
-			ax1.set_extent([-180, 180, 20, 90], ccrs.PlateCarree())
-		if hemisphere == 'SH':
-			ax1 = plt.subplot2grid(shape=(3,5), loc=(0,cols[i]), projection=ccrs.SouthPolarStereo())
-			ax1.set_extent([-180, 180, -90, -20], ccrs.PlateCarree())
-			
+
+		ax1 = plt.subplot2grid(shape=(3,5), loc=(0,cols[i]), projection=projection)
+		ax1.set_extent(axes, ccrs.PlateCarree())
+
 		plt.title('%s' % titles[i],fontsize=10,y=0.93,fontweight='normal')
-		
+
 		# Plot style features #
-		
+
 		ax1.coastlines(linewidth=0.25)
 		theta = np.linspace(0, 2*np.pi, 100)
 		center, radius = [0.5, 0.5], 0.5
@@ -574,20 +630,20 @@ def enso_slp(PS,negative_indices,positive_indices,hemisphere):
 		pos1 = ax1.get_position()
 		plt.title("%s" % titles[i], fontsize=10,fontweight='normal',y=0.98)
 		cyclic_z, cyclic_lon = add_cyclic_point(nina_out[i], coord=lons)
-		
+
 		# Plot anomalies #
-		
+
 		contourf = ax1.contourf(cyclic_lon, lats, cyclic_z,transform=ccrs.PlateCarree(),cmap=cmap1,vmin=vmin,vmax=vmax,levels=vlevs,extend='both',zorder=1)
 
 		# Overlay the climatology #
-		
+
 		cyclic_clim, cyclic_lon = add_cyclic_point(clim_out[i], coord=lons)
 		cs = ax1.contour(cyclic_lon, lats, cyclic_clim,transform=ccrs.PlateCarree(),colors='k',linewidths=0.5,vmin=cmin,vmax=cmax,levels=clevs,extend='both',zorder=3)
-		
+
 		plt.rc('font',weight='normal')
 		plt.clabel(cs,cs.levels[:],inline=1,fmt='%1.0f',fontsize=4,colors='k',inline_spacing=1)
 		plt.rc('font',weight='normal')
-		
+
 		if i == 4:
 			ax2 = ax1.twinx()
 			yticks = [0,0.5,1.0]
@@ -600,20 +656,16 @@ def enso_slp(PS,negative_indices,positive_indices,hemisphere):
 			ax2.spines['bottom'].set_visible(False)
 			ax2.spines['left'].set_visible(False)
 			ax2.get_yaxis().set_ticks([])
-		
+
 		########
 		# Nino #
 		########
-		
-		if hemisphere == 'NH':
-			ax1 = plt.subplot2grid(shape=(3,5), loc=(1,cols[i]), projection=ccrs.NorthPolarStereo())
-			ax1.set_extent([-180, 180, 20, 90], ccrs.PlateCarree())
-		if hemisphere == 'SH':
-			ax1 = plt.subplot2grid(shape=(3,5), loc=(1,cols[i]), projection=ccrs.SouthPolarStereo())
-			ax1.set_extent([-180, 180, -90, -20], ccrs.PlateCarree())
-		
+
+		ax1 = plt.subplot2grid(shape=(3,5), loc=(1,cols[i]), projection=projection)
+		ax1.set_extent(axes, ccrs.PlateCarree())
+
 		# Plot style features #
-		
+
 		ax1.coastlines(linewidth=0.25)
 		theta = np.linspace(0, 2*np.pi, 100)
 		center, radius = [0.5, 0.5], 0.5
@@ -623,20 +675,20 @@ def enso_slp(PS,negative_indices,positive_indices,hemisphere):
 		pos1 = ax1.get_position()
 		plt.title("%s" % titles[i], fontsize=10,fontweight='normal',y=0.98)
 		cyclic_z, cyclic_lon = add_cyclic_point(nino_out[i], coord=lons)
-		
+
 		# Plot anomalies #
-		
+
 		contourf = ax1.contourf(cyclic_lon, lats, cyclic_z,transform=ccrs.PlateCarree(),cmap=cmap1,vmin=vmin,vmax=vmax,levels=vlevs,extend='both',zorder=1)
 
 		# Overlay the climatology #
-		
+
 		cyclic_clim, cyclic_lon = add_cyclic_point(clim_out[i], coord=lons)
 		cs = ax1.contour(cyclic_lon, lats, cyclic_clim,transform=ccrs.PlateCarree(),colors='k',linewidths=0.5,vmin=cmin,vmax=cmax,levels=clevs,extend='both',zorder=3)
-		
+
 		plt.rc('font',weight='normal')
 		plt.clabel(cs,cs.levels[:],inline=1,fmt='%1.0f',fontsize=4,colors='k',inline_spacing=1)
 		plt.rc('font',weight='normal')
-		
+
 		if i == 4:
 			ax2 = ax1.twinx()
 			yticks = [0,0.5,1.0]
@@ -649,20 +701,16 @@ def enso_slp(PS,negative_indices,positive_indices,hemisphere):
 			ax2.spines['bottom'].set_visible(False)
 			ax2.spines['left'].set_visible(False)
 			ax2.get_yaxis().set_ticks([])
-		
+
 		##############
 		# Difference #
 		##############
-		
-		if hemisphere == 'NH':
-			ax1 = plt.subplot2grid(shape=(3,5), loc=(2,cols[i]), projection=ccrs.NorthPolarStereo())
-			ax1.set_extent([-180, 180, 20, 90], ccrs.PlateCarree())
-		if hemisphere == 'SH':
-			ax1 = plt.subplot2grid(shape=(3,5), loc=(2,cols[i]), projection=ccrs.SouthPolarStereo())
-			ax1.set_extent([-180, 180, -90, -20], ccrs.PlateCarree())
-		
+
+		ax1 = plt.subplot2grid(shape=(3,5), loc=(2,cols[i]), projection=projection)
+		ax1.set_extent(axes, ccrs.PlateCarree())
+
 		# Plot style features #
-		
+
 		ax1.coastlines(linewidth=0.25)
 		theta = np.linspace(0, 2*np.pi, 100)
 		center, radius = [0.5, 0.5], 0.5
@@ -672,9 +720,9 @@ def enso_slp(PS,negative_indices,positive_indices,hemisphere):
 		pos1 = ax1.get_position()
 		plt.title("%s" % titles[i], fontsize=10,fontweight='normal',y=0.98)
 		cyclic_z, cyclic_lon = add_cyclic_point(diff_out[i], coord=lons)
-		
+
 		# Plot anomalies #
-		
+
 		contourf = ax1.contourf(cyclic_lon, lats, cyclic_z,transform=ccrs.PlateCarree(),cmap=cmap1,vmin=vmin,vmax=vmax,levels=vlevs,extend='both',zorder=1)
 
 		# Statistical significance #
@@ -685,14 +733,14 @@ def enso_slp(PS,negative_indices,positive_indices,hemisphere):
 		ax1.contourf(cyclic_lon, lats, cyclic_sig,transform=ccrs.PlateCarree(),colors='black',vmin=0.95,vmax=1,levels=sig_levs,hatches=['......','......'],alpha=0.0,zorder=2)
 
 		# Overlay the climatology #
-		
+
 		cyclic_clim, cyclic_lon = add_cyclic_point(clim_out[i], coord=lons)
 		cs = ax1.contour(cyclic_lon, lats, cyclic_clim,transform=ccrs.PlateCarree(),colors='k',linewidths=0.5,vmin=cmin,vmax=cmax,levels=clevs,extend='both',zorder=3)
-		
+
 		plt.rc('font',weight='normal')
 		plt.clabel(cs,cs.levels[:],inline=1,fmt='%1.0f',fontsize=4,colors='k',inline_spacing=1)
 		plt.rc('font',weight='normal')
-		
+
 		if i == 4:
 			ax2 = ax1.twinx()
 			yticks = [0,0.5,1.0]
@@ -707,13 +755,13 @@ def enso_slp(PS,negative_indices,positive_indices,hemisphere):
 			ax2.get_yaxis().set_ticks([])
 
 	# Add colorbar #
-	
+
 	cb_ax = fig.add_axes([0.35, 0.05, 0.30, 0.015])
 	cbar = fig.colorbar(contourf, cax=cb_ax, ticks=ticks,orientation='horizontal')
 	cbar.ax.tick_params(labelsize=8, width=1)
 	cbar.ax.set_xticklabels(ticks,weight='normal')
-	
-	
+
+
 	plt.subplots_adjust(top=0.86,bottom=0.09,hspace=0.3,wspace=0.0,left=0.02,right=0.94)
-	
+
 	return fig, ax

@@ -359,7 +359,7 @@ class HTMLOutputManager(AbstractOutputManager,
                 and not any(p.failed for p in self.obj.iter_children()):
             self.obj.status = util.ObjectStatus.SUCCEEDED
 
-    def generate_html_file_case_loop(self, output_file_name: str, case_info: dict):
+    def generate_html_file_case_loop(self, output_file_name: str, case_info: dict, pod_plot_html_file):
         """generate_html_file: write the case information into
         the html template
 

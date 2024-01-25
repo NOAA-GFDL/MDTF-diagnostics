@@ -31,12 +31,13 @@
 import glob
 import os
 import json
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as mplt
 import numpy
 
 # Import Python functions specific to Non-Gaussian Frequency Distributions
 from TempExtDistShape_FreqDist_util import Seasonal_Anomalies
-from TempExtDistShape_FreqDist_util import Gaussfit_Params
 from TempExtDistShape_FreqDist_util import Gaussfit_Est
 from TempExtDistShape_FreqDist_util import Gaussfit_Plot
 
@@ -90,6 +91,7 @@ ax_lg.set_xlabel('Temperature Anomaly ('+u"\u00b0"+'C)',fontsize=14,labelpad=16)
 fig.subplots_adjust(wspace=0.2, hspace=0.25)
 
 ### Save figure to PDF
+fig.canvas.draw()
 fig.savefig(freq_data["FIG_OUTPUT_DIR"]+"/"+freq_data["FIG_OUTPUT_FILENAME"],bbox_inches='tight')
 print("      Figure saved as "+freq_data["FIG_OUTPUT_DIR"]+'/'+freq_data["FIG_OUTPUT_FILENAME"]+"!")
 

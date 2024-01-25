@@ -2,32 +2,29 @@
 name: _MDTF_dev
 channels:
 - conda-forge
-- defaults
 dependencies:
 # contents of python3_base
-- python=3.10
-- numpy=1.22.3
-- scipy=1.9
-- netCDF4=1.5.8
-- cftime=1.6
-- xarray=2022.11.0
-- matplotlib=3.6
-- cartopy=0.21.0
-- pandas=1.5
-- pint=0.16
-- dask=2022.10.0
+- python=3.11
+- numpy=1.25.2
+- scipy=1.11.2
+- netCDF4=1.6.4
+- cftime=1.6.2
+- xarray=2023.8.0
+- matplotlib=3.7.2
+- cartopy=0.22.0
+- pandas=2.1.0
+- pint=0.22
+- dask=2023.9.1
 # additional development tools
-- jupyter_core=4.11.1
-- jupyterlab=3.5.0
-- sphinx=5.2
-- recommonmark=0.7
-- pylint=2.14.5
-- doc8=0.8.0
+- jupyter_core=5.3.1
+- jupyterlab=4.0.5
+- sphinx=7.2.5
+- recommonmark=0.7.1
+- pylint=2.17.5
+- doc8=1.1.1
 - jinja2=3.1.2
 - latexmk=4.76
-# additions dec 2020
-- cfunits=3.3.1
-- intake=0.6
+- cfunits=3.3.6
+- intake=0.7.0
 - intake-esm=2023.07.07
-# bump version 0.3.1 -> 0.4 feb 2021
-- cf_xarray=0.8.0
+- cf_xarray=0.8.4

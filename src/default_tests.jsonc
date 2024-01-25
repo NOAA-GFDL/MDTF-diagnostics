@@ -81,10 +81,13 @@
   // put in a subdirectory of this directory.
   "OUTPUT_DIR": "../wkdir",
 
-  // Location of the Anaconda/miniconda installation to use for managing
-  // dependencies (path returned by running `conda info --base`.) If empty,
+  // Location of the Anaconda/miniconda or micromamba installation to use for managing
+  // dependencies (path returned by running `[conda | micromamba] info`.) If empty,
   // framework will attempt to determine location of system's conda installation.
   "conda_root": "",
+
+  // Location of micromamba executable if using micromamba
+  "micromamba_exe":"",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left

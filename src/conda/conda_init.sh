@@ -139,4 +139,3 @@ else
     fi
 fi
 unset __conda_setup
-

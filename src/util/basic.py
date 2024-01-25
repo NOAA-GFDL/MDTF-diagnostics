@@ -634,12 +634,10 @@ def deserialize_class(name):
         t = q.popleft()
         if t.__name__ == name:
             return t
-        try:  # keep looking
-            q.extend(t.__subclasses__())
-        except TypeError:
-            # type.__subclasses__ needs an argument, for whatever reason.
-            if t is type:
-                continue
-            else:
-                raise
-    raise ValueError('No such type: %r' % name)
+        else:
+            try:  # keep looking
+                q.extend(t.__subclasses__())
+            except TypeError:
+                pass
+        if not type(t):
+            raise ValueError('No such type: %r' % name)

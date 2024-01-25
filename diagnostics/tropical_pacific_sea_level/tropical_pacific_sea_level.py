@@ -71,15 +71,15 @@ print("Start reading set parameter (pod_env_vars)")
 print("--------------------------")
 
 # constant setting
-syear = np.int(os.getenv("FIRSTYR"))  # crop model data from year
-fyear = np.int(os.getenv("LASTYR"))  # crop model data to year
+syear = int(os.getenv("FIRSTYR"))  # crop model data from year
+fyear = int(os.getenv("LASTYR"))  # crop model data to year
 predef_obs = os.getenv("predef_obs")
-obs_start_year = np.int(os.getenv("obs_start_year"))  # crop obs data from year
-obs_end_year = np.int(os.getenv("obs_end_year"))  # crop obs data to year
+obs_start_year = int(os.getenv("obs_start_year"))  # crop obs data from year
+obs_end_year = int(os.getenv("obs_end_year"))  # crop obs data to year
 
 # regional average box
-lon_range_list = [np.float(os.getenv("lon_min")), np.float(os.getenv("lon_max"))]
-lat_range_list = [np.float(os.getenv("lat_min")), np.float(os.getenv("lat_max"))]
+lon_range_list = [float(os.getenv("lon_min")), float(os.getenv("lon_max"))]
+lat_range_list = [float(os.getenv("lat_min")), float(os.getenv("lat_max"))]
 
 # Model label
 Model_name = [os.getenv("CASENAME")]  # model name in the dictionary
@@ -466,7 +466,7 @@ lat_range = lat_range_list
 # correct the lon range
 lon_range_mod = np.array(lon_range)
 lonmin = ds_model_mlist[model]["zos"].lon.min()
-ind1 = np.where(lon_range_mod < np.float(0))[0]
+ind1 = np.where(lon_range_mod < float(0))[0]
 lon_range_mod[ind1] = lon_range_mod[ind1] + 360.0  # change Lon range to 0-360
 
 
@@ -487,19 +487,33 @@ for nmodel, model in enumerate(Model_name):
                                        da_area_temp.lon)  
 
         # crop region
-        ds_mask = (
-            da_area
-            .where(
-                  (da_area_temp[Model_coordname[1]] >= np.min(lon_range_mod))
-                & (da_area_temp[Model_coordname[1]] <= np.max(lon_range_mod))
-                & (da_area_temp[Model_coordname[0]] >= np.min(lat_range))
-                & (da_area_temp[Model_coordname[0]] <= np.max(lat_range)),
-                drop=True,
+        #ds_mask = (
+        #    da_area
+        #    .where(
+        #          (da_area_temp[Model_coordname[1]] >= np.min(lon_range_mod))
+        #        & (da_area_temp[Model_coordname[1]] <= np.max(lon_range_mod))
+        #        & (da_area_temp[Model_coordname[0]] >= np.min(lat_range))
+        #        & (da_area_temp[Model_coordname[0]] <= np.max(lat_range)),
+        #        drop=True,
+        #    )
+        #    .compute()
+        #)
+
+        # NOTE: the code below is substituted to solve issue with indexing boolean dask arrays
+        # The solution proposed is to call compute on each boolean index first
+        # https://stackoverflow.com/questions/76713492/xarray-requesting-compute-for-a-boolean-array
+        lon_range_min = np.min(lon_range_mod)
+        lon_range_max = np.max(lon_range_mod)
+        lat_range_min = np.min(lat_range)
+        lat_range_max = np.max(lat_range)
+        da_area.where(
+            (da_area_temp[Model_coordname[1]] >= lon_range_min
+            & da_area_temp[Model_coordname[1]] <= lon_range_max
+            & da_area_temp[Model_coordname[0]] >= lat_range_min
+            & da_area_temp[Model_coordname[0]] <= lat_range_max).compute(),
+            drop=True
             )
-            .compute()
-        )
-        
-        
+
         ds_mask = ds_mask / ds_mask
 
         # calculate regional mean

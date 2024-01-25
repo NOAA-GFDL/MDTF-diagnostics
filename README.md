@@ -60,8 +60,15 @@ and a link to the full documentation for each currently-supported POD.
 #### Visit the [GFDL Youtube Channel](https://www.youtube.com/channel/UCCVFLbjYix7RCz1GgKG2QxA) for tutorials on package installation and other MDTF-diagnostics-related topics
 
 ## Prerequisites
-- [Anaconda3](https://docs.anaconda.com/anaconda/install/) or [Miniconda3](https://docs.conda.io/en/latest/miniconda.html). Installation instructions are available [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html).
-- MDTF-diagnositics is developed for macOS and Linux systems. The package has been tested on, but is not fully supported for, the Windows Subsystem for Linux.
+- [Anaconda3](https://docs.anaconda.com/anaconda/install/), [Miniconda3](https://docs.conda.io/en/latest/miniconda.html), 
+or [micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html). 
+
+- Installation instructions are available [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html).
+- MDTF-diagnositics is developed for macOS and Linux systems. The package has been tested on, but is not fully supported
+for, the Windows Subsystem for Linux.
+- **Attention macOS M-series chip users**: the MDTF-diagnostics base and python3 conda environments will only build with micromamba on
+machines running Apple M-series chips. The NCL and R environments will NOT build on M-series machines because the conda
+packages do not support them at this time.
 ## Notes
 - `$` indicates strings to be substituted, e.g., the string `$CODE_ROOT` should be substituted by the actual path to the MDTF-diagnostics directory.
 - Consult the [Getting started](https://mdtf-diagnostics.readthedocs.io/en/main/sphinx/start_toc.html) section to learn how to run the framework on your own data and configure general settings.
@@ -77,10 +84,24 @@ and a link to the full documentation for each currently-supported POD.
 - Check out the latest official release: `git checkout tags/[version name]`
 - Run `% conda info --base` to determine the location of your Conda installation. This path will be referred to as `$CONDA_ROOT`.
 - `cd $CODE_ROOT`, then run
+### ANACONADA/MINICONDA
 `% ./src/conda/conda_env_setup.sh --all --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR`
-  - Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, and `$CONDA_ENV_DIR`.
+### MICROMAMBA on machines that do NOT have Apple M-series chips
+`% ./src/conda/micromamba_env_setup.sh --all --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR`
+### MICROMAMBA on machines with Apple M-series chips
+`% ./src/conda/micromamba_env_setup.sh --e base --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR`
 
-  - The `--env_dir` flag allows you to put the program files in a designated location `$CONDA_ENV_DIR` (for space reasons, or if you don’t have write access). You can omit this flag, and the environments will be installed within `$CONDA_ROOT/envs/` by default.
+`% ./src/conda/micromamba_env_setup.sh --e python3_base --micromamba_root $MICROMAMBA_ROOT ---micromamba_exe $MICROMAMBA_EXE -env_dir $CONDA_ENV_DIR`
+
+  - Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, `$MICROMAMBA_ROOT`, `MICROMAMBA_EXE`, and `$CONDA_ENV_DIR`.
+  - `$MICROMAMBA_ROOT` is the path to micromamba installation on your system
+     (e.g., /home/${USER}/micromamba). This is defined by the `$MAMBA_ROOT_PREFIX` environment variable on your system 
+     when micromamba is installed
+  - `$MICROMAMBA_EXE` is full path to the micromamba executable on your system
+     (e.g., /home/${USER}/.local/bin/micromamba). This is defined by the `MAMBA_EXE` environment variable on your system
+  - The `--env_dir` flag allows you to put the program files in a designated location `$CONDA_ENV_DIR` 
+  (for space reasons, or if you don’t have write access).
+  You can omit this flag, and the environments will be installed within `$CONDA_ROOT/envs/` by default.
 
 ## 2. Download the sample data
 

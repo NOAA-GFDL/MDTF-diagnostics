@@ -235,7 +235,7 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         conda_prefix = os.path.join(self.conda_env_root, env_name)
         if os.path.split(self.conda_exe)[-1] == 'micromamba':
             return [
-                f'source {self.conda_dir}/micromamba_init.sh --micromamba_exe {self.conda_exe} --conda_root {self.conda_root}',
+                f'source {self.conda_dir}/micromamba_init.sh --micromamba_exe {self.conda_exe} --micromamba_root {self.conda_root}',
                 f'micromamba activate {conda_prefix}'
             ]
         else:
@@ -317,7 +317,7 @@ class SubprocessRuntimePODWrapper(object):
         self.pod.log.info("%s will run using '%s' from conda env '%s'.",
                           self.pod.full_name, self.pod.program, self.env)
 
-        self.pod.log.debug("%s", self.pod.format_log(children=True))
+        self.pod.log.debug("%s"l, self.pod.format_log(children=True))
     #    self.pod._log_handler.reset_buffer()
         self.write_case_env_file(cases)
         self.setup_env_vars()
@@ -346,20 +346,21 @@ class SubprocessRuntimePODWrapper(object):
         self.pod.pod_env_vars["case_env_file"] = out_file
         case_info = dict()
         case_info['CATALOG_FILE'] = os.path.join(self.pod.paths.WORK_DIR, 'MDTF_postprocessed_data.json')
+        case_info['CASE_LIST'] = dict()
         assert os.path.isfile(case_info['CATALOG_FILE']), 'CATALOG_FILE json not found in WORK_DIR'
         for case_name, case in case_list.items():
-            case_info[case_name] = {k: v
-                                    for k, v in case.env_vars.items()}
+            case_info['CASE_LIST'][case_name] = {k: v
+                                                 for k, v in case.env_vars.items()}
             
             # append case environment vars
             for v in case.iter_vars_only(active=True):
                 for kk, vv in v.env_vars.items():
                     if v.name.lower() + '_var' in kk.lower():
-                        case_info[case_name][kk] = v.name
+                        case_info['CASE_LIST'][case_name][kk] = v.name
                     elif v.name.lower() + '_file' in kk.lower():
-                        case_info[case_name][kk] = v.dest_path
+                        case_info['CASE_LIST'][case_name][kk] = v.dest_path
                     else:
-                        case_info[case_name][kk] = vv
+                        case_info['CASE_LIST'][case_name][kk] = vv
         
         f = open(out_file, 'w+')
         assert os.path.isfile(out_file), f"Could not find case env file {out_file}"

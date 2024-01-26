@@ -100,8 +100,8 @@ def convecTransCriticalCollapse_loadAnalyzedData(*argsv):
 #  (but different from) convecTransBasic_plot in convecTransBasic_util.py
 #  with more restricted conditions here for robustness
 
-def convecTransCriticalCollapse_fitCritical(argsv1,*argsv2):
 
+def convecTransCriticalCollapse_fitCritical(argsv1, *argsv2):
     cwv_bin_center,\
     temp_bin_center,\
     P0,\
@@ -111,7 +111,7 @@ def convecTransCriticalCollapse_fitCritical(argsv1,*argsv2):
     Q0,\
     Q1,\
     CWV_BIN_WIDTH,\
-    PRECIP_THRESHOLD=argsv1
+    PRECIP_THRESHOLD = argsv1
 
     PDF_THRESHOLD,\
     CWV_RANGE_THRESHOLD,\
@@ -120,37 +120,37 @@ def convecTransCriticalCollapse_fitCritical(argsv1,*argsv2):
     CWV_FIT_RANGE_MAX,\
     PRECIP_REF,\
     PRECIP_FIT_MIN,\
-    PRECIP_FIT_MAX=argsv2[0]
+    PRECIP_FIT_MAX = argsv2[0]
 
-    if P0.size!=0:
+    if P0.size != 0:
 
-        P0[P0==0.0]=numpy.nan
-        P=P1/P0
-        CP=PE/P0
-        PDF=numpy.zeros(P0.shape)
+        P0[P0 == 0.0] = numpy.nan
+        P = P1/P0
+        CP = PE/P0
+        PDF = numpy.zeros(P0.shape)
         for reg in numpy.arange(P0.shape[0]):
-            PDF[reg,:,:]=P0[reg,:,:]/numpy.nansum(P0[reg,:,:])/CWV_BIN_WIDTH
+            PDF[reg, :, :] = P0[reg, :, :]/numpy.nansum(P0[reg, :, :])/CWV_BIN_WIDTH
         # Bins with PDF>PDF_THRESHOLD
-        pdf_gt_th=numpy.zeros(PDF.shape)
+        pdf_gt_th = numpy.zeros(PDF.shape)
         with numpy.errstate(invalid="ignore"):
-            pdf_gt_th[PDF>PDF_THRESHOLD]=1
-        P[pdf_gt_th==0]=numpy.nan
-        CP[pdf_gt_th==0]=numpy.nan
-        PDF=numpy.copy(PDF)
-        PDF_pe=PDF*CP
+            pdf_gt_th[PDF > PDF_THRESHOLD] = 1
+        P[pdf_gt_th == 0]=numpy.nan
+        CP[pdf_gt_th == 0]=numpy.nan
+        PDF = numpy.copy(PDF)
+        PDF_pe = PDF*CP
 
         # Indicator of (temp,reg) with wide CWV range
         #  & other criteria specified below
         #  i.e., t_reg_I will be further modified below
-        t_reg_I=(numpy.squeeze(numpy.sum(pdf_gt_th,axis=1))*CWV_BIN_WIDTH>CWV_RANGE_THRESHOLD)
+        t_reg_I = (numpy.squeeze(numpy.sum(pdf_gt_th, axis=1))*CWV_BIN_WIDTH > CWV_RANGE_THRESHOLD)
 
-        ### Connected Component Section
+        # Connected Component Section
         # The CWV_RANGE_THRESHOLD-Criterion must be satisfied by a connected component
-        #  Default: off for MODEL/on for OBS/on for Fitting
+        # Default: off for MODEL/on for OBS/on for Fitting
         # Fot R2TMIv7 (OBS) this doesn't make much difference
-        #  But when models behave "funny" one may miss by turning on this section
+        # But when models behave "funny" one may miss by turning on this section
         # For fitting procedure (finding critical CWV at which the precip picks up)
-        #  Default: on
+        # Default: on
         for reg in numpy.arange(P0.shape[0]):
             for Tidx in numpy.arange(P0.shape[2]):
                 if t_reg_I[reg, Tidx]:
@@ -167,8 +167,8 @@ def convecTransCriticalCollapse_fitCritical(argsv1,*argsv2):
                     else:
                         t_reg_I[reg,Tidx]=False
                         pdf_gt_th[reg,:,Tidx]=0
-        ### End of Connected Component Section
-
+        # End of Connected Component Section
+        #
         # Copy P, CP into p, cp for (temp,reg) with "wide CWV range" & "large PDF"
         p=numpy.zeros(P.shape)
         cp=numpy.zeros(P.shape)
@@ -180,7 +180,7 @@ def convecTransCriticalCollapse_fitCritical(argsv1,*argsv2):
         p[pdf_gt_th==0]=numpy.nan
         cp[pdf_gt_th==0]=numpy.nan
 
-        # Disgard (temp,reg) if conditional probability < CP_THRESHOLD
+        # Discard (temp,reg) if conditional probability < CP_THRESHOLD
         for reg in numpy.arange(P.shape[0]):
             for Tidx in numpy.arange(P.shape[2]):
                 if t_reg_I[reg,Tidx] and cp[reg,:,Tidx][cp[reg,:,Tidx]>=0.0].size>0:
@@ -195,29 +195,29 @@ def convecTransCriticalCollapse_fitCritical(argsv1,*argsv2):
             for Tidx in numpy.arange(t_reg_I.shape[1]):
                 if t_reg_I[reg,Tidx]:
                     p_gt_pref=p[reg,:,Tidx]>PRECIP_REF
-                    if numpy.nonzero(p_gt_pref)[0].size>0: # p_gt_pref non-empty
+                    if numpy.nonzero(p_gt_pref)[0].size > 0:  # p_gt_pref non-empty
                         wr_idx=numpy.nonzero(p_gt_pref)[0][0]
-                        wr_idx-=(p[reg,wr_idx,Tidx]-PRECIP_REF)/(p[reg,wr_idx,Tidx]-p[reg,wr_idx-1,Tidx])
+                        wr_idx -= (p[reg, wr_idx, Tidx]-PRECIP_REF)/(p[reg,wr_idx,Tidx]-p[reg,wr_idx-1,Tidx])
                         wr[reg,Tidx]=(wr_idx+1)*CWV_BIN_WIDTH
-                    else: # p1<PRECIP_REF, wr doesn't exist/noting to fit
-                        wr[reg,Tidx]=numpy.nan
-                        t_reg_I[reg,Tidx]=False
+                    else:  #p1<PRECIP_REF, wr doesn't exist/noting to fit
+                        wr[reg,Tidx] = numpy.nan
+                        t_reg_I[reg, Tidx] = False
                 else:
-                    wr[reg,Tidx]=numpy.nan
-        wr[~t_reg_I]=numpy.nan
+                    wr[reg, Tidx] = numpy.nan
+        wr[~t_reg_I] = numpy.nan
 
         # Temperature range for Fitting & Plotting
-        TEMP_MIN=numpy.where(numpy.sum(t_reg_I,axis=0)>=1)[0][0]
-        TEMP_MAX=numpy.where(numpy.sum(t_reg_I,axis=0)>=1)[0][-1]
+        TEMP_MIN = numpy.where(numpy.sum(t_reg_I, axis=0) >= 1)[0][0]
+        TEMP_MAX = numpy.where(numpy.sum(t_reg_I, axis=0) >= 1)[0][-1]
 
         # Start fitting to find Critical CWV (wc)
         #  Working with the assumption that the slope of the asymptote
         #  to the pickup curves do not depend on temperature (as in OBS)
-        wc=numpy.zeros(t_reg_I.shape) # Find wc-wr first, then wc=wr-(wr-wc)
-        al=numpy.zeros(t_reg_I.shape[0]) # al:alpha, slope of pickup asymptote
-        cwvRange=numpy.linspace(CWV_FIT_RANGE_MIN,
-                                CWV_FIT_RANGE_MAX,
-                                int((CWV_FIT_RANGE_MAX-CWV_FIT_RANGE_MIN)/CWV_BIN_WIDTH+1))
+        wc = numpy.zeros(t_reg_I.shape)  # Find wc-wr first, then wc=wr-(wr-wc)
+        al = numpy.zeros(t_reg_I.shape[0])  # al:alpha, slope of pickup asymptote
+        cwvRange = numpy.linspace(CWV_FIT_RANGE_MIN,
+                                  CWV_FIT_RANGE_MAX,
+                                  int((CWV_FIT_RANGE_MAX-CWV_FIT_RANGE_MIN)/CWV_BIN_WIDTH + 1))
 
         # Use the 3 most probable Temperature bins only
         #  These should best capture the pickup over tropical oceans
@@ -225,15 +225,15 @@ def convecTransCriticalCollapse_fitCritical(argsv1,*argsv2):
         for reg in numpy.arange(t_reg_I.shape[0]):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                mpdf=numpy.nansum(PDF[reg,:,:],axis=0) # marginal PDF
-            mp3t=sorted(range(len(mpdf)), key=lambda k: mpdf[k])[-3:]
+                mpdf = numpy.nansum(PDF[reg, :, :], axis=0) # marginal PDF
+            mp3t = sorted(range(len(mpdf)), key=lambda k: mpdf[k])[-3:]
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                p_mp3t=numpy.nanmean(numpy.array([\
-                    interp1d(cwv_bin_center-wr[reg,mp3t[0]],p[reg,:,mp3t[0]],'linear', 0, True, False) (cwvRange),
-                    interp1d(cwv_bin_center-wr[reg,mp3t[1]],p[reg,:,mp3t[1]],'linear', 0, True, False) (cwvRange),
-                    interp1d(cwv_bin_center-wr[reg,mp3t[2]],p[reg,:,mp3t[2]],'linear', 0, True, False) (cwvRange)
-                                                 ]),axis=0)
+                p_mp3t=numpy.nanmean(numpy.array([
+                    interp1d(cwv_bin_center-wr[reg, mp3t[0]], p[reg, :, mp3t[0]], 'linear', 0, True, False)(cwvRange),
+                    interp1d(cwv_bin_center-wr[reg, mp3t[1]], p[reg, :, mp3t[1]], 'linear', 0, True, False)(cwvRange),
+                    interp1d(cwv_bin_center-wr[reg, mp3t[2]], p[reg, :, mp3t[2]], 'linear', 0, True, False)(cwvRange)
+                ]), axis=0)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 fitRange=((p_mp3t>PRECIP_FIT_MIN)*(p_mp3t<PRECIP_FIT_MAX))
@@ -248,7 +248,9 @@ def convecTransCriticalCollapse_fitCritical(argsv1,*argsv2):
         return t_reg_I,wc,al,TEMP_MIN,TEMP_MAX,P,CP,PDF,PDF_pe
 
     else: # binned data doesn't exist
-        return numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([]),numpy.array([])
+        return (numpy.array([]), numpy.array([]), numpy.array([]),
+                numpy.array([]), numpy.array([]), numpy.array([]),
+                numpy.array([]), numpy.array([]), numpy.array([]))
 
 # ======================================================================
 # convecTransCriticalCollapse_plot
@@ -449,48 +451,48 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
                     ax3.scatter(cwv_bin_center_obs-wc_obs[reg,Tidx],pdf_obs[reg,:,Tidx]/PDFNormalizer,
                                 edgecolor="none", facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],
                                 s=marker_size, clip_on=True, zorder=3)
-            for Tidx in numpy.arange(TEMP_MIN_obs,TEMP_MAX_obs+1):
+            for Tidx in numpy.arange(TEMP_MIN_obs, TEMP_MAX_obs+1):
                 if t_reg_I_obs[reg,Tidx]:
                     if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1:
-                        ax3.scatter(Q1_obs[reg,Tidx]/Q0_obs[reg,Tidx]-wc_obs[reg,Tidx],fig_params['f3'][1][1]*0.83,
-                                    edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:]/2,
-                                    facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],
+                        ax3.scatter(Q1_obs[reg,Tidx]/Q0_obs[reg,Tidx]-wc_obs[reg, Tidx], fig_params['f3'][1][1]*0.83,
+                                    edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :]/2,
+                                    facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :],
                                     s=marker_size, clip_on=True, zorder=3, marker="^")
                     elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2:
-                        ax3.scatter(temp_bin_center_obs[Tidx]-wc_obs[reg,Tidx],fig_params['f3'][1][1]*0.83,
-                                    edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:]/2,
-                                    facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],
+                        ax3.scatter(temp_bin_center_obs[Tidx]-wc_obs[reg, Tidx], fig_params['f3'][1][1]*0.83,
+                                    edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :]/2,
+                                    facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :],
                                     s=marker_size,clip_on=True,zorder=3,marker="^")
             ax3.set_xlabel(fig_params['f3'][2], fontsize=axes_fontsize)
             ax3.set_ylabel(fig_params['f3'][3], fontsize=axes_fontsize)
             ax3.grid()
             ax3.grid(visible=True, which='minor', color='0.8', linestyle='-')
             ax3.set_axisbelow(True)
-            if reg==0:
+            if reg == 0:
                 ax3.text(s='PDF of CWV', x=0.5, y=1.05, transform=ax3.transAxes,
                          fontsize=12, ha='center', va='bottom')
 
             # create figure 4 (normalized PDF - precipitation)
-            ax4 = fig_obs_cts.add_subplot(NUMBER_OF_REGIONS,4,4+reg*NUMBER_OF_REGIONS)
+            ax4 = fig_obs_cts.add_subplot(NUMBER_OF_REGIONS, 4, 4 + reg*NUMBER_OF_REGIONS)
             ax4.set_yscale("log")
             ax4.set_xlim(fig_params['f4'][0])
             ax4.set_ylim(fig_params['f4'][1])
             ax4.set_xticks(fig_params['f4'][4])
             ax4.tick_params(labelsize=axes_fontsize)
             ax4.tick_params(axis="x", pad=xtick_pad)
-            for Tidx in numpy.arange(TEMP_MIN_obs,TEMP_MAX_obs+1):
+            for Tidx in numpy.arange(TEMP_MIN_obs, TEMP_MAX_obs+1):
                 if t_reg_I_obs[reg,Tidx]:
-                    PDFNormalizer=pdf_obs[reg,numpy.where(cwv_bin_center_obs<=wc_obs[reg,Tidx])[0][-1], Tidx]
-                    ax4.scatter(cwv_bin_center_obs-wc_obs[reg,Tidx],pdf_pe_obs[reg,:,Tidx]/PDFNormalizer,
-                                edgecolor="none", facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],
+                    PDFNormalizer=pdf_obs[reg, numpy.where(cwv_bin_center_obs <= wc_obs[reg,Tidx])[0][-1], Tidx]
+                    ax4.scatter(cwv_bin_center_obs-wc_obs[reg,Tidx],pdf_pe_obs[reg, :, Tidx]/PDFNormalizer,
+                                edgecolor="none", facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :],
                                 s=marker_size, clip_on=True, zorder=3)
             for Tidx in numpy.arange(TEMP_MIN_obs,TEMP_MAX_obs+1):
                 if t_reg_I_obs[reg,Tidx]:
                     if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1:
-                        ax4.scatter(Q1_obs[reg,Tidx]/Q0_obs[reg,Tidx]-wc_obs[reg,Tidx],
+                        ax4.scatter(Q1_obs[reg,Tidx]/Q0_obs[reg,Tidx]-wc_obs[reg, Tidx],
                                     fig_params['f4'][1][1]*0.83,
-                                    edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:]/2,
-                                    facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],
+                                    edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :]/2,
+                                    facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :],
                                     s=marker_size, clip_on=True, zorder=3, marker="^")
                     elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2:
                         ax4.scatter(temp_bin_center_obs[Tidx]-wc_obs[reg,Tidx], fig_params['f4'][1][1]*0.83,
@@ -528,10 +530,10 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         fig_obs_cts.tight_layout()
         fig_obs_cts.savefig(FIG_OBS_DIR+"/"+FIG_OBS_FILENAME_CTS, bbox_inches="tight")
 
-        ##### Figure Critical CWV (WC) #####
-        fig_obs_wc = mp.figure(figsize=(figsize1/1.5,figsize2/2.6))
+        # Figure Critical CWV (WC) #####
+        fig_obs_wc = mp.figure(figsize=(figsize1/1.5, figsize2/2.6))
 
-        fig_obs_wc.suptitle('Critical CWV, Col. Satn., & Critical Col. RH ('+OBS+', '+RES+'$^{\circ}$)',
+        fig_obs_wc.suptitle('Critical CWV, Col. Satn., & Critical Col. RH (' + OBS + ', ' + RES + '$^{\circ}$)',
                             y=1.02, fontsize=16)
 
         reg_color=[-1,-2,-3,0]
@@ -559,9 +561,9 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
                         s=marker_size,clip_on=True,zorder=3,label=REGION_STR[reg])
         handles, labels = ax1.get_legend_handles_labels()
         leg = ax1.legend(handles, labels, fontsize=axes_fontsize, bbox_to_anchor=(0.05,0.95),
-                        bbox_transform=ax1.transAxes, loc="upper left", borderaxespad=0, labelspacing=0.5,
-                        fancybox=False,scatterpoints=1,  framealpha=0, borderpad=0,
-                        handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
+                         bbox_transform=ax1.transAxes, loc="upper left", borderaxespad=0, labelspacing=0.5,
+                         fancybox=False,scatterpoints=1,  framealpha=0, borderpad=0,
+                         handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
         ax1.text(0.3, 0.2, OBS, transform=ax1.transAxes, fontsize=12, fontweight="bold", verticalalignment="top")
         ax1.text(0.3, 0.1, RES+"$^{\circ}$", transform=ax1.transAxes, fontsize=12,
                  fontweight="bold", verticalalignment="top")
@@ -598,10 +600,10 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
                             color=scatter_colors[reg_color[reg],:],
                             s=marker_size, clip_on=True, zorder=3, label=REGION_STR[reg])
         handles, labels = ax2.get_legend_handles_labels()
-        leg = ax2.legend(handles, labels, fontsize=axes_fontsize, bbox_to_anchor=(0.6,0.95),
-                        bbox_transform=ax2.transAxes, loc="upper left", borderaxespad=0, labelspacing=0.5,
-                        fancybox=False,scatterpoints=1,  framealpha=0, borderpad=0,
-                        handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
+        leg = ax2.legend(handles, labels, fontsize=axes_fontsize, bbox_to_anchor=(0.6, 0.95),
+                         bbox_transform=ax2.transAxes, loc="upper left", borderaxespad=0, labelspacing=0.5,
+                         fancybox=False,scatterpoints=1,  framealpha=0, borderpad=0,
+                         handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
         ax2.text(0.15, 0.2, OBS, transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top")
         ax2.text(0.15, 0.1, RES+"$^{\circ}$", transform=ax2.transAxes,
                  fontsize=12, fontweight="bold", verticalalignment="top")
@@ -637,58 +639,58 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         # ======================================================================    
 
     # Use OBS to set colormap (but if they don't exist or users don't want to...)
-    if p1_obs.size==0 or USE_SAME_COLOR_MAP==False:
-        TEMP_MIN_obs=TEMP_MIN
-        TEMP_MAX_obs=TEMP_MAX
+    if p1_obs.siz == 0 or not  USE_SAME_COLOR_MAP:
+        TEMP_MIN_obs = TEMP_MIN
+        TEMP_MAX_obs = TEMP_MAX
 
     # ======================================================================
     # =====================Start Plot MODEL Binned Data=====================
     # ======================================================================
-    NoC=TEMP_MAX_obs-TEMP_MIN_obs+1 # Number of Colors
-    scatter_colors = cm.jet(numpy.linspace(0,1,NoC,endpoint=True))
+    NoC = TEMP_MAX_obs-TEMP_MIN_obs + 1  # Number of Colors
+    scatter_colors = cm.jet(numpy.linspace(0, 1, NoC, endpoint=True))
 
-    axes_fontsize,legend_fonsize,marker_size,xtick_pad,figsize1,figsize2 = fig_params['f0'] 
+    axes_fontsize, legend_fonsize, marker_size, xtick_pad, figsize1, figsize2 = fig_params['f0']
 
     print("   Plotting MODEL Figure..."),
 
-    ##### Figure Convective Transition Statistics (CTS) #####
+    # Figure Convective Transition Statistics (CTS) #####
     # create figure canvas
-    fig_cts = mp.figure(figsize=(figsize1,figsize2))
+    fig_cts = mp.figure(figsize=(figsize1, figsize2))
     
-    fig_cts.suptitle('Convective Transition Collapsed Statistics ('+MODEL+')', y=1.02, fontsize=16)
+    fig_cts.suptitle('Convective Transition Collapsed Statistics (' + MODEL + ')', y=1.02, fontsize=16)
 
     for reg in numpy.arange(NUMBER_OF_REGIONS):
         # create figure 1
-        ax1 = fig_cts.add_subplot(NUMBER_OF_REGIONS,4,1+reg*NUMBER_OF_REGIONS)
+        ax1 = fig_cts.add_subplot(NUMBER_OF_REGIONS, 4, 1 + reg*NUMBER_OF_REGIONS)
         ax1.set_xlim(fig_params['f1'][0])
         ax1.set_ylim(fig_params['f1'][1])
         ax1.set_xticks(fig_params['f1'][4])
         ax1.set_yticks(fig_params['f1'][5])
         ax1.tick_params(labelsize=axes_fontsize)
         ax1.tick_params(axis="x", pad=10)
-        for Tidx in numpy.arange(TEMP_MIN,TEMP_MAX+1):
-            if t_reg_I[reg,Tidx]:
-                if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1:
-                    ax1.scatter(cwv_bin_center-wc[reg,Tidx],p1[reg,:,Tidx],
-                                edgecolor="none",facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],
-                                s=marker_size,clip_on=True,zorder=3,
+        for Tidx in numpy.arange(TEMP_MIN, TEMP_MAX + 1):
+            if t_reg_I[reg, Tidx]:
+                if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE == 1:
+                    ax1.scatter(cwv_bin_center-wc[reg, Tidx], p1[reg, :, Tidx],
+                                edgecolor="none", facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :],
+                                s=marker_size, clip_on=True, zorder=3,
                                 label="{:.0f}".format(temp_bin_center[Tidx]))
-                elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2:
+                elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE == 2:
                     ax1.scatter(cwv_bin_center-wc[reg,Tidx],p1[reg,:,Tidx],
-                                edgecolor="none",facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],
+                                edgecolor="none",facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :],
                                 s=marker_size,clip_on=True,zorder=3,
                                 label="{:.1f}".format(temp_bin_center[Tidx]))
-        for Tidx in numpy.arange(TEMP_MIN,TEMP_MAX+1):
-            if t_reg_I[reg,Tidx]:
-                if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1:
+        for Tidx in numpy.arange(TEMP_MIN, TEMP_MAX+1):
+            if t_reg_I[reg, Tidx]:
+                if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE == 1:
                     ax1.scatter(Q1[reg,Tidx]/Q0[reg,Tidx]-wc[reg,Tidx],fig_params['f1'][1][1]*0.98,
-                                edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:]/2,
-                                facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],
+                                edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :]/2,
+                                facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :],
                                 s=marker_size,clip_on=True,zorder=3,marker='^',
-                                label=': $\widehat{q_{sat}}-w_c$; '\
-                                      +'$\widehat{q_{sat}}$: Column-integrated Saturation Specific Humidity'
-                                       ' w.r.t. Liquid; '\
-                                      +'$w_c$: Estimated Critical Column Water Vapor.')
+                                label=': $\widehat{q_{sat}}-w_c$; ' +\
+                                      '$\widehat{q_{sat}}$: Column-integrated Saturation Specific Humidity' +\
+                                      ' w.r.t. Liquid; ' +\
+                                      '$w_c$: Estimated Critical Column Water Vapor.')
                 elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2:
                     ax1.scatter(temp_bin_center[Tidx]-wc[reg,Tidx],fig_params['f1'][1][1]*0.98,
                                 edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:]/2,
@@ -799,19 +801,19 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         ax4.tick_params(axis="x", pad=xtick_pad)
         for Tidx in numpy.arange(TEMP_MIN,TEMP_MAX+1):
             if t_reg_I[reg,Tidx]:
-                PDFNormalizer=pdf[reg,numpy.where(cwv_bin_center<=wc[reg,Tidx])[0][-1],Tidx]
-                ax4.scatter(cwv_bin_center-wc[reg,Tidx],pdf_pe[reg,:,Tidx]/PDFNormalizer,
-                            edgecolor="none",facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],
-                            s=marker_size,clip_on=True,zorder=3)
-        for Tidx in numpy.arange(TEMP_MIN,TEMP_MAX+1):
-            if t_reg_I[reg,Tidx]:
-                if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1:
+                PDFNormalizer=pdf[reg, numpy.where(cwv_bin_center <= wc[reg,Tidx])[0][-1], Tidx]
+                ax4.scatter(cwv_bin_center-wc[reg,Tidx],pdf_pe[reg, :, Tidx]/PDFNormalizer,
+                            edgecolor="none", facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :],
+                            s=marker_size, clip_on=True, zorder=3)
+        for Tidx in numpy.arange(TEMP_MIN, TEMP_MAX + 1):
+            if t_reg_I[reg, Tidx]:
+                if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE == 1:
                     ax4.scatter(Q1[reg,Tidx]/Q0[reg,Tidx]-wc[reg,Tidx],fig_params['f4'][1][1]*0.83,
-                                edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:]/2,
-                                facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],
-                                s=marker_size,clip_on=True,zorder=3,marker="^")
-                elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2:
-                    ax4.scatter(temp_bin_center[Tidx]-wc[reg,Tidx],fig_params['f4'][1][1]*0.83,
+                                edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :]/2,
+                                facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC, :],
+                                s=marker_size, clip_on=True, zorder=3, marker="^")
+                elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE == 2:
+                    ax4.scatter(temp_bin_center[Tidx]-wc[reg, Tidx], fig_params['f4'][1][1]*0.83,
                                 edgecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:]/2,
                                 facecolor=scatter_colors[(Tidx-TEMP_MIN_obs)%NoC,:],
                                 s=marker_size,clip_on=True,zorder=3,marker="^")
@@ -823,7 +825,8 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         ax4.grid(visible=True, which='minor', color='0.8', linestyle='-')
         ax4.set_axisbelow(True)
         if reg==0:
-            ax4.text(s='PDF of CWV for Precip.>'+str(PT)+'mm/hr', x=0.49, y=1.05, transform=ax4.transAxes, fontsize=12, ha='center', va='bottom')
+            ax4.text(s='PDF of CWV for Precip.>'+str(PT)+'mm/hr', x=0.49, y=1.05, transform=ax4.transAxes, fontsize=12,
+                     ha='center', va='bottom')
 
     if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1:
         temp_str='$\widehat{T}$ (1000-200hPa Mass-weighted Column Average Temperature)' \
@@ -861,7 +864,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
     ax1.tick_params(axis="x", pad=10)
     ax1.set_aspect(float(fig_params['f5'][0][1]-fig_params['f5'][0][0])/float(fig_params['f5'][1][1]
                                                                               -fig_params['f5'][1][0]))
-    if OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size!=0:
+    if OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size != 0:
         for reg in numpy.arange(NUMBER_OF_REGIONS):
             ax1.plot(temp_bin_center_obs,wc_obs[reg,:],'-',color='0.6')
             ax1.scatter(temp_bin_center_obs,wc_obs[reg,:],color='0.6',s=marker_size,clip_on=True,zorder=3)
@@ -870,26 +873,26 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
                     warnings.simplefilter("ignore")
                     ax1.plot(temp_bin_center_obs,Q1_obs[reg,:]/Q0_obs[reg,:],'-',color='0.6')
     for reg in numpy.arange(NUMBER_OF_REGIONS):
-        ax1.plot(temp_bin_center,wc[reg,:],'-',color=scatter_colors[reg_color[reg],:])
-        if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1:
+        ax1.plot(temp_bin_center,wc[reg, :],'-',color=scatter_colors[reg_color[reg],:])
+        if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE == 1:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 ax1.plot(temp_bin_center,Q1[reg,:]/Q0[reg,:],'-',color=scatter_colors[reg_color[reg],:])
-        elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2:
+        elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE == 2:
             ax1.plot(temp_bin_center,temp_bin_center,'-',color='0.4')
-        ax1.scatter(temp_bin_center,wc[reg,:],color=scatter_colors[reg_color[reg],:],
-                    s=marker_size,clip_on=True,zorder=3,label=REGION_STR[reg])
+        ax1.scatter(temp_bin_center,wc[reg,:],color=scatter_colors[reg_color[reg], :],
+                    s=marker_size,clip_on=True,zorder=3, label=REGION_STR[reg])
     handles, labels = ax1.get_legend_handles_labels()
-    leg = ax1.legend(handles, labels, fontsize=axes_fontsize, bbox_to_anchor=(0.05,0.95),
-                    bbox_transform=ax1.transAxes, loc="upper left", borderaxespad=0, labelspacing=0.5,
-                    fancybox=False,scatterpoints=1,  framealpha=0, borderpad=0,
-                    handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
+    leg = ax1.legend(handles, labels, fontsize=axes_fontsize, bbox_to_anchor=(0.05, 0.95),
+                     bbox_transform=ax1.transAxes, loc="upper left", borderaxespad=0, labelspacing=0.5,
+                     fancybox=False,scatterpoints=1,  framealpha=0, borderpad=0,
+                     handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
 
-    if OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size!=0:
+    if OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size != 0:
         ax1.text(0.3, 0.2, OBS, transform=ax1.transAxes, fontsize=12,
-                 fontweight="bold", verticalalignment="top",color='0.6')
+                 fontweight="bold", verticalalignment="top", color='0.6')
         ax1.text(0.3, 0.1, RES+"$^{\circ}$", transform=ax1.transAxes,
-                 fontsize=12, fontweight="bold", verticalalignment="top",color='0.6')
+                 fontsize=12, fontweight="bold", verticalalignment="top", color='0.6')
     ax1.set_xlabel(fig_params['f5'][2], fontsize=axes_fontsize)
     ax1.set_ylabel(fig_params['f5'][3], fontsize=axes_fontsize)
     ax1.grid()
@@ -899,7 +902,7 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
                         ha='center', va='bottom')
 
     # create figure 6: wc/qsat_int
-    ax2 = fig_wc.add_subplot(1,2,2)
+    ax2 = fig_wc.add_subplot(1, 2, 2)
     ax2.set_xlim(fig_params['f6'][0])
     ax2.set_ylim(fig_params['f6'][1])
     ax2.set_xticks(fig_params['f6'][4])
@@ -913,8 +916,8 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
             if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    ax2.plot(temp_bin_center_obs,wc_obs[reg,:]/(Q1_obs[reg,:]/Q0_obs[reg,:]),'-',color='0.6')
-                    ax2.scatter(temp_bin_center_obs,wc_obs[reg,:]/(Q1_obs[reg,:]/Q0_obs[reg,:]),color='0.6',
+                    ax2.plot(temp_bin_center_obs, wc_obs[reg,:]/(Q1_obs[reg,:]/Q0_obs[reg,:]),'-',color='0.6')
+                    ax2.scatter(temp_bin_center_obs, wc_obs[reg,:]/(Q1_obs[reg,:]/Q0_obs[reg,:]),color='0.6',
                             s=marker_size,clip_on=True,zorder=3)
             elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2:
                 ax2.plot(temp_bin_center_obs,wc_obs[reg,:]/temp_bin_center_obs,'-',color='0.6')
@@ -924,42 +927,50 @@ def convecTransCriticalCollapse_plot(argsv1,argsv2,argsv3,argsv4,argsv5,argsv6):
         if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1:
             with warnings.catch_warnings():
               warnings.simplefilter("ignore")
-              ax2.plot(temp_bin_center,wc[reg,:]/(Q1[reg,:]/Q0[reg,:]),'-',color=scatter_colors[reg_color[reg],:])
-              ax2.scatter(temp_bin_center,wc[reg,:]/(Q1[reg,:]/Q0[reg,:]),color=scatter_colors[reg_color[reg],:],
+              ax2.plot(temp_bin_center ,wc[reg,:]/(Q1[reg, :]/Q0[reg, :]),'-', color=scatter_colors[reg_color[reg], :])
+              ax2.scatter(temp_bin_center, wc[reg, :]/(Q1[reg,:]/Q0[reg, :]), color=scatter_colors[reg_color[reg], :],
                           s=marker_size,clip_on=True,zorder=3,label=REGION_STR[reg])
         elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2:
-            ax2.plot(temp_bin_center,wc[reg,:]/temp_bin_center,'-',color=scatter_colors[reg_color[reg],:])
-            ax2.scatter(temp_bin_center,wc[reg,:]/temp_bin_center,color=scatter_colors[reg_color[reg],:],
-                        s=marker_size,clip_on=True,zorder=3,label=REGION_STR[reg])
-    leg = ax2.legend(handles, labels, fontsize=axes_fontsize, bbox_to_anchor=(0.6,0.95),
-                    bbox_transform=ax2.transAxes, loc="upper left", borderaxespad=0, labelspacing=0.5,
-                    fancybox=False,scatterpoints=1,  framealpha=0, borderpad=0,
-                    handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
-    if OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size!=0:
-        ax2.text(0.15, 0.2, OBS, transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top",color='0.6')
-        ax2.text(0.15, 0.1, RES+"$^{\circ}$", transform=ax2.transAxes, fontsize=12, fontweight="bold", verticalalignment="top",color='0.6')
+            ax2.plot(temp_bin_center, wc[reg, :]/temp_bin_center, '-', color=scatter_colors[reg_color[reg], :])
+            ax2.scatter(temp_bin_center, wc[reg, :]/temp_bin_center, color=scatter_colors[reg_color[reg], :],
+                        s=marker_size, clip_on=True,zorder=3, label=REGION_STR[reg])
+    leg = ax2.legend(handles, labels, fontsize=axes_fontsize, bbox_to_anchor=(0.6, 0.95),
+                     bbox_transform=ax2.transAxes, loc="upper left", borderaxespad=0, labelspacing=0.5,
+                     fancybox=False,scatterpoints=1,  framealpha=0, borderpad=0,
+                     handletextpad=0.1, markerscale=1, ncol=1, columnspacing=0.25)
+    if OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size != 0:
+        ax2.text(0.15, 0.2, OBS, transform=ax2.transAxes, fontsize=12, fontweight="bold",
+                 verticalalignment="top",color='0.6')
+        ax2.text(0.15, 0.1, RES + "$^{\circ}$", transform=ax2.transAxes, fontsize=12, fontweight="bold",
+                 verticalalignment="top",color='0.6')
     ax2.set_xlabel(fig_params['f6'][2], fontsize=axes_fontsize)
     ax2.set_ylabel(fig_params['f6'][3], fontsize=axes_fontsize)
     ax2.grid()
     ax2.set_axisbelow(True)
-    ax2_text = ax2.text(s='Critical Col. RH', x=0.5, y=1.02, transform=ax2.transAxes, fontsize=12, ha='center', va='bottom')
+    ax2_text = ax2.text(s='Critical Col. RH', x=0.5, y=1.02, transform=ax2.transAxes, fontsize=12, ha='center',
+                        va='bottom')
 
-    footnote_str='Solid line: $\widehat{q_{sat}}$ (1000-200hPa Column-integrated Saturation Specific Humidity w.r.t. Liquid)\n'
-    if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1:
-        footnote_str+='$\widehat{T}$ (1000-200hPa Mass-weighted Column Average Temperature) as the bulk tropospheric temperature measure'
-    elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==2:
-        footnote_str+='$\widehat{q_{sat}}$ (1000-200hPa Column-integrated Saturation Specific Humidity) as the bulk tropospheric temperature measure'
-    footnote_str+='\n$w_c$ estimated by fitting (dashed) the average precip. pickup curves for the 3 most probable temperature bins'
-    if OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size!=0:
-        footnote_str+='\nCorresponding results from '+OBS+' (spatial resolution: '+RES+'$^{\circ}$) plotted in gray'
+    footnote_str = ('Solid line: $\widehat{q_{sat}}$ (1000-200hPa Column-integrated Saturation'
+                    ' Specific Humidity w.r.t. Liquid)\n')
+    if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE == 1:
+        footnote_str += ('$\widehat{T}$ (1000-200hPa Mass-weighted Column Average Temperature)'
+                         ' as the bulk tropospheric temperature measure')
+    elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE == 2:
+        footnote_str += ('$\widehat{q_{sat}}$ (1000-200hPa Column-integrated Saturation Specific Humidity)'
+                         ' as the bulk tropospheric temperature measure')
+    footnote_str += ('\n$w_c$ estimated by fitting (dashed) the average precip.'
+                   ' pickup curves for the 3 most probable temperature bins')
+    if OVERLAY_OBS_ON_TOP_OF_MODEL_FIG and p1_obs.size != 0:
+        footnote_str += ('\nCorresponding results from ' + OBS +
+                         ' (spatial resolution: ' + RES + '$^{\circ}$) plotted in gray')
 
     # set layout to tight (so that space between figures is minimized)
     fig_wc.tight_layout()
-    fig_wc.savefig(FIG_OUTPUT_DIR+"/"+FIG_FILENAME_WC, bbox_inches="tight")
+    fig_wc.savefig(FIG_OUTPUT_DIR + "/" + FIG_FILENAME_WC, bbox_inches="tight")
     
     print("...Completed!")
-    print("      MODEL Figure saved as "+FIG_OUTPUT_DIR+"/"+FIG_FILENAME_CTS+"!")
-    print("      MODEL Figure saved as "+FIG_OUTPUT_DIR+"/"+FIG_FILENAME_WC+"!")
+    print(" MODEL Figure saved as " + FIG_OUTPUT_DIR + "/" + FIG_FILENAME_CTS + "!")
+    print(" MODEL Figure saved as " + FIG_OUTPUT_DIR + "/" + FIG_FILENAME_WC + "!")
     # ======================================================================
     # ======================End Plot MODEL Binned Data======================
     # ======================================================================

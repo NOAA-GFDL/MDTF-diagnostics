@@ -69,14 +69,14 @@ import glob
 # POD. This statement translates the value of BULK_TROPOSPHERIC_TEMPERATURE_VAR
 # into BULK_TROPOSPHERIC_TEMPERATURE_MEASURE, the env var used in the rest of the
 # POD's code.
-if os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR','').lower() == 'tave':
+if os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR', '').lower() == 'tave':
     os.environ['BULK_TROPOSPHERIC_TEMPERATURE_MEASURE'] = '1'
-elif os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR','').lower() == 'qsat_int':
+elif os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR', '').lower() == 'qsat_int':
     os.environ['BULK_TROPOSPHERIC_TEMPERATURE_MEASURE'] = '2'
 else:
     raise KeyError(
         'Unrecognized BULK_TROPOSPHERIC_TEMPERATURE_VAR = {}'.format(
-        os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR',''))
+        os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR', ''))
     )
 
 os.environ["lev_coord"] = 'lev'
@@ -88,29 +88,24 @@ os.environ["ta_file"] = os.environ["TA_FILE"]
 os.environ["tave_file"] = os.environ["TAVE_FILE"]
 os.environ["qsat_int_file"] = os.environ["QSAT_INT_FILE"]
 
-## Model output filename convention
-os.environ["MODEL_OUTPUT_DIR"]=os.environ["DATADIR"]+"/1hr"
+# Model output filename convention
+os.environ["MODEL_OUTPUT_DIR"] = os.environ["DATADIR"]+"/1hr"
 if not os.path.exists(os.environ["MODEL_OUTPUT_DIR"]):
     os.makedirs(os.environ["MODEL_OUTPUT_DIR"])
-#os.environ["pr_file"] = "*."+os.environ["pr_var"]+".1hr.nc"
-#os.environ["prw_file"] = "*."+os.environ["prw_var"]+".1hr.nc"
-#os.environ["ta_file"] = "*."+os.environ["ta_var"]+".1hr.nc"
-#os.environ["tave_file"] = "*."+os.environ["tave_var"]+".1hr.nc"
-#os.environ["qsat_int_file"] = "*."+os.environ["qsat_int_var"]+".1hr.nc"
 
-missing_file=0
-if len(glob.glob(os.environ["pr_file"]))==0:
+missing_file = 0
+
+if len(glob.glob(os.environ["pr_file"])) == 0:
     print("Required Precipitation data missing!")
-    missing_file=1
-if len(glob.glob(os.environ["prw_file"]))==0:
+    missing_file = 1
+if len(glob.glob(os.environ["prw_file"])) == 0:
     print("Required Precipitable Water Vapor (CWV) data missing!")
-    missing_file=1
+    missing_file = 1
 if len(glob.glob(os.environ["ta_file"]))==0:
-    if (os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"]=="2" and \
-       len(glob.glob(os.environ["qsat_int_file"]))==0) \
-    or (os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"]=="1" and \
-       (len(glob.glob(os.environ["qsat_int_file"]))==0 or \
-        len(glob.glob(os.environ["tave_file"]))==0)):
+    if ((os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2" and
+            len(glob.glob(os.environ["qsat_int_file"])) == 0)
+            or (os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "1" and
+       (len(glob.glob(os.environ["qsat_int_file"])) == 0 or len(glob.glob(os.environ["tave_file"])) == 0))):
         print("Required Temperature data missing!")
         missing_file=1
 
@@ -118,40 +113,39 @@ if missing_file==1:
     print("Convective Transition Diagnostic Package will NOT be executed!")
 else:
 
-    ##### Functionalities in Convective Transition Diagnostic Package #####
+    # Functionalities in Convective Transition Diagnostic Package #####
     # ======================================================================
     # Convective Transition Basic Statistics
     #  See convecTransBasic.py for detailed info
     try:
-        os.system("python "+os.environ["POD_HOME"]+"/"+"convecTransBasic.py")
+        os.system("python " + os.environ["POD_HOME"]+"/" + "convecTransBasic.py")
     except OSError as e:
-        print('WARNING',e.errno,e.strerror)
+        print('WARNING', e.errno, e.strerror)
         print("**************************************************")
         print("Convective Transition Basic Statistics (convecTransBasic.py) is NOT Executed as Expected!")		
         print("**************************************************")
 
-    ## ======================================================================
-    ## Convective Transition Critical Collapse
-    ##  Requires output from convecTransBasic.py
-    ##  See convecTransCriticalCollapse.py for detailed info
+    # ======================================================================
+    # Convective Transition Critical Collapse
+    #  Requires output from convecTransBasic.py
+    #  See convecTransCriticalCollapse.py for detailed info
     try:
-        os.system("python "+os.environ["POD_HOME"]+"/"+"convecTransCriticalCollapse.py")
+        os.system("python " + os.environ["POD_HOME"] + "/" + "convecTransCriticalCollapse.py")
     except OSError as e:
-        print('WARNING',e.errno,e.strerror)
+        print('WARNING', e.errno, e.strerror)
         print("**************************************************")
-        print("Convective Transition Thermodynamic Critical Collapse (convecTransCriticalCollapse.py) is NOT Executed as Expected!")		
+        print("Convective Transition Thermodynamic Critical Collapse"
+              " (convecTransCriticalCollapse.py) is NOT Executed as Expected!")
         print("**************************************************")
 
-    ##### THE FOLLOWING FUNCTIONALITIES HAVE NOT BEEN IMPLEMENTED YET!!!#####
-    ## ======================================================================
-    ## Moisture Precipitation Joint Probability Density Function
-    ##  See cwvPrecipJPDF.py for detailed info
-    #os.system("python "+os.environ["POD_HOME"]+"/"+"cwvPrecipJPDF.py")
-    ## ======================================================================
-    ## Super Critical Precipitation Probability
-    ##  Requires output from convecTransBasic.py
-    ##  See supCriticPrecipProb.py for detailed info
-    #os.system("python "+os.environ['POD_HOME']+"/supCriticPrecipProb.py") 
+    # THE FOLLOWING FUNCTIONALITIES HAVE NOT BEEN IMPLEMENTED YET!!!#####
+    # ======================================================================
+    # Moisture Precipitation Joint Probability Density Function
+    # See cwvPrecipJPDF.py for detailed info
+    # ======================================================================
+    # Super Critical Precipitation Probability
+    # Requires output from convecTransBasic.py
+    # See supCriticPrecipProb.py for detailed info
 
     print("**************************************************")
     print("Convective Transition Diagnostic Package (convective_transition_diag_v1r3.py) Executed!")

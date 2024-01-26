@@ -37,7 +37,7 @@ BULK_TROPOSPHERIC_TEMPERATURE_MEASURE=int(os.environ["BULK_TROPOSPHERIC_TEMPERAT
 
 # Directory & Filename for saving binned results (netCDF4)
 #  tave or qsat_int will be appended to BIN_OUTPUT_FILENAME
-BIN_OUTPUT_DIR=os.environ["WK_DIR"]+"/model/netCDF"
+BIN_OUTPUT_DIR=os.environ["WORK_DIR"]+"/model/netCDF"
 BIN_OUTPUT_FILENAME=os.environ["CASENAME"]+".convecTransBasic"
 
 if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE==1:
@@ -55,7 +55,7 @@ bin_output_list=sorted(glob.glob(BIN_OUTPUT_DIR+"/"+BIN_OUTPUT_FILENAME+".nc"))
 
 # Directory & Filename for saving figures 
 #  convecTransCriticalCollapse.py generates 2 sets figures for MODEL
-FIG_OUTPUT_DIR=os.environ["WK_DIR"]+"/model/PS"
+FIG_OUTPUT_DIR=os.environ["WORK_DIR"] + "/model/PS"
 # Figure filename for Convective Transition Statistics (CTS)
 #  collapsed by shifting CWV by Critical CWV
 FIG_FILENAME_CTS=os.environ["CASENAME"]+".convecTransCriticalCollapse_stats"+"_"+TEMP_VAR+".eps"
@@ -69,20 +69,20 @@ bin_obs_list=sorted(glob.glob(os.environ["OBS_DATA"]\
                     +RES+"_fillNrCWV_"\
                     +TEMP_VAR+".nc"))
 # convecTransCriticalCollapse.py generates 2 sets figures for OBS too
-FIG_OBS_DIR=os.environ["WK_DIR"]+"/obs/PS"
+FIG_OBS_DIR=os.environ["WORK_DIR"] + "/obs/PS"
 FIG_OBS_FILENAME_CTS="convecTransCriticalCollapse_stats_R2TMIv7r1_200206_201405_res="\
                       +RES+"_fillNrCWV_"+TEMP_VAR+".eps"
 FIG_OBS_FILENAME_WC="convecTransCriticalCollapse_wc_R2TMIv7r1_200206_201405_res="\
                       +RES+"_fillNrCWV_"+TEMP_VAR+".eps"
 
 # Don't fit/plot bins with PDF<PDF_THRESHOLD
-PDF_THRESHOLD=1e-5 # default: 1e-5
+PDF_THRESHOLD = 1e-5  # default: 1e-5
 
 # Don't fit/plot tave/qsat_int with narrow cwv range (< CWV_RANGE_THRESHOLD mm)
-CWV_RANGE_THRESHOLD=18 # default: 18
+CWV_RANGE_THRESHOLD = 18  # default: 18
 
 # Don't fit/plot tave/qsat_int with low conditional probability of precipitation
-CP_THRESHOLD=0.2
+CP_THRESHOLD = 0.2
 
 ##### Start: FITTING-REQUIRED PARAMETERS #####
 # Use PRECIP_REF (units: mm/hr) to find a 0-th order approximation of Critical CWV w_c
@@ -326,5 +326,5 @@ for i in ['f1','f2','f3','f4','f5','f6']:
 
 data["plot_params"]=fig_params
 
-with open(os.environ["WK_DIR"]+"/convecTransCriticalCollapse_parameters.json", "w") as outfile:
+with open(os.environ["WORK_DIR"] + "/convecTransCriticalCollapse_parameters.json", "w") as outfile:
     json.dump(data, outfile)

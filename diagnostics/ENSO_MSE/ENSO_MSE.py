@@ -23,7 +23,7 @@ import datetime
 now = datetime.datetime.now()
 print( "STARTING ENSO_MSE.py  on:" + now.strftime("%Y-%m-%d %H:%M"))
 
-os.environ["ENSO_MSE_WKDIR"] = os.environ["WK_DIR"]
+os.environ["ENSO_MSE_WKDIR"] = os.environ["WORK_DIR"]
 
 # TODO remove the ENSO module environment switch definitions after framework
 # pod_env_vars issue is fixed
@@ -41,7 +41,7 @@ os.environ["slat2"] = "5"
 # Subpackage control variables optionally set in namelist eg. VAR ENSO_COMPOSITE 1
 # nb. OBS isn't really a subpackage but is a switch used by all subpackages
 subpackages = ["OBS","COMPOSITE","MSE","MSE_VAR","SCATTER"]
-subpack_default = "1"  #Run all subpackage unless envvars are set not to
+subpack_default = "1"  # Run all subpackage unless envvars are set not to
 
 for subpack in subpackages:
     os.environ["ENSO_"+subpack] = os.environ.get("ENSO_"+subpack,subpack_default)

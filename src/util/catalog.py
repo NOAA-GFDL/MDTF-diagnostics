@@ -12,8 +12,6 @@ import subprocess
 from pathlib import Path
 import itertools
 import logging
-import fsspec
-import json
 from src import cli
 
 _log = logging.getLogger(__name__)
@@ -157,7 +155,6 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
             "source_id",
             "experiment_id",
             "frequency",
-            "member_id",
             "table_id",
             "grid_label",
             "realm",

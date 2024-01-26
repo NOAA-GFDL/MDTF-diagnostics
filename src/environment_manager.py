@@ -317,7 +317,7 @@ class SubprocessRuntimePODWrapper(object):
         self.pod.log.info("%s will run using '%s' from conda env '%s'.",
                           self.pod.full_name, self.pod.program, self.env)
 
-        self.pod.log.debug("%s"l, self.pod.format_log(children=True))
+        self.pod.log.debug("%s", self.pod.format_log(children=True))
     #    self.pod._log_handler.reset_buffer()
         self.write_case_env_file(cases)
         self.setup_env_vars()
@@ -342,7 +342,7 @@ class SubprocessRuntimePODWrapper(object):
         self.pod.log_file.write("\n\n")
 
     def write_case_env_file(self, case_list):
-        out_file = os.path.join(self.pod.paths.POD_WORK_DIR, 'case_info.yaml')
+        out_file = os.path.join(self.pod.paths.POD_WORK_DIR, 'case_info.yml')
         self.pod.pod_env_vars["case_env_file"] = out_file
         case_info = dict()
         case_info['CATALOG_FILE'] = os.path.join(self.pod.paths.WORK_DIR, 'MDTF_postprocessed_data.json')

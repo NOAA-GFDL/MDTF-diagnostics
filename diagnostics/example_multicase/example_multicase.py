@@ -69,21 +69,20 @@ import yaml
 # Part 1: Read in the model data
 # ------------------------------
 # Debugging: remove following line in final PR
-os.environ["WORK_DIR"] = "/local2/home/mdtf/wkdir/example_multicase"
-
+# os.environ["WORK_DIR"] = "/Users/jess/mdtf/wkdir/MDTF_output/example_multicase"
+work_dir = os.environ["WORK_DIR"]
 # Receive a dictionary of case information from the framework
 print("reading case_info")
 # Remove following line final PR
-os.environ["case_env_file"] = "/local2/home/mdtf/MDTF-diagnostics/diagnostics/example_multicase/case_info.yaml"
+# os.environ["case_env_file"] = os.path.join(work_dir, "case_info.yml")
 case_env_file = os.environ["case_env_file"]
-assert(os.path.isfile(case_env_file)), f"case environment file {case_env_file} not found"
+assert os.path.isfile(case_env_file), f"case environment file not found"
 with open(case_env_file, 'r') as stream:
     try:
         case_info = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
         print(exc)
 
-#os.environ['CATALOG_FILE'] = '/nbhome/jml/esm_catalog_IPSL-CM5A2-INCA_historical_r1i1p1f1.json'
 cat_def_file = case_info['CATALOG_FILE']
 case_list = case_info['CASE_LIST']
 # all cases share variable names and dimension coords, so just get first result for each
@@ -101,8 +100,6 @@ tas_subset = cat.search(variable_id=tas_var, frequency="day")
 tas_dict = tas_subset.to_dataset_dict(
     xarray_open_kwargs={"decode_times": True, "use_cftime": True}
 )
-# get key list for new dictionary. Each key corresponds to a case
-#tas_keys = [key for key in tas_dict.keys()]
 
 # Part 2: Do some calculations (time and zonal means)
 # ---------------------------------------------------
@@ -153,17 +150,15 @@ plt.legend()
 plt.title("Zonal Mean Surface Air Temperature Anomaly")
 
 # save the plot in the right location
-work_dir = os.environ["WORK_DIR"]
 assert os.path.isdir(f"{work_dir}/model/PS"), f'Assertion error: {work_dir}/model/PS not found'
 plt.savefig(f"{work_dir}/model/PS/example_model_plot.eps", bbox_inches="tight")
 
 
-# Part 4: Clean up and close open file handles
-# --------------------------------------------
-
-_ = [x.close() for x in tas_dict.values()]
-
-
+# Part 4: Close the catalog files and
+# release variable dict reference for garbage collection
+# ------------------------------------------------------
+cat.close()
+tas_dict = None
 # Part 5: Confirm POD executed successfully
 # ----------------------------------------
 print("Last log message by example_multicase POD: finished successfully!")

@@ -101,17 +101,19 @@ def generate_html_file_case_loop(f, case_dict: dict):
     the html template <NOT YET IMPLEMENTED>
 
     Arguments: f (file handle)
-               case_dict (nested dict  [case1, [CASENAME, STARTDATE, ENDDATE],
+               case_dict (nested dict  [case1, [CASENAME, startdate, enddate],
                                         case2, [ ... ], ..., caseN, [ ... ]]
 
     Note: safe_substitute could be used; it leaves unmodified anything that doesn't have a match (instead of crashing)
     Note: any other case info in the dict can be replaced, eg:
-    case_template = Template("<TD style='width: 200px' align=center><A href=model/block_freq_anncycle.$CASENAME.png>$CASENAME ($STARTDATE-$ENDDATE)</A>")
+    case_template = Template("<TD style='width: 200px' align=center><A href=model/block_freq_anncycle.$CASENAME.png>
+    $CASENAME ($startdate-$enddate)</A>")
 
     """
     from string import Template
 
-    case_template = Template("<TR><TD><TD><TD><TD style='width: 200px' align=center><A href=model/block_freq_anncycle.$CASENAME.png>$CASENAME</A>")
+    case_template = Template("<TR><TD><TD><TD><TD style='width: 200px' align=center>"
+                             "<A href=model/block_freq_anncycle.$CASENAME.png>$CASENAME</A>")
     for case_name, case_settings in case_dict.items():
         html_template = case_template.substitute(case_settings)
         f.write(html_template)
@@ -130,7 +132,7 @@ def generate_html_file_case_loop(f, case_dict: dict):
     # This prints the whole thing html_template = str(case_dict)
 
     case_template = Template("<TR><TD style='width: 100px' align=center><b>$CASENAME")
-    settings_template = Template("<TD style='width: 100px' align=center>$STARTDATE - $ENDDATE ")
+    settings_template = Template("<TD style='width: 100px' align=center>$startdate - $enddate ")
 
     for case_name, case_settings in case_dict.items():
         html_template = case_template.safe_substitute(case_settings)
@@ -179,7 +181,7 @@ def generate_html_file_case_single(f):
     html_template = "<TR><TD style='width: 100px' align=center><b>{{CASENAME}}"
     f.write(html_template)
 
-    html_template = "<TD style='width: 100px' align=center>{{STARTDATE}} - {{ENDDATE}} "
+    html_template = "<TD style='width: 100px' align=center>{{startdate}} - {{enddate}} "
     f.write(html_template)
 
     # Finish the table 
@@ -211,7 +213,7 @@ def generate_html_file_footer(f):
    <TR><TH align=left>POD Settings
 
 <TR><TD> SEASON <TD> ANN
-<TR><TD> MDTF_BLOCKING_OBS <TD>               "{{MDTF_BLOCKING_OBS}}"
+<TR><TD> MDTF_BLOCKING_OBS <TD> "{{MDTF_BLOCKING_OBS}}"
 <TR><TD> MDTF_BLOCKING_CAM3 <TD> "{{MDTF_BLOCKING_CAM3}}"
 <TR><TD> MDTF_BLOCKING_CAM4 <TD> "{{MDTF_BLOCKING_CAM4}}"
 <TR><TD> MDTF_BLOCKING_CAM5 <TD> "{{MDTF_BLOCKING_CAM5}}"

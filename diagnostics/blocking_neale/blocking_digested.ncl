@@ -12,7 +12,7 @@ begin
 
 
   file_opts_out = file_opts_in  ; copy everything
-  path_out        = set_from_env("WK_DIR",False)                    ; wkdir
+  path_out        = set_from_env("WORK_DIR",False)                    ; wkdir
   dir_out = set_from_env("MDTF_BLOCKING_WRITE_DIGESTED_DIR",False)  ; write directory
 
   strs = str_split(file_opts_in@file_name, "/")  ; separate strings of path by "/"

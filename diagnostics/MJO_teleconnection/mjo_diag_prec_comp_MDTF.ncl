@@ -37,7 +37,7 @@ print("Model: " + Model)
 ;--directory for output files--
 ;-------------------------------------------------------------------------------------
 dirobs  = getenv("OBS_DATA")+"/"         ;Output data directory
-diro  = getenv("WK_DIR")+"/model/netCDF/" 
+diro  = getenv("WORK_DIR")+"/model/netCDF/"
 filpr = getenv("prec_file")                   ; input file
 
 print("Output data path :" + diro)

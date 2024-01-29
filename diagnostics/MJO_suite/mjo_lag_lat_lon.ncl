@@ -14,7 +14,7 @@ routine_name = "mjo_lat_lat_lon.ncl"
 vars = (/"pr","u850"/)
 casename = getenv("CASENAME")
 
-file_dir = getenv("WK_DIR")+"/model/netCDF/"
+file_dir = getenv("WORK_DIR")+"/model/netCDF/"
 filename_pr = file_dir+casename+".pr.day.anom.nc"
 filename_u850 = file_dir+casename+".u850.day.anom.nc"
 

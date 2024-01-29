@@ -182,6 +182,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
     use_exact_name: bool = False
     env_var: str = dc.field(default="", compare=False)
     path_variable: str = dc.field(default="", compare=False)
+    realm: str = dc.field(default="", compare=False)
     dest_path: str = ""
     requirement: VarlistEntryRequirement = dc.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False
@@ -318,7 +319,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         if self.status != util.ObjectStatus.SUCCEEDED:
             # Signal to POD's code that vars are not provided by setting
             # variable to the empty string.
-            self.env_vars = {self.env_var: "", self.path_variable: ""}
+            self.env_vars = {self.env_var: "", self.path_variable: "", "realm": ""}
 
         assert self.dest_path, "dest_path not defined"
         self.env_vars = util.WormDict()
@@ -332,6 +333,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         self.env_vars.update({
             self.env_var: self.name_in_model,
             self.path_variable: self.dest_path,
+            "realm": self.realm,
             **assoc_dict
         })
         for ax, dim in self.dim_axes.items():

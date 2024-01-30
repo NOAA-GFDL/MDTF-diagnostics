@@ -91,7 +91,7 @@ def wave_ampl_climo_plot(z_k, lat, obs=None):
     xlab_pos = (np.diff(xticks)*0.5)+xticks[0:-1]
 
     # Handle the obs if given. Compute amplitudes and climo line.
-    if (obs is not None):
+    if obs is not None:
         obs_ampls = 2*np.abs(obs.interp(lat=lat))/obs.nlons
         obs_climo = obs_ampls.groupby('time.dayofyear').mean('time')
         obs_max_doy = int(obs_climo.dayofyear.max())
@@ -99,7 +99,7 @@ def wave_ampl_climo_plot(z_k, lat, obs=None):
         # Some models use different calendars (e.g., noleap, 360day).
         # For comparison, we will interpolate the obs to the same time
         # range as the input model dataset
-        if (obs_max_doy != max_doy):
+        if obs_max_doy != max_doy:
             obs_climo = obs_climo.assign_coords({'dayofyear': np.linspace(1, max_doy, obs_max_doy)})
             obs_climo = obs_climo.interp(dayofyear=climo.dayofyear)
 
@@ -129,7 +129,7 @@ def wave_ampl_climo_plot(z_k, lat, obs=None):
             # plot the climo in a thicker black line
             ax.plot(climo.dayofyear, climo.sel(lev=lev, zonal_wavenum=wavenum).roll(dayofyear=roll_to),
                     color='black', linewidth=3.0, label='Climatology')
-            if (obs is not None):
+            if obs is not None:
                 # plot the obs climo in an orange line for comparison
                 ax.plot(climo.dayofyear, obs_climo.sel(lev=lev, zonal_wavenum=wavenum).roll(dayofyear=roll_to),
                         color='#ff8c00', linewidth=1.0, label='Obs Climatology')
@@ -141,13 +141,13 @@ def wave_ampl_climo_plot(z_k, lat, obs=None):
                 plt.text(xlab_pos[ix]/max_doy, -0.1, xlabel, fontsize=16, ha='center', transform=ax.transAxes)
             ax.tick_params(axis='both', which='major', length=7, width=1.2, labelsize=14)
 
-            if (lev == 10):
+            if lev == 10:
                 plt.title(f'Wave {wavenum}', fontsize=18)
 
-            if (lev == 10) and (wavenum == 3):
+            if lev == 10 and wavenum == 3:
                 plt.legend(frameon=False, fontsize=13, loc='upper left')
 
-            if (wavenum == 1):
+            if wavenum == 1:
                 plt.text(0.05, 0.90, f'{lev} hPa', color='red',
                          fontsize=16, transform=ax.transAxes, fontweight='semibold')
 
@@ -190,16 +190,16 @@ def heatflux_histo_plot(vt_k, months, hemi, obs=None):
 
     # limit the input data and obs to the specific months
     vt_to_plot = vt_k.where(vt_k['time.month'].isin(months), drop=True)
-    if (obs is not None):
+    if obs is not None:
         obs_to_plot = obs.where(obs['time.month'].isin(months), drop=True)
 
     # The histogram bins we'll plot as a function
     # of the hemisphere and wavenumber
-    if (hemi == 1):
+    if hemi == 1:
         bins = {1: np.linspace(-80, 140, 25),
                 2: np.linspace(-50, 100, 25),
                 3: np.linspace(-30, 30, 25)}
-    elif (hemi == -1):
+    elif hemi == -1:
         bins = {1: np.linspace(-140, 80, 25),
                 2: np.linspace(-100, 50, 25),
                 3: np.linspace(-30, 30, 25)}
@@ -222,7 +222,7 @@ def heatflux_histo_plot(vt_k, months, hemi, obs=None):
         plt.text(0.85, 0.93, percstring, transform=ax.transAxes, fontsize=12, ha='center', va='center')
 
         # handle the obs if given; overplot similar step-histos and percentile vertical lines
-        if (obs is not None):
+        if obs is not None:
             obs_percs = np.percentile(obs_to_plot.sel(zonal_wavenum=wavenum), [10, 90])
             percstring = f'{obs_percs[0]:0.1f}, {obs_percs[1]:0.1f}'
 
@@ -230,7 +230,8 @@ def heatflux_histo_plot(vt_k, months, hemi, obs=None):
                     histtype='step', color='#FF8C00', linewidth=1, label='Obs')
             plt.axvline(obs_percs[0], color='#FF8C00', linestyle='--', linewidth=0.7)
             plt.axvline(obs_percs[1], color='#FF8C00', linestyle='--', linewidth=0.7)
-            plt.text(0.85, 0.85, percstring, transform=ax.transAxes, color='#FF8C00', fontsize=12, ha='center', va='center')
+            plt.text(0.85, 0.85, percstring, transform=ax.transAxes, color='#FF8C00', fontsize=12, ha='center',
+                     va='center')
 
         plt.xlim((bins[wavenum].min(), bins[wavenum].max()))
         x0, x1 = ax.get_xlim()
@@ -240,10 +241,10 @@ def heatflux_histo_plot(vt_k, months, hemi, obs=None):
         ax.xaxis.set_major_locator(ticker.MaxNLocator(6))
         plt.title(f'Wave {wavenum}', fontsize=18)
 
-        if (wavenum == 1):
+        if wavenum == 1:
             ax.legend(loc='center right', frameon=False)
             plt.ylabel('Normalized Frequency', fontsize=16)
-        if (wavenum == 2):
+        if wavenum == 2:
             plt.xlabel('Eddy Heat Flux due to wave-k [K m/s]', fontsize=16)
 
     fig.subplots_adjust(top=0.95, wspace=0.35, left=0.10, bottom=0.05, right=0.99)
@@ -283,7 +284,7 @@ def eddy_hgt_hfevents(z10_eddy, z500_eddy, pos_dates, neg_dates, hemi):
 
     """
 
-    if (hemi not in [-1, 1]):
+    if hemi not in [-1, 1]:
         msg = 'hemi must be either 1 (for NH) or -1 (for SH)'
         raise ValueError(msg)
 
@@ -303,7 +304,7 @@ def eddy_hgt_hfevents(z10_eddy, z500_eddy, pos_dates, neg_dates, hemi):
     #    * extreme negative heat flux composite anomalies
     fig = plt.figure()
     for i in range(3):
-        if (i == 0):
+        if i == 0:
             q2p_10 = z10_clim.mean('dayofyear')
             q2p_500 = z500_clim.mean('dayofyear')
             clevs10 = (np.arange(-800, 0, 100),
@@ -311,7 +312,7 @@ def eddy_hgt_hfevents(z10_eddy, z500_eddy, pos_dates, neg_dates, hemi):
             clevs500 = (np.arange(-500, 0, 20),
                         np.arange(20, 501, 20))
             title = 'Eddy Height Climo'
-        elif (i == 1):
+        elif i == 1:
             q2p_10 = z10_anom.sel(time=pos_dates).mean('time')
             q2p_500 = z500_anom.sel(time=pos_dates).mean('time')
 
@@ -320,7 +321,7 @@ def eddy_hgt_hfevents(z10_eddy, z500_eddy, pos_dates, neg_dates, hemi):
             clevs500 = (np.arange(-500, 0, 10),
                         np.arange(10, 501, 10))
             title = f'+EHF50 Days ({len(pos_dates)})'
-        elif (i == 2):
+        elif i == 2:
             q2p_10 = z10_anom.sel(time=neg_dates).mean('time')
             q2p_500 = z500_anom.sel(time=neg_dates).mean('time')
 
@@ -381,10 +382,10 @@ def corrcoh_seasons(z_fc, hemi):
 
     # The bimonthly composites for the different
     # extended winter seasons of each hemisphere
-    if (hemi == 1):
+    if hemi == 1:
         months = [(11, 12), (12, 1), (1, 2), (2, 3), (3, 4)]
         labels = ['ND', 'DJ', 'JF', 'FM', 'MA']
-    elif (hemi == -1):
+    elif hemi == -1:
         months = [(7, 8), (8, 9), (9, 10), (10, 11), (11, 12)]
         labels = ['JA', 'AS', 'SO', 'ON', 'ND']
     else:
@@ -404,7 +405,7 @@ def corrcoh_seasons(z_fc, hemi):
 
         # Customize the plots
         ax.set_title(f'Wave {wavenum}', fontsize=20)
-        if (wavenum == 1):
+        if wavenum == 1:
             ax.set_ylabel('Correlation Coherence (500 hPa vs 10 hPa)', fontsize=17)
             ax.legend(frameon=False, loc='upper left', fontsize=13)
         ax.set_xlabel('<- strat leads trop | Lag [days] | trop leads strat ->', fontsize=16)
@@ -413,7 +414,6 @@ def corrcoh_seasons(z_fc, hemi):
         ax.set_xlim((-10, 10))
         ax.set_xticks(np.arange(-10, 11, 2))
         ax.tick_params(axis='both', which='major', length=7, width=1.2, labelsize=14)
-        #ax.xaxis.set_major_locator(ticker.MaxNLocator(6))
 
     fig.subplots_adjust(wspace=0.1, left=0.075, bottom=0.1, right=0.99, top=0.85)
     fig.set_size_inches(14, 6)

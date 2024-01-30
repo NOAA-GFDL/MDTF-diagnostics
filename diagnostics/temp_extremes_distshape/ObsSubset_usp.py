@@ -14,31 +14,31 @@ import os
 # ======================================================================
 # START USER SPECIFIED SECTION
 # ======================================================================
-### Model name and output directory
-MODEL=os.environ["CASENAME"]
-MODEL_OUTPUT_DIR=os.environ["DATADIR"]+"/day"
+# Model name and output directory
+MODEL = os.environ["CASENAME"]
+MODEL_OUTPUT_DIR = os.environ["DATADIR"] + "/day"
 
-### Variable Names
-T2M_VAR=os.environ["tas_var"]
-TIME_VAR=os.environ["time_coord"]
-LAT_VAR=os.environ["lat_coord"]
-LON_VAR=os.environ["lon_coord"]
+# Variable Names
+T2M_VAR = os.environ["tas_var"]
+TIME_VAR = os.environ["time_coord"]
+LAT_VAR = os.environ["lat_coord"]
+LON_VAR = os.environ["lon_coord"]
 
-### Set shift for non-Gaussian tail calculations
-shift=0.5
+# Set shift for non-Gaussian tail calculations
+shift = 0.5
 
-### Set seasons and percentiles to identify distribution tails
-monthsubs=[[6,7,8],[12,1,2]]
-monthstrs=['JJA','DJF']
-ptiles=[5,95]
+# Set seasons and percentiles to identify distribution tails
+monthsubs = [[6, 7, 8], [12, 1, 2]]
+monthstrs = ['JJA', 'DJF']
+ptiles = [5, 95]
 
-### Set range of years, season, and tail percentile threshold for calculations
-yearbeg=int(os.environ["FIRSTYR"])
-yearend=int(os.environ["LASTYR"])
+# Set range of years, season, and tail percentile threshold for calculations
+yearbeg = int(os.environ["startdate"])
+yearend = int(os.environ["enddate"])
 
-### Region mask directory & filename
-REGION_MASK_DIR=os.environ["OBS_DATA"]
-REGION_MASK_FILENAME="MERRA2_landmask.mat"
+# Region mask directory & filename
+REGION_MASK_DIR = os.environ["OBS_DATA"]
+REGION_MASK_FILENAME = "MERRA2_landmask.mat"
 
 # ======================================================================
 # END USER SPECIFIED SECTION
@@ -49,39 +49,39 @@ REGION_MASK_FILENAME="MERRA2_landmask.mat"
 # DO NOT MODIFY CODE BELOW
 # ======================================================================
 
-data={}
+data = {}
 
-data["MODEL"]=MODEL
-data["MODEL_OUTPUT_DIR"]=MODEL_OUTPUT_DIR
-data["REGION_MASK_DIR"]=REGION_MASK_DIR
-data["REGION_MASK_FILENAME"]=REGION_MASK_FILENAME
-data["shift"]=shift
-data["yearbeg"]=yearbeg
-data["yearend"]=yearend
-data["TIME_VAR"]=TIME_VAR
-data["LAT_VAR"]=LAT_VAR
-data["LON_VAR"]=LON_VAR
-data["T2M_VAR"]=T2M_VAR
-data["monthsubs"]=monthsubs
-data["monthstrs"]=monthstrs
-data["ptiles"]=ptiles
+data["MODEL"] = MODEL
+data["MODEL_OUTPUT_DIR"] = MODEL_OUTPUT_DIR
+data["REGION_MASK_DIR"] = REGION_MASK_DIR
+data["REGION_MASK_FILENAME"] = REGION_MASK_FILENAME
+data["shift"] = shift
+data["yearbeg"] = yearbeg
+data["yearend"] = yearend
+data["TIME_VAR"] = TIME_VAR
+data["LAT_VAR"] = LAT_VAR
+data["LON_VAR"] = LON_VAR
+data["T2M_VAR"] = T2M_VAR
+data["monthsubs"] = monthsubs
+data["monthstrs"] = monthstrs
+data["ptiles"] = ptiles
 
 # Taking care of function arguments
-data["args1"]=[ \
-REGION_MASK_DIR, \
-REGION_MASK_FILENAME, \
-MODEL_OUTPUT_DIR, \
-MODEL, \
-shift, \
-yearbeg, \
-yearend, \
-monthsubs, \
-monthstrs, \
-ptiles, \
-TIME_VAR, \
-T2M_VAR, \
-LAT_VAR, \
-LON_VAR ]
+data["args1"] = [
+    REGION_MASK_DIR,
+    REGION_MASK_FILENAME,
+    MODEL_OUTPUT_DIR,
+    MODEL,
+    shift,
+    yearbeg,
+    yearend,
+    monthsubs,
+    monthstrs,
+    ptiles,
+    TIME_VAR,
+    T2M_VAR,
+    LAT_VAR,
+    LON_VAR]
 
-with open(os.environ["WK_DIR"]+"/ObsSubset_parameters.json", "w") as outfile:
+with open(os.environ["WORK_DIR"] + "/ObsSubset_parameters.json", "w") as outfile:
     json.dump(data, outfile)

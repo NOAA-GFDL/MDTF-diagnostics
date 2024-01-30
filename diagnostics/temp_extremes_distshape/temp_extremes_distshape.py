@@ -17,7 +17,8 @@
 #   (3) Frequency Distributions at Non-Gaussian Tail locations (TempExtDistShape_FreqDist.py)
 #   (4) Composite Circulation at Non-Gaussian Tail locations (TempExtDistShape_CircComps.py)
 #
-#   As a module of the MDTF code package, all scripts of this package can be found under /diagnostics/temp_extremes_distshape/**
+#   As a module of the MDTF code package, all scripts of this package can be found under
+#   /diagnostics/temp_extremes_distshape/**
 #   and observational data under /inputdata/obs_data/temp_extremes_distshape/**
 #
 #   This package is written in Python 3, and requires the following Python packages:
@@ -52,50 +53,57 @@
 # Import standard Python packages
 import os
 
-##### Functionalities in Surface Temperature Extremes and Distribution Shape Package #####
+# ### Functionalities in Surface Temperature Extremes and Distribution Shape Package #####
 
-## ======================================================================
-##  Moments of Surface Temperature Probability Distribution
-##  See TempExtDistShape_Moments.py for detailed info
+# ======================================================================
+#  Moments of Surface Temperature Probability Distribution
+#  See TempExtDistShape_Moments.py for detailed info
 try:
-    os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_Moments.py")
+    os.system("python " + os.environ["POD_HOME"] + "/TempExtDistShape_Moments.py")
 except OSError as e:
-    print(('WARNING',e.errno,e.strerror))
+    print(('WARNING', e.errno, e.strerror))
     print("**************************************************")
-    print("Moments of Surface Temperature Probability Distribution (TempExtDistShape_Moments.py) is NOT Executed as Expected!")		
-    print("**************************************************")
-
-## ======================================================================
-##  Shifted Underlying-to-Gaussian Distribution Tail Exceedances Ratio 
-##  See TempExtDistShape_ShiftRatio.py for detailed info
-try:
-    os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_ShiftRatio.py")
-except OSError as e:
-    print(('WARNING',e.errno,e.strerror))
-    print("**************************************************")
-    print("Shifted Underlying-to-Gaussian Distribution Tail Exceedances ratio (TempExtDistShape_ShiftRatio.py) is NOT Executed as Expected!")		
+    print(
+        "Moments of Surface Temperature Probability Distribution (TempExtDistShape_Moments.py) is NOT Executed"
+        " as Expected!")
     print("**************************************************")
 
-## ======================================================================
-##  Frequency Distributions at Non-Gaussian Tail Locations
-##  See TempExtDistShape_FreqDist.py for detailed info
+# ======================================================================
+#  Shifted Underlying-to-Gaussian Distribution Tail Exceedances Ratio
+#  See TempExtDistShape_ShiftRatio.py for detailed info
 try:
-    os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_FreqDist.py")
+    os.system("python " + os.environ["POD_HOME"] + "/TempExtDistShape_ShiftRatio.py")
 except OSError as e:
-    print(('WARNING',e.errno,e.strerror))
+    print(('WARNING', e.errno, e.strerror))
     print("**************************************************")
-    print("Frequency Distributions at Non-Gaussian Tail Locations (TempExtDistShape_FreqDist.py) is NOT Executed as Expected!")
+    print(
+        "Shifted Underlying-to-Gaussian Distribution Tail Exceedances ratio (TempExtDistShape_ShiftRatio.py)"
+        " is NOT Executed as Expected!")
     print("**************************************************")
 
-## ======================================================================
-##  Composite Circulation at Non-Gaussian Tail Locations
-##  See TempExtDistShape_CircComps.py for detailed info
+# ======================================================================
+#  Frequency Distributions at Non-Gaussian Tail Locations
+#  See TempExtDistShape_FreqDist.py for detailed info
 try:
-    os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_CircComps.py")
+    os.system("python " + os.environ["POD_HOME"] + "/TempExtDistShape_FreqDist.py")
 except OSError as e:
-    print(('WARNING',e.errno,e.strerror))
+    print(('WARNING', e.errno, e.strerror))
     print("**************************************************")
-    print("Composite Circulation at Non-Gaussian Tail Locations (TempExtDistShape_CircComps.py) is NOT Executed as Expected!")
+    print(
+        "Frequency Distributions at Non-Gaussian Tail Locations (TempExtDistShape_FreqDist.py)"
+        " is NOT Executed as Expected!")
+    print("**************************************************")
+
+# ======================================================================
+#  Composite Circulation at Non-Gaussian Tail Locations
+#  See TempExtDistShape_CircComps.py for detailed info
+try:
+    os.system("python " + os.environ["POD_HOME"] + "/TempExtDistShape_CircComps.py")
+except OSError as e:
+    print(('WARNING', e.errno, e.strerror))
+    print("**************************************************")
+    print("Composite Circulation at Non-Gaussian Tail Locations (TempExtDistShape_CircComps.py)"
+          " is NOT Executed as Expected!")
     print("**************************************************")
 
 print("**************************************************")

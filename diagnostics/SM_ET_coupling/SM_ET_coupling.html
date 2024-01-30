@@ -4,14 +4,24 @@
 <TITLE>Soil Moisture-Evapotranspiration coupling</TITLE>
 <!-- <H3>Convective Transition Statistics</h3> -->
 <P>
-This module computes the correlation between surface soil moisture (SM; top-10CM) and evapotranspiration (ET), at the interannual time scale, using summertime-mean values (JJA in the Northern Hemisphere, DJF in the Southern Hemisphere). Positive correlations indicate that SM controls ET variations. Negative correlations indicate that ET is ernergy-limited (by radiation and temperature). 
-The degree of coupling between SM and ET depends on how wet the local climate is; thus differences in precipitation between model and observations (independent, in first approximation, from the surface) induce differences in SM-ET coupling. Across CMIP5 models, the degree of SM-ET coupling is closely correlated with the amount of summertime rainfall; using this relationship (see Berg and Sheffield 2018, Figure 3), we correct the estimate of SM-ET coupling for the model by accounting for differences in summertime precipitation. In other words, the Pr-corrected estimate of SM-ET coupling is an estimate of the coupling that would be if precipitation in the model was equal to observed rainfall. 
+    This module computes the correlation between surface soil moisture (SM; top-10CM) and evapotranspiration (ET),
+    at the interannual time scale, using summertime-mean values (JJA in the Northern Hemisphere,
+    DJF in the Southern Hemisphere). Positive correlations indicate that SM controls ET variations.
+    Negative correlations indicate that ET is ernergy-limited (by radiation and temperature).
+    The degree of coupling between SM and ET depends on how wet the local climate is;
+    thus differences in precipitation between model and observations (independent, in first approximation,
+    from the surface) induce differences in SM-ET coupling. Across CMIP5 models, the degree of SM-ET coupling
+    is closely correlated with the amount of summertime rainfall; using this relationship
+    (see Berg and Sheffield 2018, Figure 3), we correct the estimate of SM-ET coupling for the model by accounting
+    for differences in summertime precipitation. In other words, the Pr-corrected estimate of SM-ET coupling is an
+    estimate of the coupling that would be if precipitation in the model was equal to observed rainfall.
 <p>
-<a href="https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx_pods/SM_ET_coupling.html">Full Documentation and Contact Information</a>
+<a href="https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx_pods/SM_ET_coupling.html">
+    Full Documentation and Contact Information</a>
 <P>
 <TABLE>
 <TR>
-<TH ALIGN=LEFT><font color=navy> Soil Moisture-EvapoTranspiration coupling
+<TH ALIGN=LEFT>< color=navy> Soil Moisture-EvapoTranspiration coupling
 <TH ALIGN=LEFT>{{CASENAME}}
 <TH ALIGN=LEFT>OBS (GLEAM)
 <TH ALIGN=LEFT>Model-OBS 

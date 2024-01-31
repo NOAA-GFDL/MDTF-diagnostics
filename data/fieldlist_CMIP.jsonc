@@ -34,6 +34,12 @@
       "scalar_coord_templates": {"plev": "ua{value}"},
       "ndim": 4
     },
+    "u10": {
+      "standard_name": "10 hPa zonal_wind",
+      "units": "m s-1",
+      "scalar_coord_templates": {"plev": "u10{value}"},
+      "ndim": 3
+    },
     "va": {
       "standard_name": "northward_wind",
       "realm": "atmos",
@@ -148,11 +154,21 @@
       "units": "Pa",
       "ndim": 3
     },
+    "tos": {
+      "standard_name": "sea_surface_temperature",
+      "units": "degC",
+      "ndim": 3
+    },
     "sfcWind": {
       "standard_name": "wind_speed",
       "realm": "atmos",
       "units": "m s-1",
       "modifier": "atmos_height",
+      "ndim": 3
+    },
+    "tos": {
+      "standard_name": "sea_surface_temperature",
+      "units": "K",
       "ndim": 3
     },
     // radiative fluxes:

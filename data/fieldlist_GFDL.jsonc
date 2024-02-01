@@ -153,6 +153,90 @@
       "units": "W m-2",
       "ndim": 3
     },
+    "shflx": {
+      "standard_name": "sensible_heat_flux",
+      "realm" : "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "lhflx": {
+      "standard_name": "",
+      "realm": "land",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "olr_clr": {
+      "standard_name": "clear_sky_outgoing_longwave_radiation",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "swdn_sfc_ad_clr": {
+      "standard_name": "clear_sky_outgoing_longwave_radiation",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "swdn_sfc_clr": {
+      "standard_name": "clear_sky_SW_flux_down_at_surface_without_aerosol",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "swdn_toa_clr": {
+      "standard_name": "clear_sky_SW_flux_down_at_TOA",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "swup_sfc_ad_clr": {
+      "standard_name": "clear_sky_SW_flux_up_at_surface_without_aerosol",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "swup_sfc_clr": {
+      "standard_name": "clear_sky_SW_flux_up_at_surface",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "swup_toa_ad_clr": {
+      "standard_name": "clear_sky_SW_flux_up_at_TOA_without_aerosol",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "swup_toa_clr": {
+      "standard_name": "clear_sky_SW_flux_up_at_TOA",
+      "realm": "tmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "lwdn_sfc_clr": {
+      "standard_name": ""clear_sky_LW_flux_down_at_surface",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "lwsfc_ad_clr": {
+      "standard_name": "clear_sky_Net_LW_flux_at-surface_without_aerosol",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "lwtoa_ad_clr": {
+      "standard_name": "clear_sky_Net_LW_flux_at_TOA_without_aerosol",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "lwup_sfc_clr": {
+      "standard_name": "clear_sky_LW_flux_up_at_surface",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
     // Variables for AMOC_3D_Structure module:
     // "uo": {
     // NB: need to perform rotation to get from u,v?

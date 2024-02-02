@@ -159,14 +159,20 @@
       "units": "W m-2",
       "ndim": 3
     },
-    "lhflx": {
-      "standard_name": "",
-      "realm": "land",
+    "hfls": {
+      "standard_name": "surface_upward_latent_heat_flux",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "lwflx": {
+      "standard_name": "net_longwave_flux",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "olr_clr": {
-      "standard_name": "clear_sky_outgoing_longwave_radiation",
+      "standard_name": "clearsky_outgoing_longwave_radiation",
       "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
@@ -190,7 +196,7 @@
       "ndim": 3
     },
     "swup_sfc_ad_clr": {
-      "standard_name": "clear_sky_SW_flux_up_at_surface_without_aerosol",
+      "standard_name": "clearsky_SW_flux_up_at_surface_without_aerosol",
       "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
@@ -214,13 +220,13 @@
       "ndim": 3
     },
     "lwdn_sfc_clr": {
-      "standard_name": ""clear_sky_LW_flux_down_at_surface",
+      "standard_name": "clea_rsky_LW_flux_down_at_surface",
       "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "lwsfc_ad_clr": {
-      "standard_name": "clear_sky_Net_LW_flux_at-surface_without_aerosol",
+      "standard_name": "clear_sky_Net_LW_flux_at_surface_without_aerosol",
       "realm": "atmos",
       "units": "W m-2",
       "ndim": 3

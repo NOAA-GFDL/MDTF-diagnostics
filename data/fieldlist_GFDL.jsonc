@@ -215,7 +215,7 @@
     },
     "swup_toa_clr": {
       "standard_name": "clear_sky_SW_flux_up_at_TOA",
-      "realm": "tmos",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },

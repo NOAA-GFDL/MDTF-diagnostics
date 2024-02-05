@@ -33,16 +33,14 @@ def feedback_regress(fluxanom, tspert, tsclimo, lat, lon, fbname):
     sp = tspert.shape
     sc = tsclimo.shape
 
-    tsclimo_re = np.squeeze(np.nanmean(np.reshape(tsclimo, \
-                                                  (np.int(sc[0] / 12), 12, sc[1], sc[2])), axis=0))
+    tsclimo_re = np.squeeze(np.nanmean(np.reshape(tsclimo, (np.int(sc[0] / 12), 12, sc[1], sc[2])), axis=0))
 
-    tsanom = tspert - np.reshape(np.repeat(tsclimo_re[np.newaxis, ...], np.int(sp[0] / 12), \
+    tsanom = tspert - np.reshape(np.repeat(tsclimo_re[np.newaxis, ...], np.int(sp[0] / 12),
                                            axis=0), (sp[0], sp[1], sp[2]))
 
     weights = np.repeat(np.cos(np.deg2rad(lat))[np.newaxis, :], sp[0], axis=0)
     tsanom_globemean = globemean_3D(tsanom, weights)
-    tsanom_re = np.repeat(np.repeat(tsanom_globemean[:, np.newaxis], \
-                                    sp[1], axis=1)[..., np.newaxis], sp[2], axis=2)
+    tsanom_re = np.repeat(np.repeat(tsanom_globemean[:, np.newaxis], sp[1], axis=1)[..., np.newaxis], sp[2], axis=2)
 
     tsanom_re_timemean = np.nanmean(tsanom_re, axis=0)
     tsanom_re_std = np.nanstd(tsanom_re, axis=0)
@@ -61,7 +59,11 @@ def feedback_regress(fluxanom, tspert, tsclimo, lat, lon, fbname):
 kname = 'CloudSat'
 regime = 'TOA'
 
-# Read in reanalysis data and kernel-derived radiative anomalies and forcing, which were computed using a slightly modified version of the MDTF "Forcing and Feedback" module code. Then, regress against global-mean surface temperature, when applicable, to compute radiative feedbacks using the "feedback_regress" function detailed above. For Instantaneous Radiative Forcing, we just regress against time (trend)
+# Read in reanalysis data and kernel-derived radiative anomalies and forcing,
+# which were computed using a slightly modified version of the MDTF "Forcing and Feedback"
+# module code. Then, regress against global-mean surface temperature, when applicable,
+# to compute radiative feedbacks using the "feedback_regress" function detailed above.
+# For Instantaneous Radiative Forcing, we just regress against time (trend)
 
 # Surface temperature
 
@@ -77,7 +79,8 @@ ts_pert = ts_GISS_anoms_anoms.tempanomaly.values
 ts_climo = ts_GISS_anoms_anoms.tempanomaly.values
 
 # Planck radiative anomalies
-inputfile = '/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_planck_Results_K' + kname + '_MERRAfb_wCERES_retry.nc'
+inputfile = ('/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_planck_Results_K' + kname +
+             '_MERRAfb_wCERES_retry.nc')
 nc_pl_era = xr.open_dataset(inputfile)
 nc_pl_era = nc_pl_era.assign_coords(time=pd.date_range('2003-01', periods=len(nc_pl_era.time.values), freq='M')).sel(
     time=slice('2003-01', '2014-12'))
@@ -89,7 +92,8 @@ fb_pl_era = feedback_regress(varhold, ts_pert, ts_climo, nc_pl_era.latitude.valu
 varhold = None
 
 # Lapse Rate radiative anomalies
-inputfile = '/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_lapserate_Results_K' + kname + '_MERRAfb_wCERES_retry.nc'
+inputfile = ('/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_lapserate_Results_K' + kname +
+             '_MERRAfb_wCERES_retry.nc')
 nc_lr_era = xr.open_dataset(inputfile)
 nc_lr_era = nc_lr_era.assign_coords(time=pd.date_range('2003-01', periods=len(nc_lr_era.time.values), freq='M')).sel(
     time=slice('2003-01', '2014-12'))
@@ -101,10 +105,11 @@ fb_lr_era = feedback_regress(varhold, ts_pert, ts_climo, nc_lr_era.latitude.valu
 varhold = None
 
 # Water vapor radiative anomalies
-inputfile = '/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_watervapor_Results_K' + kname + '_MERRAfb_wCERES_retry.nc'
+inputfile = ('/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_watervapor_Results_K' + kname +
+             '_MERRAfb_wCERES_retry.nc')
 nc_wv_era = xr.open_dataset(inputfile)
-nc_wv_era = nc_wv_era.assign_coords(time=pd.date_range('2003-01', periods=len(nc_wv_era.time.values), freq='M')).sel(
-    time=slice('2003-01', '2014-12'))
+nc_wv_era = nc_wv_era.assign_coords(time=pd.date_range('2003-01', periods=len(nc_wv_era.time.values),
+                                                       freq='M')).sel(time=slice('2003-01', '2014-12'))
 inputfile = None
 
 varhold = nc_wv_era.fluxanom_lw_q_trop_tot.values + nc_wv_era.fluxanom_lw_q_strat_tot.values
@@ -117,7 +122,8 @@ fb_sw_q_era = feedback_regress(varhold, ts_pert, ts_climo, nc_wv_era.latitude.va
 varhold = None
 
 # Cloud radiative anomalies
-inputfile = '/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_clouds_Results_K' + kname + '_MERRAfb_wCERES_retry.nc'
+inputfile = ('/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_clouds_Results_K' + kname +
+             '_MERRAfb_wCERES_retry.nc')
 nc_c_era = xr.open_dataset(inputfile)
 nc_c_era = nc_c_era.assign_coords(time=pd.date_range('2003-01', periods=len(nc_c_era.time.values), freq='M')).sel(
     time=slice('2003-01', '2014-12'))
@@ -133,7 +139,8 @@ fb_sw_c_era = feedback_regress(varhold, ts_pert, ts_climo, nc_c_era.latitude.val
 varhold = None
 
 # Surface Albedo radiative anomalies
-inputfile = '/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_albedo_Results_K' + kname + '_MERRAfb_wCERES_retry.nc'
+inputfile = ('/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_albedo_Results_K' + kname +
+             '_MERRAfb_wCERES_retry.nc')
 nc_a_era = xr.open_dataset(inputfile)
 nc_a_era = nc_a_era.assign_coords(time=pd.date_range('2003-01', periods=len(nc_a_era.time.values), freq='M')).sel(
     time=slice('2003-01', '2014-12'))
@@ -145,7 +152,8 @@ fb_a_era = feedback_regress(varhold, ts_pert, ts_climo, nc_a_era.latitude.values
 varhold = None
 
 # Total TOA radiative imbalance
-inputfile = '/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_netrad_Results_K' + kname + '_MERRAfb_wCERES_retry.nc'
+inputfile = ('/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_netrad_Results_K' + kname +
+             '_MERRAfb_wCERES_retry.nc')
 nc_netrad_era = xr.open_dataset(inputfile)
 nc_netrad_era = nc_netrad_era.assign_coords(
     time=pd.date_range('2003-01', periods=len(nc_netrad_era.time.values), freq='M')).sel(
@@ -162,10 +170,11 @@ fb_sw_netrad_era = feedback_regress(varhold, ts_pert, ts_climo, nc_netrad_era.la
 varhold = None
 
 # Instaneous Radiative Forcing
-inputfile = '/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_IRF_Results_K' + kname + '_MERRAfb_wCERES_retry.nc'
+inputfile = ('/gpfsm/dnb32/rjkramer/MERRAfb/results/' + regime + '_Fluxanom_IRF_Results_K' + kname +
+             '_MERRAfb_wCERES_retry.nc')
 nc_IRF_era = xr.open_dataset(inputfile)
-nc_IRF_era = nc_IRF_era.assign_coords(time=pd.date_range('2003-01', periods=len(nc_IRF_era.time.values), freq='M')).sel(
-    time=slice('2003-01', '2014-12'))
+nc_IRF_era = nc_IRF_era.assign_coords(time=pd.date_range('2003-01', periods=len(nc_IRF_era.time.values),
+                                                         freq='M')).sel(time=slice('2003-01', '2014-12'))
 inputfile = None
 
 varhold = nc_IRF_era.IRF_lw_tot.values

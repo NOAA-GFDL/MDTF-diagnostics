@@ -51,7 +51,7 @@ def var_anom4D(var_pert, var_base):
     if len(sp)!=4 or len(sb)!=4:
        print("An input variable is not 4D! Function will not execute")
     else:
-       #Prep variable to analyze on a monthly-basis
+       # Prep variable to analyze on a monthly-basis
 
        var_pert_re = np.reshape(var_pert, (int(sp[0]/12),12,sp[1],sp[2],sp[3]))
        var_base_re = np.reshape(var_base, (int(sb[0]/12),12,sb[1],sb[2],sb[3]))
@@ -62,7 +62,7 @@ def var_anom4D(var_pert, var_base):
     return var_anom
 
 # ======================================================================
-#fluxanom_calc_4D
+# fluxanom_calc_4D
 
 def fluxanom_calc_4D(var_anom, tot_kern, clr_kern, dpsfc, levs, lats, psk):
     '''
@@ -72,7 +72,7 @@ def fluxanom_calc_4D(var_anom, tot_kern, clr_kern, dpsfc, levs, lats, psk):
 
     ''' 
 
-    #Pressure of upper boundary of each vertical layer
+    # Pressure of upper boundary of each vertical layer
     pt = (levs[1:]+levs[:-1])/2
     pt = np.append(pt,0)
     #Pressure of lower boundary of each vertical layer
@@ -86,7 +86,7 @@ def fluxanom_calc_4D(var_anom, tot_kern, clr_kern, dpsfc, levs, lats, psk):
     skc = clr_kern.shape
 
 
-    #Create indices to seperate troposphere from stratosphere
+    # Create indices to seperate troposphere from stratosphere
     frac_tropo = np.zeros((sp[0],sp[1],sp[2]-1,sp[3],sp[4]))
     frac_strato = np.zeros((sp[0],sp[1],sp[2]-1,sp[3],sp[4]))
     tropopause = (100 + np.absolute(lats)*200/90)
@@ -119,11 +119,11 @@ def fluxanom_calc_4D(var_anom, tot_kern, clr_kern, dpsfc, levs, lats, psk):
        frac_strato = da.from_array(frac_strato,chunks=(5,5,sp[2],sp[3],sp[4]))
        dpsfc = da.from_array(dpsfc,chunks=(5,5,sp[3],sp[4]))
 
-       #Calculate flux anomaly for all levels except first level above surface - total-sky, troposphere
+       # Calculate flux anomaly for all levels except first level above surface - total-sky, troposphere
        flux_tot_tropo = (tot_kern[:,:,1:,:,:]* frac_tropo * dp_mat * var_anom[:,:,1:,:,:]/100)
        flux_tot_strato = (tot_kern[:,:,1:,:,:]* frac_strato * dp_mat *var_anom[:,:,1:,:,:]/100)
    
-       #Calculate flux anomaly for level above surface
+       # Calculate flux anomaly for level above surface
 
        flux_tot_tropo_bottom = (tot_kern[:,:,0,:,:]\
                                        *dpsfc *var_anom[:,:,0,:,:]/100)
@@ -131,12 +131,12 @@ def fluxanom_calc_4D(var_anom, tot_kern, clr_kern, dpsfc, levs, lats, psk):
        flux_tot_strato_bottom = (tot_kern[:,:,0,:,:]\
                                        * dpsfc *var_anom[:,:,0,:,:]/100)
 
-       #Calculate flux anomaly for all levels except first level above surface - clear-sky, troposphere
+       # Calculate flux anomaly for all levels except first level above surface - clear-sky, troposphere
        flux_clr_tropo = (clr_kern[:,:,1:,:,:] * frac_tropo * dp_mat * var_anom[:,:,1:,:,:]/100)
 
        flux_clr_strato = (clr_kern[:,:,1:,:,:] * frac_tropo * dp_mat * var_anom[:,:,1:,:,:]/100)
 
-       #Calculate flux anomaly for level above surface
+       # Calculate flux anomaly for level above surface
        flux_clr_tropo_bottom = (clr_kern[:,:,0,:,:]\
                                        *dpsfc *var_anom[:,:,0,:,:]/100)
 
@@ -146,7 +146,7 @@ def fluxanom_calc_4D(var_anom, tot_kern, clr_kern, dpsfc, levs, lats, psk):
 
     frac_tropo, frac_strato = None, None
 
-    #Reshape fluxanom variables and vertically integrate
+    # Reshape fluxanom variables and vertically integrate
     flux_tot_tropo = da.append(flux_tot_tropo,flux_tot_tropo_bottom[:,:,np.newaxis,...],axis=2)
     flux_tot_strato = da.append(flux_tot_strato,flux_tot_strato_bottom[:,:,np.newaxis,...],axis=2)
     flux_tot_strato = da.append(flux_tot_strato,flux_tot_strato_bottom[:,:,np.newaxis,...],axis=2)
@@ -162,7 +162,7 @@ def fluxanom_calc_4D(var_anom, tot_kern, clr_kern, dpsfc, levs, lats, psk):
 
 
 # ======================================================================
-#fluxanom_calc_3D
+# fluxanom_calc_3D
 
 def fluxanom_calc_3D(var_pert_tot, var_base_tot, tot_kern, clr_kern, var_pert_clr=None, var_base_clr=None):
 
@@ -196,8 +196,8 @@ def fluxanom_calc_3D(var_pert_tot, var_base_tot, tot_kern, clr_kern, var_pert_cl
 
        for m in range(0,12):
 
-           #Conduct calculations by month, using m index to isolate data accordingly
-           #Create climatology by average all timesteps in the var_base variable
+           # Conduct calculations by month, using m index to isolate data accordingly
+           # Create climatology by average all timesteps in the var_base variable
            var_base_tot_m_tmean = np.squeeze(np.nanmean(var_base_tot_re[:,m,:,:],axis=0))
            var_pert_tot_m = np.squeeze(var_pert_tot_re[:,m,:,:])
 
@@ -205,22 +205,22 @@ def fluxanom_calc_3D(var_pert_tot, var_base_tot, tot_kern, clr_kern, var_pert_cl
               var_base_clr_m_tmean = np.squeeze(np.mean(var_base_clr_re[:,m,:,:],axis=0)) 
               var_pert_clr_m = np.squeeze(var_pert_clr_re[:,m,:,:])
 
-           #Compute anomalies
+           # Compute anomalies
            var_tot_anom = var_pert_tot_m - np.repeat(var_base_tot_m_tmean[np.newaxis,:,:],int(sp[0]/12),axis=0)
 
            if var_base_clr is not None:
               var_clr_anom = var_pert_clr_m - np.repeat(var_base_clr_m_tmean[np.newaxis,:,:],int(sp[0]/12),axis=0)
 
-           #Compute flux anomaly - total-sky
+           # Compute flux anomaly - total-sky
            flux_sfc_tot[:,m,:,:] = np.squeeze(np.repeat(tot_kern[np.newaxis,m,:,:],int(sp[0]/12),axis=0)) * var_tot_anom
 
-           #Compute flux anomaly - clear-sky
+           # Compute flux anomaly - clear-sky
            if var_base_clr is not None:
               flux_sfc_clr[:,m,:,:] = np.squeeze(np.repeat(clr_kern[np.newaxis,m,:,:],int(sp[0]/12),axis=0)) * var_clr_anom
            else:
               flux_sfc_clr[:,m,:,:] = np.squeeze(np.repeat(clr_kern[np.newaxis,m,:,:],int(sp[0]/12),axis=0)) * var_tot_anom
     
-    #Reshape flux anomalies
+    # Reshape flux anomalies
     flux_sfc_tot = np.reshape(flux_sfc_tot,(sp[0],sp[1],sp[2]))
     flux_sfc_clr = np.reshape(flux_sfc_clr,(sp[0],sp[1],sp[2]))
           
@@ -272,7 +272,7 @@ def latlonr3_3D4D(variable, lat_start, lon_start, lat_end, lon_end,kern):
 
     '''
 
-    #Check of start and end lat is in similar order. If not, flip.
+    # Check of start and end lat is in similar order. If not, flip.
     if ((lat_start[0]>lat_start[-1]) and (lat_end[0]<lat_end[-1])) or \
        ((lat_start[0]<lat_start[-1]) and (lat_end[0]>lat_end[-1])):
 
@@ -300,14 +300,14 @@ def latlonr3_3D4D(variable, lat_start, lon_start, lat_end, lon_end,kern):
          lon_start = np.concatenate((lon1b,lon1a))
          variable = np.concatenate((start1b,start1a),axis=-1)
 
-    #If, after above change (or after skipping that step), start and lat are in different order, flip.
+    # If, after above change (or after skipping that step), start and lat are in different order, flip.
     if ((lon_start[0]>lon_start[-1]) and (lon_end[0]<lon_end[-1])) or \
        ((lon_start[0]<lon_start[-1]) and (lon_end[0]>lon_end[-1])):
 
        lon_start = np.flipud(lon_start)
        variable = variable[...,::-1]
 
-    #Now that latitudes and longitudes have similar order and format, regrid.
+    # Now that latitudes and longitudes have similar order and format, regrid.
     Y_start, X_start = np.meshgrid(lat_start,lon_start)
     Y_kern, X_kern = np.meshgrid(lat_end,lon_end)
 
@@ -413,7 +413,7 @@ def feedback_regress(fluxanom,tspert,tsclimo,lat,lon,fbname):
     tsanom_re_std = np.nanstd(tsanom_re,axis=0)
     fluxanom_timemean = np.nanmean(fluxanom,axis=0)
 
-    n=np.sum(~np.isnan(tsanom_re),axis=0)
+    n = np.sum(~np.isnan(tsanom_re),axis=0)
     cov = np.nansum((tsanom_re-tsanom_re_timemean)*\
              (fluxanom-fluxanom_timemean),axis=0)/n
     slopes = cov/(tsanom_re_std**2)
@@ -471,7 +471,7 @@ def map_plotting_4subs(cbar_levs1,cbar_levs2,var1_name,var1_model, \
     '''
 
 
-    fig,axs = plt.subplots(2, 2,subplot_kw=dict(projection= \
+    fig, axs = plt.subplots(2, 2,subplot_kw=dict(projection= \
               ccrs.PlateCarree(central_longitude=180)),figsize=(8,8))
     
     axs[0, 0].set_title(var1_name+' - Model')
@@ -562,7 +562,7 @@ def map_plotting_2subs(cbar_levs,var_name,var_model, \
 
     '''
 
-    fig,axs = plt.subplots(1, 2,subplot_kw=dict(projection= \
+    fig, axs = plt.subplots(1, 2,subplot_kw=dict(projection= \
               ccrs.PlateCarree(central_longitude=180)))
 
     axs[0].set_title(var_name+' - Model')

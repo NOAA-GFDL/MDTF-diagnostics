@@ -17,7 +17,7 @@ import numpy as np
 import xarray as xr
 from scipy.interpolate import interp1d
 
-#Import functions specific to this toolkit
+# Import functions specific to this toolkit
 from forcing_feedback_util import var_anom4D
 from forcing_feedback_util import fluxanom_calc_4D
 from forcing_feedback_util import fluxanom_calc_3D
@@ -26,7 +26,7 @@ from forcing_feedback_util import latlonr3_3D4D
 from forcing_feedback_util import feedback_regress
 # ======================================================================
 
-#Read in radiative kernels
+# Read in radiative kernels
 kernnc = xr.open_dataset(os.environ["OBS_DATA"]+"/forcing_feedback_kernels.nc")
 lat_kern = kernnc['latitude'].values
 lon_kern = kernnc['longitude'].values
@@ -47,13 +47,12 @@ ps_kern_TOA = kernnc['PS'].values #Radiative kernel surface pressure
 #close kernel file
 kernnc.close()
 
-#Read in model output
+# Read in model output
 
 varnames = ["ta","ts","hus","rsus","rsds","rsuscs","rsdscs","rsdt","rsut","rsutcs","rlut","rlutcs"]
 model_mainvar_pert = {}
-i=0
+i = 0
 for varname in varnames:
-    #nc = xr.open_dataset(os.environ["DATADIR"]+"/mon/"+os.environ[varname+"_file"])
     nc = xr.open_dataset(os.environ[varname.upper()+"_FILE"])
     model_mainvar_pert[os.environ[varname+"_var"]] = nc[os.environ[varname+"_var"]]
     if i == 0:
@@ -67,7 +66,7 @@ i = None
 
 model_mainvar_climo = model_mainvar_pert
 
-#To avoid issues with interpreting different model time formats, just create new variable. 
+# To avoid issues with interpreting different model time formats, just create new variable. 
 time_model = np.arange(len(time_model))+1
 
 #Regrid kernels using function to match horizontal grid of model/observational data
@@ -95,90 +94,90 @@ ps_kern_TOA = latlonr3_3D4D(ps_kern_TOA,lat_kern,lon_kern,lat_model,lon_model, \
              model_mainvar_climo[os.environ["ts_var"]])
 
 
-#Kernels have now been regridded to the model/observation grid
+# Kernels have now been regridded to the model/observation grid
 lat_kern = lat_model
 lon_kern = lon_model
 
-#If necessary, conduct vertical interpolation
+# If necessary, conduct vertical interpolation
 for varname in varnames:
-    if len(model_mainvar_pert[os.environ[varname+"_var"]].shape)==4:
+    if len(model_mainvar_pert[os.environ[varname+"_var"]].shape) == 4:
        #If vertical coordinates for kernel and model data differ, check if just a difference in units,
        #check if one is flipped and finally, flip or interpolate as needed.
-       if not np.array_equal(lev_model,lev_kern) and not np.array_equal(lev_model/100,lev_kern) \
+       if not np.array_equal(lev_model, lev_kern) and not np.array_equal(lev_model/100,lev_kern) \
             and not np.array_equal(lev_model*100,lev_kern):
                     if np.array_equal(lev_model,lev_kern[::-1]) or np.array_equal(lev_model/100,lev_kern[::-1]) \
                        or np.array_equal(lev_model*100,lev_kern[::-1]):
                        model_mainvar_pert[os.environ[varname+"_var"]] = \
-                          model_mainvar_pert[os.environ[varname+"_var"]][:,::-1,...]
+                          model_mainvar_pert[os.environ[varname+"_var"]][:, ::-1,...]
                        model_mainvar_climo[os.environ[varname+"_var"]] = \
-                          model_mainvar_climo[os.environ[varname+"_var"]][:,::-1,...]
+                          model_mainvar_climo[os.environ[varname+"_var"]][:, ::-1,...]
                     else:
                           if (np.max(lev_model)/np.max(lev_kern)>10):
                              lev_model = lev_model/100 #scale units down
                           if (np.max(lev_model)/np.max(lev_kern)<0.1):
                              lev_model = lev_model*100 #scale units up
                           f = interp1d(np.log(lev_model), model_mainvar_pert[os.environ[varname+"_var"]], \
-                              axis=1,bounds_error=False,fill_value='extrapolate')
+                              axis=1,bounds_error=False, fill_value='extrapolate')
                           model_mainvar_pert[os.environ[varname+"_var"]] = f(np.log(lev_kern))
                           f = None
                           f = interp1d(np.log(lev_model), model_mainvar_climo[os.environ[varname+"_var"]], \
-                              axis=1,bounds_error=False,fill_value='extrapolate')
+                              axis=1,bounds_error=False, fill_value='extrapolate')
                           model_mainvar_climo[os.environ[varname+"_var"]] = f(np.log(lev_kern))
 
 
-#Pressure of upper boundary of each vertical layer
+# Pressure of upper boundary of each vertical layer
 pt = (lev_kern[1:]+lev_kern[:-1])/2
 pt = np.append(pt,0)
 #Pressure of lower boundary of each vertical layer
 pb = pt[:-1]
 pb = np.insert(pb,0,1000)
-#Pressure thickness of each vertical level
+# Pressure thickness of each vertical level
 dp = pb - pt
 
 sk = lw_t_kern_TOA.shape
 sp = model_mainvar_pert[os.environ["ta_var"]].shape
 
-#Determine thickness of lowest layer, dependent on local surface pressure
+# Determine thickness of lowest layer, dependent on local surface pressure
 dp_sfc = dp[0]+(ps_kern_TOA-pb[0])
 dp_sfc[ps_kern_TOA>=pt[0]] = 0
 
 
-#Repeat lowest layer thicknesses to match size of model data for kernel calculations
+# Repeat lowest layer thicknesses to match size of model data for kernel calculations
 dp_sfc = np.repeat(dp_sfc[np.newaxis,:,:,:],int(sp[0]/12),axis=0)
 
-#Compute lapse rate and uniform warming
+# Compute lapse rate and uniform warming
 ta_pert = np.asarray(model_mainvar_pert[os.environ["ta_var"]])
 ta_climo = np.asarray(model_mainvar_climo[os.environ["ta_var"]])
 ts_pert = np.asarray(model_mainvar_pert[os.environ["ts_var"]])
 ts_climo = np.asarray(model_mainvar_climo[os.environ["ts_var"]])
 s = ta_pert.shape
 
-pl_pert = np.repeat(ts_pert[:,np.newaxis,:,:],s[1],axis=1)
+pl_pert = np.repeat(ts_pert[:,np.newaxis,:,:], s[1],axis=1)
 s = ta_climo.shape
-pl_climo = np.repeat(ts_climo[:,np.newaxis,:,:],s[1],axis=1)
+pl_climo = np.repeat(ts_climo[:,np.newaxis,:,:], s[1],axis=1)
 
-ta_anom = var_anom4D(ta_pert,ta_climo)
-pl_anom = var_anom4D(pl_pert,pl_climo)
+ta_anom = var_anom4D(ta_pert, ta_climo)
+pl_anom = var_anom4D(pl_pert, pl_climo)
 lr_anom = ta_anom-pl_anom
 
-#Compute Planck Radiative Flux Anomalies
-[fluxanom_pl_tot_TOA_tropo,fluxanom_pl_clr_TOA_tropo,fluxanom_pl_tot_TOA_strato,fluxanom_pl_clr_TOA_strato] = \
-          fluxanom_calc_4D(pl_anom,lw_t_kern_TOA,lwclr_t_kern_TOA,dp_sfc,lev_kern,lat_kern,ps_kern_TOA)
+# Compute Planck Radiative Flux Anomalies
+[fluxanom_pl_tot_TOA_tropo, fluxanom_pl_clr_TOA_tropo, fluxanom_pl_tot_TOA_strato, fluxanom_pl_clr_TOA_strato] = \
+          fluxanom_calc_4D(pl_anom, lw_t_kern_TOA, lwclr_t_kern_TOA, dp_sfc, lev_kern, lat_kern,ps_kern_TOA)
 
-#Compute Surface Temperature (surface Planck) Flux Anomalies
-[fluxanom_pl_sfc_tot_TOA,fluxanom_pl_sfc_clr_TOA] = fluxanom_calc_3D(ts_pert,ts_climo,lw_ts_kern_TOA,lwclr_ts_kern_TOA)
+# Compute Surface Temperature (surface Planck) Flux Anomalies
+[fluxanom_pl_sfc_tot_TOA,fluxanom_pl_sfc_clr_TOA] = fluxanom_calc_3D(ts_pert, ts_climo, lw_ts_kern_TOA, lwclr_ts_kern_TOA)
 
-#Comput Lapse Rate Radiative Flux Anomalies
-[fluxanom_lr_tot_TOA_tropo,fluxanom_lr_clr_TOA_tropo,fluxanom_lr_tot_TOA_strato,fluxanom_lr_clr_TOA_strato] = \
-        fluxanom_calc_4D(lr_anom,lw_t_kern_TOA,lwclr_t_kern_TOA,dp_sfc,lev_kern,lat_kern,ps_kern_TOA)
+# Comput Lapse Rate Radiative Flux Anomalies
+[fluxanom_lr_tot_TOA_tropo, fluxanom_lr_clr_TOA_tropo, fluxanom_lr_tot_TOA_strato,fluxanom_lr_clr_TOA_strato] = \
+        fluxanom_calc_4D(lr_anom, lw_t_kern_TOA, lwclr_t_kern_TOA, dp_sfc, lev_kern, lat_kern, ps_kern_TOA)
 
-#Compute water vapor change
+# Compute water vapor change
 hus_pert = np.asarray(model_mainvar_pert[os.environ["hus_var"]])
 hus_pert[hus_pert<0] = 0
 hus_climo = np.asarray(model_mainvar_climo[os.environ["hus_var"]])
 hus_climo[hus_climo<0] = 0
 
-#Calculations necessary to convert units of water vapor change to match kernels
+# Calculations necessary to convert units of water vapor change to match kernels
 shp = ta_climo.shape
 ta_ratio_climo = np.squeeze(np.nanmean(np.reshape(ta_climo, (int(shp[0]/12),12,shp[1],shp[2],shp[3])), axis=0))
 es_ratio = esat_coef(ta_ratio_climo+1)/esat_coef(ta_ratio_climo)
@@ -186,7 +185,7 @@ es_ratio = esat_coef(ta_ratio_climo+1)/esat_coef(ta_ratio_climo)
 es_ratio_pert = np.reshape(np.repeat(es_ratio[np.newaxis,...],int(ta_pert.shape[0]/12),axis=0), \
                 (ta_pert.shape[0],shp[1],shp[2],shp[3]))
 
-#Log of water vapor
+# Log of water vapor
 q_pert = np.log(hus_pert)/(es_ratio_pert-1)
 es_ratio_climo = np.reshape(np.repeat(es_ratio[np.newaxis,...],int(shp[0]/12),axis=0), \
                 (shp[0],shp[1],shp[2],shp[3]))
@@ -194,17 +193,17 @@ es_ratio_climo = np.reshape(np.repeat(es_ratio[np.newaxis,...],int(shp[0]/12),ax
 q_climo = np.log(hus_climo)/(es_ratio_climo-1)
 es_ratio, ta_ratio_climo, hus_pert, hus_climo, ta_pert, ta_climo = None, None, None, None, None, None
 
-q_anom = var_anom4D(q_pert,q_climo)
+q_anom = var_anom4D(q_pert, q_climo)
 
-#Compute SW Water Vapor Radiative Flux Anomalies
+# Compute SW Water Vapor Radiative Flux Anomalies
 
-[fluxanom_sw_q_tot_TOA_tropo,fluxanom_sw_q_clr_TOA_tropo,fluxanom_sw_q_tot_TOA_strato,fluxanom_sw_q_clr_TOA_strato] = \
-    fluxanom_calc_4D(q_anom,sw_q_kern_TOA,swclr_q_kern_TOA,dp_sfc,lev_kern,lat_kern,ps_kern_TOA)
+[fluxanom_sw_q_tot_TOA_tropo, fluxanom_sw_q_clr_TOA_tropo, fluxanom_sw_q_tot_TOA_strato, fluxanom_sw_q_clr_TOA_strato] = \
+    fluxanom_calc_4D(q_anom, sw_q_kern_TOA, swclr_q_kern_TOA, dp_sfc, lev_kern, lat_kern, ps_kern_TOA)
 
 
-#Compute LW Water Vapor Radiative Flux Anomalies
-[fluxanom_lw_q_tot_TOA_tropo,fluxanom_lw_q_clr_TOA_tropo,fluxanom_lw_q_tot_TOA_strato,fluxanom_lw_q_clr_TOA_strato] = \
-    fluxanom_calc_4D(q_anom,lw_q_kern_TOA,lwclr_q_kern_TOA,dp_sfc,lev_kern,lat_kern,ps_kern_TOA)
+# Compute LW Water Vapor Radiative Flux Anomalies
+[fluxanom_lw_q_tot_TOA_tropo, fluxanom_lw_q_clr_TOA_tropo,fluxanom_lw_q_tot_TOA_strato, fluxanom_lw_q_clr_TOA_strato] = \
+    fluxanom_calc_4D(q_anom,lw_q_kern_TOA, lwclr_q_kern_TOA, dp_sfc,lev_kern, lat_kern, ps_kern_TOA)
 
 fluxanom_sw_q_tot_TOA_tropo[fluxanom_sw_q_tot_TOA_tropo==float('Inf')] = np.nan
 fluxanom_sw_q_clr_TOA_tropo[fluxanom_sw_q_clr_TOA_tropo==float('Inf')] = np.nan
@@ -224,7 +223,7 @@ fluxanom_sw_q_clr_TOA_strato[fluxanom_sw_q_clr_TOA_strato==-float('Inf')] = np.n
 fluxanom_lw_q_tot_TOA_strato[fluxanom_lw_q_tot_TOA_strato==-float('Inf')] = np.nan
 fluxanom_lw_q_clr_TOA_strato[fluxanom_lw_q_clr_TOA_strato==-float('Inf')] = np.nan
 
-#Compute surface albedo change
+# Compute surface albedo change
 alb_pert_tot = np.asarray(model_mainvar_pert[os.environ["rsus_var"]]/model_mainvar_pert[os.environ["rsds_var"]])
 alb_climo_tot = np.asarray(model_mainvar_climo[os.environ["rsus_var"]]/model_mainvar_climo[os.environ["rsds_var"]])
 alb_pert_clr = np.asarray(model_mainvar_pert[os.environ["rsuscs_var"]]/model_mainvar_pert[os.environ["rsdscs_var"]])
@@ -242,13 +241,13 @@ alb_pert_clr[alb_pert_clr>1] = 0
 alb_pert_clr[alb_pert_clr<0] = 0
 alb_climo_clr[alb_climo_clr>1] = 0
 alb_climo_clr[alb_climo_clr<0] = 0
-#Compute Surface Albedo Radiative Flux Anomalies
+# Compute Surface Albedo Radiative Flux Anomalies
 
 
-[fluxanom_a_sfc_tot_TOA,fluxanom_a_sfc_clr_TOA] = \
-   fluxanom_calc_3D(alb_pert_tot,alb_climo_tot,sw_a_kern_TOA/.01,swclr_a_kern_TOA/.01,alb_pert_clr,alb_climo_clr)
+[fluxanom_a_sfc_tot_TOA, fluxanom_a_sfc_clr_TOA] = \
+   fluxanom_calc_3D(alb_pert_tot, alb_climo_tot, sw_a_kern_TOA/.01, swclr_a_kern_TOA/.01, alb_pert_clr, alb_climo_clr)
 
-#Compute NET Radiative Flux Anomalies
+# Compute NET Radiative Flux Anomalies
 Rtot_LW_TOA_pert = np.asarray(-model_mainvar_pert[os.environ["rlut_var"]])
 Rtot_SW_TOA_pert = np.asarray(model_mainvar_pert[os.environ["rsdt_var"]] - model_mainvar_pert[os.environ["rsut_var"]])
 Rtot_LW_TOA_climo = np.asarray(-model_mainvar_climo[os.environ["rlut_var"]])
@@ -258,22 +257,22 @@ Rclr_SW_TOA_pert = np.asarray(model_mainvar_pert[os.environ["rsdt_var"]]-model_m
 Rclr_LW_TOA_climo = np.asarray(-model_mainvar_climo[os.environ["rlutcs_var"]])
 Rclr_SW_TOA_climo = np.asarray(model_mainvar_climo[os.environ["rsdt_var"]]-model_mainvar_climo[os.environ["rsutcs_var"]])
 
-#TOA
+# TOA
 [fluxanom_Rtot_LW_TOA,fluxanom_Rclr_LW_TOA] = \
-      fluxanom_calc_3D(Rtot_LW_TOA_pert,Rtot_LW_TOA_climo,np.ones(lw_ts_kern_TOA.shape),np.ones(lwclr_ts_kern_TOA.shape), \
+      fluxanom_calc_3D(Rtot_LW_TOA_pert,Rtot_LW_TOA_climo,np.ones(lw_ts_kern_TOA.shape), np.ones(lwclr_ts_kern_TOA.shape), \
                        Rclr_LW_TOA_pert,Rclr_LW_TOA_climo)
 
 [fluxanom_Rtot_SW_TOA,fluxanom_Rclr_SW_TOA] = \
-   fluxanom_calc_3D(Rtot_SW_TOA_pert,Rtot_SW_TOA_climo,np.ones(lw_ts_kern_TOA.shape),np.ones(lwclr_ts_kern_TOA.shape), \
+   fluxanom_calc_3D(Rtot_SW_TOA_pert,Rtot_SW_TOA_climo,np.ones(lw_ts_kern_TOA.shape), np.ones(lwclr_ts_kern_TOA.shape), \
                        Rclr_SW_TOA_pert,Rclr_SW_TOA_climo)
-#TOA CRE
+# TOA CRE
 fluxanom_Rcre_LW_TOA = fluxanom_Rtot_LW_TOA - fluxanom_Rclr_LW_TOA
 fluxanom_Rcre_SW_TOA = fluxanom_Rtot_SW_TOA - fluxanom_Rclr_SW_TOA
 
-#Compute Instantaneous Radiative Forcing as difference between NET Radiative Flux Anomalies and
-#the sum of all indivisual radiative flux anomalies. Total-sky IRF computed as 
-#Clear-Sky IRF divided by cloud masking constant. NOTE, these cloud masking constants may not apply
-#to user's specific model experiment.
+# Compute Instantaneous Radiative Forcing as difference between NET Radiative Flux Anomalies and
+# the sum of all indivisual radiative flux anomalies. Total-sky IRF computed as 
+# Clear-Sky IRF divided by cloud masking constant. NOTE, these cloud masking constants may not apply
+# to user's specific model experiment.
 IRF_lw_clr_TOA = fluxanom_Rclr_LW_TOA - fluxanom_pl_clr_TOA_tropo - fluxanom_lr_clr_TOA_tropo  - \
                      fluxanom_lw_q_clr_TOA_tropo - fluxanom_pl_sfc_clr_TOA - fluxanom_pl_clr_TOA_tropo - \
                      fluxanom_lr_clr_TOA_strato - fluxanom_lw_q_clr_TOA_strato
@@ -298,44 +297,44 @@ fluxanom_sw_c_TOA = fluxanom_Rcre_SW_TOA - (fluxanom_sw_q_tot_TOA_tropo-fluxanom
                                         - (fluxanom_a_sfc_tot_TOA-fluxanom_a_sfc_clr_TOA) \
                                         - (IRF_sw_tot_TOA - IRF_sw_clr_TOA)
 
-#Regress radiative flux anomalies with global-mean dTs to compute feedbacks
-#within feedback_regress function, results saved to a netcdf
+# Regress radiative flux anomalies with global-mean dTs to compute feedbacks
+# within feedback_regress function, results saved to a netcdf
 
-#Planck Feedback
-feedback_regress(fluxanom_pl_tot_TOA_tropo+fluxanom_pl_sfc_tot_TOA,ts_pert,ts_climo,lat_kern,lon_kern,'Planck')
+# Planck Feedback
+feedback_regress(fluxanom_pl_tot_TOA_tropo + fluxanom_pl_sfc_tot_TOA, ts_pert, ts_climo, lat_kern, lon_kern, 'Planck')
 
-#Lapse Rate Feedback
-feedback_regress(fluxanom_lr_tot_TOA_tropo,ts_pert,ts_climo,lat_kern,lon_kern,'LapseRate')
+# Lapse Rate Feedback
+feedback_regress(fluxanom_lr_tot_TOA_tropo, ts_pert, ts_climo, lat_kern, lon_kern, 'LapseRate')
 
-#LW Water vapor Feedback
-feedback_regress(fluxanom_lw_q_tot_TOA_tropo,ts_pert,ts_climo,lat_kern,lon_kern,'LW_WaterVapor')
+# LW Water vapor Feedback
+feedback_regress(fluxanom_lw_q_tot_TOA_tropo, ts_pert, ts_climo, lat_kern, lon_kern, 'LW_WaterVapor')
 
-#SW Water vapor Feedback
-feedback_regress(fluxanom_sw_q_tot_TOA_tropo,ts_pert,ts_climo,lat_kern,lon_kern,'SW_WaterVapor')
+# SW Water vapor Feedback
+feedback_regress(fluxanom_sw_q_tot_TOA_tropo, ts_pert, ts_climo, lat_kern, lon_kern, 'SW_WaterVapor')
 
-#Surface Albedo Feedback
-feedback_regress(fluxanom_a_sfc_tot_TOA,ts_pert,ts_climo,lat_kern,lon_kern,'SfcAlbedo')
+# Surface Albedo Feedback
+feedback_regress(fluxanom_a_sfc_tot_TOA, ts_pert, ts_climo, lat_kern, lon_kern, 'SfcAlbedo')
 
-#Total stratospheric Feedback
-feedback_regress(fluxanom_pl_tot_TOA_strato+fluxanom_lr_tot_TOA_strato+fluxanom_lw_q_tot_TOA_strato+ \
-                 fluxanom_sw_q_tot_TOA_strato,ts_pert,ts_climo,lat_kern,lon_kern,'StratFB')
+# Total stratospheric Feedback
+feedback_regress(fluxanom_pl_tot_TOA_strato + fluxanom_lr_tot_TOA_strato + fluxanom_lw_q_tot_TOA_strato + \
+                 fluxanom_sw_q_tot_TOA_strato, ts_pert, ts_climo, lat_kern, lon_kern, 'StratFB')
 
-#LW Cloud Feedback
-feedback_regress(fluxanom_lw_c_TOA,ts_pert,ts_climo,lat_kern,lon_kern,'LW_Cloud')
+# LW Cloud Feedback
+feedback_regress(fluxanom_lw_c_TOA, ts_pert, ts_climo, lat_kern, lon_kern, 'LW_Cloud')
 
-#SW Cloud Feedback
-feedback_regress(fluxanom_sw_c_TOA,ts_pert,ts_climo,lat_kern,lon_kern,'SW_Cloud')
+# SW Cloud Feedback
+feedback_regress(fluxanom_sw_c_TOA, ts_pert,ts_climo, lat_kern,lon_kern, 'SW_Cloud')
 
 #LW Total Radiative Anomalies
-feedback_regress(fluxanom_Rtot_LW_TOA,ts_pert,ts_climo,lat_kern,lon_kern,'LW_Rad')
+feedback_regress(fluxanom_Rtot_LW_TOA, ts_pert, ts_climo, lat_kern,lon_kern, 'LW_Rad')
 
 #SW Total Radiative Anomalies
-feedback_regress(fluxanom_Rtot_SW_TOA,ts_pert,ts_climo,lat_kern,lon_kern,'SW_Rad')
+feedback_regress(fluxanom_Rtot_SW_TOA, ts_pert, ts_climo, lat_kern, lon_kern, 'SW_Rad')
 
 shp = ts_pert.shape
-xtime = np.repeat(np.repeat(np.arange(shp[0])[...,np.newaxis],shp[1],axis=1)[...,np.newaxis],shp[2],axis=2)
+xtime = np.repeat(np.repeat(np.arange(shp[0])[..., np.newaxis], shp[1], axis=1)[..., np.newaxis], shp[2], axis=2)
 #LW IRF (trendlines, regressed against time)
-feedback_regress(IRF_lw_tot_TOA,xtime,xtime*0,lat_kern,lon_kern,'LW_IRF')
+feedback_regress(IRF_lw_tot_TOA, xtime,xtime*0, lat_kern,lon_kern, 'LW_IRF')
 
-#SW IRF (trendlines, regressed against time)
-feedback_regress(IRF_sw_tot_TOA,xtime,xtime*0,lat_kern,lon_kern,'SW_IRF')
+# SW IRF (trendlines, regressed against time)
+feedback_regress(IRF_sw_tot_TOA, xtime, xtime*0, lat_kern, lon_kern,'SW_IRF')

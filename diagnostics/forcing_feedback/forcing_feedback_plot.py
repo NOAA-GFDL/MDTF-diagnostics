@@ -249,4 +249,3 @@ map_plotting_4subs(levels_1,levels_2,variablename_1,modelvariable_1,lon_original
                    lon_model,lat_model,lon_obs,lat_obs,obsvariable_1, \
                    variablename_2,modelvariable_2,obsvariable_2,units,filename)
 
-

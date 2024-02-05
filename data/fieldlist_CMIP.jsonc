@@ -200,6 +200,22 @@
       "units": "W m-2",
       "ndim": 3
     },
+    "rldcs": {
+      "realm": "atmos", 
+      "standard_name": "downwelling_longwave_flux_in_air_assuming_clear_sky", 
+      "units": "W m-2",
+      "long_name": "Downwelling Clear-Sky Longwave Radiation", 
+      "positive": "down",
+      "scalar_coord_templates" : {"plev": "rldcs{value}"},
+      "ndim": 4
+    },
+    "rldscs": {
+      "realm": "atmos", 
+      "standard_name": "surface_downwelling_longwave_flux_in_air_assuming_clear_sky", 
+      "units": "W m-2", 
+      "long_name": "Surface Downwelling Clear-Sky Longwave Radiation", 
+      "ndim": 3
+    }, 
     "rlut": {
       "standard_name": "toa_outgoing_longwave_flux",
       "units": "W m-2",

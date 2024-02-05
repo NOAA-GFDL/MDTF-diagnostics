@@ -167,6 +167,66 @@
       "units": "W m-2",
       "ndim": 3
     },
+    "FSNS": {
+      "standard_name": "net_solar_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+   "FLNS": {
+      "standard_name": "net_longwave_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FLNSC": {
+      "standard_name": "clearsky_net_longwave_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FSDS": {
+      "standard_name": "downwelling_solar_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FLDSC": {
+      "standard_name": "clearsky_downwelling_longwave_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FLUTC": {
+      "standard_name": "clearsky_upwelling_longwave_flux_at_top_of_model",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FLNTC": {
+      "standard_name": "clearsky_toa_outgoing_longwave_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FSNSC": {
+      "standard_name": "clearsky_net_solar_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FSDSC": {
+      "standard_name": "clearsky_downwelling_solar_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FSNTOA": {
+      "standard_name": "net_solar_flux_at_top_of_atmosphere",
+      "units": "W m-2",
+      "ndim": 3
+    }, 
+    "FSUTOA": {
+      "standard_name": "upwelling_solar_flux_at_top_of_atmosphere",
+      "units": "W m-2",
+      "ndim": 3
+    },  
+    "FSNTOAC": {
+      "standard_name": "clearsky_net_solar_flux_at_top_of_atmosphere",
+      "units": "W m-2",
+      "ndim": 3
+    },
     "SHFLX": {
       "standard_name": "surface_upward_sensible_heat_flux",
       "units": "W m-2",

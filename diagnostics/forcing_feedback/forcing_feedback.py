@@ -51,26 +51,26 @@
 
 import os
 
-if not os.path.isfile(os.environ["OBS_DATA"]+"/forcing_feedback_kernels.nc"):
-   print("Kernel file is missing. POD will not work!")
+if not os.path.isfile(os.environ["OBS_DATA"] + "/forcing_feedback_kernels.nc"):
+    print("Kernel file is missing. POD will not work!")
 
 else:
 
     try:
-       os.system("python " + os.environ["POD_HOME"] + "/" + "forcing_feedback_kernelcalcs.py")
-       print('Working Directory is ' + os.environ['WK_DIR'])
-       print('Forcing Feedback POD is executing')
+        os.system("python " + os.environ["POD_HOME"] + "/" + "forcing_feedback_kernelcalcs.py")
+        print('Working Directory is ' + os.environ['WK_DIR'])
+        print('Forcing Feedback POD is executing')
     except RuntimeError as e1:
-       print('WARNING', e1.errno, e1.strerror)
-       print("**************************************************")
-       print("Kernel calculations (forcing_feedback_kernelcalcs.py) are NOT Executing as Expected!")
+        print('WARNING', e1.errno, e1.strerror)
+        print("**************************************************")
+        print("Kernel calculations (forcing_feedback_kernelcalcs.py) are NOT Executing as Expected!")
 
     try:
-       os.system("python "+os.environ["POD_HOME"] + "/" + "forcing_feedback_plot.py")
-       print('Generating Forcing Feedback POD plots')
+        os.system("python " + os.environ["POD_HOME"] + "/" + "forcing_feedback_plot.py")
+        print('Generating Forcing Feedback POD plots')
     except RuntimeError as e2:
-       print('WARNING', e2.errno, e2.strerror)
-       print("**************************************************")
-       print("Plotting functions (forcing_feedback_plots.py) are NOT Executing as Expected!")
+        print('WARNING', e2.errno, e2.strerror)
+        print("**************************************************")
+        print("Plotting functions (forcing_feedback_plots.py) are NOT Executing as Expected!")
 
     print("Last log message by Forcing Feedback POD: finished executing")

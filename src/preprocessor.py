@@ -8,12 +8,13 @@ import dataclasses
 import datetime
 
 import pandas as pd
-from src import util, cli, varlist_util, translation, xr_parser, units
+from src import util, varlist_util, translation, xr_parser, units
 import cftime
 import intake
 import numpy as np
 import xarray as xr
 import collections
+import re
 
 import logging
 
@@ -803,15 +804,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # assert files_date_range.contains(self.attrs.date_range)
             return sorted_df
         except ValueError:
-            self._query_error_handler(
-                "Non-contiguous or malformed date range in files:", sorted_df[date_col], log=log
-            )
+            log.error("Non-contiguous or malformed date range in files:", sorted_df["path"].values)
         except AssertionError:
             log.debug(("Eliminating expt_key since date range of files (%s) doesn't "
                        "span query range (%s)."), files_date_range, self.attrs.date_range)
         except Exception as exc:
-            self._query_error_handler(f"Caught exception {repr(exc)}:", sorted_df[date_col],
-                                      log=log)
+            log.warning(f"Caught exception {repr(exc)}")
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
 
@@ -829,6 +827,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         Returns:
             Dictionary of xarray datasets with catalog information for each case
         """
+
         # open the csv file using information provided by the catalog definition file
         cat = intake.open_esm_datastore(data_catalog)
         # create filter lists for POD variables
@@ -838,19 +837,20 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         if 'date_range' not in [c.lower() for c in cols]:
             cols.append('date_range')
         for case_name, case_d in case_dict.items():
-            # path_regex = "(?i)(?<!\\S)" + case_name + "(?!\\S+)"
-            path_regex = case_name + "*"
+            # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
+            # path_regex = re.compile(r'({})'.format(case_name))
+            path_regex = case_name + '*'
             freq = case_d.varlist.T.frequency
             for v in case_d.varlist.iter_vars():
-                realm_regex = v.realm + "*"
+                realm_regex = v.realm + '*'
                 cat_subset = cat.search(activity_id=case_d.convention,
                                         standard_name=v.standard_name,
                                         frequency=freq,
                                         realm=realm_regex,
                                         path=path_regex
                                         )
-                if cat_subset.df is None:
-                    case_d.log.error(f"No data catalog assets found for {case_name} in {data_catalog}")
+                if cat_subset.df.empty:
+                    raise util.DataRequestError(f"No assets found for {case_name} in {data_catalog}")
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
                 cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
@@ -915,6 +915,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
     def rename_dataset_keys(self, ds: dict, case_list: dict) -> collections.OrderedDict:
         """Rename dataset keys output by ESM intake catalog query to case names`"""
+
         def rename_key(old_dict: dict, new_dict: collections.OrderedDict, old_key, new_key):
             """Credit:  https://stackoverflow.com/questions/16475384/rename-a-dictionary-key"""
             new_dict[new_key] = old_dict[old_key]
@@ -1199,6 +1200,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 class NullPreprocessor(MDTFPreprocessorBase):
     """A class that skips preprocessing and just symlinks files from the input dir to the work dir
     """
+
     def __init__(self,
                  model_paths: util.ModelDataPathManager,
                  config: util.NameSpace):

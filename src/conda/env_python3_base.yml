@@ -30,7 +30,7 @@ dependencies:
 - h5py=3.9.0
 - intake=0.7.0
 - intake-xarray=0.7.0
-- intake-esm=2023.11.10
+- intake-esm=2024.2.6
 - nc-time-axis=1.4.1
 - pyyaml=6.0.1
 - networkx=3.1

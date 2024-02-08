@@ -64,10 +64,14 @@ class HTMLSourceFileMixin:
             os.path.join(self.WORK_DIR, self.obj.name+".data.log"),
             'w', encoding='utf-8'
         )
-        if isinstance(self, HTMLOutputManager):
-            str_1 = f"{self.obj.name} POD"
+        if isinstance(self, HTMLPodOutputManager):
+            str_1 = f"POD {self.obj.name}"
+        elif isinstance(self, HTMLOutputManager):
+            str_1 = ""
+            for case_name in self.obj.multi_case_dict['CASE_LIST'].keys():
+                str_1 += f"case {case_name} \n"
         else:
-            raise AssertionError("self is not an instance of HTMLOutputManager")
+            raise AssertionError("self is not an instance of HTMLPodOutputManager or HTMLOutputManager")
 
         log_file.write(f"# Input model data files used in this run of {str_1}:\n")
         assert hasattr(self.obj, '_in_file_log'), "could not find obj attribute _in_file_log"
@@ -86,7 +90,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
     finished running.
     """
     save_ps: bool = False
-    save_nc: bool = False
+    save_nc: bool = True
     save_non_nc: bool = False
     CODE_ROOT: str = ""
     CODE_DIR: str = ""
@@ -233,8 +237,8 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         if not self.save_ps:
             for d in util.find_files(self.WORK_DIR, 'PS'+os.sep):
                 shutil.rmtree(d)
-        # delete netCDF files, keep everything else
-        if self.save_non_nc:
+        # delete netCDF files, keep everything else if specified
+        if not self.save_nc:
             for f in util.find_files(self.WORK_DIR, '*.nc'):
                 os.remove(f)
         # delete all generated data
@@ -364,7 +368,7 @@ class HTMLOutputManager(AbstractOutputManager,
         the html template
 
         Arguments: f (file handle)
-                   case_dict (nested dict  [case1, [casename,firstyr,lastyr],
+                   case_dict (nested dict  [case1, [casename, startdate, enddate],
                                             case2, [ ... ], ..., caseN, [ ... ]]
 
         Note: safe_substitute could be used; it leaves unmodified anything that doesn't have a match (instead of crashing)

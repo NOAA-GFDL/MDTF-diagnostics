@@ -90,9 +90,9 @@ class LinkVerifier(object):
 
         self.verbose = verbose
         self.pod_name = None
-        # NB: WK_DIR isn't a "working directory"; it's just the base path
+        # NB: WORK_DIR isn't a "working directory"; it's just the base path
         # relative to which paths are reported
-        (self.root_url, self.WK_DIR, self.root_file) = munge_input_url(root)
+        (self.root_url, self.WORK_DIR, self.root_file) = munge_input_url(root)
         if rel_path_root:
             self.rel_path_root, _, _ = munge_input_url(rel_path_root)
         else:
@@ -149,9 +149,9 @@ class LinkVerifier(object):
             # print('\nFailed to find file or connect to server.')
             # print('Reason: ', e.reason)
             tup = re.split(r"\[Errno 2\] No such file or directory: \'(.*)\'",
-                str(e.reason))
+                           str(e.reason))
             if len(tup) == 3:
-                str_ = util.abbreviate_path(tup[1], self.WK_DIR, '$WK_DIR')
+                str_ = util.abbreviate_path(tup[1], self.WORK_DIR, '$WORK_DIR')
             else:
                 str_ = str(e.reason)
             self.log.error("Missing '%s'.", str_, tags=util.ObjectLogTag.BANNER)
@@ -161,8 +161,8 @@ class LinkVerifier(object):
         else:
             parser = LinkParser()
             links = [
-                Link(origin=url, target=urllib.parse.urljoin(url, link_out)) \
-                    for link_out in self.gen_links(f, parser)
+                Link(origin=url, target=urllib.parse.urljoin(url, link_out))
+                for link_out in self.gen_links(f, parser)
             ]
             f.close()
             return links
@@ -251,8 +251,8 @@ class LinkVerifier(object):
             their path relative to the POD's output directory.
         """
         self.pod_name = pod_name
-        self.WK_DIR = util.remove_suffix(
-            util.remove_suffix(self.WK_DIR, os.sep), pod_name
+        self.WORK_DIR = util.remove_suffix(
+            util.remove_suffix(self.WORK_DIR, os.sep), pod_name
         )
         if not self.root_file:
             self.root_file = pod_name+'.html'
@@ -279,13 +279,14 @@ class LinkVerifier(object):
 
 # --------------------------------------------------------------
 
+
 if __name__ == '__main__':
     # Wrap input/output if we're called as a standalone script
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", action="store_true",
-        help="increase output verbosity")
+                        help="increase output verbosity")
     parser.add_argument("path_or_url",
-        help="URL or filesystem path to the MDTF framework output directory.")
+                        help="URL or filesystem path to the MDTF framework output directory.")
     args = parser.parse_args()
 
     # instead of print(), use root logger

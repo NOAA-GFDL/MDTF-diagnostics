@@ -102,7 +102,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         self.env_vars = util.WormDict.from_struct({
             k: case_dict[k] for k in ("startdate", "enddate", "convention")
         })
-        self.env_vars.update({"case_name": case_name})
+        self.env_vars.update({"CASENAME": case_name})
 
     @property
     def _children(self):
@@ -125,7 +125,6 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
                           to_convention: str):
         for v in self.varlist.iter_vars():
             self.varlist.setup_var(model_paths, case_name, v, to_convention, self.date_range)
-            #print(v)
 
 
 # instantiate the class maker so that the convention-specific classes can be instantiated using

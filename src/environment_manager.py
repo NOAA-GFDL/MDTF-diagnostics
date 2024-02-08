@@ -332,9 +332,15 @@ class SubprocessRuntimePODWrapper(object):
             else:
                 return str(x)
 
-        skip_items = ['enddate', 'startdate', 'casename']  # Omit per-case environment variables
+        skip_items = ['enddate', 'startdate', 'CASENAME']  # Omit per-case environment variables
         self.env_vars = {k: _envvar_format(v)
                          for k, v in self.pod.pod_env_vars.items() if k not in skip_items}
+
+        # append varlist env vars for backwards compatibility with single-run PODs
+        if len(self.pod.multi_case_dict['CASE_LIST']) == 1:
+            for case_name, case_info in self.pod.multi_case_dict['CASE_LIST'].items():
+                for k, v in case_info.items():
+                    self.env_vars[k] = v
 
         env_list = [f"  {k}: {v}" for k, v in self.env_vars.items()]
         self.pod.log_file.write("\n")

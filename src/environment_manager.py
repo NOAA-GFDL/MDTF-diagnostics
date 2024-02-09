@@ -372,6 +372,7 @@ class SubprocessRuntimePODWrapper(object):
         assert os.path.isfile(out_file), f"Could not find case env file {out_file}"
         yaml.dump(case_info, f, allow_unicode=True, default_flow_style=False)
         self.pod.multi_case_dict = case_info
+        f.close()
 
     def setup_exception_handler(self, exc):
         chained_exc = util.chain_exc(exc, f"preparing to run {self.pod.full_name}.",

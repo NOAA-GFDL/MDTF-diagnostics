@@ -88,6 +88,7 @@ import sys
 # script know where the locally downloaded copy of the data for this variable
 # (which we called "tas") is.
 input_path = os.environ["TAS_FILE"]
+print('TAS_FILE is:', input_path)
 
 # command to load the netcdf file
 model_dataset = xr.open_dataset(input_path)
@@ -119,9 +120,12 @@ print("Computed time average of {tas_var} for {CASENAME}.".format(**os.environ))
 # available to the user for further use or b) to pass large amounts of data
 # between stages of a calculation run as different sub-scripts. Data can be in
 # any format (as long as it's documented) and should be written to the 
-# directory <WK_DIR>/model/netCDF (created by the framework).
+# directory <WORK_DIR>/model/netCDF (created by the framework).
 #
-out_path = "{WORK_DIR}/model/netCDF/temp_means.nc".format(**os.environ)
+WORK_DIR = os.environ['WORK_DIR']
+out_dir = os.path.join(WORK_DIR, "model")
+assert os.path.isdir(out_dir), f'{out_dir} not found'
+out_path = os.path.join(out_dir, "temp_means.nc")
 
 # write out time averages as a netcdf file
 model_mean_tas.to_netcdf(out_path)
@@ -170,7 +174,7 @@ plot_and_save_figure("model", title_string, model_mean_tas)
 # The following command replaces the substring "{OBS_DATA}" with the value of 
 # the OBS_DATA environment variable.
 input_path = "{OBS_DATA}/example_tas_means.nc".format(**os.environ)
-
+print(input_path)
 # command to load the netcdf file
 obs_dataset = xr.open_dataset(input_path)
 obs_mean_tas = obs_dataset['mean_tas']

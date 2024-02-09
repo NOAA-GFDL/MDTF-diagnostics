@@ -237,10 +237,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         if not self.save_ps:
             for d in util.find_files(self.WORK_DIR, 'PS'+os.sep):
                 shutil.rmtree(d)
-        # delete netCDF files, keep everything else if specified
-        if not self.save_nc:
-            for f in util.find_files(self.WORK_DIR, '*.nc'):
-                os.remove(f)
+
         # delete all generated data
         # actually deletes contents of any 'netCDF' subdirs
         elif not self.save_nc:
@@ -359,8 +356,7 @@ class HTMLOutputManager(AbstractOutputManager,
         if self.make_variab_tar:
             _ = self.make_tar_file()
         self.copy_to_output()
-        if not self.obj.failed \
-                and not any(p.failed for p in self.obj.iter_children()):
+        if not self.obj.failed:
             self.obj.status = util.ObjectStatus.SUCCEEDED
 
     def generate_html_file_case_loop(self, output_file_name: str, case_info: dict, pod_plot_html_file):

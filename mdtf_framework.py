@@ -49,9 +49,9 @@ class MainLogger(util.MDTFObjectLoggerMixin, util.MDTFObjectLogger):
         self.init_log(log_dir=log_dir)
 
 
-def print_summary(pods):
+def print_summary(pods, _log: logging.log):
     def summary_info_tuple(pod):
-        """Debug information; will clean this up.
+        """create tuple of ([failed cases], [not failed cases], POD_OUTPUT_DIR) for input pod
         """
         return (
             [p_name for p_name, p in pod.multi_case_dict['CASE_LIST'].items() if pod.failed],
@@ -210,7 +210,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         out_mgr.make_output(p, ctx.config)
     tempdirs = util.TempDirManager(ctx.config)
     tempdirs.cleanup()
-    print_summary(pods)
+    print_summary(pods, log.log)
 
     # close the main log file
     log._log_handler.close()
@@ -218,7 +218,6 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         return util.exit_handler(code=0)
     else:
         return util.exit_handler(code=1)
-
 
 
 if __name__ == '__main__':

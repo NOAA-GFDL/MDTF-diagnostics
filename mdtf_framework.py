@@ -49,6 +49,43 @@ class MainLogger(util.MDTFObjectLoggerMixin, util.MDTFObjectLogger):
         self.init_log(log_dir=log_dir)
 
 
+def print_summary(pods):
+    def summary_info_tuple(pod):
+        """Debug information; will clean this up.
+        """
+        return (
+            [p_name for p_name, p in pod.multi_case_dict['CASE_LIST'].items() if pod.failed],
+            [p_name for p_name, p in pod.multi_case_dict['CASE_LIST'].items() if not pod.failed],
+            getattr(pod.paths, 'POD_OUTPUT_DIR', '<ERROR: dir not created.>')
+        )
+
+    d = {p_name: summary_info_tuple(p) for p_name, p in pods.items()}
+    failed = any(len(tup[0]) > 0 for tup in d.values())
+    _log.info('\n' + (80 * '-'))
+    if failed:
+        _log.info(f"Exiting with errors.")
+        for case_name, tup in d.items():
+            _log.info(f"Summary for {case_name}:")
+            if tup[0][0] == 'dummy sentinel string':
+                _log.info('\tAn error occurred in setup. No PODs were run.')
+            else:
+                if tup[1]:
+                    _log.info((f"\tThe following PODs exited normally: "
+                               f"{', '.join(tup[1])}"))
+                if tup[0]:
+                    _log.info((f"\tThe following PODs raised errors: "
+                               f"{', '.join(tup[0])}"))
+            _log.info(f"\tOutput written to {tup[2]}")
+    else:
+        _log.info(f"Exiting normally.")
+        for pod_name, tup in d.items():
+            _log.info(f"Summary for {pod_name}:")
+            _log.info(f"\tAll PODs exited normally.")
+            _log.info(f"\tOutput written to {tup[2]}")
+        for pod_name, pod_atts in pods.items():
+            pod_atts.status = util.ObjectStatus.SUCCEEDED
+
+
 @click.option('-f',
               '--configfile',
               required=True,
@@ -172,11 +209,16 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         out_mgr = output_manager.HTMLOutputManager(p, ctx.config)
         out_mgr.make_output(p, ctx.config)
     tempdirs = util.TempDirManager(ctx.config)
- #   tempdirs.cleanup()
+    tempdirs.cleanup()
+    print_summary(pods)
 
     # close the main log file
     log._log_handler.close()
-    return util.exit_handler(code=0)
+    if not any(v.failed for v in pods.values()):
+        return util.exit_handler(code=0)
+    else:
+        return util.exit_handler(code=1)
+
 
 
 if __name__ == '__main__':

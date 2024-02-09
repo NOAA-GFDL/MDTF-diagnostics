@@ -39,7 +39,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     pod_data = dict()
     pod_vars = dict()
     pod_settings = dict()
-    cases = dict()
+    multi_case_dict = dict()  # populated with case_info entries in enviroment_manager
     user_pp_scripts: list
 
     overwrite: bool = False
@@ -104,7 +104,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     @property
     def _children(self):
         # property required by MDTFObjectBase
-        return self.cases.values()
+        return (self.multi_case_dict.values())
 
     @property
     def full_name(self):
@@ -119,7 +119,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     def iter_case_names(self):
         """Iterator returning :c
         """
-        yield self.cases.keys()
+        yield self.multi_case_dict.keys()
 
     def parse_pod_settings_file(self, code_root: str) -> util.NameSpace:
         """Parse the POD settings file"""

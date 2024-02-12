@@ -336,6 +336,8 @@ class SubprocessRuntimePODWrapper(object):
         self.env_vars = {k: _envvar_format(v)
                          for k, v in self.pod.pod_env_vars.items() if k not in skip_items}
 
+        self.pod.pod_env_vars
+
         # append varlist env vars for backwards compatibility with single-run PODs
         if len(self.pod.multi_case_dict['CASE_LIST']) == 1:
             for case_name, case_info in self.pod.multi_case_dict['CASE_LIST'].items():
@@ -463,6 +465,7 @@ class SubprocessRuntimePODWrapper(object):
 
         if not self.pod.failed:
             self.pod.status = util.ObjectStatus.INACTIVE
+
         # elapsed = timeit.default_timer() - start_time
         # print(pod+" Elapsed time ",elapsed)
 
@@ -576,5 +579,6 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             util.signal_logger(self.__class__.__name__, signum, frame, log=p.pod.log)
             p.tear_down()
             p.pod.close_log_file(log=True)
+
         self.tear_down()
         util.exit_handler(code=1)

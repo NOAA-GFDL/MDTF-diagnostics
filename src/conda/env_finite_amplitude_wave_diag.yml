@@ -14,6 +14,6 @@ dependencies:
 - dask
 - gridfill
 - bottleneck
+- pip
 - pip:
-  - --extra-index-url https://test.pypi.org/simple/
-  - falwa==1.0.0a0
+   - "--editable=git+https://github.com/csyhuang/hn2016_falwa.git@master#egg=falwa"

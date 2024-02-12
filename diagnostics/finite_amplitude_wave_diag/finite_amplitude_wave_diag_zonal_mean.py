@@ -39,6 +39,7 @@ if socket.gethostname() == 'otc':
 # Commands to load third-party libraries. Any code you don't include that's 
 # not part of your language's standard library should be listed in the 
 # settings.jsonc file.
+from abc import ABC
 import numpy as np
 import xarray as xr  # python library we use to read netcdf files
 import matplotlib.pyplot as plt  # python library we use to make plots
@@ -287,7 +288,6 @@ def calculate_covariance(lwa_baro, u_baro):
     cov_map = row_cov.reshape(baro_matrix_shape[1], baro_matrix_shape[2])
     return cov_map
 
-
 def time_average_processing(dataset: xr.Dataset):
     SeasonalAverage = namedtuple(
         "SeasonalAverage", [
@@ -310,6 +310,70 @@ def time_average_processing(dataset: xr.Dataset):
     return seasonal_avg_data
 
 
+class HeightLatPlotter(object):
+    def __init__(self, figsize, xgrid, ygrid, cmap, xlim):
+        self._figsize = figsize
+        self._xgrid = xgrid
+        self._ygrid = ygrid
+        self._cmap = cmap
+        self._xlim = xlim  # [-80, 80]
+
+    def plot_and_save_variable(
+            self, variable, cmap, title_str, save_path, num_level=30):
+        fig = plt.figure(figsize=self._figsize)
+        spec = gridspec.GridSpec(ncols=1, nrows=1)
+        ax = fig.add_subplot(spec[0])
+        # *** Zonal mean U ***
+        main_fig = ax.contourf(
+            self._xgrid,
+            self._ygrid,
+            variable,
+            num_level,
+            cmap=cmap if cmap else self._cmap)
+        fig.colorbar(main_fig, ax=ax)
+        ax.set_title(title_str)
+        ax.set_xlim(self._xlim)
+        plt.tight_layout()
+        plt.show()
+        plt.savefig(save_path, bbox_inches='tight')
+        plt.savefig(save_path.replace(".eps", ".png"), bbox_inches='tight')
+
+
+class LatLonMapPlotter(object):
+    def __init__(self, figsize, xgrid, ygrid, cmap, xland, yland, lon_range, lat_range):
+        self._figsize = figsize
+        self._xgrid = xgrid
+        self._ygrid = ygrid
+        self._cmap = cmap
+        self._xland = xland
+        self._yland = yland
+        self._lon_range = lon_range
+        self._lat_range = lat_range
+
+    def plot_and_save_variable(
+            self, variable, cmap, title_str, save_path, num_level=30):
+        fig = plt.figure(figsize=self._figsize)
+        spec = gridspec.GridSpec(
+            ncols=1, nrows=1, wspace=0.3, hspace=0.3)
+        ax = fig.add_subplot(spec[0], projection=ccrs.PlateCarree())
+        ax.coastlines(color='black', alpha=0.7)
+        ax.set_aspect('auto', adjustable=None)
+        main_fig = ax.contourf(
+            self._xgrid, self._ygrid,
+            variable,
+            num_level,
+            cmap=cmap)
+        ax.scatter(self._xgrid[self._xland], self._ygrid[self._yland], s=1, c='gray')
+        ax.set_xticks(self._lon_range, crs=ccrs.PlateCarree())
+        ax.set_yticks(self._lat_range, crs=ccrs.PlateCarree())
+        fig.colorbar(main_fig, ax=ax)
+        ax.set_title(title_str)
+        plt.tight_layout()
+        plt.show()
+        plt.savefig(save_path, bbox_inches='tight')
+        plt.savefig(save_path.replace(".eps", ".png"), bbox_inches='tight')
+
+
 def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, analysis_height_array, title_str, plot_path,
                                            xy_mask=None, yz_mask=None):
     if xy_mask is None:
@@ -322,88 +386,39 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, analysis_heigh
     lon_range = np.arange(-180, 181, 60)
     lat_range = np.arange(-90, 91, 30)
 
-
+    test_dir = "/Users/claresyhuang/Dropbox/GitHub/mdtf/MDTF-diagnostics/diagnostics/finite_amplitude_wave_diag/"
     cmap = "jet"
-    fig = plt.figure(figsize=(9, 12))
-    # create grid for different subplots
-    spec = gridspec.GridSpec(
-        ncols=2, nrows=3, width_ratios=[1, 2], wspace=0.3, hspace=0.3, height_ratios=[1, 1, 1])
-    fig.suptitle(title_str)
-    # *** Zonal mean U ***
-    ax1 = fig.add_subplot(spec[0])
-    fig1 = ax1.contourf(
-        original_grid['lat'], analysis_height_array,
-        seasonal_average_data.zonal_mean_u,
-        30, cmap=cmap)
-    fig.colorbar(fig1, ax=ax1)
-    ax1.set_title('zonal mean U')
-    ax1.set_xlim([-80, 80])
 
-    # *** FAWA ***
-    ax3 = fig.add_subplot(spec[2])
-    fig3 = ax3.contourf(
-        original_grid['lat'], analysis_height_array,
-        seasonal_average_data.zonal_mean_lwa,
-        30, cmap=cmap)
-    fig.colorbar(fig3, ax=ax3)
-    ax3.set_title('zonal mean LWA')
-    ax3.set_xlim([-80, 80])
+    height_lat_plotter = HeightLatPlotter(
+        figsize=(4, 4), xgrid=original_grid['lat'], ygrid=analysis_height_array, cmap=cmap, xlim=[-80, 80])
+    height_lat_plotter.plot_and_save_variable(
+        variable=seasonal_average_data.zonal_mean_u,
+        cmap=cmap, title_str='zonal mean U', save_path=f"{test_dir}test_zonal_mean_u.png", num_level=30)
+    height_lat_plotter.plot_and_save_variable(
+        variable=seasonal_average_data.zonal_mean_lwa,
+        cmap=cmap, title_str='zonal mean LWA', save_path=f"{test_dir}test_zonal_mean_lwa.png", num_level=30)
+    height_lat_plotter.plot_and_save_variable(
+        variable=seasonal_average_data.uref,
+        cmap=cmap, title_str='zonal mean Uref', save_path=f"{test_dir}test_zonal_mean_uref.png", num_level=30)
+    height_lat_plotter.plot_and_save_variable(
+        variable=seasonal_average_data.zonal_mean_u - seasonal_average_data.uref,
+        cmap=cmap, title_str='zonal mean $\Delta$ U', save_path=f"{test_dir}test_zonal_mean_delta_u.png", num_level=30)
 
-    # *** Uref ***
-    ax2 = fig.add_subplot(spec[4])
-    fig2 = ax2.contourf(
-        original_grid['lat'], analysis_height_array,
-        seasonal_average_data.uref,
-        30, cmap=cmap)
-    fig.colorbar(fig2, ax=ax2)
-    ax2.set_title('zonal mean Uref')
-    ax2.set_xlim([-80, 80])
-
-    # *** U baro ***
-    ax5 = fig.add_subplot(spec[1], projection=ccrs.PlateCarree())
-    ax5.coastlines(color='black', alpha=0.7)
-    ax5.set_aspect('auto', adjustable=None)
-    fig5 = ax5.contourf(
-        original_grid['lon'], original_grid['lat'],
-        seasonal_average_data.u_baro,
-        30, cmap=cmap)
-    ax5.scatter(original_grid['lon'][xland], original_grid['lat'][yland], s=1, c='gray')
-    ax5.set_xticks(lon_range, crs=ccrs.PlateCarree())
-    ax5.set_yticks(lat_range, crs=ccrs.PlateCarree())
-    fig.colorbar(fig5, ax=ax5)
-    ax5.set_title('U baro')
-
-    # *** LWA baro ***
-    ax4 = fig.add_subplot(spec[3], projection=ccrs.PlateCarree())
-    ax4.coastlines(color='black', alpha=0.7)
-    ax4.set_aspect('auto', adjustable=None)
-    fig4 = ax4.contourf(
-        original_grid['lon'], original_grid['lat'],
-        seasonal_average_data.lwa_baro,
-        30, cmap=cmap)
-    ax4.scatter(original_grid['lon'][xland], original_grid['lat'][yland], s=1, c='gray')
-    ax4.set_xticks(lon_range, crs=ccrs.PlateCarree())
-    ax4.set_yticks(lat_range, crs=ccrs.PlateCarree())
-    fig.colorbar(fig4, ax=ax4)
-    ax4.set_title('LWA baro')
-
-    # *** Covariance between LWA and U ***
-    ax6 = fig.add_subplot(spec[5], projection=ccrs.PlateCarree())
-    ax6.coastlines(color='black', alpha=0.7)
-    ax6.set_aspect('auto', adjustable=None)
-    fig6 = ax6.contourf(
-        original_grid['lon'], original_grid['lat'],
-        seasonal_average_data.covariance_lwa_u_baro,
-        30, cmap="Purples_r")
-    ax6.scatter(original_grid['lon'][xland], original_grid['lat'][yland], s=1, c='gray')
-    ax6.set_xticks(lon_range, crs=ccrs.PlateCarree())
-    ax6.set_yticks(lat_range, crs=ccrs.PlateCarree())
-    fig.colorbar(fig6, ax=ax6)
-    ax6.set_title('Covariance between LWA and U(baro)')
-    plt.tight_layout()
-    plt.show()
-    plt.savefig(plot_path, bbox_inches='tight')
-    plt.savefig(plot_path.replace(".eps", ".png"), bbox_inches='tight')
+    # Use encapsulated class to plot
+    lat_lon_plotter = LatLonMapPlotter(
+        figsize=(6, 3), xgrid=original_grid['lon'], ygrid=original_grid['lat'],
+        cmap=cmap, xland=xland, yland=yland,
+        lon_range=lon_range, lat_range=lat_range)
+    lat_lon_plotter.plot_and_save_variable(
+        variable=seasonal_average_data.u_baro, cmap=cmap, title_str='U baro',
+        save_path=f"{test_dir}test_u_baro.png", num_level=30)
+    lat_lon_plotter.plot_and_save_variable(
+        variable=seasonal_average_data.lwa_baro, cmap=cmap, title_str='LWA baro',
+        save_path=f"{test_dir}test_lwa_baro.png", num_level=30)
+    lat_lon_plotter.plot_and_save_variable(
+        variable=seasonal_average_data.covariance_lwa_u_baro, cmap="Purples_r",
+        title_str='Covariance between LWA and U(baro)',
+        save_path=f"{test_dir}test_u_lwa_covariance.png", num_level=30)
 
 
 # === 3) Saving output data ===

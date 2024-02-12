@@ -281,6 +281,11 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         # verify that required settings are specified,
         # and that required packages are installed in the target Conda environment
         self.verify_pod_settings()
+        # append user-specified pod_env_vars to PodObject pod_env_vars dict
+        if 'pod_env_vars' in self.pod_settings:
+            if len(self.pod_settings['pod_env_vars']) > 0:
+                for k, v in self.pod_settings['pod_env_vars'].items():
+                    self.pod_env_vars[k] = v
         self.set_interpreter(pod_input.settings)
         self.runtime_requirements = pod_input.settings['runtime_requirements']
         pod_convention = self.pod_settings['convention'].lower()

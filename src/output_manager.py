@@ -28,6 +28,12 @@ def html_templating_dict(pod) -> dict:
         d[attr] = str(pod.pod_settings.get(attr, ""))
         if not any(d[attr]):
             d[attr] = str(getattr(pod, attr, ""))
+    if len(pod.multi_case_dict['CASE_LIST']) > 1:
+        pass
+    else:  # single-case PODs
+        for case_name, case_dict in pod.multi_case_dict['CASE_LIST'].items():
+            for att_name, att in case_dict.items():
+                d[att_name] = att
     return d
 
 

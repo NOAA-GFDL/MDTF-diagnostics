@@ -381,7 +381,7 @@ class MDTFObjectLogger(logging.Logger):
         """Return boolean corresponding to whether this object has received any
         exceptions (via :meth:`store_exception`.)
         """
-        return (len(self._exceptions) > 0)
+        return len(self._exceptions) > 0
 
     def store_exception(self, exc):
         """Add an Exception object *exc* to the internal list.

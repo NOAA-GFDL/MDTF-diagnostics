@@ -212,8 +212,13 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     tempdirs.cleanup()
     print_summary(pods, log.log)
 
+    for case_name, case_dict in cases.items():
+        for var in case_dict.iter_children():
+            var._log_handler.close()
+
     # close the main log file
     log._log_handler.close()
+
     if not any(v.failed for v in pods.values()):
         return util.exit_handler(code=0)
     else:

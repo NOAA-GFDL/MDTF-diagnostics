@@ -116,7 +116,6 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
             contents=d
         )
 
-    status: util.ObjectStatus = dataclasses.field(default=util.ObjectStatus.NOTSET, compare=False)
     # Cache log info in memory until log file is set up
     util.logs.initial_log_config()
 
@@ -205,13 +204,18 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
             if any(p.failed):
                 log.log.info("Data request for pod '%s' failed; skipping  execution.", p)
 
+    # convert POD figure files if necessary
+    # generate html output
     for p in pods.values():
         out_mgr = output_manager.HTMLOutputManager(p, ctx.config)
         out_mgr.make_output(p, ctx.config)
+
+    # clean up temporary directories
     tempdirs = util.TempDirManager(ctx.config)
     tempdirs.cleanup()
-    print_summary(pods, log.log)
 
+    print_summary(pods, log.log)
+    # close the varlistEntry log handlers
     for case_name, case_dict in cases.items():
         for var in case_dict.iter_children():
             var._log_handler.close()

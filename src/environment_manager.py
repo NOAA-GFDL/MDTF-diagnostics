@@ -142,7 +142,8 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         # conda_init for bash defines conda as a shell function; will get error
         # if we try to call the conda executable directly
         if any(config.micromamba_exe):
-            cmd = f"{self.conda_dir}/micromamba_init.sh --micromamba_root {config.conda_root} --micromamba_exe {config.micromamba_exe}"
+            cmd = (f"{self.conda_dir}/micromamba_init.sh --micromamba_root {config.conda_root}"
+                   f" --micromamba_exe {config.micromamba_exe}")
         else:
             cmd = f"{self.conda_dir}/conda_init.sh {config.conda_root}"
 
@@ -235,7 +236,8 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         conda_prefix = os.path.join(self.conda_env_root, env_name)
         if os.path.split(self.conda_exe)[-1] == 'micromamba':
             return [
-                f'source {self.conda_dir}/micromamba_init.sh --micromamba_exe {self.conda_exe} --micromamba_root {self.conda_root}',
+                f'source {self.conda_dir}/micromamba_init.sh --micromamba_exe {self.conda_exe}'
+                f' --micromamba_root {self.conda_root}',
                 f'micromamba activate {conda_prefix}'
             ]
         else:

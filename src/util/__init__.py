@@ -28,7 +28,7 @@ from .datelabel import (
 )
 
 from .filesystem import (
-    abbreviate_path, resolve_path, recursive_copy,
+    abbreviate_path, resolve_path, recursive_copy, _DoubleBraceTemplate,
     check_executable, find_files, check_dir, bump_version, strip_comments,
     parse_json, read_json, find_json, write_json, pretty_print_json,
     append_html_template, get_config_file_type, TempDirManager

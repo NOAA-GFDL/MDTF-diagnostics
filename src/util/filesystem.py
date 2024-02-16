@@ -455,8 +455,8 @@ class _DoubleBraceTemplate(string.Template):
     See `<https://docs.python.org/3.7/library/string.html#string.Template>`_ and
     `<https://stackoverflow.com/a/34362892>`__.
     """
-    flags = re.VERBOSE # matching is case-sensitive, unlike default
-    delimiter = '{{' # starting delimter is two braces, then apply
+    flags = re.VERBOSE  # matching is case-sensitive, unlike default
+    delimiter = '{{'  # starting delimter is two braces, then apply
     pattern = r"""
         \{\{(?:                 # match delimiter itself, but don't include it
         # Alternatives for what to do with string following delimiter:
@@ -505,7 +505,7 @@ def append_html_template(template_file, target_file, template_dict={},
             If False, overwrite *target_file* with the substituted contents of
             *template_file*.
     """
-    assert os.path.exists(template_file)
+    assert os.path.exists(template_file), f"Template file {template_file} not found"
     with io.open(template_file, 'r', encoding='utf-8') as f:
         html_str = f.read()
         html_str = _DoubleBraceTemplate(html_str).safe_substitute(template_dict)

@@ -7,6 +7,7 @@ import datetime
 import glob
 import io
 import shutil
+from string import Template
 from src import util, verify_links
 
 import logging
@@ -28,8 +29,14 @@ def html_templating_dict(pod) -> dict:
         d[attr] = str(pod.pod_settings.get(attr, ""))
         if not any(d[attr]):
             d[attr] = str(getattr(pod, attr, ""))
-    if len(pod.multi_case_dict['CASE_LIST']) > 1:
-        pass
+    if len(pod.multi_case_dict['CASE_LIST']) > 1:  # multi-case PODs
+        case_number = 1
+        for case_name, case_dict in pod.multi_case_dict['CASE_LIST'].items():
+            case_str = f'CASE_{case_number}'
+            d[case_str] = case_name
+            case_number += 1
+            for att_name, att in case_dict.items():
+                d[att_name] = att
     else:  # single-case PODs
         for case_name, case_dict in pod.multi_case_dict['CASE_LIST'].items():
             for att_name, att in case_dict.items():
@@ -55,13 +62,17 @@ class HTMLSourceFileMixin:
         return os.path.join(self.CODE_ROOT, 'src', 'html', file_name)
 
     @staticmethod
-    def pod_html_template_file_name(pod):
+    def pod_header_html_template_file_name(pod):
         """Name of the html template file to use for *pod*."""
-        return pod.name+'.html'
+        return pod.name + '.html'
 
-    def POD_HTML(self, pod):
+    @staticmethod
+    def pod_plots_html_template_file_name(pod):
+        return pod.name + '_plots.html'
+
+    def pod_html(self, pod):
         """Path to *pod*\'s html output file in the working directory."""
-        return os.path.join(pod.paths.POD_WORK_DIR, self.pod_html_template_file_name(pod))
+        return os.path.join(pod.paths.POD_WORK_DIR, self.pod_header_html_template_file_name(pod))
 
     def write_data_log_file(self):
         """Writes \*.data.log file to output containing info on data files used.
@@ -132,15 +143,17 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         ``$POD_WORK_DIR``, respecting subdirectory structure (see
         :func:`~util.recursive_copy`).
         """
-        test_path = os.path.join(
-            self.obj.paths.POD_CODE_DIR, self.pod_html_template_file_name(self.obj)
+        html_template_path = os.path.join(
+            self.obj.paths.POD_CODE_DIR, self.pod_header_html_template_file_name(self.obj)
         )
-        if not os.path.isfile(test_path):
+        if not os.path.isfile(html_template_path):
             # POD's top-level html template needs to exist
-            raise util.MDTFFileNotFoundError(test_path)
+            raise util.MDTFFileNotFoundError(html_template_path)
+
         template_d = html_templating_dict(self.obj)
         # copy and template all .html files, since PODs can make sub-pages
         source_files = util.find_files(self.CODE_DIR, '*.html')
+        # optional html_plots_template_path for PODs that generate 1 plot for each case
         util.recursive_copy(
             source_files,
             self.CODE_DIR,
@@ -356,7 +369,7 @@ class HTMLOutputManager(AbstractOutputManager,
         if not pod.failed:
             pod.status = util.ObjectStatus.SUCCEEDED
 
-        self.make_html()
+        self.make_html(self._html_file_name)
         self.backup_config_files(config)
         self.write_data_log_file()
         if self.make_variab_tar:
@@ -365,64 +378,65 @@ class HTMLOutputManager(AbstractOutputManager,
         if not self.obj.failed:
             self.obj.status = util.ObjectStatus.SUCCEEDED
 
-    def generate_html_file_case_loop(self, output_file_name: str, case_info: dict, pod_plot_html_file):
+    def generate_html_file_case_loop(self, case_info: dict, template_dict: dict, dest_file: str):
         """generate_html_file: write the case information into
         the html template
 
-        Arguments: f (file handle)
-                   case_dict (nested dict  [case1, [casename, startdate, enddate],
-                                            case2, [ ... ], ..., caseN, [ ... ]]
-
-        Note: safe_substitute could be used; it leaves unmodified anything that doesn't have a match (instead of crashing)
-        Note: any other case info in the dict can be replaced, eg:
-        case_template = Template("<TD style='width: 200px' align=center><A href=model/block_freq_anncycle.$CASENAME.png>$CASENAME ($FIRSTYR-$LASTYR)</A>")
+        Arguments: case_info (nested dict): dictionary with information for each case
+                   template_dict (dict): dictionary with template environment variables
+                   dest_file (str): path to output html file
 
         """
-        from string import Template
-
-        case_template = Template(pod_plot_html_file)
-        for case_name, case_settings in case_info:
-            html_template = case_template.substitute(case_settings)
-            output_file_name.write(html_template)
+        f = open(dest_file, "w")
+        case_template = "<TR><TD><TD><TD><TD style='width: 200px' align=center>"\
+                        "<A href={{PODNAME}}_model_plot_{{CASENAME}}.png>{{CASENAME}}\n</A>"
+        for case_name, case_settings in case_info.items():
+            case_settings['PODNAME'] = template_dict['PODNAME']
+            output_template = util._DoubleBraceTemplate(case_template).safe_substitute(case_settings)
+            f.write(output_template)
 
         # finalize the figure table, start the case settings table
-        html_template = """
+        case_settings_header_html_template = """
         </TABLE>
         </p>
-        </p><b> Case settings</b>
+        </p><b> Case Settings</b>
         <TABLE>
 
         """
-        output_file_name.write(html_template)
+        f.write(case_settings_header_html_template)
 
         # write the settings per case. First header.
-        #           This prints the whole thing    html_template = str(case_dict)
+        # This prints the whole thing html_template = str(case_dict)
 
-        case_template = Template("<TR><TD style='width: 100px' align=center><b>$CASENAME")
-        settings_template = Template("<TD style='width: 100px' align=center>$FIRSTYR - $LASTYR ")
+        case_settings_template = "<TR><TD style='width: 100px' align=center><b>{{CASENAME}}\n"\
+                                 "<TD style='width: 100px' align=center>{{startdate}} - {{enddate}}\n "
 
-        for case_name, case_settings in case_info:
-            html_template = case_template.safe_substitute(case_settings)
-            output_file_name.write(html_template)
+        for case_name, case_settings in case_info.items():
+            # html_template = case_template.safe_substitute(case_settings)
+            # output_file_name.write(html_template)
+            output_template = util._DoubleBraceTemplate(case_settings_template).safe_substitute(case_settings)
+            f.write(output_template)
 
-            html_template = settings_template.safe_substitute(case_settings)
-            output_file_name.write(html_template)
-
-        html_template = """
+        pod_settings_header_html_template = """
         </TABLE>
         </p>
         <TABLE>
-        <TR><TH align=left>POD Settings
+        <TR><TH align=left>POD Settings\n
+        "<TR><TD style='width: 100px' align=center><b>{{driver}}\n"
+         <TD style='width: 100px' align=center>{{convention}}\n "
         """
-        output_file_name.write(html_template)
+        output_template = (
+            util._DoubleBraceTemplate(pod_settings_header_html_template).safe_substitute(self.obj.pod_settings))
+        f.write(output_template)
+        f.close()
 
-    def make_html(self, cleanup=True):
+    def make_html(self, html_file_name:str, cleanup=True):
         """Add header and footer to the temporary output file at CASE_TEMP_HTML.
         """
-        dest = os.path.join(self.WORK_DIR, self._html_file_name)
+        dest = os.path.join(self.WORK_DIR, html_file_name)
         if os.path.isfile(dest):
             self.obj.log.warning("%s: '%s' exists, deleting.",
-                                 self._html_file_name, self.obj.name)
+                                 html_file_name, self.obj.name)
             os.remove(dest)
 
         template_dict = self.obj.pod_env_vars.copy()
@@ -433,6 +447,7 @@ class HTMLOutputManager(AbstractOutputManager,
             self.html_src_file('mdtf_multirun_header.html'), dest, template_dict
         )
         util.append_html_template(self.CASE_TEMP_HTML, dest, {})
+        self.generate_html_file_case_loop(self.obj.multi_case_dict['CASE_LIST'], template_dict, dest)
         util.append_html_template(
             self.html_src_file('mdtf_footer.html'), dest, template_dict
         )
@@ -475,7 +490,7 @@ class HTMLOutputManager(AbstractOutputManager,
         """Copy all files to the user-specified output directory (``$OUTPUT_DIR``).
         """
         if self.WORK_DIR == self.OUT_DIR:
-            return # no copying needed
+            return  # no copying needed
         self.obj.log.debug("%s: Copy '%s' to '%s'.", self.obj.full_name,
                            self.WORK_DIR, self.OUT_DIR)
         try:
@@ -499,7 +514,7 @@ class HTMLOutputManager(AbstractOutputManager,
         """
         pod.log.info('Checking linked output files for %s.', pod.full_name)
         verifier = verify_links.LinkVerifier(
-            self.POD_HTML(pod),  # root html file to start search at
+            self.pod_html(pod),  # root html file to start search at
             self.WORK_DIR,         # root directory to resolve relative paths
             verbose=False,
             log=pod.log

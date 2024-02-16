@@ -151,7 +151,7 @@ plt.title("Zonal Mean Surface Air Temperature Anomaly")
 
 # save the plot in the right location
 assert os.path.isdir(f"{work_dir}/model/PS"), f'Assertion error: {work_dir}/model/PS not found'
-plt.savefig(f"{work_dir}/model/PS/example_model_plot.eps", bbox_inches="tight")
+plt.savefig(f"{work_dir}/model/PS/example_multicase_plot.eps", bbox_inches="tight")
 
 
 # Part 4: Close the catalog files and

@@ -10,33 +10,37 @@
             "netCDF4",
             "numpy",
             "cartopy",
-            "hn2016_falwa"
+            "falwa"
          ]
       }
    },
-   "data":{
-      "frequency":"day"
-   },
+   "data":{"frequency":"day"},
    "dimensions":{
-      "lat":{
-         "standard_name":"latitude"
-      },
-      "lon":{
-         "standard_name":"longitude"
-      },
-      "lev":{
-         "standard_name":"air_pressure",
-         "units":"hPa",
-         "positive":"down",
-         "axis":"Z"
-      },
-      "time":{
-         "standard_name":"time"
-      }
+      "lat": {"standard_name": "latitude"},
+      "lon": {"standard_name": "longitude"},
+      "lev":{"standard_name":"air_pressure", "units":"hPa", "positive":"down", "axis":"Z"},
+      "time": {"standard_name": "time"},
+   "varlist":{
+      "ua":{
+         "standard_name":"eastward_wind",
+         "units":"m s-1",
+         "dimensions":["time", "lev", "lat", "lon"],
+         "freq":"day"},
+      "va":{
+         "standard_name":"northward_wind",
+         "units":"m s-1",
+         "dimensions":["time", "lev", "lat", "lon"],
+         "freq":"day"},
+      "ta":{
+         "standard_name":"air_temperature",
+         "units":"K",
+         "dimensions":["time", "lev", "lat", "lon"],
+         "freq":"day"}
    },
-   "pod_env_vars":{
+   "pod_env_vars":{   /* This shall be removed when submitting PR */
       "start_year" : "1993",
       "end_year" : "2009",
+      "CASENAME": "GFDL-CM3_historical_r1i1p1",
       "UVT_FILE": "GFDL-CM3_historical_r1i1p1_20050101-20051231_10tslice.nc",
       "U_VAR": "ua",
       "V_VAR": "va",
@@ -46,40 +50,5 @@
       "LAT_COORD": "lat",
       "LON_COORD": "lon",
       "WK_DIR": "wkdir"
-   },
-   "varlist":{
-      "ua":{
-         "standard_name":"eastward_wind",
-         "units":"m s-1",
-         "dimensions":[
-            "time",
-            "lev",
-            "lat",
-            "lon"
-         ],
-         "freq":"day"
-      },
-      "va":{
-         "standard_name":"northward_wind",
-         "units":"m s-1",
-         "dimensions":[
-            "time",
-            "lev",
-            "lat",
-            "lon"
-         ],
-         "freq":"day"
-      },
-      "ta":{
-         "standard_name":"air_temperature",
-         "units":"K",
-         "dimensions":[
-            "time",
-            "lev",
-            "lat",
-            "lon"
-         ],
-         "freq":"day"
-      }
    }
 }

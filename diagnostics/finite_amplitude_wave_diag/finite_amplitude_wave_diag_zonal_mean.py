@@ -3,7 +3,7 @@
 # Calculate finite-amplitude wave diagnostics that quantifies wave-mean flow
 # interactions.
 #
-# Last update: 09/07/2023
+# Last update: 02/18/2024
 # ================================================================================
 #   Version & Contact info
 # 
@@ -27,23 +27,21 @@
 import os
 import gc
 import socket
-from typing import Tuple, Optional
-
-import gridfill
-import matplotlib
-from matplotlib import gridspec
+from typing import Optional
 from collections import namedtuple
-
+import matplotlib
 if socket.gethostname() == 'otc':
     matplotlib.use('Agg')  # non-X windows backend
-# Commands to load third-party libraries. Any code you don't include that's 
+
+import gridfill
+from finite_amplitude_wave_diag_utils import LatLonMapPlotter, HeightLatPlotter
+
+# Commands to load third-party libraries. Any code you don't include that's
 # not part of your language's standard library should be listed in the 
 # settings.jsonc file.
-from abc import ABC
+from typing import Dict
 import numpy as np
 import xarray as xr  # python library we use to read netcdf files
-import matplotlib.pyplot as plt  # python library we use to make plots
-from cartopy import crs as ccrs
 from falwa.xarrayinterface import QGDataset
 from falwa.oopinterface import QGFieldNH18
 from falwa.constant import P_GROUND, SCALE_HEIGHT
@@ -71,8 +69,6 @@ def convert_hPa_to_pseudoheight(p_array):
     """
     height_array = - SCALE_HEIGHT * np.log(p_array / P_GROUND)
     return height_array
-
-
 
 
 class DataPreprocessor:
@@ -207,6 +203,9 @@ if load_environ:  # otc path
     lat_name = os.environ["LAT_COORD"]
     lon_name = os.environ["LON_COORD"]
     wk_dir = os.environ["WK_DIR"]
+    casename = os.environ["CASENAME"]
+    firstyr = os.environ["FIRSTYR"]
+    lastyr = os.environ["LASTYR"]
 else:  # iMac path
     uvt_path = f"{os.environ['HOME']}/Dropbox/GitHub/mdtf/MDTF-diagnostics/diagnostics/finite_amplitude_wave_diag/" + \
                "GFDL-CM3_historical_r1i1p1_20050101-20051231_10tslice.nc"
@@ -218,6 +217,10 @@ else:  # iMac path
     lat_name = "lat"
     lon_name = "lon"
     wk_dir = "/Users/claresyhuang/Dropbox/GitHub/hn2016_falwa/github_data_storage"
+    casename = "GFDL-CM3_historical_r1i1p1"
+    firstyr = 2005
+    lastyr = 2005
+
 # Regular grid defined by developer
 xlon = np.arange(0, 361, 1.0)
 ylat = np.arange(-90, 91, 1.0)
@@ -279,14 +282,13 @@ def calculate_covariance(lwa_baro, u_baro):
         cov_map in dimension of (lat, lon)
     """
     baro_matrix_shape = lwa_baro.data.shape
-    # dataset.lwa_baro.data.shape # (10, 90, 144)
-    # dataset.u_baro.data.shape # (10, 90, 144)
     flatten_lwa_baro = lwa_baro.data.reshape(baro_matrix_shape[0], baro_matrix_shape[1] * baro_matrix_shape[2])
     flatten_u_baro = u_baro.data.reshape(baro_matrix_shape[0], baro_matrix_shape[1] * baro_matrix_shape[2])
     covv = np.cov(m=flatten_lwa_baro, y=flatten_u_baro, rowvar=False)
     row_cov = np.diagonal(covv, offset=baro_matrix_shape[1] * baro_matrix_shape[2])
     cov_map = row_cov.reshape(baro_matrix_shape[1], baro_matrix_shape[2])
     return cov_map
+
 
 def time_average_processing(dataset: xr.Dataset):
     SeasonalAverage = namedtuple(
@@ -310,71 +312,7 @@ def time_average_processing(dataset: xr.Dataset):
     return seasonal_avg_data
 
 
-class HeightLatPlotter(object):
-    def __init__(self, figsize, xgrid, ygrid, cmap, xlim):
-        self._figsize = figsize
-        self._xgrid = xgrid
-        self._ygrid = ygrid
-        self._cmap = cmap
-        self._xlim = xlim  # [-80, 80]
-
-    def plot_and_save_variable(
-            self, variable, cmap, title_str, save_path, num_level=30):
-        fig = plt.figure(figsize=self._figsize)
-        spec = gridspec.GridSpec(ncols=1, nrows=1)
-        ax = fig.add_subplot(spec[0])
-        # *** Zonal mean U ***
-        main_fig = ax.contourf(
-            self._xgrid,
-            self._ygrid,
-            variable,
-            num_level,
-            cmap=cmap if cmap else self._cmap)
-        fig.colorbar(main_fig, ax=ax)
-        ax.set_title(title_str)
-        ax.set_xlim(self._xlim)
-        plt.tight_layout()
-        plt.show()
-        plt.savefig(save_path, bbox_inches='tight')
-        plt.savefig(save_path.replace(".eps", ".png"), bbox_inches='tight')
-
-
-class LatLonMapPlotter(object):
-    def __init__(self, figsize, xgrid, ygrid, cmap, xland, yland, lon_range, lat_range):
-        self._figsize = figsize
-        self._xgrid = xgrid
-        self._ygrid = ygrid
-        self._cmap = cmap
-        self._xland = xland
-        self._yland = yland
-        self._lon_range = lon_range
-        self._lat_range = lat_range
-
-    def plot_and_save_variable(
-            self, variable, cmap, title_str, save_path, num_level=30):
-        fig = plt.figure(figsize=self._figsize)
-        spec = gridspec.GridSpec(
-            ncols=1, nrows=1, wspace=0.3, hspace=0.3)
-        ax = fig.add_subplot(spec[0], projection=ccrs.PlateCarree())
-        ax.coastlines(color='black', alpha=0.7)
-        ax.set_aspect('auto', adjustable=None)
-        main_fig = ax.contourf(
-            self._xgrid, self._ygrid,
-            variable,
-            num_level,
-            cmap=cmap)
-        ax.scatter(self._xgrid[self._xland], self._ygrid[self._yland], s=1, c='gray')
-        ax.set_xticks(self._lon_range, crs=ccrs.PlateCarree())
-        ax.set_yticks(self._lat_range, crs=ccrs.PlateCarree())
-        fig.colorbar(main_fig, ax=ax)
-        ax.set_title(title_str)
-        plt.tight_layout()
-        plt.show()
-        plt.savefig(save_path, bbox_inches='tight')
-        plt.savefig(save_path.replace(".eps", ".png"), bbox_inches='tight')
-
-
-def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, analysis_height_array, title_str, plot_path,
+def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, analysis_height_array, plot_dir, title_str,
                                            xy_mask=None, yz_mask=None):
     if xy_mask is None:
         xy_mask = np.zeros_like(seasonal_average_data.u_baro)
@@ -386,39 +324,34 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, analysis_heigh
     lon_range = np.arange(-180, 181, 60)
     lat_range = np.arange(-90, 91, 30)
 
-    test_dir = "/Users/claresyhuang/Dropbox/GitHub/mdtf/MDTF-diagnostics/diagnostics/finite_amplitude_wave_diag/"
     cmap = "jet"
 
-    height_lat_plotter = HeightLatPlotter(
-        figsize=(4, 4), xgrid=original_grid['lat'], ygrid=analysis_height_array, cmap=cmap, xlim=[-80, 80])
-    height_lat_plotter.plot_and_save_variable(
-        variable=seasonal_average_data.zonal_mean_u,
-        cmap=cmap, title_str='zonal mean U', save_path=f"{test_dir}test_zonal_mean_u.png", num_level=30)
-    height_lat_plotter.plot_and_save_variable(
-        variable=seasonal_average_data.zonal_mean_lwa,
-        cmap=cmap, title_str='zonal mean LWA', save_path=f"{test_dir}test_zonal_mean_lwa.png", num_level=30)
-    height_lat_plotter.plot_and_save_variable(
-        variable=seasonal_average_data.uref,
-        cmap=cmap, title_str='zonal mean Uref', save_path=f"{test_dir}test_zonal_mean_uref.png", num_level=30)
-    height_lat_plotter.plot_and_save_variable(
-        variable=seasonal_average_data.zonal_mean_u - seasonal_average_data.uref,
-        cmap=cmap, title_str='zonal mean $\Delta$ U', save_path=f"{test_dir}test_zonal_mean_delta_u.png", num_level=30)
+    height_lat_plotter = HeightLatPlotter(figsize=(4, 4), title_str=title_str, xgrid=original_grid['lat'],
+                                          ygrid=analysis_height_array, cmap=cmap, xlim=[-80, 80])
+    height_lat_plotter.plot_and_save_variable(variable=seasonal_average_data.zonal_mean_u, cmap=cmap,
+                                              var_title_str='zonal mean U',
+                                              save_path=f"{plot_dir}test_zonal_mean_u.png", num_level=30)
+    height_lat_plotter.plot_and_save_variable(variable=seasonal_average_data.zonal_mean_lwa, cmap=cmap,
+                                              var_title_str='zonal mean LWA',
+                                              save_path=f"{plot_dir}test_zonal_mean_lwa.png", num_level=30)
+    height_lat_plotter.plot_and_save_variable(variable=seasonal_average_data.uref, cmap=cmap,
+                                              var_title_str='zonal mean Uref',
+                                              save_path=f"{plot_dir}test_zonal_mean_uref.png", num_level=30)
+    height_lat_plotter.plot_and_save_variable(variable=seasonal_average_data.zonal_mean_u - seasonal_average_data.uref,
+                                              cmap=cmap, var_title_str='zonal mean $\Delta$ U',
+                                              save_path=f"{plot_dir}test_zonal_mean_delta_u.png", num_level=30)
 
     # Use encapsulated class to plot
-    lat_lon_plotter = LatLonMapPlotter(
-        figsize=(6, 3), xgrid=original_grid['lon'], ygrid=original_grid['lat'],
-        cmap=cmap, xland=xland, yland=yland,
-        lon_range=lon_range, lat_range=lat_range)
-    lat_lon_plotter.plot_and_save_variable(
-        variable=seasonal_average_data.u_baro, cmap=cmap, title_str='U baro',
-        save_path=f"{test_dir}test_u_baro.png", num_level=30)
-    lat_lon_plotter.plot_and_save_variable(
-        variable=seasonal_average_data.lwa_baro, cmap=cmap, title_str='LWA baro',
-        save_path=f"{test_dir}test_lwa_baro.png", num_level=30)
-    lat_lon_plotter.plot_and_save_variable(
-        variable=seasonal_average_data.covariance_lwa_u_baro, cmap="Purples_r",
-        title_str='Covariance between LWA and U(baro)',
-        save_path=f"{test_dir}test_u_lwa_covariance.png", num_level=30)
+    lat_lon_plotter = LatLonMapPlotter(figsize=(6, 3), title_str=title_str, xgrid=original_grid['lon'],
+                                       ygrid=original_grid['lat'], cmap=cmap, xland=xland, yland=yland,
+                                       lon_range=lon_range, lat_range=lat_range)
+    lat_lon_plotter.plot_and_save_variable(variable=seasonal_average_data.u_baro, cmap=cmap, var_title_str='U baro',
+                                           save_path=f"{plot_dir}test_u_baro.png", num_level=30)
+    lat_lon_plotter.plot_and_save_variable(variable=seasonal_average_data.lwa_baro, cmap=cmap, var_title_str='LWA baro',
+                                           save_path=f"{plot_dir}test_lwa_baro.png", num_level=30)
+    lat_lon_plotter.plot_and_save_variable(variable=seasonal_average_data.covariance_lwa_u_baro, cmap="Purples_r",
+                                           var_title_str='Covariance between LWA and U(baro)',
+                                           save_path=f"{plot_dir}test_u_lwa_covariance.png", num_level=30)
 
 
 # === 3) Saving output data ===
@@ -430,40 +363,52 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, analysis_heigh
 
 # *** Produce data by season, daily ***
 if __name__ == '__main__':
-    season_dict = {"DJF": [1, 2, 12], "MAM": [3, 4, 5], "JJA": [6, 7, 8], "SON": [9, 10, 11]}
-    out_paths = {key: f"{wk_dir}/intermediate_{key}.nc" for key, value in season_dict.items()}
+    model_or_obs: str = "model"  # It can be "model" or "obs"
+    season_to_months = [
+        ("DJF", [1, 2, 12]), ("MAM", [3, 4, 5]), ("JJA", [6, 7, 8]), ("SON", [9, 10, 11])]
+    intermediate_output_paths: Dict[str, str] = {
+        item[0]: f"{wk_dir}/{model_or_obs}/intermediate_{item[0]}.nc" for item in season_to_months}
 
-    for season in season_dict:
+    for season in season_to_months[:1]:
         # Construct data preprocessor
         data_preprocessor = DataPreprocessor(
             wk_dir=wk_dir, xlon=xlon, ylat=ylat, u_var_name=u_var_name, v_var_name=v_var_name, t_var_name=t_var_name,
             plev_name=plev_name, lat_name=lat_name, lon_name=lon_name, time_coord_name=time_coord_name)
 
-        selected_months = season_dict.get(season)
-        plot_path = f"FAWA_Diag_{season}_new.eps"
-        # plot_path = "{WK_DIR}/{model_or_obs}/PS/example_{model_or_obs}_plot.eps".format(
-        #     model_or_obs=model_or_obs, **os.environ)
-        # plt.savefig(plot_path, bbox_inches='tight')
+        selected_months = season[1]
+        plot_dir = f"{wk_dir}/{model_or_obs}/PS/"
+        # plt.savefig(plot_dir, bbox_inches='tight')
 
         # Do temporal sampling to reduce the data size
         sampled_dataset = model_dataset.where(
             model_dataset.time.dt.month.isin(selected_months), drop=True) \
             .groupby("time.day").mean("time")
-        preprocessed_output_path = out_paths[season]  # TODO set it
+        preprocessed_output_path = intermediate_output_paths[season[0]]  # TODO set it
         data_preprocessor.output_preprocess_data(
             sampled_dataset=sampled_dataset, output_path=preprocessed_output_path)
         intermediate_dataset = xr.open_mfdataset(preprocessed_output_path)
         fawa_diagnostics_dataset = compute_from_sampled_data(intermediate_dataset)
         analysis_height_array = fawa_diagnostics_dataset.coords['height'].data
         seasonal_avg_data = time_average_processing(fawa_diagnostics_dataset)
+
+        # === 4) Saving output plots ===
+        #
+        # Plots should be saved in EPS or PS format at <WK_DIR>/<model or obs>/PS
+        # (created by the framework). Plots can be given any filename, but should have
+        # the extension ".eps" or ".ps". To make the webpage output, the framework will
+        # convert these to bitmaps with the same name but extension ".png".
+
+        # Define a python function to make the plot, since we'll be doing it twice and
+        # we don't want to repeat ourselves.
+
+        # set an informative title using info about the analysis set in env vars
+        title_string = f"{casename} ({firstyr}-{lastyr})"
+        # Plot the model data:
+        # plot_and_save_figure("model", title_string, model_dataset)
         plot_finite_amplitude_wave_diagnostics(
-            seasonal_avg_data,
-            analysis_height_array,
-            title_str=f'Finite-amplitude diagnostic plots for {season}',
-            plot_path=plot_path,
-            xy_mask=data_preprocessor._xy_mask,
-            yz_mask=data_preprocessor._yz_mask)
-        print(f"Finishing outputting {plot_path}.")
+            seasonal_avg_data, analysis_height_array, plot_dir=plot_dir, title_str=title_string,
+            xy_mask=data_preprocessor._xy_mask, yz_mask=data_preprocessor._yz_mask)
+        print(f"Finishing outputting figures to {plot_dir}.")
 
         # Close xarray datasets
         sampled_dataset.close()
@@ -473,27 +418,12 @@ if __name__ == '__main__':
     print("Finish the whole process")
     model_dataset.close()
 
-    # === 4) Saving output plots (TODO not yet finished) ===
-    #
-    # Plots should be saved in EPS or PS format at <WK_DIR>/<model or obs>/PS
-    # (created by the framework). Plots can be given any filename, but should have
-    # the extension ".eps" or ".ps". To make the webpage output, the framework will
-    # convert these to bitmaps with the same name but extension ".png".
-
-    # Define a python function to make the plot, since we'll be doing it twice and
-    # we don't want to repeat ourselves.
-
-    # set an informative title using info about the analysis set in env vars
-    # title_string = "{CASENAME}: mean {tas_var} ({FIRSTYR}-{LASTYR})".format(**os.environ)
-    # Plot the model data:
-    # plot_and_save_figure("model", title_string, model_dataset)
-
     # 6) Cleaning up:
     #
     # In addition to your language's normal housekeeping, don't forget to delete any
     # temporary/scratch files you created in step 4).
-
-
+    os.system(f"rm -f {wk_dir}/gridfill_*.nc")
+    os.system(f"rm -f {wk_dir}/intermediate_*.nc")
 
 ### 7) Error/Exception-Handling Example ########################################
 # nonexistent_file_path = "{DATADIR}/mon/nonexistent_file.nc".format(**os.environ)
@@ -503,7 +433,6 @@ if __name__ == '__main__':
 #     print(error)
 #     print("This message is printed by the example POD because exception-handling is working!")
 
-
 ### 8) Confirm POD executed sucessfully ########################################
-# print("Last log message by Example POD: finished successfully!")
+print("POD Finite-amplitude wave diagnostic (zonal mean) finished successfully!")
 

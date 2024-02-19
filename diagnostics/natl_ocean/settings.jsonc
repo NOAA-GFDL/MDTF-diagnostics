@@ -1,0 +1,90 @@
+// Example MDTF diagnostic settings file
+//
+// This should be an ascii text file in JSON format
+// (https://en.wikipedia.org/wiki/JSON#Data_types_and_syntax), with the addition
+// that all text to the  right of a "//" is a comment and ignored (sometimes
+// called "JSONC" format).
+//
+{
+  "settings" : {
+    "driver" : "natl_ocean.py",
+    "long_name" : "Subtropical to Subpolar North Atlantic Ocean Diagnostics",
+    "realm" : "ocean",
+    "description" : "Subtropical to Subpolar North Atlantic Ocean Diagnostics",
+
+    // (optional) Any diagnostic-specific environment variables, given as
+    // key:value pairs. The user can't change these at runtime, but they can be
+    // used to set site-specific installation settings for your diagnostic.
+    "pod_env_vars" : {
+      "EXAMPLE_FAV_COLOR": "blue"
+    },
+
+    // Programs and third-party libraries your diagnostic needs to run. This is
+    // a set of key:value pairs, where "key" is the name of a language's
+    // executable and "value" is a list of all the libraries that language needs.
+    // The framework will ensure everything listed here is on your diagnostic's
+    // $PATH when it runs.
+    "runtime_requirements": {
+        "python3": ["matplotlib", "xarray", "netCDF4"]
+    }
+  },
+
+  // In this section, you define the names and units for the coordinates used by
+  // the variables defined below in the "varlist" section. Names in the
+  // "dimensions" attribute for each variable must correspond to a coordinate
+  // named here.
+  "dimensions": {
+    "time": {"standard_name": "time"},
+    "TLONG": {
+             "standard_name": "array of t-grid longitudes",
+             "axis": "X"
+           },
+    "TLAT": {
+             "standard_name": "array of t-grid latitudes",
+             "axis": "Y"
+          },
+    "z_t": {
+           "standard_name": "depth from surface to midpoint of layer", 
+           "axis": "Z", 
+           "units": "centimeters",
+           "positive": "down"
+        }
+  },
+
+  // In this section, you describe what model data your diagnostic uses. Add one
+  // list entry (the section in curly braces) for each variable, separated by
+  // commas.
+  "varlist" : {
+     "SST": {
+       "standard_name" : "Potential Temperature",
+       "units": "degC",
+       "frequency" : "mon",
+       "dimensions": ["time", "z_t", "TLAT", "TLONG"]
+       },
+     "SALT": {
+       "standard_name" : "Salinity",
+       "units": "psu",
+       "frequency" : "mon",
+       "dimensions": ["time", "z_t", "TLAT", "TLONG"]
+       }, 
+     "SHF": {
+       "standard_name" : "Surface Heat Flux",
+       "units": "W/m2",
+       "frequency" : "mon",
+     "dimensions": ["time", "TLAT", "TLONG"]
+       },
+      "SFWF": {
+       "standard_name" : "Surface Freshwater Flux",
+       "units": "kg/m2/s",
+       "frequency" : "mon",
+       "dimensions": ["time", "TLAT", "TLONG"]
+       },
+       "TAREA": {
+       "standard_name" : "area of T cells",
+       "units": "centimeters^2",
+       "dimensions": ["TLAT", "TLONG"]
+       }
+        
+   // If we needed a second variable, we'd list it here.
+  }
+}

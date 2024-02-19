@@ -13,6 +13,8 @@
     "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
     "TLONG": {"axis": "X", "standard_name": "array of t-grid longitudes", "units": "degrees_east"},
     "TLAT": {"axis": "Y", "standard_name": "array of t-grid latitudes", "units": "degrees_north"},
+    //"nlon": {"axis": "X", "standard_name": "xindex", "units": "degrees_east"},
+    //"nlat": {"axis": "Y", "standard_name": "yindex", "units": "degrees_north"},
     "plev": {
       "standard_name": "air_pressure",
       "units": "hPa",
@@ -258,7 +260,13 @@
       "units": "m2",
       "ndim": 2
     },
-    // Variables for AMOC_3D_Structure module:
+    "TAREA": {
+      "standard_name": "area of T cells",
+      "modifier": "ocean_realm",
+      "units": "centimeters^2",
+      "ndim": 2
+    },
+   // Variables for AMOC_3D_Structure module:
     // "uo": {
     //   "standard_name": "sea_water_x_velocity",
     //   "units": "m s-1"
@@ -288,6 +296,21 @@
       "standard_name": "Potential Temperature",
       "units": "degC",
       "ndim": 4
+    },
+     "SALT": {
+      "standard_name": "Salinity",
+      "units": "psu",
+      "ndim": 4
+    },
+     "SHF": {
+      "standard_name": "Surface Heat Flux",
+      "units": "watts m^-2",
+      "ndim": 3
+    },
+     "SFWF": {
+      "standard_name": "Surface Freshwater Flux",
+      "units": "kg/m2/s",
+      "ndim": 3
     },
     // Variables for Convective Transition Diagnostics module:
     // ta: 3D temperature, units = K:
@@ -320,3 +343,5 @@
     "date_int_offset" : 1
   }
 }
+
+

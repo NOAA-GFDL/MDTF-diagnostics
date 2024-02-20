@@ -59,6 +59,8 @@ make_variab_tar: False
 # Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
 # under a unique name.
 overwrite: False
+# Generate html output for multiple figures per case
+"make_multicase_figure_html": False
 ### Developer settings ###
 # Set to True to run the preprocessor
 run_pp: True

@@ -376,64 +376,57 @@ class HTMLOutputManager(AbstractOutputManager,
         if not self.obj.failed:
             self.obj.status = util.ObjectStatus.SUCCEEDED
 
-    def generate_html_file_case_loop(self, case_info: dict, template_dict: dict, dest_file: str):
+    def generate_html_file_case_loop(self, case_info: dict, template_dict: dict, dest_file_handle: io.TextIOWrapper):
         """generate_html_file: append case figures to the POD html template
 
         Arguments: case_info (nested dict): dictionary with information for each case
                    template_dict (dict): dictionary with template environment variables
-                   dest_file (str): path to output html file
+                   dest_file_handle (io.TextIOWrapper): Output html file io stream
 
         """
-        f = open(dest_file, "w")
+
         case_template = "<TR><TD><TD><TD><TD style='width: 200px' align=center>"\
                         "<A href={{PODNAME}}_model_plot_{{CASENAME}}.png>{{CASENAME}}\n</A>"
         for case_name, case_settings in case_info.items():
             case_settings['PODNAME'] = template_dict['PODNAME']
             output_template = util._DoubleBraceTemplate(case_template).safe_substitute(case_settings)
-            f.write(output_template)
+            dest_file_handle.write(output_template)
 
-        f.close()
-
-    def append_case_info_html(self, case_info: dict, dest_file: str):
+    def append_case_info_html(self, case_info: dict, dest_file_handle: io.TextIOWrapper):
         """append_case_info_html: append case figures to the POD html template
 
         Arguments: case_info (nested dict): dictionary with information for each case
-                   dest_file (str): path to output html file
+                   dest_file_handle (io.TextIO): output html file io stream
         """
 
-        case_settings_header_html_template = """
-        </TABLE>
+        case_settings_header_html_template = """</TABLE>
         </p>
         </p><b> Case Settings</b>
         <TABLE>
-
         """
 
-        f = open(dest_file, "w")
-        f.write(case_settings_header_html_template)
+        dest_file_handle.write(case_settings_header_html_template)
 
         # write the settings per case. First header.
         # This prints the whole html_template = str(case_dict)
 
-        case_settings_template = "<TR><TD style='width: 100px' align=center><b>{{CASENAME}}\n"\
-                                 "<TD style='width: 100px' align=center>Date Range: {{startdate}} - {{enddate}}\n "
+        case_settings_template = """<TR><TD style='width: 100px' align=center><b>{{CASENAME}}\n\
+        <TD style='width: 100px' align=center>Date Range: {{startdate}} - {{enddate}}\n
+        """
 
         for case_name, case_settings in case_info.items():
             output_template = util._DoubleBraceTemplate(case_settings_template).safe_substitute(case_settings)
-            f.write(output_template)
+            dest_file_handle.write(output_template)
 
-        pod_settings_header_html_template = """
-        </TABLE>
+        pod_settings_header_html_template = """</TABLE>
         </p>
         <TABLE>
         <TR><TH align=left>POD Settings\n
-        "<TR><TD style='width: 100px' align=center><b> Driver script: {{driver}}\n"
-         <TD style='width: 100px' align=center> POD convention: {{convention}}\n "
+        <TR><TD style='width: 100px' align=center><b> Driver script: {{driver}}\n
         """
         output_template = (
             util._DoubleBraceTemplate(pod_settings_header_html_template).safe_substitute(self.obj.pod_settings))
-        f.write(output_template)
-        f.close()
+        dest_file_handle.write(output_template)
 
     def make_html(self, html_file_name: str, cleanup=True):
         """Add header and footer to the temporary output file at CASE_TEMP_HTML.
@@ -452,9 +445,11 @@ class HTMLOutputManager(AbstractOutputManager,
             self.html_src_file('mdtf_multirun_header.html'), dest, template_dict
         )
         util.append_html_template(self.CASE_TEMP_HTML, dest, {})
-        if self.multi_case_figure:
-            self.generate_html_file_case_loop(self.obj.multi_case_dict['CASE_LIST'], template_dict, dest)
-        self.append_case_info_html(self.obj.multi_case_dict['CASE_LIST'], dest)
+        with io.open(dest, 'a', encoding='utf-8') as f:
+            if self.multi_case_figure:
+                self.generate_html_file_case_loop(self.obj.multi_case_dict['CASE_LIST'], template_dict, f)
+            self.append_case_info_html(self.obj.multi_case_dict['CASE_LIST'], f)
+        f.close()
         util.append_html_template(
             self.html_src_file('mdtf_footer.html'), dest, template_dict
         )

@@ -43,16 +43,17 @@
           "enddate": "19891231"
         }
     },
+
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
   // Full path to model data ESM-intake catalog header file
-  "DATA_CATALOG": "/local2/home/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
+  "DATA_CATALOG": "/net/jml/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
 
   // Backwards compatibility
-  "MODEL_DATA_ROOT": "../mdtf_test_data",
+  "MODEL_DATA_ROOT": "../inputdata/mdtf_test_data",
 
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
@@ -67,7 +68,7 @@
   // Location of the Anaconda/miniconda or micromamba installation to use for managing
   // dependencies (path returned by running `[conda | micromamba] info`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  "conda_root": "~/.local/bin",
+  "conda_root": "~/miniconda3",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
@@ -114,3 +115,4 @@
 
   // Log verbosity level.
   "verbose": 1
+}

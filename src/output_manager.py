@@ -7,7 +7,6 @@ import datetime
 import glob
 import io
 import shutil
-from string import Template
 from src import util, verify_links
 
 import logging
@@ -66,9 +65,6 @@ class HTMLSourceFileMixin:
         """Name of the html template file to use for *pod*."""
         return pod.name + '.html'
 
-    @staticmethod
-    def pod_plots_html_template_file_name(pod):
-        return pod.name + '_plots.html'
 
     def pod_html(self, pod):
         """Path to *pod*\'s html output file in the working directory."""
@@ -294,6 +290,7 @@ class HTMLOutputManager(AbstractOutputManager,
     """
     _PodOutputManagerClass = HTMLPodOutputManager
     _html_file_name = 'index.html'
+    multi_case_figure: bool = False
     WORK_DIR: str = ""
     CODE_ROOT: str = ""
     OUT_DIR: str = ""
@@ -303,6 +300,7 @@ class HTMLOutputManager(AbstractOutputManager,
             self.make_variab_tar = config['make_variab_tar']
             self.overwrite = config['overwrite']
             self.file_overwrite = self.overwrite  # overwrite both config and .tar
+            self.multi_case_figure = config['make_multicase_figure_html']
         except KeyError as exc:
             self.log.exception("Caught %r", exc)
 
@@ -312,11 +310,11 @@ class HTMLOutputManager(AbstractOutputManager,
         self.obj = pod
 
     @property
-    def _tarball_file_path(self, pod):
-            paths = pod.paths
-            assert hasattr(self, 'WORK_DIR')
-            file_name = self.WORK_DIR + '.tar'
-            return os.path.join(paths.OUTPUT_DIR, file_name)
+    def _tarball_file_path(self) -> str:
+        paths = self.obj.paths
+        assert hasattr(self, 'WORK_DIR')
+        file_name = self.WORK_DIR + '.tar'
+        return os.path.join(paths.OUTPUT_DIR, file_name)
 
     def append_result_link(self, pod, config):
         """Update the top level index.html page with a link to *pod*'s results.
@@ -379,8 +377,7 @@ class HTMLOutputManager(AbstractOutputManager,
             self.obj.status = util.ObjectStatus.SUCCEEDED
 
     def generate_html_file_case_loop(self, case_info: dict, template_dict: dict, dest_file: str):
-        """generate_html_file: write the case information into
-        the html template
+        """generate_html_file: append case figures to the POD html template
 
         Arguments: case_info (nested dict): dictionary with information for each case
                    template_dict (dict): dictionary with template environment variables
@@ -395,7 +392,15 @@ class HTMLOutputManager(AbstractOutputManager,
             output_template = util._DoubleBraceTemplate(case_template).safe_substitute(case_settings)
             f.write(output_template)
 
-        # finalize the figure table, start the case settings table
+        f.close()
+
+    def append_case_info_html(self, case_info: dict, dest_file: str):
+        """append_case_info_html: append case figures to the POD html template
+
+        Arguments: case_info (nested dict): dictionary with information for each case
+                   dest_file (str): path to output html file
+        """
+
         case_settings_header_html_template = """
         </TABLE>
         </p>
@@ -403,17 +408,17 @@ class HTMLOutputManager(AbstractOutputManager,
         <TABLE>
 
         """
+
+        f = open(dest_file, "w")
         f.write(case_settings_header_html_template)
 
         # write the settings per case. First header.
-        # This prints the whole thing html_template = str(case_dict)
+        # This prints the whole html_template = str(case_dict)
 
         case_settings_template = "<TR><TD style='width: 100px' align=center><b>{{CASENAME}}\n"\
-                                 "<TD style='width: 100px' align=center>{{startdate}} - {{enddate}}\n "
+                                 "<TD style='width: 100px' align=center>Date Range: {{startdate}} - {{enddate}}\n "
 
         for case_name, case_settings in case_info.items():
-            # html_template = case_template.safe_substitute(case_settings)
-            # output_file_name.write(html_template)
             output_template = util._DoubleBraceTemplate(case_settings_template).safe_substitute(case_settings)
             f.write(output_template)
 
@@ -422,15 +427,15 @@ class HTMLOutputManager(AbstractOutputManager,
         </p>
         <TABLE>
         <TR><TH align=left>POD Settings\n
-        "<TR><TD style='width: 100px' align=center><b>{{driver}}\n"
-         <TD style='width: 100px' align=center>{{convention}}\n "
+        "<TR><TD style='width: 100px' align=center><b> Driver script: {{driver}}\n"
+         <TD style='width: 100px' align=center> POD convention: {{convention}}\n "
         """
         output_template = (
             util._DoubleBraceTemplate(pod_settings_header_html_template).safe_substitute(self.obj.pod_settings))
         f.write(output_template)
         f.close()
 
-    def make_html(self, html_file_name:str, cleanup=True):
+    def make_html(self, html_file_name: str, cleanup=True):
         """Add header and footer to the temporary output file at CASE_TEMP_HTML.
         """
         dest = os.path.join(self.WORK_DIR, html_file_name)
@@ -447,7 +452,9 @@ class HTMLOutputManager(AbstractOutputManager,
             self.html_src_file('mdtf_multirun_header.html'), dest, template_dict
         )
         util.append_html_template(self.CASE_TEMP_HTML, dest, {})
-        self.generate_html_file_case_loop(self.obj.multi_case_dict['CASE_LIST'], template_dict, dest)
+        if self.multi_case_figure:
+            self.generate_html_file_case_loop(self.obj.multi_case_dict['CASE_LIST'], template_dict, dest)
+        self.append_case_info_html(self.obj.multi_case_dict['CASE_LIST'], dest)
         util.append_html_template(
             self.html_src_file('mdtf_footer.html'), dest, template_dict
         )
@@ -479,10 +486,10 @@ class HTMLOutputManager(AbstractOutputManager,
             self.obj.log.info("%s: Creating '%s'.", self.obj.full_name, out_path)
         elif os.path.exists(out_path):
             self.obj.log.info("%s: Overwriting '%s'.", self.obj.full_name, out_path)
-        tar_flags = [f"--exclude=.{s}" for s in ('netCDF','nc','ps','PS','eps')]
+        tar_flags = [f"--exclude=.{s}" for s in ('netCDF', 'nc', 'ps', 'PS', 'eps')]
         tar_flags = ' '.join(tar_flags)
         util.run_shell_command(
-            f'tar {tar_flags} -czf {out_path} -C {self.WORK_DIR} .'
+            [f'tar {tar_flags} -czf {out_path} -C {self.WORK_DIR} .']
         )
         return out_path
 

@@ -64,6 +64,8 @@ overwrite: False
 ### Developer settings ###
 # Set to True to run the preprocessor
 run_pp: True
+# Set to True to run unit tests
+unit_test: False
 # Additional custom preprocessing scripts to run on data
 # place these scripts in the sites/local directory
 # The framework will run the specified scripts whether run_pp is set to True or False

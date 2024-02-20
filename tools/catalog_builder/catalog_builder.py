@@ -143,10 +143,9 @@ class CatalogBase(object):
         # in variables using intake-esm
         self.xarray_aggregations = [
             {'type': 'union', 'attribute_name': 'variable_id'},
-            {
-                'type': 'join_existing',
-                'attribute_name': 'time_range',
-                'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'}
+            {'type': 'join_existing',
+             'attribute_name': 'time_range',
+             'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'}
             }
         ]
         self.data_format = "netcdf" # netcdf or zarr

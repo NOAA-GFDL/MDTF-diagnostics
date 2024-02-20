@@ -187,5 +187,5 @@
   "description": null,
   "title": null,
   "last_updated": "2023-06-01",
-  "catalog_file": "file:////local2/home/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.csv"
+  "catalog_file": "file:/Users/jess/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.csv"
 }

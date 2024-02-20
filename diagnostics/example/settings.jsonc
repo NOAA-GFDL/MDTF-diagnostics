@@ -80,7 +80,7 @@
 
       // Time frequency the data should be sampled at. Currently recognized
       // values are '1hr', '3hr', '6hr', 'day' and 'mon'.
-      "frequency" : "mon",
+      "frequency" : "day",
 
       // Coordinates of the variable (defined in the section above.)
       "dimensions": ["time", "lat", "lon"],

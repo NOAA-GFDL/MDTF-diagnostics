@@ -23,17 +23,19 @@
   // Run each ensemble on the example POD.
   // Add other PODs that work on ensemble datasets to the pod_list as needed
   "pod_list" : [
+      //"example"
      "example_multicase"
    ],
    // Each case corresponds to a different simulation/output dataset
+   // startdate, enddate: either YYYY-MM-DD, YYYYMMDD:HHMMSS, or YYYY-MM-DD:HHMMSS
    "case_list":
     {
       "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231":
         {
           "model": "test",
           "convention": "CMIP",
-          "startdate": "19800101",
-          "enddate": "19841231"
+          "startdate": "19800101120000",
+          "enddate": "19841231000000"
         }
       ,
       "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231":

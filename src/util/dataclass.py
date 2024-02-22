@@ -11,6 +11,7 @@ from . import basic
 from . import exceptions
 
 import logging
+
 _log = logging.getLogger(__name__)
 
 
@@ -23,6 +24,7 @@ _log = logging.getLogger(__name__)
 
 class ClassMaker:
     """ Class to instantiate other classes from strings"""
+
     def __init__(self):
         self.classes = {}
 
@@ -50,6 +52,13 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
     of parsing information in a string, using a regex with named capture groups
     corresponding to the data fields being collected from the string.
     """
+
+    data: dict
+    fields: frozenset
+    input_string: str = ""
+    input_field: str = ""
+    is_matched: bool = False
+    _defaults: dict
 
     def __init__(self, regex, defaults=None, input_field=None,
                  match_error_filter=None):
@@ -80,6 +89,9 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
             is_matched (bool): True if the last call to :meth:`match` was
                 successful, False otherwise.
         """
+        self.data = dict()
+        self.input_string = ""
+        self.is_matched = False
         try:
             if isinstance(regex, re.Pattern):
                 self.regex = regex
@@ -113,7 +125,7 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
         self.regex_fields = frozenset(self.regex.groupindex.keys())
         self.fields = self.regex_fields.union(self._defaults.keys())
         if self.input_field:
-            self.fields = self.fields.union((self.input_field, ))
+            self.fields = self.fields.union((self.input_field,))
         self.clear()
 
     def update_defaults(self, d):
@@ -149,7 +161,7 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
                 *match_error_filter* are not met. One of RegexParseError or
                 RegexSuppressedError is always raised on failure.
         """
-        self.clear() # to be safe
+        self.clear()  # to be safe
         self.input_string = str_
         m = self.regex.fullmatch(str_, *args)
         if not m:
@@ -168,7 +180,7 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
                     f"Couldn't match {str_} against {self.regex}.")
         else:
             self.data = m.groupdict(default=NOTSET)
-            for k,v in self._defaults.items():
+            for k, v in self._defaults.items():
                 if self.data.get(k, NOTSET) is NOTSET:
                     self.data[k] = v
             if self.input_field:
@@ -178,7 +190,7 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
             if any(self.data[f] is NOTSET for f in self.fields):
                 bad_names = [f for f in self.fields if self.data[f] is NOTSET]
                 raise exceptions.RegexParseError((f"Couldn't match the "
-                    f"following fields in {str_}: " + ', '.join(bad_names) ))
+                                                  f"following fields in {str_}: " + ', '.join(bad_names)))
             self.is_matched = True
 
     def _validate_match(self, match_obj):
@@ -191,7 +203,7 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
         if not self.is_matched:
             str_ = ', '.join(self.fields)
         else:
-            str_ = ', '.join([f'{k}={v}' for k,v in self.data.items()])
+            str_ = ', '.join([f'{k}={v}' for k, v in self.data.items()])
         return f"<{self.__class__.__name__}({str_})>"
 
     def __copy__(self):
@@ -223,6 +235,9 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
 class RegexPatternWithTemplate(RegexPattern):
     """Adds formatted output to :class:`RegexPattern`.
     """
+
+    template: str = ""
+
     def __init__(self, regex, defaults=None, input_field=None,
                  match_error_filter=None, template=None, log=_log):
         """Constructor.
@@ -289,6 +304,7 @@ class ChainedRegexPattern(RegexPatternBase):
     one that succeeds determining the parsed field values. Public methods work
     the same as on :class:`RegexPattern`.
     """
+
     def __init__(self, *string_patterns, defaults=None, input_field=None,
                  match_error_filter=None):
         """Constructor.
@@ -307,9 +323,16 @@ class ChainedRegexPattern(RegexPatternBase):
 
         Other arguments and attributes are the same as in :class:`RegexPattern`.
         """
+
+        input_string: str
+        _match: int
+        is_matched: bool = False
+
         # NB, changes attributes on patterns passed as arguments, so
         # once created they can't be used on their own
         new_pats = []
+        self.input_string = ""
+        self._match = -1
         for pat in string_patterns:
             if isinstance(pat, RegexPattern):
                 new_pats.append(pat)
@@ -377,19 +400,19 @@ class ChainedRegexPattern(RegexPatternBase):
                     self._match_error_filter.match(str_, *args)
                 except Exception as exc:
                     raise exceptions.RegexParseError((f"Couldn't match {str_} "
-                        f"against any pattern in {self.__class__.__name__}."))
+                                                      f"against any pattern in {self.__class__.__name__}."))
                 raise exceptions.RegexSuppressedError(str_)
             elif self._match_error_filter:
                 raise exceptions.RegexSuppressedError(str_)
             else:
                 raise exceptions.RegexParseError((f"Couldn't match {str_} "
-                    f"against any pattern in {self.__class__.__name__}."))
+                                                  f"against any pattern in {self.__class__.__name__}."))
 
     def __str__(self):
         if not self.is_matched:
             str_ = ', '.join(self.fields)
         else:
-            str_ = ', '.join([f'{k}={v}' for k,v in self.data.items()])
+            str_ = ', '.join([f'{k}={v}' for k, v in self.data.items()])
         return f"<{self.__class__.__name__}({str_})>"
 
     def format(self):
@@ -410,6 +433,7 @@ class ChainedRegexPattern(RegexPatternBase):
             *new_pats,
             match_error_filter=copy.deepcopy(self._match_error_filter, memo)
         )
+
 
 # ---------------------------------------------------------
 
@@ -460,7 +484,7 @@ def _mdtf_dataclass_get_field_types(obj, f, log):
             or isinstance(f.type, typing._SpecialForm):
         # type is a generic from typing module, eg "typing.List"
         if f.type.__origin__ is typing.Union:
-            new_type = None # can't do coercion, but can test type
+            new_type = None  # can't do coercion, but can test type
             valid_types = list(f.type.__args__)
         else:
             try:
@@ -496,9 +520,9 @@ def _mdtf_dataclass_type_coercion(self, log):
         new_type, valid_types = _mdtf_dataclass_get_field_types(self, f, log)
         try:
             if valid_types is None or isinstance(value, tuple(valid_types)):
-                continue # don't coerce if we're already a valid type
+                continue  # don't coerce if we're already a valid type
             if new_type is None or hasattr(new_type, '__abstract_methods__'):
-                continue # can't do type coercion
+                continue  # can't do type coercion
             else:
                 if hasattr(new_type, 'from_struct'):
                     new_value = new_type.from_struct(value)
@@ -546,6 +570,7 @@ def _mdtf_dataclass_type_check(self, log):
 
 DEFAULT_MDTF_DATACLASS_KWARGS = {'init': True, 'repr': True, 'eq': True,
                                  'order': False, 'unsafe_hash': False, 'frozen': False}
+
 
 # declaration to allow calling with and without args: python cookbook 9.6
 # https://github.com/dabeaz/python-cookbook/blob/master/src/9/defining_a_decorator_that_takes_an_optional_argument/example.py
@@ -605,6 +630,7 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
         # create dummy __post_init__ if none defined, so we can wrap it.
         # contrast with what we do below in regex_dataclass()
         def _dummy_post_init(self, *args, **kwargs): pass
+
         type.__setattr__(cls, '__post_init__', _dummy_post_init)
 
     # apply dataclasses' decorator
@@ -623,6 +649,7 @@ def mdtf_dataclass(cls=None, **deco_kwargs):
         _mdtf_dataclass_type_coercion(self, _post_init_log)
         _old_post_init(self, *args, **kwargs)
         _mdtf_dataclass_type_check(self, _post_init_log)
+
     type.__setattr__(cls, '__post_init__', _new_post_init)
 
     return cls
@@ -708,6 +735,7 @@ def regex_dataclass(pattern, **deco_kwargs):
             # hasattr().) __post_init__ of all parents will have been called when
             # the parent classes are instantiated by _regex_dataclass_preprocess_kwargs.
             def _dummy_post_init(self, *args, **kwargs): pass
+
             type.__setattr__(cls, '__post_init__', _dummy_post_init)
 
         # apply dataclasses' decorator
@@ -730,7 +758,7 @@ def regex_dataclass(pattern, **deco_kwargs):
                 first_arg = None
                 kwargs = self._pattern.data
             new_kw, other_kw = _regex_dataclass_preprocess_kwargs(self, kwargs)
-            for k,v in other_kw.items():
+            for k, v in other_kw.items():
                 # set field values that aren't arguments to _old_init
                 object.__setattr__(self, k, v)
             if first_arg is None:
@@ -740,6 +768,7 @@ def regex_dataclass(pattern, **deco_kwargs):
 
             _mdtf_dataclass_type_coercion(self, _log)
             _mdtf_dataclass_type_check(self, _log)
+
         type.__setattr__(cls, '__init__', _new_init)
 
         def _from_string(cls_, str_, *args):
@@ -750,56 +779,14 @@ def regex_dataclass(pattern, **deco_kwargs):
 
             cls_._pattern.match(str_, *args)
             return cls_(**cls_._pattern.data)
+
         type.__setattr__(cls, 'from_string', classmethod(_from_string))
 
         type.__setattr__(cls, '_is_regex_dataclass', True)
         type.__setattr__(cls, '_pattern', pattern)
         return cls
+
     return _dataclass_decorator
-
-
-def dataclass_factory(dataclass_decorator, class_name, *parents, **kwargs):
-    """Function that returns a dataclass (ie, a decorated class) whose fields
-    are the union of the fields in *parents*, which the new dataclass inherits
-    from.
-
-    Args:
-        dataclass_decorator (function): decorator to apply to the new class.
-        class_name (str): name of the new class.
-        parents: collection of other mdtf_dataclasses to inherit from. Order in
-            the collection determines the MRO.
-        kwargs: Optional; arguments to pass to dataclass_decorator when it's
-            applied to produce the returned class.
-    """
-    def _to_dataclass(self, cls_, **kwargs_):
-        f"""Method to create an instance of one of the parent classes of
-        {class_name} by copying over the relevant subset of fields.
-        """
-        # above docstring gets templated
-        new_kwargs = filter_dataclass(self, cls_)
-        new_kwargs.update(kwargs_)
-        return cls_(**new_kwargs)
-
-    def _from_dataclasses(cls_, *other_dcs, **kwargs_):
-        f"""Class method to create a new instance of {class_name} from instances
-        of its parents, along with any other field values passed in kwargs.
-        """
-        # above docstring gets templated
-        new_kwargs = dict()
-        for dc in other_dcs:
-            new_kwargs.update(filter_dataclass(dc, cls_))
-        new_kwargs.update(kwargs_)
-        return cls_(**new_kwargs)
-
-    methods = {
-        'to_dataclass': _to_dataclass,
-        'from_dataclasses': classmethod(_from_dataclasses),
-    }
-    for dc in parents:
-        method_nm = 'to_' + dc.__name__
-        methods[method_nm] = functools.partialmethod(_to_dataclass, cls_=dc)
-    new_cls = type(class_name, tuple(parents), methods)
-    return dataclass_decorator(new_cls, **kwargs)
 
 
 def filter_dataclass(d, dc, init=False):

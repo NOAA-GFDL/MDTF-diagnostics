@@ -18,7 +18,7 @@ from .basic import (
 )
 from .dataclass import (
     RegexPatternBase, RegexPattern, RegexPatternWithTemplate, ChainedRegexPattern,
-    NOTSET, MANDATORY, mdtf_dataclass, regex_dataclass, dataclass_factory,
+    NOTSET, MANDATORY, mdtf_dataclass, regex_dataclass,
     filter_dataclass, coerce_to_dataclass, ClassMaker
 )
 from .datelabel import (

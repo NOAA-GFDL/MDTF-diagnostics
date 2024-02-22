@@ -44,7 +44,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
 
     overwrite: bool = False
     # explict 'program' attribute in settings
-    _interpreters = dict()
+    _interpreters = dict
     runtime_requirements: util.NameSpace
     driver: str = ""
     program: str = ""
@@ -52,7 +52,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     log_file: io.IOBase = dc.field(default=None, init=False)
     nc_largefile: bool = False
     bash_exec: str
-    global_env_vars: dict()
+    global_env_vars: dict
 
     def __init__(self, name: str, runtime_config: util.NameSpace):
         self.name = name
@@ -104,7 +104,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     @property
     def _children(self):
         # property required by MDTFObjectBase
-        return (self.multi_case_dict.values())
+        return self.multi_case_dict.values()
 
     @property
     def full_name(self):
@@ -138,8 +138,8 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             value = [i for i in required_settings if i in self.pod_settings
                      and isinstance(self.pod_settings[i], type(required_settings[i]))]
         except Exception as exc:
-            raise util.PodConfigError("Caught Exception: required setting %s not in pod setting file %s", value[0]) \
-                from exc
+            raise util.PodConfigError("Caught Exception: required setting %s not in pod setting file %s",
+                                      value[0]) from exc
 
         def verify_runtime_reqs(runtime_reqs: dict):
             for k, v in runtime_reqs.items():

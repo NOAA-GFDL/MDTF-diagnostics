@@ -1,7 +1,7 @@
 import os
 import unittest
 from src.tests.shared_test_utils import setUp_config_singletons, tearDown_config_singletons
-from src import translation, varlist_util, pod_setup, util
+from src import data_sources, translation, varlist_util, pod_setup, util
 
 
 class TestVariableTranslator(unittest.TestCase):
@@ -74,7 +74,8 @@ class TestVariableTranslator(unittest.TestCase):
     def test_variabletranslator_no_translation(self):
         dummy_varlist = {
             "data": {
-                "frequency": "day"
+                "frequency": "day",
+                "realm": "atmos"
             },
             "dimensions": {
                 "lat": {"standard_name": "latitude"},
@@ -183,7 +184,6 @@ class TestVariableTranslatorFiles(unittest.TestCase):
 
 
 class TestPathManager(unittest.TestCase):
-    # pylint: disable=maybe-no-member
     def setUp(self):
         # set up translation dictionary without calls to filesystem
         setUp_config_singletons(paths={
@@ -207,12 +207,11 @@ class TestPathManager(unittest.TestCase):
             'OBS_DATA_ROOT': 'B', 'MODEL_DATA_ROOT': 'C',
             'WORK_DIR': 'D', 'OUTPUT_DIR': 'E'
         }
-        paths = util.ModelDtataPathManager()
-        self.assertRaises(AssertionError, paths.parse, d, list(d.keys()))
+        paths = util.ModelDataPathManager(config)
+        self.assertRaises(AssertionError, paths, d, list(d.keys()))
 
 
 @unittest.skip("TODO: Test needs to be rewritten following v3 beta 3 release")
-# @mock.patch.multiple(DataManager, __abstractmethods__=set())
 class TestPathManagerPodCase(unittest.TestCase):
     def setUp(self):
         # set up translation dictionary without calls to filesystem
@@ -236,21 +235,23 @@ class TestPathManagerPodCase(unittest.TestCase):
     def tearDown(self):
         tearDown_config_singletons()
 
-    def test_pathmgr_model(self):
-        paths = util.ModelDataPathManager()
-        case = DataManager(self.case_dict)
-        d = paths.model_paths(case)
-        self.assertEqual(d['MODEL_DATA_DIR'], 'TEST_MODEL_DATA_ROOT/A')
-        self.assertEqual(d['MODEL_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100')
+    def test_pathmgr(self):
+        model_paths = util.ModelDataPathManager(config)
+        self.assertEqual(model_paths['MODEL_DATA_DIR'], 'TEST_MODEL_DATA_ROOT/A')
+        self.assertEqual(model_paths['MODEL_WORK_DIR'], 'TEST_WORK_DIR/MDTF_A_1900_2100')
 
-    def test_pathmgr_pod(self):
-        paths = util.ModelPathManager()
-        case = DataManager(self.case_dict)
-        pod = pod_setup.PodObject('AA', ctx_config)
-        d = paths.pod_paths(pod, case)
-        self.assertEqual(d['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/AA')
-        self.assertEqual(d['POD_OBS_DATA'], 'TEST_OBS_DATA_ROOT/AA')
-        self.assertEqual(d['POD_WK_DIR'], 'TEST_WORKING_DIR/MDTF_A_1900_2100/AA')
+        # set up the case data source dictionary
+        cases = dict()
+        for case_name, case_d in self.case_dict.items():
+            # instantiate the data_source class instance for the specified convention
+            cases[case_name] = data_sources.data_source[case_d.convention.upper() + "DataSource"](case_name,
+                                                                                                  case_d,
+                                                                                                  model_paths,
+                                                                                                  parent=None)
+        pod = pod_setup.PodObject('AA', config)
+        self.assertEqual(pod.paths['POD_CODE_DIR'], 'TEST_CODE_ROOT/diagnostics/AA')
+        self.assertEqual(pod.paths['POD_OBS_DATA'], 'TEST_OBS_DATA_ROOT/AA')
+        self.assertEqual(pod.paths['POD_WORK_DIR'], 'TEST_WORK_DIR/MDTF_A_1900_2100/AA')
 
 
 # ---------------------------------------------------

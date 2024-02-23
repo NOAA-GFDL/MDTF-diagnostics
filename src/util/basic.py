@@ -384,11 +384,19 @@ class NameSpace(dict):
 
 
 class _MDTFEnumMixin:
+    __members__ = None
+
+    def __init__(self):
+        self.name = None
+
     def __str__(self):
         return str(self.name).lower()
 
     def __repr__(self):
         return '<%s.%s>' % (self.__class__.__name__, self.name)
+
+    def __getitem__(self, key):
+        return getattr(self, key)
 
     @classmethod
     def from_struct(cls, str_):
@@ -439,6 +447,7 @@ ObjectStatus.__doc__ = """
 - *SUCCEEDED*: Processing finished successfully.
 """
 
+
 def sentinel_object_factory(obj_name):
     """Return a unique singleton object/class (same difference for singletons).
     For implementation, see `python docs
@@ -485,12 +494,12 @@ class MDTF_ID:
 
     def __eq__(self, other):
         if hasattr(other, '_uuid'):
-            return (self._uuid == other._uuid)
+            return self._uuid == other._uuid
         else:
             return False
 
     def __ne__(self, other):
-        return (not self.__eq__(other))  # more foolproof
+        return not self.__eq__(other)  # more foolproof
 
 
 # ------------------------------------------------------------------
@@ -619,41 +628,6 @@ def splice_into_list(list_, splice_d, key_fn=None, log=_log):
         else:
             spliced_chunks.append(c)
     return list(itertools.chain.from_iterable(spliced_chunks))
-
-
-def deserialize_class(name):
-    """Given the name of a currently defined class, return the class itself.
-    This avoids security issues with calling :py:func:`eval`. Based on
-    `<https://stackoverflow.com/a/11781721>`__.
-
-    Args:
-        name (str): name of the class to look up.
-
-    Returns:
-        :obj:`class` with the given name, if currently imported.
-
-    Raises:
-        :py:class:`ValueError`: If class not found in current namespace.
-    """
-    try:
-        # for performance, search python builtin types first before going
-        # through everything
-        return getattr(__builtins__, name)
-    except AttributeError:
-        # _log.debug('%s not found in builtin types.', name)
-        pass
-    q = collections.deque([object])  # everything inherits from object
-    while q:
-        t = q.popleft()
-        if t.__name__ == name:
-            return t
-        else:
-            try:  # keep looking
-                q.extend(t.__subclasses__())
-            except TypeError:
-                pass
-        if not type(t):
-            raise ValueError('No such type: %r' % name)
 
 
 def canonical_arg_name(str_):

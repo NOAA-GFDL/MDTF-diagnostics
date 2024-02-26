@@ -40,8 +40,6 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     pod_vars = dict()
     pod_settings = dict()
     multi_case_dict = dict()  # populated with case_info entries in enviroment_manager
-    user_pp_scripts: list
-
     overwrite: bool = False
     # explict 'program' attribute in settings
     _interpreters = dict
@@ -257,15 +255,6 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             self.program = self._interpreters[driver_ext]
             self.log.debug("Set program for %s to '%s'.",
                            self.full_name, self.program)
-
-    def add_user_pp_scripts(self, runtime_config: util.NameSpace):
-        self.user_pp_scripts = [os.path.join(self.paths.CODE_ROOT, "sites/local", s)
-                                for s in runtime_config.user_pp_scripts]
-        for s in self.user_pp_scripts:
-            try:
-                os.path.exists(s)
-            except util.MDTFFileExistsError:
-                self.log.error(f"User-defined post-processing file {s} not found")
 
     def setup_pod(self, runtime_config: util.NameSpace,
                   model_paths: util.ModelDataPathManager,

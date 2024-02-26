@@ -6,7 +6,7 @@ import shutil
 import abc
 import dataclasses
 import datetime
-
+import sys
 import pandas as pd
 from src import util, varlist_util, translation, xr_parser, units
 import cftime
@@ -14,7 +14,6 @@ import intake
 import numpy as np
 import xarray as xr
 import collections
-import re
 
 import logging
 
@@ -1235,6 +1234,7 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     variable, using xarray `open_mfdataset()
     <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
     """
+    user_pp_scripts: list
 
     def __init__(self,
                  model_paths: util.ModelDataPathManager,
@@ -1242,6 +1242,25 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         # initialize PreprocessorFunctionBase objects
         super().__init__(model_paths, config)
         self.file_preproc_functions = [f for f in self._functions]
+        # append custom preprocessing scripts
+        if any([s for s in config.user_pp_scripts]):
+            self.add_user_pp_scripts(config)
+            module_root = os.path.join(self.paths.CODE_ROOT, "user_scripts", "__init__.py")
+            import importlib
+            for s in self.user_pp_scripts:
+                spec = importlib.util.spec_from_file_location(s, module_root)
+                mod_obj = importlib.util.module_from_spec(spec)
+                sys.modules[s] = mod_obj
+                spec.loader.exec_module(mod_obj)
+
+    def add_user_pp_scripts(self, runtime_config: util.NameSpace):
+        self.user_pp_scripts = [os.path.join(self.paths.CODE_ROOT, "user_scripts", s)
+                                for s in runtime_config.user_pp_scripts]
+        for s in self.user_pp_scripts:
+            try:
+                os.path.exists(s)
+            except util.MDTFFileExistsError:
+                self.log.error(f"User-defined post-processing file {s} not found")
 
 
 def init_preprocessor(model_paths: util.ModelDataPathManager,

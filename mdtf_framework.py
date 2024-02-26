@@ -125,14 +125,12 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # parse the runtime config file
     ctx.config = cli.parse_config_file(configfile)
     # Test ctx.config
-    print(ctx.config.WORK_DIR)
+    # print(ctx.config.WORK_DIR)
     ctx.config.CODE_ROOT = os.path.dirname(os.path.realpath(__file__))
     ctx.config.TEMP_DIR_ROOT = ctx.config.WORK_DIR
     log_config = cli.read_config_file(
         ctx.config.CODE_ROOT, "src", "logging.jsonc"
     )
-    if not hasattr(ctx.config, "unit_test"):
-        ctx.config.unit_test = False
     cli.verify_runtime_config_options(ctx.config)
     # Initialize the model path object and define the model data output paths
     make_new_work_dir = not ctx.config.overwrite
@@ -180,9 +178,6 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     for pod_name in ctx.config.pod_list:
         pods[pod_name] = pod_setup.PodObject(pod_name, ctx.config)
         pods[pod_name].setup_pod(ctx.config, model_paths, cases)
-        # run custom scripts on dataset
-        if any([s for s in ctx.config.user_pp_scripts]):
-            pods[pod_name].add_user_pp_scripts(ctx.config)
         pods[pod_name].log.info(f"Preprocessing data for {pod_name}")
         for k, v in pods[pod_name].runtime_requirements.items():
             if not hasattr(pod_runtime_reqs, k):

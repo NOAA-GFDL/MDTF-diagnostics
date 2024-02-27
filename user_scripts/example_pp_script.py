@@ -12,6 +12,9 @@ from src import util, cli
 # Define a log object for debugging
 _log = logging.getLogger(__name__)
 
+# check_group_daterange is a helper script used by the preprocessor
+# and included in this example custom preprocessing script for testing
+
 
 def check_group_daterange(group_df: pd.DataFrame, log=_log) -> pd.DataFrame:
     """Sort the files found for each experiment by date, verify that
@@ -41,6 +44,9 @@ def check_group_daterange(group_df: pd.DataFrame, log=_log) -> pd.DataFrame:
         log.error("Non-contiguous or malformed date range in files:", sorted_df["path"].values)
     return pd.DataFrame(columns=group_df.columns)
 
+# rename_dataset_leus is a helper script used by the preprocessor
+# and included in this example custom preprocessing script for testing
+
 
 def rename_dataset_keys(ds: dict, case_list: dict) -> collections.OrderedDict:
     """Rename dataset keys output by ESM intake catalog query to case names`"""
@@ -60,7 +66,7 @@ def rename_dataset_keys(ds: dict, case_list: dict) -> collections.OrderedDict:
 # Main script that works on the xarray dataset that the framework reads from the input data catalog
 # Functions adapted from albedofb_calcs.py
 
-def main(xr_ds: xr.Dataset) -> xr.Dataset:
+def main(xr_ds: xr.Dataset, var: str) -> xr.Dataset:
     # 1. Reshape the data array to convert dimensions to sub-dimensions defined by "coords" and "new_dims"
     # define coordinate and new_dims arrays
     ny = int(xr_ds['time'].sizes['time'] / 12)
@@ -90,13 +96,14 @@ def main(xr_ds: xr.Dataset) -> xr.Dataset:
     xr_ds.transpose(*dims)
 
     # 2. compute the time mean
-    return xr_ds.mean(dim='year')
+    return xr_ds.mean(name=var, dim='year')
 
 
 # Anything in this block executes if the script is run on its own
 # > python3 example_pp_script.py
-# Test reading a catalog into an xarray dataset and passing it to you preprocessing routine
-# by modifying code block below
+# The following code reads a data catalog subset into an xarray dataset in a python dictionary
+# and computes a time average on reshaped arrays of air temperature (tas) for each case defined in the input
+# configuration file
 
 
 if __name__ == '__main__':
@@ -168,7 +175,7 @@ if __name__ == '__main__':
 
     # run the main routine on the xarray dataset
     for case_name, case_xr_dataset in new_cat.items():
-        for v in var_list.values():
-            xr_ds_new = main(case_xr_dataset, v)
+        for k, v in var_list.values():
+            xr_ds_new = main(case_xr_dataset, k)
 
     sys.exit(0)

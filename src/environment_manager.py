@@ -256,7 +256,7 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
                 elif key == '_CONDA_ROOT':
                     self.conda_root = val
         except Exception as exc:
-            raise util.PodRuntimeError("Can't find conda.") from exc
+                raise util.PodRuntimeError("Can't find conda.") from exc
 
         # find where environments are installed
         if 'conda_env_root' in paths and paths.conda_env_root:
@@ -543,12 +543,14 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             self.env_mgr.create_environment(env)
 
     def spawn_subprocess(self, p, env_vars_base):
+        print("SPAWN SUBPROCESS")
         run_cmds = p.validate_commands() + p.run_commands()
         if self.test_mode:
             run_cmds = ['echo "TEST MODE: call {}"'.format('; '.join(run_cmds))]
         commands = self.env_mgr.activate_env_commands(p.env) \
             + run_cmds \
             + self.env_mgr.deactivate_env_commands(p.env)
+        print(commands)
         if self.test_mode:
             for cmd in commands:
                 print('\tTEST MODE: call {}'.format(cmd))

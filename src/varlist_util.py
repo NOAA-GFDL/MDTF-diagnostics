@@ -25,17 +25,6 @@ VarlistEntryRequirement.__doc__ = """
 provide data for the :class:`VarlistEntry`.
 """
 
-VarlistEntryStage = util.MDTFIntEnum(
-    'VarlistEntryStage',
-    'NOTSET INITED QUERIED FETCHED PREPROCESSED',
-    module=__name__
-)
-VarlistEntryStage.__doc__ = """
-:class:`util.MDTFIntEnum` used to track the stages of processing of a
-:class:`VarlistEntry` carried out by the DataSource.
-"""
-
-
 _coord_env_var_suffix = '_coord'
 _coord_bounds_env_var_suffix = '_bnds'
 _var_name_env_var_suffix = '_var'
@@ -83,7 +72,6 @@ class VarlistEntryBase(metaclass=util.MDTFABCMeta):
         dest_path: Path(s) to local data.
         alternates: List of lists of VarlistEntries.
         translation: :class:`core.TranslatedVarlistEntry`, populated by DataSource.
-        stage: enum to track processing stages of VarlistEntry classes
         data: dict mapping experiment_keys to DataKeys. Populated by DataSource.
     """
 
@@ -95,7 +83,6 @@ class VarlistEntryBase(metaclass=util.MDTFABCMeta):
             'alternates',
             'translation',
             'data',
-            'stage',
             '_deactivation_log_level'
         ]
         for var in required_class_variables:
@@ -191,17 +178,12 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
     translation: typing.Any = dc.field(default=None, compare=False)
     data: util.ConsistentDict = dc.field(default_factory=util.ConsistentDict,
                                          compare=False)
-    stage: VarlistEntryStage = dc.field(
-        default=VarlistEntryStage.NOTSET, compare=False
-    )
-
     _deactivation_log_level = logging.INFO  # default log level for failure
     associated_files: dict
 
     status: util.ObjectStatus = dc.field(default=util.ObjectStatus.NOTSET, compare=False)
     name: str = util.MANDATORY
     _parent: typing.Any = dc.field(default=util.MANDATORY, compare=False)
-
 
     def __post_init__(self, coords=None):
         # set up log (VarlistEntryLoggerMixin)
@@ -393,7 +375,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
                 trans_str = trans_str.replace("<", "'").replace(">", "'")
             else:
                 trans_str = "(not translated)"
-            return (f"<{str_}; {status_str}, {v.stage.name.lower()}, {v.requirement})\n"
+            return (f"<{str_}; {status_str}, {v.requirement})\n"
                     f"\tName in data source: {trans_str}")
 
         s = _format(self)
@@ -425,36 +407,11 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
             iter_ = filter((lambda x: x.status != status_neq), iter_)
         yield from list(iter_)
 
-    def deactivate_data_key(self, d_key, exc):
-        """When a DataKey (*d_key*) has been deactivated during query or fetch,
-        log a message and delete our record of it if we were using it, and
-        deactivate ourselves if we don't have any viable DataKeys left.
-
-        We can't just use the *status* attribute on the DataKey, because the
-        VarlistEntry-DataKey relationship is many-to-many.
-        """
-        expt_keys_to_remove = []
-        for dd_key in self.iter_data_keys(status=None):
-            if dd_key == d_key:
-                expt_keys_to_remove.append(dd_key.expt_key)
-        if expt_keys_to_remove:
-            self.log.debug("Eliminating %s for %s.", d_key, self.full_name)
-        for expt_key in expt_keys_to_remove:
-            del self.data[expt_key]
-
-        if self.stage >= VarlistEntryStage.QUERIED and not self.data:
-            # all DataKeys obtained for this var during query have
-            # been eliminated, so need to deactivate var
-            util.deactivate(self, util.ChildFailureEvent(self))
-
     @property
     def local_data(self):
         """Return sorted list of local file paths corresponding to the selected
         experiment.
         """
-        if self.stage < VarlistEntryStage.FETCHED:
-            raise util.DataRequestError((f"Requested local_data property on "
-                                         f"{self.full_name} before fetch."))
 
         local_paths = set([])
         for d_key in self.iter_data_keys(status=util.ObjectStatus.ACTIVE):
@@ -464,32 +421,6 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
             raise util.DataRequestError((f"local_data property on {self.full_name} "
                                          "empty after fetch."))
         return local_paths
-
-    def query_attrs(self, key_synonyms=None):
-        """Returns a dict of attributes relevant for DataSource.query_dataset()
-        (ie, which describe the variable itself and aren't specific to the
-        MDTF implementation.)
-        """
-        if key_synonyms is None:
-            key_synonyms = dict()
-
-        def iter_query_attrs(obj):
-            """Recursive generator yielding name:value pairs for all dataclass
-            fields marked with query attribute in their metadata.
-            """
-            for f in dc.fields(obj):
-                val = getattr(obj, f.name, None)
-                if dc.is_dataclass(val):
-                    yield from iter_query_attrs(val)
-                if f.metadata.get('query', False):
-                    key = key_synonyms.get(f.name, f.name)
-                    yield key, val
-
-        d = util.ConsistentDict()
-        d.update(dict(iter_query_attrs(self)))
-        for dim in self.dims:
-            d.update(dict(iter_query_attrs(dim)))
-        return d
 
 
 @util.mdtf_dataclass
@@ -622,7 +553,6 @@ class Varlist(data_model.DMDataSet):
             v.log.store_exception(chained_exc)
         # set the VarlistEntry env_vars (required for backwards compatibility with first-gen PODs)
         v.set_env_vars()
-        v.stage = VarlistEntryStage.INITED
 
     def variable_dest_path(self,
                            model_paths: util.ModelDataPathManager,

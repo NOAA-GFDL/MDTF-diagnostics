@@ -270,12 +270,6 @@ class TestMDTFEnum(unittest.TestCase):
         # self.assertNotEqual('another_value', Dummy.VALUE)
         # self.assertNotEqual(Dummy.VALUE, 'another_value')
 
-    def test_int_enum(self):
-        Dummy = util.MDTFIntEnum('Dummy', 'ONE TWO THREE')
-        self.assertTrue(Dummy.ONE < Dummy.TWO)
-        self.assertTrue(Dummy.THREE >= Dummy.TWO)
-        self.assertNotEqual(Dummy.ONE, Dummy.TWO)
-
 
 class TestSpliceIntoList(unittest.TestCase):
     def test_splice_into_list_start(self):

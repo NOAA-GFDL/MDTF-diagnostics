@@ -1,13 +1,16 @@
+#!/usr/bin/env python3
 """Example custom preprocessing script to include in framework workflow"""
-# Import modules used in the POD
 import os
 import sys
+import io
 import collections
 import numpy as np
 import pandas as pd
 import xarray as xr
 import logging
-from src import util, cli
+from src.util import datelabel
+from src.util import NameSpace
+import src.util.json_utils
 
 # Define a log object for debugging
 _log = logging.getLogger(__name__)
@@ -16,7 +19,7 @@ _log = logging.getLogger(__name__)
 # and included in this example custom preprocessing script for testing
 
 
-def check_group_daterange(group_df: pd.DataFrame, log=_log) -> pd.DataFrame:
+def check_group_daterange(group_df: pd.DataFrame) -> pd.DataFrame:
     """Sort the files found for each experiment by date, verify that
     the date ranges contained in the files are contiguous in time and that
     the date range of the files spans the query date range.
@@ -33,7 +36,7 @@ def check_group_daterange(group_df: pd.DataFrame, log=_log) -> pd.DataFrame:
         for idx, x in enumerate(group_df.values):
             st = dates_df.at[idx, 'start_time']
             en = dates_df.at[idx, 'end_time']
-            date_range_vals.append(util.DateRange(st, en))
+            date_range_vals.append(datelabel.DateRange(st, en))
 
         group_df = group_df.assign(date_range=date_range_vals)
         sorted_df = group_df.sort_values(by=date_col)
@@ -41,7 +44,7 @@ def check_group_daterange(group_df: pd.DataFrame, log=_log) -> pd.DataFrame:
         # throws ValueError if we don't span the query range
         return sorted_df
     except ValueError:
-        log.error("Non-contiguous or malformed date range in files:", sorted_df["path"].values)
+        logging.error("Non-contiguous or malformed date range in files:", sorted_df["path"].values)
     return pd.DataFrame(columns=group_df.columns)
 
 # rename_dataset_leus is a helper script used by the preprocessor
@@ -65,6 +68,7 @@ def rename_dataset_keys(ds: dict, case_list: dict) -> collections.OrderedDict:
 
 # Main script that works on the xarray dataset that the framework reads from the input data catalog
 # Functions adapted from albedofb_calcs.py
+
 
 def main(xr_ds: xr.Dataset, var: str) -> xr.Dataset:
     # 1. Reshape the data array to convert dimensions to sub-dimensions defined by "coords" and "new_dims"
@@ -117,10 +121,14 @@ if __name__ == '__main__':
     config_file = "/Users/jess/mdtf/MDTF-diagnostics/templates/runtime_config.jsonc"
 
     # read the contents of the configuration file into a NameSpace (basically a dict with dot notation)
-    config = cli.parse_config_file(config_file)
+    with io.open(config_file, 'r', encoding='utf-8') as file_:
+        str_ = file_.read()
+    json_config = src.util.json_utils.parse_json(str_)
+    config = NameSpace.fromDict({k: json_config[k] for k in json_config.keys()})
 
     # full path to the input data catalog json file
-    data_catalog = "[path_to_catalog]/catalog_name.json"
+    # data_catalog = "[path_to_catalog]/[catalog_name].json"
+    data_catalog = config.DATA_CATALOG
 
     # open the csv file using information provided by the catalog definition file
     cat = intake.open_esm_datastore(data_catalog)
@@ -141,7 +149,7 @@ if __name__ == '__main__':
     var_list = {"tas":
                 {
                     "standard_name": "air_temperature",
-                    "freq": "mon",
+                    "freq": "day",
                     "realm": "atmos"
                 }
     }
@@ -159,7 +167,7 @@ if __name__ == '__main__':
                                     path=path_regex
                                     )
             if cat_subset.df.empty:
-                raise util.DataRequestError(f"No assets found for {case_name} in {data_catalog}")
+                logging.error(f"No assets found for {case_name} in {data_catalog}")
 
             # Get files in specified date range
             cat_subset.esmcat._df = check_group_daterange(cat_subset.df)

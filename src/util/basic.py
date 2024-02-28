@@ -385,8 +385,9 @@ class NameSpace(dict):
 
 class _MDTFEnumMixin:
     __members__ = None
+    name = None
 
-    def __init__(self):
+    def __init__(self, *args):
         self.name = None
 
     def __str__(self):
@@ -423,12 +424,6 @@ class MDTFEnum(_MDTFEnumMixin, enum.Enum):
         obj = object.__new__(cls)
         obj._value_ = value
         return obj
-
-
-class MDTFIntEnum(_MDTFEnumMixin, enum.IntEnum):
-    """Customize :py:class:`~enum.IntEnum` analogous to :class:`MDTFEnum`.
-    """
-    pass
 
 
 ObjectStatus = MDTFEnum(

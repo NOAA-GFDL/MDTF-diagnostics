@@ -368,7 +368,8 @@ class TempDirManager:
     _unittest: bool = False
 
     def __init__(self, config):
-        self._unittest = config.unit_test
+        if hasattr(config, 'unit_test'):
+            self._unittest = config.unit_test
         if not hasattr(config, 'TEMP_DIR_ROOT'):
             temp_root = tempfile.gettempdir()
         else:

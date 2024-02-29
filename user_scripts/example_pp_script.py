@@ -73,34 +73,38 @@ def rename_dataset_keys(ds: dict, case_list: dict) -> collections.OrderedDict:
 def main(xr_ds: xr.Dataset, var: str) -> xr.Dataset:
     # 1. Reshape the data array to convert dimensions to sub-dimensions defined by "coords" and "new_dims"
     # define coordinate and new_dims arrays
-    ny = int(xr_ds['time'].sizes['time'] / 12)
-    coords = [np.arange(ny), np.arange(12)]
-    new_dims = ['year', 'month']
+    ny = int(xr_ds['time'].sizes['time'] / 365)
+    coords = [np.arange(ny), np.arange(365)]
+    new_dims = ['year', 'day']
 
     # Create a pandas MultiIndex
     ind = pd.MultiIndex.from_product(coords, names=new_dims)
 
+    # get the variable data array
+    xr_dupe = xr_ds[var].copy()
+
     # Replace the time index in the DataArray by this new index
-    xr_ds.coords['time'] = ind
+    xr_dupe.coords['time'] = ind
 
     # Convert multi-index to individual dims using DataArray.unstack().
     # This changes dimension order! The new dimensions are at the end.
-    xr_ds.unstack('time')
+    xr_dupe = xr_dupe.unstack('time')
 
     # Permute to restore dimensions
-    i = xr_ds.dims.index('time')
-    dims = list(xr_ds.dims)
+    i = xr_ds[var].dims.index('time')
+    dims = list(xr_dupe.dims)
 
+    # insert the new dimension names into the dataset
     for d in new_dims[::-1]:
         dims.insert(i, d)
 
     for d in new_dims:
         _ = dims.pop(-1)
 
-    xr_ds.transpose(*dims)
+    xr_dupe = xr_dupe.transpose(*dims)
 
-    # 2. compute the time mean
-    return xr_ds.mean(name=var, dim='year')
+    # 2. compute the annual mean for each day
+    return xr_dupe.mean(dim='year')
 
 
 # Anything in this block executes if the script is run on its own
@@ -145,7 +149,7 @@ if __name__ == '__main__':
 
     # define a variable dictionary with the name, standard_name, realm, output frequency, and any other attributes
     # you want to use in the catalog query
-    # note that this example uses monthly data
+    # note that this example uses daily data
     var_list = {"tas":
                 {
                     "standard_name": "air_temperature",
@@ -183,7 +187,7 @@ if __name__ == '__main__':
 
     # run the main routine on the xarray dataset
     for case_name, case_xr_dataset in new_cat.items():
-        for k, v in var_list.values():
-            xr_ds_new = main(case_xr_dataset, k)
-
+        for var_name in var_list.keys():
+            xr_ds_new = main(case_xr_dataset, var_name)
+            case_xr_datset = xr_ds_new
     sys.exit(0)

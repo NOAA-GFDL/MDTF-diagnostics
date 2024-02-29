@@ -857,6 +857,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict
                 cat_dict = cat_dict | cat_subset.to_dataset_dict(
+                    progressbar=False,
                     xarray_open_kwargs=self.open_dataset_kwargs
                 )
 
@@ -1245,7 +1246,7 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         # append custom preprocessing scripts
         if any([s for s in config.user_pp_scripts]):
             self.add_user_pp_scripts(config)
-            module_root = os.path.join(self.paths.CODE_ROOT, "user_scripts", "__init__.py")
+            module_root = os.path.join(config.CODE_ROOT, "user_scripts", "__init__.py")
             import importlib
             for s in self.user_pp_scripts:
                 spec = importlib.util.spec_from_file_location(s, module_root)
@@ -1254,7 +1255,7 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
                 spec.loader.exec_module(mod_obj)
 
     def add_user_pp_scripts(self, runtime_config: util.NameSpace):
-        self.user_pp_scripts = [os.path.join(self.paths.CODE_ROOT, "user_scripts", s)
+        self.user_pp_scripts = [os.path.join(runtime_config.CODE_ROOT, "user_scripts", s)
                                 for s in runtime_config.user_pp_scripts]
         for s in self.user_pp_scripts:
             try:

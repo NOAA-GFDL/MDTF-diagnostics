@@ -179,7 +179,10 @@ if __name__ == '__main__':
             # convert subset catalog to an xarray dataset dict
             # and concatenate the result with the final dict
             cat_dict = cat_dict | cat_subset.to_dataset_dict(
-                xarray_open_kwargs={"decode_times": True, "use_cftime": True}
+                progressbar=False,
+                xarray_open_kwargs={"decode_times": True,
+                                    "use_cftime": True
+                                    }
             )
 
     # rename cat_subset case dict keys to case names
@@ -189,5 +192,5 @@ if __name__ == '__main__':
     for case_name, case_xr_dataset in new_cat.items():
         for var_name in var_list.keys():
             xr_ds_new = main(case_xr_dataset, var_name)
-            case_xr_datset = xr_ds_new
+            case_xr_dataset = xr_ds_new
     sys.exit(0)

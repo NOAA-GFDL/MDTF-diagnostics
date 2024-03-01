@@ -7,6 +7,7 @@ import abc
 import dataclasses
 import datetime
 import sys
+import importlib
 import pandas as pd
 from src import util, varlist_util, translation, xr_parser, units
 import cftime
@@ -875,10 +876,20 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             func.edit_request(func, v, **kwargs)
 
     def execute_pp_functions(self, v: varlist_util.VarlistEntry,
-                             xarray_ds: xr.Dataset, **kwargs):
+                             xarray_ds: xr.Dataset,
+                             **kwargs):
         """Method to launch pp routines on xarray datasets associated with required variables"""
         for func in self.file_preproc_functions:
             func.execute(func, v, xarray_ds, **kwargs)
+            # append custom preprocessing scripts
+
+        if any([s for s in self.user_pp_scripts]):
+            for s in self.user_pp_scripts:
+                spec = importlib.util.spec_from_file_location(s, self.module_root)
+                mod_obj = importlib.util.module_from_spec(spec)
+                sys.modules[s] = mod_obj
+                spec.loader.exec_module(mod_obj)
+                mod_obj(xarray_ds, v)
 
     def setup(self, pod):
         """Method to do additional configuration immediately before :meth:`process`
@@ -1143,6 +1154,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                           cat_subset[case_name],
                                           work_dir=model_work_dir[case_name],
                                           case_name=case_name)
+
         return cat_subset
 
     def write_pp_catalog(self,
@@ -1236,6 +1248,7 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
     """
     user_pp_scripts: list
+    module_root: str = ""
 
     def __init__(self,
                  model_paths: util.ModelDataPathManager,
@@ -1243,16 +1256,9 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         # initialize PreprocessorFunctionBase objects
         super().__init__(model_paths, config)
         self.file_preproc_functions = [f for f in self._functions]
-        # append custom preprocessing scripts
         if any([s for s in config.user_pp_scripts]):
             self.add_user_pp_scripts(config)
-            module_root = os.path.join(config.CODE_ROOT, "user_scripts", "__init__.py")
-            import importlib
-            for s in self.user_pp_scripts:
-                spec = importlib.util.spec_from_file_location(s, module_root)
-                mod_obj = importlib.util.module_from_spec(spec)
-                sys.modules[s] = mod_obj
-                spec.loader.exec_module(mod_obj)
+            self.module_root = os.path.join(config.CODE_ROOT, "user_scripts", "__init__.py")
 
     def add_user_pp_scripts(self, runtime_config: util.NameSpace):
         self.user_pp_scripts = [os.path.join(runtime_config.CODE_ROOT, "user_scripts", s)

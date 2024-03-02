@@ -6,7 +6,7 @@ Continue from here next time
 import os
 import numpy as np
 import xarray as xr                # python library we use to read netcdf files
-from diagnostics.finite_amplitude_wave_diag.finite_amplitude_wave_diag_zonal_mean import gridfill_each_level
+from diagnostics.finite_amplitude_wave_diag.finite_amplitude_wave_diag_utils import gridfill_each_level
 from hn2016_falwa.xarrayinterface import QGDataset
 import matplotlib.pyplot as plt
 from hn2016_falwa.oopinterface import QGFieldNHN22, QGFieldNH18

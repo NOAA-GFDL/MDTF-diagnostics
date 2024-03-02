@@ -27,13 +27,15 @@
 import os
 import gc
 import socket
-from typing import Optional
 from collections import namedtuple
 import matplotlib
+
+from diagnostics.finite_amplitude_wave_diag.finite_amplitude_wave_diag_utils import convert_hPa_to_pseudoheight, \
+    DataPreprocessor
+
 if socket.gethostname() == 'otc':
     matplotlib.use('Agg')  # non-X windows backend
 
-import gridfill
 from finite_amplitude_wave_diag_utils import LatLonMapPlotter, HeightLatPlotter
 
 # Commands to load third-party libraries. Any code you don't include that's
@@ -45,145 +47,6 @@ import xarray as xr  # python library we use to read netcdf files
 from falwa.xarrayinterface import QGDataset
 from falwa.oopinterface import QGFieldNH18
 from falwa.constant import P_GROUND, SCALE_HEIGHT
-
-
-def convert_pseudoheight_to_hPa(height_array):
-    """
-    Args:
-        height_array(np.array): pseudoheight in [m]
-
-    Returns:
-        np.array which contains pressure levels in [hPa]
-    """
-    p_array = P_GROUND * np.exp(- height_array / SCALE_HEIGHT)
-    return p_array
-
-
-def convert_hPa_to_pseudoheight(p_array):
-    """
-    Args:
-        height_array(np.array): pseudoheight in [m]
-
-    Returns:
-        np.array which contains pressure levels in [hPa]
-    """
-    height_array = - SCALE_HEIGHT * np.log(p_array / P_GROUND)
-    return height_array
-
-
-class DataPreprocessor:
-    def __init__(
-            self, wk_dir, xlon, ylat, u_var_name, v_var_name, t_var_name, plev_name, lat_name, lon_name, time_coord_name):
-
-        self._wk_dir = wk_dir
-        self._xlon: np.array = xlon  # user input
-        self._ylat: np.array = ylat  # user input
-        self._u_var_name: str = u_var_name
-        self._v_var_name: str = v_var_name
-        self._t_var_name: str = t_var_name
-        self._plev_name: str = plev_name
-        self._lat_name: str = lat_name
-        self._lon_name: str = lon_name
-        self._original_plev = None
-        self._original_lat = None
-        self._original_lon = None
-        self._original_time_coord = None
-        self._time_coord_name: str = time_coord_name
-        self._new_time_coord_name: str = "day"
-        self._sampled_dataset = None  # Shall be xarray. Set type later
-        self._gridfill_needed: Optional[bool] = None
-        self._yz_mask = None
-        self._xy_mask = None
-
-    def _save_original_coordinates(self, dataset):
-        self._original_plev = dataset.coords[plev_name]
-        self._original_lat = dataset.coords[lat_name]
-        self._original_lon = dataset.coords[lon_name]
-
-    def _check_if_gridfill_is_needed(self, sampled_dataset):
-        num_of_nan = sampled_dataset[self._u_var_name].isnull().sum().values
-        if num_of_nan > 0:
-            self._gridfill_needed = True
-            self._do_save_mask(sampled_dataset)
-        else:
-            self._gridfill_needed = False
-
-    def _do_save_mask(self, dataset):
-        self._yz_mask = dataset[self._u_var_name]\
-            .to_masked_array().mask.sum(axis=0).sum(axis=-1).astype(bool)
-        self._xy_mask = dataset[self._u_var_name]\
-            .to_masked_array().mask[:, 1:, :, :].sum(axis=0).sum(axis=0).astype(bool)
-
-    def _save_preprocessed_data(self, dataset, output_path):
-        dataset.to_netcdf(output_path)
-        dataset.close()
-        print(f"Finished outputing preprocessed dataset: {output_path}")
-
-    def _interpolate_onto_regular_grid(self, dataset):
-        dataset = dataset.interp(
-            coords={self._lat_name: self._ylat, self._lon_name: self._xlon},
-            method="linear",
-            kwargs={"fill_value": "extrapolate"})
-        return dataset
-
-    def _implement_gridfill(self, dataset: xr.Dataset):
-        if not self._gridfill_needed:
-            print("No NaN values detected. Gridfill not needed. Bypass DataPreprocessor._implement_gridfill.")
-            return dataset
-        # *** Implement gridfill procedure ***
-        print(f"self._gridfill_needed = True. Do gridfill with poisson solver.")
-        args_tuple = [self._u_var_name, self._v_var_name, self._t_var_name]
-        gridfill_file_path = self._wk_dir + "/gridfill_{var}.nc"
-        for var_name in args_tuple:
-            field_at_all_level = xr.apply_ufunc(
-                gridfill_each_level,
-                *[sampled_dataset[var_name]],
-                input_core_dims=((self._lat_name, self._lon_name),),
-                output_core_dims=((self._lat_name, self._lon_name),),
-                vectorize=True, dask="allowed")
-            field_at_all_level.to_netcdf(gridfill_file_path.format(var=var_name))
-            field_at_all_level.close()
-            print(f"Finished outputing {var_name} to {gridfill_file_path.format(var=var_name)}")
-        load_gridfill_path = gridfill_file_path.format(var="*")
-        return load_gridfill_path
-
-    def output_preprocess_data(self, sampled_dataset, output_path):
-        """
-        Main procedure executed by this class
-        """
-        self._save_original_coordinates(sampled_dataset)
-        self._check_if_gridfill_is_needed(sampled_dataset)
-        gridfill_path = self._implement_gridfill(sampled_dataset)
-        gridfilled_dataset = xr.open_mfdataset(gridfill_path)
-        dataset = self._interpolate_onto_regular_grid(gridfilled_dataset)  # Interpolate onto regular grid
-        gridfilled_dataset.close()
-        self._save_preprocessed_data(dataset, output_path)  # Save preprocessed data
-        dataset.close()
-
-
-def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
-    """
-    Fill missing values in lat-lon grids with values derived by solving Poisson's equation
-    using a relaxation scheme.
-
-    Args:
-        lat_lon_field(np.ndarray): 2D array to apply gridfill on
-        itermax(int): maximum iteration for poisson solver
-        verbose(bool): verbose level of poisson solver
-
-    Returns:
-        A 2D array of the same dimension with all nan filled.
-    """
-    if np.isnan(lat_lon_field).sum() == 0:
-        return lat_lon_field
-
-    lat_lon_filled, converged = gridfill.fill(
-        grids=np.ma.masked_invalid(lat_lon_field), xdim=1, ydim=0, eps=0.01,
-        cyclic=True, itermax=itermax, verbose=verbose)
-
-    return lat_lon_filled
-
-
 
 # 1) Loading model data files:
 #
@@ -312,8 +175,8 @@ def time_average_processing(dataset: xr.Dataset):
     return seasonal_avg_data
 
 
-def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, analysis_height_array, plot_dir, title_str,
-                                           xy_mask=None, yz_mask=None):
+def plot_and_save_figure(seasonal_average_data, analysis_height_array, plot_dir, title_str, season,
+                         xy_mask=None, yz_mask=None):
     if xy_mask is None:
         xy_mask = np.zeros_like(seasonal_average_data.u_baro)
         yland, xland = [], []
@@ -330,28 +193,28 @@ def plot_finite_amplitude_wave_diagnostics(seasonal_average_data, analysis_heigh
                                           ygrid=analysis_height_array, cmap=cmap, xlim=[-80, 80])
     height_lat_plotter.plot_and_save_variable(variable=seasonal_average_data.zonal_mean_u, cmap=cmap,
                                               var_title_str='zonal mean U',
-                                              save_path=f"{plot_dir}test_zonal_mean_u.png", num_level=30)
+                                              save_path=f"{plot_dir}test_{season}_zonal_mean_u.eps", num_level=30)
     height_lat_plotter.plot_and_save_variable(variable=seasonal_average_data.zonal_mean_lwa, cmap=cmap,
                                               var_title_str='zonal mean LWA',
-                                              save_path=f"{plot_dir}test_zonal_mean_lwa.png", num_level=30)
+                                              save_path=f"{plot_dir}test_{season}_zonal_mean_lwa.eps", num_level=30)
     height_lat_plotter.plot_and_save_variable(variable=seasonal_average_data.uref, cmap=cmap,
                                               var_title_str='zonal mean Uref',
-                                              save_path=f"{plot_dir}test_zonal_mean_uref.png", num_level=30)
+                                              save_path=f"{plot_dir}test_{season}_zonal_mean_uref.eps", num_level=30)
     height_lat_plotter.plot_and_save_variable(variable=seasonal_average_data.zonal_mean_u - seasonal_average_data.uref,
                                               cmap=cmap, var_title_str='zonal mean $\Delta$ U',
-                                              save_path=f"{plot_dir}test_zonal_mean_delta_u.png", num_level=30)
+                                              save_path=f"{plot_dir}test_{season}_zonal_mean_delta_u.eps", num_level=30)
 
     # Use encapsulated class to plot
     lat_lon_plotter = LatLonMapPlotter(figsize=(6, 3), title_str=title_str, xgrid=original_grid['lon'],
                                        ygrid=original_grid['lat'], cmap=cmap, xland=xland, yland=yland,
                                        lon_range=lon_range, lat_range=lat_range)
     lat_lon_plotter.plot_and_save_variable(variable=seasonal_average_data.u_baro, cmap=cmap, var_title_str='U baro',
-                                           save_path=f"{plot_dir}test_u_baro.png", num_level=30)
+                                           save_path=f"{plot_dir}test_{season}_u_baro.eps", num_level=30)
     lat_lon_plotter.plot_and_save_variable(variable=seasonal_average_data.lwa_baro, cmap=cmap, var_title_str='LWA baro',
-                                           save_path=f"{plot_dir}test_lwa_baro.png", num_level=30)
+                                           save_path=f"{plot_dir}test_{season}_lwa_baro.eps", num_level=30)
     lat_lon_plotter.plot_and_save_variable(variable=seasonal_average_data.covariance_lwa_u_baro, cmap="Purples_r",
                                            var_title_str='Covariance between LWA and U(baro)',
-                                           save_path=f"{plot_dir}test_u_lwa_covariance.png", num_level=30)
+                                           save_path=f"{plot_dir}test_{season}_u_lwa_covariance.eps", num_level=30)
 
 
 # === 3) Saving output data ===
@@ -367,7 +230,7 @@ if __name__ == '__main__':
     season_to_months = [
         ("DJF", [1, 2, 12]), ("MAM", [3, 4, 5]), ("JJA", [6, 7, 8]), ("SON", [9, 10, 11])]
     intermediate_output_paths: Dict[str, str] = {
-        item[0]: f"{wk_dir}/{model_or_obs}/intermediate_{item[0]}.nc" for item in season_to_months}
+        item[0]: f"{wk_dir}/intermediate_{item[0]}.nc" for item in season_to_months}
 
     for season in season_to_months[:1]:
         # Construct data preprocessor
@@ -377,7 +240,6 @@ if __name__ == '__main__':
 
         selected_months = season[1]
         plot_dir = f"{wk_dir}/{model_or_obs}/PS/"
-        # plt.savefig(plot_dir, bbox_inches='tight')
 
         # Do temporal sampling to reduce the data size
         sampled_dataset = model_dataset.where(
@@ -402,12 +264,10 @@ if __name__ == '__main__':
         # we don't want to repeat ourselves.
 
         # set an informative title using info about the analysis set in env vars
-        title_string = f"{casename} ({firstyr}-{lastyr})"
+        title_string = f"{casename} ({firstyr}-{lastyr}) {season}"
         # Plot the model data:
-        # plot_and_save_figure("model", title_string, model_dataset)
-        plot_finite_amplitude_wave_diagnostics(
-            seasonal_avg_data, analysis_height_array, plot_dir=plot_dir, title_str=title_string,
-            xy_mask=data_preprocessor._xy_mask, yz_mask=data_preprocessor._yz_mask)
+        plot_and_save_figure(seasonal_avg_data, analysis_height_array, plot_dir=plot_dir, title_str=title_string,
+                             season=season[0], xy_mask=data_preprocessor.xy_mask, yz_mask=data_preprocessor.yz_mask)
         print(f"Finishing outputting figures to {plot_dir}.")
 
         # Close xarray datasets

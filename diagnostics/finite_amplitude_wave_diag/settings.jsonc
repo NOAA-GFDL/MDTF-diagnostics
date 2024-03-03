@@ -2,6 +2,7 @@
    "settings":{
       "driver":"finite_amplitude_wave_diag_zonal_mean.py",
       "long_name":"Finite-amplitude Rossby Wave Diagnostics (zonal-mean version)",
+      "realm" : "atmos",
       "description":"Finite-amplitude Rossby Wave Diagnostics (zonal-mean version)",
       "runtime_requirements":{
          "python3":[

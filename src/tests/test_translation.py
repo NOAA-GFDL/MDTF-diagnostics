@@ -36,9 +36,9 @@ class TestVariableTranslator(unittest.TestCase):
                 'PRECC': {"standard_name": "prc_var", "units": "1", "ndim": 3}
             }
         },
-        "")
+            "")
         self.assertEqual(temp.to_CF_name('not_CF', 'PRECT'), 'pr_var')
-        self.assertEqual(temp.from_CF_name('not_CF', 'pr_var'), 'PRECT')
+        self.assertEqual(temp.from_CF_name('not_CF', 'pr_var', 'atmos'), 'PRECT')
 
     def test_variabletranslator_no_key(self):
         temp = translation.VariableTranslator()
@@ -49,11 +49,11 @@ class TestVariableTranslator(unittest.TestCase):
                 'PRECC': {"standard_name": "prc_var", "units": "1", "ndim": 3}
             }
         },
-        "")
+            "")
         self.assertRaises(KeyError, temp.to_CF_name, 'B', 'PRECT')
         self.assertRaises(KeyError, temp.to_CF_name, 'not_CF', 'nonexistent_var')
-        self.assertRaises(KeyError, temp.from_CF_name, 'B', 'PRECT')
-        self.assertRaises(KeyError, temp.from_CF_name, 'not_CF', 'nonexistent_var')
+        self.assertRaises(KeyError, temp.from_CF_name, 'B', 'PRECT', 'atmos')
+        self.assertRaises(KeyError, temp.from_CF_name, 'not_CF', 'nonexistent_var', 'blah')
 
     def test_variabletranslator_aliases(self):
         # create multiple entries when multiple models specified
@@ -66,10 +66,10 @@ class TestVariableTranslator(unittest.TestCase):
                 'PRECC': {"standard_name": "prc_var", "units": "1", "ndim": 3}
             }
         },
-        "")
-        self.assertEqual(temp.from_CF_name('not_CF', 'pr_var'), 'PRECT')
-        self.assertEqual(temp.from_CF_name('A', 'pr_var'), 'PRECT')
-        self.assertEqual(temp.from_CF_name('B', 'pr_var'), 'PRECT')
+            "")
+        self.assertEqual(temp.from_CF_name('not_CF', 'pr_var', 'atmos'), 'PRECT')
+        self.assertEqual(temp.from_CF_name('A', 'pr_var', 'atmos'), 'PRECT')
+        self.assertEqual(temp.from_CF_name('B', 'pr_var', 'atmos'), 'PRECT')
 
     def test_variabletranslator_no_translation(self):
         dummy_varlist = {
@@ -179,8 +179,8 @@ class TestVariableTranslatorFiles(unittest.TestCase):
         translate = translation.VariableTranslator(code_root, unittest=False)
         translate.read_conventions(code_root, unittest=False)
         self.assertEqual(translate.to_CF_name('NCAR', 'PRECT'), "precipitation_rate")
-        self.assertEqual(translate.from_CF_name('CMIP', 'toa_outgoing_longwave_flux'),
-                         "rlut")
+        self.assertEqual(translate.from_CF_name('CMIP', 'toa_outgoing_longwave_flux',
+                                                'atmos'), "rlut")
 
 
 class TestPathManager(unittest.TestCase):

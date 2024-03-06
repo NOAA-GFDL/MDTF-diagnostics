@@ -6,7 +6,6 @@ import shutil
 import abc
 import dataclasses
 import datetime
-import sys
 import importlib
 import pandas as pd
 from src import util, varlist_util, translation, xr_parser, units
@@ -15,6 +14,14 @@ import intake
 import numpy as np
 import xarray as xr
 import collections
+
+# TODO: Make the following lines a unit test
+# import sys
+# ROOT_DIR = os.path.abspath("../MDTF-diagnostics")
+# sys.path.append(ROOT_DIR)
+# user_scripts = importlib.import_module("user_scripts")
+# from user_scripts import example_pp_script
+# test_str = example_pp_script.test_example_script()
 
 import logging
 
@@ -537,7 +544,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             new_tv_name = v.name
         else:
             new_tv_name = translation.VariableTranslator().from_CF_name(
-                data_convention, v.standard_name, new_ax_set
+                data_convention, v.standard_name, new_ax_set, v.realm
             )
         new_tv = tv.remove_scalar(
             tv.scalar_coords[0].axis,
@@ -630,8 +637,8 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
     """
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
-        """Edit the *pod*'s :class:`~src.diagnostic.Varlist` prior to data query.
-        If given a :class:`~src.MultirunDiagnostic.VarlistEntry` *v* has a
+        """Edit the *pod*'s :class:`~src.VarlistEntry.Varlist` prior to data query.
+        If given a :class:`~src.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
         pressure level), return a copy of *v* with that ``scalar_coordinate``
         removed (i.e., requesting a full 3D variable) to be used as an alternate
@@ -665,7 +672,7 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
             new_tv_name = v.name
         else:
             new_tv_name = translation.VariableTranslator().from_CF_name(
-                data_convention, v.standard_name, new_ax_set
+                data_convention, v.standard_name, v.realm, new_ax_set
             )
         new_tv = tv.remove_scalar(
             tv.scalar_coords[0].axis,
@@ -744,6 +751,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     file_preproc_functions = util.abstract_attribute()
     output_to_ncl: bool = False
     nc_format: str
+    user_pp_scripts: list
 
     def __init__(self,
                  model_paths: util.ModelDataPathManager,
@@ -885,11 +893,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         if any([s for s in self.user_pp_scripts]):
             for s in self.user_pp_scripts:
-                spec = importlib.util.spec_from_file_location(s, self.module_root)
-                mod_obj = importlib.util.module_from_spec(spec)
-                sys.modules[s] = mod_obj
-                spec.loader.exec_module(mod_obj)
-                mod_obj(xarray_ds, v)
+                script_name, script_ext = os.path.splitext(s)
+                full_module_name = "user_scripts." + script_name
+                user_module = importlib.import_module(full_module_name, package=None)
+                # Call function with the arguments
+                # user_scripts.example_pp_script.main(xarray_ds, v)
+                user_module.main(xarray_ds, v.name)
 
     def setup(self, pod):
         """Method to do additional configuration immediately before :meth:`process`
@@ -1247,7 +1256,6 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     variable, using xarray `open_mfdataset()
     <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
     """
-    user_pp_scripts: list
     module_root: str = ""
 
     def __init__(self,
@@ -1258,11 +1266,10 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         self.file_preproc_functions = [f for f in self._functions]
         if any([s for s in config.user_pp_scripts]):
             self.add_user_pp_scripts(config)
-            self.module_root = os.path.join(config.CODE_ROOT, "user_scripts", "__init__.py")
+            self.module_root = os.path.join(config.CODE_ROOT, "user_scripts")
 
     def add_user_pp_scripts(self, runtime_config: util.NameSpace):
-        self.user_pp_scripts = [os.path.join(runtime_config.CODE_ROOT, "user_scripts", s)
-                                for s in runtime_config.user_pp_scripts]
+        self.user_pp_scripts = [s for s in runtime_config.user_pp_scripts]
         for s in self.user_pp_scripts:
             try:
                 os.path.exists(s)

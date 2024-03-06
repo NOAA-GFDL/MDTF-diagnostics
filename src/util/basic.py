@@ -10,7 +10,6 @@ import re
 import textwrap
 import unittest.mock
 import uuid
-import pandas as pd
 from . import exceptions, PropagatedEvent
 
 import logging
@@ -710,17 +709,3 @@ class RegexDict(dict):
         return (match for query in queries for match in self.get_matching_value(query))
 
 
-def insert_dataframe_row(idx: int, df, row):
-    """Insert a new row into a Pandas dataframe
-    Credit: https://stackoverflow.com/questions/24284342/insert-a-row-to-pandas-dataframe
-     Args:
-        idx (int): index position in the dataframe where row will be inserted
-        df (pandas.DataFrame): dataframe to add row to
-        row(list): list of values to insert into dataframe
-    """
-    insert_loc = df.index.max()
-    if pd.isna(insert_loc):
-        df.loc[0] = row
-    else:
-        df.loc[insert_loc + 1] = row
-    return df

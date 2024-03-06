@@ -6,8 +6,7 @@ from .basic import (
     ConsistentDict, WormDefaultDict, NameSpace, MDTFEnum,
     sentinel_object_factory, MDTF_ID, deactivate, ObjectStatus,
     is_iterable, to_iter, from_iter, remove_prefix, RegexDict,
-    remove_suffix, filter_kwargs, splice_into_list,
-    insert_dataframe_row
+    remove_suffix, filter_kwargs, splice_into_list
 )
 
 from .logs import (

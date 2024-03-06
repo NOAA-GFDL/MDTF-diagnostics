@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Example custom preprocessing script to include in framework workflow"""
 import os
 import sys
@@ -66,7 +65,19 @@ def rename_dataset_keys(ds: dict, case_list: dict) -> collections.OrderedDict:
     return new_dict
 
 
+# unit test for basic functionality
+def test_example_script() -> str:
+    test_str = "Testing call to example_pp_script"
+    print(test_str)
+    return test_str
+
+
 # Main script that works on the xarray dataset that the framework reads from the input data catalog
+# The main script mirrors the preprocessor functions that operate separately on each variable in every case in an
+# xarray dataset:
+# for case_name, case_xr_dataset in cat_subset.items():
+#     for v in case_list[case_name].varlist.keys():
+#
 # Functions adapted from albedofb_calcs.py
 
 

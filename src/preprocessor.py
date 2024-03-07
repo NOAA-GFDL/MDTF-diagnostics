@@ -78,7 +78,7 @@ class PreprocessorFunctionBase(abc.ABC):
         alternate variable request (:class:`~src.diagnostic.VarlistEntry`) for
         *Y*.
         """
-        pass
+        return v
 
     @abc.abstractmethod
     def execute(self, var: varlist_util.VarlistEntry,
@@ -271,8 +271,9 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         """
         std_name = getattr(v, 'standard_name', "")
         if std_name not in self._rate_d and std_name not in self._flux_d:
-            # logic not applicable to this VE; do nothing
-            return None
+            # logic not applicable to this VE; do nothing and return varlistEntry for
+            # next function to run edit_request on
+            return v
         # construct dummy var to translate (rather than modifying std_name & units)
         # on v's translation) because v may not have a translation
         if std_name in self._rate_d:
@@ -307,6 +308,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         new_v = copy_as_alternate(v)
         new_v.translation = new_tv
         return new_v
+        #v = new_v
 
     def execute(self, var, ds, **kwargs):
         """Convert units of dependent variable *ds* between precip rate and
@@ -526,11 +528,11 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
 
         if not v.translation:
             # hit this if VE not defined for this model naming convention;
-            # do nothing for this v
-            return None
+            # do nothing for this v and return for next pp function edit_request
+            return v
         elif v.translation.get_scalar('Z') is None:
             # hit this if VE didn't request Z level extraction; do nothing
-            return None
+            return v
 
         tv = v.translation  # abbreviate
         if len(tv.scalar_coords) == 0:
@@ -722,7 +724,9 @@ class UserDefinedPreprocessorFunction(PreprocessorFunctionBase):
         self.user_defined_script = pp_script
 
     def edit_request(self, v, **kwargs):
-        pass
+        """Dummy implementation of edit_request to meet abstract base class requirements
+        """
+        return v
 
     def execute(self, var, ds, **kwargs):
         pass
@@ -880,15 +884,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         class's functionality. Calls the :meth:`~PreprocessorFunctionBase.edit_request`
         method on all included PreprocessorFunctions.
         """
+
         for func in self.file_preproc_functions:
-            func.edit_request(func, v, **kwargs)
+            v = func.edit_request(func, v, **kwargs)
 
     def execute_pp_functions(self, v: varlist_util.VarlistEntry,
                              xarray_ds: xr.Dataset,
                              **kwargs):
         """Method to launch pp routines on xarray datasets associated with required variables"""
         for func in self.file_preproc_functions:
-            func.execute(func, v, xarray_ds, **kwargs)
+            xarray_ds = func.execute(func, v, xarray_ds, **kwargs)
             # append custom preprocessing scripts
 
         if any([s for s in self.user_pp_scripts]):
@@ -898,7 +903,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 user_module = importlib.import_module(full_module_name, package=None)
                 # Call function with the arguments
                 # user_scripts.example_pp_script.main(xarray_ds, v)
-                user_module.main(xarray_ds, v.name)
+                xarray_ds = user_module.main(xarray_ds, v.name)
 
     def setup(self, pod):
         """Method to do additional configuration immediately before :meth:`process`
@@ -1232,7 +1237,7 @@ class NullPreprocessor(MDTFPreprocessorBase):
     def edit_request(self, v, **kwargs):
         """Dummy implementation of edit_request to meet abstract base class requirements
         """
-        pass
+        return v
 
     def process(self, case_list: dict,
                 config: util.NameSpace,

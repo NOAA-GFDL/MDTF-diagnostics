@@ -9,11 +9,12 @@ failed without raising errors.
 Based on test_website by Dani Coleman, bundy@ucar.edu.
 """
 import sys
+
 # do version check before importing other stuff
 if sys.version_info[0] != 3 or sys.version_info[1] < 10:
     sys.exit("ERROR: MDTF currently only supports python >= 3.10.*. Please check "
-    "which version is on your $PATH (e.g. with `which python`.)\n"
-    f"Attempted to run with following python version:\n{sys.version}")
+             "which version is on your $PATH (e.g. with `which python`.)\n"
+             f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports
 import os
 import argparse
@@ -27,6 +28,7 @@ import urllib.error
 from src import util
 
 import logging
+
 _log = logging.getLogger(__name__)
 
 Link = collections.namedtuple('Link', ['origin', 'target'])
@@ -38,11 +40,13 @@ Attributes:
     target (str): URL referred to by the link.
 """
 
+
 class LinkParser(HTMLParser):
     """Custom subclass of :py:class:`~html.parser.HTMLParser` which constructs
     an iterable over each ``<a>`` tag. Adapted from
     `<https://stackoverflow.com/a/41663924>`__.
     """
+
     def reset(self):
         super(LinkParser, self).reset()
         self.links = iter([])
@@ -71,6 +75,7 @@ class LinkVerifier(object):
             verbose (bool, default False): Set to True to print each file
                 examined.
         """
+
         def munge_input_url(url):
             url_parts = urllib.parse.urlsplit(url)
             if not url_parts.scheme:
@@ -90,9 +95,9 @@ class LinkVerifier(object):
 
         self.verbose = verbose
         self.pod_name = None
-        # NB: WK_DIR isn't a "working directory"; it's just the base path
+        # NB: WORK_DIR isn't a "working directory"; it's just the base path
         # relative to which paths are reported
-        (self.root_url, self.WK_DIR, self.root_file) = munge_input_url(root)
+        (self.root_url, self.WORK_DIR, self.root_file) = munge_input_url(root)
         if rel_path_root:
             self.rel_path_root, _, _ = munge_input_url(rel_path_root)
         else:
@@ -149,9 +154,9 @@ class LinkVerifier(object):
             # print('\nFailed to find file or connect to server.')
             # print('Reason: ', e.reason)
             tup = re.split(r"\[Errno 2\] No such file or directory: \'(.*)\'",
-                str(e.reason))
+                           str(e.reason))
             if len(tup) == 3:
-                str_ = util.abbreviate_path(tup[1], self.WK_DIR, '$WK_DIR')
+                str_ = util.abbreviate_path(tup[1], self.WORK_DIR, '$WORK_DIR')
             else:
                 str_ = str(e.reason)
             self.log.error("Missing '%s'.", str_, tags=util.ObjectLogTag.BANNER)
@@ -161,8 +166,8 @@ class LinkVerifier(object):
         else:
             parser = LinkParser()
             links = [
-                Link(origin=url, target=urllib.parse.urljoin(url, link_out)) \
-                    for link_out in self.gen_links(f, parser)
+                Link(origin=url, target=urllib.parse.urljoin(url, link_out))
+                for link_out in self.gen_links(f, parser)
             ]
             f.close()
             return links
@@ -209,7 +214,7 @@ class LinkVerifier(object):
                 # restrict links to those that start with root_parent
                 new_links = [
                     lnk for lnk in new_links if lnk.target not in known_urls \
-                        and lnk.target.startswith(root_parent)
+                                                and lnk.target.startswith(root_parent)
                 ]
                 queue.extend(new_links)
                 # update known_urls so that we don't chase cycles
@@ -251,11 +256,11 @@ class LinkVerifier(object):
             their path relative to the POD's output directory.
         """
         self.pod_name = pod_name
-        self.WK_DIR = util.remove_suffix(
-            util.remove_suffix(self.WK_DIR, os.sep), pod_name
+        self.WORK_DIR = util.remove_suffix(
+            util.remove_suffix(self.WORK_DIR, os.sep), pod_name
         )
         if not self.root_file:
-            self.root_file = pod_name+'.html'
+            self.root_file = pod_name + '.html'
         root_url = urllib.parse.urljoin(self.root_url, self.root_file)
         missing = self.breadth_first(root_url)
         missing_dict = self.group_relative_links(missing)
@@ -277,15 +282,17 @@ class LinkVerifier(object):
         missing = self.breadth_first(root_url)
         return self.group_relative_links(missing)
 
+
 # --------------------------------------------------------------
+
 
 if __name__ == '__main__':
     # Wrap input/output if we're called as a standalone script
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", action="store_true",
-        help="increase output verbosity")
+                        help="increase output verbosity")
     parser.add_argument("path_or_url",
-        help="URL or filesystem path to the MDTF framework output directory.")
+                        help="URL or filesystem path to the MDTF framework output directory.")
     args = parser.parse_args()
 
     # instead of print(), use root logger

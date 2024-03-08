@@ -9,7 +9,7 @@ setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
 
 begin
 
-wk_dir = getenv("WK_DIR")
+wk_dir = getenv("WORK_DIR")
 OBS_DATA = getenv("OBS_DATA")
 ; model skill score names (MJO propagtion, specific humidity,
 ;                          MJO amplitude, convect. timescale)

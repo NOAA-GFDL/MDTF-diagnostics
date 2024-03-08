@@ -5,7 +5,7 @@ import xarray as xr
 from metpy.units import units
 
 
-def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
+def tao_triton(obs_data_dir, lon_lim: list, lat_lim: list, year_lim=None):
     """
     The observational data io for latent heat flux corrections. 
     If there are more needed model variables, a manual 
@@ -47,19 +47,18 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
     """
 
     # original variable name for dir name
-    dirlist = ['WindSpeed10m','SST','RH','Latent','airT','SLP']
+    dirlist = ['WindSpeed10m', 'SST', 'RH', 'Latent', 'airT', 'SLP']
 
     # original variable name for file name
-    varlist = ['wzs','sst','rh','qlat','airt','bp']
+    varlist = ['wzs', 'sst', 'rh', 'qlat', 'airt', 'bp']
 
     # original variable name in netcdf
-    varname = ['WZS_2401','T_25','RH_910','QL_137','AT_21','BP_915']
+    varname = ['WZS_2401', 'T_25', 'RH_910', 'QL_137', 'AT_21', 'BP_915']
 
     var_file_dict = {}
-    for nvar,var in enumerate(varlist):
+    for nvar, var in enumerate(varlist):
         var_file = []
-        location = []
-        files = os.listdir(os.path.join(obs_data_dir,dirlist[nvar],'daily'))
+        files = os.listdir(os.path.join(obs_data_dir, dirlist[nvar], 'daily'))
         for file in files:
             if file.startswith(var) and file.endswith('_dy.cdf'):
                 startlen = len(var)
@@ -67,7 +66,7 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
                 loc = file[startlen:-endlen]
 
                 lat_index = loc.find('n')
-                if lat_index == -1 :
+                if lat_index == -1:
                     lat_index = loc.find('s')            
 
                 # latitude
@@ -88,9 +87,8 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
                         var_file.append(loc)
         var_file_dict[var] = var_file
 
-
     # pick only overlapping stations
-    for nvar,var in enumerate(varlist):
+    for nvar, var in enumerate(varlist):
         if nvar == 0:
             final_list = var_file_dict[var]
         else:
@@ -102,10 +100,10 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
     print('TAO/TRITON stations:')
     for stn_loc in stn_locs:
         data_files = []
-        for nvar,var in enumerate(varlist):
-            path = os.path.join(obs_data_dir,dirlist[nvar],'daily')
+        for nvar, var in enumerate(varlist):
+            path = os.path.join(obs_data_dir, dirlist[nvar], 'daily')
             file = var+stn_loc+'_dy.cdf'
-            data_files.append(os.path.join(path,file))
+            data_files.append(os.path.join(path, file))
         try :
             ds_list = [xr.open_dataset(file) for file in data_files]
             ds_mlist[stn_loc] = ds_list
@@ -113,14 +111,11 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
         except FileNotFoundError:
             print('%s not enough data'%stn_loc)
 
-
-
-    ### clean fill_value
+    # clean fill_value
     for stn_loc in stn_locs:
-        for nvar,var in enumerate(varname):
+        for nvar, var in enumerate(varname):
             ds_mlist[stn_loc][nvar][var] = ds_mlist[stn_loc][nvar][var]\
-                        .where(ds_mlist[stn_loc][nvar][var] != 1e35,other=np.nan)
-
+                        .where(ds_mlist[stn_loc][nvar][var] != 1e35, other=np.nan)
 
     # # Calculate $\Delta$q
     #
@@ -133,15 +128,13 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
     #    slp to determine the mix ratio and then the specific humidity
     #
 
-
     for stn_loc in stn_locs:
         temp_list = [ds_mlist[stn_loc][nvar][varname[nvar]].squeeze() for nvar in range(len(varname))]
 
-        ds_merge = xr.merge(temp_list,compat='override')
+        ds_merge = xr.merge(temp_list, compat='override')
 
         for nvar in range(len(varlist)):
             ds_merge = ds_merge.rename_vars({varname[nvar]:varlist[nvar]})
-
 
         # calculate 2m specific humidity
         mixing_ratio = metpy.calc.mixing_ratio_from_relative_humidity(
@@ -178,36 +171,34 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
         
     # crop time period
     if year_lim is not None:
-        for nstn,stn_loc in enumerate(stn_locs):
+        for nstn, stn_loc in enumerate(stn_locs):
             ds_mlist[stn_loc] = ds_mlist[stn_loc].where(
-                       (ds_mlist[stn_loc]['time.year']>=np.array(year_lim).min())&
-                       (ds_mlist[stn_loc]['time.year']<=np.array(year_lim).max()),
+                       (ds_mlist[stn_loc]['time.year'] >= np.array(year_lim).min())&
+                       (ds_mlist[stn_loc]['time.year'] <= np.array(year_lim).max()),
                        drop=True)
-        
-
 
     # stack all station
-    for nstn,stn_loc in enumerate(stn_locs):
+    for nstn, stn_loc in enumerate(stn_locs):
         if nstn == 0:
             ds_merge = ds_mlist[stn_loc]
         else:
-            ds_merge=xr.concat([ds_merge,ds_mlist[stn_loc]],dim='stn')
+            ds_merge = xr.concat([ds_merge, ds_mlist[stn_loc]], dim='stn')
             
     if len(stn_locs) == 1:
         ds_merge = ds_merge
     else: 
-        ds_merge = ds_merge.stack(allstn=('stn','time'))
+        ds_merge = ds_merge.stack(allstn=('stn', 'time'))
     
     location = []
     for loc in stn_locs:
         lat_index = loc.find('n')
-        if lat_index == -1 :
+        if lat_index == -1:
             lat_index = loc.find('s')            
 
         # latitude
         if loc[lat_index] in ['n']:
             lat_loc = float(loc[:lat_index])
-        else :
+        else:
             lat_loc = -float(loc[:lat_index])
 
         # longitude
@@ -216,19 +207,18 @@ def tao_triton(obs_data_dir,lon_lim,lat_lim,year_lim=None):
         else:
             lon_loc = -float(loc[lat_index+1:-1])+360.
             
-        location.append([lon_loc,lat_loc])
+        location.append([lon_loc, lat_loc])
     
     # change varname to be consistent with model
-    ds_merge = ds_merge.rename({'wzs':'sfcWind','dQ':'del_q','qlat':'hfls'})
+    ds_merge = ds_merge.rename({'wzs': 'sfcWind', 'dQ': 'del_q', 'qlat': 'hfls'})
 
     # change dq unit from kg/kg to g/kg
     ds_merge['del_q'] = ds_merge['del_q']*1e3
     
-    return ds_merge,location
+    return ds_merge, location
 
 
-
-def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
+def rama(obs_data_dir: str, lon_lim: list, lat_lim: list, year_lim=None):
     """
     The observational data io for latent heat flux corrections. 
     If there are more needed model variables, a manual 
@@ -270,19 +260,18 @@ def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
     """
 
     # original variable name for dir name
-    dirlist = ['WindSpeed10m','SST','RH','Latent','airT','SLP']
+    dirlist = ['WindSpeed10m', 'SST', 'RH', 'Latent', 'airT', 'SLP']
 
     # original variable name for file name
-    varlist = ['wzs','sst','rh','qlat','airt','bp']
+    varlist = ['wzs', 'sst', 'rh', 'qlat', 'airt', 'bp']
 
     # original variable name in netcdf
-    varname = ['WZS_2401','T_25','RH_910','QL_137','AT_21','BP_915']
+    varname = ['WZS_2401', 'T_25', 'RH_910', 'QL_137', 'AT_21', 'BP_915']
 
     var_file_dict = {}
-    for nvar,var in enumerate(varlist):
+    for nvar, var in enumerate(varlist):
         var_file = []
-        location = []
-        files = os.listdir(os.path.join(obs_data_dir,dirlist[nvar],'daily'))
+        files = os.listdir(os.path.join(obs_data_dir, dirlist[nvar], 'daily'))
         for file in files:
             if file.startswith(var) and file.endswith('_dy.cdf'):
                 startlen = len(var)
@@ -290,7 +279,7 @@ def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
                 loc = file[startlen:-endlen]
 
                 lat_index = loc.find('n')
-                if lat_index == -1 :
+                if lat_index == -1:
                     lat_index = loc.find('s')            
 
                 # latitude
@@ -311,9 +300,8 @@ def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
                         var_file.append(loc)
         var_file_dict[var] = var_file
 
-
     # pick only overlapping stations
-    for nvar,var in enumerate(varlist):
+    for nvar, var in enumerate(varlist):
         if nvar == 0:
             final_list = var_file_dict[var]
         else:
@@ -325,26 +313,24 @@ def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
     print('RAMA stations:')
     for stn_loc in stn_locs:
         data_files = []
-        for nvar,var in enumerate(varlist):
-            path = os.path.join(obs_data_dir,dirlist[nvar],'daily')
-            file = var+stn_loc+'_dy.cdf'
-            data_files.append(os.path.join(path,file))
+        for nvar, var in enumerate(varlist):
+            path = os.path.join(obs_data_dir, dirlist[nvar], 'daily')
+            file = var + stn_loc + '_dy.cdf'
+            data_files.append(os.path.join(path, file))
         try :
             ds_list = [xr.open_dataset(file) for file in data_files]
             ds_mlist[stn_loc] = ds_list
             print("%s included"%stn_loc)
         except FileNotFoundError:
-            print('%s not enough data'%stn_loc)
+            print('%s not enough data' % stn_loc)
 
-
-    ### clean fill_value
+    # clean fill_value
     for stn_loc in stn_locs:
-        for nvar,var in enumerate(varname):
+        for nvar, var in enumerate(varname):
             ds_mlist[stn_loc][nvar][var] = ds_mlist[stn_loc][nvar][var]\
-                        .where(ds_mlist[stn_loc][nvar][var] != 1e35,other=np.nan)
+                        .where(ds_mlist[stn_loc][nvar][var] != 1e35, other=np.nan)
 
-
-    # # Calculate $\Delta$q
+    # Calculate $\Delta$q
     #
     # $\delta$ q is the specific humidity difference between
     #   saturation q near surface determined by SST and 2m(3m) q.
@@ -355,15 +341,13 @@ def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
     #    slp to determine the mix ratio and then the specific humidity
     #
 
-
     for stn_loc in stn_locs:
         temp_list = [ds_mlist[stn_loc][nvar][varname[nvar]].squeeze() for nvar in range(len(varname))]
 
-        ds_merge = xr.merge(temp_list,compat='override')
+        ds_merge = xr.merge(temp_list, compat='override')
 
         for nvar in range(len(varlist)):
             ds_merge = ds_merge.rename_vars({varname[nvar]:varlist[nvar]})
-
 
         # calculate 2m specific humidity
         mixing_ratio = metpy.calc.mixing_ratio_from_relative_humidity(
@@ -400,32 +384,30 @@ def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
         
     # crop time period
     if year_lim is not None:
-        for nstn,stn_loc in enumerate(stn_locs):
+        for nstn, stn_loc in enumerate(stn_locs):
             ds_mlist[stn_loc] = ds_mlist[stn_loc].where(
-                       (ds_mlist[stn_loc]['time.year']>=np.array(year_lim).min())&
-                       (ds_mlist[stn_loc]['time.year']<=np.array(year_lim).max()),
+                       (ds_mlist[stn_loc]['time.year'] >= np.array(year_lim).min()) &
+                       (ds_mlist[stn_loc]['time.year'] <= np.array(year_lim).max()),
                        drop=True)
-        
-
 
     # stack all station
-    for nstn,stn_loc in enumerate(stn_locs):
+    for nstn, stn_loc in enumerate(stn_locs):
         if nstn == 0:
             ds_merge = ds_mlist[stn_loc]
         else:
-            ds_merge=xr.concat([ds_merge,ds_mlist[stn_loc]],dim='stn')
-    ds_merge = ds_merge.stack(allstn=('stn','time'))
+            ds_merge=xr.concat([ds_merge, ds_mlist[stn_loc]], dim='stn')
+    ds_merge = ds_merge.stack(allstn=('stn', 'time'))
     
     location = []
     for loc in stn_locs:
         lat_index = loc.find('n')
-        if lat_index == -1 :
+        if lat_index == -1:
             lat_index = loc.find('s')            
 
         # latitude
         if loc[lat_index] in ['n']:
             lat_loc = float(loc[:lat_index])
-        else :
+        else:
             lat_loc = -float(loc[:lat_index])
 
         # longitude
@@ -434,13 +416,12 @@ def rama(obs_data_dir,lon_lim,lat_lim,year_lim=None):
         else:
             lon_loc = -float(loc[lat_index+1:-1])+360.
             
-        location.append([lon_loc,lat_loc])
+        location.append([lon_loc, lat_loc])
         
     # change varname to be consistent with model
-    ds_merge = ds_merge.rename({'wzs':'sfcWind','dQ':'del_q','qlat':'hfls'})
+    ds_merge = ds_merge.rename({'wzs': 'sfcWind', 'dQ': 'del_q', 'qlat': 'hfls'})
 
     # change dq unit from kg/kg to g/kg
     ds_merge['del_q'] = ds_merge['del_q']*1e3
-    
-    
-    return ds_merge,location
+
+    return ds_merge, location

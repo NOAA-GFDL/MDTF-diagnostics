@@ -381,7 +381,7 @@ def fluxanom_nc_create(variable, lat, lon, fbname):
 
     """
     var = xr.DataArray(variable, coords=[lat, lon], dims=['lat', 'lon'], name=fbname)
-    var.to_netcdf(os.environ['WK_DIR'] + '/model/netCDF/fluxanom2D_' + fbname + '.nc')
+    var.to_netcdf(os.environ['WORK_DIR'] + '/model/netCDF/fluxanom2D_' + fbname + '.nc')
 
     return None
 
@@ -449,7 +449,7 @@ def bargraph_plotting(model_bar, obs_bar, var_units, var_legnames, var_filename)
     plt.ylabel(var_units)
     plt.xticks([r + barWidth for r in range(len(model_bar))], var_legnames)
     plt.legend(loc="upper right")
-    plt.savefig(os.environ['WK_DIR'] + '/model/PS/forcing_feedback_globemean_' + var_filename + '.eps')
+    plt.savefig(os.environ['WORK_DIR'] + '/model/PS/forcing_feedback_globemean_' + var_filename + '.eps')
     plt.close()
 
     return None
@@ -540,7 +540,7 @@ def map_plotting_4subs(cbar_levs1, cbar_levs2, var1_name, var1_model, \
     if np.all(cbar_levs1 == cbar_levs2):
         cbar = plt.colorbar(cs, ax=axs.ravel(), orientation='horizontal', aspect=25)
         cbar.set_label(var_units)
-    plt.savefig(os.environ['WK_DIR'] + '/model/PS/forcing_feedback_maps_' + \
+    plt.savefig(os.environ['WORK_DIR'] + '/model/PS/forcing_feedback_maps_' + \
                 var_filename + '.eps', bbox_inches='tight')
     plt.close()
 
@@ -593,7 +593,7 @@ def map_plotting_2subs(cbar_levs, var_name, var_model,
 
     cbar = plt.colorbar(cs, ax=axs.ravel(), orientation='horizontal', aspect=25)
     cbar.set_label(var_units)
-    plt.savefig(os.environ['WK_DIR'] + '/model/PS/forcing_feedback_maps_' + \
+    plt.savefig(os.environ['WORK_DIR'] + '/model/PS/forcing_feedback_maps_' + \
                 var_filename + '.eps', bbox_inches='tight')
     plt.close()
 

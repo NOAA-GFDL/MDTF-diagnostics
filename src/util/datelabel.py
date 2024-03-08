@@ -47,12 +47,15 @@ import warnings
 from src import util
 
 import logging
+
 _log = logging.getLogger(__name__)
+
 
 # ===============================================================
 # following adapted from Alexandre Decan's python-intervals
 # https://github.com/AlexandreDecan/python-intervals ; LGPLv3
 # We neglect the case of noncontiguous or semi-infinite intervals here
+
 
 class AtomicInterval(object):
     """
@@ -122,9 +125,9 @@ class AtomicInterval(object):
             True if interval is empty, False otherwise.
         """
         return (
-            self._lower > self._upper or
-            (self._lower == self._upper \
-                and (self._left == self.OPEN or self._right == self.OPEN))
+                self._lower > self._upper or
+                (self._lower == self._upper \
+                 and (self._left == self.OPEN or self._right == self.OPEN))
         )
 
     def replace(self, left=None, lower=None, upper=None, right=None, ignore_inf=True):
@@ -183,7 +186,7 @@ class AtomicInterval(object):
             raise TypeError('Only AtomicInterval instances are supported.')
 
         if self._lower < other.lower or \
-            (self._lower == other.lower and self._left == self.CLOSED):
+                (self._lower == other.lower and self._left == self.CLOSED):
             first, second = self, other
         else:
             first, second = other, self
@@ -284,11 +287,11 @@ class AtomicInterval(object):
     def __contains__(self, item):
         if isinstance(item, AtomicInterval):
             left = item._lower > self._lower or (
-                item._lower == self._lower \
+                    item._lower == self._lower
                     and (item._left == self._left or self._left == self.CLOSED)
             )
             right = item._upper < self._upper or (
-                item._upper == self._upper and \
+                    item._upper == self._upper and
                     (item._right == self._right or self._right == self.CLOSED)
             )
             return left and right
@@ -400,11 +403,12 @@ class AtomicInterval(object):
         """
         ints = sorted(args, key=op.attrgetter('lower'))
         for i in list(range(0, len(ints) - 1)):
-            if not ints[i].adjoins_left(ints[i+1]):
+            if not ints[i].adjoins_left(ints[i + 1]):
                 raise ValueError(("Intervals {} and {} not contiguous and "
-                    "nonoverlapping.").format(ints[i], ints[i+1]))
+                                  "nonoverlapping.").format(ints[i], ints[i + 1]))
         return AtomicInterval(ints[0].left, ints[0].lower,
-            ints[-1].upper, ints[-1].right)
+                              ints[-1].upper, ints[-1].right)
+
 
 # ===============================================================
 
@@ -427,10 +431,13 @@ class DatePrecision(enum.IntEnum):
     HOUR = 4
     MINUTE = 5
     SECOND = 6
+    MICROSECOND = 7
+
 
 class DateMixin(object):
     """Utility methods for dealing with dates.
     """
+
     @staticmethod
     def date_format(dt, precision=None):
         """Print date *dt* in YYYYMMDDHHMMSS format, with length being set
@@ -447,7 +454,7 @@ class DateMixin(object):
         str_ = '{0.tm_year:04}{0.tm_mon:02}{0.tm_mday:02}'.format(tup_)
         str_ = str_ + '{0.tm_hour:02}{0.tm_min:02}{0.tm_sec:02}'.format(tup_)
         if precision:
-            return str_[:2*(precision + 1)]
+            return str_[:2 * (precision + 1)]
         else:
             return str_
 
@@ -456,7 +463,7 @@ class DateMixin(object):
         """Return a copy of *dt* advanced by one time unit as specified by
         the *precision* attribute.
         """
-        if precision == DatePrecision.MONTH: # can't handle this with timedeltas
+        if precision == DatePrecision.MONTH:  # can't handle this with timedeltas
             if dt.month == 12:
                 return dt.replace(year=(dt.year + 1), month=1)
             else:
@@ -469,7 +476,7 @@ class DateMixin(object):
         """Return a copy of *dt* moved back by one time unit as specified by
         the *precision* attribute.
         """
-        if precision == DatePrecision.MONTH: # can't handle this with timedeltas
+        if precision == DatePrecision.MONTH:  # can't handle this with timedeltas
             if dt.month == 1:
                 return dt.replace(year=(dt.year - 1), month=12)
             else:
@@ -490,13 +497,15 @@ class DateMixin(object):
             # nb: can't handle this with timedeltas
             return dt.replace(year=(dt.year + delta))
         elif precision == DatePrecision.DAY:
-            td = datetime.timedelta(days = delta)
+            td = datetime.timedelta(days=delta)
         elif precision == DatePrecision.HOUR:
-            td = datetime.timedelta(hours = delta)
+            td = datetime.timedelta(hours=delta)
         elif precision == DatePrecision.MINUTE:
-            td = datetime.timedelta(minutes = delta)
+            td = datetime.timedelta(minutes=delta)
         elif precision == DatePrecision.SECOND:
-            td = datetime.timedelta(seconds = delta)
+            td = datetime.timedelta(seconds=delta)
+        elif precision == DatePrecision.MICROSECOND:
+            td = datetime.timedelta(microseconds=delta)
         else:
             # prec == 2 case handled in calling logic
             raise ValueError(f"Malformed input: {repr(dt)} prec={precision} delta={delta}")
@@ -526,17 +535,17 @@ class DateRange(AtomicInterval, DateMixin):
 
         Args:
             start (str or datetime): Start date of the interval as a
-                :py:class:`~datetime.datetime` object, or string in YYYYMMDD...
-                or YYYY-MM-DD formats, or a two-item collection or string defining
-                *both* endpoints of the interval as strings in YYYYMMDD... format
-                separated by a single hyphen.
+                :py:class:`~datetime.datetime` object, or string in YYYYmmdd...
+                YYYY-MM-DD, or YYYY:MM:DD formats, or a two-item collection or string defining
+                *both* endpoints of the interval as strings in YYYYmmdd... format
+                separated by a single hyphen or colon.
             end (str or datetime): Optional. End date of the interval as a
-                :py:class:`~datetime.datetime` object, or string in YYYYMMDD...
-                or YYYY-MM-DD formats. Ignored if the entire range was specified
+                :py:class:`~datetime.datetime` object, or string in YYYYmmdd...,
+                YYYY-mm-dd, or YYYY:mm:dd formats. Ignored if the entire range was specified
                 as a string in *start*.
             precision (int or :class:`DatePrecision`): Optional. Manually set
                 precision of date endpoints defining the range. If not supplied,
-                set based on the length of the YYYYMMDD... strings supplied in
+                set based on the length of the YYYYmmdd... strings supplied in
                 *start* and *end*.
 
         Raises:
@@ -548,7 +557,7 @@ class DateRange(AtomicInterval, DateMixin):
         """
         if not end:
             if isinstance(start, str):
-                (start, end) = start.split(self._range_sep)
+                (start, end) = re.split('[-, :]', start)
             elif len(start) == 2:
                 (start, end) = start
             else:
@@ -558,7 +567,7 @@ class DateRange(AtomicInterval, DateMixin):
         dt1, prec1 = self._coerce_to_datetime(end, is_lower=False)
         if not (dt0 < dt1):
             log.warning('Args to DateRange out of order (%s >= %s)',
-                start, end)
+                        start, end)
             dt0, prec0 = self._coerce_to_datetime(end, is_lower=True)
             dt1, prec1 = self._coerce_to_datetime(start, is_lower=False)
         # call AtomicInterval's init
@@ -568,9 +577,10 @@ class DateRange(AtomicInterval, DateMixin):
                 precision = DatePrecision(precision)
             if precision > prec0 or precision > prec1:
                 raise util.MixedDatePrecisionException((
-                    "Attempted to init DateRange with manual prec {}, but date "
-                    "arguments have precs {}, {}").format(precision, prec0, prec1)
-                )
+                                                           "Attempted to init DateRange with manual prec {}, but date "
+                                                           "arguments have precs {}, {}").format(precision, prec0,
+                                                                                                 prec1)
+                                                       )
             self.precision = precision
         else:
             self.precision, _ = self._precision_check(prec0, prec1)
@@ -593,13 +603,13 @@ class DateRange(AtomicInterval, DateMixin):
             warnings.warn('Expected precisions {} to be identical'.format(
                 args
             ))
-        return (min_, max_)
+        return min_, max_
 
     @staticmethod
     def _coerce_to_datetime(dt, is_lower):
         if isinstance(dt, datetime.datetime):
             # datetime specifies time to within second
-            return (dt, DatePrecision.SECOND)
+            return dt, DatePrecision.SECOND
         if isinstance(dt, datetime.date):
             # date specifies time to within day
             return (
@@ -609,9 +619,9 @@ class DateRange(AtomicInterval, DateMixin):
         else:
             tmp = Date._coerce_to_self(dt)
             if is_lower:
-                return (tmp.lower, tmp.precision)
+                return tmp.lower, tmp.precision
             else:
-                return (tmp.upper, tmp.precision)
+                return tmp.upper, tmp.precision
 
     @classmethod
     def _coerce_to_self(cls, item, precision=None):
@@ -628,7 +638,7 @@ class DateRange(AtomicInterval, DateMixin):
                     return cls(item)
             except Exception:
                 raise TypeError((f"Comparison not supported between {cls.__name__} "
-                    f"and {type(item).__name__} ({repr(item)})."))
+                                 f"and {type(item).__name__} ({repr(item)})."))
 
     @property
     def start_datetime(self):
@@ -668,7 +678,7 @@ class DateRange(AtomicInterval, DateMixin):
     @classmethod
     def from_contiguous_span(cls, *args):
         """Given multiple DateRanges, return interval containing them
-        only if their time intervals are continguous and nonoverlapping.
+        only if their time intervals are contiguous and non-overlapping.
         """
         if len(args) == 1 and isinstance(args[0], DateRange):
             return args[0]
@@ -698,6 +708,7 @@ class DateRange(AtomicInterval, DateMixin):
         # need to decrement upper bound because interval is open there
         return self.date_format(self.lower, precision) + self._range_sep \
             + self.date_format(self.decrement(self.upper, precision), precision)
+
     __str__ = format
 
     def __repr__(self):
@@ -716,12 +727,13 @@ class DateRange(AtomicInterval, DateMixin):
         """
         item = self._coerce_to_self(item)
         left_gt = item._lower > self._lower
-        left_eq = self.start.overlaps(item.start) \
-            and (item._left == self._left or self._left == self.CLOSED)
+        left_eq = (self.start.overlaps(item.start)
+                   and (item._left == self._left or self._left == self.CLOSED))
         right_lt = item._upper < self._upper
-        right_eq = self.end.overlaps(item.end) \
-            and (item._right == self._right or self._right == self.CLOSED)
+        right_eq = (self.end.overlaps(item.end)
+                    and (item._right == self._right or self._right == self.CLOSED))
         return (left_gt or left_eq) and (right_lt or right_eq)
+
     contains = __contains__
 
     def overlaps(self, item):
@@ -747,12 +759,16 @@ class DateRange(AtomicInterval, DateMixin):
 
     def __lt__(self, other):
         return self._date_range_compare_common(other, '__lt__')
+
     def __le__(self, other):
         return self._date_range_compare_common(other, '__le__')
+
     def __gt__(self, other):
         return self._date_range_compare_common(other, '__gt__')
+
     def __ge__(self, other):
         return self._date_range_compare_common(other, '__ge__')
+
     def __eq__(self, other):
         # Don't want check for static date in this case
         try:
@@ -765,6 +781,7 @@ class DateRange(AtomicInterval, DateMixin):
 
     def __hash__(self):
         return hash((self.__class__, self.lower, self.upper, self.precision))
+
 
 class Date(DateRange):
     """Defines a single date with variable level precision.
@@ -787,7 +804,7 @@ class Date(DateRange):
             of DatePrecision.YEAR.
 
     """
-    _datetime_attrs = ('year','month','day','hour','minute','second')
+    _datetime_attrs = ('year', 'month', 'day', 'hour', 'minute', 'second')
 
     def __init__(self, *args, **kwargs):
         """Constructor.
@@ -820,13 +837,13 @@ class Date(DateRange):
         if prec is not None and not isinstance(prec, DatePrecision):
             prec = DatePrecision(prec)
 
-        assert prec <= 6 # other values not supported
+        assert prec <= 6  # other values not supported
         for i in list(range(prec)):
             setattr(self, self._datetime_attrs[i], dt_args[i])
         if prec == 1:
-            dt_args = (dt_args[0], 1, 1) # missing month & day
+            dt_args = (dt_args[0], 1, 1)  # missing month & day
         elif prec == 2:
-            dt_args = (dt_args[0], dt_args[1], 1) # missing day
+            dt_args = (dt_args[0], dt_args[1], 1)  # missing day
 
         dt = datetime.datetime(*dt_args)
         # call DateRange's init
@@ -847,13 +864,14 @@ class Date(DateRange):
 
     @classmethod
     def _parse_input_string(cls, s):
-        """Parse date strings in `YYYY-MM-DD` or `YYYYMMDDHH` formats.
+        """Parse date strings in `YYYY-MM-DD:HH:MM:SS` or `YYYYMMDDHHMMSS` formats.
         """
-        if '-' in s:
-            return tuple([int(ss) for ss in s.split('-')])
+
+        if '-' in s or ':' in s:
+            return tuple([int(ss) for ss in re.split('[-:s+]', s)])
         ans = [int(s[0:4])]
         for i in list(range(4, len(s), 2)):
-            ans.append(int(s[i:(i+2)]))
+            ans.append(int(s[i:(i + 2)]))
         return tuple(ans)
 
     def format(self, precision=None):
@@ -865,6 +883,7 @@ class Date(DateRange):
             return self.date_format(self.lower, precision)
         else:
             return self.date_format(self.lower, self.precision)
+
     __str__ = format
 
     def __repr__(self):
@@ -883,7 +902,7 @@ class Date(DateRange):
         if self.is_static or getattr(other, 'is_static', False):
             if func == op.eq:
                 # True only if both values are FXDates
-                return (self.is_static and getattr(other, 'is_static', False))
+                return self.is_static and getattr(other, 'is_static', False)
             else:
                 raise util.FXDateException(func_name='_tuple_compare')
         if not isinstance(other, self.__class__):
@@ -917,15 +936,17 @@ class Date(DateRange):
             return False
 
     def __ne__(self, other):
-        return (not self.__eq__(other)) # more foolproof
+        return not self.__eq__(other)  # more foolproof
 
     def __hash__(self):
         return hash((self.__class__, self.lower, self.upper, self.precision))
+
 
 class _StaticTimeDependenceBase(object):
     """Dummy class to label sentinel objects for use in describing static data
     with no time dependence.
     """
+
     @property
     def is_static(self):
         """Property indicating time-independent data (eg, 'fx' in CMIP6 DRS.)
@@ -939,12 +960,14 @@ class _StaticTimeDependenceBase(object):
 
     def format(self, precision=None):
         return "<N/A>"
+
     isoformat = format
     __str__ = format
 
     @staticmethod
     def date_format(dt, precision=None):
         return "<N/A>"
+
 
 class _FXDateMin(_StaticTimeDependenceBase, Date):
     def __init__(self):
@@ -964,7 +987,10 @@ class _FXDateMin(_StaticTimeDependenceBase, Date):
     @property
     def end(self):
         return self.lower
+
+
 FXDateMin = _FXDateMin()
+
 
 class _FXDateMax(_StaticTimeDependenceBase, Date):
     def __init__(self):
@@ -984,12 +1010,16 @@ class _FXDateMax(_StaticTimeDependenceBase, Date):
     @property
     def end(self):
         return self.upper
+
+
 FXDateMax = _FXDateMax()
+
 
 class _FXDateRange(_StaticTimeDependenceBase, DateRange):
     """Singleton placeholder/sentinel object for use in describing static data
     with no time dependence.
     """
+
     def __init__(self):
         # call DateRange's init
         super(_FXDateRange, self).__init__(datetime.datetime.min, datetime.datetime.max)
@@ -1005,10 +1035,13 @@ class _FXDateRange(_StaticTimeDependenceBase, DateRange):
     @property
     def end(self):
         return FXDateMax
+
+
 FXDateRange = _FXDateRange()
 """Singleton placeholder/sentinel object for use in describing static data
 with no time dependence.
 """
+
 
 class DateFrequency(datetime.timedelta):
     """Class representing a frequency or time period.
@@ -1020,6 +1053,7 @@ class DateFrequency(datetime.timedelta):
        as is possible for :py:class:`~datetime.timedelta` and
        :py:class:`~datetime.datetime`.
     """
+
     # define __new__, not __init__, because timedelta is immutable
     def __new__(cls, quantity, unit=None):
         if isinstance(quantity, str) and (unit is None):
@@ -1040,7 +1074,7 @@ class DateFrequency(datetime.timedelta):
     def is_static(self):
         """Property indicating time-independent data (e.g., ``fx`` in CMIP6 DRS.)
         """
-        return (self.quantity == 0 and self.unit == "fx")
+        return self.quantity == 0 and self.unit == "fx"
 
     @classmethod
     def from_struct(cls, str_):
@@ -1081,7 +1115,7 @@ class DateFrequency(datetime.timedelta):
             s = 'min'
         else:
             raise ValueError("Malformed input {} {}".format(quantity, unit))
-        return (cls._get_timedelta_kwargs(q, s), {'quantity': q, 'unit': s})
+        return cls._get_timedelta_kwargs(q, s), {'quantity': q, 'unit': s}
 
     @classmethod
     def _get_timedelta_kwargs(cls, q, s):
@@ -1089,8 +1123,8 @@ class DateFrequency(datetime.timedelta):
             # internally set to maximum representable timedelta, for purposes of comparison
             tmp = datetime.timedelta.max
             return {'days': tmp.days, 'seconds': tmp.seconds,
-                'microseconds': tmp.microseconds
-            }
+                    'microseconds': tmp.microseconds
+                    }
         elif s == 'yr':
             return {'days': 365 * q}
         elif s == 'season':
@@ -1115,6 +1149,7 @@ class DateFrequency(datetime.timedelta):
             return 'fx'
         else:
             return "{}{}".format(self.quantity, self.unit)
+
     __str__ = format
 
     def format_local(self):
@@ -1142,23 +1177,25 @@ class DateFrequency(datetime.timedelta):
             return super(DateFrequency, self).__eq__(other)
 
     def __ne__(self, other):
-        return (not self.__eq__(other)) # more foolproof
+        return not self.__eq__(other)  # more foolproof
 
     def __copy__(self):
         return self.__class__.__new__(self.__class__, self.quantity, unit=self.unit)
 
     def __deepcopy__(self, memo):
         return self.__class__.__new__(self.__class__,
-            copy.deepcopy(self.quantity, memo), unit=copy.deepcopy(self.unit, memo)
-        )
+                                      copy.deepcopy(self.quantity, memo), unit=copy.deepcopy(self.unit, memo)
+                                      )
 
     def __hash__(self):
         return hash((self.__class__, self.quantity, self.unit))
+
 
 class _FXDateFrequency(DateFrequency, _StaticTimeDependenceBase):
     """Singleton placeholder/sentinel object for use in describing static data
     with no time dependence.
     """
+
     # define __new__, not __init__, because timedelta is immutable
     def __new__(cls):
         return super(_FXDateFrequency, cls).__new__(cls, 'static')
@@ -1173,20 +1210,24 @@ class _FXDateFrequency(DateFrequency, _StaticTimeDependenceBase):
     def __deepcopy__(self, memo):
         return self.__class__.__new__(self.__class__)
 
+
 FXDateFrequency = _FXDateFrequency()
 """Singleton placeholder/sentinel object for use in describing static data
 with no time dependence.
 """
+
 
 class AbstractDateRange(abc.ABC):
     """Defines interface (set of attributes) for :class:`DateRange` objects.
     """
     pass
 
+
 class AbstractDate(abc.ABC):
     """Defines interface (set of attributes) for :class:`Date` objects.
     """
     pass
+
 
 class AbstractDateFrequency(abc.ABC):
     """Defines interface (set of attributes) for :class:`DateFrequency` objects.

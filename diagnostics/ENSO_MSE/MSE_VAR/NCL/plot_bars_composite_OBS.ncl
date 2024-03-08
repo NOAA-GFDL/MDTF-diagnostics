@@ -15,12 +15,7 @@ begin
       varcode  = getenv("POD_HOME")
       vardata = getenv("ENSO_MSE_WKDIR_MSE_VAR")
       outdir =  getenv("ENSO_MSE_WKDIR") 
-      model =  "  " ;   leave  blank for OBS 
-     
-;;      varcode = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/diagnostics/ENSO_MSE/"
-;;      vardata = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/wkdir/MDTF_CESM2_1950_2005.v0/ENSO_MSE/MSE_VAR/"
-;;      outdir = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/wkdir/MDTF_CESM2_1950_2005.v0/ENSO_MSE/"
-
+      model =  "  " ;   leave  blank for OBS
 
       Varname = "output"
 

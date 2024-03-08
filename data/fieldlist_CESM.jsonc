@@ -5,7 +5,7 @@
 // Source: https://www.cesm.ucar.edu/models/cesm2/atmosphere/docs/ug6/hist_flds_f2000.html
 // CF variables not on that list are commented out
 {
-  "name" : "NCAR",
+  "name" : "CESM",
   "models": ["CAM4", "CESM2", "CESM"], // others?
   "coords" : {
     // only used for taking slices, unit conversion
@@ -13,6 +13,7 @@
     "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
     "TLONG": {"axis": "X", "standard_name": "array of t-grid longitudes", "units": "degrees_east"},
     "TLAT": {"axis": "Y", "standard_name": "array of t-grid latitudes", "units": "degrees_north"},
+
     "plev": {
       "standard_name": "air_pressure",
       "units": "hPa",
@@ -48,12 +49,14 @@
   "variables" : {
     "U": {
       "standard_name": "eastward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "scalar_coord_templates": {"plev": "U{value}"},
       "ndim": 4
     },
     "V": {
       "standard_name": "northward_wind",
+      "realm":"atmos",
       "units": "m s-1",
       "scalar_coord_templates": {"plev": "V{value}"},
       "ndim": 4
@@ -61,67 +64,79 @@
     "Z3": {
       "standard_name": "geopotential_height",
       "units": "m",
+      "realm": "atmos",
       // note: 4d name is 'Z3' but Z500 = height at 500 mb, etc.
       "scalar_coord_templates": {"plev": "Z{value}"},
       "ndim": 4
     },
     "Z500": {
       "standard_name": "geopotential_height_500mb",
+      "realm": "atmos",
       "units": "m",
       // note: 4d name is 'Z3' but Z500 = height at 500 mb, etc.
       "ndim": 3
     },
     "Q": {
       "standard_name": "specific_humidity",
+      "realm": "atmos",
       "units": "1",
       "ndim": 4
     },
     "OMEGA": {
       "standard_name": "lagrangian_tendency_of_air_pressure",
+      "realm": "atmos",
       "units": "Pa s-1",
       "scalar_coord_templates": {"plev": "OMEGA{value}"},
       "ndim": 4
     },
     "TS": {
       "standard_name": "surface_temperature",
+      "realm": "atmos",
       "units": "K",
       "ndim": 3
     },
     "PS": {
       "standard_name": "surface_air_pressure",
+      "realm": "atmos",
       // note: not hPa
       "units": "Pa",
       "ndim": 3
     },
     "PRECT": {
       "standard_name": "precipitation_rate",
+      "realm": "atmos",
       "units": "m s-1",
       "ndim": 3
     },
     "PRECC": {
       "standard_name": "convective_precipitation_rate",
+      "realm": "atmos",
       "units": "m s-1",
       "ndim": 3
     },
     "TREFHT" : {
       // correct name? CMIP6 equivalent should be tas, temp at 2m ref height
       "standard_name": "air_temperature",
+      "realm": "atmos",
       "units": "K",
       "ndim": 3,
       "modifier": "atmos_height"
     },
     "TAUX": {
       "standard_name": "surface_downward_eastward_stress",
+      "realm": "atmos",
       "units": "Pa",
       "ndim": 3
     },
     "TAUY": {
       "standard_name": "surface_downward_northward_stress",
+      "realm": "atmos",
       "units": "Pa",
       "ndim": 3
     },
     "PSL": {
       "standard_name": "air_pressure_at_mean_sea_level",
+      "realm": "atmos",
       "units": "Pa",
       "ndim": 3
     },
@@ -149,21 +164,25 @@
     "FLUS": {
       // correct name? Guessed according to pattern -- no FLUS, only the net combination?
       "standard_name": "surface_upwelling_longwave_flux_in_air",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "FLDS": {
       "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "FLUT": {
       "standard_name": "toa_outgoing_longwave_flux",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
      "FLNT": {
       "standard_name": "net_upward_longwave_flux",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
@@ -229,32 +248,37 @@
     },
     "SHFLX": {
       "standard_name": "surface_upward_sensible_heat_flux",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "LHFLX": {
       "standard_name": "surface_upward_latent_heat_flux",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
     "zos": {
       "standard_name": "sea_surface_height_above_geoid",
+      "realm": "ocean",
       "units": "m",
       "ndim": 3
     },
     "tauuo": {
       "standard_name": "surface_downward_x_stress",
+      "realm": "ocean",
       "units": "N m-2",
       "ndim": 3
     },
     "tauvo": {
       "standard_name": "surface_downward_y_stress",
+      "realm": "ocean",
       "units": "N m-2",
       "ndim": 3
     },
     "areacello": {
       "standard_name": "cell_area",
-      "modifier": "ocean_realm",
+      "realm": "ocean",
       "units": "m2",
       "ndim": 2
     },
@@ -281,11 +305,13 @@
     // },
     "THETAL": {
       "standard_name": "sea_water_potential_temperature",
+      "realm": "ocean",
       "units": "K",
       "ndim": 4
     },
     "SST": {
       "standard_name": "Potential Temperature",
+      "realm": "ocean",
       "units": "degC",
       "ndim": 4
     },
@@ -293,6 +319,7 @@
     // ta: 3D temperature, units = K:
     "T": {
       "standard_name": "air_temperature",
+      "realm": "atmos",
       "units": "K",
       "ndim": 4
     },
@@ -300,6 +327,7 @@
     "prw": {
       // check name: is this column integrated?
       "standard_name": "atmosphere_mass_content_of_water_vapor",
+      "realm": "atmos",
       "units": "kg m-2",
       "ndim": 3
     }

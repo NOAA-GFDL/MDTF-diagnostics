@@ -1,7 +1,7 @@
 Framework configuration and parsing
 ===================================
 
-This section describes the :doc:`src.cli`, responsible for parsing input configuration. Familiarity with the python :py:mod:`argparse` module is recommended.
+This section describes the :doc:`src.cli`, responsible for parsing input configuration.
 
 CLI functionality
 -----------------
@@ -13,11 +13,12 @@ Flexibility and extensibility are among the MDTF project's design goals, which m
 
 - Allow for specifying and recording user input in a file, to allow provenance of package runs and to eliminate the need for long strings of CLI flags.
 - Record whether the user has explicitly set an option (to a value which may or may not be the default), or whether the option is unset and its default value is being used.
-- Define "plug-ins" for specific tasks (such as model data retrieval) which can define their own CLI settings. This is necessary to avoid confusing the user with settings that are irrelevant for their specified analysis; e.g. the ``--version-date`` flag used by the :ref:`ref-data-source-cmip6` data source would be meaningless for a source of data that didn't have a revision history.
 - Enable site-specific customizations, which can add to or modify any of the above properties.
 - Define CLIs through configuration files instead of code to streamline the process of defining all of the above.
 
-No third-party CLI package implements all of the above features, so the MDTF package provides its own solution, described here.
+The MDTF framework uses the `Python Click package <https://click.palletsprojects.com/en/8.1.x/>`__
+to create the CLI from the runtime configuration file options,
+eliminating the need for custom the CLI modules and plugins in prior versions of the code.
 
 .. _ref-cli-subcommands:
 
@@ -42,34 +43,18 @@ Additional package manager-like commands could be added to allow users to select
 
 .. _ref-cli-plugins:
 
-CLI Plugins
-+++++++++++
-
-"Plug-ins" provide different ways to implement the same type of task, following a common API. One example is obtaining model data from different sources: different code is needed for reading the sample model data from a local directory vs. accessing remote data via a catalog interface. In the plug-in system, the code for these two cases would be written as distinct data source plug-ins, and the data retrieval method to use would be selected at runtime by the user via the ``--data-manager`` CLI flag. This allows new functionalities to be developed and tested independently of each other, and without requiring changes to the common logic of the framework.
-
-The categories of plug-ins are fixed by the framework. Currently these are ``data_manager``, which retrieves model data, and ``environment_manager``, which sets up each POD's third-party code dependencies. Two other plug-ins are defined but not exposed to the user through the UI, because only one option is currently implemented for them: ``runtime_manager``, which controls how PODs are executed, and ``output_manager``, which controls how the PODs' output files are collected and processed.
-
-Allowed values for each of these plug-in categories are defined in the ``cli_plugins.jsonc`` files: the "base" one in ``/src``, and optionally one in the site-specific directory selected by the user. 
-
-As noted in the overview above, for a manageable interface we need to allow each plug-in to define its own CLI options. These are defined in the ``cli`` attribute for each plug-in definition in the ``cli_plugins.jsonc`` file, following the syntax described below. When the CLI parser is being configured, the user input is first partially parsed to determine what plug-ins the user has selected, and then their specific CLI options are added to the "full" CLI parser. 
 
 File-based CLI definition
 -------------------------
 
-The CLI for the package is constructed from a set of JSONC configuration files. The syntax for these files is essentially a direct JSON serialization of the arguments given to :py:class:`~argparse.ArgumentParser`, with a few extensions described below.
+The CLI for the package is constructed from a runtime configuration file.
+The syntax for these files is essentially a direct JSON serialization of the arguments given to :py:class:`~argparse.ArgumentParser`,
+with a few extensions described below.
 
 Location of configuration files
 +++++++++++++++++++++++++++++++
 
 The top-level configuration files have hard-coded names:
-
-- `src/cli_subcommands.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/cli_subcommands.jsonc>`__ to define the :ref:`subcommands <ref-cli-subcommands>`, and
-- `src/cli_plugins.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/cli_plugins.jsonc>`__ to define the :ref:`plug-ins <ref-cli-plugins>`.
-- Files with these names in a site directory will override the contents of the above files in ``/src`` if that site is selected, e.g. `sites/NOAA_GFDL/cli_subcommands.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/sites/NOAA_GFDL/cli_subcommands.jsonc>`__.
-
-Plugins define their own CLI options in the ``cli`` attribute in their entry in the plugins file, using the syntax described below. On the other hand, each subcommand defines its CLI through a separate file, given in the ``cli_file`` attribute. Chief among these is 
-
-- `src/cli_template.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/cli_template.jsonc>`__, which defines the CLI for running the package in the absence of site-specific modifications.
 
 CLI configuration file syntax
 +++++++++++++++++++++++++++++
@@ -100,10 +85,6 @@ Use in the code
 
 :doc:`src.cli` defines a hierarchy of classes representing objects in a CLI parser specification, which are instantiated by values from the configuration files. At the root of the hierarchy is :class:`~src.cli.CLIConfigManager`, a Singleton which reads all the files, begins the object creation process, and stores the results. The other classes in the hierarchy are, in descending order:
 
-- :class:`~src.cli.CLICommand`\: Dataclass representing a :ref:`subcommand <ref-cli-subcommands>` or a :ref:`plug-in <ref-cli-plugins>`. This wraps a parser (``parser`` attribute) and objects in the classes below, corresponding to configuration for that parser, which are initialized from the configuration files (``cli`` attribute.) It also implements a :meth:`~src.cli.CLICommand.call` method for dispatching parsed values to the initialization method of the class implementing the subcommand or plug-in.
-- :class:`~src.cli.CLIParser`\: Dataclass representing arguments passed to the constructor for :py:class:`~argparse.ArgumentParser`. A parser object (next section) is configured with information in objects in the classes below via this class's :class:`~src.cli.CLIParser.configure` method.
-- :class:`~src.cli.CLIArgumentGroup`\: Dataclass representing arguments passed to :py:meth:`~argparse.ArgumentParser.add_argument_group`. This only affects the formatting in the online help.
-- :class:`~src.cli.CLIArgument`\: Dataclass representing arguments passed to :py:meth:`~argparse.ArgumentParser.add_argument`, as described above.
 
 
 CLI parsers
@@ -112,12 +93,6 @@ CLI parsers
 Parser classes
 ++++++++++++++
 
-As described above, the CLI used on a specific run of the package depends on the values of some of the CLI arguments: the ``--site``, and the values chosen for recognized plug-ins. This introduces a chicken-and-egg level of complexity, in which we need to parse some arguments in order to determine how to proceed with the rest of the parsing. The :doc:`src.cli` does this by defining several parser classes, all of which inherit from :py:class:`~argparse.ArgumentParser`.
-
-- :class:`~src.cli.MDTFArgParser`: The base class for all parsers, which implements custom help formatting (:class:`~src.cli.CustomHelpFormatter`) and recording of user-provided vs. default values for options (via :class:`~src.cli.RecordDefaultsAction`)
-- :class:`~src.cli.MDTFArgPreparser`: Child class used for partial parsing ("preparsing"). This is used in :meth:`~src.cli.MDTFTopLevelArgParser.init_user_defaults` to extract paths to file-based user input, in :meth:`~src.cli.MDTFTopLevelArgParser.init_site` to extract the site, and in :meth:`~src.cli.MDTFTopLevelArgParser.setup` to extract values for the subcommand and plug-in options before the full CLI is parsed.
-- :class:`~src.cli.MDTFTopLevelArgParser`: Child class for the top-level CLI interface to the package. Has additional methods for formatting help text, and initiating the CLI configuration and parsing process described in detail below.
-- :class:`~src.cli.MDTFTopLevelSubcommandArgParser`: Currently unused. Child class which would take care of parsing and dispatch to MDTF package :ref:`subcommands <ref-cli-subcommands>`. This is currently done by manual inspection of ``sys.argv`` in `mdtf_framework.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/mdtf_framework.py>`__.
 
 .. _ref-cli-precedence:
 
@@ -146,7 +121,7 @@ Building the CLI
 ++++++++++++++++
 
 - The mdtf wrapper script activates the ``_MDTF_base`` conda environment and calls `mdtf_framework.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/mdtf_framework.py>`__.
-- mdtf_framework.py manually determines the subcommand from the currently recognized values, and constructs the CLI appropriate to it. In this example, we're running the package, so the :class:`~src.cli.MDTFTopLevelArgParser` is initialized and its :meth:`~src.cli.MDTFTopLevelArgParser.setup` method is called.
+- mdtf_framework.py
 
   - This calls :meth:`~src.cli.MDTFTopLevelArgParser.init_user_defaults`, which parses the value of ``--input-file`` and, if set, reads the file and stores its contents in the ``user_defaults`` attribute of :class:`~src.cli.CLIConfigManager`.
   - It then calls :meth:`~src.cli.MDTFTopLevelArgParser.init_site`, which parses the value of the selected site and reads the site-specific defaults files (if any).
@@ -172,13 +147,4 @@ Parsing CLI arguments
 - The parsed option values are stored as a dict in the ``config`` attribute of the :class:`~src.cli.MDTFTopLevelArgParser` object. This will be the starting point for further validation of user input done in the :class:`~src.core.MDTFFramework` class.
 - The :meth:`~src.cli.MDTFTopLevelArgParser.dispatch` then imports the modules for all selected plug-in objects. We do this import "on demand," rather than simply always importing everything, because a plug-in may make use of third-party modules that the user hasn't installed (e.g. if the plug-in is site-specific and the user is at a different site.)
 - Finally, :meth:`~src.cli.MDTFTopLevelArgParser.dispatch` calls the :meth:`~src.cli.CLICommand.call` method on the selected subcommand to hand off execution. As noted above, subcommand functionality is implemented but unused, so currently we always hand off the the first (only) subcommand, **mdtf run**, regardless of input. The corresponding entry point, as specified in `src/cli_plugins.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/cli_plugins.jsonc>`__, is the ``__init__`` method of :class:`~src.core.MDTFFramework`. 
-
-Extending the user interface
-----------------------------
-
-Currently, the only method for the user to configure a run of the package is the CLI described above, which parses command-line options and :ref:`configuration files <ref-cli-precedence>`. 
-
-In the future it may be desirable to provide additional invocation mechanisms, e.g. from a larger workflow engine or a web-based front end. 
-
-Parsing and validation logic is split between the :doc:`src.cli` and the :class:`~src.core.MDTFFramework` class. In order to avoid duplicating logic and ensure that configuration gets parsed consistently across the different methods, the raw user input should be introduced into the chain of methods in the parsing logic (described above) as early as possible.
 

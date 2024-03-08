@@ -59,7 +59,7 @@ else:
 
     try:
         os.system("python " + os.environ["POD_HOME"] + "/" + "forcing_feedback_kernelcalcs.py")
-        print('Working Directory is ' + os.environ['WK_DIR'])
+        print('Working Directory is ' + os.environ['WORK_DIR'])
         print('Forcing Feedback POD is executing')
     except RuntimeError as e1:
         print('WARNING', e1.errno, e1.strerror)

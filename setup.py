@@ -45,10 +45,13 @@ setup(
             'Programming Language :: Python',
             'Programming Language :: Python :: 3.11',
     ],
-    scripts=[
-        'mdtf_framework.py'
-    ],
-    packages=packages,
+    packages=find_packages(),
+    include_package_data=True,
+    entry_points={
+        'console_scripts': [
+            'mdtf = MDTF-diagnostics.mdtf_framework:cli',
+        ],
+    },
     cmdclass={  # hook for post-install commands
         'develop': PostDevelopCommand,
         'install': PostInstallCommand

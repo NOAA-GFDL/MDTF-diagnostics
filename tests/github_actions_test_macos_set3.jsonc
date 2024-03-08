@@ -10,7 +10,7 @@
     "mixed_layer_depth",
     "seaice_suite",
     "stc_eddy_heat_fluxes"
-    // "albedofb"
+     // "albedofb"
   ],
   "case_list" : {
     "CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231" : {

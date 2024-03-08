@@ -4,7 +4,7 @@
 // as blank lines (JSONC quasi-standard.)
 {
   "pod_list": [
-     "MJO_prop_amp"
+    "MJO_prop_amp"
   ],
   "case_list" : {
      "GFDL.Synthetic": {

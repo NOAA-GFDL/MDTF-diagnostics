@@ -8,9 +8,9 @@ setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
 
 begin
 
-print_clock("Starting model data inteperation")
+print_clock("Starting model data interpolation")
 
-wk_dir = getenv("WK_DIR")
+wk_dir = getenv("WORK_DIR")
 pr_name  = getenv("pr_var")
 prw_name = getenv("prw_var")
 hus_name = getenv("hus_var")

@@ -16,15 +16,17 @@
 #  Community Climate System Model? A Comparison to Reanalysis, 
 #  Satellite, and Gridded Station Data.
 # J. Climate, 27, 5219-5239.
-#============================================================
+# ============================================================
 
 import os
 import subprocess
 import time
 
-#============================================================
+# ============================================================
 # generate_ncl_plots - call a nclPlotFile via subprocess call
-#============================================================
+# ============================================================
+
+
 def generate_ncl_plots(nclPlotFile):
     """generate_plots_call - call a nclPlotFile via subprocess call
    
@@ -40,22 +42,23 @@ def generate_ncl_plots(nclPlotFile):
         while pipe.poll() is None:
             time.sleep(0.5)
     except OSError as e:
-        print('WARNING',e.errno,e.strerror)
+        print('WARNING', e.errno, e.strerror)
 
     return 0
+
 
 if os.path.isfile(os.environ["PR_FILE"]):
     print("3 hourly precipitation rate file found")
     print("computing diurnal cycle of precipitation")
 
-#============================================================
+# ============================================================
 # Call NCL code here
-#============================================================
+# ============================================================
     print("--------- Starting DIURNAL CYCLE OF PRECIPITATION generate figures----------------------------")
-    if ( True ):
-        generate_ncl_plots(os.environ["POD_HOME"]+"/pr_diurnal_cycle.ncl")
+    if True:
+        generate_ncl_plots(os.environ["POD_HOME"] + "/pr_diurnal_cycle.ncl")
 
-        generate_ncl_plots(os.environ["POD_HOME"]+"/pr_diurnal_phase.ncl")
+        generate_ncl_plots(os.environ["POD_HOME"] + "/pr_diurnal_phase.ncl")
     else:
         print("WARNING: For testing purposes, skipping diurnal cycle figure generation")
 

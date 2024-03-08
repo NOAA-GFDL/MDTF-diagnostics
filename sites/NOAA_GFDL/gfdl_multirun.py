@@ -42,49 +42,6 @@ class MultirunGfdlDiagnostic(diagnostic.MultirunDiagnostic,
                                                    f"{self.POD_OUT_DIR}."), util.PodRuntimeError)
                 self.deactivate(chained_exc)
 
-class Multirun_GFDL_GCP_FileDataSourceBase(multirun.MultirunDataframeQueryDataSourceBase,
-                                           qfp.MultirunDataSourceQFPMixin,
-                                           gfdl.GFDL_GCP_FileDataSourceBase,
-                                           ABC):
-    """Base class for multirun DataSources that access data on GFDL's internal filesystems
-    using GCP, and which may be invoked via frepp.
-    """
-    _DiagnosticClass = MultirunGfdlDiagnostic
-    _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
-
-    def __init__(self, case_dict, parent):
-        super(Multirun_GFDL_GCP_FileDataSourceBase, self).__init__(case_dict, parent)
-        # borrow MDTFObjectBase initialization from data_manager:~DataSourceBase
-        core.MDTFObjectBase.__init__(
-            self, name=case_dict['CASENAME'], _parent=parent
-        )
-        # default behavior when run interactively:
-        # frepp_mode = False, any_components = True
-        # default behavior when invoked by FRE wrapper:
-        # frepp_mode = True (set to False by calling wrapper with --run_once)
-        # any_components = True (set to False with --component_only)
-        config = core.ConfigManager()
-        self.frepp_mode = config.get('frepp', False)
-        self.dry_run = config.get('dry_run', False)
-        self.any_components = config.get('any_components', False)
-        self.timeout = config.get('file_transfer_timeout', 0)
-
-        if self.frepp_mode:
-            paths = core.PathManager()
-            self.overwrite = True
-            # flag to not overwrite config and .tar: want overwrite for frepp
-            self.file_overwrite = True
-            # if overwrite=False, WK_DIR & OUT_DIR will have been set to a
-            # unique name in parent's init. Set it back so it will be overwritten.
-            d = paths.model_paths(self, overwrite=True)
-            self.MODEL_WK_DIR = d.MODEL_WK_DIR
-            self.MODEL_OUT_DIR = d.MODEL_OUT_DIR
-
-    @property
-    def _children(self):
-        """Iterable of the multirun varlist that is associated with the data source object
-        """
-        yield from self.varlist.iter_vars()
 
 class MultirunGfdlarchivecmip6DataManager(Multirun_GFDL_GCP_FileDataSourceBase,
                                           gfdl.Gfdlarchivecmip6DataManager, ABC):

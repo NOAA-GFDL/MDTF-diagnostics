@@ -111,5 +111,5 @@
   "description": null,
   "title": null,
   "last_updated": "2023-05-07T16:35:52Z",
-  "catalog_file": "file:///nbhome/jml/esm_catalog_DECK_ESM4_historical_D1_atmos_ts_monthly_5yr_subset.csv"
+  "catalog_file": "file:////local2/home/mdtf/MDTF-diagnostics/tools/catalog_builder/examples/gfdl/esm_catalog_DECK_ESM4_historical_D1_atmos_ts_monthly_5yr_subset.csv"
 }

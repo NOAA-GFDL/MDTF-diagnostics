@@ -14,10 +14,8 @@
 
     // Human-readable name of the diagnostic. May contain spaces. 
     "long_name" : "Rich Neale's blocking diagnostic",
-    
-    // Modeling realm. If your diagnostic uses data from multiple realms, give
-    // this as a list.
-    "realm" : "atmos",
+    // Data convention exepected by the diagnostic: cmip (default), cesm, or gfdl
+    "convention": "cesm",
 
     // Human-readable name of the diagnostic. May contain spaces. This
     // is used to describe your diagnostic on the top-level index.html page.
@@ -70,8 +68,16 @@
   // "dimensions" attribute for each variable must correspond to a coordinate
   // named here.
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
     "lev": {
       "standard_name": "air_pressure",
       "units": "hPa",
@@ -91,6 +97,7 @@
       "path_variable" : "MODEL_DATA_PATH",
       "standard_name" : "geopotential_height", 
       "units": "m",
+      "realm" : "atmos",
       "frequency" : "day",
       "dimensions": ["time", "lat", "lon"],	 
       "scalar_coordinates": {"lev" : 500}

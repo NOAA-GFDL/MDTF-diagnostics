@@ -47,29 +47,34 @@
   "variables" : {
     "ucomp": {
       "standard_name": "eastward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "scalar_coord_templates": {"plev": "u{value}"},
       "ndim": 4
     },
     "vcomp": {
       "standard_name": "northward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "scalar_coord_templates": {"plev": "v{value}"},
       "ndim": 4
     },
     "hght": {
       "standard_name": "geopotential_height",
+      "realm": "atmos",
       "units": "m",
       "scalar_coord_templates": {"plev": "hght{value}"},
       "ndim": 4
     },
     "sphum": {
       "standard_name": "specific_humidity",
+      "realm": "atmos",
       "units": "1",
       "ndim": 4
     },
     "omega": {
       "standard_name": "lagrangian_tendency_of_air_pressure",
+      "realm": "atmos",
       "units": "Pa s-1", // need to verify
       "scalar_coord_templates": {"plev": "omega{value}"},
       "ndim": 4
@@ -77,79 +82,94 @@
     "t_surf": {
       // "skin temperature", analogue of ts
       "standard_name": "surface_temperature",
+      "realm": "atmos",
       "units": "K",
       "ndim": 3
     },
     "precip": {
       "standard_name": "precipitation_flux",
+      "realm": "atmos",
       "units": "kg m-2 s-1",
       "ndim": 3
     },
     "prec_conv": {
       "standard_name": "convective_precipitation_flux",
+      "realm": "atmos",
       "units": "kg m-2 s-1", // need to verify
       "ndim": 3
     },
     "t_ref" : {
       // CMIP6 equivalent = tas, temp at 2m ref height
       "standard_name": "air_temperature",
+      "realm": "atmos",
       "units": "K",
       "ndim": 3,
       "modifier": "atmos_height"
     },
     "ps": {
       "standard_name": "surface_air_pressure",
+      "realm": "atmos",
       "units": "Pa", // need to verify
       "ndim": 3
     },
     "tau_x": {
       "standard_name": "surface_downward_eastward_stress",
+      "realm": "atmos",
       "units": "Pa", // need to verify
       "ndim": 3
     },
     "tau_y": {
       "standard_name": "surface_downward_northward_stress",
+      "realm": "atmos",
       "units": "Pa", // need to verify
       "ndim": 3
     },
     "slp": {
       "standard_name": "air_pressure_at_mean_sea_level",
+      "realm": "atmos",
       "units": "Pa", // need to verify
       "ndim": 3
     },
     // radiative fluxes:
     "swup_sfc": {
       "standard_name": "surface_upwelling_shortwave_flux_in_air",
+      "realm": "atmos",
       "units": "W m-2", // need to verify
       "ndim": 3
     },
     "swdn_sfc": {
       "standard_name": "surface_downwelling_shortwave_flux_in_air",
+      "realm": "atmos",
       "units": "W m-2", // need to verify
       "ndim": 3
     },
     "swdn_toa": {
       "standard_name": "toa_incoming_shortwave_flux",
+      "realm": "atmos",
       "units": "W m-2", // need to verify
       "ndim": 3
     },
     "swup_toa": {
       "standard_name": "toa_outgoing_shortwave_flux",
+      "realm": "atmos",
       "units": "W m-2", // need to verify
       "ndim": 3
     },
     "lwup_sfc": {
       "standard_name": "surface_upwelling_longwave_flux_in_air",
+      "realm": "atmos",
       "units": "W m-2", // need to verify
       "ndim": 3
     },
     "lwdn_sfc": {
       "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "realm": "atmos",
       "units": "W m-2", // need to verify
       "ndim": 3
     },
     "olr": {
       "standard_name": "toa_outgoing_longwave_flux",
+      "realm": "atmos",
       "units": "W m-2",
       "ndim": 3
     },
@@ -256,6 +276,7 @@
     // },
     "salt": {
       "standard_name": "sea_water_salinity",
+      "realm": "ocean",
       "units": "psu",
       "ndim": 4
     },
@@ -275,12 +296,14 @@
     // Variables for Convective Transition Diagnostics module:
     "temp": {
       "standard_name": "air_temperature",
+      "realm": "atmos",
       "units": "K",
       "ndim": 4
     },
     "WVP": {
       // column integral; over the whole column?
       "standard_name": "atmosphere_mass_content_of_water_vapor",
+      "realm": "atmos",
       "units": "kg m-2",
       "ndim": 3
     }

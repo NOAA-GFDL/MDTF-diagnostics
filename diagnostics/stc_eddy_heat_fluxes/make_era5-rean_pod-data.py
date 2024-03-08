@@ -22,7 +22,7 @@ import os
 import numpy as np
 import xarray as xr
 
-### BEGIN: READ INPUT FIELDS ###
+# BEGIN: READ INPUT FIELDS ###
 # The following code/paths will have to be adapted for your own system.
 #
 # On my system, the monthly-mean variables are contained in individual
@@ -42,7 +42,7 @@ hgt_ds = xr.open_dataset(hgt_fi)
 # should each contain all available months of meridional wind,
 # air temperature and geopotential height, respectively. They can be
 # lazily loaded with xarray (e.g., after using open_mfdataset) 
-### END: READ INPUT FIELDS ###
+# END: READ INPUT FIELDS ###
 
 
 ehf = []
@@ -65,7 +65,7 @@ for time in hgt.time:
     zg = hgt_ds.hgt.sel(time=time).load()
 
     # Compute zonal mean temperatures
-    ta_zm_50_tmp  =  t50.mean('lon')
+    ta_zm_50_tmp = t50.mean('lon')
     ta_zm_100_tmp = t100.mean('lon')
 
     # Compute zonal mean eddy heat flux

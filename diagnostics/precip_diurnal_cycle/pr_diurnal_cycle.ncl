@@ -13,14 +13,14 @@ begin
 
 case_desc = getenv("CASENAME")
 casename = getenv("CASENAME")
-dir_stub = getenv("WK_DIR")
+dir_stub = getenv("OR_DIR")
 filename = getenv("PR_FILE")
 ;fincl = getenv("fincl")
 ver = getenv("ver")
 file_obs_DJF = getenv("OBS_DATA")+"/TRMM_DJF.nc"
 file_obs_JJA = getenv("OBS_DATA")+"/TRMM_JJA.nc"
-start_year = stringtodouble(getenv("FIRSTYR"))
-end_year = stringtodouble(getenv("LASTYR"))
+start_year = stringtodouble(getenv("startdate"))
+end_year = stringtodouble(getenv("enddate"))
 vars = (/getenv("pr_var"),"TRMM"/)
 slatlim = -90.
 nlatlim = 90.

@@ -21,7 +21,7 @@ def da_linregress(da_data,xname="x",yname="y",tname="time",stTconfint=0.99,skipn
     da_conf (xr.DataArray) - a 2 dimension gridded data representing the confidence interval of the linear trend
     
     """
-    if skipna == True:
+    if skipna:
 
         # make sure the order of the dataarray is correct
         da_data = da_data.transpose(tname,yname,xname)
@@ -34,7 +34,6 @@ def da_linregress(da_data,xname="x",yname="y",tname="time",stTconfint=0.99,skipn
         da_r_value = da_slope.copy() * np.nan
         da_p_value = da_slope.copy() * np.nan
         da_std_err = da_slope.copy() * np.nan
-        da_conf = da_slope.copy() * np.nan
 
         for xx in range(nx):
             for yy in range(ny):
@@ -42,7 +41,6 @@ def da_linregress(da_data,xname="x",yname="y",tname="time",stTconfint=0.99,skipn
                     da_data[:, yy, xx].notnull(), drop=True
                 )
                 if len(da_ts) > 0:
-                    da_time = da_ts.time.copy()
                     year = da_ts["time.year"].values
                     month = da_ts["time.month"].values
 
@@ -59,7 +57,6 @@ def da_linregress(da_data,xname="x",yname="y",tname="time",stTconfint=0.99,skipn
                     da_std_err[yy, xx] = std_err
 
     else:
-        da_time = da_data.time.copy()
         year = da_data["time.year"].values
         month = da_data["time.month"].values
 
@@ -82,7 +79,7 @@ def da_linregress(da_data,xname="x",yname="y",tname="time",stTconfint=0.99,skipn
         # vectorize=True,dask='parallelized',
         # dask_gufunc_kwargs={"allow_rechunk":True})
 
-    ### calculate confidence interval
+    # calculate confidence interval
     # calculate the error bar base on the number of standard error
     # the number related to dist. percentage is derived base on Students's T
     # distribution

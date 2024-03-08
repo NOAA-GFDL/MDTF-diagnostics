@@ -42,7 +42,7 @@ begin
   debug_print("one_plot, map_flag = "+map_flag+", writing figure: "+file_name,funcname,debug_flag)
 
 
-  dir_out  = getenv("WK_DIR")+"/model/PS/debug/"       ; output dir: should be working directory
+  dir_out  = getenv("WORK_DIR")+"/model/PS/debug/"       ; output dir: should be working directory
   system("mkdir -p "+dir_out)
   file_out = dir_out+"/"+file_name
   wks  = gsn_open_wks("png",file_out)         ; send graphics to PNG file
@@ -103,7 +103,7 @@ begin
     debug_print(" min="+min(diff)+"   max="+max(diff),funcname,debug_flag)
 
 ;---Plot
-    dir_out  = getenv("WK_DIR")+"/model/PS/debug/"       ; output dir
+    dir_out  = getenv("WORK_DIR")+"/model/PS/debug/"       ; output dir
     system("mkdir -p "+dir_out)
     file_out = dir_out+"/diff_"+file_name
     wks  = gsn_open_wks("png",file_out)         ; send graphics to PNG file

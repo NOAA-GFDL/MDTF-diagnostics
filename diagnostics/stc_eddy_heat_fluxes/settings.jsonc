@@ -9,6 +9,7 @@
     "driver" : "stc_eddy_heat_fluxes.py",
     "long_name" : "Upward Coupling of Vertically Propagating Planetary Waves",
     "realm" : "atmos",
+    "convention" : "cmip",
     "description" : "Assess the influence of wave driving on the polar stratosphere",
     "pod_env_vars" : {
       // Lower latitude limit for heat flux lat band avgs (defaults to 45)
@@ -28,8 +29,16 @@
     }
   },
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
     "lev": {
       "standard_name": "air_pressure",
       "units": "hPa",
@@ -41,6 +50,7 @@
   "varlist": {
     "v100": {
       "standard_name": "northward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "frequency": "mon",
       "dimensions": ["time", "lat", "lon"],
@@ -49,6 +59,7 @@
     },
     "t100": {
       "standard_name": "air_temperature",
+      "realm": "atmos",
       "units": "K",
       "frequency": "mon",
       "dimensions": ["time", "lat", "lon"],
@@ -57,6 +68,7 @@
     },
     "t50": {
         "standard_name": "air_temperature",
+        "realm": "atmos",
         "units": "K",
         "frequency": "mon",
         "dimensions": ["time", "lat", "lon"],
@@ -65,6 +77,7 @@
     },
     "va": {
       "standard_name" : "northward_wind",
+      "realm": "atmos",
       "units" : "m s-1",
       "frequency": "mon",
       "dimensions": ["time", "lev", "lat", "lon"],
@@ -72,6 +85,7 @@
     },
     "ta": {
       "standard_name" : "air_temperature",
+      "realm": "atmos",
       "units" : "K",
       "frequency": "mon",
       "dimensions": ["time", "lev", "lat", "lon"],
@@ -79,6 +93,7 @@
     },
     "zg": {
       "standard_name" : "geopotential_height",
+      "realm": "atmos",
       "units" : "m",
       "frequency": "mon",
       "dimensions": ["time", "lev", "lat", "lon"]

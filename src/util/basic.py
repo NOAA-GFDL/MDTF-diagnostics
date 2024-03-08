@@ -6,9 +6,11 @@ import collections.abc
 import enum
 import itertools
 import string
+import re
+import textwrap
 import unittest.mock
 import uuid
-from . import exceptions
+from . import exceptions, PropagatedEvent
 
 import logging
 
@@ -69,24 +71,18 @@ class MDTFABCMeta(abc.ABCMeta):
         return instance
 
 
-class _Singleton(type):
-    """Private metaclass that creates a :class:`~util.Singleton` base class when
-    called. This version is taken from `<https://stackoverflow.com/a/6798042>`__
-    and is compatible with Python 2 and 3.
-    """
+class Singleton(type):
+    # Updated definition to use solution #3 since Python 2 is no longer supported
+    # https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python/6798042
+    # example implementation:
+    # class MyClass(BaseClass, metaclass=Singleton):
+    #     pass
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
-
-
-class Singleton(_Singleton('SingletonMeta', (object,), {})):
-    """Parent class defining the
-    `Singleton <https://en.wikipedia.org/wiki/Singleton_pattern>`_ pattern. We
-    use this as safer way to pass around global state.
-    """
 
     @classmethod
     def _reset(cls):
@@ -319,7 +315,7 @@ class NameSpace(dict):
         self.clear()
         self.update(state)
 
-    def toDict(self):
+    def toDict(self) -> dict:
         """Recursively converts a NameSpace back into a dictionary.
         """
         return type(self)._toDict(self)
@@ -375,23 +371,32 @@ class NameSpace(dict):
 
     def __eq__(self, other):
         if type(other) is type(self):
-            return (self._freeze() == other._freeze())
+            return self._freeze() == other._freeze()
         else:
             return False
 
     def __ne__(self, other):
-        return (not self.__eq__(other))  # more foolproof
+        return not self.__eq__(other)  # more foolproof
 
     def __hash__(self):
         return hash(self._freeze())
 
 
-class _MDTFEnumMixin():
+class _MDTFEnumMixin:
+    __members__ = None
+    name = None
+
+    def __init__(self, *args):
+        self.name = None
+
     def __str__(self):
         return str(self.name).lower()
 
     def __repr__(self):
         return '<%s.%s>' % (self.__class__.__name__, self.name)
+
+    def __getitem__(self, key):
+        return getattr(self, key)
 
     @classmethod
     def from_struct(cls, str_):
@@ -420,10 +425,21 @@ class MDTFEnum(_MDTFEnumMixin, enum.Enum):
         return obj
 
 
-class MDTFIntEnum(_MDTFEnumMixin, enum.IntEnum):
-    """Customize :py:class:`~enum.IntEnum` analogous to :class:`MDTFEnum`.
-    """
-    pass
+ObjectStatus = MDTFEnum(
+    'ObjectStatus',
+    'NOTSET ACTIVE INACTIVE FAILED SUCCEEDED',
+    module=__name__
+)
+ObjectStatus.__doc__ = """
+:class:`util.MDTFEnum` used to track the status of an object hierarchy object:
+- *NOTSET*: the object hasn't been fully initialized.
+- *ACTIVE*: the object is currently being processed by the framework.
+- *INACTIVE*: the object has been initialized, but isn't being processed (e.g.,
+  alternate :class:`~diagnostic.VarlistEntry`\s).
+- *FAILED*: processing of the object has encountered an error, and no further
+  work will be done.
+- *SUCCEEDED*: Processing finished successfully.
+"""
 
 
 def sentinel_object_factory(obj_name):
@@ -434,7 +450,7 @@ def sentinel_object_factory(obj_name):
     return getattr(unittest.mock.sentinel, obj_name)
 
 
-class MDTF_ID():
+class MDTF_ID:
     """Class wrapping :py:class:`~uuid.UUID`, to provide unique ID numbers for
     members of the object hierarchy (cases, pods, variables, etc.), so that we
     don't need to require that objects in these classes have unique names.
@@ -472,12 +488,12 @@ class MDTF_ID():
 
     def __eq__(self, other):
         if hasattr(other, '_uuid'):
-            return (self._uuid == other._uuid)
+            return self._uuid == other._uuid
         else:
             return False
 
     def __ne__(self, other):
-        return (not self.__eq__(other))  # more foolproof
+        return not self.__eq__(other)  # more foolproof
 
 
 # ------------------------------------------------------------------
@@ -608,36 +624,88 @@ def splice_into_list(list_, splice_d, key_fn=None, log=_log):
     return list(itertools.chain.from_iterable(spliced_chunks))
 
 
-def deserialize_class(name):
-    """Given the name of a currently defined class, return the class itself.
-    This avoids security issues with calling :py:func:`eval`. Based on
-    `<https://stackoverflow.com/a/11781721>`__.
+def canonical_arg_name(str_):
+    """Convert a flag or other specification to a destination variable name.
+    The destination variable name always has underscores, never hyphens, in
+    accordance with PEP8.
 
-    Args:
-        name (str): name of the class to look up.
-
-    Returns:
-        :obj:`class` with the given name, if currently imported.
-
-    Raises:
-        :py:class:`ValueError`: If class not found in current namespace.
+    E.g., ``canonical_arg_name('--GNU-style-flag')`` returns "GNU_style_flag".
     """
-    try:
-        # for performance, search python builtin types first before going
-        # through everything
-        return getattr(__builtins__, name)
-    except AttributeError:
-        # _log.debug('%s not found in builtin types.', name)
-        pass
-    q = collections.deque([object])  # everything inherits from object
-    while q:
-        t = q.popleft()
-        if t.__name__ == name:
-            return t
+    return str_.lstrip('-').rstrip().replace('-', '_')
+
+
+def plugin_key(plugin_name):
+    """Convert user input for plugin options to string used to lookup plugin
+    value from options defined in cli_plugins.jsonc files.
+
+    Ignores spaces and underscores in supplied choices for CLI plugins, and
+    make matching of plugin names case-insensititve.
+    """
+    return re.sub(r"[\s_]+", "", plugin_name).lower()
+
+
+def word_wrap(str_):
+    """Clean whitespace and perform 80-column word wrapping for multi-line help
+    and description strings. Explicit paragraph breaks must be encoded as a
+    double newline \(``\\n\\n``\).
+    """
+    paragraphs = textwrap.dedent(str_).split('\n\n')
+    paragraphs = [re.sub(r'\s+', ' ', s).strip() for s in paragraphs]
+    paragraphs = [textwrap.fill(s, width=80) for s in paragraphs]
+    return '\n\n'.join(paragraphs)
+
+
+def iterdict(d):
+    """Iterate through a nested dictionary
+       Return the key-value pair, and a level index
+       for the deepest level
+    """
+    level = 0
+    for k, v in d.items():
+        if isinstance(v, dict) or isinstance(v, collections.OrderedDict):
+            iterdict(v)
+            level = level+1
         else:
-            try:  # keep looking
-                q.extend(t.__subclasses__())
-            except TypeError:
-                pass
-        if not type(t):
-            raise ValueError('No such type: %r' % name)
+            return k, v, level
+
+
+# level at which to log deactivation events
+    _deactivation_log_level = logging.ERROR
+
+
+def deactivate(obj, exc, level=None):
+    """Deactivate an object and dependencies and set object status"""
+    # always log exceptions, even if we've already failed
+    obj.log.store_exception(exc)
+
+    if not (obj.failed or obj.status == ObjectStatus.SUCCEEDED):
+        # only need to log and update on status change for still-active objs
+        if level is None:
+            level = obj._deactivation_log_level # default level for child class
+        obj.log.log(level, "Deactivated %s due to %r.", obj.full_name, exc)
+
+        # update status on self
+        obj.status = ObjectStatus.FAILED
+        if obj._parent is not None:
+            # call handler on parent, which may change parent and/or siblings
+            obj._parent.child_deactivation_handler(obj, exc)
+            obj._parent.child_status_update()
+        # update children (deactivate all)
+        for obj in obj.iter_children(status_neq=ObjectStatus.FAILED):
+            obj.deactivate(PropagatedEvent(exc=exc, parent=obj), level=None)
+
+
+class RegexDict(dict):
+    """ Utilities to find dictionary entries using regular expressions
+    Credit: https://stackoverflow.com/questions/21024822/python-accessing-dictionary-with-wildcards
+    """
+
+    def get_matching_value(self, query):
+        """Return the value corresponding to query"""
+        return (self[key] for key in self if re.search(r"(?P<key>\w+)", query))
+
+    def get_all_matching_values(self, queries: list):
+        """Return a tuple of all matching values corresponding to each entry in a list of queries"""
+        return (match for query in queries for match in self.get_matching_value(query))
+
+

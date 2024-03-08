@@ -5,11 +5,5 @@
 {
   "atmos_height" : {
     "description" : "atmospheric height above the ground (relative to orography) in meters"
-  },
-  "atmos_realm" : {
-    "description" : "designator for a variable belonging to the atmosphere realm that shares a standard_name with a variable in a different realm"
-  },
-  "ocean_realm" : {
-    "description" : "designator for a variable belonging to the ocean realm that shares a standard_name with a variable in a different realm"
   }
 }

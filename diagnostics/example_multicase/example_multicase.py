@@ -34,11 +34,13 @@
 #
 #   Required programming language and libraries
 #
-#     * Python >= 3.7
+#     * Python >= 3.10
 #     * xarray
 #     * matplotlib
+#     * intake
 #     * yaml
 #     * sys
+#     * os
 #     * numpy
 #
 #   Required model output variables
@@ -58,52 +60,46 @@ import matplotlib
 
 matplotlib.use("Agg")  # non-X windows backend
 
-import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
-import yaml
+import intake
 import sys
+import yaml
 
 # Part 1: Read in the model data
 # ------------------------------
-
-# Receive a dictionary of case information from the framework. For now, we will
-# "fake" a dictionary now with information we are getting from the single case
-# POD that is processed by the framework
+# Debugging: remove following line in final PR
+# os.environ["WORK_DIR"] = "/Users/jess/mdtf/wkdir/MDTF_output/example_multicase"
+work_dir = os.environ["WORK_DIR"]
+# Receive a dictionary of case information from the framework
 print("reading case_info")
+# Remove following line final PR
+# os.environ["case_env_file"] = os.path.join(work_dir, "case_info.yml")
 case_env_file = os.environ["case_env_file"]
-assert(os.path.isfile(case_env_file))
+assert os.path.isfile(case_env_file), f"case environment file not found"
 with open(case_env_file, 'r') as stream:
     try:
         case_info = yaml.safe_load(stream)
-        # print(parsed_yaml)
     except yaml.YAMLError as exc:
         print(exc)
 
-# Sample case_info template ingested from yaml file ('case_info.yaml')
-# case_info = {
-#    "CASENAME": {
-#        "NAME": os.environ["CASENAME"],
-#        "TAS_FILE": os.environ["TAS_FILE"],
-#        "tas_var": os.environ["tas_var"],
-#        "time_coord": os.environ["time_coord"],
-#        "lon_coord": os.environ["lon_coord"],
-#    },
-#    "CASENAME1": {
-#        "NAME": os.environ["CASENAME"],
-#        "TAS_FILE": os.environ["TAS_FILE"],
-#        "tas_var": os.environ["tas_var"],
-#        "time_coord": os.environ["time_coord"],
-#        "lon_coord": os.environ["lon_coord"],
-#    },
-# }
-
-# Loop over cases and load datasets into a separate dict
-model_datasets = dict()
-for case_name, case_dict in case_info.items():
-    ds = xr.open_dataset(case_dict["TAS_FILE"], use_cftime=True)
-    model_datasets[case_name] = ds
-    #print(ds)
+cat_def_file = case_info['CATALOG_FILE']
+case_list = case_info['CASE_LIST']
+# all cases share variable names and dimension coords, so just get first result for each
+tas_var = [case['tas_var'] for case in case_list.values()][0]
+time_coord = [case['time_coord'] for case in case_list.values()][0]
+lat_coord = [case['lat_coord'] for case in case_list.values()][0]
+lon_coord = [case['lon_coord'] for case in case_list.values()][0]
+# open the csv file using information provided by the catalog definition file
+cat = intake.open_esm_datastore(cat_def_file)
+# filter catalog by desired variable and output frequency
+tas_subset = cat.search(variable_id=tas_var, frequency="day")
+# examine assets for a specific file
+#tas_subset['CMIP.synthetic.day.r1i1p1f1.day.gr.atmos.r1i1p1f1.1980-01-01-1984-12-31'].df
+# convert tas_subset catalog to an xarray dataset dict
+tas_dict = tas_subset.to_dataset_dict(
+    xarray_open_kwargs={"decode_times": True, "use_cftime": True}
+)
 
 # Part 2: Do some calculations (time and zonal means)
 # ---------------------------------------------------
@@ -111,11 +107,12 @@ for case_name, case_dict in case_info.items():
 tas_arrays = {}
 
 # Loop over cases
+for k, v in tas_dict.items():
+    # load the tas data for case k
+    arr = tas_dict[k][tas_var]
 
-for k, v in case_info.items():
     # take the time mean
-    arr = model_datasets[k][case_info[k]["tas_var"]]
-    arr = arr.mean(dim=case_info[k]["time_coord"])
+    arr = arr.mean(dim=tas_dict[k][time_coord].name)
 
     # this block shuffles the data to make this single case look more
     # interesting.  ** DELETE THIS ** once we test with real data
@@ -130,7 +127,7 @@ for k, v in case_info.items():
     arr = arr - arr.mean()
 
     # take the zonal mean
-    arr = arr.mean(dim=case_info[k]["lon_coord"])
+    arr = arr.mean(dim=tas_dict[k][lon_coord].name)
 
     tas_arrays[k] = arr
 
@@ -153,18 +150,16 @@ plt.legend()
 plt.title("Zonal Mean Surface Air Temperature Anomaly")
 
 # save the plot in the right location
-work_dir = os.environ["WK_DIR"]
-assert os.path.isdir(f"{work_dir}/model/PS")
-plt.savefig(f"{work_dir}/model/PS/example_model_plot.eps", bbox_inches="tight")
+assert os.path.isdir(f"{work_dir}/model/PS"), f'Assertion error: {work_dir}/model/PS not found'
+plt.savefig(f"{work_dir}/model/PS/example_multicase_plot.eps", bbox_inches="tight")
 
 
-# Part 4: Clean up and close open file handles
-# --------------------------------------------
-
-_ = [x.close() for x in model_datasets.values()]
-
-
-# Part 5: Confirm POD executed sucessfully
+# Part 4: Close the catalog files and
+# release variable dict reference for garbage collection
+# ------------------------------------------------------
+cat.close()
+tas_dict = None
+# Part 5: Confirm POD executed successfully
 # ----------------------------------------
 print("Last log message by example_multicase POD: finished successfully!")
 sys.exit(0)

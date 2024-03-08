@@ -6,7 +6,6 @@ Developer information
    :numbered: 2
 
    dev_overview
-   dev_migration
    dev_checklist
    dev_start
    dev_guidelines

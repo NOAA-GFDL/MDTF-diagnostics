@@ -11,6 +11,7 @@ on:
   pull_request:
     branches:
       - main
+      - refactor_pp
 defaults:
   run:
     shell: bash -l {0}

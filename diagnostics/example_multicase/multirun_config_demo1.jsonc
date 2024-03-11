@@ -24,7 +24,7 @@
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
-  // Full path to model data ESM-intake catalog header file
+  // Full or relative path to model data ESM-intake catalog header file
   "DATA_CATALOG":"/home/a1r/github/MDTF-diagnostics/diagnostics/example_multicase/c384L65_am5f3b1r0_amip.json",
 
   // Backwards compatibility

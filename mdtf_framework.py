@@ -139,6 +139,8 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     model_paths.setup_data_paths(ctx.config.case_list)
     ctx.config.update({'WORK_DIR': model_paths.WORK_DIR})
     ctx.config.update({'OUTPUT_DIR': model_paths.OUTPUT_DIR})
+    cat_path = ctx.config.DATA_CATALOG
+    ctx.config.update({'DATA_CATALOG': util.filesystem.resolve_path(cat_path)})
     # TODO: update paths in ctx.config so that POD paths are placed in the correct sub-directories
     backup_config = backup_config(ctx.config)
     ctx.config._configs = dict()

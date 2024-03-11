@@ -29,11 +29,12 @@ def abbreviate_path(path, old_base, new_base=None):
     return str_
 
 
-def resolve_path(rel_path: str, root_path: str = "", env_vars: dict = None, log=_log):
+def resolve_path(rel_path: str, root_path: str = "", env_vars: dict = None, log=_log) -> str:
     """Abbreviation to resolve relative paths, expanding environment variables
     if necessary.
 
     Args:
+        log: logger object
         rel_path (str): Path to resolve.
         root_path (str): Optional. Root path to resolve `path` with. If
             not given, resolves relative to :py:func:`os.getcwd`.
@@ -69,7 +70,7 @@ def resolve_path(rel_path: str, root_path: str = "", env_vars: dict = None, log=
         return rel_path
     if root_path == "":
         root_path = os.getcwd()
-    assert os.path.isabs(root_path)
+    assert os.path.isabs(root_path), f"{root_path} is not an absolute path"
     return os.path.normpath(os.path.join(root_path, rel_path))
 
 

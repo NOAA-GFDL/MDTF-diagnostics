@@ -22,7 +22,7 @@
   },
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
-
+  "DATA_CATALOG": "../tests/esm_catalog_CMIP_macos.json",
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
@@ -34,7 +34,7 @@
   "MODEL_DATA_ROOT": "../mdtf_test_data",
 
   // Working directory. Defaults to working directory if blank.
-  "WORKING_DIR": "../wkdir",
+  "WORK_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be
   // put in a subdirectory of this directory.

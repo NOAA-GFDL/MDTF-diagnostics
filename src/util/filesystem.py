@@ -18,7 +18,7 @@ import logging
 _log = logging.getLogger(__name__)
 
 
-def abbreviate_path(path, old_base, new_base=None):
+def abbreviate_path(path: str, old_base: str, new_base=None) -> str:
     """Express *path* as a path relative to *old_base*, optionally prepending
     *new_base*.
     """
@@ -29,11 +29,12 @@ def abbreviate_path(path, old_base, new_base=None):
     return str_
 
 
-def resolve_path(rel_path: str, root_path: str = "", env_vars: dict = None, log=_log):
+def resolve_path(rel_path: str, root_path: str = "", env_vars: dict = None, log=_log) -> str:
     """Abbreviation to resolve relative paths, expanding environment variables
     if necessary.
 
     Args:
+        log: logger object
         rel_path (str): Path to resolve.
         root_path (str): Optional. Root path to resolve `path` with. If
             not given, resolves relative to :py:func:`os.getcwd`.
@@ -69,12 +70,12 @@ def resolve_path(rel_path: str, root_path: str = "", env_vars: dict = None, log=
         return rel_path
     if root_path == "":
         root_path = os.getcwd()
-    assert os.path.isabs(root_path)
+    assert os.path.isabs(root_path), f"{root_path} is not an absolute path"
     return os.path.normpath(os.path.join(root_path, rel_path))
 
 
-def recursive_copy(src_files, src_root, dest_root, copy_function=None,
-                   overwrite=False):
+def recursive_copy(src_files, src_root: str, dest_root: str, copy_function=None,
+                   overwrite: bool = False):
     """Copy *src_files* to *dest_root*, preserving relative subdirectory structure.
 
     Copies a subset of files in a directory subtree rooted at *src_root* to an
@@ -118,7 +119,7 @@ def recursive_copy(src_files, src_root, dest_root, copy_function=None,
         copy_function(src, dest)
 
 
-def check_executable(exec_name):
+def check_executable(exec_name: str) -> bool:
     """Tests if the executable *exec_name* is found on the current ``$PATH``.
 
     Args:
@@ -127,7 +128,7 @@ def check_executable(exec_name):
     return find_executable(exec_name) is not None
 
 
-def find_files(src_dirs, filename_globs, n_files=None):
+def find_files(src_dirs: str | list, filename_globs: str | list, n_files=None) -> list:
     """Return list of files in *src_dirs*, or any subdirectories, matching any
     of *filename_globs*. Wraps Python :py:class:`glob.glob`.
 
@@ -160,7 +161,7 @@ def find_files(src_dirs, filename_globs, n_files=None):
     return list(files)
 
 
-def check_dir(dir_path, attr_name="", create=False):
+def check_dir(dir_path: str, attr_name: str = "", create: bool = False):
     """Check existence of directories. No action is taken for directories that
     already exist; nonexistent directories either raise a
     :class:`~util.MDTFFileNotFoundError` or cause the creation of that directory.
@@ -199,7 +200,7 @@ def check_dir(dir_path, attr_name="", create=False):
                 from exc
 
 
-def bump_version(path, new_v=None, extra_dirs=None):
+def bump_version(path: str, new_v=None, extra_dirs=None):
     """Append a version number to *path*, if necessary, so that it doesn't
     conflict with existing files.
 
@@ -307,8 +308,8 @@ class _DoubleBraceTemplate(string.Template):
     """
 
 
-def append_html_template(template_file, target_file, template_dict={},
-                         create=True, append=True):
+def append_html_template(template_file: str, target_file: str, template_dict: dict={},
+                         create: bool = True, append: bool = True):
     """Perform substitutions on *template_file* and write result to *target_file*.
 
     Variable substitutions are done with custom
@@ -400,7 +401,7 @@ class TempDirManager:
         self._dirs.append(new_dir)
         return new_dir
 
-    def rm_tempdir(self, path):
+    def rm_tempdir(self, path: str):
         assert path in self._dirs
         self._dirs.remove(path)
         _log.debug("Cleaning up temp dir %s", path)

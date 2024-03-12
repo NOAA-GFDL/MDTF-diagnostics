@@ -25,7 +25,8 @@
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
-
+  // Full or relative path to model data ESM-intake catalog header file
+  "DATA_CATALOG": "../tests/esm_catalog_CMIP_test_ubuntu.json",
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
@@ -33,7 +34,7 @@
   "MODEL_DATA_ROOT": "../mdtf_test_data",
 
   // Working directory. Defaults to working directory if blank.
-  "WORKING_DIR": "../wkdir",
+  "WORK_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be
   // put in a subdirectory of this directory.

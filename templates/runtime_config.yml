@@ -67,7 +67,7 @@ run_pp: True
 # Set to True to run unit tests
 unit_test: False
 # Additional custom preprocessing scripts to run on data
-# place these scripts in the sites/local directory
+# place these scripts in the MDTF-diagnostics/user_scripts directory
 # The framework will run the specified scripts whether run_pp is set to True or False
 user_pp_scripts:
   - ""

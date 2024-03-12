@@ -51,9 +51,8 @@
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
-  // Full path to model data ESM-intake catalog header file
-  //"DATA_CATALOG": "/net/jml/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
-  "DATA_CATALOG": "/Users/jess/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
+  // Full or relative path to model data ESM-intake catalog header file
+  "DATA_CATALOG": "./diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
   // Backwards compatibility
   "MODEL_DATA_ROOT": "../inputdata/mdtf_test_data",
   // Parent directory containing observational data used by individual PODs.
@@ -110,7 +109,7 @@
   "overwrite": false,
 
   // List with custom preprocessing script(s) to run on data
-  // Place these scripts in the sites/local directory of your copy of the MDTF-diagnostics repository
+  // Place these scripts in the user_scripts directory of your copy of the MDTF-diagnostics repository
   "user_pp_scripts" : ["example_pp_script.py"],
 
   // Settings used in debugging:

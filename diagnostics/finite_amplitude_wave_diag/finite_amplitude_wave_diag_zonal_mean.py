@@ -193,28 +193,28 @@ def plot_and_save_figure(seasonal_average_data, analysis_height_array, plot_dir,
                                           ygrid=analysis_height_array, cmap=cmap, xlim=[-80, 80])
     height_lat_plotter.plot_and_save_variable(variable=seasonal_average_data.zonal_mean_u, cmap=cmap,
                                               var_title_str='zonal mean U',
-                                              save_path=f"{plot_dir}test_{season}_zonal_mean_u.eps", num_level=30)
+                                              save_path=f"{plot_dir}{season}_zonal_mean_u.eps", num_level=30)
     height_lat_plotter.plot_and_save_variable(variable=seasonal_average_data.zonal_mean_lwa, cmap=cmap,
                                               var_title_str='zonal mean LWA',
-                                              save_path=f"{plot_dir}test_{season}_zonal_mean_lwa.eps", num_level=30)
+                                              save_path=f"{plot_dir}{season}_zonal_mean_lwa.eps", num_level=30)
     height_lat_plotter.plot_and_save_variable(variable=seasonal_average_data.uref, cmap=cmap,
                                               var_title_str='zonal mean Uref',
-                                              save_path=f"{plot_dir}test_{season}_zonal_mean_uref.eps", num_level=30)
+                                              save_path=f"{plot_dir}{season}_zonal_mean_uref.eps", num_level=30)
     height_lat_plotter.plot_and_save_variable(variable=seasonal_average_data.zonal_mean_u - seasonal_average_data.uref,
                                               cmap=cmap, var_title_str='zonal mean $\Delta$ U',
-                                              save_path=f"{plot_dir}test_{season}_zonal_mean_delta_u.eps", num_level=30)
+                                              save_path=f"{plot_dir}{season}_zonal_mean_delta_u.eps", num_level=30)
 
     # Use encapsulated class to plot
     lat_lon_plotter = LatLonMapPlotter(figsize=(6, 3), title_str=title_str, xgrid=original_grid['lon'],
                                        ygrid=original_grid['lat'], cmap=cmap, xland=xland, yland=yland,
                                        lon_range=lon_range, lat_range=lat_range)
     lat_lon_plotter.plot_and_save_variable(variable=seasonal_average_data.u_baro, cmap=cmap, var_title_str='U baro',
-                                           save_path=f"{plot_dir}test_{season}_u_baro.eps", num_level=30)
+                                           save_path=f"{plot_dir}{season}_u_baro.eps", num_level=30)
     lat_lon_plotter.plot_and_save_variable(variable=seasonal_average_data.lwa_baro, cmap=cmap, var_title_str='LWA baro',
-                                           save_path=f"{plot_dir}test_{season}_lwa_baro.eps", num_level=30)
+                                           save_path=f"{plot_dir}{season}_lwa_baro.eps", num_level=30)
     lat_lon_plotter.plot_and_save_variable(variable=seasonal_average_data.covariance_lwa_u_baro, cmap="Purples_r",
                                            var_title_str='Covariance between LWA and U(baro)',
-                                           save_path=f"{plot_dir}test_{season}_u_lwa_covariance.eps", num_level=30)
+                                           save_path=f"{plot_dir}{season}_u_lwa_covariance.eps", num_level=30)
 
 
 # === 3) Saving output data ===

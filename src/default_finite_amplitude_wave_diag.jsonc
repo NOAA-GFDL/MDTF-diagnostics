@@ -23,14 +23,7 @@
       "LASTYR" : 1984,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
-          "finite_amplitude_wave_diag",
-          // "convective_transition_diag",
-          // "precip_diurnal_cycle",
-          // "ocn_surf_flux_diag",
-          // "mixed_layer_depth",
-          // "tropical_pacific_sea_level",
-          // "temp_extremes_distshape",
-          // "precip_buoy_diag"
+          "finite_amplitude_wave_diag"
       ]
     }
     // {

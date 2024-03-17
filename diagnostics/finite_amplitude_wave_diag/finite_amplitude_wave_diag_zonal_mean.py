@@ -84,10 +84,7 @@ u_var_name = "ua"
 v_var_name = "va"
 t_var_name = "ta"
 time_coord_name = "time"
-if load_environ:
-    plev_name = "level"
-else:
-    plev_name = "plev"
+plev_name = "plev"
 lat_name = "lat"
 lon_name = "lon"
 

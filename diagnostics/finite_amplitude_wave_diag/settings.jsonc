@@ -27,16 +27,16 @@
          "standard_name":"eastward_wind",
          "units":"m s-1",
          "dimensions":["time", "lev", "lat", "lon"],
-         "freq":"1hr"},
+         "freq":"day"},
       "va":{
          "standard_name":"northward_wind",
          "units":"m s-1",
          "dimensions":["time", "lev", "lat", "lon"],
-         "freq":"1hr"},
+         "freq":"day"},
       "ta":{
          "standard_name":"air_temperature",
          "units":"K",
          "dimensions":["time", "lev", "lat", "lon"],
-         "freq":"1hr"}
+         "freq":"day"}
    }
 }

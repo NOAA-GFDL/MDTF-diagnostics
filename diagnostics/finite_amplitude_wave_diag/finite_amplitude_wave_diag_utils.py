@@ -94,7 +94,7 @@ class HeightLatPlotter(object):
         ax.set_xlim(self._xlim)
         plt.tight_layout()
         plt.savefig(save_path, bbox_inches='tight')
-        plt.savefig(save_path.replace(".png", ".eps"), bbox_inches='tight')  # Do I need this?
+        plt.savefig(save_path.replace(".eps", ".png"), bbox_inches='tight')  # Do I need this?
         plt.show()
 
 

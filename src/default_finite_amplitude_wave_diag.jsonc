@@ -16,7 +16,7 @@
     // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
     // and likewise for the SM_ET_coupling POD.
     {
-      "CASENAME" : "GFDL.CM4.HISTORICAL.SLICE.TEST11.1984010100-1984123123",
+      "CASENAME" : "GFDL-CM4",
       "model" : "CESM",
       "convention" : "CESM",
       "FIRSTYR" : 1984,

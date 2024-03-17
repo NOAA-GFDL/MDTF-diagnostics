@@ -19,24 +19,24 @@
    "dimensions":{
       "lat": {"standard_name": "latitude"},
       "lon": {"standard_name": "longitude"},
-      "lev":{"standard_name":"air_pressure", "units":"hPa", "positive":"down", "axis":"Z"},
+      "plev":{"standard_name":"air_pressure", "units":"Pa", "positive":"down", "axis":"Z"},
       "time": {"standard_name": "time"}
    },
    "varlist":{
       "ua":{
          "standard_name":"eastward_wind",
          "units":"m s-1",
-         "dimensions":["time", "lev", "lat", "lon"],
+         "dimensions":["time", "plev", "lat", "lon"],
          "freq":"day"},
       "va":{
          "standard_name":"northward_wind",
          "units":"m s-1",
-         "dimensions":["time", "lev", "lat", "lon"],
+         "dimensions":["time", "plev", "lat", "lon"],
          "freq":"day"},
       "ta":{
          "standard_name":"air_temperature",
          "units":"K",
-         "dimensions":["time", "lev", "lat", "lon"],
+         "dimensions":["time", "plev", "lat", "lon"],
          "freq":"day"}
    }
 }

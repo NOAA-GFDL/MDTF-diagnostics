@@ -19,8 +19,8 @@
       "CASENAME" : "GFDL-CM3_historical_r1i1p1",
       "model" : "CMIP",
       "convention" : "CMIP",
-      "FIRSTYR" : 1984,
-      "LASTYR" : 1984,
+      "FIRSTYR" : 2005,
+      "LASTYR" : 2005,
       "pod_list": [
           // Optional: PODs to run for this model only (defaults to all)
           "finite_amplitude_wave_diag"

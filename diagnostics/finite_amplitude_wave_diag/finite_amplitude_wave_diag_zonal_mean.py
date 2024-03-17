@@ -89,11 +89,8 @@ lat_name = "lat"
 lon_name = "lon"
 
 # *** Regular analysis grid defined by developer ***
-xlon = np.arange(0, 361, 1.0)
+xlon = np.arange(0, 360, 1.0)
 ylat = np.arange(-90, 91, 1.0)
-print(f"Use xlon: {xlon}")
-print(f"Use ylat: {ylat}")
-
 
 # 2) Doing computations:
 model_dataset = xr.open_mfdataset(uvt_path)  # command to load the netcdf file
@@ -103,6 +100,11 @@ if model_dataset[plev_name].units == 'Pa':  # Pa shall be divided by 100 to beco
     print("model_dataset[plev_name].units == 'Pa'. Convert it to hPa.")
     model_dataset = model_dataset.assign_coords({plev_name: model_dataset[plev_name] // 100})
     model_dataset[plev_name].attrs["units"] = 'hPa'
+print(f"""
+    Use xlon: {xlon}
+    Use ylat: {ylat}
+    firstyr, lastyr = {firstyr}, {lastyr}
+    """)
 
 # === 2.0) Save original grid ===
 original_grid = {

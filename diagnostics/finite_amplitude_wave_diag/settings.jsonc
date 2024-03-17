@@ -15,7 +15,7 @@
          ]
       }
    },
-   "data":{"frequency":"1hr"},
+   "data":{"frequency":"day"},
    "dimensions":{
       "lat": {"standard_name": "latitude"},
       "lon": {"standard_name": "longitude"},

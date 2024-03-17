@@ -71,6 +71,13 @@ else:  # iMac path
                "GFDL-CM3_historical_r1i1p1_20050101-20051231_10tslice.nc"
     casename = "GFDL-CM3_historical_r1i1p1"
 
+print(
+    f"""
+    wk_dir = {wk_dir}
+    uvt_path = {uvt_path}
+    casename = {casename}
+    """
+)
 
 # *** Coordinates of input dataset ***
 u_var_name = "ua"

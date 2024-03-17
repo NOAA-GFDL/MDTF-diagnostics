@@ -52,7 +52,9 @@
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
   // Full or relative path to model data ESM-intake catalog header file
-  "DATA_CATALOG": "../diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
+
+  "DATA_CATALOG": "./diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
+
   // Backwards compatibility
   "MODEL_DATA_ROOT": "../inputdata/mdtf_test_data",
   // Parent directory containing observational data used by individual PODs.

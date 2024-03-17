@@ -22,9 +22,8 @@ case_list:
     enddate: "19891231:000000"
 
 ### Data location settings ###
-# Required: full path to ESM-intake catalog header file
-#DATA_CATALOG: "/local2/home/mdtf/MDTF-diagnostics/tools/catalog_builder/examples/gfdl/esm_catalog_DECK_ESM4_historical_D1_atmos_ts_monthly_5yr_subset.json"
-DATA_CATALOG: "/local2/home/mdtf/MDTF-diagnostics/tools/catalog_builder/examples/gfdl/esm_catalog_DECK_ESM4_historical_D1_at
+# Required: full or relative path to ESM-intake catalog header file
+DATA_CATALOG: "./diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json"
 # Optional: Parent directory containing observational data used by individual PODs.
 # If defined, the framework assumes observational data is in OBS_DATA_ROOT/[POD_NAME]
 OBS_DATA_ROOT: "../inputdata/obs_data"
@@ -64,8 +63,6 @@ overwrite: False
 ### Developer settings ###
 # Set to True to run the preprocessor
 run_pp: True
-# Set to True to run unit tests
-unit_test: False
 # Additional custom preprocessing scripts to run on data
 # place these scripts in the MDTF-diagnostics/user_scripts directory
 # The framework will run the specified scripts whether run_pp is set to True or False

@@ -64,7 +64,7 @@ if load_environ:  # otc path
     wk_dir = os.environ["WK_DIR"]
     uvt_path = f'{os.environ["DATADIR"]}/{os.environ["CASENAME"]}/{frequency}/{os.environ["CASENAME"]}.[uvt]a.{frequency}.nc'
     casename = os.environ["CASENAME"]
-    # otc_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL-CM4/GFDL-CM4.ta.1hr.nc"
+    # otc_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL-CM4/1hr/GFDL-CM4.ta.1hr.nc"
 else:  # iMac path
     wk_dir = "/Users/claresyhuang/Dropbox/GitHub/hn2016_falwa/github_data_storage"
     uvt_path = f"{os.environ['HOME']}/Dropbox/GitHub/mdtf/MDTF-diagnostics/diagnostics/finite_amplitude_wave_diag/" + \
@@ -239,6 +239,7 @@ intermediate_output_paths: Dict[str, str] = {
     item[0]: f"{wk_dir}/{model_or_obs}/intermediate_{item[0]}.nc" for item in season_to_months}
 
 for season in season_to_months[:1]:
+    print(f"season: {season}")
     # Construct data preprocessor
     data_preprocessor = DataPreprocessor(
         wk_dir=wk_dir, xlon=xlon, ylat=ylat, u_var_name=u_var_name, v_var_name=v_var_name, t_var_name=t_var_name,
@@ -248,16 +249,26 @@ for season in season_to_months[:1]:
     plot_dir = f"{wk_dir}/{model_or_obs}/"
 
     # Do temporal sampling to reduce the data size
+    print("Start samping data in frequency 'day'.")
     sampled_dataset = model_dataset.where(
         model_dataset.time.dt.month.isin(selected_months), drop=True) \
         .groupby("time.day").mean("time")
     preprocessed_output_path = intermediate_output_paths[season[0]]  # TODO set it
+    print(f"Start preparing intermediate data in the directory: {preprocessed_output_path}")
     data_preprocessor.output_preprocess_data(
         sampled_dataset=sampled_dataset, output_path=preprocessed_output_path)
+    print(f"Finished preparing intermediate data in the directory: {preprocessed_output_path}")
     intermediate_dataset = xr.open_mfdataset(preprocessed_output_path)
+    print(f"Start computing FAWA diagnostics from sampled data.")
     fawa_diagnostics_dataset = compute_from_sampled_data(intermediate_dataset)
     analysis_height_array = fawa_diagnostics_dataset.coords['height'].data
     seasonal_avg_data = time_average_processing(fawa_diagnostics_dataset)
+    print(
+        f"""
+        Finished computing FAWA diagnostics from sampled data.
+        fawa_diagnostics_dataset: {fawa_diagnostics_dataset}
+        seasonal_avg_data: {seasonal_avg_data}
+        """)
 
     # === 4) Saving output plots ===
     #

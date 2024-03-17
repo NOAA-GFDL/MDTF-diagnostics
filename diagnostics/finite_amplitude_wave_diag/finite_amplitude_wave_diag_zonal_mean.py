@@ -53,7 +53,7 @@ if socket.gethostname() == 'otc':
 # settings.json.
 already_done_gridfill: bool = True
 load_environ: bool = (socket.gethostname() == 'otc')
-frequency = "1hr"  # TODO: change later
+frequency = "day"  # TODO: change later
 
 if load_environ:  # otc path
     print(

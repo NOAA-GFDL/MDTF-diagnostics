@@ -227,66 +227,65 @@ def plot_and_save_figure(seasonal_average_data, analysis_height_array, plot_dir,
 # any format (as long as it's documented) and should be written to the
 # directory <WK_DIR>/model/netCDF (created by the framework).
 
-# *** Produce data by season, daily ***
-if __name__ == '__main__':
-    model_or_obs: str = "model"  # It can be "model" or "obs"
-    season_to_months = [
-        ("DJF", [1, 2, 12]), ("MAM", [3, 4, 5]), ("JJA", [6, 7, 8]), ("SON", [9, 10, 11])]
-    intermediate_output_paths: Dict[str, str] = {
-        item[0]: f"{wk_dir}/intermediate_{item[0]}.nc" for item in season_to_months}
+# *** MAIN PROCESS: Produce data by season, daily ***
+model_or_obs: str = "model"  # It can be "model" or "obs"
+season_to_months = [
+    ("DJF", [1, 2, 12]), ("MAM", [3, 4, 5]), ("JJA", [6, 7, 8]), ("SON", [9, 10, 11])]
+intermediate_output_paths: Dict[str, str] = {
+    item[0]: f"{wk_dir}/intermediate_{item[0]}.nc" for item in season_to_months}
 
-    for season in season_to_months[:1]:
-        # Construct data preprocessor
-        data_preprocessor = DataPreprocessor(
-            wk_dir=wk_dir, xlon=xlon, ylat=ylat, u_var_name=u_var_name, v_var_name=v_var_name, t_var_name=t_var_name,
-            plev_name=plev_name, lat_name=lat_name, lon_name=lon_name, time_coord_name=time_coord_name)
+for season in season_to_months[:1]:
+    # Construct data preprocessor
+    data_preprocessor = DataPreprocessor(
+        wk_dir=wk_dir, xlon=xlon, ylat=ylat, u_var_name=u_var_name, v_var_name=v_var_name, t_var_name=t_var_name,
+        plev_name=plev_name, lat_name=lat_name, lon_name=lon_name, time_coord_name=time_coord_name)
 
-        selected_months = season[1]
-        plot_dir = f"{wk_dir}/{model_or_obs}/PS/"
+    selected_months = season[1]
+    plot_dir = f"{wk_dir}/{model_or_obs}/PS/"
 
-        # Do temporal sampling to reduce the data size
-        sampled_dataset = model_dataset.where(
-            model_dataset.time.dt.month.isin(selected_months), drop=True) \
-            .groupby("time.day").mean("time")
-        preprocessed_output_path = intermediate_output_paths[season[0]]  # TODO set it
-        data_preprocessor.output_preprocess_data(
-            sampled_dataset=sampled_dataset, output_path=preprocessed_output_path)
-        intermediate_dataset = xr.open_mfdataset(preprocessed_output_path)
-        fawa_diagnostics_dataset = compute_from_sampled_data(intermediate_dataset)
-        analysis_height_array = fawa_diagnostics_dataset.coords['height'].data
-        seasonal_avg_data = time_average_processing(fawa_diagnostics_dataset)
+    # Do temporal sampling to reduce the data size
+    sampled_dataset = model_dataset.where(
+        model_dataset.time.dt.month.isin(selected_months), drop=True) \
+        .groupby("time.day").mean("time")
+    preprocessed_output_path = intermediate_output_paths[season[0]]  # TODO set it
+    data_preprocessor.output_preprocess_data(
+        sampled_dataset=sampled_dataset, output_path=preprocessed_output_path)
+    intermediate_dataset = xr.open_mfdataset(preprocessed_output_path)
+    fawa_diagnostics_dataset = compute_from_sampled_data(intermediate_dataset)
+    analysis_height_array = fawa_diagnostics_dataset.coords['height'].data
+    seasonal_avg_data = time_average_processing(fawa_diagnostics_dataset)
 
-        # === 4) Saving output plots ===
-        #
-        # Plots should be saved in EPS or PS format at <WK_DIR>/<model or obs>/PS
-        # (created by the framework). Plots can be given any filename, but should have
-        # the extension ".eps" or ".ps". To make the webpage output, the framework will
-        # convert these to bitmaps with the same name but extension ".png".
-
-        # Define a python function to make the plot, since we'll be doing it twice and
-        # we don't want to repeat ourselves.
-
-        # set an informative title using info about the analysis set in env vars
-        title_string = f"{casename} ({firstyr}-{lastyr}) {season}"
-        # Plot the model data:
-        plot_and_save_figure(seasonal_avg_data, analysis_height_array, plot_dir=plot_dir, title_str=title_string,
-                             season=season[0], xy_mask=data_preprocessor.xy_mask, yz_mask=data_preprocessor.yz_mask)
-        print(f"Finishing outputting figures to {plot_dir}.")
-
-        # Close xarray datasets
-        sampled_dataset.close()
-        intermediate_dataset.close()
-        fawa_diagnostics_dataset.close()
-        gc.collect()
-    print("Finish the whole process")
-    model_dataset.close()
-
-    # 6) Cleaning up:
+    # === 4) Saving output plots ===
     #
-    # In addition to your language's normal housekeeping, don't forget to delete any
-    # temporary/scratch files you created in step 4).
-    os.system(f"rm -f {wk_dir}/gridfill_*.nc")
-    os.system(f"rm -f {wk_dir}/intermediate_*.nc")
+    # Plots should be saved in EPS or PS format at <WK_DIR>/<model or obs>/PS
+    # (created by the framework). Plots can be given any filename, but should have
+    # the extension ".eps" or ".ps". To make the webpage output, the framework will
+    # convert these to bitmaps with the same name but extension ".png".
+
+    # Define a python function to make the plot, since we'll be doing it twice and
+    # we don't want to repeat ourselves.
+
+    # set an informative title using info about the analysis set in env vars
+    title_string = f"{casename} ({firstyr}-{lastyr}) {season}"
+    # Plot the model data:
+    plot_and_save_figure(seasonal_avg_data, analysis_height_array, plot_dir=plot_dir, title_str=title_string,
+                         season=season[0], xy_mask=data_preprocessor.xy_mask, yz_mask=data_preprocessor.yz_mask)
+    print(f"Finishing outputting figures to {plot_dir}.")
+
+    # Close xarray datasets
+    sampled_dataset.close()
+    intermediate_dataset.close()
+    fawa_diagnostics_dataset.close()
+    gc.collect()
+print("Finish the whole process")
+model_dataset.close()
+
+# 6) Cleaning up:
+#
+# In addition to your language's normal housekeeping, don't forget to delete any
+# temporary/scratch files you created in step 4).
+os.system(f"rm -f {wk_dir}/gridfill_*.nc")
+os.system(f"rm -f {wk_dir}/intermediate_*.nc")
 
 ### 7) Error/Exception-Handling Example ########################################
 # nonexistent_file_path = "{DATADIR}/mon/nonexistent_file.nc".format(**os.environ)

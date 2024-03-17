@@ -67,14 +67,13 @@ if load_environ:  # otc path
     wk_dir = os.environ["WK_DIR"]
     uvt_path = f'{os.environ["DATADIR"]}/{frequency}/{os.environ["CASENAME"]}.[uvt]a.{frequency}.nc'
     casename = os.environ["CASENAME"]
+    # otc_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL-CM4/GFDL-CM4.ta.1hr.nc"
 else:  # iMac path
     wk_dir = "/Users/claresyhuang/Dropbox/GitHub/hn2016_falwa/github_data_storage"
     uvt_path = f"{os.environ['HOME']}/Dropbox/GitHub/mdtf/MDTF-diagnostics/diagnostics/finite_amplitude_wave_diag/" + \
                "GFDL-CM3_historical_r1i1p1_20050101-20051231_10tslice.nc"
     casename = "GFDL-CM3_historical_r1i1p1"
 
-otc_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL.CM4.HISTORICAL.SLICE.TEST11.1984010100-1984123123/" + \
-           "1hr/GFDL.CM4.HISTORICAL.SLICE.TEST11.1984010100-1984123123.ta.1hr.nc"
 
 # *** Coordinates of input dataset ***
 u_var_name = "ua"

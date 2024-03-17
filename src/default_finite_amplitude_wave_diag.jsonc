@@ -117,7 +117,7 @@
   // Settings used in debugging:
 
   // Log verbosity level.
-  "verbose": 1,
+  "verbose": 2,
 
   // Set to true for framework test. Data is fetched but PODs are not run.
   "test_mode": false,

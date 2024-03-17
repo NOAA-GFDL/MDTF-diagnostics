@@ -37,19 +37,19 @@
          "units":"K",
          "dimensions":["time", "lev", "lat", "lon"],
          "freq":"day"}
-   },
-   "pod_env_vars":{   /* This shall be removed when submitting PR */
-      "start_year" : "1993",
-      "end_year" : "2009",
-      "CASENAME": "GFDL-CM3_historical_r1i1p1",
-      "UVT_FILE": "GFDL-CM3_historical_r1i1p1_20050101-20051231_10tslice.nc",
-      "U_VAR": "ua",
-      "V_VAR": "va",
-      "T_VAR": "ta",
-      "TIME_COORD": "time",
-      "LEV_COORD": "plev",
-      "LAT_COORD": "lat",
-      "LON_COORD": "lon",
-      "WK_DIR": "wkdir"
    }
+//    "pod_env_vars":{   /* This shall be removed when submitting PR */
+//       "start_year" : "1993",
+//       "end_year" : "2009",
+//       "CASENAME": "GFDL-CM3_historical_r1i1p1",
+//       "UVT_FILE": "GFDL-CM3_historical_r1i1p1_20050101-20051231_10tslice.nc",
+//       "U_VAR": "ua",
+//       "V_VAR": "va",
+//       "T_VAR": "ta",
+//       "TIME_COORD": "time",
+//       "LEV_COORD": "plev",
+//       "LAT_COORD": "lat",
+//       "LON_COORD": "lon",
+//       "WK_DIR": "wkdir"
+//    }
 }

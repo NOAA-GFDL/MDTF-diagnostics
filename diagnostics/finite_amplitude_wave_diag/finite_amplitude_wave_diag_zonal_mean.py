@@ -3,7 +3,7 @@
 # Calculate finite-amplitude wave diagnostics that quantifies wave-mean flow
 # interactions.
 #
-# Last update: 02/18/2024
+# Last update: 03/18/2024
 # ================================================================================
 #   Version & Contact info
 # 
@@ -54,37 +54,38 @@ from falwa.constant import P_GROUND, SCALE_HEIGHT
 # <DATADIR>/<frequency>/<CASENAME>.<variable_name>.<frequency>.nc
 # Here <variable_name> and frequency are requested in the "varlist" part of 
 # settings.json.
-already_done_gridfill = True
-load_environ = (socket.gethostname() == 'otc')
+already_done_gridfill: bool = True
+load_environ: bool = (socket.gethostname() == 'otc')
+frequency = "1hr"  # TODO: change later
+
 if load_environ:  # otc path
-    uvt_path = os.environ["UVT_FILE"]
-    u_var_name = os.environ["U_VAR"]
-    v_var_name = os.environ["V_VAR"]
-    t_var_name = os.environ["T_VAR"]
-    time_coord_name = os.environ["TIME_COORD"]
-    plev_name = os.environ["LEV_COORD"]
-    lat_name = os.environ["LAT_COORD"]
-    lon_name = os.environ["LON_COORD"]
+    print(
+        f"""
+        Start running on OTC. Print out all environment variables:
+        {os.environ}
+        """)
     wk_dir = os.environ["WK_DIR"]
+    uvt_path = f'{os.environ["DATADIR"]}/{frequency}/{os.environ["CASENAME"]}.[uvt]a.{frequency}.nc'
     casename = os.environ["CASENAME"]
-    firstyr = os.environ["FIRSTYR"]
-    lastyr = os.environ["LASTYR"]
 else:  # iMac path
+    wk_dir = "/Users/claresyhuang/Dropbox/GitHub/hn2016_falwa/github_data_storage"
     uvt_path = f"{os.environ['HOME']}/Dropbox/GitHub/mdtf/MDTF-diagnostics/diagnostics/finite_amplitude_wave_diag/" + \
                "GFDL-CM3_historical_r1i1p1_20050101-20051231_10tslice.nc"
-    u_var_name = "ua"
-    v_var_name = "va"
-    t_var_name = "ta"
-    time_coord_name = "time"
-    plev_name = "plev"
-    lat_name = "lat"
-    lon_name = "lon"
-    wk_dir = "/Users/claresyhuang/Dropbox/GitHub/hn2016_falwa/github_data_storage"
     casename = "GFDL-CM3_historical_r1i1p1"
-    firstyr = 2005
-    lastyr = 2005
 
-# Regular grid defined by developer
+otc_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL.CM4.HISTORICAL.SLICE.TEST11.1984010100-1984123123/" + \
+           "1hr/GFDL.CM4.HISTORICAL.SLICE.TEST11.1984010100-1984123123.ta.1hr.nc"
+
+# *** Coordinates of input dataset ***
+u_var_name = "ua"
+v_var_name = "va"
+t_var_name = "ta"
+time_coord_name = "time"
+plev_name = "plev"
+lat_name = "lat"
+lon_name = "lon"
+
+# *** Regular analysis grid defined by developer ***
 xlon = np.arange(0, 361, 1.0)
 ylat = np.arange(-90, 91, 1.0)
 print(f"Use xlon: {xlon}")
@@ -93,6 +94,8 @@ print(f"Use ylat: {ylat}")
 
 # 2) Doing computations:
 model_dataset = xr.open_mfdataset(uvt_path)  # command to load the netcdf file
+firstyr = model_dataset.coords['time'].values[0].year
+lastyr = model_dataset.coords['time'].values[-1].year
 if model_dataset[plev_name].units == 'Pa':  # Pa shall be divided by 100 to become hPa
     model_dataset = model_dataset.assign_coords({plev_name: model_dataset[plev_name] // 100})
     model_dataset[plev_name].attrs["units"] = 'hPa'

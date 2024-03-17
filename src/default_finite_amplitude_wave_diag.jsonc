@@ -17,8 +17,8 @@
     // and likewise for the SM_ET_coupling POD.
     {
       "CASENAME" : "GFDL-CM4",
-      "model" : "CESM",
-      "convention" : "CESM",
+      "model" : "CM4",
+      "convention" : "GFDL",
       "FIRSTYR" : 1984,
       "LASTYR" : 1984,
       "pod_list": [

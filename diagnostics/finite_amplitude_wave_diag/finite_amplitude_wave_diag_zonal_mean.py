@@ -100,6 +100,7 @@ model_dataset = xr.open_mfdataset(uvt_path)  # command to load the netcdf file
 firstyr = model_dataset.coords['time'].values[0].year
 lastyr = model_dataset.coords['time'].values[-1].year
 if model_dataset[plev_name].units == 'Pa':  # Pa shall be divided by 100 to become hPa
+    print("model_dataset[plev_name].units == 'Pa'. Convert it to hPa.")
     model_dataset = model_dataset.assign_coords({plev_name: model_dataset[plev_name] // 100})
     model_dataset[plev_name].attrs["units"] = 'hPa'
 

@@ -29,14 +29,8 @@ import gc
 import socket
 from collections import namedtuple
 import matplotlib
-
-from diagnostics.finite_amplitude_wave_diag.finite_amplitude_wave_diag_utils import convert_hPa_to_pseudoheight, \
-    DataPreprocessor
-
-if socket.gethostname() == 'otc':
-    matplotlib.use('Agg')  # non-X windows backend
-
-from finite_amplitude_wave_diag_utils import LatLonMapPlotter, HeightLatPlotter
+from finite_amplitude_wave_diag_utils import convert_hPa_to_pseudoheight, DataPreprocessor, LatLonMapPlotter, \
+    HeightLatPlotter
 
 # Commands to load third-party libraries. Any code you don't include that's
 # not part of your language's standard library should be listed in the 
@@ -47,6 +41,9 @@ import xarray as xr  # python library we use to read netcdf files
 from falwa.xarrayinterface import QGDataset
 from falwa.oopinterface import QGFieldNH18
 from falwa.constant import P_GROUND, SCALE_HEIGHT
+
+if socket.gethostname() == 'otc':
+    matplotlib.use('Agg')  # non-X windows backend
 
 # 1) Loading model data files:
 #

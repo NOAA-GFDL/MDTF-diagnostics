@@ -192,7 +192,7 @@ class DataPreprocessor:
         # *** Implement gridfill procedure ***
         print(f"self._gridfill_needed = True. Do gridfill with poisson solver.")
         args_tuple = [self._u_var_name, self._v_var_name, self._t_var_name]
-        gridfill_file_path = self._wk_dir + "/gridfill_{var}.nc"
+        gridfill_file_path = self._wk_dir + "/model/netCDF/gridfill_{var}.nc"
         for var_name in args_tuple:
             field_at_all_level = xr.apply_ufunc(
                 gridfill_each_level,

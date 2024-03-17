@@ -232,7 +232,7 @@ model_or_obs: str = "model"  # It can be "model" or "obs"
 season_to_months = [
     ("DJF", [1, 2, 12]), ("MAM", [3, 4, 5]), ("JJA", [6, 7, 8]), ("SON", [9, 10, 11])]
 intermediate_output_paths: Dict[str, str] = {
-    item[0]: f"{wk_dir}/intermediate_{item[0]}.nc" for item in season_to_months}
+    item[0]: f"{wk_dir}/model/netCDF/intermediate_{item[0]}.nc" for item in season_to_months}
 
 for season in season_to_months[:1]:
     # Construct data preprocessor
@@ -284,8 +284,8 @@ model_dataset.close()
 #
 # In addition to your language's normal housekeeping, don't forget to delete any
 # temporary/scratch files you created in step 4).
-os.system(f"rm -f {wk_dir}/gridfill_*.nc")
-os.system(f"rm -f {wk_dir}/intermediate_*.nc")
+# os.system(f"rm -f {wk_dir}/model/netCDF/gridfill_*.nc")
+# os.system(f"rm -f {wk_dir}/model/netCDF/intermediate_*.nc")
 
 ### 7) Error/Exception-Handling Example ########################################
 # nonexistent_file_path = "{DATADIR}/mon/nonexistent_file.nc".format(**os.environ)

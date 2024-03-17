@@ -254,7 +254,7 @@ for season in season_to_months[:1]:
     print("Start samping data in frequency 'day'.")
     sampled_dataset = model_dataset.where(
         model_dataset.time.dt.month.isin(selected_months), drop=True) \
-        .groupby("time.day").first("time")
+        .groupby("time.day").first()
     preprocessed_output_path = intermediate_output_paths[season[0]]  # TODO set it
     print(f"Start preparing intermediate data in the directory: {preprocessed_output_path}")
     data_preprocessor.output_preprocess_data(

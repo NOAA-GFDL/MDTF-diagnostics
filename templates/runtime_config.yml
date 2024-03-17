@@ -64,6 +64,7 @@ overwrite: False
 # Set to True to run the preprocessor
 run_pp: True
 # Additional custom preprocessing scripts to run on data
-# place these scripts in the user_scripts directory of your copy of the MDTF-diagnostics package
+# place these scripts in the MDTF-diagnostics/user_scripts directory
+# The framework will run the specified scripts whether run_pp is set to True or False
 user_pp_scripts:
   - ""

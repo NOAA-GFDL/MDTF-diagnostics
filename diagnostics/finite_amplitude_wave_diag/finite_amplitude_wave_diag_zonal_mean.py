@@ -283,7 +283,7 @@ for season in season_to_months:
     # we don't want to repeat ourselves.
 
     # set an informative title using info about the analysis set in env vars
-    title_string = f"{casename} ({firstyr}-{lastyr}) {season}"
+    title_string = f"{casename} ({firstyr}-{lastyr}) {season[0]}"
     # Plot the model data:
     plot_and_save_figure(seasonal_avg_data, analysis_height_array, plot_dir=plot_dir, title_str=title_string,
                          season=season[0], xy_mask=data_preprocessor.xy_mask, yz_mask=data_preprocessor.yz_mask)

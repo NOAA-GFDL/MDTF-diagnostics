@@ -62,7 +62,7 @@ if load_environ:  # otc path
         {os.environ}
         """)
     wk_dir = os.environ["WK_DIR"]
-    uvt_path = f'{os.environ["DATADIR"]}/{frequency}/{os.environ["CASENAME"]}.[uvt]a.{frequency}.nc'
+    uvt_path = f'{os.environ["DATADIR"]}/{os.environ["CASENAME"]}/{frequency}/{os.environ["CASENAME"]}.[uvt]a.{frequency}.nc'
     casename = os.environ["CASENAME"]
     # otc_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL-CM4/GFDL-CM4.ta.1hr.nc"
 else:  # iMac path

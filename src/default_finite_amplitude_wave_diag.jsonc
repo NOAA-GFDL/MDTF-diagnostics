@@ -120,9 +120,9 @@
   "verbose": 1,
 
   // Set to true for framework test. Data is fetched but PODs are not run.
-  "test_mode": false,
+  "test_mode": true,
 
   // Set to true for framework test. No external commands are run and no remote
   // data is copied. Implies test_mode.
-  "dry_run": false
+  "dry_run": true
 }

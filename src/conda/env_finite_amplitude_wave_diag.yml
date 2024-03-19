@@ -16,4 +16,4 @@ dependencies:
 - bottleneck
 - pip
 - pip:
-   - "--editable=git+https://github.com/csyhuang/hn2016_falwa.git@master#egg=falwa"
+   - falwa==1.2.1

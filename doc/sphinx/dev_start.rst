@@ -137,6 +137,7 @@ Recall how the framework finds a proper Conda environment for a POD. First, it s
 
       % cd $CODE_ROOT
       % ./src/conda/conda_env_setup.sh --env $your_POD_short_name --conda_root $CONDA_ROOT --env_dir $CONDA_ENV_DIR
+
    Or, if using micromamba:
 
    .. code-block:: console

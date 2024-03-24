@@ -8,6 +8,4 @@ Framework reference
    ref_data_sources
    ref_conventions
    ref_data
-   ref_runtime_mgrs
-   ref_settings
    ref_envvars

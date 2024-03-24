@@ -8,7 +8,8 @@ Each diagnostic must contain a text file named ``settings.jsonc`` in the `JSON <
 Brief summary of JSON
 ---------------------
 
-We'll briefly summarize subset of JSON syntax used in this configuration file. The file's JSON expressions are built up out of *items*, which may be either
+We'll briefly summarize subset of JSON syntax used in this configuration file. The file's JSON expressions are built
+up out of *items*, which may be either
 
 1. a boolean, taking one of the values ``true`` or ``false`` (lower-case, with no quotes).
 2. a number (integer or floating-point).

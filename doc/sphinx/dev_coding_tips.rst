@@ -3,30 +3,47 @@
 POD coding best practices
 =========================
 
-In this section we describe issues we've seen in POD code that have caused problems in the form of bugs, inefficiencies, or unintended consequences.
+In this section we describe issues we've seen in POD code that have caused problems in the form of bugs, inefficiencies,
+or unintended consequences.
 
 All languages
 -------------
 
 - **PS vs. EPS figures**: Save vector plots as .eps (Encapsulated PostScript), not .ps (regular PostScript).
 
-  *Why*: Postscript (.ps) is perhaps the most common vector graphics format, and almost all plotting packages are able to output postscript files. `Encapsulated Postscript <https://en.wikipedia.org/wiki/Encapsulated_PostScript>`__ (.eps) includes bounding box information that describes the physical extent of the plot's contents. This is used by the framework to generate bitmap versions of the plots correctly: the framework calls `ghostscript <https://www.ghostscript.com/>`__ for the conversion, and if not provided with a bounding box ghostscript assumes the graphics use an entire sheet of (letter or A4) paper. This can cause plots to be cut off if they extend outside of this region.
+  *Why*: Postscript (.ps) is perhaps the most common vector graphics format, and almost all plotting packages are able
+  to output postscript files. `Encapsulated Postscript <https://en.wikipedia.org/wiki/Encapsulated_PostScript>`__
+  (.eps) includes bounding box information that describes the physical extent of the plot's contents. This is used by
+  the framework to generate bitmap versions of the plots correctly: the framework calls
+  `ghostscript <https://www.ghostscript.com/>`__ for the conversion, and if not provided with a bounding box
+  ghostscript assumes the graphics use an entire sheet of (letter or A4) paper. This can cause plots to be cut off if
+  they extend outside of this region.
 
-  Note that many plotting libraries will set the format of the output file automatically from the filename extension. The framework will process both `*.ps` and `*.eps` files.
+  Note that many plotting libraries will set the format of the output file automatically from the filename extension.
+  The framework will process both `*.ps` and `*.eps` files.
 
 Python: General
 ----------------
 
 - **Whitespace**: Indent python code with four spaces per indent level.
   
-  *Why*: Python uses indentation to delineate nesting and scope within a program, and indentation that's not done consistently is a syntax error. Using four spaces is not required, but is the generally accepted standard.
+  *Why*: Python uses indentation to delineate nesting and scope within a program, and indentation that's not done
+  consistently is a syntax error. Using four spaces is not required, but is the generally accepted standard.
 
-  Indentation can be configured in most text editors, or fixed with scripts such as ``reindent.py`` described `here <https://stackoverflow.com/q/1024435>`__. We recommend using a `linter <https://books.agiliq.com/projects/essential-python-tools/en/latest/linters.html>`__ such as ``pylint`` to find common bugs and syntax errors.
+  Indentation can be configured in most text editors, or fixed with scripts such as ``reindent.py`` described
+  `here <https://stackoverflow.com/q/1024435>`__. We recommend using a
+  `linter <https://books.agiliq.com/projects/essential-python-tools/en/latest/linters.html>`__
+  such as ``pylint`` to find common bugs and syntax errors.
 
-  Beyond this, we don't impose requirements on how your code is formatted, but voluntarily following standard best practices (such as described in `PEP8 <https://www.python.org/dev/peps/pep-0008/>`__ or the Google `style guide <https://github.com/google/styleguide/blob/gh-pages/pyguide.md>`__\) will make it easier for you and others to understand your code, find bugs, etc. 
+  Beyond this, we don't impose requirements on how your code is formatted, but voluntarily following standard best
+  practices (such as described in `PEP8 <https://www.python.org/dev/peps/pep-0008/>`__ or the Google
+  `style guide <https://github.com/google/styleguide/blob/gh-pages/pyguide.md>`__\) will make it easier for you and
+  others to understand your code, find bugs, etc.
 
 
-- **Filesystem commands**: Use commands in the `os <https://docs.python.org/3.7/library/os.html>`__ and `shutil <https://docs.python.org/3.7/library/shutil.html>`__ modules to interact with the filesystem, instead of running unix commands using ``os.system()``, ``commands`` (which is deprecated), or ``subprocess``.
+- **Filesystem commands**: Use commands in the `os <https://docs.python.org/3.11/library/os.html>`__ and
+  `shutil <https://docs.python.org/3.11/library/shutil.html>`__ modules to interact with the filesystem,
+  instead of running unix commands using ``os.system()``, ``commands`` (which is deprecated), or ``subprocess``.
 
   *Why*: Hard-coding unix commands makes code less portable. Calling out to a subprocess introduces overhead and makes error handling and logging more difficult. The main reason, however, is that Python already provides these tools in a portable way. Please see the documentation for the `os <https://docs.python.org/3.7/library/os.html>`__ and `shutil <https://docs.python.org/3.7/library/shutil.html>`__ modules, summarized in this table:
 
@@ -36,23 +53,25 @@ Python: General
      * - Task
        - Recommended function
      * - Construct a path from *dir1*, *dir2*, ..., *filename*
-       - `os.path.join <https://docs.python.org/3.10/library/os.path.html?highlight=os%20path#os.path.join>`__\(*dir1*, *dir2*, ..., *filename*)
+       - `os.path.join <https://docs.python.org/3.11/library/os.path.html?highlight=os%20path#os.path.join>`__
+       \(*dir1*, *dir2*, ..., *filename*)
      * - Split a *path* into directory and filename
-       - `os.path.split <https://docs.python.org/3.10/library/os.path.html?highlight=os%20path#os.path.split>`__\(*path*) and related functions in `os.path <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path>`__
+       - `os.path.split <https://docs.python.org/3.11/library/os.path.html?highlight=os%20path#os.path.split>`__
+       \(*path*) and related functions in `os.path <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path>`__
      * - List files in directory *dir*
-       - `os.scandir <https://docs.python.org/3.10/library/os.html#os.scandir>`__\(*dir*)
+       - `os.scandir <https://docs.python.org/3.11/library/os.html#os.scandir>`__\(*dir*)
      * - Move or rename a file or directory from *old_path* to *new_path*
-       - `shutil.move <https://docs.python.org/3.10/library/shutil.html#shutil.move>`__\(*old_path*, *new_path*)
+       - `shutil.move <https://docs.python.org/3.11/library/shutil.html#shutil.move>`__\(*old_path*, *new_path*)
      * - Create a directory or sequence of directories *dir*
-       - `os.makedirs <https://docs.python.org/3.10/library/os.html#os.makedirs>`__\(*dir*)
+       - `os.makedirs <https://docs.python.org/3.11/library/os.html#os.makedirs>`__\(*dir*)
      * - Copy a file from *path* to *new_path*
-       - `shutil.copy2 <https://docs.python.org/3.10/library/shutil.html#shutil.copy2>`__\(*path*, *new_path*)
+       - `shutil.copy2 <https://docs.python.org/3.11/library/shutil.html#shutil.copy2>`__\(*path*, *new_path*)
      * - Copy a directory *dir*, and everything inside it, to *new_dir*
-       - `shutil.copytree <https://docs.python.org/3.10/library/shutil.html#shutil.copytree>`__\(*dir*, *new_dir*)
+       - `shutil.copytree <https://docs.python.org/3.11/library/shutil.html#shutil.copytree>`__\(*dir*, *new_dir*)
      * - Delete a single file at *path*
-       - `os.remove <https://docs.python.org/3.10/library/os.html#os.remove>`__\(*path*)
+       - `os.remove <https://docs.python.org/3.11/library/os.html#os.remove>`__\(*path*)
      * - Delete a directory *dir* and everything inside it
-       - `shutil.rmtree <https://docs.python.org/3.10/library/shutil.html#shutil.rmtree>`__\(*dir*)
+       - `shutil.rmtree <https://docs.python.org/3.11/library/shutil.html#shutil.rmtree>`__\(*dir*)
 
   In particular, using `os.path.join <https://docs.python.org/3.10/library/os.path.html?highlight=os%20path#os.path.join>`__ is more verbose than joining strings but eliminates bugs arising from missing or redundant directory separators.
 
@@ -63,15 +82,26 @@ To obtain acceptable performance for numerical computation, people use Python in
 
 NumPy and xarray both have extensive documentation and many tutorials, such as:
 
-  + NumPy's own `basic <https://numpy.org/doc/stable/user/absolute_beginners.html>`__ and `intermediate <https://numpy.org/doc/stable/user/quickstart.html>`__ tutorials; xarray's `overview <http://xarray.pydata.org/en/stable/quick-overview.html>`__ and climate and weather `examples <http://xarray.pydata.org/en/stable/examples.html>`__;
+  + NumPy's own `basic <https://numpy.org/doc/stable/user/absolute_beginners.html>`__ and
+    `intermediate <https://numpy.org/doc/stable/user/quickstart.html>`__ tutorials; xarray's
+    `overview <http://xarray.pydata.org/en/stable/quick-overview.html>`__ and climate and weather
+    `examples <http://xarray.pydata.org/en/stable/examples.html>`__;
   + A `demonstration <https://rabernat.github.io/research_computing/xarray.html>`__ of the features of xarray using earth science data;
-  + The 2020 SciPy conference has open-source, interactive `tutorials <https://www.scipy2020.scipy.org/tutorial-information>`__ you can work through on your own machine or fully online using `Binder <https://mybinder.org/>`__. In particular, there are tutorials for `NumPy <https://github.com/enthought/Numpy-Tutorial-SciPyConf-2020>`__ and `xarray <https://xarray-contrib.github.io/xarray-tutorial/index.html>`__.
+  + The 2020 SciPy conference has open-source, interactive
+    `tutorials <https://www.scipy2020.scipy.org/tutorial-information>`__
+    you can work through on your own machine or fully online using `Binder <https://mybinder.org/>`__.
+    In particular, there are tutorials for `NumPy <https://github.com/enthought/Numpy-Tutorial-SciPyConf-2020>`__
+    and `xarray <https://xarray-contrib.github.io/xarray-tutorial/index.html>`__.
 
-- **Eliminate explicit for loops**: Use NumPy/xarray functions instead of writing for loops in Python that loop over the indices of your data array. In particular, nested for loops on multidimensional data should never need to be used.
+- **Eliminate explicit for loops**: Use NumPy/xarray functions instead of writing for loops in Python that loop
+  over the indices of your data array. In particular, nested for loops on multidimensional data should never need
+  to be used.
 
-  *Why*: For loops in Python are very slow compared to C or Fortran, because Python is an interpreted language. You can think of the NumPy functions as someone writing those for-loops for you in C, and giving you a way to call it as a Python function.
+  *Why*: For loops in Python are very slow compared to C or Fortran, because Python is an interpreted language.
+  You can think of the NumPy functions as someone writing those for-loops for you in C, and giving you a way to call it as a Python function.
 
-  It's beyond the scope of this document to cover all possible situations, since this is the main use case for NumPy. We refer to the tutorials above for instructions, and to the following blog posts that discuss this specific issue:
+  It's beyond the scope of this document to cover all possible situations, since this is the main use case for NumPy.
+  We refer to the tutorials above for instructions, and to the following blog posts that discuss this specific issue:
 
   + "`Look Ma, no for-loops <https://realpython.com/numpy-array-programming/>`__," by Brad Solomon;
   + "`Turn your conditional loops to Numpy vectors <https://towardsdatascience.com/data-science-with-python-turn-your-conditional-loops-to-numpy-vectors-9484ff9c622e>`__," by Tirthajyoti Sarkar;

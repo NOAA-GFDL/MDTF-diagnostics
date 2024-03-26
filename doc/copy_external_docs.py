@@ -46,6 +46,7 @@ Tools documentation
 
 """
 
+
 def find_copy_make_toc(type_, docs_dir, search_root, header):
     """Look for documentation files, copy them to the build directory, and
     generate toc file linking to pod/site documentation.
@@ -55,6 +56,7 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
         search_root (str): Directory to search for PODs or sites.
         header (str): header of the toc file.
     """
+
     def _docname(item):
         """Helper for status_iterator()."""
         return str(os.path.basename(item))
@@ -67,10 +69,10 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
 
     # find PODs or sites as directories under search_root
     entries = [x for x in os.listdir(search_root) \
-        if os.path.isdir(os.path.join(search_root, x)) and x[0].isalnum()
-    ]
+               if os.path.isdir(os.path.join(search_root, x)) and x[0].isalnum()
+               ]
     # Case-insensitive alpha sort
-    entries = sorted(entries, key=(lambda s: s.lower())) # handles unicode
+    entries = sorted(entries, key=(lambda s: s.lower()))  # handles unicode
     # put example POD documentation first
     if 'example' in entries:
         entries.remove('example')

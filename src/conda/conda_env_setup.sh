@@ -166,8 +166,15 @@ if [ "$make_envs" = "true" ]; then
         else
             conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
         fi
+	echo "$conda_prefix"
+	if [ -d "$conda_prefix" ]; then
+		# remove conda env of same name
+		echo "Removing previous conda env ${env_name}..."
+		conda remove -q -y -n "$env_name" --all
+		echo "... previous env ${env_name} removed."
+	fi
         echo "Creating conda env ${env_name} in ${conda_prefix}..."
-        "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
+        "$_INSTALL_EXE" env create -q -p="$conda_prefix" -f="$env_file" 
         echo "... conda env ${env_name} created."
     done
     "$_INSTALL_EXE" clean -aqy

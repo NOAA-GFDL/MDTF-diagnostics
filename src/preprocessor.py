@@ -3,6 +3,7 @@ once it's been downloaded; see :doc:`fmwk_preprocess`.
 """
 import os
 import shutil
+import collections.abc
 import abc
 import dataclasses
 import datetime
@@ -929,7 +930,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         # mark attrs with sentinel value for deletion
         for k, v in attrs.items():
-            if v == xr_parser.ATTR_NOT_FOUND:
+            if isinstance(v, (np.ndarray, tuple, collections.abc.Sequence)) and not isinstance(v, str):
+                if v.any() == xr_parser.ATTR_NOT_FOUND:
+                    var.log.debug("Caught unset attribute '%s' of '%s'.", k, name)
+                    attrs_to_delete.add(k)
+            elif v == xr_parser.ATTR_NOT_FOUND:
                 var.log.debug("Caught unset attribute '%s' of '%s'.", k, name)
                 attrs_to_delete.add(k)
         # clean up _FillValue
@@ -1643,3 +1648,4 @@ class MultirunNullPreprocessor(MultirunDefaultPreprocessor):
         associated with the POD variable *var*.
         """
         var.log.debug("Skipping preprocessing for %s.", var)
+

@@ -62,13 +62,8 @@ if load_environ:  # otc path
         {os.environ}
         """)
     wk_dir = os.environ["WK_DIR"]
-    # uvt_path = f'{os.environ["DATADIR"]}/{os.environ["CASENAME"]}/{frequency}/{os.environ["CASENAME"]}.[uvt]a.{frequency}.nc'
-    # Old above
-    # uvt_path = /home/clare/GitHub/mdtf/wkdir/MDTF_GFDL-CM3_historical_r1i1p1_2005_2005.v3/finite_amplitude_wave_diag/GFDL-CM3_historical_r1i1p1/day/GFDL-CM3_historical_r1i1p1.[uvt]a.day.nc
-    # Correct below
     uvt_path = f"{os.environ['DATADIR']}/{frequency}/{os.environ['CASENAME']}.[uvt]a.{frequency}.nc"
     casename = os.environ["CASENAME"]
-    # otc_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL-CM4/1hr/GFDL-CM4.ta.1hr.nc"
 else:  # iMac path
     wk_dir = "/Users/claresyhuang/Dropbox/GitHub/hn2016_falwa/github_data_storage"
     uvt_path = f"{os.environ['HOME']}/Dropbox/GitHub/mdtf/MDTF-diagnostics/diagnostics/finite_amplitude_wave_diag/" + \
@@ -244,14 +239,13 @@ season_to_months = [
 intermediate_output_paths: Dict[str, str] = {
     item[0]: f"{wk_dir}/{model_or_obs}/intermediate_{item[0]}.nc" for item in season_to_months}
 
-for season in season_to_months:
+for season, selected_months in season_to_months:
     print(f"season: {season}")
     # Construct data preprocessor
     data_preprocessor = DataPreprocessor(
         wk_dir=wk_dir, xlon=xlon, ylat=ylat, u_var_name=u_var_name, v_var_name=v_var_name, t_var_name=t_var_name,
         plev_name=plev_name, lat_name=lat_name, lon_name=lon_name, time_coord_name=time_coord_name)
 
-    selected_months = season[1]
     plot_dir = f"{wk_dir}/{model_or_obs}/PS/"
 
     # Do temporal sampling to reduce the data size
@@ -259,7 +253,7 @@ for season in season_to_months:
     sampled_dataset = model_dataset.where(
         model_dataset.time.dt.month.isin(selected_months), drop=True) \
         .groupby("time.day").first(skipna=False)
-    preprocessed_output_path = intermediate_output_paths[season[0]]  # TODO set it
+    preprocessed_output_path = intermediate_output_paths[season]  # TODO set it
     print(f"Start preparing intermediate data in the directory: {preprocessed_output_path}")
     data_preprocessor.output_preprocess_data(
         sampled_dataset=sampled_dataset, output_path=preprocessed_output_path)
@@ -287,10 +281,16 @@ for season in season_to_months:
     # we don't want to repeat ourselves.
 
     # set an informative title using info about the analysis set in env vars
-    title_string = f"{casename} ({firstyr}-{lastyr}) {season[0]}"
+    title_string = f"{casename} ({firstyr}-{lastyr}) {season}"
     # Plot the model data:
-    plot_and_save_figure(seasonal_avg_data, analysis_height_array, plot_dir=plot_dir, title_str=title_string,
-                         season=season[0], xy_mask=data_preprocessor.xy_mask, yz_mask=data_preprocessor.yz_mask)
+    plot_and_save_figure(
+        seasonal_average_data=seasonal_avg_data,
+        analysis_height_array=analysis_height_array,
+        plot_dir=plot_dir,
+        title_str=title_string,
+        season=season,
+        xy_mask=data_preprocessor.xy_mask,
+        yz_mask=data_preprocessor.yz_mask)
     print(f"Finishing outputting figures to {plot_dir}.")
 
     # Close xarray datasets

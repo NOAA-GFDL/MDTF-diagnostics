@@ -65,7 +65,7 @@ class LatLonMapPlotter(object):
         fig.colorbar(main_fig, ax=ax)
         ax.set_title(f"{self._title_str}\n{var_title_str}")
         plt.savefig(save_path, bbox_inches='tight')
-        plt.savefig(save_path.replace("/PS/", "/").replace(".eps", ".png"), bbox_inches='tight')  # Do I need this?
+        # plt.savefig(save_path.replace("/PS/", "/").replace(".eps", ".png"), bbox_inches='tight')  # Do I need this?
         plt.show()
 
 
@@ -94,7 +94,7 @@ class HeightLatPlotter(object):
         ax.set_xlim(self._xlim)
         plt.tight_layout()
         plt.savefig(save_path, bbox_inches='tight')
-        plt.savefig(save_path.replace("/PS/", "/").replace(".eps", ".png"), bbox_inches='tight')  # Do I need this?
+        # plt.savefig(save_path.replace("/PS/", "/").replace(".eps", ".png"), bbox_inches='tight')  # Do I need this?
         plt.show()
 
 

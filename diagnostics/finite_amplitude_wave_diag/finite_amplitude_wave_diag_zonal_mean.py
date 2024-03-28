@@ -62,7 +62,11 @@ if load_environ:  # otc path
         {os.environ}
         """)
     wk_dir = os.environ["WK_DIR"]
-    uvt_path = f'{os.environ["DATADIR"]}/{os.environ["CASENAME"]}/{frequency}/{os.environ["CASENAME"]}.[uvt]a.{frequency}.nc'
+    # uvt_path = f'{os.environ["DATADIR"]}/{os.environ["CASENAME"]}/{frequency}/{os.environ["CASENAME"]}.[uvt]a.{frequency}.nc'
+    # Old above
+    # uvt_path = /home/clare/GitHub/mdtf/wkdir/MDTF_GFDL-CM3_historical_r1i1p1_2005_2005.v3/finite_amplitude_wave_diag/GFDL-CM3_historical_r1i1p1/day/GFDL-CM3_historical_r1i1p1.[uvt]a.day.nc
+    # Correct below
+    uvt_path = f"{os.environ['DATADIR']}/{frequency}/{os.environ['CASENAME']}.[uvt]a.{frequency}.nc"
     casename = os.environ["CASENAME"]
     # otc_path = "/home/clare/GitHub/mdtf/inputdata/model/GFDL-CM4/1hr/GFDL-CM4.ta.1hr.nc"
 else:  # iMac path

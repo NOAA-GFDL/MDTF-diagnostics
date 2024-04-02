@@ -1,0 +1,53 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Build and push image to Amazon ECR.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  AWS_REGION: us-east-1                  # set this to your preferred AWS region, e.g. us-west-1
+  ECR_REPOSITORY: mdtf/mdtf-test        # set this to your Amazon ECR repository name
+  ECS_SERVICE: custom-service                # MY_ECS_SERVICE   set this to your Amazon ECS service name
+  ECS_CLUSTER: mdtf-east1                 # MY_ECS_CLUSTER  set this to your Amazon ECS cluster name
+  ECS_TASK_DEFINITION: ecs-task-defn.json # set this to the path to your Amazon ECS task definition
+                                               # file, e.g. .aws/task-definition.json
+  CONTAINER_NAME: mdtf-test-a1r           # set this to the name of the container in the
+                                               # containerDefinitions section of your task definition MY_CONTAINER_NAME
+
+jobs:
+  deploy:
+    name: push-to-public-ecr-cache-test
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@13d241b293754004c80624b5567555c4a39ffbe3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        uses: aradhakrishnanGFDL/docker-build-with-cache-action@master #support-aws-ecr-public
+        env:
+         ECR_REGISTRY: public.ecr.aws
+         IMAGE_TAG: "latest"
+         ECS_IMAGE: $ECR_REGISTRY/ECR_REPOSITORY:$env.IMAGE_TAG
+        with:
+         registry: public.ecr.aws
+         username: "${{ secrets.AWS_ACCESS_KEY_ID }}"  
+         password: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"  
+         image_name: c6h4h4s8/mdtf/mdtf-test
+         push_image_and_stages: true
+         image_tag: latest

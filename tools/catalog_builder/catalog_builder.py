@@ -265,7 +265,7 @@ class CatalogCESM(CatalogBase):
             file_parse_method = parse_cesm_timeseries
         # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cesm.py
         # for more parsing methods
-        self.cb.build(file_parse_method)
+        self.cb = self.cb.build(parsing_func=file_parse_method) 
 
 
 def load_config(config):
@@ -315,7 +315,8 @@ def main(config: str):
 
     print("Time to build catalog:", timedelta(seconds=end_time - start_time))
     # save the catalog
-    print('Saving catalog to', conf['output_filename'] + ".csv")
+    print('Saving catalog to', conf['output_dir'],'/',conf['output_filename'] + ".csv")
+
     cat_obj.call_save(output_dir=conf['output_dir'],
                       output_filename=conf['output_filename']
                       )

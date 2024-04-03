@@ -18,13 +18,14 @@ dependencies:
 # additional development tools
 - jupyter_core=5.3.1
 - jupyterlab=4.0.5
-- sphinx=7.2.5
+- sphinx=7.2.6
 - recommonmark=0.7.1
 - pylint=2.17.5
 - doc8=1.1.1
 - jinja2=3.1.2
-- latexmk=4.76
+#- latexmk=4.76
 - cfunits=3.3.6
 - intake=0.7.0
-- intake-esm=2023.07.07
+- intake-esm=2024.2.6
 - cf_xarray=0.8.4
+- cloud_sptheme

@@ -20,6 +20,7 @@ import datetime
 import inspect
 import unittest.mock as mock
 import traceback
+import cloud_sptheme
 
 stdlib_path = os.path.dirname(traceback.__file__)
 cwd = os.path.dirname(os.path.realpath(__file__))
@@ -99,7 +100,6 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
-    'sphinx_design',
     'recommonmark'
 ]
 
@@ -127,7 +127,7 @@ extlinks = {
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -143,22 +143,19 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'Cloud'
+html_theme = 'cloud'
 
 # Theme options are theme-specific.
 # See https://alabaster.readthedocs.io/en/latest/customization.html
 html_theme_options = {
-    'page_width': '1152px',
-    'sidebar_width': '280px',
-    'sidebar_collapse': False,
-    'fixed_sidebar': False
+    'page_width': '1152px'
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 # Sphinx automatically copies referenced image files.
-html_static_path = ['_static']
+#html_static_path = ['_static']
 
 html_logo = 'img/logo_MDTF.png'
 

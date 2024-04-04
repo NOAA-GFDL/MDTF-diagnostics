@@ -59,6 +59,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         self.pod_env_vars = os.environ.copy()
         self.pod_env_vars['RGB'] = os.path.join(runtime_config.CODE_ROOT, 'shared', 'rgb')
         self.pod_env_vars['CONDA_ROOT'] = os.path.expandvars(runtime_config.conda_root)
+        self.pod_env_vars['CONDA_ENV_ROOT'] = os.path.expandvars(runtime_config.conda_env_root)
         if any(runtime_config.micromamba_exe):
             self.pod_env_vars['MICROMAMBA_EXE'] = runtime_config.micromamba_exe
         else:
@@ -144,14 +145,16 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 if any(v):
                     pod_env = k
                     break
+                
             pod_pkgs = runtime_reqs[pod_env]
 
             if "python" not in pod_env:
                 env_name = '_MDTF_' + pod_env.upper() + '_base'
             else:
                 env_name = '_MDTF_' + pod_env.lower() + '_base'
-            conda_root = self.pod_env_vars['CONDA_ROOT']
-            e = os.path.join(conda_root, 'envs', env_name)
+
+            conda_env_root = self.pod_env_vars['CONDA_ENV_ROOT']
+            e = os.path.join(conda_env_root,  env_name)
 
             env_dir = util.resolve_path(e,
                                         env_vars=self.pod_env_vars,

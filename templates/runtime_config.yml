@@ -5,21 +5,20 @@
 # List of POD(s) to run
 pod_list:
   - "example_multicase"
-  - "MJO_suite"
 
 # Case list entries (must be unique IDs for each simulation)
 case_list:
   "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231" :
     model: "test"
     convention: "CMIP"
-    startdate: "19800101:000000"
-    enddate: "19841231:000000"
+    startdate: "19800101120000"
+    enddate: "19841231000000"
 
   "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231" :
     model: "test"
     convention: "CMIP"
-    startdate: "19850101:000000"
-    enddate: "19891231:000000"
+    startdate: "19850101000000"
+    enddate: "19891231000000"
 
 ### Data location settings ###
 # Required: full or relative path to ESM-intake catalog header file
@@ -31,17 +30,17 @@ OBS_DATA_ROOT: "../inputdata/obs_data"
 # Final output is also written here if the OUTPUT_DIR is not defined.
 WORK_DIR: "../wkdir"
 # Optional: Location to write final output if you don't want it in the wkdir
-OUTPUT_DIR: ""
+OUTPUT_DIR: "../wkdir"
 ### Environment Settings ###
 # Required: Location of the Anaconda/miniconda installation to use for managing
 # dependencies (path returned by running `conda info --base`.)
-conda_root": ""
+conda_root: "/Users/jess/micromamba"
 # Optional: Directory containing the framework-specific conda environments. This should
 # be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
 # blank, the framework will look for its environments in conda_root/envs
-conda_env_root": ""
+conda_env_root: "/Users/jess/micromamba/envs"
 # Location of micromamba executable; REQUIRED if using micromamba
-micromamba_exe: ""
+micromamba_exe: "/Users/jess/.local/bin/micromamba"
 ### Data type settings ###
 # set to true to handle data files > 4 GB
 large_file: False

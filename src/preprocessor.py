@@ -896,7 +896,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             xarray_ds = func.execute(func, v, xarray_ds, **kwargs)
             # append custom preprocessing scripts
 
-        if any([s for s in self.user_pp_scripts]):
+        if self.user_pp_scripts and len(self.user_pp_scripts) > 0:
             for s in self.user_pp_scripts:
                 script_name, script_ext = os.path.splitext(s)
                 full_module_name = "user_scripts." + script_name
@@ -1262,6 +1262,7 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
     <https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.
     """
     module_root: str = ""
+    user_pp_scripts: list
 
     def __init__(self,
                  model_paths: util.ModelDataPathManager,
@@ -1272,6 +1273,8 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         if any([s for s in config.user_pp_scripts]):
             self.add_user_pp_scripts(config)
             self.module_root = os.path.join(config.CODE_ROOT, "user_scripts")
+        else:
+            self.user_pp_scripts = None
 
     def add_user_pp_scripts(self, runtime_config: util.NameSpace):
         self.user_pp_scripts = [s for s in runtime_config.user_pp_scripts]

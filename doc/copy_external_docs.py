@@ -68,7 +68,7 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
         os.makedirs(sphinx_dir)
 
     # find PODs or sites as directories under search_root
-    entries = [x for x in os.listdir(search_root) \
+    entries = [x for x in os.listdir(search_root)
                if os.path.isdir(os.path.join(search_root, x)) and x[0].isalnum()
                ]
     # Case-insensitive alpha sort
@@ -77,10 +77,6 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
     if 'example' in entries:
         entries.remove('example')
         entries.insert(0, 'example')
-    # put local site documentation first
-    elif 'local' in entries:
-        entries.remove('local')
-        entries.insert(0, 'local')
 
     # find documentation files
     # = all non-PDF files (.rst and graphics) in /doc subdirectory

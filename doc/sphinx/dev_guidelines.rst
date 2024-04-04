@@ -59,17 +59,23 @@ The environment variables most relevant for a POD's operation are:
 
 - ``POD_HOME``: Path to directory containing POD's scripts, e.g., ``diagnostics/convective_transition_diag/``.
 
-- ``OBS_DATA``: Path to directory containing POD's supporting/digested observation data, e.g., ``inputdata/obs_data/convective_transition_diag/``.
+- ``OBS_DATA``: Path to directory containing POD's supporting/digested observation data, e.g.,
+  ``inputdata/obs_data/convective_transition_diag/``.
 
-- ``DATADIR``: Path to directory containing model data files for one case/experiment, e.g., ``inputdata/model/QBOi.EXP1.AMIP.001/``.
+- ``DATADIR`` (deprecated; PODs written for MDTF-diagnostics v3.5 and earlier): Path to directory containing model data files for
+  one case/experiment, e.g., ``inputdata/model/QBOi.EXP1.AMIP.001/``.
 
-- ``WK_DIR``: Path to directory for POD to output files. Note that **this is the only directory a POD is allowed to write its output**. e.g., ``wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/convective_transition_diag/``.
+- ``WORK_DIR``: Path to directory for POD to output files. Note that **this is the only directory a POD is allowed
+   to write its output**. e.g., ``wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/convective_transition_diag/``.
 
-   1. Output figures to ``$WK_DIR/obs/`` and ``$WK_DIR/model/`` respectively.
+   1. Output figures to ``$WORK_DIR/obs/`` and ``$WORK_DIR/model/`` respectively.
 
-   2. ``$WK_DIR/obs/PS/`` and ``$WK_DIR/model/PS/``: If a POD chooses to save vector-format figures, save them as ``EPS`` under these two directories. Files in these locations will be converted by the framework to ``PNG`` for HTML output. Caution: avoid using ``PS`` because of potential bugs in recent ``matplotlib`` and converting to PNG.
+   2. ``$WORKK_DIR/obs/PS/`` and ``$WORK_DIR/model/PS/``: If a POD chooses to save vector-format figures, save them as
+   ``EPS`` under these two directories. Files in these locations will be converted by the framework to ``PNG`` for HTML
+   output. Caution: avoid using ``PS`` because of potential bugs in recent ``matplotlib`` and converting to PNG.
 
-   3. ``$WK_DIR/obs/netCDF/`` and ``$WK_DIR/model/netCDF/``: If a POD chooses to save digested data for later analysis/plotting, save them in these two directories in ``NetCDF``.
+   3. ``$WORK_DIR/obs/netCDF/`` and ``$WORK_DIR/model/netCDF/``: If a POD chooses to save digested data for later
+   analysis/plotting, save them in these two directories in ``NetCDF``.
 
 Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WK_DIR`` change when the framework executes different PODs; (2) the ``WK_DIR`` directory and subdirectories therein are automatically created by the framework. **Each POD should output files as described here** so that the framework knows where to find what, and also for the ease of code maintenance.
 

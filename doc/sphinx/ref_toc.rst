@@ -8,3 +8,4 @@ Framework reference
    ref_conventions
    ref_data
    ref_envvars
+   ref_submodules

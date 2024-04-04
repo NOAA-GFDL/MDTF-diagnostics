@@ -9,6 +9,6 @@ Developer information
    dev_start
    dev_guidelines
    pod_settings
-   dev_walkthrough
    dev_coding_tips
    dev_git_intro
+   dev_cheatsheet

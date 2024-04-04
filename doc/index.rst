@@ -21,6 +21,7 @@ This site contains documentation for the MDTF-Diagnostics package. The code is f
    sphinx/ref_toc
    sphinx/fmwk_toc
    sphinx/pod_toc
+   sphinx/tools_toc
 
 
 Acknowledgements

@@ -14,7 +14,7 @@ The following block in your JSON or yml file is required for the submodule to la
        {
          "${FUNCTION_NAME}":
 	   {
-	     "${FUNCTION_ARGS}":
+	     "args":
                {
                  "arguments go here"
                }

@@ -184,6 +184,14 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         for k, v in pods[pod_name].runtime_requirements.items():
             if not hasattr(pod_runtime_reqs, k):
                 pod_runtime_reqs[k] = v
+    # run module(s)
+    if "module_list" in ctx.config:
+        for module in ctx.config.module_list:
+            module_obj = __import__(module)
+            for function in ctx.config.module_list[module]:
+                args = ctx.config.module_list[module][function].args
+                func = getattr(module_obj, function)
+                func(args)
     # read the subset of data for the cases and date range(s) and preprocess the data
     cat_subset = data_pp.process(cases, ctx.config, model_paths.MODEL_WORK_DIR)
     # write the preprocessed files

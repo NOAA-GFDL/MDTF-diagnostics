@@ -16,7 +16,7 @@ documentation files, stores alongside individual PODs and site files in
 """
 import os
 import shutil
-from sphinx.util import status_iterator
+import sphinx.util
 
 # generate POD toc source file on-the-fly
 _pod_toc_header = """
@@ -94,7 +94,7 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
             ])
 
     # copy the docs we found
-    iter_ = status_iterator(
+    iter_ = sphinx.util.display.status_iterator(
         docs, 'Copying {} files... '.format(type_),
         color='purple', stringify_func=_docname
     )

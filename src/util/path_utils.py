@@ -124,11 +124,11 @@ class ModelDataPathManager(PathManagerBase):
 
         if hasattr(config, "MODEL_DATA_ROOT"):
             self.MODEL_DATA_ROOT = self._init_path('MODEL_DATA_ROOT', config, env=env)
-            self.MODEL_DATA_DIR = dict()
-            self.MODEL_OUTPUT_DIR = dict()
-            self.MODEL_WORK_DIR = dict()
         else:
             self.MODEL_DATA_ROOT = ""
+        self.MODEL_DATA_DIR = dict()
+        self.MODEL_OUTPUT_DIR = dict()
+        self.MODEL_WORK_DIR = dict()
 
     def setup_data_paths(self, case_list: NameSpace):
         # define directory paths for multirun mode

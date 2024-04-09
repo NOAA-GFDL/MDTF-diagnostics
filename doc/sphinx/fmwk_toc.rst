@@ -10,17 +10,6 @@ Internal code documentation
 .. Package design
 .. --------------
 
-.. These sections describe design features of the code that cut across multiple modules.
-
-.. .. toctree::
-..    :maxdepth: 1
-
-..    fmwk_intro
-..    fmwk_plugins
-..    fmwk_obj_hierarchy
-..    fmwk_datamodel
-..    fmwk_provenance
-
 Package code and API documentation
 ----------------------------------
 
@@ -30,9 +19,6 @@ These sections provide an overview of specific parts of the code that's more hig
    :maxdepth: 1
 
    fmwk_cli
-   fmwk_datasources
-   fmwk_dataquery
-   fmwk_datafetch
    fmwk_preprocess
    fmwk_utils
 
@@ -67,7 +53,8 @@ Supporting framework modules
 Utility modules
 ^^^^^^^^^^^^^^^
 
-The ``src.util`` subpackage provides non-MDTF-specific utility functionality used many places in the modules above. See the :doc:`fmwk_utils` documentation for an overview.
+The ``src.util`` subpackage provides non-MDTF-specific utility functionality used many places in the modules above.
+See the :doc:`fmwk_utils` documentation for an overview.
 
 .. autosummary::
 
@@ -79,4 +66,3 @@ The ``src.util`` subpackage provides non-MDTF-specific utility functionality use
    src.util.logs
    src.util.path_utils
    src.util.processes
-

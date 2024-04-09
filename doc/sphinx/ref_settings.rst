@@ -22,11 +22,7 @@ In addition, for the purposes of the configuration file we define
 
 .. _time_duration:
 
-4. a "time duration": this is a string specifying a time span, used e.g. to describe how frequently data is sampled.
-It consists of an optional integer (if omitted, the integer is assumed to be 1) and a units string which is one of
-``hr``, ``day``, ``mon``, ``yr`` or ``fx``. ``fx`` is used where appropriate to denote time-independent data.
-Common synonyms for these units are also recognized (e.g. ``monthly``, ``month``, ``months``, ``mo`` for ``mon``,
-``static`` for ``fx``, etc.)
+
 
    **In addition**, the string ``"any"`` may be used to signify that any value is acceptable.
 
@@ -142,15 +138,26 @@ Diagnostic runtime
 ^^^^^^^^^^^^^^^^^^
 
 ``runtime_requirements``:
-  :ref:`object<object>`, **required**. Programs your diagnostic needs to run (for example, scripting language interpreters) and any third-party libraries needed in those languages. Each executable should be listed in a separate key-value pair:
+  :ref:`object<object>`, **required**. Programs your diagnostic needs to run (for example, scripting language
+  interpreters) and any third-party libraries needed in those languages. Each executable should be listed in a separate
+  key-value pair:
 
-  - The *key* is the name of the required executable, e.g. languages such as "`python <https://www.python.org/>`__" or "`ncl <https://www.ncl.ucar.edu/>`__" etc. but also any utilities such as "`ncks <http://nco.sourceforge.net/>`__", "`cdo <https://code.mpimet.mpg.de/projects/cdo>`__", etc.
-  - The *value* corresponding to each key is an :ref:`array<array>` (list) of strings, which are names of third-party libraries in that language that your diagnostic needs. You do *not* need to list standard libraries or scripts that are provided in a standard installation of your language: eg, in python, you need to list `numpy <https://numpy.org/>`__ but not `math <https://docs.python.org/3/library/math.html>`__. If no third-party libraries are needed, the value should be an empty list.
+  - The *key* is the name of the required executable, e.g. languages such as "`python <https://www.python.org/>`__" or
+    "`ncl <https://www.ncl.ucar.edu/>`__" etc. but also any utilities such as "`ncks <http://nco.sourceforge.net/>`__",
+    "`cdo <https://code.mpimet.mpg.de/projects/cdo>`__", etc.
+  - The *value* corresponding to each key is an :ref:`array<array>` (list) of strings, which are names of third-party
+    libraries in that language that your diagnostic needs. You do *not* need to list standard libraries or scripts that
+    are provided in a standard installation of your language: eg, in python, you need to list
+    `numpy <https://numpy.org/>`__ but not `math <https://docs.python.org/3/library/math.html>`__. If no third-party
+    libraries are needed, the value should be an empty list.
 
-  In the future we plan to offer the capability to request specific `versions <https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/pkg-specs.html#package-match-specifications>`__. For now, please communicate your diagnostic's version requirements to the MDTF organizers.
 
 ``pod_env_vars``:
-  :ref:`object<object>`, optional. Names and values of shell environment variables used by your diagnostic, *in addition* to those supplied by the framework. The user can't change these at runtime, but this can be used to set site-specific installation settings for your diagnostic (eg, switching between low- and high-resolution observational data depending on what the user has chosen to download). Note that environment variable values must be provided as strings.
+  :ref:`object<object>`, optional. Names and values of shell environment variables used by your diagnostic,
+  *in addition* to those supplied by the framework. The user can't change these at runtime, but this can be used to set
+  site-specific installation settings for your diagnostic (eg, switching between low- and high-resolution observational
+  data depending on what the user has chosen to download). Note that environment variable values must be provided as
+  strings.
 
 
 .. _sec_data:
@@ -167,10 +174,7 @@ Example
 
   "data": {
     "format": "netcdf4_classic",
-    "rename_dimensions": false,
-    "rename_variables": false,
     "realm": "atmos",
-    "multi_file_ok": true,
     "frequency": "3hr",
     "min_frequency": "1hr",
     "max_frequency": "6hr",
@@ -184,8 +188,8 @@ Example
 
 ``format``:
   String. Optional: assumed ``"any_netcdf_classic"`` if not specified. Specifies the format(s) of *model* data your
-  diagnostic is able to read. As of this writing, the framework only supports retrieval of netCDF formats, so only the
-  following values are allowed:
+  diagnostic is able to read. As of this writing, the framework only supports retrieval of netCDF or Zarr formats, so
+  only the following values are allowed:
 
   - ``"any_netcdf"`` includes all of:
 
@@ -205,37 +209,11 @@ Example
   See the `netCDF FAQ <https://www.unidata.ucar.edu/software/netcdf/docs/faq.html#How-many-netCDF-formats-are-there-and-what-are-the-differences-among-them>`__ for information on the distinctions. Any recent version of a supported language for diagnostics with netCDF support will be able to read all of these. However, the extended features of the ``"netcdf4"`` data model are not commonly used in practice and currently only supported at a beta level in NCL, which is why we've chosen ``"any_netcdf_classic"`` as the default.
 
 
-``rename_dimensions``:
-  Boolean. Optional: assumed ``false`` if not specified. If set to ``true``, the framework will change the name of all
-  :ref:`dimensions<sec_dimensions>` in the model data from the model's native value to the string specified in the
-  ``name`` property for that dimension. If set to ``false``, **the diagnostic is responsible for reading dimension names
-  from the environment variable**. See the environment variable :doc:`documentation <ref_envvars>` for details
-  on how these names are provided.
-
-``rename_variables``:
-  Boolean. Optional: assumed ``false`` if not specified. If set to ``true``, the framework will change the name of all
-  :ref:`variables<sec_varlist>` in the model data from the model's native value to the string specified in the ``name``
-  property for that variable. If set to ``false``, **the diagnostic is responsible for reading dimension names from the
-  environment variable**. See the environment variable :doc:`documentation <ref_envvars>` for details on how these names
-  are provided.
-
 ``realm``:
   String or :ref:`array<array>` (list) of strings, **required**. One of the eight CMIP6 modeling realms (aerosol, atmos,
   atmosChem, land, landIce, ocean, ocnBgchem, seaIce) describing what data your diagnostic uses. If your diagnostic uses
   data from multiple realms, list them in an array (e.g. ``["atmos", "ocean"]``). This is used as part of the data
   catalog query to help determine which file(s) match the POD's requirements
-.. _multi_file:
-
-``multi_file_ok``:
-  Boolean. Optional: assumed ``false`` if not specified. If set to ``true``, the diagnostic is signalling that it's able
-  to accept data for a single variable that may be spread out in multiple files, to be aggregated along the time
-  dimension (e.g. through the use of
-  `xarray <http://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__.) Aggregation along the time
-  dimension is the only type of aggregation the diagnostic will need to consider.
-
-  If ``false``, the framework will ensure all data for a single variable is presented as a single netCDF file. This may
-  lead to large file sizes if your diagnostic uses high-frequency data, in which case you should consider setting a
-  limit via ``max_duration``.
 
 ``min_duration``, ``max_duration``:
   :ref:`Time durations<time_duration>`. Optional: assumed ``"any"`` if not specified. Set minimum and maximum length of
@@ -372,7 +350,9 @@ Time
   the number of days per month.
 
 ``need_bounds``:
-  Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied for this dimension, in addition to its midpoint values, following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__: the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds information.
+  Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
+  for this dimension, in addition to its midpoint values, following the
+  `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__: the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds information.
 
 ``axis``:
   String, optional. Assumed to be ``T`` if omitted or provided.
@@ -387,13 +367,22 @@ Z axis (height/depth, pressure, ...)
   the CMIP6 MIP tables.
 
 ``units``:
-  Optional, a :ref:`CFunit<cfunit>`. Units the diagnostic expects the dimension to be in. **If not provided, the framework will assume CF convention** `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
+  Optional, a :ref:`CFunit<cfunit>`. Units the diagnostic expects the dimension to be in. **If not provided, the
+  framework will assume CF convention**
+  `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
 
 ``positive``:
-  String, **required**. Must be ``"up"`` or ``"down"``, according to the `CF conventions <http://cfconventions.org/faq.html#vertical_coords_positive_attribute>`__. A pressure axis is always ``"down"`` (increasing values are closer to the center of the earth), but this is not set automatically.
+  String, **required**. Must be ``"up"`` or ``"down"``, according to the
+  `CF conventions <http://cfconventions.org/faq.html#vertical_coords_positive_attribute>`__.
+  A pressure axis is always ``"down"`` (increasing values are closer to the center of the earth), but this is not set
+  automatically.
 
 ``need_bounds``:
-  Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied for this dimension, in addition to its midpoint values, following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__: the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds information.
+  Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
+  for this dimension, in addition to its midpoint values, following the
+  `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__:
+  the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds
+  information.
 
 ``axis``:
   String, optional. Assumed to be ``Z`` if omitted or provided.
@@ -402,16 +391,24 @@ Other dimensions (wavelength, ...)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``standard_name``:
-  **Required**, string. `Standard name <http://cfconventions.org/Data/cf-standard-names/72/build/cf-standard-name-table.html>`__ of the variable as defined by the `CF conventions <http://cfconventions.org/>`__, or a commonly used synonym as employed in the CMIP6 MIP tables.
+  **Required**, string. `Standard name <http://cfconventions.org/Data/cf-standard-names/72/build/cf-standard-name-table.html>`__
+  of the variable as defined by the `CF conventions <http://cfconventions.org/>`__, or a commonly used synonym as
+  employed in the CMIP6 MIP tables.
 
 ``units``:
   Optional, a :ref:`CFunit<cfunit>`. Units the diagnostic expects the dimension to be in. **If not provided, the framework will assume CF convention** `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
 
 ``need_bounds``:
-  Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied for this dimension, in addition to its midpoint values, following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__: the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds information.
+  Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
+  for this dimension, in addition to its midpoint values, following the
+  `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__:
+  the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds
+  information.
 
-``modifier``:
-String, Optional. Used to distinguish variables that are defined on a vertical level that is not a pressure level (e.g., 2-meter temperature) from variables that are defined on pressure levels. Modfiers are defined in data/modifiers.jsonc. MDTF-diagnostics currently supports `atmos_height`.
+``modifier`` (backward:
+String, Optional. Used to distinguish variables that are defined on a vertical level that is not a pressure level
+(e.g., 2-meter temperature) from variables that are defined on pressure levels. Modfiers are defined in data/modifiers.jsonc.
+MDTF-diagnostics currently supports `atmos_height`.
 
 .. _sec_varlist:
 
@@ -478,43 +475,9 @@ The value of the key-value pair is an :ref:`object<object>` containing propertie
 
 .. _item_var_coords:
 
-``scalar_coordinates``:
-  :ref:`object<object>`, optional. This implements what the CF conventions refer to as
-  "`scalar coordinates <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#scalar-coordinate-variables>`__",
-  with the use case here being the ability to request slices of higher-dimensional data. For example, the snippet at
-  the beginning of this section shows how to request the u component of wind velocity on a 500 mb pressure level.
 
-  - *keys* are the key (name) of an entry in the :ref:`dimensions<sec_dimensions>` section.
-  - *values* are a single number (integer or floating-point) corresponding to the value of the slice to extract.
-  **Units** of this number are taken to be the ``units`` property of the dimension named as the key.
-
-  In order to request multiple slices (e.g. wind velocity on multiple pressure levels, with each level saved to a
-  different file), create one varlist entry per slice.
 
 ``frequency``, ``min_frequency``, ``max_frequency``:
   :ref:`Time durations<time_duration>`. Optional. Time frequency at which the variable's data is provided.
   If given here, overrides the values set globally in the ``data`` section (see :ref:`description<freq_target>` there).
 
-``requirement``:
-  String. Optional: assumed ``"required"`` if not specified. One of three values:
-
-  - ``"required"``: variable is necessary for the diagnostic's calculations. If the data source doesn't provide the
-  variable (at the requested frequency, etc., for the user-specified analysis period) the framework will *not* run the
-  diagnostic, but will instead log an error message explaining that the lack of this data was at fault.
-  - ``"optional"``: variable will be supplied to the diagnostic if provided by the data source. If not available, the
-  diagnostic will still run, and the ``path_variable`` for this variable will be set to the empty string.
-  **The diagnostic is responsible for testing the environment variable** for the existence of all optional variables.
-  - ``"alternate"``: variable is specified as an alternate source of data for some other variable (see next property).
-  The framework will only query the data source for this variable if it's unable to obtain one of the *other* variables
-  that list it as an alternate.
-
-``alternates``:
-  :ref:`Array<array>` (list) of strings, which must be keys (names) of other variables. Optional: if provided,
-  specifies an alternative method for obtaining needed data if this variable isn't provided by the data source.
-
-  - If the data source provides this variable (at the requested frequency, etc., for the user-specified
-  analysis period), this property is ignored.
-  - If this variable isn't available as requested, the framework will query the data source for all of the variables
-  listed in this property. If *all* of the alternate variables are available, the diagnostic will be run; if any are
-  missing it will be skipped. Note that, as currently implemented, only one set of alternates may be given
-  (no "plan B", "plan C", etc.)

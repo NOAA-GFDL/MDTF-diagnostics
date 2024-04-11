@@ -3,6 +3,4 @@
 # /src/conda/env_dev.yml.
 recommonmark>=0.7
 mock
-jinja2=3.1.3
 cloud_sptheme
-markupsafe=2.1.5

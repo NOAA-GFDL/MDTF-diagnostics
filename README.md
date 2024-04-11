@@ -12,13 +12,12 @@ emergent behavior to determine how well one or more models represent the process
 answers for the right reasons, and identify gaps in the understanding of phenomena. Each POD is independent of other
 PODs. PODs generate diagnostic figures that can be viewed as an html file using a web browser.
 
-## Available and Planned Diagnostics
+## Available Diagnostics
 The links in the table below show sample output, a brief description,
 and a link to the full documentation for each currently-supported POD.
 
 | Diagnostic                                                                                                                                                                                                              | Contributor                                                          |
-|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------|
-| [AMOC 3D structure ](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_GFDL-CM2p1/transport_onto_TS/transport_onto_TS.html) (implementation in progress) | Xiaobiao Xu (FSU/COAPS)                                              |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------|                                      |
 | [Blocking Neale](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/blocking_neale/doc/blocking_neale.rst)                                                                                             | Rich Neale (NCAR), Dani Coleman (NCAR) |
 | [Convective Transition Diagnostics](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/convective_transition_diag/convective_transition_diag.html) | J. David Neelin (UCLA) |
 | [Diurnal Cycle of Precipitation](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/precip_diurnal_cycle/precip_diurnal_cycle.html) | Rich Neale (NCAR) |
@@ -47,11 +46,7 @@ and a link to the full documentation for each currently-supported POD.
 | [Top Heaviness Metric](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/top_heaviness_metric/doc/top_heaviness_metric.rst)                                                                      | Zhuo Wang (U.Illinois Urbana-Champaign), Jiacheng Ye (U.Illinois Urbana-Champaign)|
 | [Tropical Cyclone Rain Rate Azimuthal Average](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/TC_Rain/doc/TC_Rain.rst)                                                                      | Daehyun Kim (U. Washington), Nelly Emlaw (U.Washington) |
 | [Tropical Pacific Sea Level](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/tropical_pacific_sea_level/doc/tropical_pacific_sea_level.rst) | Jianjun Yin (U. Arizona), Chia-Weh Hsu (GFDL)|
-| [Warm Rain Microphysics](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/warm_rain_microphysics/documentation) (implementation in progress)                      | Kentaroh Suzuki (AORI, U. Tokyo)|
 | [Wavenumber-Frequency Spectra](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/Wheeler_Kiladis/Wheeler_Kiladis.html) | CESM/AMWG (NCAR) |
-
-
-
 
 ## Example POD Analysis Results
 
@@ -158,7 +153,12 @@ needed to test the MJO Propagation and Amplitude POD.
 You can put the observational data and model output in different locations (e.g., for space reasons) by changing the
 values of `OBS_DATA_ROOT`as described below in section 3.
 
-## 3. Configure framework paths
+## 3. Generate a data catalog for the sample input data
+
+The MDTF-diagnostics package provides a basic catalog generator to assist users with building data catalogs in
+the [tools/catalog_builder directory](https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/tools/catalog_builder) 
+
+## 4. Configure framework paths
 
 The MDTF framework supports setting configuration options in a file as well as on the command line. An example of the
 configuration file format is provided at [templates/runtime_config.[jsonc | yml]](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/templates).
@@ -184,12 +184,13 @@ relative to `$CODE_ROOT`.`$CODE_ROOT` contains the following subdirectories:
 - `diagnostics/`: directory containing source code and documentation of individual PODs
 - `doc/`: directory containing documentation (a local mirror of the documentation site)
 - `src/`: source code of the framework itself
+- `submodules/`: location to place 3rd-party submodules to run as part of the MDTF-diagnostics workflow
 - `tests/`: unit tests for the framework
 - `templates/`: runtime configuration template files
 - `tools/`: helper scripts for building ESM-intake catalogs, and other utilities
 - `user_scripts/`: directory where users can place custom preprocessing scripts
 
-## 4. Run the framework
+## 5. Run the framework
 The framework runs PODs that analyze one or more model datasets (cases), along with optional observational datasets,
 using. To run the framework on the **[example_multicase](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase)** POD, modify the example configuration file and run
 ```commandline
@@ -225,11 +226,10 @@ root directory locations on your file system. Full paths must be specified.
 Depending on the POD(s) you run, the size of your input datasets, and your system hardware, run time may be 10--20
 minutes.
 
-## 5. Next steps
+## 6. Next steps
 
-For more detailed information, consult the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/main/). The ["Getting Started"](https://mdtf-diagnostics.readthedocs.io/en/main/sphinx/start_toc.html) section has more
-detailed information on customizing your installation and running the framework on your own data. Users interested in
-contributing a POD should consult the ["Developer Information"](https://mdtf-diagnostics.readthedocs.io/en/main/sphinx/dev_toc.html) section.
+For more detailed information, consult the [documentation site](https://mdtf-diagnostics.readthedocs.io/en/main/). Users interested in
+contributing a POD should consult the ["Developer Information"](https://mdtf-diagnostics.readthedocs.io/en/main/sphinx/pod_dev_toc.html) section.
 
 # Acknowledgements
 

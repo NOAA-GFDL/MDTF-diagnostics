@@ -79,9 +79,7 @@ version = ''
 release = '4.0'
 
 # only used for resolving relative links in markdown docs
-# TODO: change this before final PR to main
-# _project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/'
-_project_github_url = 'https://github.com/wrongkindofdoctor/MDTF-diagnostics/tree/refactor_pp/'
+_project_github_url = 'https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/'
 
 # -- General configuration ---------------------------------------------------
 

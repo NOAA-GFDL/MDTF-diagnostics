@@ -5,7 +5,7 @@
 	"settings": {
 		"driver": "albedofb.py",
 		"long_name": "Surface Albedo Feedback Diagnostics",
-		"realm": "atmos",
+		"convention": "cmip",
 		"description": "Surface Albedo Feedback Diagnostics",
 		"runtime_requirements": {
 			"python3": [
@@ -27,19 +27,24 @@
 	},
 	"dimensions": {
 		"lat": {
-			"standard_name": "latitude"
-		},
-		"lon": {
-			"standard_name": "longitude"
-		},
+                 "standard_name": "latitude",
+                 "units": "degrees_north",
+                 "axis": "Y"
+               },
+        "lon": {
+                 "standard_name": "longitude",
+                 "units": "degrees_east",
+                 "axis": "X"
+                },
 		"time": {
-			"standard_name": "time"
-		}
+			      "standard_name": "time"
+		        }
 	},
 	"varlist": {
 	    "areacella": {
 			"standard_name": "cell_area",
 			"dimensions": ["lat", "lon"],
+			"realm": "atmos",
 			"units": "m2",
 			"modifier" : "atmos_realm",
 			"requirement": "optional"
@@ -48,12 +53,14 @@
 			"standard_name": "air_temperature",
 			"frequency": "mon",
 			"dimensions": ["time", "lat", "lon"],
+			"realm": "atmos",
 			"modifier": "atmos_height",
 			"units": "K",
 			"requirement": "required"
 		},
 		"rsdt": {
 			"standard_name": "toa_incoming_shortwave_flux",
+			"realm": "atmos",
 			"frequency": "mon",
 			"units": "W m-2",
 			"dimensions": ["time", "lat", "lon"],
@@ -61,6 +68,7 @@
 		},
 		"rsds": {
 			"standard_name": "surface_downwelling_shortwave_flux_in_air",
+			"realm": "atmos",
 			"frequency": "mon",
 			"units": "W m-2",
 			"dimensions": ["time", "lat", "lon"],
@@ -68,6 +76,7 @@
 		},
 		"rsut": {
 			"standard_name": "toa_outgoing_shortwave_flux",
+			"realm": "atmos",
 			"frequency": "mon",
 		    "units": "W m-2",
 			"dimensions": ["time", "lat", "lon"],
@@ -75,6 +84,7 @@
 		},
 		"rsus": {
 			"standard_name": "surface_upwelling_shortwave_flux_in_air",
+			"realm": "atmos",
 			"frequency": "mon",
 			"units": "W m-2",
 			"dimensions": ["time", "lat", "lon"],

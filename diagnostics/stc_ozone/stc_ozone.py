@@ -169,9 +169,9 @@ def plot_o3_ustrat_corr(uzm_bnd, o3_pcap, hemi):
     
     fig, ax = plt.subplots()
 
-    if (hemi == 'NH'):
+    if hemi == 'NH':
         # Need FMA polar cap ozone at 50 hPa
-        xlab_str = f"50 hPa FMA O3"+\
+        xlab_str = f"50 hPa FMA O3" + \
                    f"({PCAP_LO_LAT}-90N), [ppmv]"
         o3_seas = o3_pcap.sel(lev=50).resample(time='QS-FEB').mean('time')
         o3_seas = o3_seas.where(o3_seas.time.dt.month == 2, drop=True)
@@ -181,7 +181,7 @@ def plot_o3_ustrat_corr(uzm_bnd, o3_pcap, hemi):
         uzm_seas = uzm_bnd.sel(lev=50).resample(time='QS-MAR').mean('time')
         uzm_seas = uzm_seas.where(uzm_seas.time.dt.month == 3, drop=True)
 
-    elif (hemi == 'SH'):
+    elif hemi == 'SH':
         # Need SON polar cap ozone at 50 hPa
         xlab_str = f"50 hPa SON O3 "+\
                    f"({PCAP_LO_LAT}-90S), [ppmv]"
@@ -229,17 +229,18 @@ def plot_o3_ustrat_corr(uzm_bnd, o3_pcap, hemi):
         r = np.corrcoef(o3_seas.isel(time=ixs).values,
                         uzm_seas.isel(time=ixs).values)[0,1]
         corr_bs.append(r)
-    bs_lo,bs_hi = np.percentile(corr_bs, [2.5, 97.5])
+    bs_lo, bs_hi = np.percentile(corr_bs, [2.5, 97.5])
 
     # display the correlation and 95% bootstrap CI
     plt.text(0.45,0.88, f'r={corr:.3f} ({bs_lo:.3f}, {bs_hi:.3f})',
              transform=ax.transAxes, fontsize=16, color='red',
              fontweight='semibold')
 
-    fig.subplots_adjust(left=0.1,right=0.98)
-    fig.set_size_inches(6.5,6.5)
+    fig.subplots_adjust(left=0.1, right=0.98)
+    fig.set_size_inches(6.5, 6.5)
 
-    return (fig,ax)
+    return fig, ax
+
 
 def plot_o3_fsw_corr(uzm_50, o3_pcap, hemi, filepath):
     r""" Create a scatterplot showing the relationship between 50 mb
@@ -280,9 +281,9 @@ def plot_o3_fsw_corr(uzm_50, o3_pcap, hemi, filepath):
     """
     fig, ax = plt.subplots()
 
-    if (hemi == 'NH'):
+    if hemi == 'NH':
         # Need FMA polar cap ozone at 50 hPa
-        xlab_str = f"50 hPa FMA O3"+\
+        xlab_str = f"50 hPa FMA O3" + \
                    f"({PCAP_LO_LAT}-90N), [ppmv]"
         o3_seas = o3_pcap.sel(lev=50).resample(time='QS-FEB').mean('time')
         o3_seas = o3_seas.where(o3_seas.time.dt.month == 2, drop=True)
@@ -297,17 +298,17 @@ def plot_o3_fsw_corr(uzm_50, o3_pcap, hemi, filepath):
             if n == 'NaN':
                 aDate = float("NaN")
             else:
-                aDate = datetime.date.fromisoformat(n).timetuple().tm_yday
+                 aDate = datetime.date.fromisoformat(n).timetuple().tm_yday
             doyn.append(aDate)
-        doy=np.array(doyn,dtype='float')
+        doy = np.array(doyn, dtype='float')
         
         with open(filepath, 'w') as file_handler:
             for item in fsw:
                 file_handler.write(f"{item}\n")
 
-    elif (hemi == 'SH'):
+    elif hemi == 'SH':
         # Need SON polar cap ozone at 50 hPa
-        xlab_str = f"50 hPa SON O3"+\
+        xlab_str = f"50 hPa SON O3" + \
                    f"({PCAP_LO_LAT}-90S), [ppmv]"
         o3_seas = o3_pcap.sel(lev=50).resample(time='QS-SEP').mean('time')
         o3_seas = o3_seas.where(o3_seas.time.dt.month == 9, drop=True)
@@ -324,7 +325,7 @@ def plot_o3_fsw_corr(uzm_50, o3_pcap, hemi, filepath):
             else:
                 aDate = datetime.date.fromisoformat(n).timetuple().tm_yday
             doyn.append(aDate)
-        doy=np.array(doyn,dtype='float')
+        doy = np.array(doyn, dtype='float')
         
         with open(filepath, 'w') as file_handler:
             for item in fsw:
@@ -336,12 +337,12 @@ def plot_o3_fsw_corr(uzm_50, o3_pcap, hemi, filepath):
      
     # Determine plot axes from the data
     xlims = (np.round(o3_seas.min())-1, np.round(o3_seas.max())+1)
-    if (hemi == 'NH'):
+    if hemi == 'NH':
         ylims = (np.nanmin(doy)-3, np.nanmax(doy).max()+3)
-    elif (hemi == 'SH'):
-        for i,n in enumerate(doy):
+    elif hemi == 'SH':
+        for i, n in enumerate(doy):
             if n < 180:
-                doy[i] = doy[i]+365 #note, this doesn't account for leap-years
+                doy[i] = doy[i] + 365  # note, this doesn't account for leap-years
         ylims = (np.round(np.nanmin(doy)-3), np.round(np.nanmax(doy).max()+3))
 
     # Set plot limits, add labels, and make axis square
@@ -350,40 +351,40 @@ def plot_o3_fsw_corr(uzm_50, o3_pcap, hemi, filepath):
     plt.xlabel(xlab_str, fontsize=18)
     plt.ylabel(ylab_str, fontsize=18)
     ax.set_aspect(1.0/ax.get_data_ratio(), adjustable='box')
-    if (hemi == 'SH'):
-        y_pos = np.arange(np.round(ylims[0]),np.round(ylims[1])+10,10)
+    if hemi == 'SH':
+        y_pos = np.arange(np.round(ylims[0]), np.round(ylims[1])+10, 10)
         ax.set_yticks(y_pos)
-        y_pos2 = np.where(y_pos <= 365,y_pos,y_pos-365)
+        y_pos2 = np.where(y_pos <= 365, y_pos, y_pos-365)
         ax.set_yticklabels(y_pos2)
     
     # Plot ranges of +/- 1 std and mean
-    plt.vlines(o3_seas.mean(),ylims[0],ylims[1],color='gainsboro',linewidth=0.66)
-    plt.hlines(np.nanmean(doy),xlims[0],xlims[1],color='gainsboro',linewidth=0.66)
-    plt.axvspan(o3_seas.mean()-o3_seas.std(), o3_seas.mean()+o3_seas.std(),color='whitesmoke')
-    plt.axhspan(np.nanmean(doy)-np.nanstd(doy), np.nanmean(doy)+np.nanstd(doy),color='whitesmoke')
-    ax.scatter(o3_seas.values, doy, c='dimgrey', s=16,zorder=100)
+    plt.vlines(o3_seas.mean(), ylims[0], ylims[1], color='gainsboro', linewidth=0.66)
+    plt.hlines(np.nanmean(doy), xlims[0], xlims[1], color='gainsboro', linewidth=0.66)
+    plt.axvspan(o3_seas.mean()-o3_seas.std(), o3_seas.mean()+o3_seas.std(), color='whitesmoke')
+    plt.axhspan(np.nanmean(doy)-np.nanstd(doy), np.nanmean(doy) + np.nanstd(doy), color='whitesmoke')
+    ax.scatter(o3_seas.values, doy, c='dimgrey', s=16, zorder=100)
             
     # Get the correlation and do bootstrapping to determine its 95% CI
     a=ma.masked_invalid(o3_seas.values)
     b=ma.masked_invalid(doy)
     msk = (~a.mask & ~b.mask)
-    corr = ma.corrcoef(a[msk],b[msk])[0,1]
+    corr = ma.corrcoef(a[msk], b[msk])[0, 1]
     
     # Get the best-fit line and plot it
-    m,yo,r,p,std_err = linregress(a[msk],b[msk])
-    x = np.linspace(xlims[0],xlims[1])
-    plt.plot(x,m*x+yo, color='black', linestyle='--', linewidth=0.66)
+    m, yo, r, p, std_err = linregress(a[msk], b[msk])
+    x = np.linspace(xlims[0], xlims[1])
+    plt.plot(x, m*x+yo, color='black', linestyle='--', linewidth=0.66)
 
     nbs = 1000
     corr_bs = []
     for n in range(nbs):
         ixs = np.random.choice(o3_seas.size, size=o3_seas.size)
-        a=ma.masked_invalid(o3_seas.isel(time=ixs).values)
-        b=ma.masked_invalid(doy[ixs])
+        a = ma.masked_invalid(o3_seas.isel(time=ixs).values)
+        b = ma.masked_invalid(doy[ixs])
         msk = (~a.mask & ~b.mask)
-        r = ma.corrcoef(a[msk],b[msk])[0,1]
+        r = ma.corrcoef(a[msk], b[msk])[0, 1]
         corr_bs.append(r)
-    bs_lo,bs_hi = np.nanpercentile(corr_bs, [2.5, 97.5])
+    bs_lo, bs_hi = np.nanpercentile(corr_bs, [2.5, 97.5])
 
     # display the correlation and 95% bootstrap CI
     plt.text(0.05,0.08, f'r={corr:.3f} ({bs_lo:.3f}, {bs_hi:.3f})',
@@ -393,7 +394,7 @@ def plot_o3_fsw_corr(uzm_50, o3_pcap, hemi, filepath):
     fig.subplots_adjust(left=0.1,right=0.98)
     fig.set_size_inches(6.5,6.5)
 
-    return (fig,ax)
+    return fig, ax
 
 
 def plot_o3_uwnd_lev_lags(uzm_bnd, o3_pcap, hemi):
@@ -433,12 +434,12 @@ def plot_o3_uwnd_lev_lags(uzm_bnd, o3_pcap, hemi):
 
     """
     
-    if (hemi == 'NH'):
+    if hemi == 'NH':
         # Need April 50 mb polar cap ozone
         mon_origin = 'Apr'
         o3_early = o3_pcap.sel(lev=50).where(o3_pcap.time.dt.month == 4, drop=True)
         months = [2, 3, 4, 5, 6]
-    elif (hemi == 'SH'):
+    elif hemi == 'SH':
         # Need October 50 mb polar cap ozone
         mon_origin = 'Oct'
         o3_early = o3_pcap.sel(lev=50).where(o3_pcap.time.dt.month == 10, drop=True)
@@ -452,10 +453,10 @@ def plot_o3_uwnd_lev_lags(uzm_bnd, o3_pcap, hemi):
     lag_corrs = []
     for mon in months:
         uzm_mon = uzm_bnd.where(uzm_bnd.time.dt.month == mon, drop=True)
-        data_mat = np.concatenate([o3_early.values[:,np.newaxis],
+        data_mat = np.concatenate([o3_early.values[:, np.newaxis],
                                   uzm_mon.values], axis=1)
-        corrs = np.corrcoef(data_mat.T)[0,1:]
-        lag_corrs.append(corrs[np.newaxis,...])
+        corrs = np.corrcoef(data_mat.T)[0, 1:]
+        lag_corrs.append(corrs[np.newaxis, ...])
     lag_corrs = np.concatenate(lag_corrs, axis=0)
     
     # Evaluate significance using 2-tailed t-test
@@ -470,8 +471,8 @@ def plot_o3_uwnd_lev_lags(uzm_bnd, o3_pcap, hemi):
     xlab_str = "Month"
     ylab_str = "Pressure [hPa]"
     cbp = ax.contourf(np.arange(5), uzm_bnd.lev.values, lag_corrs.T,
-                     levels=np.linspace(-1,1,21),cmap='RdBu_r',extend='both')
-    ax.contourf(np.arange(5), uzm_bnd.lev.values, ttests.T, levels=[-1,0,1], hatches=[None,'..'], colors='none')
+                      levels=np.linspace(-1, 1, 21), cmap='RdBu_r', extend='both')
+    ax.contourf(np.arange(5), uzm_bnd.lev.values, ttests.T, levels=[-1, 0, 1], hatches=[None, '..'], colors='none')
     ax.set_yscale('log')
     ax.invert_yaxis()
     plt.xticks(np.arange(5), months)
@@ -480,9 +481,9 @@ def plot_o3_uwnd_lev_lags(uzm_bnd, o3_pcap, hemi):
     plt.title(f'Lag correlation of Zonal-mean Zonal Wind with {mon_origin} 50 hPa polar cap ozone')
     plt.colorbar(cbp, format='%.1f', label='Correlation', ax=[ax], location='bottom')
 
-    fig.set_size_inches(10,6)
+    fig.set_size_inches(10, 6)
     
-    return (fig,ax)
+    return fig, ax
 
 
 def plot_o3_seas_trends(uzm_bnd, o3_pcap, t_pcap, start_year1='1979', 
@@ -545,20 +546,20 @@ def plot_o3_seas_trends(uzm_bnd, o3_pcap, t_pcap, start_year1='1979',
     t_tr_late, t_p_late = l_trend(t_pcap,start_year2, end_year2)
     u_tr_late, u_p_late = l_trend(uzm_bnd,start_year2, end_year2)
         
-    #Shift around so that it goes JASONDJFMAMJ instead
-    t_tr_shift_early = xr.concat([t_tr_early[6:,:],t_tr_early[0:6,:]],dim="month")
-    u_tr_shift_early = xr.concat([u_tr_early[6:,:],u_tr_early[0:6,:]],dim="month")
-    o3_tr_shift_early = xr.concat([o3_tr_early[6:,:],o3_tr_early[0:6,:]],dim="month")
-    o3_p_shift_early = xr.concat([o3_p_early[6:,:],o3_p_early[0:6,:]],dim="month")
-    t_p_shift_early = xr.concat([t_p_early[6:,:],t_p_early[0:6,:]],dim="month")
-    u_p_shift_early = xr.concat([u_p_early[6:,:],u_p_early[0:6,:]],dim="month")
+    # Shift around so that it goes JASONDJFMAMJ instead
+    t_tr_shift_early = xr.concat([t_tr_early[6:, :], t_tr_early[0:6, :]], dim="month")
+    u_tr_shift_early = xr.concat([u_tr_early[6:, :], u_tr_early[0:6, :]], dim="month")
+    o3_tr_shift_early = xr.concat([o3_tr_early[6:, :], o3_tr_early[0:6, :]], dim="month")
+    o3_p_shift_early = xr.concat([o3_p_early[6:, :], o3_p_early[0:6, :]], dim="month")
+    t_p_shift_early = xr.concat([t_p_early[6:, :], t_p_early[0:6, :]], dim="month")
+    u_p_shift_early = xr.concat([u_p_early[6:, :], u_p_early[0:6, :]], dim="month")
     
-    t_tr_shift_late = xr.concat([t_tr_late[6:,:],t_tr_late[0:6,:]],dim="month")
-    u_tr_shift_late = xr.concat([u_tr_late[6:,:],u_tr_late[0:6,:]],dim="month")
-    o3_tr_shift_late = xr.concat([o3_tr_late[6:,:],o3_tr_late[0:6,:]],dim="month")
-    o3_p_shift_late = xr.concat([o3_p_late[6:,:],o3_p_late[0:6,:]],dim="month")
-    t_p_shift_late = xr.concat([t_p_late[6:,:],t_p_late[0:6,:]],dim="month")
-    u_p_shift_late = xr.concat([u_p_late[6:,:],u_p_late[0:6,:]],dim="month")
+    t_tr_shift_late = xr.concat([t_tr_late[6:, :], t_tr_late[0:6, :]], dim="month")
+    u_tr_shift_late = xr.concat([u_tr_late[6:, :], u_tr_late[0:6, :]], dim="month")
+    o3_tr_shift_late = xr.concat([o3_tr_late[6:, :], o3_tr_late[0:6, :]], dim="month")
+    o3_p_shift_late = xr.concat([o3_p_late[6:, :], o3_p_late[0:6, :]], dim="month")
+    t_p_shift_late = xr.concat([t_p_late[6:, :], t_p_late[0:6, :]], dim="month")
+    u_p_shift_late = xr.concat([u_p_late[6:, :], u_p_late[0:6, :]], dim="month")
     
     fig, axs = plt.subplots(2, 3, figsize=(12, 10))
 
@@ -566,101 +567,102 @@ def plot_o3_seas_trends(uzm_bnd, o3_pcap, t_pcap, start_year1='1979',
     ylab_str = "Pressure (hPa)"
 
     # Top row shows trends from period of ozone depletion
-    cbp = axs[0,0].contourf(np.arange(12),t_tr_shift_early.lev,t_tr_shift_early.transpose(),
-           levels=np.linspace(-5,5,11),cmap='RdBu_r',extend='both')
-    axs[0,0].contourf(np.arange(12),t_p_shift_early.lev,t_p_shift_early.transpose(),
-                      levels=[0.05,0.95],hatches=['..'], colors='none')
-    axs[0,0].set_yscale('log')
-    axs[0,0].invert_yaxis()
-    axs[0,0].set_ylim([1000,10])
+    cbp = axs[0, 0].contourf(np.arange(12), t_tr_shift_early.lev, t_tr_shift_early.transpose(),
+                             levels=np.linspace(-5, 5,  11), cmap='RdBu_r', extend='both')
+    axs[0, 0].contourf(np.arange(12), t_p_shift_early.lev, t_p_shift_early.transpose(),
+                       levels=[0.05, 0.95], hatches=['..'], colors='none')
+    axs[0, 0].set_yscale('log')
+    axs[0, 0].invert_yaxis()
+    axs[0, 0].set_ylim([1000, 10])
     
-    axs[0,0].set_xticks(np.arange(12))
-    axs[0,0].set_xticklabels(['J','A','S','O','N','D','J','F','M','A','M','J'])
-    axs[0,0].set(xlabel=xlab_str, ylabel=ylab_str, title=f'Polar cap Temperature Trends \n'+start_year1+'-'+end_year1)
-    plt.colorbar(cbp, format='%.1f',label='[K/decade]', ax=[axs[0,0]], location='bottom')
+    axs[0, 0].set_xticks(np.arange(12))
+    axs[0, 0].set_xticklabels(['J', 'A', 'S', 'O', 'N', 'D', 'J', 'F', 'M', 'A', 'M', 'J'])
+    axs[0, 0].set(xlabel=xlab_str, ylabel=ylab_str, title=f'Polar cap Temperature Trends \n'+start_year1+'-'+end_year1)
+    plt.colorbar(cbp, format='%.1f', label='[K/decade]', ax=[axs[0, 0]], location='bottom')
     
-    cbp2 = axs[0,1].contourf(np.arange(12),u_tr_shift_early.lev,u_tr_shift_early.transpose(),
-           levels=np.linspace(-5,5,11),cmap='RdBu_r',extend='both')
-    axs[0,1].contourf(np.arange(12),u_p_shift_early.lev,u_p_shift_early.transpose(),
-                      levels=[0.05,0.95],hatches=['..'], colors='none')
-    axs[0,1].set_yscale('log')
-    axs[0,1].invert_yaxis()
-    axs[0,1].set_ylim([1000,10])
+    cbp2 = axs[0, 1].contourf(np.arange(12), u_tr_shift_early.lev, u_tr_shift_early.transpose(),
+                              levels=np.linspace(-5, 5, 11), cmap='RdBu_r', extend='both')
+    axs[0, 1].contourf(np.arange(12), u_p_shift_early.lev, u_p_shift_early.transpose(),
+                       levels=[0.05, 0.95], hatches=['..'], colors='none')
+    axs[0, 1].set_yscale('log')
+    axs[0, 1].invert_yaxis()
+    axs[0, 1].set_ylim([1000, 10])
     
-    axs[0,1].set_xticks(np.arange(12))
-    axs[0,1].set_xticklabels(['J','A','S','O','N','D','J','F','M','A','M','J'])
-    axs[0,1].set(xlabel=xlab_str, title=f'Zonal-mean Zonal Wind Trends \n'+start_year1+'-'+end_year1)
-    plt.colorbar(cbp2, format='%.1f',label='[m/s per decade]', ax=[axs[0,1]], location='bottom')
+    axs[0, 1].set_xticks(np.arange(12))
+    axs[0, 1].set_xticklabels(['J', 'A', 'S', 'O', 'N', 'D', 'J', 'F', 'M', 'A', 'M', 'J'])
+    axs[0, 1].set(xlabel=xlab_str, title=f'Zonal-mean Zonal Wind Trends \n'+start_year1+'-'+end_year1)
+    plt.colorbar(cbp2, format='%.1f', label='[m/s per decade]', ax=[axs[0, 1]], location='bottom')
     
-    cbp3 = axs[0,2].contourf(np.arange(12),o3_tr_shift_early.lev,o3_tr_shift_early.transpose(),
-           levels=np.linspace(-1,1,11),cmap='RdBu_r',extend='both')
-    axs[0,2].contourf(np.arange(12),o3_p_shift_early.lev,o3_p_shift_early.transpose(),
-                      levels=[0.05,0.95],hatches=['..'], colors='none')
-    axs[0,2].set_yscale('log')
-    axs[0,2].invert_yaxis()
-    axs[0,2].set_ylim([1000,10])
+    cbp3 = axs[0, 2].contourf(np.arange(12), o3_tr_shift_early.lev, o3_tr_shift_early.transpose(),
+                              levels=np.linspace(-1, 1, 11), cmap='RdBu_r', extend='both')
+    axs[0, 2].contourf(np.arange(12), o3_p_shift_early.lev, o3_p_shift_early.transpose(),
+                       levels=[0.05, 0.95], hatches=['..'], colors='none')
+    axs[0, 2].set_yscale('log')
+    axs[0, 2].invert_yaxis()
+    axs[0, 2].set_ylim([1000, 10])
     
-    axs[0,2].set_xticks(np.arange(12))
-    axs[0,2].set_xticklabels(['J','A','S','O','N','D','J','F','M','A','M','J'])
-    axs[0,2].set(xlabel=xlab_str, title=f'Polar Cap Ozone Trends \n'+start_year1+'-'+end_year1)
-    plt.colorbar(cbp3, format='%.1f',label='[ppmv/decade]', ax=[axs[0,2]], location='bottom')
+    axs[0, 2].set_xticks(np.arange(12))
+    axs[0, 2].set_xticklabels(['J', 'A', 'S', 'O', 'N', 'D', 'J', 'F', 'M', 'A', 'M', 'J'])
+    axs[0, 2].set(xlabel=xlab_str, title=f'Polar Cap Ozone Trends \n'+start_year1+'-'+end_year1)
+    plt.colorbar(cbp3, format='%.1f', label='[ppmv/decade]', ax=[axs[0, 2]], location='bottom')
     
     # Bottom row shows trends from period of ozone recovery
-    cbp = axs[1,0].contourf(np.arange(12),t_tr_shift_late.lev,t_tr_shift_late.transpose(),
-           levels=np.linspace(-5,5,11),cmap='RdBu_r',extend='both')
-    axs[1,0].contourf(np.arange(12),t_p_shift_late.lev,t_p_shift_late.transpose(),
-                      levels=[0.05,0.95],hatches=['..'], colors='none')
-    axs[1,0].set_yscale('log')
-    axs[1,0].invert_yaxis()
-    axs[1,0].set_ylim([1000,10])
+    cbp = axs[1, 0].contourf(np.arange(12), t_tr_shift_late.lev, t_tr_shift_late.transpose(),
+                             levels=np.linspace(-5, 5, 11), cmap='RdBu_r', extend='both')
+    axs[1, 0].contourf(np.arange(12), t_p_shift_late.lev, t_p_shift_late.transpose(),
+                       levels=[0.05, 0.95] ,hatches=['..'], colors='none')
+    axs[1, 0].set_yscale('log')
+    axs[1, 0].invert_yaxis()
+    axs[1, 0].set_ylim([1000, 10])
     
-    axs[1,0].set_xticks(np.arange(12))
-    axs[1,0].set_xticklabels(['J','A','S','O','N','D','J','F','M','A','M','J'])
-    axs[1,0].set(xlabel=xlab_str, ylabel=ylab_str, title=start_year2+'-'+end_year2)
-    plt.colorbar(cbp, format='%.1f',label='[K/decade]', ax=[axs[1,0]], location='bottom')
+    axs[1, 0].set_xticks(np.arange(12))
+    axs[1, 0].set_xticklabels(['J', 'A', 'S', 'O', 'N', 'D', 'J', 'F', 'M', 'A', 'M',' J'])
+    axs[1, 0].set(xlabel=xlab_str, ylabel=ylab_str, title=start_year2+'-'+end_year2)
+    plt.colorbar(cbp, format='%.1f', label='[K/decade]', ax=[axs[1,0]], location='bottom')
 
-
-    cbp2 = axs[1,1].contourf(np.arange(12),u_tr_shift_late.lev,u_tr_shift_late.transpose(),
-           levels=np.linspace(-5,5,11),cmap='RdBu_r',extend='both')
-    axs[1,1].contourf(np.arange(12),u_p_shift_late.lev,u_p_shift_late.transpose(),
-                      levels=[0.05,0.95],hatches=['..'], colors='none')
-    axs[1,1].set_yscale('log')
-    axs[1,1].invert_yaxis()
-    axs[1,1].set_ylim([1000,10])
+    cbp2 = axs[1, 1].contourf(np.arange(12), u_tr_shift_late.lev, u_tr_shift_late.transpose(),
+                              levels=np.linspace(-5, 5, 11), cmap='RdBu_r', extend='both')
+    axs[1, 1].contourf(np.arange(12), u_p_shift_late.lev, u_p_shift_late.transpose(),
+                       levels=[0.05, 0.95], hatches=['..'], colors='none')
+    axs[1, 1].set_yscale('log')
+    axs[1, 1].invert_yaxis()
+    axs[1, 1].set_ylim([1000, 10])
     
-    axs[1,1].set_xticks(np.arange(12))
-    axs[1,1].set_xticklabels(['J','A','S','O','N','D','J','F','M','A','M','J'])
-    axs[1,1].set(xlabel=xlab_str, title=start_year2+'-'+end_year2)
+    axs[1, 1].set_xticks(np.arange(12))
+    axs[1, 1].set_xticklabels(['J', 'A', 'S', 'O', 'N', 'D', 'J', 'F', 'M', 'A', 'M', 'J'])
+    axs[1, 1].set(xlabel=xlab_str, title=start_year2+'-'+end_year2)
     plt.colorbar(cbp2, format='%.1f',label='[m/s per decade]', ax=[axs[1,1]], location='bottom')
     
-    cbp3 = axs[1,2].contourf(np.arange(12),o3_tr_shift_late.lev,o3_tr_shift_late.transpose(),
-           levels=np.linspace(-1,1,11),cmap='RdBu_r',extend='both')
-    axs[1,2].contourf(np.arange(12),o3_p_shift_late.lev,o3_p_shift_late.transpose(),
-                      levels=[0.05,0.95],hatches=['..'], colors='none')
-    axs[1,2].set_yscale('log')
-    axs[1,2].invert_yaxis()
-    axs[1,2].set_ylim([1000,10])
+    cbp3 = axs[1, 2].contourf(np.arange(12), o3_tr_shift_late.lev, o3_tr_shift_late.transpose(),
+                              levels=np.linspace(-1, 1, 11), cmap='RdBu_r', extend='both')
+    axs[1, 2].contourf(np.arange(12), o3_p_shift_late.lev,o3_p_shift_late.transpose(),
+                       levels=[0.05, 0.95], hatches=['..'], colors='none')
+    axs[1, 2].set_yscale('log')
+    axs[1, 2].invert_yaxis()
+    axs[1, 2].set_ylim([1000, 10])
     
-    axs[1,2].set_xticks(np.arange(12))
-    axs[1,2].set_xticklabels(['J','A','S','O','N','D','J','F','M','A','M','J'])
-    axs[1,2].set(xlabel=xlab_str, title=start_year2+'-'+end_year2)
-    plt.colorbar(cbp3, format='%.1f',label='[ppmv/decade]', ax=[axs[1,2]], location='bottom')
+    axs[1, 2].set_xticks(np.arange(12))
+    axs[1, 2].set_xticklabels(['J', 'A', 'S', 'O', 'N', 'D', 'J', 'F', 'M', 'A', 'M', 'J'])
+    axs[1, 2].set(xlabel=xlab_str, title=start_year2 + '-' + end_year2)
+    plt.colorbar(cbp3, format='%.1f', label='[ppmv/decade]', ax=[axs[1, 2]], location='bottom')
     
-    return (fig,axs)
+    return fig, axs
 
-##########################################################################
+# #########################################################################
 # --- BEGIN SCRIPT --- #
-##########################################################################
+# #########################################################################
+
+
 print('\n=======================================')
 print('BEGIN stc_ozone.py ')
 print('=======================================\n')
 
-##### Parse MDTF-set environment variables
+# Parse MDTF-set environment variables
 print('*** Parse MDTF-set environment variables ...')
 CASENAME = os.environ['CASENAME']
-FIRSTYR = int(os.environ['FIRSTYR'])
-LASTYR = int(os.environ['LASTYR'])
-WK_DIR = os.environ['WK_DIR']
+FIRSTYR = int(os.environ['startdate'])
+LASTYR = int(os.environ['enddate'])
+WK_DIR = os.environ['WORK_DIR']
 OBS_DIR = os.environ['OBS_DATA']
 
 o3fi = os.environ['O3_FILE']
@@ -669,22 +671,22 @@ ufi = os.environ['UA_FILE']
 
 # Parse POD-specific environment variables
 print('*** Parse POD-specific environment variables ...')
-UZM_LO_LAT  = int(os.environ['UZM_LO_LAT'])
-UZM_HI_LAT  = int(os.environ['UZM_HI_LAT'])
+UZM_LO_LAT = int(os.environ['UZM_LO_LAT'])
+UZM_HI_LAT = int(os.environ['UZM_HI_LAT'])
 PCAP_LO_LAT = int(os.environ['PCAP_LO_LAT'])
 
 # Do error-checking on these environment variables. Rather than trying to
 # correct the values, we throw errors so that users can adjust their config
 # files in the appropriate manner, and obtain expected results.
-if (UZM_LO_LAT >= UZM_HI_LAT):
+if UZM_LO_LAT >= UZM_HI_LAT:
     msg = 'UZM_LO_LAT must be less than UZM_HI_LAT, and both must be >= 30'
     raise ValueError(msg)
 
-if (UZM_LO_LAT < 30):
+if UZM_LO_LAT < 30:
     msg = 'UZM_LO_LAT must be >= 30'
     raise ValueError(msg)
 
-if (PCAP_LO_LAT < 30):
+if PCAP_LO_LAT < 30:
     msg = 'PCAP_LO_LAT must be >= 30'
     raise ValueError(msg)
     
@@ -692,7 +694,7 @@ if (PCAP_LO_LAT < 30):
 print(f'*** Now starting work on {CASENAME}\n------------------------------')
 print('*** Reading variables ...')
 print('    o3')
-o3 = xr.open_dataset(o3fi,decode_cf=True)['o3']
+o3 = xr.open_dataset(o3fi, decode_cf=True)['o3']
 print('    ta')
 ta = xr.open_dataset(tfi)['ta']
 print('    ua')
@@ -701,19 +703,19 @@ ua = xr.open_dataset(ufi)['ua']
 # Compute the diagnostics (note, here we assume that all model variables are the same length in time)
 mod_firstyr = o3.time.dt.year.values[0]
 mod_lastyr = o3.time.dt.year.values[-1]
-print(mod_firstyr,mod_lastyr)
+print(mod_firstyr, mod_lastyr)
 
 print(f'***Limiting model data to {FIRSTYR} to {LASTYR}***')
-if (FIRSTYR < mod_firstyr):
+if FIRSTYR < mod_firstyr:
     msg = 'FIRSTYR must be >= model first year'
     raise ValueError(msg)
-if (LASTYR > mod_lastyr):
+if LASTYR > mod_lastyr:
     msg = 'LASTYR must be <= model last year'
     raise ValueError(msg)
 
-o3s = o3.sel(time=slice(str(FIRSTYR),str(LASTYR)))
-tas = ta.sel(time=slice(str(FIRSTYR),str(LASTYR)))
-uas = ua.sel(time=slice(str(FIRSTYR),str(LASTYR)))
+o3s = o3.sel(time=slice(str(FIRSTYR), str(LASTYR)))
+tas = ta.sel(time=slice(str(FIRSTYR), str(LASTYR)))
+uas = ua.sel(time=slice(str(FIRSTYR), str(LASTYR)))
 
 print(f'*** Computing zonal-means')
 o3zm = o3s.mean(dim="lon")
@@ -730,8 +732,8 @@ if getattr(uzm.lev,'units') == 'Pa':
     tzm = tzm.assign_coords({"lev": (tzm.lev/100.)})
     tzm.lev.attrs['units'] = 'hPa'
 
-print(f'*** Computing {UZM_LO_LAT}-{UZM_HI_LAT}N and '+\
-          f'{UZM_LO_LAT}-{UZM_HI_LAT}S lat averages of zonal-mean zonal winds')
+print(f'*** Computing {UZM_LO_LAT}-{UZM_HI_LAT}N and '
+      f'{UZM_LO_LAT}-{UZM_HI_LAT}S lat averages of zonal-mean zonal winds')
 uzm_50 = uzm.sel(lev=50)
 uzm_band = {}
 uzm_band['NH'] = lat_avg(uzm,  UZM_LO_LAT,  UZM_HI_LAT)
@@ -767,19 +769,19 @@ for hemi in ['NH','SH']:
     print(f'*** Plotting {hemi} FSW vs polar cap O3 scatter plot')
     scatter_FSW = f'{plot_dir}/{CASENAME}_{hemi}_FSW-O3cap_Scatter.eps'
     filepath = f'{WK_DIR}/model/netCDF/{CASENAME}_{hemi}_fsw.txt'
-    fig,ax = plot_o3_fsw_corr(uzm_50, o3_pcap[hemi], hemi,filepath)
+    fig, ax = plot_o3_fsw_corr(uzm_50, o3_pcap[hemi], hemi,filepath)
     ax.set_title(f'{CASENAME}\n{hemi}, {FIRSTYR}-{LASTYR}', fontsize=20)
     fig.savefig(scatter_FSW)
         
     print(f'*** Plotting {hemi} UZM vs polar cap O3 lag correlations')
     levcorr_plot = f'{plot_dir}/{CASENAME}_{hemi}_UZM-O3cap_LagCorr_Lev.eps'
-    fig,ax = plot_o3_uwnd_lev_lags(uzm_band[hemi], o3_pcap[hemi], hemi)
+    fig, ax = plot_o3_uwnd_lev_lags(uzm_band[hemi], o3_pcap[hemi], hemi)
     plt.suptitle(f'{CASENAME}, {hemi}, {FIRSTYR}-{LASTYR}', fontsize=20)
     fig.savefig(levcorr_plot)
         
     print(f'*** Plotting {hemi} trends in o3, temp, and UZM')
     trends_plot = f'{plot_dir}/{CASENAME}_{hemi}_Trends.eps'
-    fig,axs = plot_o3_seas_trends(uzm_band[hemi], o3_pcap[hemi], t_pcap[hemi])
+    fig, axs = plot_o3_seas_trends(uzm_band[hemi], o3_pcap[hemi], t_pcap[hemi])
     fig.suptitle(f'{CASENAME}, {hemi}', fontsize=20)
     fig.savefig(trends_plot)
     
@@ -790,17 +792,17 @@ data_dir = f'{WK_DIR}/model/netCDF'
 outfile = data_dir+f'/{CASENAME}_ozone-circ_diagnostics.nc'
 
 # Prepare the output variables and their metadata
-ua_band   = xr.concat([uzm_band['SH'], uzm_band['NH']], dim='hemi')
+ua_band = xr.concat([uzm_band['SH'], uzm_band['NH']], dim='hemi')
 ua_band.name = 'ua_band'
 ua_band.attrs['units'] = 'm s**-1'
 ua_band.attrs['long_name'] = f'{UZM_LO_LAT}-{UZM_HI_LAT} lat band zonal-mean zonal wind'
 
-ta_pcap   = xr.concat([t_pcap['SH'], t_pcap['NH']], dim='hemi')
+ta_pcap = xr.concat([t_pcap['SH'], t_pcap['NH']], dim='hemi')
 ta_pcap.name = 'ta_pcap'
 ta_pcap.attrs['units'] = 'K'
 ta_pcap.attrs['long_name'] = f'{PCAP_LO_LAT}-90 polar cap temperature'
 
-oz_pcap   = xr.concat([o3_pcap['SH'], o3_pcap['NH']], dim='hemi')
+oz_pcap = xr.concat([o3_pcap['SH'], o3_pcap['NH']], dim='hemi')
 oz_pcap.name = 'oz_pcap'
 oz_pcap.attrs['units'] = 'ppmv'
 oz_pcap.attrs['long_name'] = f'{PCAP_LO_LAT}-90 polar cap ozone'
@@ -817,7 +819,7 @@ encoding = {'ua_band':  {'dtype':'float32'},
 print(f'*** Saving ozone-circulation diagnostics to {outfile}')
 out_ds.to_netcdf(outfile, encoding=encoding)
 
-## Loading obs data files & plotting obs figures: ##########################
+# Loading obs data files & plotting obs figures: ##########################
 
 print(f'*** Now working on obs data\n------------------------------')
 obs_file = OBS_DIR + '/stc_ozone_obs-data.nc'
@@ -854,31 +856,32 @@ try:
     for hemi in ['NH','SH']:
         print(f'*** Plotting {hemi} UZM vs polar cap O3 scatter plot from rean')
         scatter_plot = f'{plot_dir}/obs_{hemi}_UZM-O3cap_Scatter.eps'
-        fig,ax = plot_o3_ustrat_corr(uzm_band[hemi], o3_pcap[hemi], hemi)
+        fig, ax = plot_o3_ustrat_corr(uzm_band[hemi], o3_pcap[hemi], hemi)
         ax.set_title(f'{rean}\n{hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
         fig.savefig(scatter_plot)
         
         print(f'*** Plotting {hemi} FSW vs polar cap O3 scatter plot from rean')
         filepath = f'{WK_DIR}/obs/netCDF/{rean}_{hemi}_fsw.txt'
         scatter_FSW = f'{plot_dir}/obs_{hemi}_FSW-O3cap_Scatter.eps'
-        fig,ax = plot_o3_fsw_corr(uzm_50, o3_pcap[hemi], hemi,filepath)
+        fig, ax = plot_o3_fsw_corr(uzm_50, o3_pcap[hemi], hemi,filepath)
         ax.set_title(f'{rean}\n{hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
         fig.savefig(scatter_FSW)
         
         print(f'*** Plotting {hemi} UZM vs polar cap O3 lag correlations from rean')
         levcorr_plot = f'{plot_dir}/obs_{hemi}_UZM-O3cap_LagCorr_Lev.eps'
-        fig,ax = plot_o3_uwnd_lev_lags(uzm_band[hemi], o3_pcap[hemi], hemi)
+        fig, ax = plot_o3_uwnd_lev_lags(uzm_band[hemi], o3_pcap[hemi], hemi)
         plt.suptitle(f'{rean}, {hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
         fig.savefig(levcorr_plot)
         
         print(f'*** Plotting {hemi} trends in o3, temp, and UZM from rean')
         trends_plot = f'{plot_dir}/obs_{hemi}_Trends.eps'
-        fig,axs = plot_o3_seas_trends(uzm_band[hemi], o3_pcap[hemi], t_pcap[hemi])
+        fig, axs = plot_o3_seas_trends(uzm_band[hemi], o3_pcap[hemi], t_pcap[hemi])
         fig.suptitle(f'{rean}, {hemi}', fontsize=20)
         fig.savefig(trends_plot)
         
-except:
+except Exception as exc:
     print('*** Unable to create plots from the observational data: ')
+    print(exc)
     print(traceback.format_exc())
     
 print('\n=====================================')

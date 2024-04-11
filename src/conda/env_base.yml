@@ -17,15 +17,16 @@ dependencies:
 # ds.cf attributes are defined later in the process, and this clashes
 # with the preprocessing procedures
 - cf_xarray=0.8.4
-- matplotlib=3.7.2
+- matplotlib=3.8.2
 - pandas=2.1.0
 - pint=0.22
-- dask=2023.9.1
+- dask=2024.1.1
 - ecgtools=2023.7.13
 - cfunits=3.3.6
 - intake=0.7.0
-- intake-esm=2023.11.10
+- intake-esm=2024.2.6
 - subprocess32=3.5.4
 - pyyaml=6.0.1
 - click=8.1.7
 - ghostscript=10.02.1
+- pybind11=2.12.0

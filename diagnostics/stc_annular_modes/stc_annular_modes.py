@@ -80,7 +80,6 @@
 
 import os
 import traceback
-
 import xarray as xr
 import matplotlib as mpl
 
@@ -129,7 +128,7 @@ def make_tseries(am, which, data_name, out_dir, first, last):
     # Iterate over each hemisphere
     hemis = {"S": -1, "N": 1}
 
-    ### BEGIN MODEL DIAGNOSTIC CODEBLOCK ###
+    # BEGIN MODEL DIAGNOSTIC CODEBLOCK ###
     for hemi, hn in hemis.items():
         # E-FOLDING TIMESCALES
         print(f"*** Computing the {which} {hemi}AM e-folding timescales")
@@ -183,9 +182,9 @@ print("=======================================")
 # Parse MDTF-set environment variables
 print("*** Parse MDTF-set environment variables ...")
 CASENAME = os.environ["CASENAME"]
-FIRSTYR = int(os.environ["FIRSTYR"])
-LASTYR = int(os.environ["LASTYR"])
-WK_DIR = os.environ["WK_DIR"]
+FIRSTYR = int(os.environ["startdate"])
+LASTYR = int(os.environ["enddate"])
+WK_DIR = os.environ["WORK_DIR"]
 OBS_DATA = os.environ["OBS_DATA"]
 
 # Input and output files/directories

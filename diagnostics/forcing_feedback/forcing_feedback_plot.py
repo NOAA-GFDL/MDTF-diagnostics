@@ -35,18 +35,18 @@ llons_obs, llats_obs = np.meshgrid(lon_obs, lat_obs)
 
 # Read in model results
 
-nc_pl = xr.open_dataset(os.environ["WK_DIR"] + "/model/netCDF/fluxanom2D_Planck.nc")
-nc_lr = xr.open_dataset(os.environ["WK_DIR"] + "/model/netCDF/fluxanom2D_LapseRate.nc")
-nc_lw_q = xr.open_dataset(os.environ["WK_DIR"] + "/model/netCDF/fluxanom2D_LW_WaterVapor.nc")
-nc_sw_q = xr.open_dataset(os.environ["WK_DIR"] + "/model/netCDF/fluxanom2D_SW_WaterVapor.nc")
-nc_alb = xr.open_dataset(os.environ["WK_DIR"] + "/model/netCDF/fluxanom2D_SfcAlbedo.nc")
-nc_lw_c = xr.open_dataset(os.environ["WK_DIR"] + "/model/netCDF/fluxanom2D_LW_Cloud.nc")
-nc_sw_c = xr.open_dataset(os.environ["WK_DIR"] + "/model/netCDF/fluxanom2D_SW_Cloud.nc")
-nc_lw_irf = xr.open_dataset(os.environ["WK_DIR"] + "/model/netCDF/fluxanom2D_LW_IRF.nc")
-nc_sw_irf = xr.open_dataset(os.environ["WK_DIR"] + "/model/netCDF/fluxanom2D_SW_IRF.nc")
-nc_lw_netrad = xr.open_dataset(os.environ["WK_DIR"] + "/model/netCDF/fluxanom2D_LW_Rad.nc")
-nc_sw_netrad = xr.open_dataset(os.environ["WK_DIR"] + "/model/netCDF/fluxanom2D_SW_Rad.nc")
-nc_strat = xr.open_dataset(os.environ["WK_DIR"] + "/model/netCDF/fluxanom2D_StratFB.nc")
+nc_pl = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_Planck.nc")
+nc_lr = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_LapseRate.nc")
+nc_lw_q = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_LW_WaterVapor.nc")
+nc_sw_q = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_SW_WaterVapor.nc")
+nc_alb = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_SfcAlbedo.nc")
+nc_lw_c = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_LW_Cloud.nc")
+nc_sw_c = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_SW_Cloud.nc")
+nc_lw_irf = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_LW_IRF.nc")
+nc_sw_irf = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_SW_IRF.nc")
+nc_lw_netrad = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_LW_Rad.nc")
+nc_sw_netrad = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_SW_Rad.nc")
+nc_strat = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_StratFB.nc")
 
 lat_model = nc_sw_irf.lat.values
 weights_model = np.cos(np.deg2rad(lat_model))
@@ -147,7 +147,7 @@ ax2.set_ylabel('W/$m^2$/yr')
 xterms = ['', 'IRF', '']
 ax2.set_xticks([r for r in range(len(xterms))], xterms)
 plt.tight_layout()
-plt.savefig(os.environ['WK_DIR'] + '/model/PS/forcing_feedback_CMIP6scatter.eps')
+plt.savefig(os.environ['WORK_DIR'] + '/model/PS/forcing_feedback_CMIP6scatter.eps')
 plt.close()
 
 if np.max(nc_sw_irf.lon.values) >= 300:  # convert 0-360 lon to -180-180 lon for plotting

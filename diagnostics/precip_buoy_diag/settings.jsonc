@@ -17,7 +17,7 @@
 	"settings": {
 		"driver": "precip_buoy_diag.py",
 		"long_name": "Precipitation Buoyancy Diagnostics",
-		"realm": "atmos",
+		"convention" : "cmip",
 		"description": "Precipitation Buoyancy Diagnostics",
 		// threshold precipitation value to compute precipitating pdfs
 		"pod_env_vars": { "PRECIP_THRESHOLD": "0.25", 
@@ -27,49 +27,63 @@
 			"python3": ["numpy", "scipy", "cython", "matplotlib", "xarray", "numba", "networkx"]
 		}
 	},
-	"dimensions": {
-   		       "lat": {"standard_name": "latitude"},
-                       "lon": {"standard_name": "longitude"},
-                       "lev": {
-                               "standard_name": "air_pressure",
-                               "positive": "down"
-                              },
-                       "time": {"standard_name": "time"}
-                      },
+    "dimensions": {
+        "lat": {
+                 "standard_name": "latitude",
+                 "units": "degrees_north",
+                 "axis": "Y"
+                },
+        "lon": {
+                 "standard_name": "longitude",
+                 "units": "degrees_east",
+                 "axis": "X"
+               },
+        "lev": {
+                 "standard_name": "air_pressure",
+                 "units": "hPa",
+                 "positive": "down",
+                 "axis": "Z"
+                },
+        "time": {"standard_name": "time"}
+  },
 	"varlist": {
-		     "pr": {
-                            "standard_name": "precipitation_flux",
-			    "freq": "1hr",
-			    "requirement": "required",
-			    "units": "kg m-2 s-1",
-                            "dimensions" : ["time", "lat", "lon"],
-                            "multi_file_ok" : true
-		           },
-		   "ta": {
-			   "standard_name": "air_temperature",
-			   "freq": "1hr",
-			   "requirement": "required",
-			   "units": "K",
-                           "dimensions" : ["time", "lev", "lat", "lon"],
-                           "multi_file_ok" : true
-		         },
-		   "qa": {
-			   "standard_name": "specific_humidity",
-			   "freq": "1hr",
-			   "requirement": "required",
-			   "units": "kg/kg",
-                           "dimensions" : ["time", "lev", "lat", "lon"],
-                           "multi_file_ok" : true
-		         },
-		    "ps": {
-			   "standard_name": "surface_air_pressure",
-			   "freq": "1hr",
-			   // this is optional only if height co-ordinates are on pressure levels
-			   // if height co-ordinates are sigma, then surface pressure is required.
-			  "requirement": "optional",
-			  "units": "Pa",
-                          "dimensions" : ["time", "lat", "lon"],
-                          "multi_file_ok" : true
-		         }
-                     }
+	    "pr": {
+			"standard_name": "precipitation_flux",
+			"freq": "1hr",
+			"realm": "atmos",
+			"requirement": "required",
+			"units": "kg m-2 s-1",
+            "dimensions" : ["time", "lat", "lon"],
+            "multi_file_ok" : true
+		},
+		"ta": {
+			"standard_name": "air_temperature",
+			"realm": "atmos",
+			"freq": "1hr",
+			"requirement": "required",
+			"units": "K",
+            "dimensions" : ["time", "lev", "lat", "lon"],
+            "multi_file_ok" : true
+		},
+		"qa": {
+			"standard_name": "specific_humidity",
+		    "realm": "atmos",
+			"freq": "1hr",
+			"requirement": "required",
+			"units": "kg/kg",
+            "dimensions" : ["time", "lev", "lat", "lon"],
+            "multi_file_ok" : true
+		},
+		"ps": {
+			"standard_name": "surface_air_pressure",
+			"realm": "atmos",
+			"freq": "1hr",
+			// this is optional only if height co-ordinates are on pressure levels
+			// if height co-ordinates are sigma, then surface pressure is required.
+			"requirement": "optional",
+			"units": "Pa",
+            "dimensions" : ["time", "lat", "lon"],
+            "multi_file_ok" : true
+		}
+	}
 }

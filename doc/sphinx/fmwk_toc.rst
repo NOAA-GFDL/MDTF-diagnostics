@@ -10,17 +10,6 @@ Internal code documentation
 .. Package design
 .. --------------
 
-.. These sections describe design features of the code that cut across multiple modules.
-
-.. .. toctree::
-..    :maxdepth: 1
-
-..    fmwk_intro
-..    fmwk_plugins
-..    fmwk_obj_hierarchy
-..    fmwk_datamodel
-..    fmwk_provenance
-
 Package code and API documentation
 ----------------------------------
 
@@ -30,9 +19,6 @@ These sections provide an overview of specific parts of the code that's more hig
    :maxdepth: 1
 
    fmwk_cli
-   fmwk_datasources
-   fmwk_dataquery
-   fmwk_datafetch
    fmwk_preprocess
    fmwk_utils
 
@@ -43,14 +29,12 @@ Main framework modules
 ^^^^^^^^^^^^^^^^^^^^^^
 
 .. autosummary::
-
-   src.core
-   src.data_manager
+   src.pod_setup
    src.data_sources
-   src.diagnostic
    src.environment_manager
-   src.preprocessor
+   src.translation
    src.output_manager
+   src.preprocessor
 
 Supporting framework modules
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -62,13 +46,15 @@ Supporting framework modules
    src.data_model
    src.mdtf_info
    src.units
+   src.varlist_util
    src.verify_links
    src.xr_parser
 
 Utility modules
 ^^^^^^^^^^^^^^^
 
-The ``src.util`` subpackage provides non-MDTF-specific utility functionality used many places in the modules above. See the :doc:`fmwk_utils` documentation for an overview.
+The ``src.util`` subpackage provides non-MDTF-specific utility functionality used many places in the modules above.
+See the :doc:`fmwk_utils` documentation for an overview.
 
 .. autosummary::
 
@@ -78,14 +64,5 @@ The ``src.util`` subpackage provides non-MDTF-specific utility functionality use
    src.util.exceptions
    src.util.filesystem
    src.util.logs
+   src.util.path_utils
    src.util.processes
-
-Currently unused modules
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-The following modules implement features moved to, or intended for, future releases. They can be removed from the current production branch with no effect.
-
-.. autosummary::
-
-   src.conflict_resolution
-   src.install

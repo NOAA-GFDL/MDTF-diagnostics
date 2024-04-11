@@ -13,7 +13,7 @@
   "settings" : {
     "driver" : "Wheeler_Kiladis.py",
     "long_name" : "Wheeler Kiladis plots",
-    "realm" : "atmos",
+    "convention": "cesm",
     "description" : "Wavenumber-Frequency Power Spectra (Wheeler and Kiladis)",
     "runtime_requirements": {
       "python3": [],
@@ -24,8 +24,16 @@
     "frequency": "day"
   },
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+    "lat": {
+            "standard_name": "latitude",
+            "units": "degrees_north",
+            "axis": "Y"
+           },
+    "lon": {
+            "standard_name": "longitude",
+            "units": "degrees_east",
+            "axis": "X"
+           },
     "lev": {
       "standard_name": "air_pressure",
       "units": "hPa",
@@ -37,28 +45,33 @@
   "varlist": {
     "rlut": {
       "standard_name": "toa_outgoing_longwave_flux",
+      "realm": "atmos",
       "units": "W m-2",
       "dimensions": ["time", "lat", "lon"]
     },
     "pr": {
       "standard_name": "precipitation_rate",
+      "realm": "atmos",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"]
     },
     "omega500": {
       "standard_name": "lagrangian_tendency_of_air_pressure",
+      "realm": "atmos",
       "units": "Pa s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 500}
     },
     "u200": {
       "standard_name": "eastward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 200}
     },
     "u850": {
       "standard_name": "eastward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"lev": 850}

@@ -11,8 +11,9 @@ Mac OS, and the Windows Subsystem for Linux.
 
 You will need to download the source code, digested observational data, and sample model data (:numref:`ref-download`).
 Afterwards, we describe how to install software dependencies using the `conda <https://docs.conda.io/en/latest/>`__
-package manager (:numref:`ref-conda-install`) or `micromamba <https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html>`__ (:numref:`ref-micromamba-install`) and run the framework on sample model data (:numref:`ref-configure` and
-:numref:`ref-execute`).
+package manager (:numref:`ref-conda-install`) or
+`micromamba <https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html>`__ (:numref:`ref-micromamba-install`)
+and run the framework on sample model data (:numref:`ref-configure` and :numref:`ref-execute`).
 
 Throughout this document, :console:`%` indicates the shell prompt and is followed by commands to be executed in a
 terminal in ``fixed-width font``. Variable values are denoted by angle brackets, e.g. <*HOME*> is the path to your
@@ -67,7 +68,10 @@ It contains the following subdirectories:
 - ``shared/``: shared code and resources for use by both the framework and PODs.
 - ``sites/``: site-specific code and configuration files.
 - ``src/``: source code of the framework itself.
+- ``templates/``: runtime configuration template files
 - ``tests/``: general tests for the framework.
+- ``tools/``: helper scripts for building data catalogs and data management
+- ``user_scripts/``: directory for POD developers to place custom preprocessing scripts
 
 For advanced users interested in keeping more up-to-date on project development and contributing feedback,
 the ``main`` branch of the GitHub repo contains features that haven’t yet been incorporated into an official release,
@@ -75,17 +79,23 @@ which are less stable or thoroughly tested.
 
 .. _ref-supporting-data:
 
-Obtaining supporting data
--------------------------
+Creating synthetic data for example_multicase and other 4th generation and newer PODs that use ESM-intake catalogs
+------------------------------------------------------------------------------------------------------------------
 
-Supporting observational data and sample model data are available via anonymous FTP from ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation, while the sample model data is optional and only needed for test and demonstration purposes. The files you will need to download are:
+Obtaining supporting data for 3rd-generation and older single-run PODs
+-------------------------------------------------------------------------
+
+Supporting observational data and sample model data for second and third generation single-run PODs are available
+via anonymous FTP from ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation,
+while the sample model data is optional and only needed for test and demonstration purposes. The files you will need
+to download are:
 
 - Digested observational data (159 Mb): `MDTF_v2.1.a.obs_data.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.obs_data.tar>`__.
 - NCAR-CESM-CAM sample data (12.3 Gb): `model.QBOi.EXP1.AMIP.001.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar>`__.
 - NOAA-GFDL-CM4 sample data (4.8 Gb): `model.GFDL.CM4.c96L32.am4g10r8.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar>`__.
 
-The default test case uses the ``QBOi.EXP1.AMIP.001`` sample dataset, and the ``GFDL.CM4.c96L32.am4g10r8`` sample
-dataset is only for testing the `MJO Propagation and Amplitude POD <../sphinx_pods/MJO_prop_amp.html>`__.
+The default single-run test case uses the ``QBOi.EXP1.AMIP.001`` sample dataset, and the ``GFDL.CM4.c96L32.am4g10r8``
+sample dataset is only for testing the `MJO Propagation and Amplitude POD <../sphinx_pods/MJO_prop_amp.html>`__.
 Note that the above paths are symlinks to the most recent versions of the data, and will be reported as having
 a size of zero bytes in an FTP client.
 
@@ -205,14 +215,16 @@ Installing the package's conda environments
 In this section we use conda to install the versions of the language interpreters and third-party libraries required
 by the package's diagnostics.
 
-- First, determine the location of your conda/micromamba installation by running :console:`% conda info --base` or :console:`% micromamba info`
-as the user who will be using the package. This path will be referred to as <*CONDA_ROOT*> or <*MICROMAMBA_ROOT*> below.
+- First, determine the location of your conda/micromamba installation by running :console:`% conda info --base` or
+  :console:`% micromamba info` as the user who will be using the package. This path will be referred to as
+  <*CONDA_ROOT*> or <*MICROMAMBA_ROOT*> below.
 
 - If you don't have write access to <*CONDA_ROOT*>/<*MICROMAMBA_ROOT*>
-(for example, if conda has been installed for all users of a multi-user system),
-you will need to tell conda to install its files in a different, writable location.
-You can also choose to do this out of convenience, e.g. to keep all files and programs used by the MDTF package together
-in the ``mdtf`` directory for organizational purposes. This location will be referred to as <*CONDA_ENV_DIR*> below.
+  (for example, if conda has been installed for all users of a multi-user system),
+  you will need to tell conda to install its files in a different, writable location.
+  You can also choose to do this out of convenience, e.g. to keep all files and programs used by the MDTF package
+  together in the ``mdtf`` directory for organizational purposes. This location will be referred to as
+  <*CONDA_ENV_DIR*> below.
 
 To display information about all of the options in the conda_env_setup.sh and
 micromamba_env_setup.sh environment installation scripts, run
@@ -230,11 +242,13 @@ micromamba_env_setup.sh environment installation scripts, run
       % cd <CODE_ROOT>
       % ./src/conda/conda_env_setup.sh --all --conda_root <CONDA_ROOT> --env_dir <CONDA_ENV_DIR>
 
-  The names of all conda environments used by the package begin with “_MDTF”, so as not to conflict with other environments in your conda installation. The installation process should finish within ten minutes.
+  The names of all conda environments used by the package begin with “_MDTF”, so as not to conflict with other
+  environments in your conda installation. The installation process should finish within ten minutes.
 
   - Substitute the paths identified above for <*CONDA_ROOT*> and <*CONDA_ENV_DIR*>.
 
-  - If the ``--env_dir`` flag is omitted, the environment files will be installed in your system's conda's default location (usually <*CONDA_ROOT*>/envs).
+  - If the ``--env_dir`` flag is omitted, the environment files will be installed in your system's conda's default
+    location (usually <*CONDA_ROOT*>/envs).
 
 - Install all the package's conda environments with micromamba by running
 
@@ -278,15 +292,22 @@ To test the installation, run
 .. code-block:: console
 
    % cd <CODE_ROOT>
-   % ./mdtf --version
+   % ./mdtf --help
 
 The output should be
 
 .. code-block:: console
 
-   === Starting <CODE_ROOT>/mdtf_framework.py
+   Usage: MDTF-diagnostics [OPTIONS]
 
-   mdtf [version number]
+   A community-developed package to run Process Oriented Diagnostics on weather
+   and climate data
+
+   Options:
+     -v, --verbose          Enables verbose mode.
+     -f, --configfile PATH  Path to the runtime configuration file  [required]
+     --help                 Show this message and exit.
+
 
 .. _ref-configure:
 
@@ -309,34 +330,36 @@ override those given in the configuration file.
 For the remainder of this section, we describe how to edit and use configuration files,
 since the paths to data, etc., we need to set won't change.
 
-An example of the configuration file format is provided at
-`src/default_tests.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/default_tests.jsonc>`__.
-This is meant to be a template you can customize according to your purposes: save a copy of the file at
+Runtime configuration file json and yaml templates are located in the
+`templates/ <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/templates>`__ directory.
+You can customize either template depending on your preferences; save a copy of the file at
 <*config_file_path*> and open it in a text editor.
 The following paths need to be configured before running the framework:
 
-- ``OBS_DATA_ROOT`` should be set to the location of the supporting data that you downloaded in
-:numref:`ref-supporting-data`. If you used the directory structure described in that section,
-the default value provided in the configuration file (``../inputdata/obs_data/``) will be correct.
-If you put the data in a different location, this value should be changed accordingly.
-Note that relative paths can be used in the configuration file, and are always resolved relative to the location of
-the MDTF-diagnostics directory (<*CODE_ROOT*>).
+- ``DATA_CATALOG``: set to the path of the input ESM-intake data catalog
 
-- Likewise, ``MODEL_DATA_ROOT`` should be updated to the location of the NCAR-CESM-CAM sample data
-(``model.QBOi.EXP1.AMIP.001.tar``)downloaded in :numref:`ref-supporting-data`.
-This data is required to run the test in the next section. If you used the directory structure described
-in :numref:`ref-supporting-data`, the default value provided in the configuration file (``../inputdata/model/``)
-will be correct.
+- ``OBS_DATA_ROOT``: set the location of the supporting data that you downloaded in
+  :numref:`ref-supporting-data`. If you used the directory structure described in that section,
+  the default value provided in the configuration file (``../inputdata/obs_data/``) will be correct.
+  If you put the data in a different location, this value should be changed accordingly.
+  Note that relative paths can be used in the configuration file, and are always resolved relative to the location of
+  the MDTF-diagnostics directory (<*CODE_ROOT*>).
+
+- ``MODEL_DATA_ROOT`` should be updated if you are running single-run PODs that do not implement ESM-intake catalogs.
+  For example, the NCAR-CESM-CAM sample data (``model.QBOi.EXP1.AMIP.001.tar``) downloaded in
+  :numref:`ref-supporting-data`. This data is required to run the test in the next section.
+  If you used the directory structure described in :numref:`ref-supporting-data`, the default value provided in
+  the configuration file (``../inputdata/model/``) will be correct.
 
 - ``conda_root`` should be set to the location of your conda installation: the value of <*CONDA_ROOT*>
-that was used in :numref:`ref-conda-install`.
+  that was used in :numref:`ref-conda-install`.
 
 - Likewise, if you installed the package's conda environments in a non-default location by using the ``--env_dir``
-flag in :numref:`ref-conda-install`, the option ``conda_env_root`` should be set to this path (<*CONDA_ENV_DIR*>).
+  flag in :numref:`ref-conda-install`, the option ``conda_env_root`` should be set to this path (<*CONDA_ENV_DIR*>).
 
 - Finally, ``OUTPUT_DIR`` should be set to the location you want the output files to be written to
-(default: ``mdtf/wkdir/``; will be created by the framework).
-The output of each run of the framework will be saved in a different subdirectory in this location.
+  (default: ``mdtf/wkdir/``; will be created by the framework).
+  The output of each run of the framework will be saved in a different subdirectory in this location.
 
 In :doc:`start_config`, we describe more of the most important configuration options for the package,
 and in particular how you can configure the package to run on different data.
@@ -367,8 +390,8 @@ The first few lines of output will be
       CASENAME: QBOi.EXP1.AMIP.001
       model: CESM
       convention: CESM
-      FIRSTYR: 1977
-      LASTYR: 1981
+      startdate: 19770101
+      enddate: 19811231
    [...]
 
 Run time may be up to 10-20 minutes, depending on your system. The final lines of output should be:

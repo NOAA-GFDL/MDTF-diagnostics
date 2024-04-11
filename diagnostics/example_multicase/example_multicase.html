@@ -1,11 +1,13 @@
-<title>MDTF example diagnostic</title>
+<title>MDTF example-multicase diagnostic</title>
 <img src="../mdtf_diag_banner.png">
 <h3>Multi-Case Example Diagnostic: zonal-average near-surface temperature anomaly</h3>
 <p>
     This POD illustrates how multiple cases (experiments) can be analyzed together.
-    The framework initializes and processes each case, writes the environment variables for the cases
-    to a yaml file (case_info.yaml). The example_multicase POD reads information from the yaml file
-    into a dictionary that it references to ingest data from the output files for each ease.
+    The MDTF-diagnostics framework initializes and processes each case, writes the environment variables for the cases
+    to a yaml file (case_info.yml), and exports an ESM Intake catalog with information about the post-processed
+    data for each ease to the working directory (WORK_DIR). The example_multicase POD driver script reads
+    environment information from case_info.yml into a dictionary that it references to read data from the
+    post-processed files in the data catalog.
 </p>
 <p>
     The example_multicase POD reads near-surface air temperature (TAS) from netcdf output files for multiple cases.
@@ -18,8 +20,10 @@
         <TH align=left>Model Results
     <TR>
         <TH align=left>Zonal-mean near-surface temperature anomalies (K)
-            <!--
-                Relative links to bitmaps of plots made by the diagnostic, see above.
-            -->
-        <TH align=center><A href=model/example_model_plot.png>plot</A>
 </TABLE>
+<!--
+  If the POD generates one figure per case, use the following format in your python script file paths:
+  <TH align=center><A href=model/example_model_plot_{{CASENAME}}.png>{{CASENAME}}</A>
+  The framework output manager will automatically append a link to each file
+-->
+<TH align=center><A href=model/example_multicase_plot.png>plot</A> -->

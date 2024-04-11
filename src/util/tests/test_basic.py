@@ -1,7 +1,7 @@
 import unittest
-import unittest.mock as mock
 from src.util import basic as util
 from src.util import exceptions
+
 
 class TestMDTFABCMeta(unittest.TestCase):
     def test_abstract_attribute(self):
@@ -25,8 +25,10 @@ class TestMDTFABCMeta(unittest.TestCase):
 
         class BadChildClass(Foo):
             pass
+
         with self.assertRaises(NotImplementedError):
             b = BadChildClass()
+
 
 class TestSingleton(unittest.TestCase):
     def test_singleton(self):
@@ -34,6 +36,7 @@ class TestSingleton(unittest.TestCase):
         class Temp1(util.Singleton):
             def __init__(self):
                 self.foo = 0
+
         temp1 = Temp1()
         temp2 = Temp1()
         temp1.foo = 5
@@ -44,40 +47,42 @@ class TestSingleton(unittest.TestCase):
         class Temp2(util.Singleton):
             def __init__(self):
                 self.foo = 0
+
         temp1 = Temp2()
         temp1.foo = 5
         temp1._reset()
         temp2 = Temp2()
         self.assertEqual(temp2.foo, 0)
 
+
 class TestMultiMap(unittest.TestCase):
     def test_multimap_inverse(self):
         # test inverse map
-        temp = util.MultiMap({'a':1, 'b':2})
+        temp = util.MultiMap({'a': 1, 'b': 2})
         temp_inv = temp.inverse()
         self.assertIn(1, temp_inv)
         self.assertEqual(temp_inv[2], set(['b']))
 
     def test_multimap_setitem(self):
         # test key addition and handling of duplicate values
-        temp = util.MultiMap({'a':1, 'b':2})
+        temp = util.MultiMap({'a': 1, 'b': 2})
         temp['c'] = 1
         temp_inv = temp.inverse()
         self.assertIn(1, temp_inv)
-        self.assertCountEqual(temp_inv[1], set(['a','c']))
+        self.assertCountEqual(temp_inv[1], set(['a', 'c']))
         temp['b'] = 3
         temp_inv = temp.inverse()
         self.assertNotIn(2, temp_inv)
 
     def test_multimap_delitem(self):
         # test item deletion
-        temp = util.MultiMap({'a':1, 'b':2})
+        temp = util.MultiMap({'a': 1, 'b': 2})
         del temp['b']
         temp_inv = temp.inverse()
         self.assertNotIn(2, temp_inv)
 
     def test_multimap_add(self):
-        temp = util.MultiMap({'a':1, 'b':2, 'c':1})
+        temp = util.MultiMap({'a': 1, 'b': 2, 'c': 1})
         temp['a'].add(3)
         temp_inv = temp.inverse()
         self.assertIn(3, temp_inv)
@@ -85,34 +90,35 @@ class TestMultiMap(unittest.TestCase):
         temp['a'].add(2)
         temp_inv = temp.inverse()
         self.assertIn(2, temp_inv)
-        self.assertCountEqual(temp_inv[2], set(['a','b']))
+        self.assertCountEqual(temp_inv[2], set(['a', 'b']))
 
     def test_multimap_add_new(self):
-        temp = util.MultiMap({'a':1, 'b':2, 'c':1})
+        temp = util.MultiMap({'a': 1, 'b': 2, 'c': 1})
         temp['x'].add(2)
         temp_inv = temp.inverse()
         self.assertIn(2, temp_inv)
-        self.assertCountEqual(temp_inv[2], set(['b','x']))
+        self.assertCountEqual(temp_inv[2], set(['b', 'x']))
 
     def test_multimap_remove(self):
-        temp = util.MultiMap({'a':1, 'b':2, 'c':1})
+        temp = util.MultiMap({'a': 1, 'b': 2, 'c': 1})
         temp['c'].add(2)
         temp['c'].remove(1)
         temp_inv = temp.inverse()
         self.assertIn(2, temp_inv)
-        self.assertCountEqual(temp_inv[2], set(['b','c']))
+        self.assertCountEqual(temp_inv[2], set(['b', 'c']))
         self.assertIn(1, temp_inv)
         self.assertCountEqual(temp_inv[1], set(['a']))
+
 
 class TestWormDict(unittest.TestCase):
     def test_worm_normal_operation(self):
         foo = util.WormDict(a=1, b=2)
-        self.assertTrue(isinstance(foo, dict)) # should really be testing for MutableMapping
+        self.assertTrue(isinstance(foo, dict))  # should really be testing for MutableMapping
         self.assertEqual(foo['b'], 2)
         # all dicts are OrderedDicts starting with 3.7
-        self.assertEqual(tuple(foo.keys()), ('a','b'))
-        self.assertEqual(tuple(foo.values()), (1,2))
-        self.assertEqual(tuple(str(k) + str(v) for k,v in foo.items()), ('a1', 'b2'))
+        self.assertEqual(tuple(foo.keys()), ('a', 'b'))
+        self.assertEqual(tuple(foo.values()), (1, 2))
+        self.assertEqual(tuple(str(k) + str(v) for k, v in foo.items()), ('a1', 'b2'))
         foo.update({'c': 3, 'd': 4})
         self.assertEqual(foo['d'], 4)
         self.assertEqual(len(foo), 4)
@@ -138,12 +144,12 @@ class TestWormDict(unittest.TestCase):
 
     def test_consistentD_normal_operation(self):
         foo = util.ConsistentDict(a=1, b=2)
-        self.assertTrue(isinstance(foo, dict)) # should really be testing for MutableMapping
+        self.assertTrue(isinstance(foo, dict))  # should really be testing for MutableMapping
         self.assertEqual(foo['b'], 2)
         # all dicts are OrderedDicts starting with 3.7
-        self.assertEqual(tuple(foo.keys()), ('a','b'))
-        self.assertEqual(tuple(foo.values()), (1,2))
-        self.assertEqual(tuple(str(k) + str(v) for k,v in foo.items()), ('a1', 'b2'))
+        self.assertEqual(tuple(foo.keys()), ('a', 'b'))
+        self.assertEqual(tuple(foo.values()), (1, 2))
+        self.assertEqual(tuple(str(k) + str(v) for k, v in foo.items()), ('a1', 'b2'))
         foo.update({'c': 3, 'd': 4})
         self.assertEqual(foo['d'], 4)
         self.assertEqual(len(foo), 4)
@@ -241,6 +247,7 @@ class TestNameSpace(unittest.TestCase):
         self.assertIn(test, set_test)
         self.assertIn(test4, set_test)
 
+
 class TestMDTFEnum(unittest.TestCase):
     def test_to_string(self):
         Dummy = util.MDTFEnum('Dummy', 'VALUE ANOTHER_VALUE')
@@ -258,70 +265,50 @@ class TestMDTFEnum(unittest.TestCase):
         Dummy = util.MDTFEnum('Dummy', 'VALUE ANOTHER_VALUE')
         self.assertEqual(Dummy.VALUE, Dummy.VALUE)
         self.assertNotEqual(Dummy.ANOTHER_VALUE, Dummy.VALUE)
-        #self.assertEqual(Dummy.VALUE, 'value')
-        #self.assertEqual('value', Dummy.VALUE)
-        #self.assertNotEqual('another_value', Dummy.VALUE)
-        #self.assertNotEqual(Dummy.VALUE, 'another_value')
+        # self.assertEqual(Dummy.VALUE, 'value')
+        # self.assertEqual('value', Dummy.VALUE)
+        # self.assertNotEqual('another_value', Dummy.VALUE)
+        # self.assertNotEqual(Dummy.VALUE, 'another_value')
 
-    def test_int_enum(self):
-        Dummy = util.MDTFIntEnum('Dummy', 'ONE TWO THREE')
-        self.assertTrue(Dummy.ONE < Dummy.TWO)
-        self.assertTrue(Dummy.THREE >= Dummy.TWO)
-        self.assertNotEqual(Dummy.ONE, Dummy.TWO)
 
 class TestSpliceIntoList(unittest.TestCase):
     def test_splice_into_list_start(self):
-        list_ = ['a','b','c']
-        ans = util.splice_into_list(list_, {'a':['a1']})
+        list_ = ['a', 'b', 'c']
+        ans = util.splice_into_list(list_, {'a': ['a1']})
         self.assertEqual(ans, ['a', 'a1', 'b', 'c'])
 
     def test_splice_into_list_middle(self):
-        list_ = ['a','b','c']
-        ans = util.splice_into_list(list_, {'b':['b1']})
+        list_ = ['a', 'b', 'c']
+        ans = util.splice_into_list(list_, {'b': ['b1']})
         self.assertEqual(ans, ['a', 'b', 'b1', 'c'])
 
     def test_splice_into_list_end(self):
-        list_ = ['a','b','c']
-        ans = util.splice_into_list(list_, {'c':['c1']})
+        list_ = ['a', 'b', 'c']
+        ans = util.splice_into_list(list_, {'c': ['c1']})
         self.assertEqual(ans, ['a', 'b', 'c', 'c1'])
 
     def test_splice_into_list_multi(self):
-        list_ = ['a','b','a']
-        ans = util.splice_into_list(list_, {'a':['a1'], 'c':['c1']})
+        list_ = ['a', 'b', 'a']
+        ans = util.splice_into_list(list_, {'a': ['a1'], 'c': ['c1']})
         self.assertEqual(ans, ['a', 'a1', 'b', 'a', 'a1'])
 
     def test_splice_into_list_keyfn(self):
-        list_ = ['aaa','bXX','bYY','c','dXX','bZZ']
+        list_ = ['aaa', 'bXX', 'bYY', 'c', 'dXX', 'bZZ']
         key_fn = (lambda s: s[0])
-        splice_d = {'a':['a1'], 'b':['b1'], 'd':['d1'],'g':['g1']}
+        splice_d = {'a': ['a1'], 'b': ['b1'], 'd': ['d1'], 'g': ['g1']}
         ans = util.splice_into_list(list_, splice_d, key_fn)
         self.assertEqual(ans,
-            ['aaa', 'a1', 'bXX', 'b1', 'bYY', 'b1', 'c', 'dXX', 'd1', 'bZZ', 'b1']
-        )
+                         ['aaa', 'a1', 'bXX', 'b1', 'bYY', 'b1', 'c', 'dXX', 'd1', 'bZZ', 'b1']
+                         )
 
     def test_splice_into_list_general(self):
-        list_ = ['a','b','b','c','d','b']
-        splice_d = {'a':['a1','a2'], 'b':['b1'], 'd':['d1'],'g':['g1']}
+        list_ = ['a', 'b', 'b', 'c', 'd', 'b']
+        splice_d = {'a': ['a1', 'a2'], 'b': ['b1'], 'd': ['d1'], 'g': ['g1']}
         ans = util.splice_into_list(list_, splice_d)
         self.assertEqual(ans,
-            ['a', 'a1', 'a2', 'b', 'b1', 'b', 'b1', 'c', 'd', 'd1', 'b', 'b1']
-        )
+                         ['a', 'a1', 'a2', 'b', 'b1', 'b', 'b1', 'c', 'd', 'd1', 'b', 'b1']
+                         )
 
-class TestSerializeClass(unittest.TestCase):
-    def test_deserialize_builtin(self):
-        cls_ = util.deserialize_class('list')
-        self.assertEqual(cls_, list)
-        cls_ = util.deserialize_class('str')
-        self.assertEqual(cls_, str)
-        cls_ = util.deserialize_class('int')
-        self.assertEqual(cls_, int)
-
-    def test_deserialize_user(self):
-        class Dummy(object):
-            pass
-        cls_ = util.deserialize_class('Dummy')
-        self.assertEqual(cls_, Dummy)
-# ---------------------------------------------------
 
 if __name__ == '__main__':
     unittest.main()

@@ -20,11 +20,6 @@ begin
 
        model = getenv( "CASENAME")
 
-;       varcode = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/diagnostics/ENSO_MSE/"
-;      vardata = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/wkdir/MDTF_CESM2_1950_2005.v1/ENSO_MSE/MSE_VAR/"
-;      outdir = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/wkdir/MDTF_CESM2_1950_2005.v1/ENSO_MSE/"
-;      model = "CESM2"
-
       Varname = "output"
 
       parameter_name = varcode + "/shared/parameters.txt"

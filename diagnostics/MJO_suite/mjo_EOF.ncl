@@ -18,7 +18,7 @@ vars = (/"pr","rlut","u200","u850","v200","v850"/)
 
 casename = getenv("CASENAME")
 
-file_dir = getenv("WK_DIR")+"/model/netCDF/"
+file_dir = getenv("WORK_DIR")+"/model/netCDF/"
 filename_pr = file_dir+casename+".pr.day.anom.nc"
 filename_rlut = file_dir+casename+".rlut.day.anom.nc"
 filename_u200 = file_dir+casename+".u200.day.anom.nc"

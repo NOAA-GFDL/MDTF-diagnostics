@@ -68,15 +68,15 @@
 #
 import os
 import matplotlib
-matplotlib.use('Agg') # non-X windows backend
+matplotlib.use('Agg')  # non-X windows backend
 # Commands to load third-party libraries. Any code you don't include that's 
 # not part of your language's standard library should be listed in the 
 # settings.jsonc file.
 import xarray as xr                # python library we use to read netcdf files
 import matplotlib.pyplot as plt    # python library we use to make plots
+import sys
 
-
-### 1) Loading model data files: ###############################################
+# 1) Loading model data files: ###############################################
 #
 # The framework copies model data to a regular directory structure of the form
 # <DATADIR>/<frequency>/<CASENAME>.<variable_name>.<frequency>.nc
@@ -88,12 +88,12 @@ import matplotlib.pyplot as plt    # python library we use to make plots
 # script know where the locally downloaded copy of the data for this variable
 # (which we called "tas") is.
 input_path = os.environ["TAS_FILE"]
+print('TAS_FILE is:', input_path)
 
 # command to load the netcdf file
 model_dataset = xr.open_dataset(input_path)
 
-
-### 2) Doing computations: #####################################################
+# 2) Doing computations: #####################################################
 #
 # Diagnostics in the framework are intended to work with native output from a
 # variety of models. For this reason, variable names should not be hard-coded
@@ -106,7 +106,7 @@ time_coord_name = os.environ["time_coord"]
 
 # The only computation done here: compute the time average of input data
 tas_data = model_dataset[tas_var_name]
-model_mean_tas = tas_data.mean(dim = time_coord_name)
+model_mean_tas = tas_data.mean(dim=time_coord_name)
 # Note that we supplied the observational data as time averages, to save space
 # and avoid having to repeat that calculation each time the diagnostic is run.
 
@@ -114,22 +114,23 @@ model_mean_tas = tas_data.mean(dim = time_coord_name)
 # your diagnostic prints to STDOUT will be saved to its own log file.
 print("Computed time average of {tas_var} for {CASENAME}.".format(**os.environ))
 
-
-### 3) Saving output data: #####################################################
+# 3) Saving output data: #####################################################
 #
 # Diagnostics should write output data to disk to a) make relevant results 
 # available to the user for further use or b) to pass large amounts of data
 # between stages of a calculation run as different sub-scripts. Data can be in
 # any format (as long as it's documented) and should be written to the 
-# directory <WK_DIR>/model/netCDF (created by the framework).
+# directory <WORK_DIR>/model/netCDF (created by the framework).
 #
-out_path = "{WK_DIR}/model/netCDF/temp_means.nc".format(**os.environ)
+WORK_DIR = os.environ['WORK_DIR']
+out_dir = os.path.join(WORK_DIR, "model")
+assert os.path.isdir(out_dir), f'{out_dir} not found'
+out_path = os.path.join(out_dir, "temp_means.nc")
 
 # write out time averages as a netcdf file
 model_mean_tas.to_netcdf(out_path)
 
-
-### 4) Saving output plots: ####################################################
+# 4) Saving output plots: ####################################################
 #
 # Plots should be saved in EPS or PS format at <WK_DIR>/<model or obs>/PS 
 # (created by the framework). Plots can be given any filename, but should have 
@@ -138,27 +139,30 @@ model_mean_tas.to_netcdf(out_path)
 
 # Define a python function to make the plot, since we'll be doing it twice and
 # we don't want to repeat ourselves.
+
+
 def plot_and_save_figure(model_or_obs, title_string, dataset):
     # initialize the plot
-    plt.figure(figsize=(12,6))
-    plot_axes = plt.subplot(1,1,1)
+    plt.figure(figsize=(12, 6))
+    plot_axes = plt.subplot(1, 1, 1)
     # actually plot the data (makes a lat-lon colormap)
-    dataset.plot(ax = plot_axes)
+    dataset.plot(ax=plot_axes)
     plot_axes.set_title(title_string)
     # save the plot in the right location
-    plot_path = "{WK_DIR}/{model_or_obs}/PS/example_{model_or_obs}_plot.eps".format(
+    plot_path = "{WORK_DIR}/{model_or_obs}/PS/example_{model_or_obs}_plot.eps".format(
         model_or_obs=model_or_obs, **os.environ
     )
     plt.savefig(plot_path, bbox_inches='tight')
 # end of function
 
 # set an informative title using info about the analysis set in env vars
-title_string = "{CASENAME}: mean {tas_var} ({FIRSTYR}-{LASTYR})".format(**os.environ)
+
+
+title_string = "{CASENAME}: mean {tas_var} ({startdate}-{enddate})".format(**os.environ)
 # Plot the model data:
 plot_and_save_figure("model", title_string, model_mean_tas)
 
-
-### 5) Loading obs data files & plotting obs figures: ##########################
+# 5) Loading obs data files & plotting obs figures: ##########################
 #
 # If your diagnostic uses any model-independent supporting data (eg. reference 
 # or observational data) larger than a few kB of text, it should be provided via
@@ -170,7 +174,7 @@ plot_and_save_figure("model", title_string, model_mean_tas)
 # The following command replaces the substring "{OBS_DATA}" with the value of 
 # the OBS_DATA environment variable.
 input_path = "{OBS_DATA}/example_tas_means.nc".format(**os.environ)
-
+print(input_path)
 # command to load the netcdf file
 obs_dataset = xr.open_dataset(input_path)
 obs_mean_tas = obs_dataset['mean_tas']
@@ -180,7 +184,7 @@ title_string = "Observations: mean {tas_var}".format(**os.environ)
 plot_and_save_figure("obs", title_string, obs_mean_tas)
 
 
-### 6) Cleaning up: ############################################################
+# 6) Cleaning up: ############################################################
 #
 # In addition to your language's normal housekeeping, don't forget to delete any
 # temporary/scratch files you created in step 4).
@@ -188,8 +192,7 @@ plot_and_save_figure("obs", title_string, obs_mean_tas)
 model_dataset.close()
 obs_dataset.close()
 
-
-### 7) Error/Exception-Handling Example ########################################
+# 7) Error/Exception-Handling Example ########################################
 nonexistent_file_path = "{DATADIR}/mon/nonexistent_file.nc".format(**os.environ)
 try:
     nonexistent_dataset = xr.open_dataset(nonexistent_file_path)
@@ -197,6 +200,6 @@ except IOError as error:
     print(error)
     print("This message is printed by the example POD because exception-handling is working!")
 
-
-### 8) Confirm POD executed sucessfully ########################################
+# 8) Confirm POD executed successfully ########################################
 print("Last log message by Example POD: finished successfully!")
+sys.exit(0)

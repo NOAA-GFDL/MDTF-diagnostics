@@ -9,9 +9,11 @@ import os
 import subprocess
 import time
 
-#============================================================
+# ============================================================
 # generate_ncl_plots - call a nclPlotFile via subprocess call
-#============================================================
+# ============================================================
+
+
 def generate_ncl_plots(nclPlotFile):
     """generate_plots_call - call a nclPlotFile via subprocess call
    
@@ -27,13 +29,14 @@ def generate_ncl_plots(nclPlotFile):
         while pipe.poll() is None:
             time.sleep(0.5)
     except OSError as e:
-        print('WARNING',e.errno,e.strerror)
-
+        print('WARNING', e.errno, e.strerror)
     return 0
 
-#============================================================
+# ============================================================
 # Call NCL code here
-#============================================================
+# ============================================================
+
+
 if not os.path.exists(os.path.join(os.environ['DATADIR'], 'day')):
     os.makedirs(os.path.join(os.environ['DATADIR'], 'day'))
 
@@ -52,7 +55,7 @@ generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_lag_lat_lon.ncl")
 print("MJO spectra")
 generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_spectra.ncl")
 
-if os.path.isfile( os.environ["WK_DIR"]+"/model/netCDF/MJO_PC_INDEX.nc"):
+if os.path.isfile( os.environ["WORK_DIR"]+"/model/netCDF/MJO_PC_INDEX.nc"):
     print("WARNING: MJO_PC_INDEX.nc already exists. Not re-running.")
 else:
     generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_EOF_cal.ncl")

@@ -13,15 +13,7 @@ begin
        slat2 = tofloat( getenv("slat2"))
       varcode  = getenv("POD_HOME")
       vardata  = getenv("ENSO_MSE_WKDIR_MSE_VAR")
-      outdir   = getenv("ENSO_MSE_WKDIR") 
-
-;       varcode = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/diagnostics/ENSO_MSE/"
-;      vardata = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/wkdir/MDTF_CESM2_1950_2005.v0/ENSO_MSE/MSE_VAR/"
-;      outdir = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/wkdir/MDTF_CESM2_1950_2005.v0/ENSO_MSE/"
-;      slon1 = 160.
-;      slon2 = 200.
-;      slat1 = -10.
-;      slat2 =   5.
+      outdir   = getenv("ENSO_MSE_WKDIR")
 
       model = " "
       Varname = "output"

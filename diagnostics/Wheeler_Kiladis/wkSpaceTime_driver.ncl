@@ -107,7 +107,7 @@ begin
   latBound = 15
 ;  latBound = stringtointeger(getenv("LATBND"))
 
-  diro     = getenv("WK_DIR")+"/model/PS/"     ; output dir: location of plots
+  diro     = getenv("WORK_DIR")+"/model/PS/"     ; output dir: location of plots
   print ("writing to "+diro)
 ;-------------------------------------------------------------------
 ; spectral input params for wkSpaceTime
@@ -182,8 +182,8 @@ begin
   latN    = latBound
   latS    =-latBound ; make symmetric about the equator
 
-  yr1 = stringtointeger(getenv("FIRSTYR"))
-  yr2 = stringtointeger(getenv("LASTYR"))
+  yr1 = stringtointeger(getenv("startdate"))
+  yr2 = stringtointeger(getenv("enddate"))
   f=addfile(fili,"r")
 
   ; DRB: should move all the time/calendar stuff to a function

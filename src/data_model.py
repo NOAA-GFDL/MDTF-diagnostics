@@ -8,11 +8,12 @@ import abc
 import dataclasses as dc
 import itertools
 import typing
+import collections
 from src import util
 import src.units  # fully qualify name to reduce confusion with "units" attributes
-import src.core
 import logging
 _log = logging.getLogger(__name__)
+
 
 class AbstractDMCoordinate(abc.ABC):
     """Defines interface (set of attributes) for :class:`DMCoordinate` objects.
@@ -73,6 +74,7 @@ class AbstractDMCoordinate(abc.ABC):
         """
         pass
 
+
 class AbstractDMDependentVariable(abc.ABC):
     """Defines interface (set of attributes) for "dependent variables" (data
     defined as a function of one or more dimension coordinates), which inherit
@@ -110,37 +112,10 @@ class AbstractDMDependentVariable(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def all_axes(self): pass
-
-    @property
-    @abc.abstractmethod
-    def X(self):
-        """X axis coordinate of variable, if defined."""
-        pass
-
-    @property
-    @abc.abstractmethod
-    def Y(self):
-        """Y axis coordinate of variable, if defined."""
-        pass
-
-    @property
-    @abc.abstractmethod
-    def Z(self):
-        """Z axis coordinate of variable, if defined."""
-        pass
-
-    @property
-    @abc.abstractmethod
-    def T(self):
-        """T axis coordinate of variable, if defined."""
-        pass
-
-    @property
-    @abc.abstractmethod
     def is_static(self):
         """Whether the variable has time dependence (bool)."""
         pass
+
 
 class AbstractDMCoordinateBounds(AbstractDMDependentVariable):
     """Defines interface (set of attributes) for :class:`DMCoordinateBounds`
@@ -154,11 +129,13 @@ class AbstractDMCoordinateBounds(AbstractDMDependentVariable):
 
 # ------------------------------------------------------------------------------
 
+
 _AXIS_NAMES = ('X', 'Y', 'Z', 'T')
 _ALL_AXIS_NAMES = _AXIS_NAMES + ('BOUNDS', 'OTHER')
 
+
 @util.mdtf_dataclass
-class DMBoundsDimension(object):
+class DMBoundsDimension(AbstractDMCoordinate):
     """Placeholder object to represent the bounds dimension of a
     :class:`DMCoordinateBounds` object. Not a dimension coordinate, and strictly
     speaking we should make another set of classes for dimensions.
@@ -186,8 +163,9 @@ class DMBoundsDimension(object):
         """
         return False
 
+
 @util.mdtf_dataclass
-class _DMCoordinateShared(object):
+class _DMCoordinateShared:
     """Fields common to all :class:`AbstractDMCoordinate` child classes which
     aren't fixed to particular values.
 
@@ -198,7 +176,8 @@ class _DMCoordinateShared(object):
     units: src.units.Units = util.MANDATORY
     axis: str = 'OTHER'
     bounds_var: AbstractDMCoordinateBounds = None
-    value: typing.Union[int, float] = None
+    value: typing.Union[int, float, str] = None
+    need_bounds: bool = False
 
     @property
     def bounds(self):
@@ -216,7 +195,7 @@ class _DMCoordinateShared(object):
     def has_bounds(self):
         """Whether the coordinate has an associated bounds variable (bool).
         """
-        return (self.bounds_var is not None)
+        return self.bounds_var is not None
 
     @property
     def is_scalar(self):
@@ -224,7 +203,7 @@ class _DMCoordinateShared(object):
         <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#scalar-coordinate-variables>`__
         (bool).
         """
-        return (self.value is not None)
+        return self.value is not None
 
     def make_scalar(self, new_value):
         """Returns a copy of the coordinate, converted to a scalar coordinate
@@ -232,8 +211,9 @@ class _DMCoordinateShared(object):
         """
         return dc.replace(self, value=new_value)
 
+
 @util.mdtf_dataclass
-class DMCoordinate(_DMCoordinateShared):
+class DMCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
     """Class to describe a single coordinate variable (dimension coordinate or
     scalar coordinate, in the sense used by the `CF conventions
     <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#terminology>`__).
@@ -247,16 +227,16 @@ class DMCoordinate(_DMCoordinateShared):
     units: src.units.Units = util.MANDATORY
     """Coordinate units (str or :class:`~src.units.Units`)."""
     axis: str = 'OTHER'
-    """Coordinate axis identifier ('X', 'Y', etc.)"""
+
 
 @util.mdtf_dataclass
-class DMLongitudeCoordinate(_DMCoordinateShared):
+class DMXCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
     """Class to describe a longitude dimension coordinate.
     """
     name: str = util.MANDATORY
     """Coordinate name."""
     # bounds_var: AbstractDMCoordinateBounds
-    # [scalar] value: int or float
+    # [scalar] value: int, float, or str
     standard_name: str = util.MANDATORY
     """Coordinate CF standard name."""
     units: src.units.Units = 'degrees_east'
@@ -264,30 +244,32 @@ class DMLongitudeCoordinate(_DMCoordinateShared):
     axis: str = 'X'
     """Coordinate axis identifier. Always 'X' for this coordinate."""
 
+
 @util.mdtf_dataclass
-class DMLatitudeCoordinate(_DMCoordinateShared):
-    """Class to describe a latitude dimension coordinate.
+class DMYCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
+    """Class to describe a longitude dimension coordinate.
     """
     name: str = util.MANDATORY
-    """Coordinate name; defaults to 'lat'."""
+    """Coordinate name."""
     # bounds_var: AbstractDMCoordinateBounds
-    # [scalar] value: int or float
+    # [scalar] value: int, float, or str
     standard_name: str = util.MANDATORY
     """Coordinate CF standard name."""
-    units: src.units.Units = 'degrees_north'
+    units: src.units.Units = 'degrees_east'
     """Coordinate units (str or :class:`~src.units.Units`)."""
     axis: str = 'Y'
     """Coordinate axis identifier. Always 'Y' for this coordinate."""
 
+
 @util.mdtf_dataclass
-class DMVerticalCoordinate(_DMCoordinateShared):
+class DMVerticalCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
     """Class to describe a non-parametric vertical coordinate (height or depth),
     following the `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#vertical-coordinate>`__.
     """
     name: str = util.MANDATORY
     """Coordinate name."""
     # bounds_var: AbstractDMCoordinateBounds
-    # [scalar] value: int or float
+    # [scalar] value: int, float, or str
     standard_name: str = util.MANDATORY
     """Coordinate CF standard name."""
     units: src.units.Units = "1" # dimensionless vertical coords OK
@@ -296,8 +278,9 @@ class DMVerticalCoordinate(_DMCoordinateShared):
     """Coordinate axis identifier. Always 'Z' for this coordinate."""
     positive: str = util.MANDATORY
 
+
 @util.mdtf_dataclass
-class DMParametricVerticalCoordinate(DMVerticalCoordinate):
+class DMParametricVerticalCoordinate(DMVerticalCoordinate, AbstractDMCoordinate):
     """Class to describe `parametric vertical coordinates
     <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#parametric-vertical-coordinate>`__.
     Note that the variable names appearing in ``formula_terms`` aren't parsed
@@ -312,8 +295,9 @@ class DMParametricVerticalCoordinate(DMVerticalCoordinate):
     # model.
     formula_terms: str = dc.field(default=None, compare=False)
 
+
 @util.mdtf_dataclass
-class DMGenericTimeCoordinate(_DMCoordinateShared):
+class DMGenericTimeCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
     """Applies to collections of variables, which may be at different time
     frequencies (or other attributes).
     """
@@ -338,7 +322,7 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
         unique -- we may be using a different DateFrequency depending on the
         data source.
         """
-        return (self.range == util.FXDateRange)
+        return self.range == util.FXDateRange
 
     @classmethod
     def from_instances(cls, *t_coords):
@@ -353,8 +337,9 @@ class DMGenericTimeCoordinate(_DMCoordinateShared):
             raise ValueError("mismatch")
         return t0
 
+
 @util.mdtf_dataclass
-class DMTimeCoordinate(DMGenericTimeCoordinate):
+class DMTimeCoordinate(DMGenericTimeCoordinate, AbstractDMCoordinate):
     name: str = util.MANDATORY
     """Coordinate name."""
     # bounds_var: AbstractDMCoordinateBounds
@@ -376,12 +361,13 @@ class DMTimeCoordinate(DMGenericTimeCoordinate):
     def from_instances(cls, *t_coords):
         raise NotImplementedError
 
+
 # Use the "register" method, instead of inheritance, to associate these classes
 # with their corresponding abstract interfaces, because Python dataclass fields
 # aren't recognized as implementing an abc.abstractmethod.
 AbstractDMCoordinate.register(DMCoordinate)
-AbstractDMCoordinate.register(DMLongitudeCoordinate)
-AbstractDMCoordinate.register(DMLatitudeCoordinate)
+AbstractDMCoordinate.register(DMXCoordinate)
+AbstractDMCoordinate.register(DMYCoordinate)
 AbstractDMCoordinate.register(DMVerticalCoordinate)
 AbstractDMCoordinate.register(DMParametricVerticalCoordinate)
 AbstractDMCoordinate.register(DMGenericTimeCoordinate)
@@ -389,7 +375,7 @@ AbstractDMCoordinate.register(DMTimeCoordinate)
 AbstractDMCoordinate.register(DMBoundsDimension)
 
 
-def coordinate_from_struct(d, class_dict=None, **kwargs):
+def coordinate_from_struct(d: collections.OrderedDict, class_dict=None, **kwargs):
     """Attempt to instantiate the correct :class:`DMCoordinate` class based on
     information in dict *d* (read from JSON file).
 
@@ -401,39 +387,31 @@ def coordinate_from_struct(d, class_dict=None, **kwargs):
     """
     if class_dict is None:
         class_dict = {
-            'X': DMLongitudeCoordinate,
-            'Y': DMLatitudeCoordinate,
+            'X': DMXCoordinate,
+            'Y': DMYCoordinate,
             'Z': DMVerticalCoordinate,
             'T': DMGenericTimeCoordinate,
             'OTHER': DMCoordinate
         }
-    standard_names = {
-        'longitude': 'X',
-        'latitude': 'Y',
-        'time': 'T'
-    }
     try:
         ax = 'OTHER'
-        if 'axis' in d:
+        if 'axis' in d and any(d['axis'].strip()):
             ax = d['axis']
-        else:
-            # try to match an axis value (X,Y,T) to the dimension. The standard name of the dimension specified
-            # in the input json file must contain the word "longitude", "latitude", or "time"
-            for k in standard_names.keys():
-                if k in d.get('standard_name', ""):
-                    ax = standard_names[k]
+        elif 'time' in d['standard_name'].lower():
+            ax = 'T'
         return util.coerce_to_dataclass(d, class_dict[ax], **kwargs)
     except Exception:
         raise ValueError(f"Couldn't parse coordinate: {repr(d)}")
 
 
-class _DMPlaceholderCoordinateBase(object):
+class _DMPlaceholderCoordinateBase:
     """Dummy base class for placeholder coordinates. Placeholder coordinates are
     only used in instantiating :class:`~src.core.FieldlistEntry` objects: they're
     replaced by the appropriate translated coordinates when that object is used
     to create a :class:`~src.core.TranslatedVarlistEntry` object.
     """
     pass
+
 
 @util.mdtf_dataclass
 class DMPlaceholderCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
@@ -452,6 +430,7 @@ class DMPlaceholderCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase)
     axis: str = 'OTHER'
     """Coordinate axis identifier ('X', 'Y', etc.)"""
 
+
 @util.mdtf_dataclass
 class DMPlaceholderXCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
     """Dummy base class for placeholder X axis coordinates. Placeholder coordinates are
@@ -469,9 +448,10 @@ class DMPlaceholderXCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase
     axis: str = 'X'
     """Coordinate axis identifier ('X', 'Y', etc.)"""
 
+
 @util.mdtf_dataclass
 class DMPlaceholderYCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
-    """Dummy base class for placeholder Y axis coordinates. Placeholder coordinates are
+    """Dummy base class for placeholder X axis coordinates. Placeholder coordinates are
     only used in instantiating :class:`~src.core.FieldlistEntry` objects: they're
     replaced by the appropriate translated coordinates when that object is used
     to create a :class:`~src.core.TranslatedVarlistEntry` object.
@@ -485,6 +465,7 @@ class DMPlaceholderYCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase
     """Coordinate units (str or :class:`~src.units.Units`)."""
     axis: str = 'Y'
     """Coordinate axis identifier ('X', 'Y', etc.)"""
+
 
 @util.mdtf_dataclass
 class DMPlaceholderZCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
@@ -503,6 +484,7 @@ class DMPlaceholderZCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase
     axis: str = 'Z'
     """Coordinate axis identifier ('X', 'Y', etc.)"""
     positive: str = NotImplemented
+
 
 @util.mdtf_dataclass
 class DMPlaceholderTCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase):
@@ -532,13 +514,13 @@ class DMPlaceholderTCoordinate(_DMCoordinateShared, _DMPlaceholderCoordinateBase
         unique -- we may be using a different DateFrequency depending on the
         data source.
         """
-        return (self.range == util.FXDateRange)
+        return self.range == util.FXDateRange
 
 
 # ------------------------------------------------------------------------------
 
 @util.mdtf_dataclass
-class _DMDimensionsMixin(object):
+class _DMDimensionsMixin:
     """Lookups for the dimensions, and associated dimension coordinates,
     associated with an array (eg a variable or auxiliary coordinate.) Needs to
     be included as a parent class of a dataclass.
@@ -564,7 +546,7 @@ class _DMDimensionsMixin(object):
 
     @property
     def dim_axes(self):
-        """Retrun dict mapping axes labels ('X', 'Y', etc.) to corresponding
+        """Return dict mapping axes labels ('X', 'Y', etc.) to corresponding
         dimension coordinate objects.
         """
         return self.build_axes(self.dims, verify=False)
@@ -597,7 +579,7 @@ class _DMDimensionsMixin(object):
     @property
     def is_static(self):
         """Whether the variable has time dependence (bool)."""
-        return (self.T is None) or (self.T.is_static)
+        return (self.T is None) or self.T.is_static
 
     def get_scalar(self, ax_name):
         """If the axis label *ax_name* is a scalar coordinate, return the
@@ -620,15 +602,19 @@ class _DMDimensionsMixin(object):
                 if c.axis != 'OTHER' and c.axis in verify_d:
                     err_name = getattr(self, 'name', self.__class__.__name__)
                     raise ValueError((f"Duplicate definition of {c.axis} axis in "
-                        f"{err_name}: {c}, {verify_d[c.axis]}"))
+                                      f"{err_name}: {c}, {verify_d[c.axis]}"))
+                try:
+                    verify_d.get(c.axis)
+                except Exception as exc:
+                    self.log.error(f"{c.axis} already exists %s. Caught exception:", exc)
                 verify_d[c.axis] = c
                 if c.axis in _AXIS_NAMES:
                     d[c.axis] = c
             return d
         else:
             # assume we've already verified, so use a quicker version of same logic
-            return {c.axis: c for c in itertools.chain(*coords) \
-                if c.axis in _AXIS_NAMES}
+            return {c.axis: c for c in itertools.chain(*coords)
+                    if c.axis in _AXIS_NAMES}
 
     def change_coord(self, ax_name, new_class=None, **kwargs):
         """Replace attributes on a given coordinate, but also optionally cast
@@ -668,13 +654,15 @@ class _DMDimensionsMixin(object):
         self.dims[self.dims.index(old_coord)] = new_coord
         self.__post_init__(None) # rebuild axes dicts
 
+
 @util.mdtf_dataclass
-class DMDependentVariable(_DMDimensionsMixin):
+class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
     """Base class for any "dependent variable": all non-dimension-coordinate
     information that depends on one or more dimension coordinates.
     """
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
+    realm: str = ""
     units: src.units.Units = ""  # not MANDATORY since may be set later from var translation
     modifier: str = ""
     component: str = ""
@@ -689,11 +677,6 @@ class DMDependentVariable(_DMDimensionsMixin):
         super(DMDependentVariable, self).__post_init__(coords)
         # raises exceptions if axes are inconsistent
         _ = self.build_axes(self.dims, self.scalar_coords, verify=True)
-        # if specified, verify that POD modifier attributes are valid
-        if not self.modifier.lower().strip() in (None, ''):
-            _str = src.core.VariableTranslator()
-            if self.modifier not in _str.modifier:
-                raise ValueError(f"Modifier {self.modifier} is not a recognized value.")
 
     @property
     def full_name(self):
@@ -748,11 +731,10 @@ class DMDependentVariable(_DMDimensionsMixin):
         new_dims.remove(dim)
         new_scalars = self.scalar_coords.copy()
         new_scalars.add(new_dim)
-        return dc.replace(
-            self,
-            coords=(new_dims + new_scalars),
-            **kwargs
-        )
+        return dc.replace(self,
+                          coords=(new_dims + new_scalars),
+                          **kwargs
+                          )
 
     def remove_scalar(self, ax, position=-1, **kwargs):
         """Metadata operation that's the inverse of :meth:`add_scalar`. Given an
@@ -773,8 +755,15 @@ class DMDependentVariable(_DMDimensionsMixin):
             **kwargs
         )
 
+    def dims(self):
+        pass
+
+    def scalar_coords(self):
+        pass
+
+
 @util.mdtf_dataclass
-class DMAuxiliaryCoordinate(DMDependentVariable):
+class DMAuxiliaryCoordinate(DMDependentVariable, AbstractDMDependentVariable):
     """Class to describe `auxiliary coordinate variables
     <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#terminology>`__,
     as defined in the CF conventions. An example would be lat or lon for data
@@ -782,8 +771,9 @@ class DMAuxiliaryCoordinate(DMDependentVariable):
     """
     pass
 
+
 @util.mdtf_dataclass
-class DMCoordinateBounds(DMAuxiliaryCoordinate):
+class DMCoordinateBounds(DMAuxiliaryCoordinate, AbstractDMDependentVariable):
     """Class describing bounds on a dimension coordinate.
     """
     def __post_init__(self, coords=None):
@@ -791,11 +781,11 @@ class DMCoordinateBounds(DMAuxiliaryCoordinate):
         # validate dimensions
         if self.scalar_coords:
             raise ValueError(("Attempted to create DMCoordinateBounds "
-                f"{self.name} with scalar coordinates: {self.scalar_coords}."))
+                              f"{self.name} with scalar coordinates: {self.scalar_coords}."))
         if len(self.dims) != 2 or \
-            'BOUNDS' not in {c.axis for c in self.dims}:
+                'BOUNDS' not in {c.axis for c in self.dims}:
             raise ValueError(("Attempted to create DMCoordinateBounds "
-                f"{self.name} with improper dimensions: {self.dims}."))
+                              f"{self.name} with improper dimensions: {self.dims}."))
 
     @property
     def coord(self):
@@ -819,8 +809,9 @@ class DMCoordinateBounds(DMAuxiliaryCoordinate):
         coord.bounds_var = coord_bounds
         return coord_bounds
 
+
 @util.mdtf_dataclass
-class DMVariable(DMDependentVariable):
+class DMVariable(DMDependentVariable, AbstractDMDependentVariable):
     """Class to describe general properties of data variables.
     """
     # name: str             # fields inherited from DMDependentVariable
@@ -831,6 +822,7 @@ class DMVariable(DMDependentVariable):
     # scalar_coords: list
     pass
 
+
 # Use the "register" method, instead of inheritance, to associate these classes
 # with their corresponding abstract interfaces, because Python dataclass fields
 # aren't recognized as implementing an abc.abstractmethod.
@@ -838,6 +830,7 @@ AbstractDMDependentVariable.register(DMDependentVariable)
 AbstractDMDependentVariable.register(DMAuxiliaryCoordinate)
 AbstractDMDependentVariable.register(DMVariable)
 AbstractDMCoordinateBounds.register(DMCoordinateBounds)
+
 
 @util.mdtf_dataclass
 class DMDataSet(_DMDimensionsMixin):
@@ -900,6 +893,16 @@ class DMDataSet(_DMDimensionsMixin):
         excluding coordinate bounds.
         """
         yield from itertools.chain(self.vars, self.aux_coords)
+
+    def iter_vars_only(self, active=None):
+        """Generator iterating over variables
+        """
+        iter_ = yield from itertools.chain(self.vars)
+        if active:
+            iter_ = filter((lambda x: x.status == util.ObjectStatus.ACTIVE), self.vars)
+            yield from list(iter_)
+        else:
+            return iter_
 
     def _classify(self, v):
         assert isinstance(v, DMDependentVariable)

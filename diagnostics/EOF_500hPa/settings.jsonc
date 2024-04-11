@@ -12,7 +12,7 @@
   "settings" : {
     "driver" : "EOF_500hPa.py",
     "long_name" : "EOF of geopotential height anomalies of 500 hPa",
-    "realm" : "atmos",
+    "convention": "cesm",
     "description" : "EOF of geopotential height anomalies for 500 hPa",
     "runtime_requirements": {
       "python3": [],
@@ -23,16 +23,26 @@
     "frequency": "mon"
   },
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "x"
+           },
     "plev": {
       "standard_name": "air_pressure",
+      "realm": "atmos",
       "units": "hPa",
       "positive": "down",
       "axis": "Z"
     },
     "lev": {
       "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate",
+      "realm": "atmos",
       "units": "level",
       "positive": "down",
       "axis": "Z"
@@ -45,6 +55,7 @@
     "zg": {
       "standard_name": "geopotential_height",
       "units": "m",
+      "realm": "atmos",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"plev": 500},
       "alternates": ["zg_hybrid_sigma", "ps"]
@@ -52,12 +63,14 @@
     "zg_hybrid_sigma": {
       "standard_name": "geopotential_height",
       "units": "m",
+      "realm": "atmos",
       "dimensions": ["time", "lev", "lat", "lon"],
       "requirement": "alternate"
     },
     "ps": {
       "standard_name": "surface_air_pressure",
       "units": "Pa",
+      "realm": "atmos",
       "dimensions": ["time", "lat", "lon"],
       "requirement": "alternate"
     }

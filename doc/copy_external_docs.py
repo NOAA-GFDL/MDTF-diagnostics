@@ -16,7 +16,7 @@ documentation files, stores alongside individual PODs and site files in
 """
 import os
 import shutil
-from sphinx.util import status_iterator
+import sphinx.util
 
 # generate POD toc source file on-the-fly
 _pod_toc_header = """
@@ -46,6 +46,7 @@ Tools documentation
 
 """
 
+
 def find_copy_make_toc(type_, docs_dir, search_root, header):
     """Look for documentation files, copy them to the build directory, and
     generate toc file linking to pod/site documentation.
@@ -55,6 +56,7 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
         search_root (str): Directory to search for PODs or sites.
         header (str): header of the toc file.
     """
+
     def _docname(item):
         """Helper for status_iterator()."""
         return str(os.path.basename(item))
@@ -66,19 +68,15 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
         os.makedirs(sphinx_dir)
 
     # find PODs or sites as directories under search_root
-    entries = [x for x in os.listdir(search_root) \
-        if os.path.isdir(os.path.join(search_root, x)) and x[0].isalnum()
-    ]
+    entries = [x for x in os.listdir(search_root)
+               if os.path.isdir(os.path.join(search_root, x)) and x[0].isalnum()
+               ]
     # Case-insensitive alpha sort
-    entries = sorted(entries, key=(lambda s: s.lower())) # handles unicode
+    entries = sorted(entries, key=(lambda s: s.lower()))  # handles unicode
     # put example POD documentation first
     if 'example' in entries:
         entries.remove('example')
         entries.insert(0, 'example')
-    # put local site documentation first
-    elif 'local' in entries:
-        entries.remove('local')
-        entries.insert(0, 'local')
 
     # find documentation files
     # = all non-PDF files (.rst and graphics) in /doc subdirectory
@@ -92,7 +90,7 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
             ])
 
     # copy the docs we found
-    iter_ = status_iterator(
+    iter_ = sphinx.util.display.status_iterator(
         docs, 'Copying {} files... '.format(type_),
         color='purple', stringify_func=_docname
     )

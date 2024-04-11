@@ -69,17 +69,15 @@
 
   // Location of the Anaconda/miniconda or micromamba installation to use for managing
   // dependencies (path returned by running `conda info --base` or `micromamba info`.)
-  //"conda_root": "/net/jml/miniconda3",
-  "conda_root": "/Users/jess/micromamba",
+  "conda_root": "",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in conda_root/envs
-  //"conda_env_root": "/net/jml/miniconda3/envs",
-  "conda_env_root": "/Users/jess/micromamba/envs",
+  "conda_env_root": "",
 
   // Location of the micromamba executable. Required if using micromamba
-  "micromamba_exe": "/Users/jess/.local/bin/micromamba",
+  "micromamba_exe": "",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
@@ -112,7 +110,7 @@
 
   // List with custom preprocessing script(s) to run on data
   // Place these scripts in the user_scripts directory of your copy of the MDTF-diagnostics repository
-  "user_pp_scripts" : ["example_pp_script.py"],
+  "user_pp_scripts" : [],
 
   // Settings used in debugging:
 

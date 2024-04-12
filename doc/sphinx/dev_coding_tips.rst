@@ -58,6 +58,7 @@ Python: General
      * - Construct a path from *dir1*, *dir2*, ..., *filename*
        - `os.path.join <https://docs.python.org/3.11/library/os.path.html?highlight=os%20path#os.path.join>`__
        \(*dir1*, *dir2*, ..., *filename*)
+
      * - Split a *path* into directory and filename
        - `os.path.split <https://docs.python.org/3.11/library/os.path.html?highlight=os%20path#os.path.split>`__
        \(*path*) and related functions in `os.path <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path>`__
@@ -93,8 +94,10 @@ NumPy and xarray both have extensive documentation and many tutorials, such as:
     `intermediate <https://numpy.org/doc/stable/user/quickstart.html>`__ tutorials; xarray's
     `overview <http://xarray.pydata.org/en/stable/quick-overview.html>`__ and climate and weather
     `examples <http://xarray.pydata.org/en/stable/examples.html>`__;
+
   + A `demonstration <https://rabernat.github.io/research_computing/xarray.html>`__ of the features of xarray using
   Earth science data;
+
   + The 2020 SciPy conference has open-source, interactive
     `tutorials <https://www.scipy2020.scipy.org/tutorial-information>`__
     you can work through on your own machine or fully online using `Binder <https://mybinder.org/>`__.
@@ -113,8 +116,10 @@ NumPy and xarray both have extensive documentation and many tutorials, such as:
   We refer to the tutorials above for instructions, and to the following blog posts that discuss this specific issue:
 
   + "`Look Ma, no for-loops <https://realpython.com/numpy-array-programming/>`__," by Brad Solomon;
+
   + "`Turn your conditional loops to Numpy vectors <https://towardsdatascience.com/data-science-with-python-turn-your-conditional-loops-to-numpy-vectors-9484ff9c622e>`__,"
   by Tirthajyoti Sarkar;
+
   + "`'Vectorized' Operations: Optimized Computations on NumPy Arrays <https://www.pythonlikeyoumeanit.com/Module3_IntroducingNumpy/VectorizedOperations.html>`__",
   part of "`Python like you mean it <https://www.pythonlikeyoumeanit.com/>`__," a free resource by Ryan Soklaski.
 
@@ -159,8 +164,10 @@ NumPy and xarray both have extensive documentation and many tutorials, such as:
   See the following references for more information:
 
   + The NumPy `documentation <https://numpy.org/doc/stable/reference/arrays.indexing.html>`__ on indexing;
+
   + "`Numpy Views vs Copies: Avoiding Costly Mistakes <https://www.jessicayung.com/numpy-views-vs-copies-avoiding-costly-mistakes/>`__,"
   by Jessica Yung;
+
   + "`How can I tell if NumPy creates a view or a copy? <https://stackoverflow.com/questions/11524664/how-can-i-tell-if-numpy-creates-a-view-or-a-copy>`__"
   on stackoverflow.
 

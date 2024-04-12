@@ -1,4 +1,4 @@
-.. _ref-dev-settings-quick:
+.. _ref-pod-settings:
 
 POD settings file summary
 =========================

@@ -79,9 +79,7 @@ in addition to the ``calendar`` attribute on the time coordinate:
 Many utilities exist for editing metadata in netCDF headers. Popular examples are the
 `ncatted <http://nco.sourceforge.net/nco.html#ncatted>`__ tool in the `NCO <http://nco.sourceforge.net/>`__
 utilities and the `setattribute <https://code.mpimet.mpg.de/projects/cdo/embedded/cdo_refcard.pdf>`__ operator in
-`CDO <https://code.mpimet.mpg.de/projects/cdo>`__, as well as the functionality provided by xarray itself. Additionally,
-the :ref:`ref-data-source-explictfile` provides limited functionality for overwriting metadata attributes.
-
+`CDO <https://code.mpimet.mpg.de/projects/cdo>`__, as well as the functionality provided by xarray itself.
 
 xarray reference implementation
 -------------------------------

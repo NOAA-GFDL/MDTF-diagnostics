@@ -1,5 +1,5 @@
 Development Cheatsheet
-==============================
+======================
 
 Creating and submitting a POD
 -----------------------------
@@ -14,6 +14,7 @@ Creating and submitting a POD
    - Name your POD, make a directory for your POD in MDTF-diagnostics/diagnostics, and move your code to your POD
      directory
    - ``cp`` your observational data to ``MDTF_diagnostics/../inputdata/obs_data/[YOUR POD NAME]``
+
 2. Link your POD code into the framework
    - Modify your POD's driver script (e.g, ``driver.py``) to interface with your code
    - Modify pod's ``settings.jsonc`` to specify variables that will be passed to the framework

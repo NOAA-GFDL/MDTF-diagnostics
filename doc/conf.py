@@ -28,7 +28,8 @@ code_root = os.path.abspath(os.path.join(cwd, '..'))
 sys.path.insert(0, os.path.abspath(cwd))
 sys.path.insert(0, code_root)
 sys.path.insert(0, os.path.join(code_root, 'src'))
-
+print("code_root", code_root)
+print("CWD", cwd)
 # AutoStructify needed for getting full Sphinx features from markdown (.md) files
 # https://recommonmark.readthedocs.io/en/latest/auto_structify.html
 import recommonmark
@@ -153,7 +154,7 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 # Sphinx automatically copies referenced image files.
-#html_static_path = ['_static']
+# html_static_path = ['_static']
 
 html_logo = 'img/logo_MDTF.png'
 
@@ -170,9 +171,9 @@ html_logo = 'img/logo_MDTF.png'
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
 #
-html_sidebars = {
-    '**': ['about.html', 'navigation.html', 'relations.html', 'searchbox.html']
-}
+#html_sidebars = {
+#    '**': ['navigation.html', 'relations.html', 'searchbox.html']
+#}
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
@@ -273,7 +274,7 @@ def skip_members_handler(app, what, name, obj, skip, options):
     def _get_class_that_defined_method(meth):
         # https://stackoverflow.com/a/25959545
         if inspect.ismethod(meth) or (
-                inspect.isbuiltin(meth) and getattr(meth, '__self__', None) is not None \
+                inspect.isbuiltin(meth) and getattr(meth, '__self__', None) is not None
                 and getattr(meth.__self__, '__class__', None)
         ):
             for cls in inspect.getmro(meth.__self__.__class__):
@@ -341,7 +342,7 @@ def skip_members_handler(app, what, name, obj, skip, options):
 
 def run_apidoc(_):
     ignore_paths = ["**/test*"]
-    argv = ["--force", "--no-toc", "--separate", "-o", "./sphinx", "../src"
+    argv = ["--force", "--no-toc", "--separate", "-o", "./doc/sphinx", "./src"
             ] + ignore_paths
 
     try:
@@ -353,6 +354,7 @@ def run_apidoc(_):
         from sphinx import apidoc
         argv.insert(0, apidoc.__file__)
         apidoc.main(argv)
+
 
 # Napoleon configurations
 
@@ -377,6 +379,7 @@ intersphinx_mapping = {
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
 
 # == Overall Sphinx app setup hook =============================================
 

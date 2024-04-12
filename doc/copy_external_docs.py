@@ -85,7 +85,7 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
         doc_dir = os.path.join(search_root, entry, 'doc')
         if os.path.isdir(doc_dir):
             docs.extend([
-                os.path.join(doc_dir, x) for x in os.listdir(doc_dir) \
+                os.path.join(doc_dir, x) for x in os.listdir(doc_dir)
                 if os.path.isfile(os.path.join(doc_dir, x)) and not x.endswith('.pdf')
             ])
 
@@ -121,7 +121,7 @@ def config_inited(app, config):
 
     # Process tools docs: find, copy, make toc
     tools_root = os.path.abspath(os.path.join(cwd, '..', 'tools'))
-    find_copy_make_toc("tools", cwd, tools_root, _tools_toc_header)
+    find_copy_make_toc("tool", cwd, tools_root, _tools_toc_header)
 
 
 def setup(app):

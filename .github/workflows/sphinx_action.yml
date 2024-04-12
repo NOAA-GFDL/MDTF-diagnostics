@@ -12,4 +12,3 @@ jobs:
     - uses: ammaraskar/sphinx-action@master
       with:
         docs-folder: "doc/"
-        build-command: "sphinx-build ./doc ./doc/_build -c ./doc -v"

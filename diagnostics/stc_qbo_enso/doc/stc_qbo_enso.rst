@@ -9,7 +9,7 @@
    https://docutils.sourceforge.io/docs/user/rst/quickref.html#section-structure
 
 Stratosphere-Troposphere Coupling: QBO and ENSO stratospheric teleconnections
-================================
+=============================================================================
 
 Last update: 2023-10-03
 

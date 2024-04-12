@@ -9,7 +9,6 @@ import functools
 import itertools
 import re
 import warnings
-from abc import ABC
 
 import cftime  # believe explict import needed for cf_xarray date parsing?
 import cf_xarray
@@ -390,8 +389,7 @@ with warnings.catch_warnings():
 
     @xr.register_dataset_accessor("cf")
     class MDTFCFDatasetAccessor(
-        MDTFCFDatasetAccessorMixin, cf_xarray.accessor.CFDatasetAccessor, ABC
-    ):
+        MDTFCFDatasetAccessorMixin, cf_xarray.accessor.CFDatasetAccessor):
         """Accessor that's registered (under the attribute ``cf``) for xarray
         Datasets. Combines methods in :class:`MDTFCFDatasetAccessorMixin` and the
         cf_xarray Dataset accessor.
@@ -401,8 +399,7 @@ with warnings.catch_warnings():
 
     @xr.register_dataarray_accessor("cf")
     class MDTFCFDataArrayAccessor(
-        MDTFDataArrayAccessorMixin, cf_xarray.accessor.CFDataArrayAccessor, ABC
-    ):
+        MDTFDataArrayAccessorMixin, cf_xarray.accessor.CFDataArrayAccessor):
         """Accessor that's registered (under the attribute ``cf``) for xarray
         DataArrays. Combines methods in :class:`MDTFDataArrayAccessorMixin` and
         the cf_xarray DataArray accessor.

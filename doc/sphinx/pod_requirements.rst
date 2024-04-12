@@ -39,7 +39,7 @@ If you need a new Conda environment, add a new .yml file to ``src/conda/``, and 
 POD settings file
 ^^^^^^^^^^^^^^^^^
 
-The format of this file is described in :doc:`dev_settings_quick` and in more detail in :doc:`ref_settings`.
+The format of this file is described in :doc:`pod_settings`.
 
 POD html template for output
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -48,16 +48,6 @@ The html template will be copied by the framework into the output directory to d
 You should be able to create a new html template by simply copying and modifying the example templates from existing
 PODs even without prior knowledge about html syntax. If you have a
 
-Preprocessing scripts for digested data
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The "digested" supporting data policy is described in :numref:`ref-pod-digested-data`.
-
-For maintainability and provenance purposes, we request that you include the code used to generate your POD's
-"digested" data from raw data sources (any source of data that's permanently hosted).
-This code will not be called by the framework and will not be used by end users, so the restrictions
-and guidelines concerning the POD code don't apply.
-
 
 POD documentation
 ^^^^^^^^^^^^^^^^^
@@ -65,7 +55,6 @@ POD documentation
 The documentation for the framework is automatically generated using
 `sphinx <https://www.sphinx-doc.org/en/master/index.html>`__, which works with files in
 `reStructured text <https://docutils.sourceforge.io/rst.html>`__ (reST, ``.rst``) format.
-In order to include :doc:`documentation for your POD <pod_summary>`, we require that it be in this format.
 
 Use the `example_multicase POD documentation <https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx_pods/example_multicase.html>`__
 as a template for the information required for your POD, by modifying its .rst
@@ -99,16 +88,6 @@ that contains the same items as in the POD documentation, except for the "More a
 - The one-paragraph POD synopsis (in the POD documentation) as well as a link to the full documentation should be
 placed at the top of the html template (e.g., ``example_multicase.html``).
 
-Preprocessing script documentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The "digested" supporting data policy is described in :numref:`ref-pod-digested-data`.
-
-For maintainability purposes, include all information needed for a third party to reproduce your POD's digested data
-from its raw sources in the ``doc`` directory. This information is not published on the documentation website
-and can be in any format. In particular, please document the raw data sources used (DOIs/versioned references preferred)
-and the dependencies/build instructions (eg. conda environment) for your preprocessing script.
-
 
 Sample and supporting data submission
 -------------------------------------
@@ -123,7 +102,7 @@ Digested observational or supporting data
 Create a directory under ``inputdata/obs_data/`` named after the short name
 of your POD, and put all your *digested* observation data in (or more
 generally, any quantities that are independent of the model being
-analyzed).  The "digested" data policy is described in :numref:`ref-pod-digested-data`.
+analyzed).
 
 - Requirements
   - Digested data should be in the form of numerical data, not figures.

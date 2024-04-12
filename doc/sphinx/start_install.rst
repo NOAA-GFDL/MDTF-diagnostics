@@ -68,6 +68,7 @@ It contains the following subdirectories:
 - ``shared/``: shared code and resources for use by both the framework and PODs.
 - ``sites/``: site-specific code and configuration files.
 - ``src/``: source code of the framework itself.
+- ``submodules/``: 3rd party software included in the framework workflow as submodules
 - ``templates/``: runtime configuration template files
 - ``tests/``: general tests for the framework.
 - ``tools/``: helper scripts for building data catalogs and data management
@@ -171,10 +172,6 @@ will re-define the default locations of the conda executable and environment dir
 .bashrc`, or `.cshrc` file if you have previously used a version of conda managed by your institution,
 so you will have to re-create any environments made using central conda installations.
 
-If these space requirements are prohibitive, we provide an alternate method of installation which makes
-no use of conda and instead assumes the user has installed the required external dependencies,
-at the expense of portability. This is documented in a :doc:`separate section <start_nonconda>`.
-
 Installing the conda package manager
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -190,7 +187,8 @@ These environments will co-exist with any existing installation.
 the installer will break the existing installation (if it's not managed with, e.g., environment modules.)
 
 - If :console:`% conda info` doesn't return anything, you will need to install conda.
-We recommend doing so using the Miniconda installer (available `here <https://docs.conda.io/en/latest/miniconda.html>`__) for the most recent version of python 3, although any version of Miniconda or Anaconda released after June 2019, using python 2 or 3, will work.
+We recommend doing so using the Miniconda installer (available `here <https://docs.conda.io/en/latest/miniconda.html>`__)
+for the most recent version of python 3.
 
 - Follow the conda `installation instructions <https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html>`__
 appropriate to your system.
@@ -202,12 +200,11 @@ implemented.
 
 - Start a new shell to reload the updated shell login script.
 
-Installing micromamba
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. _ref-micromamba-install:
+Installing micromamba
+^^^^^^^^^^^^^^^^^^^^^
 
 `Micromamaba installation instructions <https://mamba.readthedocs.io/en/latest/micromamba-installation.html#>`__
-
 
 Installing the package's conda environments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -256,9 +253,11 @@ micromamba_env_setup.sh environment installation scripts, run
 
       % cd <CODE_ROOT>
       % ./src/conda/micromamba_env_setup.sh --all --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
+
   <*MICROMAMBA_ROOT*> is the path to the micromamba installation on your system (e.g., /home/${USER}/micromamba)
 
   <*MICROMAMBA_EXE*> is the path to the micromamba executable on your system (e.g., /home/${USER}/.local/bin/micromamba)
+
 .. note::
 
    Micromamba is required to install the conda environments on machines with Apple M-series chips.
@@ -280,7 +279,6 @@ of the framework code, re-run the above commands.
    
    These environments can be uninstalled by deleting their corresponding directories under <*CONDA_ENV_DIR*>
 (or <*CONDA_ROOT*>/envs/).
-
 
 Location of the installed executable
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -304,9 +302,8 @@ The output should be
    and climate data
 
    Options:
-     -v, --verbose          Enables verbose mode.
-     -f, --configfile PATH  Path to the runtime configuration file  [required]
-     --help                 Show this message and exit.
+     -f, PATH  Path to the runtime configuration file  [required]
+     --help  Show this message and exit.
 
 
 .. _ref-configure:
@@ -318,14 +315,14 @@ In order to run the diagnostics in the package, it needs to be provided with pat
 installed above. In general, there are two equivalent ways to configure any setting for the package:
 
 - All settings are configured with command-line flags. The full documentation for the command line interface is at
-:doc:`ref_cli`.
+  :doc:`ref_cli`.
 
 - Long lists of command-line options are cumbersome, and many of the settings
-(such as the paths to data that we set here) don't change between different runs of the package.
-For this purpose, any command-line setting can also be provided in an input configuration file.
+  (such as the paths to data that we set here) don't change between different runs of the package.
+  For this purpose, any command-line setting can also be provided in an input configuration file.
 
 - The two methods of setting options can be freely combined. Any values set explicitly on the command line will
-override those given in the configuration file.
+  override those given in the configuration file.
 
 For the remainder of this section, we describe how to edit and use configuration files,
 since the paths to data, etc., we need to set won't change.

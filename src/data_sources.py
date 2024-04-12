@@ -1,6 +1,4 @@
-"""Implementation classes for model data query/fetch functionality, selected by
-the user via ``--data_manager``; see :doc:`ref_data_sources` and
-:doc:`fmwk_datasources`.
+"""Implementation classes for model data query
 """
 import os
 import io

@@ -6,4 +6,4 @@ recommonmark>=0.7
 mock
 cloud_sptheme
 sphinx>=7.0
-docutils>=0.21
+docutils>=0.20

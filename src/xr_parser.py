@@ -1,4 +1,4 @@
-"""Code for normalizing metadata in xarray Datasets; see :doc:`fmwk_preprocess`.
+"""Code for normalizing metadata in xarray Datasets`.
 
 Familiarity with the  `cf_xarray <https://cf-xarray.readthedocs.io/en/latest/>`__
 package, used as a third-party dependency, as well as the :doc:`src.data_model`

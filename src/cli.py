@@ -1,7 +1,5 @@
 """Classes which parse the framework's command line interface configuration files
-and implement the dynamic CLI; see :doc:`fmwk_cli`.
-
-Familiarity with the python :py:mod:`argparse` module is recommended.
+and implement the dynamic CLI.
 """
 import os
 import pathlib

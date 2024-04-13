@@ -5,3 +5,4 @@ recommonmark>=0.7
 mock
 cloud_sptheme
 sphinx>=7.0
+python>=3.11

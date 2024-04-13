@@ -4,4 +4,4 @@
 recommonmark>=0.7
 mock
 cloud_sptheme
-sphinx==7.2.6
+Sphinx==7.2.6

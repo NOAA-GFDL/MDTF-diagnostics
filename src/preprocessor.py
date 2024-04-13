@@ -1,5 +1,5 @@
 """Functionality for transforming model data into the format expected by PODs
-once it's been downloaded; see :doc:`fmwk_preprocess`.
+once it's been downloaded`.
 """
 import os
 import shutil
@@ -51,7 +51,7 @@ def copy_as_alternate(old_v, **kwargs):
 
 class PreprocessorFunctionBase(abc.ABC):
     """Abstract interface for implementing a specific preprocessing functionality.
-    As described in :doc:`fmwk_preprocess`, each preprocessing operation is
+    Each preprocessing operation is
     implemented as a separate child class of this class and called sequentially
     by the preprocessor. It's up to individual Preprocessor child classes to
     select which functions to use, and in what order to perform them (via their

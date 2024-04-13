@@ -62,7 +62,7 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
         return str(os.path.basename(item))
 
     # destination directory to copy docs to
-    sphinx_subdir = 'sphinx_{}s'.format(type_)
+    sphinx_subdir = 'sphinx_{}'.format(type_)
     sphinx_dir = os.path.join(docs_dir, sphinx_subdir)
     if not os.path.isdir(sphinx_dir):
         os.makedirs(sphinx_dir)
@@ -113,15 +113,11 @@ def config_inited(app, config):
 
     # Process PODs: find, copy, make toc
     pod_root = os.path.abspath(os.path.join(cwd, '..', 'diagnostics'))
-    find_copy_make_toc("pod", cwd, pod_root, _pod_toc_header)
-
-    # Process site docs: find, copy, make toc
-    site_root = os.path.abspath(os.path.join(cwd, '..', 'sites'))
-    find_copy_make_toc("site", cwd, site_root, _site_toc_header)
+    find_copy_make_toc("pods", cwd, pod_root, _pod_toc_header)
 
     # Process tools docs: find, copy, make toc
     tools_root = os.path.abspath(os.path.join(cwd, '..', 'tools'))
-    find_copy_make_toc("tool", cwd, tools_root, _tools_toc_header)
+    find_copy_make_toc("tools", cwd, tools_root, _tools_toc_header)
 
 
 def setup(app):

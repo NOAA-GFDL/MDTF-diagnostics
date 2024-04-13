@@ -1,8 +1,8 @@
 # these requirements are only used by readthedocs.org to build documentation.
 # For local documentation builds, use the _MDTF_dev conda environment at
 # /src/conda/env_dev.yml.
+pip>=24.0
 recommonmark>=0.7
 mock
 cloud_sptheme
 sphinx>=7.0
-python>=3.11

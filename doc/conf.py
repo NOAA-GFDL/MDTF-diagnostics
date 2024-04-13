@@ -342,7 +342,7 @@ def skip_members_handler(app, what, name, obj, skip, options):
 
 def run_apidoc(_):
     ignore_paths = ["**/test*"]
-    argv = ["--force", "--no-toc", "--separate", "-o", "./doc/sphinx", "./src"
+    argv = ["--force", "--no-toc", "--separate", "-o", "./doc/sphinx", "../src"
             ] + ignore_paths
 
     try:

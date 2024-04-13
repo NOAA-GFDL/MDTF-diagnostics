@@ -49,7 +49,7 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'mdtf = MDTF-diagnostics.mdtf_framework:main',
+            'mdtf = MDTF-diagnostics.mdtf_framework:main'
         ],
     },
     cmdclass={  # hook for post-install commands

@@ -25,7 +25,7 @@ There is a `web interface <http://clipc-services.ceda.ac.uk/dreq/index.html>`__ 
 Data from any model that has been published as part of CMIP6
 (e.g., made available via `ESGF <https://esgf-node.llnl.gov/projects/cmip6/>`__) should follow this convention.
 
-* ``NCAR``: Variable names and units used in the default output of models developed at the
+* ``CESM``: Variable names and units used in the default output of models developed at the
 `National Center for Atmospheric Research <https://ncar.ucar.edu>`__, such as
 `CAM <https://www.cesm.ucar.edu/models/cesm2/atmosphere/>`__ (all versions) and
 `CESM2 <https://www.cesm.ucar.edu/models/cesm2/>`__.
@@ -55,8 +55,8 @@ of the data files. For example,
 
 .. code-block:: console
 
-   % mkdir -p inputdata/obs_data/[pod name]
-   % ln -s <path> inputdata/obs_data/[pod name]/[file name]
+    % mkdir -p inputdata/obs_data/[pod name]
+    % ln -s <path> inputdata/obs_data/[pod name]/[file name]
 
 will create a symbolic link to the file at <*path*> that follows the filename convention used by this data source:
 
@@ -74,79 +74,102 @@ Running the package on your data
 How to configure the package
 ++++++++++++++++++++++++++++
 
-All configuration options for the package are set via its command line interface, which is described in :doc:`ref_cli`,
-or by running :console:`% mdtf --help`. Because it's cumbersome to deal with long lists of command-line flags,
-options are set in a JSON or Yaml configuration file passed to the package with the ``-f`` flag. An example of this
-input file is given in
+All configuration options for the package options are set in a JSON or Yaml
+configuration file passed to the package with the ``-f`` flag. An example of this input file is given in
 `templates/runtime_config.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/templates/runtime_config.jsonc>`__,
-which you used :ref:`previously<ref-execute>` to run the package on test data. We recommend using this file as a
-template, making copies and customizing it as needed.
-
-Option values given on the command line always take precedence over those set in the configuration file.
-This is so that you can store options that don't frequently change in the file (e.g., input/output paths)
-and then use flags to set only those options you want to change from run to run
-(e.g., the start and end dates for the analysis). In all cases, the complete set of option values used in each run
-of the package is saved as a JSON configuration file in the package's output, so you can always reproduce your results.
+which you used :ref:`previously<ref-execute>` to run the package on test data. We recommend using one of the files as a
+template, copying it, and customizing it as needed.
 
 Options controlling the analysis
 ++++++++++++++++++++++++++++++++
 
 The configuration options required to specify what analysis the package should do are:
 
-* ``--CASENAME`` <*name*>: Identifier used to label this run of the package. Can be set to any string.
-* ``--experiment`` <*dataset_name*>: The name (subdirectory) you assigned to the data files in the previous section.
-If this option isn't given, its value is set from <*CASENAME*>.
-* ``--convention`` <*convention name*>: The naming convention used to assign the <*variable_name*>s,
-from the previous section.
-* ``--startdate`` <*YYYYMMDD*>: The starting year of the analysis period.
-* ``--enddate`` <*YYYYMMDD*>: The end year of the analysis period.
-An error will be raised if the data provided for any requested variable doesn't span this date range.
+* **pod_list**: (list of strings) comma-separated list of PODs to run with the framework
 
-If specifying these in a configuration file, these options should given as entry in a list titled ``case_list``
-(following the example in
-`templates/runtime_config.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/templates/runtime_config.jsonc>`__).
-Using the package to compare the results of a list of different experiments is a major feature planned for an upcoming
-release.
+* **case_list**: Main block with the information for each model data case to run with the framework
+  The block for each case is a string with the name of each model simulation (case). Note that there is no
+  explicit *CASENAME* paramater in the configuration file; the framework will define each *CASENAME* key using string
+  value that defines the case block.
 
-You will also need to specify the list of diagnostics to run. This can be given as a list of POD names (as given in the
-`diagnostics/ <https://github.com/tsjackson-noaa/MDTF-diagnostics/tree/main/diagnostics>`__ directory),
- by a ``pod_list`` attribute
+    * **model**: (string) name of the model for each case
 
-Other options
-+++++++++++++
+    * **Convention**: (string) convention of case; ["CMIP" | "CESM" | "GFDL"]
 
-Some of the most relevant options which control the package's output are:
+    * **startdate**: (string with format <*YYYYMMDD*> or <*YYYYMMDDHHmmss>) The starting date of the analysis period
 
-* ``--save-ps``: Set this flag to have PODs save copies of all plots as postscript files (vector graphics)
-in addition to the bitmaps used in the HTML output pages.
-* ``--save-nc``: Set this flag to have PODs retain netCDF files of any intermediate calculations,
-which may be useful if you want to do further analyses with your own tools.
-* ``--make-variab-tar``: Set this flag to save the collection of files (HTML pages and bitmap graphics)
-output by the package as a single .tar file, which can be useful for archival purposes.
+    * **enddate** (string with format <*YYYYMMDD*> or <*YYYYMMDDHHmmss>) The end date of the analysis period.
 
-The full list of configuration options is given at :doc:`ref_cli`.
+An error will be raised if the data provided for any requested variable doesn't span the date range defined by
+**startdate** and **enddate**
+
+Options for data management
++++++++++++++++++++++++++++
+
+* **DATA_CATALOG**: (string; *required*) Full or relative path to the model data ESM-intake catalog .json header file
+
+* **OBS_DATA_ROOT**: (string; optional) Full or relative path to Parent directory containing observational data. Must
+  be set if running PODs that have required observational datasets.
+
+* **WORK_DIR**: (string; required) Full or relative path to working directory
+
+* **OUTPUT_DIR**: (string; optional) Full or relative path to output directory; The results of each run of the framework
+  will be put in an `MDTF_output` subdirectory of this directory. Defaults to **WORK_DIR** if blank.
+
+* **conda_root**: (string; required) Location of the Anaconda/miniconda or micromamba installation to use for managing
+  package dependencies (path returned by running `conda info --base` or `micromamba info`.)
+
+* **conda_env_root**: (string; required) Directory containing the framework-specific conda environments. This should
+  be equal to the "--env_dir" flag passed to `conda_env_setup.sh`
+
+* **micromambe_exe** (string; required if using micromamba to manage conda environments)
+  Full path to the micromamba executable
+
+Options for workflow control
+++++++++++++++++++++++++++++
+
+* **run_pp**: (boolean) Set to *true* to run the preprocessor; default *true*
+
+* **translate_data**: (boolean) Set to *true* to perform data translation; default *true*
+
+* **save_ps**: (boolean) Set to *true* to have PODs save postscript figures in addition to bitmaps; default *false*
+
+* **large_file**: (boolean) Set to *true* for files > 4 GB. The framework will write processed
+  netCDF files in `NETCDF4_CLASSIC` format; if *false* files are written in `NETCDF4` format; default *false*
+
+* **save_pp_data**: (boolean) set to *true* to retain processed data in the `OUTPUT_DIR` after preprocessing.
+  If *false*, delete processed data after POD output is finalized; default *true*
+
+* **make_variab_tar**: (boolean) Set to *true* to save HTML and bitmap plots in a .tar file; default *false*
+
+* **make_multicase_figure_html**: (boolean) Set to *true* to auto-generate html output for multiple figures per case;
+  default *false*
+
+* **overwrite**: (boolean) Set to *true* to overwrite newest existing `OUTPUT_DIR` from a previous run; default *false*
+
+* **user_pp_scripts**: (list of strings) comma-separated Python list of strings with custom preprocessing scripts to
+  include in the workflow. Add any custom script(s) you want to run to the
+  `user_scripts <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/user_scripts>`__ directory of your copy of
+  the MDTF-diagnostics repository. The scripts will run even if the list is populated whether **run_pp** is set to
+  *true* or *false*.
 
 Running the package
 +++++++++++++++++++
 
 From this point, the instructions for running the package are the same as for
-:ref:`running it on the sample data<ref-execute>`, assuming you've set the configuration options by editing a copy o
+:ref:`running it on the sample data<ref-execute>`, assuming you've set the configuration options by editing a copy of
 the configuration file template at `templates/runtime_config.jsonc
  <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/templates/runtime_config.jsonc>`__. The package is run in the
 same way:
 
 .. code-block:: console
 
-   % cd <CODE_ROOT>
-   % ./mdtf -f <new config file path>
+    % cd <CODE_ROOT>
+    % ./mdtf -f <new config file path>
 
-The first few lines of console output will echo the values you've provided for <*CASENAME*>, etc., as confirmation.
+The output of the package will be saved as a series of web pages in a directory named MDTF_output/[pod_name] in
+<*OUTPUT_DIR*>.
 
-The output of the package will be saved as a series of web pages in a directory named
-MDTF\_<*CASENAME*>\_<*startdate*>\_<*enddate*> within <*OUTPUT_DIR*>.
-If you run the package multiple times with the same configuration values,
-it's not necessary to change the <*CASENAME*>: by default, the suffixes ".v1", ".v2", etc. will be added to duplicate
-output directory names so that results aren't accidentally overwritten.
+If you run the package multiple times with the same configuration values and **overwrite** set to *false, the suffixes
+".v1", ".v2", etc. will be added to duplicate `MDTF_output` directory names.
 
-The results of the diagnostics are presented as a series of web pages, with the top-level page named index.html.
-To view the results in a web browser, run (e.g.,)

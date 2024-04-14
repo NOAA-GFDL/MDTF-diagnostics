@@ -291,16 +291,28 @@ class HTMLOutputManager(AbstractOutputManager,
     _PodOutputManagerClass = HTMLPodOutputManager
     _html_file_name = 'index.html'
     multi_case_figure: bool = False
+    make_variab_tar: bool = False
+    overwrite: bool = False
+    file_overwrite: bool = False
     WORK_DIR: str = ""
     CODE_ROOT: str = ""
     OUT_DIR: str = ""
 
     def __init__(self, pod, config):
         try:
-            self.make_variab_tar = config['make_variab_tar']
-            self.overwrite = config['overwrite']
+            if hasattr(config, 'make_variab_tar'):
+                self.make_variab_tar = config['make_variab_tar']
+            else:
+                self.make_variab_tar = False
+            if hasattr(config, 'overwrite'):
+                self.overwrite = config['overwrite']
+            else:
+                self.overwrite = False
             self.file_overwrite = self.overwrite  # overwrite both config and .tar
-            self.multi_case_figure = config['make_multicase_figure_html']
+            if hasattr(config, 'make_multicase_figure_html'):
+                self.multi_case_figure = config['make_multicase_figure_html']
+            else:
+                self.multi_case_figure = False
         except KeyError as exc:
             self.log.exception("Caught %r", exc)
 

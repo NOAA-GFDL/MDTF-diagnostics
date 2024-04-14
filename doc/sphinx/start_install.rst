@@ -37,8 +37,8 @@ Instructions for end-users and new developers are then as follows:
   1. | :console:`% cd mdtf`, then clone your fork of the MDTF repo on your machine:
      | :console:`% git clone https://github.com/<your GitHub account name>/MDTF-diagnostics`.
   2. Verify that you are on the main branch: :console:`% git branch`.
-  3. | Check out the `latest official release <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v3.0>`__:
-     | :console:`% git checkout tags/v3.0`.
+  3. | Check out the `latest official release <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v4.0.alpha>`__:
+     | :console:`% git checkout tags/v4.0.alpha`.
   4. Proceed with the installation process described below.
   5. | Check out a new branch that will contain your edited config files: 
      | :console:`% git checkout -b <branch name>`.
@@ -78,60 +78,6 @@ For advanced users interested in keeping more up-to-date on project development 
 the ``main`` branch of the GitHub repo contains features that haven’t yet been incorporated into an official release,
 which are less stable or thoroughly tested.
 
-.. _ref-supporting-data:
-
-Creating synthetic data for example_multicase and other 4th generation and newer PODs that use ESM-intake catalogs
-------------------------------------------------------------------------------------------------------------------
-
-Obtaining supporting data for 3rd-generation and older single-run PODs
--------------------------------------------------------------------------
-
-Supporting observational data and sample model data for second and third generation single-run PODs are available
-via anonymous FTP from ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation,
-while the sample model data is optional and only needed for test and demonstration purposes. The files you will need
-to download are:
-
-- Digested observational data (159 Mb): `MDTF_v2.1.a.obs_data.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.obs_data.tar>`__.
-- NCAR-CESM-CAM sample data (12.3 Gb): `model.QBOi.EXP1.AMIP.001.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar>`__.
-- NOAA-GFDL-CM4 sample data (4.8 Gb): `model.GFDL.CM4.c96L32.am4g10r8.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar>`__.
-
-The default single-run test case uses the ``QBOi.EXP1.AMIP.001`` sample dataset, and the ``GFDL.CM4.c96L32.am4g10r8``
-sample dataset is only for testing the `MJO Propagation and Amplitude POD <../sphinx_pods/MJO_prop_amp.html>`__.
-Note that the above paths are symlinks to the most recent versions of the data, and will be reported as having
-a size of zero bytes in an FTP client.
-
-Download these files and extract the contents in the following directory hierarchy under the ``mdtf`` directory:
-
-::
-
-   mdtf
-   ├── MDTF-diagnostics ( = <CODE_ROOT>)
-   ├── inputdata
-   │   ├── model ( = <MODEL_DATA_ROOT>)
-   │   │   ├── GFDL.CM4.c96L32.am4g10r8
-   │   │   │   └── day
-   │   │   │       ├── GFDL.CM4.c96L32.am4g10r8.precip.day.nc
-   │   │   │       └── (... other .nc files )
-   │   │   └── QBOi.EXP1.AMIP.001
-   │   │       ├── 1hr
-   │   │       │   ├── QBOi.EXP1.AMIP.001.PRECT.1hr.nc
-   │   │       │   └── (... other .nc files )
-   │   │       ├── 3hr
-   │   │       │   └── QBOi.EXP1.AMIP.001.PRECT.3hr.nc
-   │   │       ├── day
-   │   │       │   ├── QBOi.EXP1.AMIP.001.FLUT.day.nc
-   │   │       │   └── (... other .nc files )
-   │   │       └── mon
-   │   │           ├── QBOi.EXP1.AMIP.001.PS.mon.nc
-   │   │           └── (... other .nc files )
-   │   └── obs_data ( = <OBS_DATA_ROOT>)
-   │       ├── (... supporting data for individual PODs )
-
-Note that ``mdtf`` now contains both the ``MDTF-diagnostics`` and ``inputdata`` directories. 
-
-You can put the observational data and model output in different locations, e.g. for space reasons, by changing
-the paths given in ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` as described below in :numref:`ref-configure`.
-
 .. _ref-conda-install:
 
 Installing dependencies
@@ -158,7 +104,8 @@ but supports running PODs written in a variety of scripting languages and combin
 To ensure that the correct versions of these dependencies are installed and available,
 we use `conda <https://docs.conda.io/en/latest/>`__, a free, open-source package manager.
 Conda is one component of the `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`__ and
-`Anaconda <https://www.anaconda.com/>`__ python distributions, so having Miniconda/Anaconda is sufficient but not necessary.
+`Anaconda <https://www.anaconda.com/>`__ python distributions, so having Miniconda/Anaconda is sufficient but not
+necessary.
 
 For maximum portability and ease of installation, we recommend that all users manage dependencies through conda using
 the steps below, even if they have independent installations of the required languages.
@@ -178,25 +125,25 @@ Installing the conda package manager
 In this section, we install the conda package manager if it's not already present on your system.
 
 - To determine if conda is installed, run :console:`% conda info` as the user who will be using the package.
-The package has been tested against versions of conda >= 4.11.0. If a pre-existing conda installation is present,
-continue to the following section to install the package's environments.
-These environments will co-exist with any existing installation.
+  The package has been tested against versions of conda >= 4.11.0. If a pre-existing conda installation is present,
+  continue to the following section to install the package's environments.
+  These environments will co-exist with any existing installation.
 
-  .. note::
-     **Do not** reinstall Miniconda/Anaconda if it's already installed for the user who will be running the package:
-the installer will break the existing installation (if it's not managed with, e.g., environment modules.)
+    .. note::
+        **Do not** reinstall Miniconda/Anaconda if it's already installed for the user who will be running the package:
+        the installer will break the existing installation (if it's not managed with, e.g., environment modules.)
 
 - If :console:`% conda info` doesn't return anything, you will need to install conda.
-We recommend doing so using the Miniconda installer (available `here <https://docs.conda.io/en/latest/miniconda.html>`__)
-for the most recent version of python 3.
+  We recommend doing so using the Miniconda installer (available `here <https://docs.conda.io/en/latest/miniconda.html>`__)
+  for the most recent version of python 3.
 
 - Follow the conda `installation instructions <https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html>`__
-appropriate to your system.
+  appropriate to your system.
 
 - Toward the end of the installation process, enter “yes” at “Do you wish the installer to initialize Miniconda3 by
-running conda init?” (or similar) prompt. This will allow the installer to add the conda path to the user's shell login
-script (e.g., ``~/.bashrc`` or ``~/.cshrc``). It's necessary to modify your login script due to the way conda is
-implemented.
+  running conda init?” (or similar) prompt. This will allow the installer to add the conda path to the user's shell
+  login script (e.g., ``~/.bashrc`` or ``~/.cshrc``). It's necessary to modify your login script due to the way conda is
+  implemented.
 
 - Start a new shell to reload the updated shell login script.
 
@@ -226,59 +173,59 @@ by the package's diagnostics.
 To display information about all of the options in the conda_env_setup.sh and
 micromamba_env_setup.sh environment installation scripts, run
 
-.. code-block:: console
+    .. code-block:: console
 
-      % cd <CODE_ROOT>
-      % ./src/conda/conda_env_setup.sh [-h|--help]
-      % ./src/conda/micromamba_env_setup.sh [-h|--help]
+        % cd <CODE_ROOT>
+        % ./src/conda/conda_env_setup.sh [-h|--help]
+        % ./src/conda/micromamba_env_setup.sh [-h|--help]
 
-- Install all the package's conda environments with anaconda/miniconda by running
+Install all the package's conda environments with anaconda/miniconda by running
 
-  .. code-block:: console
+    .. code-block:: console
 
-      % cd <CODE_ROOT>
-      % ./src/conda/conda_env_setup.sh --all --conda_root <CONDA_ROOT> --env_dir <CONDA_ENV_DIR>
+        % cd <CODE_ROOT>
+        % ./src/conda/conda_env_setup.sh --all --conda_root <CONDA_ROOT> --env_dir <CONDA_ENV_DIR>
 
-  The names of all conda environments used by the package begin with “_MDTF”, so as not to conflict with other
-  environments in your conda installation. The installation process should finish within ten minutes.
+The names of all conda environments used by the package begin with “_MDTF”, so as not to conflict with other
+environments in your conda installation. The installation process should finish within ten minutes.
 
-  - Substitute the paths identified above for <*CONDA_ROOT*> and <*CONDA_ENV_DIR*>.
+Substitute the paths identified above for <*CONDA_ROOT*> and <*CONDA_ENV_DIR*>.
 
-  - If the ``--env_dir`` flag is omitted, the environment files will be installed in your system's conda's default
-    location (usually <*CONDA_ROOT*>/envs).
+If the ``--env_dir`` flag is omitted, the environment files will be installed in your system's conda's default
+location (usually <*CONDA_ROOT*>/envs).
 
-- Install all the package's conda environments with micromamba by running
+Install all the package's conda environments with micromamba by running
 
-  .. code-block:: console
+    .. code-block:: console
 
-      % cd <CODE_ROOT>
-      % ./src/conda/micromamba_env_setup.sh --all --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
+        % cd <CODE_ROOT>
+        % ./src/conda/micromamba_env_setup.sh --all --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
 
-  <*MICROMAMBA_ROOT*> is the path to the micromamba installation on your system (e.g., /home/${USER}/micromamba)
+<*MICROMAMBA_ROOT*> is the path to the micromamba installation on your system (e.g., /home/${USER}/micromamba)
 
-  <*MICROMAMBA_EXE*> is the path to the micromamba executable on your system (e.g., /home/${USER}/.local/bin/micromamba)
-
-.. note::
-
-   Micromamba is required to install the conda environments on machines with Apple M-series chips.
-   NCL and R do not provide package support these systems, and only
-   python-based environments and PODs will work. Install the base and python3_base environments individually on M-series
-   Macs by running
-
-   .. code-block:: console
-
-      % cd <CODE_ROOT>
-      % ./src/conda/micromamba_env_setup.sh -e base --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
-      % ./src/conda/micromamba_env_setup.sh -e python3_base --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
+<*MICROMAMBA_EXE*> is the path to the micromamba executable on your system (e.g., /home/${USER}/.local/bin/micromamba)
 
 .. note::
 
-   After installing the framework-specific conda environments, you shouldn't alter them manually
-(i.e., never run ``conda update`` on them). To update the environments after an update to a new release
-of the framework code, re-run the above commands.
-   
-   These environments can be uninstalled by deleting their corresponding directories under <*CONDA_ENV_DIR*>
-(or <*CONDA_ROOT*>/envs/).
+    Micromamba is required to install the conda environments on machines with Apple M-series chips.
+    NCL and R do not provide package support these systems, and only
+    python-based environments and PODs will work. Install the base and python3_base environments individually on
+    M-series Macs by running
+
+    .. code-block:: console
+
+        % cd <CODE_ROOT>
+        % ./src/conda/micromamba_env_setup.sh -e base --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
+        % ./src/conda/micromamba_env_setup.sh -e python3_base --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
+
+.. note::
+
+    After installing the framework-specific conda environments, you shouldn't alter them manually
+    (i.e., never run ``conda update`` on them). To update the environments after an update to a new release
+    of the framework code, re-run the above commands.
+
+    These environments can be uninstalled by deleting their corresponding directories under <*CONDA_ENV_DIR*>
+    (or <*CONDA_ROOT*>/envs/).
 
 Location of the installed executable
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -289,22 +236,93 @@ To test the installation, run
 
 .. code-block:: console
 
-   % cd <CODE_ROOT>
-   % ./mdtf --help
+    % cd <CODE_ROOT>
+    % ./mdtf --help
 
 The output should be
 
 .. code-block:: console
 
-   Usage: MDTF-diagnostics [OPTIONS]
+    Usage: MDTF-diagnostics [OPTIONS]
 
-   A community-developed package to run Process Oriented Diagnostics on weather
-   and climate data
+    A community-developed package to run Process Oriented Diagnostics on weather
+    and climate data
 
-   Options:
-     -f, PATH  Path to the runtime configuration file  [required]
-     --help  Show this message and exit.
+    Options:
+        -v, --verbose          Enables verbose mode.
+        -f, --configfile PATH  Path to the runtime configuration file  [required]
+        --help                 Show this message and exit.
 
+.. _ref-supporting-data:
+
+Creating synthetic data for example_multicase and other 4th generation and newer PODs that use ESM-intake catalogs
+------------------------------------------------------------------------------------------------------------------
+To generate synthetic data for functionality testing, create the Conda environment from the _env_sythetic_data.yml
+file in src/conda, activate the environment, and install the
+`mdtf-test-data <https://pypi.org/project/mdtf-test-data/>`__ package. Then run the driver script with the
+desired data convention, start year, and time span. The example below generates two CMIP datasets spanning 5 years
+that start in 1980 and 1985. The sample data can be used to run the
+`example_multicase POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example_multicase>`__
+using the configuration in the
+`multirun_config_template file <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase/multirun_config_template.jsonc>`__.
+
+.. code-block:: console
+
+    % mamba env create --force -q -f ./src/conda/_env_synthetic_data.yml
+    % conda activate _MDTF_synthetic_data
+    % pip install mdtf-test-data
+    % mkdir mdtf_test_data && cd mdtf_test_data
+    % mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5
+    % mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5
+
+Obtaining supporting data for 3rd-generation and older single-run PODs
+-------------------------------------------------------------------------
+
+Supporting observational data and sample model data for second and third generation single-run PODs are available
+via anonymous FTP from ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation,
+while the sample model data is optional and only needed for test and demonstration purposes. The files you will need
+to download are:
+
+- Digested observational data (159 Mb): `MDTF_v2.1.a.obs_data.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.obs_data.tar>`__.
+- NCAR-CESM-CAM sample data (12.3 Gb): `model.QBOi.EXP1.AMIP.001.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar>`__.
+- NOAA-GFDL-CM4 sample data (4.8 Gb): `model.GFDL.CM4.c96L32.am4g10r8.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar>`__.
+
+The default single-run test case uses the ``QBOi.EXP1.AMIP.001`` sample dataset, and the ``GFDL.CM4.c96L32.am4g10r8``
+sample dataset is only for testing the `MJO Propagation and Amplitude POD <../sphinx_pods/MJO_prop_amp.html>`__.
+Note that the above paths are symlinks to the most recent versions of the data, and will be reported as having
+a size of zero bytes in an FTP client.
+
+Download these files and extract the contents in the following directory hierarchy under the ``mdtf`` directory:
+
+::
+
+   mdtf
+   ├── MDTF-diagnostics ( = <CODE_ROOT>)
+   ├── inputdata
+   │   ├── model
+   │   │   ├── GFDL.CM4.c96L32.am4g10r8
+   │   │   │   └── day
+   │   │   │       ├── GFDL.CM4.c96L32.am4g10r8.precip.day.nc
+   │   │   │       └── (... other .nc files )
+   │   │   └── QBOi.EXP1.AMIP.001
+   │   │       ├── 1hr
+   │   │       │   ├── QBOi.EXP1.AMIP.001.PRECT.1hr.nc
+   │   │       │   └── (... other .nc files )
+   │   │       ├── 3hr
+   │   │       │   └── QBOi.EXP1.AMIP.001.PRECT.3hr.nc
+   │   │       ├── day
+   │   │       │   ├── QBOi.EXP1.AMIP.001.FLUT.day.nc
+   │   │       │   └── (... other .nc files )
+   │   │       └── mon
+   │   │           ├── QBOi.EXP1.AMIP.001.PS.mon.nc
+   │   │           └── (... other .nc files )
+   │   └── obs_data ( = <OBS_DATA_ROOT>)
+   │       ├── (... supporting data for individual PODs )
+
+Note that ``mdtf`` now contains both the ``MDTF-diagnostics`` and ``inputdata`` directories. 
+
+You can put the observational data and model output in different locations, e.g. for space reasons, by changing
+the paths given in ``OBS_DATA_ROOT`` as described below in :numref:`ref-configure`.
 
 .. _ref-configure:
 
@@ -333,26 +351,19 @@ You can customize either template depending on your preferences; save a copy of 
 <*config_file_path*> and open it in a text editor.
 The following paths need to be configured before running the framework:
 
-- ``DATA_CATALOG``: set to the path of the input ESM-intake data catalog
+- ``DATA_CATALOG``: set to the path of the ESM-intake data catalog with model input data
 
-- ``OBS_DATA_ROOT``: set the location of the supporting data that you downloaded in
-  :numref:`ref-supporting-data`. If you used the directory structure described in that section,
-  the default value provided in the configuration file (``../inputdata/obs_data/``) will be correct.
-  If you put the data in a different location, this value should be changed accordingly.
-  Note that relative paths can be used in the configuration file, and are always resolved relative to the location of
-  the MDTF-diagnostics directory (<*CODE_ROOT*>).
-
-- ``MODEL_DATA_ROOT`` should be updated if you are running single-run PODs that do not implement ESM-intake catalogs.
-  For example, the NCAR-CESM-CAM sample data (``model.QBOi.EXP1.AMIP.001.tar``) downloaded in
-  :numref:`ref-supporting-data`. This data is required to run the test in the next section.
-  If you used the directory structure described in :numref:`ref-supporting-data`, the default value provided in
-  the configuration file (``../inputdata/model/``) will be correct.
+- ``OBS_DATA_ROOT``: set to the location of input observational data if you are running PODs that require observational
+   datasets (e.g., ../inputdata/obs_data).
 
 - ``conda_root`` should be set to the location of your conda installation: the value of <*CONDA_ROOT*>
-  that was used in :numref:`ref-conda-install`.
+  that was used in :numref:`ref-conda-install`
 
-- Likewise, if you installed the package's conda environments in a non-default location by using the ``--env_dir``
-  flag in :numref:`ref-conda-install`, the option ``conda_env_root`` should be set to this path (<*CONDA_ENV_DIR*>).
+- ``conda_env_root`` set to the location of the conda environments (should be the same as <*CONDA_ENV_DIR*> in
+   :numref:`ref-conda-install`)
+
+- ``micromamba_exe``: Set to the full path to micromamba executable on your system if you are using micromamba
+  to manage the conda environments
 
 - Finally, ``OUTPUT_DIR`` should be set to the location you want the output files to be written to
   (default: ``mdtf/wkdir/``; will be created by the framework).
@@ -365,10 +376,10 @@ A complete description of the configuration options is at :doc:`ref_cli`, or can
 
 .. _ref-execute:
 
-Running the package on sample model data
-----------------------------------------
+Running the package on the example_multicase POD with synthetic CMIP model data
+-------------------------------------------------------------------------------
 
-You are now ready to run the package's diagnostics on the sample data from NCAR's CESM-CAM model.
+You are now ready to run the example_multicase POD on the synthetic CMIP data.
 which is saved at <*config_file_path*> as described in the previous section.
 
 .. code-block:: console
@@ -380,38 +391,27 @@ The first few lines of output will be
 
 .. code-block:: console
 
-   === Starting <CODE_ROOT>/mdtf_framework.py
-
-   PACKAGE SETTINGS:
-   case_list(0):
-      CASENAME: QBOi.EXP1.AMIP.001
-      model: CESM
-      convention: CESM
-      startdate: 19770101
-      enddate: 19811231
-   [...]
+    POD convention and data convention are both no_translation. No data translation will be performed for case CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231.
+    POD convention and data convention are both no_translation. No data translation will be performed for case CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231.
+    Preprocessing data for example_multicase
 
 Run time may be up to 10-20 minutes, depending on your system. The final lines of output should be:
 
 .. code-block:: console
 
-   Exiting normally from <CODE_ROOT>/src/core.py
-   Summary for QBOi.EXP1.AMIP.001:
-      All PODs exited cleanly.
-      Output written to <OUTPUT_DIR>/MDTF_QBOi.EXP1.AMIP.001_1977_1981
+    SubprocessRuntimeManager: completed all PODs.
+    Checking linked output files for <#O2Lr:example_multicase>.
+    No files are missing.
 
-This shows that the output of the package has been saved to a directory named ``MDTF_QBOi.EXP1.AMIP.001_1977_1981``
-in <*OUTPUT_DIR*>. The results are presented as a series of web pages, with the top-level page named index.html.
-To view the results in a web browser (e.g., Google Chrome, Firefox) run
+Process finished with exit code 0
+
+
+The output are written to a directory named ``MDTF_Output`` in <*OUTPUT_DIR*>. The results are presented as a series
+of web pages, with the top-level page named index.html. To view the results in a web browser
+(e.g., Google Chrome, Firefox) run
 
 .. code-block:: console
 
-   % google-chrome <OUTPUT_DIR>/MDTF_QBOi.EXP1.AMIP.001_1977_1981/index.html &
-
-Currently the framework only analyzes one model dataset at a time.
-To run another test for the the `MJO Propagation and Amplitude POD <../sphinx_pods/MJO_prop_amp.html>`__
-on the sample data from GFDL's CM4 model, open the configuration file at <*config_file_path*>,
-delete or comment out the section for ``QBOi.EXP1.AMIP.001`` in the ``caselist`` section of that file,
-and uncomment the section for ``GFDL.CM4.c96L32.am4g10r8``.
+   % firefox <OUTPUT_DIR>/MDTF_Output/example_multicase/index.html &
 
 In :doc:`start_config`, we describe further options to customize how the package is run.

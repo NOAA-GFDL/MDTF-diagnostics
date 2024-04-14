@@ -126,7 +126,7 @@ Running `tar -xvf [filename].tar` will extract the contents in the following hie
 mdtf
  ├── MDTF-diagnostics
  ├── inputdata
-     ├── model ( = $MODEL_DATA_ROOT)
+     ├── model
      │   ├── GFDL.CM4.c96L32.am4g10r8
      │   │   └── day
      │   │       ├── GFDL.CM4.c96L32.am4g10r8.precip.day.nc
@@ -204,11 +204,12 @@ If you re-run the above command, the result will be written to another subdirect
 i.e., output files saved previously will not be overwritten unless you change `overwrite` in the configuration file
 to `true`.
 
-The output files for the test case will be written to `$OUTPUT_DIR/MDTF_OUTPUT/`. 
-When the framework is finished, open `$OUTPUT_DIR/MDTF_OUTPUT/[POD NAME]/index.html` in a web browser to view 
+The output files for the test case will be written to `$OUTPUT_DIR/MDTF_Output/`. 
+When the framework is finished, open `$OUTPUT_DIR/MDTF_Output/[POD NAME]/index.html` in a web browser to view 
 the output report.
 
-You can specify your own datasets in the caselist block, and provide a catalog with the model data, 
+You can specify your own datasets in the `caselist` block of the runtime config file and provide a catalog with
+the model data, 
 or run the example_multicase POD on the synthetic data and associated test catalog specified in the configuration file.
 To generate the synthetic CMIP data, run:
 ```commandline

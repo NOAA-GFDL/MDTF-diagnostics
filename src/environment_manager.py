@@ -263,14 +263,15 @@ class AbstractRuntimeManager(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def run(self): pass
+    def run(self, cases: dict, log: logging.log):
+        pass
 
     @abc.abstractmethod
     def tear_down(self): pass
 
 
 @util.mdtf_dataclass
-class SubprocessRuntimePODWrapper(object):
+class SubprocessRuntimePODWrapper:
     """Wrapper for :class:`diagnostic.multirunDiagnostic` that adds fields and methods
     used by :class:`SubprocessRuntimeManager`.
     """
@@ -278,6 +279,9 @@ class SubprocessRuntimePODWrapper(object):
     env: typing.Any = None
     env_vars: dict = dataclasses.field(default_factory=dict)
     process: typing.Any = dataclasses.field(default=None, init=False)
+
+    def __init__(self, pod):
+        self.pod = pod
 
     def set_pod_env_vars(self, pod, cases: dict):
         """Sets all environment variables for the POD: paths and names of each
@@ -337,8 +341,6 @@ class SubprocessRuntimePODWrapper(object):
         skip_items = ['enddate', 'startdate', 'CASENAME']  # Omit per-case environment variables
         self.env_vars = {k: _envvar_format(v)
                          for k, v in self.pod.pod_env_vars.items() if k not in skip_items}
-
-        self.pod.pod_env_vars
 
         # append varlist env vars for backwards compatibility with single-run PODs
         if len(self.pod.multi_case_dict['CASE_LIST']) == 1:
@@ -484,7 +486,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
 
     def __init__(self, pod_dict: dict, config: util.NameSpace, _log: logging.log):
         # transfer all pods, even failed ones, because we need to call their
-        self.pods = [self._PodWrapperClass(pod=p) for p in pod_dict.values()]
+        self.pods = [self._PodWrapperClass(p) for p in pod_dict.values()]
         # init object-level logger
         self.env_mgr = self._EnvironmentManagerClass(config, log=_log)
 

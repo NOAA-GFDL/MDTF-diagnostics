@@ -15,6 +15,7 @@ from . import exceptions
 from . import signal_logger
 
 import logging
+
 _log = logging.getLogger(__name__)
 
 
@@ -43,6 +44,7 @@ def resolve_path(rel_path: str, root_path: str = "", env_vars: dict = None, log=
     Returns:
         str: Absolute version of *path*.
     """
+
     def _expandvars(path_name: str, env_dict: dict):
         """Expand quoted variables of the form ``$key`` and ``${key}`` in *path*,
         where ``key`` is a key in *env_dict*, similar to
@@ -108,7 +110,7 @@ def recursive_copy(src_files, src_root: str, dest_root: str, copy_function=None,
         if not f.startswith(src_root):
             raise ValueError('{} not a sub-path of {}'.format(f, src_root))
     dest_files = [
-        os.path.join(dest_root, os.path.relpath(f, start=src_root)) \
+        os.path.join(dest_root, os.path.relpath(f, start=src_root))
         for f in src_files
     ]
     for f in dest_files:
@@ -128,7 +130,7 @@ def check_executable(exec_name: str) -> bool:
     return find_executable(exec_name) is not None
 
 
-def find_files(src_dirs: str | list, filename_globs: str | list, n_files=None) -> list:
+def find_files(src_dirs: tuple[str, list], filename_globs: tuple[str, list], n_files=None) -> list:
     """Return list of files in *src_dirs*, or any subdirectories, matching any
     of *filename_globs*. Wraps Python :py:class:`glob.glob`.
 
@@ -217,6 +219,7 @@ def bump_version(path: str, new_v=None, extra_dirs=None):
         repeated application would create a series of files ``file.txt``,
         ``file.v1.txt``, ``file.v2.txt``, ...
     """
+
     def _split_version(file_):
         match = re.match(r"""
             ^(?P<file_base>.*?)   # arbitrary characters (lazy match)
@@ -308,7 +311,7 @@ class _DoubleBraceTemplate(string.Template):
     """
 
 
-def append_html_template(template_file: str, target_file: str, template_dict: dict={},
+def append_html_template(template_file: str, target_file: str, template_dict: dict = {},
                          create: bool = True, append: bool = True):
     """Perform substitutions on *template_file* and write result to *target_file*.
 
@@ -389,12 +392,12 @@ class TempDirManager:
         if hash_obj is None:
             new_dir = tempfile.mkdtemp(prefix=self._prefix, dir=self._root)
         elif isinstance(hash_obj, str):
-            new_dir = os.path.join(self._root, self._prefix+hash_obj)
+            new_dir = os.path.join(self._root, self._prefix + hash_obj)
         else:
             # nicer-looking hash representation
             hash_ = hex(hash(hash_obj))[2:]
             assert isinstance(hash_, str)
-            new_dir = os.path.join(self._root, self._prefix+hash_)
+            new_dir = os.path.join(self._root, self._prefix + hash_)
         if not os.path.isdir(new_dir):
             os.makedirs(new_dir)
         assert new_dir not in self._dirs

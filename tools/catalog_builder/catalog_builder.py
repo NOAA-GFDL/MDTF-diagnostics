@@ -91,10 +91,14 @@ def parse_gfdl_pp_ts(file_name: str):
 
         # call to xr.open_dataset required by ecgtoos.builder.Builder
         with xr.open_dataset(file, chunks={}, decode_times=False) as ds:
-            # variable_list = [var for var in ds if 'standard_name' in ds[var].attrs or 'long_name' in ds[var].attrs]
-            # assert(variable_id in variable_list), \
-            # "Did not find variable with standard_name or long_name {variable_id}" \
-            # "in {file}"
+            variable_list = [var for var in ds if 'standard_name' in ds[var].attrs or 'long_name' in ds[var].attrs]
+            if 'standard_name' in ds[var].attrs:
+                standard_name = ds[var].attrs['standard_name']
+            elif 'long_name' in ds[var].attrs:
+                standard_name = ds[var].attrs['long_name']
+            else:
+                print('Asset variable does not contain a standard_name or long_name attribute')
+                exit(1)
             info = {
                 'activity_id': source_id,
                 'assoc_files': assoc_files,
@@ -110,6 +114,7 @@ def parse_gfdl_pp_ts(file_name: str):
                 'grid_label': grid_label,
                 'time_range': time_range,
                 'chunk_freq': chunk_freq,
+                'standard_name': standard_name,
                 'frequency': output_frequency,
                 'variable': variable_id,
                 'file_name': stem,
@@ -118,7 +123,8 @@ def parse_gfdl_pp_ts(file_name: str):
 
             return info
 
-    except Exception:
+    except Exception as exc:
+        print(exc)
         return {INVALID_ASSET: file, TRACEBACK: traceback.format_exc()}
 
 

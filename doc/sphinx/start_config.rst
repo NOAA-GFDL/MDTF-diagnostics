@@ -20,20 +20,20 @@ data source requires that model data follow one of several recognized variable n
 the package. The currently recognized conventions are:
 
 * ``CMIP``: Variable names and units as used in the
-`CMIP6 <https://www.wcrp-climate.org/wgcm-cmip/wgcm-cmip6>`__ `data request <https://doi.org/10.5194/gmd-2019-219>`__.
-There is a `web interface <http://clipc-services.ceda.ac.uk/dreq/index.html>`__ to the request.
-Data from any model that has been published as part of CMIP6
-(e.g., made available via `ESGF <https://esgf-node.llnl.gov/projects/cmip6/>`__) should follow this convention.
+  `CMIP6 <https://www.wcrp-climate.org/wgcm-cmip/wgcm-cmip6>`__ `data request <https://doi.org/10.5194/gmd-2019-219>`__.
+  There is a `web interface <http://clipc-services.ceda.ac.uk/dreq/index.html>`__ to the request.
+  Data from any model that has been published as part of CMIP6
+  (e.g., made available via `ESGF <https://esgf-node.llnl.gov/projects/cmip6/>`__) should follow this convention.
 
 * ``CESM``: Variable names and units used in the default output of models developed at the
-`National Center for Atmospheric Research <https://ncar.ucar.edu>`__, such as
-`CAM <https://www.cesm.ucar.edu/models/cesm2/atmosphere/>`__ (all versions) and
-`CESM2 <https://www.cesm.ucar.edu/models/cesm2/>`__.
+  `National Center for Atmospheric Research <https://ncar.ucar.edu>`__, such as
+  `CAM <https://www.cesm.ucar.edu/models/cesm2/atmosphere/>`__ (all versions) and
+  `CESM2 <https://www.cesm.ucar.edu/models/cesm2/>`__.
 
 * ``GFDL``: Variable names and units used in the default output of models developed at the
-`Geophysical Fluid Dynamics Laboratory <https://www.gfdl.noaa.gov/>`__, such as
-`AM4 <https://www.gfdl.noaa.gov/am4/>`__, `CM4 <https://www.gfdl.noaa.gov/coupled-physical-model-cm4/>`__ and
-`SPEAR <https://www.gfdl.noaa.gov/spear/>`__.
+  `Geophysical Fluid Dynamics Laboratory <https://www.gfdl.noaa.gov/>`__, such as
+  `AM4 <https://www.gfdl.noaa.gov/am4/>`__, `CM4 <https://www.gfdl.noaa.gov/coupled-physical-model-cm4/>`__ and
+  `SPEAR <https://www.gfdl.noaa.gov/spear/>`__.
 
 The names and units for the variables in the model data you're adding need to conform to one of the above conventions
 in order to be recognized by the LocalFile data source. For models that aren't currently supported, the workaround we
@@ -41,13 +41,19 @@ recommend is to generate ``CMIP``-compliant data by postprocessing model output 
 `CMOR <https://cmor.llnl.gov/>`__ tool.
 We hope to offer support for the naming conventions of a wider range of models in the future.
 
-Adding your model data files
-++++++++++++++++++++++++++++
+Generating an ESM-intake catalog of your model dataset
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-* <*dataset_name*> is any string uniquely identifying the dataset,
-* <*frequency*> is a string describing the frequency at which the data is sampled, e.g.
-  ``1hr``, ``3hr``, ``6hr``, ``day``, ``mon`` or ``year``.
-* <*variable_name*> is the name of the variable in the convention chosen in the previous section.
+The MDTF-diagnostics uses `intake-ESM <https://intake-esm.readthedocs.io/en/stable/>`__ catalogs and APIs to access
+model datasets and verify POD data requirements. The MDTF-diagnostics package provides a basic
+`catalog_builder script <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/tools/catalog_builder>`__
+that uses `ecgtools <https://ecgtools.readthedocs.io/en/latest/>`__ APIs to generate data catalogs.
+The NOAA-GFDL workflow team also maintains an `intake-ESM catalog builder
+<https://github.com/aradhakrishnanGFDL/CatalogBuilder>`__ that uses the directory structure to generate data catalogs.
+It is optimized for the files stored on GFDL systems, but can be configured to generate catalogs on a local file system.
+
+Adding your observational data files
+++++++++++++++++++++++++++++++++++++
 
 If you have observational data you want to analyze available on a locally mounted disk, we recommend creating
 `symlinks <https://en.wikipedia.org/wiki/Symbolic_link>`__ that have the needed filenames, rather than making copies
@@ -172,4 +178,3 @@ The output of the package will be saved as a series of web pages in a directory 
 
 If you run the package multiple times with the same configuration values and **overwrite** set to *false, the suffixes
 ".v1", ".v2", etc. will be added to duplicate `MDTF_output` directory names.
-

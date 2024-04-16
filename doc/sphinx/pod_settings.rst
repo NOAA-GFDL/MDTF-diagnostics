@@ -106,6 +106,13 @@ This is where you describe your diagnostic and list the programs it needs to run
     `math <https://docs.python.org/3/library/math.html>`__. If no third-party libraries are needed,
     the value should be an empty list.
 
+``pod_env_vars``:
+  :ref:`object<object>`, optional. Names and values of shell environment variables used by your diagnostic,
+  *in addition* to those supplied by the framework. The user can't change these at runtime, but this can be used to set
+  site-specific installation settings for your diagnostic (eg, switching between low- and high-resolution observational
+  data depending on what the user has chosen to download). Note that environment variable values must be provided as
+  strings.
+
 Data section
 ------------
 
@@ -127,22 +134,105 @@ This section is where you list the dimensions (coordinate axes) your variables a
 key-value pair, where the key is the name your diagnostic uses for that dimension internally, and the value is a list of
 settings describing that dimension. In order to be unambiguous, all dimensions must specify at least:
 
-``standard_name``: 
-  The CF `standard name <http://cfconventions.org/Data/cf-standard-names/72/build/cf-standard-name-table.html>`__ for
-  that coordinate.
+Latitude and Longitude
+^^^^^^^^^^^^^^^^^^^^^^
+
+``standard_name``:
+  **Required**, string. Must be ``"latitude"`` and ``"longitude"``, respectively.
 
 ``units``:
-  The units the diagnostic expects that coordinate to be in (using the syntax of the
-  `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`__). This is
-  optional: if not given, the framework will assume you want CF convention
+  Optional, a :ref:`CFunit<cfunit>`. Units the diagnostic expects the dimension to be in. Currently the framework only
+  supports decimal ``degrees_north`` and ``degrees_east``, respectively.
+
+``range``:
+  :ref:`Array<array>` (list) of two numbers. Optional. If given, specifies the range of values the diagnostic expects
+  this dimension to take. For example, ``"range": [-180, 180]`` for longitude will have the first entry of the longitude
+  variable in each data file be near -180 degrees (not exactly -180, because dimension values are cell midpoints), and
+  the last entry near +180 degrees.
+
+``need_bounds``:
+  Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
+  for this dimension, in addition to its midpoint values, following the
+  `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__:
+  the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds
+  information.
+
+``axis``:
+  String, optional. Assumed to be ``Y`` and ``X`` respectively if omitted, or if ``standard_name`` is
+  ``"latitude"`` or ``"longitude"``. Included here to enable future support for non-lat-lon horizontal coordinates.
+
+Time
+^^^^
+
+``standard_name``:
+  **Required**. Must be ``"time"``.
+
+``units``:
+  String. Optional, defaults to "day". Units the diagnostic expects the dimension to be in. Currently the diagnostic
+  only supports time axes of the form "<units> since <reference data>", and the value given here is interpreted in this
+  sense (e.g. settings this to "day" would accommodate a dimension of the form "[decimal] days since 1850-01-01".)
+
+``calendar``:
+  String, Optional. One of the CF convention
+  `calendars <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#calendar>`__ or
+  the string ``"any"``. **Defaults to "any" if not given**. Calendar convention used by your diagnostic. Only affects
+  the number of days per month.
+
+``need_bounds``:
+  Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
+  for this dimension, in addition to its midpoint values, following the
+  `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__: the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds information.
+
+``axis``:
+  String, optional. Assumed to be ``T`` if omitted or provided.
+
+Z axis (height/depth, pressure, ...)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``standard_name``:
+  **Required**, string.
+  `Standard name <http://cfconventions.org/Data/cf-standard-names/72/build/cf-standard-name-table.html>`__ of the
+  variable as defined by the `CF conventions <http://cfconventions.org/>`__, or a commonly used synonym as employed in
+  the CMIP6 MIP tables.
+
+``units``:
+  Optional, a :ref:`CFunit<cfunit>`. Units the diagnostic expects the dimension to be in. **If not provided, the
+  framework will assume CF convention**
   `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
 
-In addition, any vertical (Z axis) dimension must specify:
+``positive``:
+  String, **required**. Must be ``"up"`` or ``"down"``, according to the
+  `CF conventions <http://cfconventions.org/faq.html#vertical_coords_positive_attribute>`__.
+  A pressure axis is always ``"down"`` (increasing values are closer to the center of the earth), but this is not set
+  automatically.
 
-``positive``: 
-  Either ``"up"`` or ``"down"``, according to the
-  `CF conventions <http://cfconventions.org/faq.html#vertical_coords_positive_attribute>`__. A pressure axis is always
-  ``"down"`` (increasing values are closer to the center of the earth).
+``need_bounds``:
+  Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
+  for this dimension, in addition to its midpoint values, following the
+  `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__:
+  the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds
+  information.
+
+``axis``:
+  String, optional. Assumed to be ``Z`` if omitted or provided.
+
+Other dimensions (wavelength, ...)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``standard_name``:
+  **Required**, string. `Standard name <http://cfconventions.org/Data/cf-standard-names/72/build/cf-standard-name-table.html>`__
+  of the variable as defined by the `CF conventions <http://cfconventions.org/>`__, or a commonly used synonym as
+  employed in the CMIP6 MIP tables.
+
+``units``:
+  Optional, a :ref:`CFunit<cfunit>`. Units the diagnostic expects the dimension to be in. **If not provided, the framework will assume CF convention** `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
+
+``need_bounds``:
+  Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
+  for this dimension, in addition to its midpoint values, following the
+  `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__:
+  the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds
+  information.
 
 .. _sec_varlist:
 
@@ -227,4 +317,3 @@ variable. Most settings here are optional, but the main ones are:
 
   In order to request multiple slices (e.g. wind velocity on multiple pressure levels, with each level saved to a
   different file), create one varlist entry per slice.
-

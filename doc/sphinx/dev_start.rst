@@ -15,6 +15,7 @@ Obtaining the source code
 
 POD developers should create their branches from the
 `main branch <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main>`__ of the framework code
+
 .. code-block:: console
 
     git checkout -b [POD branch name] main
@@ -37,6 +38,7 @@ scripting languages, including, `R <https://anaconda.org/conda-forge/r-base>`__,
 Python-based PODs should be written in Python 3.11 or newer. We provide a developer version of the python3_base environment (described below) that includes Jupyter and other developer-specific tools. This is not installed by default, and must be requested by passing the ``--all`` flag to the conda setup script:
 
 If you are using Anaconda or miniconda to manage the conda environments, run:
+
 .. code-block:: console
 
     % cd $CODE_ROOT
@@ -45,6 +47,7 @@ If you are using Anaconda or miniconda to manage the conda environments, run:
 
 Installing dependencies with Micromamba
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Micromamba is a lightweight version of Anaconda. It is required to install the base and python3_base conda enviroments
 on macOS machines with Apple M-series chips. Installation instructions are available in the
 `Micromamba Documentation <https://mamba.readthedocs.io/en/latest/micromamba-installation.html>`__,
@@ -146,7 +149,7 @@ list (referred to as $POD_NAME):
     a). If purely Python 3, the framework will look for ``src/conda/env_python3_base.yml`` and check its content to
     determine whether the POD's requirements are met, and then switch to ``_MDTF_python3_base`` and run the POD.
 
-   b). Similarly, if NCL or R is used, then ``NCL_base`` or ``R_base`` environment will be activated at runtime.
+    b). Similarly, if NCL or R is used, then ``NCL_base`` or ``R_base`` environment will be activated at runtime.
 
 Note that for the 6 existing PODs depending on NCL (EOF_500hPa, MJO_prop_amp, MJO_suite, MJO_teleconnection,
 precip_diurnal_cycle, and Wheeler_Kiladis), Python is also used but merely as a wrapper. Thus the framework will
@@ -157,10 +160,10 @@ to selectively install conda environments using the ``--env`` flag (:ref:`ref-co
 the environments needed for the PODs you're interested in, and that ``_MDTF_base`` is mandatory for the framework's
 operation.
 
-- For instance, the minimal installation for running the ``EOF_500hPa`` and ``convective_transition_diag PODs``
-  requres ``_MDTF_base`` (mandatory), ``_MDTF_NCL_base`` (because of b), and ``_MDTF_convective_transition_diag``
-  (because of 1). These can be installed by passing ``base``, ``NCL_base``, and ``convective_transition_diag``
-  to the ``--env`` flag one at a time (:ref:`ref-conda-install`).
+For instance, the minimal installation for running the ``EOF_500hPa`` and ``convective_transition_diag PODs``
+requres ``_MDTF_base`` (mandatory), ``_MDTF_NCL_base`` (because of b), and ``_MDTF_convective_transition_diag``
+(because of 1). These can be installed by passing ``base``, ``NCL_base``, and ``convective_transition_diag``
+to the ``--env`` flag one at a time (:ref:`ref-conda-install`).
 
 
 Testing with a new Conda environment
@@ -187,14 +190,14 @@ correctly lists the language(s) (in case of updating an existing environment).
 
     Or, if using micromamba:
 
-        .. code-block:: console
+    .. code-block:: console
 
-            % cd $CODE_ROOT
-            % ./src/conda/conda_env_setup.sh --env $your_POD_short_name --micromamba_root $MICROMAMBA_ROOT --env_dir $CONDA_ENV_DIR
+        % cd $CODE_ROOT
+        % ./src/conda/conda_env_setup.sh --env $your_POD_short_name --micromamba_root $MICROMAMBA_ROOT --env_dir $CONDA_ENV_DIR
 
 Have the framework run your POD on suitable test data.
 
     1. Add your POD's short name to the ``pod_list`` section of the configuration input file
-    (template: ``templates/runtime_config.[jsonc | yml]``).
+       (template: ``templates/runtime_config.[jsonc | yml]``).
 
     2. Prepare the test data as described in :doc:`start_config`.

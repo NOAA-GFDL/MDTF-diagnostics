@@ -177,9 +177,6 @@ This method requires adding the *NOAA-GFDL/MDTF-diagnostics* repo to the *.git/c
 and is described in the GitHub discussion post
 `Working with multiple remote repositories in your git config file <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/96>`__.
 
-
-.. (TODO: `pip install -v .`, other installation instructions...)
-
 .. _ref-rebase:
 
 Updating your POD branch by rebasing it onto the main branch (a bit more difficult than merging, but cleaner)

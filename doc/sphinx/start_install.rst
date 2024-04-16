@@ -351,21 +351,26 @@ You can customize either template depending on your preferences; save a copy of 
 <*config_file_path*> and open it in a text editor.
 The following paths need to be configured before running the framework:
 
-- ``DATA_CATALOG``: set to the path of the ESM-intake data catalog with model input data
+- ``DATA_CATALOG``:
+  set to the path of the ESM-intake data catalog with model input data
 
-- ``OBS_DATA_ROOT``: set to the location of input observational data if you are running PODs that require observational
-   datasets (e.g., ../inputdata/obs_data).
+- ``OBS_DATA_ROOT``:
+  set to the location of input observational data if you are running PODs that require observational
+  datasets (e.g., ../inputdata/obs_data).
 
-- ``conda_root`` should be set to the location of your conda installation: the value of <*CONDA_ROOT*>
+- ``conda_root``:
+  should be set to the location of your conda installation: the value of <*CONDA_ROOT*>
   that was used in :numref:`ref-conda-install`
 
-- ``conda_env_root`` set to the location of the conda environments (should be the same as <*CONDA_ENV_DIR*> in
-   :numref:`ref-conda-install`)
+- ``conda_env_root``:
+  set to the location of the conda environments (should be the same as <*CONDA_ENV_DIR*> in
+  :numref:`ref-conda-install`)
 
 - ``micromamba_exe``: Set to the full path to micromamba executable on your system if you are using micromamba
   to manage the conda environments
 
-- Finally, ``OUTPUT_DIR`` should be set to the location you want the output files to be written to
+- ``OUTPUT_DIR``:
+  should be set to the location you want the output files to be written to
   (default: ``mdtf/wkdir/``; will be created by the framework).
   The output of each run of the framework will be saved in a different subdirectory in this location.
 

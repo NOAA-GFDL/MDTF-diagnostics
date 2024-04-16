@@ -1,7 +1,7 @@
 Multi-Case Example Diagnostic Documentation
-================================
+===========================================
 
-Last update: Oct 2022
+Last update: Apr 2024
 
 This POD illustrates how multiple cases (experiments) can be analyzed together. The
 muliple cases are specified to the MDTF Framework where they are initialized and
@@ -33,7 +33,7 @@ The anomalies are zonally-averaged and the results from all cases are shown on a
 Required programming language and libraries
 -------------------------------------------
 
-* Python >= 3.7
+* Python >= 3.11
 * xarray
 * numpy
 * matplotlib
@@ -51,4 +51,3 @@ References
 1. E. D. Maloney et al. (2019): Process-Oriented Evaluation of Climate and
 Weather Forecasting Models. *BAMS*, **100** (9), 1665–1686,
 `doi:10.1175/BAMS-D-18-0042.1 <https://doi.org/10.1175/BAMS-D-18-0042.1>`__.
-

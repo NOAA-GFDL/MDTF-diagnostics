@@ -1,48 +1,62 @@
 Overview
 ========
 
-Welcome! In this section we'll describe what the Model Diagnostics Task Force (MDTF) framework is, how it works, and how you can contribute your own diagnostic scripts.
+Welcome! In this section we'll describe what the Model Diagnostics Task Force (MDTF) framework is, how it works, and
+how you can contribute your own diagnostic scripts.
 
 Purpose
 -------
 
-The scientific motivation and content behind the framework was described in E. D. Maloney et al. (2019): Process-Oriented Evaluation of Climate and Weather Forecasting Models. *BAMS*, **100** (9), 1665–1686, `doi:10.1175/BAMS-D-18-0042.1 <https://doi.org/10.1175/BAMS-D-18-0042.1>`__.
-
-Also see the section of this site devoted to documentation of :doc:`individual diagnostics <pod_summary>`.
+The scientific motivation and content behind the framework was described in E. D. Maloney et al. (2019):
+Process-Oriented Evaluation of Climate and Weather Forecasting Models. *BAMS*, **100** (9), 1665–1686,
+`doi:10.1175/BAMS-D-18-0042.1 <https://doi.org/10.1175/BAMS-D-18-0042.1>`__.
 
 Framework operation
 -------------------
 
-The design goal of the MDTF framework is to provide a portable and adaptable means to run process-oriented diagnostic scripts, abbreviated as PODs below. By “portability,” we mean the ideal of “run once, run anywhere”: the purpose of the framework is to automate retrieval of model data from different local or remote sources, and transform that data into a layout (field names, variable units, etc.) your script expects. This will empower your analysis to be run by a wider range of researchers on a wider range of models.
+The design goal of the MDTF framework is to provide a portable and adaptable means to run process-oriented diagnostic
+scripts, abbreviated as PODs below. By “portability,” we mean the ideal of “run once, run anywhere”: the purpose of the
+framework is to automate retrieval of model data from different local or remote sources, and transform that data into a
+layout (field names, variable units, etc.) your script expects. This will empower your analysis to be run by a wider
+range of researchers on a wider range of models.
 
 .. figure:: ../img/dev_flowchart.jpg
    :align: center
    :width: 100 %
 
-As shown in the figure above, the MDTF framework itself performs common data management and support tasks (gray boxes) before and after the individual POD scripts are run. The PODs (colored boxes) are developed by different research groups and run independently of one another. Each POD takes as input 
+As shown in the figure above, the MDTF framework itself performs common data management and support tasks (gray boxes)
+before and after the individual POD scripts are run. The PODs (colored boxes) are developed by different research groups
+and run independently of one another. Each POD takes as input
 
 1. requested variables from the model run, along with 
 2. any required observational or supporting data, performs an analysis, and produces 
 3. a set of figures which are presented to the user in a series of .html files. 
 
-We do not include or require a mechanism for publishing these webpages on the internet; html is merely used as a convenient way to present a multimedia report to the user.
+We do not include or require a mechanism for publishing these webpages on the internet; html is merely used as a
+convenient way to present a multimedia report to the user.
 
 Getting started for users
 -------------------------
 
 The rest of the documentation in this section describes next steps for end users of the framework:
 
-- We provide instructions on how to :doc:`download and install <start_install>` the framework and run it on sample model data.
-- We describe the most common :doc:`configuration options <start_config>` for running the framework on your own model data. Also see the full list of :doc:`command-line options <ref_cli>`.
+- We provide instructions on how to :doc:`download and install <start_install>` the framework and run it on sample
+  model data.
+- We describe the most common :doc:`configuration options <start_config>` for running the framework on your own model
+  data. Also see the full list of :doc:`command-line options <ref_cli>`.
 - If you encounter a bug, check the GitHub `issue tracker <https://github.com/NOAA-GFDL/MDTF-diagnostics/issues>`__.
 
 Getting started for POD developers
 ----------------------------------
 
-Information for researchers wishing to contribute a POD to the framework is provided in the :doc:`Developer <dev_toc>` section; consult the :doc:`quickstart guide <dev_start>` for an overview and the :doc:`checklist <dev_checklist>` of items needed for submitting your POD.
+Information for researchers wishing to contribute a POD to the framework is provided in the :doc:`Developer Information
+<pod_dev_toc>` section
+The framework is designed to require minimal changes to existing analysis scripts. We recommend that developers of new
+PODs start independently of the framework and adapt it for the framework's use once it's fully debugged. As summarized
+in the figure above, the changes needed to convert an existing analysis script for use in the framework are:
 
-The framework is designed to require minimal changes to existing analysis scripts. We recommend that developers of new PODs start independently of the framework and adapt it for the framework's use once it's fully debugged. As summarized in the figure above, the changes needed to convert an existing analysis script for use in the framework are:
-
-- Provide a settings file which tells the framework what it needs to do: what languages and libraries your code need to run, and what model data your code takes as input.
-- Adapt your code to load data files from locations set in unix shell environment variables (we use this as a language-independent way for the framework to communicate information to the POD).
+- Provide a settings file which tells the framework what it needs to do: what languages and libraries your code need
+  to run, and what model data your code takes as input.
+- Adapt your code to load data files from locations set in unix shell environment variables
+  (we use this as a language-independent way for the framework to communicate information to the POD).
 - Provide a template web page which links to, and briefly describes, the plots generated by the script.

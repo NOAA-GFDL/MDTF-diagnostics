@@ -11,8 +11,8 @@ begin
       case =  getenv( "CASENAME")
       codedata = getenv ("POD_HOME")
 
-      iy1 = toint( ( getenv("FIRSTYR")) )
-      iy2 = toint( (  getenv("LASTYR")) )
+      iy1 = toint( ( getenv("startdate")) )
+      iy2 = toint( (  getenv("enddat")) )
 
 
       Vars3 = (/ "zg", "ua", "va", "ta", "wap" /)

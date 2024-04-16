@@ -1,14 +1,9 @@
-"""Implementation classes for model data query/fetch functionality, selected by
-the user via ``--data_manager``; see :doc:`ref_data_sources` and
-:doc:`fmwk_datasources`.
+"""Implementation classes for model data query
 """
 import os
-import collections
+import io
 import dataclasses
-from src import util, multirun, core, diagnostic, preprocessor, xr_parser, cmip6
-from src import data_manager as dm
-from src import query_fetch_preprocess as qfp
-import pandas as pd
+from src import util, cmip6, varlist_util
 
 import logging
 _log = logging.getLogger(__name__)
@@ -39,127 +34,73 @@ class SampleDataFile:
 
 
 @util.mdtf_dataclass
-class SampleDataAttributes(dm.DataSourceAttributesBase):
-    """Data-source-specific attributes for the DataSource providing sample model
-    data.
+class DataSourceAttributesBase:
+    """Class defining attributes that any DataSource needs to specify:
+
+    - *CASENAME*: User-supplied label to identify output of this run of the
+      package.
+    - *FIRSTYR*, *LASTYR*, *date_range*: Analysis period, specified as a closed
+      interval (i.e. running from 1 Jan of FIRSTYR through 31 Dec of LASTYR).
+    - *CASE_ROOT_DIR*: Root directory containing input model data. Different
+      DataSources may interpret this differently.
+    - *convention*: name of the variable naming convention used by the source of
+      model data.
     """
-    # CASENAME: str          # fields inherited from dm.DataSourceAttributesBase
-    # FIRSTYR: str
-    # LASTYR: str
-    # date_range: util.DateRange
-    # CASE_ROOT_DIR: str
-    # log: dataclasses.InitVar = _log
-    convention: str = "CMIP"  # default value, can be overridden
-    sample_dataset: str = ""
+    CASENAME: str = util.MANDATORY
+    FIRSTYR: str = util.MANDATORY
+    LASTYR: str = util.MANDATORY
+    date_range: util.DateRange = dataclasses.field(init=False)
+    CASE_ROOT_DIR: str = ""
+
+    log: dataclasses.InitVar = _log
 
     def _set_case_root_dir(self, log=_log):
-        """Additional logic to set CASE_ROOT_DIR from MODEL_DATA_ROOT.
-        """
-        config = core.ConfigManager()
-        paths = core.PathManager()
+        config = {}
         if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
             log.debug("Using global CASE_ROOT_DIR = '%s'.", config.CASE_ROOT_DIR)
             self.CASE_ROOT_DIR = config.CASE_ROOT_DIR
-        if not self.CASE_ROOT_DIR:
-            model_root = getattr(paths, 'MODEL_DATA_ROOT', None)
-            log.debug("Setting CASE_ROOT_DIR to MODEL_DATA_ROOT = '%s'.", model_root)
-            self.CASE_ROOT_DIR = model_root
-        # verify CASE_ROOT_DIR exists
+        # verify case root dir exists
         if not os.path.isdir(self.CASE_ROOT_DIR):
             log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
-                self.CASE_ROOT_DIR)
+                         self.CASE_ROOT_DIR)
             util.exit_handler(code=1)
 
     def __post_init__(self, log=_log):
-        """Validate user input.
-        """
-        super(SampleDataAttributes, self).__post_init__(log=log)
-        # set sample_dataset
-        if not self.sample_dataset and self.CASENAME:
-            log.debug(
-                "'sample_dataset' not supplied, using CASENAME = '%s'.",
-                self.CASENAME
-            )
-            self.sample_dataset = self.CASENAME
-        # verify chosen subdirectory exists
-        if not os.path.isdir(
-            os.path.join(self.CASE_ROOT_DIR, self.sample_dataset)
-        ):
-            log.critical(
-                "Sample dataset '%s' not found in CASE_ROOT_DIR = '%s'.",
-                self.sample_dataset, self.CASE_ROOT_DIR)
-            util.exit_handler(code=1)
+        self._set_case_root_dir(log=log)
+        self.date_range = util.DateRange(self.FIRSTYR, self.LASTYR)
 
 
-sampleLocalFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
-    # Catalog columns whose values must be the same for all variables.
-    expt_cols = dm.DataFrameQueryColumnGroup(["sample_dataset"])
-)
-
-
-class SampleLocalFileDataSource(dm.SingleLocalFileDataSource):
-    """DataSource for handling POD sample model data stored on a local filesystem.
-    """
-    _FileRegexClass = SampleDataFile
-    _AttributesClass = SampleDataAttributes
-    _DiagnosticClass = diagnostic.Diagnostic
-    _PreprocessorClass = preprocessor.SampleDataPreprocessor
-    col_spec = sampleLocalFileDataSource_col_spec
-
-    # map "name" field in VarlistEntry's query_attrs() to "variable" field here
-    _query_attrs_synonyms = {'name': 'variable'}
-
-    @property
-    def CATALOG_DIR(self):
-        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CASE_ROOT_DIR'))
-        return self.attrs.CASE_ROOT_DIR
-
-# ----------------------------------------------------------------------------
-
-
-class NoPPDataSource(SampleLocalFileDataSource):
-    """DataSource for handling POD sample model data stored on a local filesystem.
-    """
-    # _FileRegexClass = SampleDataFile
-    # _AttributesClass = SampleDataAttributes
-    # col_spec = sampleLocalFileDataSource_col_spec
-    _DiagnosticClass = diagnostic.NoPPDiagnostic
-    _PreprocessorClass = preprocessor.NullPreprocessor
-
-
-# ----------------------------------------------------------------------------
-
-class MultirunSampleLocalFileDataSource(multirun.MultirunSingleLocalFileDataSource, SampleLocalFileDataSource):
-    """DataSource for handling POD sample model data stored on a local filesystem.
-    Duplicate of SampleLocalFileDataSource, but need to route to multirun parent data source classes
-    """
-    # No-op=--just inherit attributes, properties, and route to __init__ methods in parent classes
-    pass
-
-class MultirunLocalFileDataSource(MultirunSampleLocalFileDataSource,
-                                  qfp.MultirunDataSourceQFPMixin
-                                  ):
+class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     """DataSource for handling POD sample model data for multirun cases stored on a local filesystem.
     """
     # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
     # _AttributesClass = SampleDataAttributes
     # col_spec = sampleLocalFileDataSource_col_spec
-    varlist: diagnostic.MultirunVarlist = None
-    _DiagnosticClass = diagnostic.MultirunDiagnostic
-    # Override data_manager:DataSourceBase init method
+    convention: str
+    date_range: util.DateRange = dataclasses.field(init=False)
+    varlist: varlist_util.Varlist = None
+    log_file: io.IOBase = dataclasses.field(default=None, init=False)
+    env_vars: util.WormDict()
 
-    def __init__(self, case_dict, parent):
-        # _id = util.MDTF_ID()        # attrs inherited from core.MDTFObjectBase
+    def __init__(self, case_name: str,
+                 case_dict: dict,
+                 path_obj: util.ModelDataPathManager,
+                 parent: None):
+        # _id = util.MDTF_ID()        # attrs inherited from util.logs.MDTFObjectBase
         # name: str
         # _parent: object
         # log = util.MDTFObjectLogger
-        # status: ObjectStatus
-        # initialize data source atts and methods from parent classes
-        super(MultirunLocalFileDataSource, self).__init__(case_dict, parent)
-        # borrow MDTFObjectBase initialization from data_manager:~DataSourceBase
-        core.MDTFObjectBase.__init__(
-            self, name=case_dict['CASENAME'], _parent=parent
-        )
+        # status: util.ObjectStatus
+
+        # initialize MDTF logging object associated with this case
+        util.MDTFObjectBase.__init__(self, name=case_name, _parent=parent)
+        # set up log (CaseLoggerMixin)
+        self.init_log(log_dir=path_obj.WORK_DIR)
+        # configure case-specific env vars
+        self.env_vars = util.WormDict.from_struct({
+            k: case_dict[k] for k in ("startdate", "enddate", "convention")
+        })
+        self.env_vars.update({"CASENAME": case_name})
 
     @property
     def _children(self):
@@ -167,154 +108,59 @@ class MultirunLocalFileDataSource(MultirunSampleLocalFileDataSource,
         """
         yield from self.varlist.iter_vars()
 
+    def iter_vars_only(self, active=None):
+        yield from self.varlist.iter_vars_only(active=active)
 
-class MultirunNoPPDataSource(MultirunSampleLocalFileDataSource, qfp.MultirunDataSourceQFPMixin):
-    """DataSource for handling Multirun POD data that won't be preprocessed
+    def read_varlist(self, parent):
+        self.varlist = varlist_util.Varlist.from_struct(parent)
+
+    def set_date_range(self, startdate: str, enddate: str):
+        self.date_range = util.DateRange(start=startdate, end=enddate)
+
+    def translate_varlist(self,
+                          model_paths: util.ModelDataPathManager,
+                          case_name: str,
+                          to_convention: str):
+        for v in self.varlist.iter_vars():
+            self.varlist.setup_var(model_paths, case_name, v, to_convention, self.date_range)
+
+
+# instantiate the class maker so that the convention-specific classes can be instantiated using
+# the convention string specification associated with each case
+data_source = util.ClassMaker()
+
+
+@data_source.maker
+class CMIPDataSource(DataSourceBase):
+    """DataSource for handling POD sample model data for multirun cases stored on a local filesystem.
     """
-    # No-op=--just inherit attributes, properties, and route to __init__ methods in parent classes
-    _PreprocessorClass = preprocessor.MultirunNullPreprocessor
-    varlist: diagnostic.MultirunVarlist = None
-
-    def __init__(self, case_dict, parent):
-        # _id = util.MDTF_ID()        # attrs inherited from core.MDTFObjectBase
-        # name: str
-        # _parent: object
-        # log = util.MDTFObjectLogger
-        # status: ObjectStatus
-        # initialize data source atts and methods from parent classes
-        super(MultirunNoPPDataSource, self).__init__(case_dict, parent)
-
-        core.MDTFObjectBase.__init__(
-            self, name=case_dict['CASENAME'], _parent=parent
-        )
-
-    @property
-    def _children(self):
-        """Iterable of the multirun varlist that is associated with the data source object
-        """
-        yield from self.varlist.iter_vars()
+    # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
+    # _AttributesClass = SampleDataAttributes
+    # col_spec = sampleLocalFileDataSource_col_spec
+    # varlist = diagnostic.varlist
+    convention: str = "CMIP"
 
 
-class MetadataRewriteParser(xr_parser.DefaultDatasetParser):
-    """After loading and parsing the metadata on dataset *ds* but before
-    applying the preprocessing functions, update attrs on *ds* with the new
-    metadata values that were specified in :class:`ExplicitFileDataSource`\'s
-    config file.
+@data_source.maker
+class CESMDataSource(DataSourceBase):
+    """DataSource for handling POD sample model data for multirun cases stored on a local filesystem.
     """
-    def __init__(self, data_mgr, pod):
-        assert isinstance(data_mgr, ExplicitFileDataSource)
-        super(MetadataRewriteParser, self).__init__(data_mgr, pod)
-
-        self.guess_names = True # needed since names will be un-translated
-        self.id_lut = dict()
-
-    def setup(self, data_mgr, pod):
-        """Make a lookup table to map :class:`~diagnostic.VarlistEntry` IDs to
-        the set of metadata that we need to alter.
-
-        If user has provided the name of variable used by the data files (via the
-        ``var_name`` attribute), set that as the translated variable name.
-        Otherwise, variables are untranslated, and we use the herusitics in
-        :meth:`xr_parser.DefaultDatasetParser.guess_dependent_var` to determine
-        the name.
-        """
-        super(MetadataRewriteParser, self).setup(data_mgr, pod)
-
-        for var in pod.iter_children():
-            # set user-supplied translated name
-            # note: currently have to do this here, rather than in setup_var(),
-            # because query for this data source relies on the *un*translated
-            # name (ie, the POD's name for the var) being set in the translated
-            # name attribute.
-            if pod.name in data_mgr._config \
-                and var.name in data_mgr._config[pod.name]:
-                translated_name = data_mgr._config[pod.name][var.name].var_name
-                if translated_name:
-                    var.translation.name = translated_name
-                    var.log.debug(("Set translated name of %s to user-specified "
-                        "value '%s'."), var.full_name, translated_name)
-
-            # add var's info to lookup table of metadata changes
-            new_metadata = util.ConsistentDict()
-            for d_key in var.data.values():
-                idxs = list(d_key.value)
-                glob_ids = data_mgr.df['glob_id'].loc[idxs].to_list()
-                for id_ in glob_ids:
-                    entry = data_mgr.config_by_id[id_]
-                    new_metadata.update(entry.metadata)
-            self.id_lut[var._id] = new_metadata
-
-    def _post_normalize_hook(self, var, ds):
-        """After loading the metadata on dataset *ds* but before
-        reconciling it with the record, update attrs with the new
-        metadata values that were specified in :class:`ExplicitFileDataSource`\'s
-        config file.
-
-        Normal operation is to set the changed attrs on the VarlistEntry
-        translation, and then have these overwrite attrs in *ds* in the inherited
-        :meth:`xr_parser.DefaultDatasetParser.reconcile_variable` method. If
-        the user set the ``--disable-preprocessor`` flag, this is skipped, so
-        instead we set the attrs directly on *ds*.
-        """
-        tv_name = var.translation.name # abbreviate
-        assert tv_name in ds # should have been validated by xr_parser
-        ds_attrs = ds[tv_name].attrs # abbreviate
-        for k, v in self.id_lut[var._id].items():
-            if k in ds_attrs and v is not xr_parser.ATTR_NOT_FOUND:
-                if v != ds_attrs[k]:
-                    var.log.info(("Changing the value of the '%s' attribute of "
-                        "variable '%s' from '%s' to user-requested value '%s'."),
-                        k, var.name, ds_attrs[k], v,
-                        tags=(util.ObjectLogTag.NC_HISTORY, util.ObjectLogTag.BANNER)
-                    )
-                else:
-                    var.log.debug(("The '%s' attribute of variable '%s' already "
-                        "has the user-requested value '%s'; not changing."),
-                        k, var.name, v,
-                        tags=util.ObjectLogTag.BANNER
-                    )
-            else:
-                var.log.debug(("Attribute '%s' of variable '%s' is undefined; "
-                    "setting to user-requested value '%s'."),
-                    k, var.name, v,
-                    tags=(util.ObjectLogTag.NC_HISTORY, util.ObjectLogTag.BANNER)
-                )
-
-            v = str(v) # xarray attrs are all strings
-            ds_attrs[k] = v
-            if k in ('standard_name', 'units'):
-                # already logged what we're doing, so update supported attrs on
-                # translated var itself in addition to setting directly on ds
-                setattr(var.translation, k, v)
+    # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
+    # _AttributesClass = SampleDataAttributes
+    # col_spec = sampleLocalFileDataSource_col_spec
+    # varlist = diagnostic.varlist
+    convention: str = "CESM"
 
 
-class MetadataRewritePreprocessor(preprocessor.DaskMultiFilePreprocessor):
-    """Subclass :class:`~preprocessor.DaskMultiFilePreprocessor` in order to
-    look up and apply edits to metadata that are stored in
-    :class:`ExplicitFileDataSourceConfigEntry` objects in the \config_by_id
-    attribute of :class:`ExplicitFileDataSource`.
+@data_source.maker
+class GFDLDataSource(DataSourceBase):
+    """DataSource for handling POD sample model data for multirun cases stored on a local filesystem.
     """
-    _file_preproc_functions = []
-    _XarrayParserClass = MetadataRewriteParser
-
-    @property
-    def _functions(self):
-        config = core.ConfigManager()
-        if config.get('disable_preprocessor', False):
-            return (
-                preprocessor.CropDateRangeFunction,
-                preprocessor.RenameVariablesFunction
-            )
-        else:
-            # Add ApplyScaleAndOffsetFunction to functions used by parent class
-            return (
-                preprocessor.CropDateRangeFunction,
-                preprocessor.ApplyScaleAndOffsetFunction,
-                preprocessor.PrecipRateToFluxFunction,
-                preprocessor.ConvertUnitsFunction,
-                preprocessor.ExtractLevelFunction,
-                preprocessor.RenameVariablesFunction
-            )
+    # _FileRegexClass = SampleDataFile # fields inherited from SampleLocalFileDataSource
+    # _AttributesClass = SampleDataAttributes
+    # col_spec = sampleLocalFileDataSource_col_spec
+    # varlist = diagnostic.varlist
+    convention: str = "GFDL"
 
 
 dummy_regex = util.RegexPattern(
@@ -326,190 +172,29 @@ dummy_regex = util.RegexPattern(
 
 
 @util.regex_dataclass(dummy_regex)
-class GlobbedDataFile():
+class GlobbedDataFile:
     """Applies a trivial regex to the paths returned by the glob."""
     dummy_group: str = util.MANDATORY
     remote_path: str = util.MANDATORY
 
 
-@util.mdtf_dataclass
-class ExplicitFileDataSourceConfigEntry():
-    glob_id: util.MDTF_ID = None
-    pod_name: str = util.MANDATORY
-    name: str = util.MANDATORY
-    glob: str = util.MANDATORY
-    var_name: str = ""
-    metadata: dict = dataclasses.field(default_factory=dict)
-    _has_user_metadata: bool = None
 
-    def __post_init__(self):
-        if self.glob_id is None:
-            self.glob_id = util.MDTF_ID() # assign unique ID #
-        if self._has_user_metadata is None:
-            self._has_user_metadata = bool(self.metadata)
+    #def to_file_glob_tuple(self):
+    #    return dm.FileGlobTuple(
+    #        name=self.full_name, glob=self.glob,
+    #        attrs={
+    #            'glob_id': self.glob_id,
+    #            'pod_name': self.pod_name, 'name': self.name
+    #        }
+    #    )
 
-    @property
-    def full_name(self):
-        return '<' + self.pod_name+ '.' + self.name + '>'
 
-    @classmethod
-    def from_struct(cls, pod_name, var_name, v_data):
-        # "var_name" in arguments is the name given to the variable by the POD;
-        # name_in_data is the user-specified name of the variable in the files
-        if isinstance(v_data, dict):
-            glob = v_data.get('files', "")
-            name_in_data = v_data.get('var_name', "")
-            metadata = v_data.get('metadata', dict())
-            _has_user_metadata = ('metadata' in v_data)
-        else:
-            glob = v_data
-            name_in_data = ""
-            metadata = dict()
-            _has_user_metadata = False
-        return cls(
-            pod_name=pod_name, name=var_name, glob=glob,
-            var_name=name_in_data, metadata=metadata,
-            _has_user_metadata=_has_user_metadata
-        )
 
-    def to_file_glob_tuple(self):
-        return dm.FileGlobTuple(
-            name=self.full_name, glob=self.glob,
-            attrs={
-                'glob_id': self.glob_id,
-                'pod_name': self.pod_name, 'name': self.name
-            }
-        )
 
 
 @util.mdtf_dataclass
-class ExplicitFileDataAttributes(dm.DataSourceAttributesBase):
-    # CASENAME: str          # fields inherited from dm.DataSourceAttributesBase
-    # FIRSTYR: str
-    # LASTYR: str
-    # date_range: util.DateRange
-    # CASE_ROOT_DIR: str
-    # log: dataclasses.InitVar = _log
-    config_file: str = None
-    convention: str = ""
-
-    def __post_init__(self, log=_log):
-        """Validate user input.
-        """
-        super(ExplicitFileDataAttributes, self).__post_init__(log=log)
-
-        config = core.ConfigManager()
-        if not self.config_file:
-            self.config_file = config.get('config_file', '')
-        if not self.config_file:
-            log.critical(("No configuration file found for ExplicitFileDataSource "
-                "(--config-file)."))
-            util.exit_handler(code=1)
-
-        if self.convention != core._NO_TRANSLATION_CONVENTION:
-            log.debug("Received incompatible convention '%s'; setting to '%s'.",
-                self.convention, core._NO_TRANSLATION_CONVENTION)
-            self.convention = core._NO_TRANSLATION_CONVENTION
-
-
-explicitFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
-    # Catalog columns whose values must be the same for all variables.
-    expt_cols = dm.DataFrameQueryColumnGroup([])
-)
-
-
-class ExplicitFileDataSource(
-    qfp.OnTheFlyGlobQueryMixin, qfp.LocalFetchMixin, dm.DataframeQueryDataSourceBase
-):
-    """DataSource for dealing data in a regular directory hierarchy on a
-    locally mounted filesystem. Assumes data for each variable may be split into
-    several files according to date, with the dates present in their filenames.
-    """
-    _FileRegexClass = GlobbedDataFile
-    _AttributesClass = ExplicitFileDataAttributes
-    _DiagnosticClass = diagnostic.Diagnostic
-    _PreprocessorClass = MetadataRewritePreprocessor
-    col_spec = explicitFileDataSource_col_spec
-
-    expt_key_cols = tuple()
-    expt_cols = expt_key_cols
-
-    def __init__(self, case_dict, parent):
-        self.catalog = None
-        self._config = collections.defaultdict(dict)
-        self.config_by_id = dict()
-        self._has_user_metadata = None
-
-        super(ExplicitFileDataSource, self).__init__(case_dict, parent)
-
-        # Read config file; parse contents into ExplicitFileDataSourceConfigEntry
-        # objects and store in self.config_by_id
-        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'config_file'))
-        config = util.read_json(self.attrs.config_file, log=self.log)
-        self.parse_config(config)
-
-    @property
-    def CATALOG_DIR(self):
-        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CASE_ROOT_DIR'))
-        return self.attrs.CASE_ROOT_DIR
-
-    def parse_config(self, config_d):
-        """Parse contents of JSON config file into a list of
-        :class`ExplicitFileDataSourceConfigEntry` objects.
-        """
-        # store contents in ConfigManager so they can be backed up in output
-        # (HTMLOutputManager.backup_config_files())
-        config = core.ConfigManager()
-        config._configs['data_source_config'] = core.ConfigTuple(
-            name='data_source_config',
-            backup_filename='ExplicitFileDataSource_config.json',
-            contents=config_d
-        )
-
-        # parse contents
-        for pod_name, v_dict in config_d.items():
-            for v_name, v_data in v_dict.items():
-                entry = ExplicitFileDataSourceConfigEntry.from_struct(
-                    pod_name, v_name, v_data)
-                self._config[pod_name][v_name] = entry
-                self.config_by_id[entry.glob_id] = entry
-        # don't bother to validate here -- if we didn't specify files for all
-        # vars it'll manifest as a failed query & be logged as error there.
-
-        # set overwrite_metadata flag if needed
-        self._has_user_metadata = any(
-            x._has_user_metadata for x in self.config_by_id.values()
-        )
-        if self._has_user_metadata and \
-            not config.get('overwrite_file_metadata', False):
-            self.log.warning(("Requesting metadata edits in ExplicitFileDataSource "
-                "implies the use of the --overwrite-file-metadata flag. Input "
-                "file metadata will be overwritten."),
-                tags=util.ObjectLogTag.BANNER
-            )
-            config['overwrite_file_metadata'] = True
-
-    def iter_globs(self):
-        """Iterator returning :class:`FileGlobTuple` instances. The generated
-        catalog contains the union of the files found by each of the globs.
-        """
-        for entry in self.config_by_id.values():
-            yield entry.to_file_glob_tuple()
-
-
-class MultirunExplicitFileDataSource(ExplicitFileDataSource):
-    """DataSource to handle multirun data in a regular directory hierarchy on a
-    locally mounted filesystem. Assumes data for each variable may be split into
-    several files according to date, with the dates present in their filenames.
-    Data file paths and metadata modifications are specified in a separate config file.
-    """
-    _DiagnosticClass = diagnostic.MultirunDiagnostic
-    _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
-
-
-@util.mdtf_dataclass
-class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
-    # CASENAME: str          # fields inherited from dm.DataSourceAttributesBase
+class CMIP6DataSourceAttributes(DataSourceAttributesBase):
+    # CASENAME: str          # fields inherited from DataSourceAttributesBase
     # FIRSTYR: str
     # LASTYR: str
     # date_range: util.DateRange
@@ -529,7 +214,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
 
     def __post_init__(self, log=_log, model=None, experiment=None):
         super(CMIP6DataSourceAttributes, self).__post_init__(log=log)
-        config = core.ConfigManager()
+        config = {}
         cv = cmip6.CMIP6_CVs()
 
         def _init_x_from_y(source, dest):
@@ -544,7 +229,7 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
                     setattr(self, dest, dest_val)
                 except KeyError:
                     log.debug("Couldn't set %s from %s='%s'.",
-                        dest, source, source_val)
+                              dest, source, source_val)
                     setattr(self, dest, "")
 
         if not self.CASE_ROOT_DIR and config.CASE_ROOT_DIR:
@@ -601,148 +286,10 @@ class CMIP6DataSourceAttributes(dm.DataSourceAttributesBase):
             self.CATALOG_DIR = new_root
 
 
-cmip6LocalFileDataSource_col_spec = dm.DataframeQueryColumnSpec(
-    # Catalog columns whose values must be the same for all variables.
-    expt_cols = dm.DataFrameQueryColumnGroup(
-        ["activity_id", "institution_id", "source_id", "experiment_id",
-        "variant_label", "version_date"],
-        # columns whose values are derived from those above
-        ["region", "spatial_avg", 'realization_index', 'initialization_index',
-        'physics_index', 'forcing_index']
-    ),
-    # Catalog columns whose values must be the same for each POD.
-    pod_expt_cols = dm.DataFrameQueryColumnGroup(
-        ['grid_label'],
-        # columns whose values are derived from those above
-        ['regrid', 'grid_number']
-    ),
-    # Catalog columns whose values must "be the same for each variable", ie are
-    # irrelevant but must be constrained to a unique value.
-    var_expt_cols = dm.DataFrameQueryColumnGroup(["table_id"]),
-    daterange_col = "date_range"
-)
 
 
-class CMIP6ExperimentSelectionMixin():
-    """Encapsulate attributes and logic used for CMIP6 experiment disambiguation
-    so that it can be reused in DataSources with different parents (eg. different
-    FetchMixins for different data fetch protocols.)
-
-    Assumes inheritance from DataframeQueryDataSourceBase -- should enforce this.
-    """
-    # Mandate the CMIP naming convention for all data sources inheriting from this
-    _convention = "CMIP"
-
-    # map "name" field in VarlistEntry's query_attrs() to "variable_id" field here
-    _query_attrs_synonyms = {'name': 'variable_id'}
-
-    @property
-    def CATALOG_DIR(self):
-        assert (hasattr(self, 'attrs') and hasattr(self.attrs, 'CATALOG_DIR'))
-        return self.attrs.CATALOG_DIR
-
-    def _query_group_hook(self, group_df):
-        """Eliminate regional (Antarctic/Greenland) and spatially averaged data
-        from consideration for data fetch, since no POD currently makes use of
-        data of this type.
-        """
-        has_region = not (group_df['region'].isnull().all())
-        has_spatial_avg = not (group_df['spatial_avg'].isnull().all())
-        if not has_region and not has_spatial_avg:
-            # correct values, pass this group through
-            return group_df
-        else:
-            # return empty DataFrame to signify failure
-            if has_region:
-                _log.debug("Eliminating expt_key for regional data (%s).",
-                    group_df['region'].drop_duplicates().to_list())
-            elif has_spatial_avg:
-                _log.debug("Eliminating expt_key for spatially averaged data (%s).",
-                    group_df['spatial_avg'].drop_duplicates().to_list())
-            return pd.DataFrame(columns=group_df.columns)
-
-    @staticmethod
-    def _filter_column(df, col_name, func, obj_name):
-        values = list(df[col_name].drop_duplicates())
-        if len(values) <= 1:
-            # unique value, no need to filter
-            return df
-        filter_val = func(values)
-        _log.debug("Selected experiment attribute '%s'='%s' for %s (out of %s).",
-            col_name, filter_val, obj_name, values)
-        return df[df[col_name] == filter_val]
-
-    def _filter_column_min(self, df, obj_name, *col_names):
-        for c in col_names:
-            df = self._filter_column(df, c, min, obj_name=obj_name)
-        return df
-
-    def _filter_column_max(self, df, obj_name, *col_names):
-        for c in col_names:
-            df = self._filter_column(df, c, max, obj_name=obj_name)
-        return df
-
-    def resolve_expt(self, df, obj):
-        """Disambiguate experiment attributes that must be the same for all
-        variables in this case:
-
-        - If variant_id (realization, forcing, etc.) not specified by user,
-            choose the lowest-numbered variant
-        - If version_date not set by user, choose the most recent revision
-        """
-        # If multiple ensemble/forcing members, choose lowest-numbered one
-        df = self._filter_column_min(df, obj.name,
-            'realization_index', 'initialization_index', 'physics_index', 'forcing_index'
-        )
-        # use most recent version_date
-        df = self._filter_column_max(df, obj.name, 'version_date')
-        return df
-
-    def resolve_pod_expt(self, df, obj):
-        """Disambiguate experiment attributes that must be the same for all
-        variables for each POD:
-
-        - Prefer regridded to native-grid data (questionable)
-        - If multiple regriddings available, pick the lowest-numbered one
-        """
-        # prefer regridded data
-        if any(df['regrid'] == 'r'):
-            df = df[df['regrid'] == 'r']
-        # if multiple regriddings, choose the lowest-numbered one
-        df = self._filter_column_min(df, obj.name, 'grid_number')
-        return df
-
-    def resolve_var_expt(self, df, obj):
-        """Disambiguate arbitrary experiment attributes on a per-variable basis:
-
-        - If the same variable appears in multiple MIP tables, select the first
-            MIP table in alphabetical order.
-        """
-        # TODO: minimize number of MIP tables
-        col_name = 'table_id'
-        # select first MIP table (out of available options) by alpha order
-        # NB need to pass list to iloc to get a pd.DataFrame instead of pd.Series
-        df = df.sort_values(col_name).iloc[[0]]
-        obj.log.debug("Selected experiment attribute '%s'='%s' for %s.",
-                      col_name, df[col_name].iloc[0], obj.name)
-        return df
 
 
-class CMIP6LocalFileDataSource(CMIP6ExperimentSelectionMixin, dm.LocalFileDataSource):
-    """DataSource for handling model data named following the CMIP6 DRS and
-    stored on a local filesystem.
-    """
-    _FileRegexClass = cmip6.CMIP6_DRSPath
-    _DirectoryRegex = cmip6.drs_directory_regex
-    _AttributesClass = CMIP6DataSourceAttributes
-    _DiagnosticClass = diagnostic.Diagnostic
-    _PreprocessorClass = preprocessor.DefaultPreprocessor
-    col_spec = cmip6LocalFileDataSource_col_spec
 
 
-class MultirunCMIP6LocalFileDataSource(CMIP6LocalFileDataSource):
-    """DataSource for handling multirun model data named following the CMIP6 DRS and
-    stored on a local filesystem.
-    """
-    _DiagnosticClass = diagnostic.MultirunDiagnostic
-    _PreprocessorClass = preprocessor.MultirunDefaultPreprocessor
+

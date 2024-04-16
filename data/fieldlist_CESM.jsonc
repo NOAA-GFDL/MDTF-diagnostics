@@ -1,0 +1,350 @@
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.) JSON doesn't support line continuation
+// in strings, so you'll want to turn word wrap on in your editor.
+//
+// Source: https://www.cesm.ucar.edu/models/cesm2/atmosphere/docs/ug6/hist_flds_f2000.html
+// CF variables not on that list are commented out
+{
+  "name" : "CESM",
+  "models": ["CAM4", "CESM2", "CESM"], // others?
+  "coords" : {
+    // only used for taking slices, unit conversion
+    "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
+    "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
+    "TLONG": {"axis": "X", "standard_name": "array of t-grid longitudes", "units": "degrees_east"},
+    "TLAT": {"axis": "Y", "standard_name": "array of t-grid latitudes", "units": "degrees_north"},
+
+    "plev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "lev": {
+      "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate",
+      "units": "level", // equivalent to '1'
+      "positive": "down",
+      "axis": "Z"
+    },
+    "z_t": {
+      "standard_name": "depth from surface to midpoint of layer",
+      "units": "centimeters",
+      "positive": "down",
+      "axis": "Z"
+   },
+    "time": {"axis": "T", "standard_name": "time", "units": "days"}
+  },
+  "aux_coords": {
+    // "deptho": {
+    //   "standard_name": "sea_floor_depth_below_geoid",
+    //   "units": "m",
+    //   "ndim": 2
+    // },
+    // "thkcello": {
+    //   "standard_name": "cell_thickness",
+    //   "units": "m",
+    //   "ndim": 3
+    // }
+  },
+  "variables" : {
+    "U": {
+      "standard_name": "eastward_wind",
+      "realm": "atmos",
+      "units": "m s-1",
+      "scalar_coord_templates": {"plev": "U{value}"},
+      "ndim": 4
+    },
+    "V": {
+      "standard_name": "northward_wind",
+      "realm":"atmos",
+      "units": "m s-1",
+      "scalar_coord_templates": {"plev": "V{value}"},
+      "ndim": 4
+    },
+    "Z3": {
+      "standard_name": "geopotential_height",
+      "units": "m",
+      "realm": "atmos",
+      // note: 4d name is 'Z3' but Z500 = height at 500 mb, etc.
+      "scalar_coord_templates": {"plev": "Z{value}"},
+      "ndim": 4
+    },
+    "Z500": {
+      "standard_name": "geopotential_height_500mb",
+      "realm": "atmos",
+      "units": "m",
+      // note: 4d name is 'Z3' but Z500 = height at 500 mb, etc.
+      "ndim": 3
+    },
+    "Q": {
+      "standard_name": "specific_humidity",
+      "realm": "atmos",
+      "units": "1",
+      "ndim": 4
+    },
+    "OMEGA": {
+      "standard_name": "lagrangian_tendency_of_air_pressure",
+      "realm": "atmos",
+      "units": "Pa s-1",
+      "scalar_coord_templates": {"plev": "OMEGA{value}"},
+      "ndim": 4
+    },
+    "TS": {
+      "standard_name": "surface_temperature",
+      "realm": "atmos",
+      "units": "K",
+      "ndim": 3
+    },
+    "PS": {
+      "standard_name": "surface_air_pressure",
+      "realm": "atmos",
+      // note: not hPa
+      "units": "Pa",
+      "ndim": 3
+    },
+    "PRECT": {
+      "standard_name": "precipitation_rate",
+      "realm": "atmos",
+      "units": "m s-1",
+      "ndim": 3
+    },
+    "PRECC": {
+      "standard_name": "convective_precipitation_rate",
+      "realm": "atmos",
+      "units": "m s-1",
+      "ndim": 3
+    },
+    "TREFHT" : {
+      // correct name? CMIP6 equivalent should be tas, temp at 2m ref height
+      "standard_name": "air_temperature",
+      "realm": "atmos",
+      "units": "K",
+      "ndim": 3,
+      "modifier": "atmos_height"
+    },
+    "TAUX": {
+      "standard_name": "surface_downward_eastward_stress",
+      "realm": "atmos",
+      "units": "Pa",
+      "ndim": 3
+    },
+    "TAUY": {
+      "standard_name": "surface_downward_northward_stress",
+      "realm": "atmos",
+      "units": "Pa",
+      "ndim": 3
+    },
+    "PSL": {
+      "standard_name": "air_pressure_at_mean_sea_level",
+      "realm": "atmos",
+      "units": "Pa",
+      "ndim": 3
+    },
+    // radiative fluxes:
+    // "rsus": {
+    //   "standard_name": "surface_upwelling_shortwave_flux_in_air",
+    //   "units": "W m-2",
+    //   "ndim": 3
+    // },
+    // "rsds": {
+    //   "standard_name": "surface_downwelling_shortwave_flux_in_air",
+    //   "units": "W m-2",
+    //   "ndim": 3
+    // },
+    // "rsdt": {
+    //   "standard_name": "toa_incoming_shortwave_flux",
+    //   "units": "W m-2",
+    //   "ndim": 3
+    // },
+    // "rsut": {
+    //   "standard_name": "toa_outgoing_shortwave_flux",
+    //   "units": "W m-2",
+    //   "ndim": 3
+    // },
+    "FLUS": {
+      // correct name? Guessed according to pattern -- no FLUS, only the net combination?
+      "standard_name": "surface_upwelling_longwave_flux_in_air",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FLDS": {
+      "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FLUT": {
+      "standard_name": "toa_outgoing_longwave_flux",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+     "FLNT": {
+      "standard_name": "net_upward_longwave_flux",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FSNS": {
+      "standard_name": "net_solar_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+   "FLNS": {
+      "standard_name": "net_longwave_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FLNSC": {
+      "standard_name": "clearsky_net_longwave_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FSDS": {
+      "standard_name": "downwelling_solar_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FLDSC": {
+      "standard_name": "clearsky_downwelling_longwave_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FLUTC": {
+      "standard_name": "clearsky_upwelling_longwave_flux_at_top_of_model",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FLNTC": {
+      "standard_name": "clearsky_toa_outgoing_longwave_flux",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FSNSC": {
+      "standard_name": "clearsky_net_solar_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FSDSC": {
+      "standard_name": "clearsky_downwelling_solar_flux_at_surface",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "FSNTOA": {
+      "standard_name": "net_solar_flux_at_top_of_atmosphere",
+      "units": "W m-2",
+      "ndim": 3
+    }, 
+    "FSUTOA": {
+      "standard_name": "upwelling_solar_flux_at_top_of_atmosphere",
+      "units": "W m-2",
+      "ndim": 3
+    },  
+    "FSNTOAC": {
+      "standard_name": "clearsky_net_solar_flux_at_top_of_atmosphere",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "SHFLX": {
+      "standard_name": "surface_upward_sensible_heat_flux",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "LHFLX": {
+      "standard_name": "surface_upward_latent_heat_flux",
+      "realm": "atmos",
+      "units": "W m-2",
+      "ndim": 3
+    },
+    "zos": {
+      "standard_name": "sea_surface_height_above_geoid",
+      "realm": "ocean",
+      "units": "m",
+      "ndim": 3
+    },
+    "tauuo": {
+      "standard_name": "surface_downward_x_stress",
+      "realm": "ocean",
+      "units": "N m-2",
+      "ndim": 3
+    },
+    "tauvo": {
+      "standard_name": "surface_downward_y_stress",
+      "realm": "ocean",
+      "units": "N m-2",
+      "ndim": 3
+    },
+    "areacello": {
+      "standard_name": "cell_area",
+      "realm": "ocean",
+      "units": "m2",
+      "ndim": 2
+    },
+    // Variables for AMOC_3D_Structure module:
+    // "uo": {
+    //   "standard_name": "sea_water_x_velocity",
+    //   "units": "m s-1"
+    // },
+    // "vo": {
+    //   "standard_name": "sea_water_y_velocity",
+    //   "units": "m s-1"
+    // },
+    // "so": {
+    //   "standard_name": "sea_water_salinity",
+    //   "units": "psu"
+    // },
+    // "umo": {
+    //   "standard_name": "ocean_mass_x_transport",
+    //   "units": "kg s-1"
+    // },
+    // "vmo": {
+    //   "standard_name": "ocean_mass_y_transport",
+    //   "units": "kg s-1"
+    // },
+    "THETAL": {
+      "standard_name": "sea_water_potential_temperature",
+      "realm": "ocean",
+      "units": "K",
+      "ndim": 4
+    },
+    "SST": {
+      "standard_name": "Potential Temperature",
+      "realm": "ocean",
+      "units": "degC",
+      "ndim": 4
+    },
+    // Variables for Convective Transition Diagnostics module:
+    // ta: 3D temperature, units = K:
+    "T": {
+      "standard_name": "air_temperature",
+      "realm": "atmos",
+      "units": "K",
+      "ndim": 4
+    },
+    // prw: Column Water Vapor (precipitable water vapor), units = mm (or kg/m^2)
+    "prw": {
+      // check name: is this column integrated?
+      "standard_name": "atmosphere_mass_content_of_water_vapor",
+      "realm": "atmos",
+      "units": "kg m-2",
+      "ndim": 3
+    }
+    // Variables for SM_ET_coupling module
+    // "mrsos": {
+    //   "standard_name": "mass_content_of_water_in_soil_layer",
+    //   "units": "kg m-2",
+    //   "ndim": 3
+    // },
+    // "evspsbl": {
+    //   "standard_name": "water_evapotranspiration_flux",
+    //   "units": "kg m-2 s-1",
+    //   "ndim": 3
+    // }
+  },
+  "env_vars" : {
+    // 0 for CMIP/GFDL date index start, 1 for CESM native date index start
+    "date_int_offset" : 1
+  }
+}

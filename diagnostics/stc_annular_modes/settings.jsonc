@@ -7,7 +7,7 @@
     "settings" : {
       "driver" : "stc_annular_modes.py",
       "long_name" : "Annular Mode Coupling",
-      "realm" : "atmos",
+      "convention" : "cmip",
       "description" : "Assess the representation of zonal mean annular mode coupling between the troposphere and stratosphere",
       "pod_env_vars" : {
         // The first and last years of the obs data to use. 
@@ -42,7 +42,11 @@
       }
     },
     "dimensions": {
-      "lat": {"standard_name": "latitude"},
+      "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
       "lev": {
         "standard_name": "air_pressure",
         "units": "hPa",
@@ -54,6 +58,7 @@
     "varlist": {
       "zg": {
         "standard_name" : "geopotential_height",
+        "realm": "atmos",
         "units" : "m",
         "frequency": "day",
         "dimensions": ["time", "lev", "lat"] // note the lack of "lon" -- this should be zonal mean data!

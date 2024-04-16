@@ -1,4 +1,4 @@
-"""Code for normalizing metadata in xarray Datasets; see :doc:`fmwk_preprocess`.
+"""Code for normalizing metadata in xarray Datasets`.
 
 Familiarity with the  `cf_xarray <https://cf-xarray.readthedocs.io/en/latest/>`__
 package, used as a third-party dependency, as well as the :doc:`src.data_model`
@@ -9,14 +9,13 @@ import functools
 import itertools
 import re
 import warnings
-from abc import ABC
 
 import cftime  # believe explict import needed for cf_xarray date parsing?
 import cf_xarray
 import xarray as xr
 import numpy as np
 
-from src import util, units, core
+from src import util, units
 
 import logging
 
@@ -44,7 +43,7 @@ are expected, but not present in the data.
 
 
 @util.mdtf_dataclass
-class PlaceholderScalarCoordinate():
+class PlaceholderScalarCoordinate:
     """Dummy object used to describe `scalar coordinates
     <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.9/cf-conventions.html#scalar-coordinate-variables>`__
     referred to by name only in the 'coordinates' attribute of a variable or
@@ -390,8 +389,7 @@ with warnings.catch_warnings():
 
     @xr.register_dataset_accessor("cf")
     class MDTFCFDatasetAccessor(
-        MDTFCFDatasetAccessorMixin, cf_xarray.accessor.CFDatasetAccessor, ABC
-    ):
+        MDTFCFDatasetAccessorMixin, cf_xarray.accessor.CFDatasetAccessor):
         """Accessor that's registered (under the attribute ``cf``) for xarray
         Datasets. Combines methods in :class:`MDTFCFDatasetAccessorMixin` and the
         cf_xarray Dataset accessor.
@@ -401,8 +399,7 @@ with warnings.catch_warnings():
 
     @xr.register_dataarray_accessor("cf")
     class MDTFCFDataArrayAccessor(
-        MDTFDataArrayAccessorMixin, cf_xarray.accessor.CFDataArrayAccessor, ABC
-    ):
+        MDTFDataArrayAccessorMixin, cf_xarray.accessor.CFDataArrayAccessor):
         """Accessor that's registered (under the attribute ``cf``) for xarray
         DataArrays. Combines methods in :class:`MDTFDataArrayAccessorMixin` and
         the cf_xarray DataArray accessor.
@@ -412,7 +409,7 @@ with warnings.catch_warnings():
 
 # ========================================================================
 
-
+@util.mdtf_dataclass
 class DefaultDatasetParser:
     """Class containing MDTF-specific methods for cleaning and normalizing
     xarray metadata.
@@ -420,41 +417,35 @@ class DefaultDatasetParser:
     Top-level methods are :meth:`parse` and :meth:`get_unmapped_names`.
     """
 
-    def __init__(self, data_mgr, pod):
+    def __init__(self, config: util.NameSpace):
         """Constructor.
 
         Args:
-            data_mgr: DataSource instance calling the preprocessor.
-            pod (:class:`~src.diagnostic.Diagnostic`): POD whose variables are
-                being preprocessed.
+            config: runtime configuration
         """
-        config = core.ConfigManager()
         self.disable = config.get('disable_preprocessor', False)
         self.overwrite_ds = config.get('overwrite_file_metadata', False)
         self.guess_names = False
 
         self.fallback_cal = 'proleptic_gregorian'  # CF calendar used if no attribute found
         self.attrs_backup = dict()
-        self.log = pod.log  # temporary
 
-    def setup(self, data_mgr, pod):
-        """Hook for use by child classes (currently unused) to do additional
-        configuration immediately before :meth:`parse` is called on each
-        variable for *pod*.
+        self.log = util.MDTFObjectLogger.get_logger(self._log_name)
 
-        Args:
-            data_mgr: DataSource instance calling the preprocessor.
-            pod (:class:`~src.diagnostic.Diagnostic`): POD whose variables are
-                being preprocessed.
-        """
-        pass
+    @property
+    def _log_name(self):
+        return f"xr_parser_default_data_parser"
 
     # --- Methods for initial munging, prior to xarray.decode_cf -------------
 
-    def guess_attr(self, attr_desc, attr_name, options, default=None,
-                   comparison_func=None):
+    def guess_attr(self,
+                   attr_desc: str,
+                   attr_name: str,
+                   options,
+                   default: str = None,
+                   comparison_func: str = None):
         """Select and return element of *options* equal to *attr_name*.
-        If none are equal, try a case-insensititve string match.
+        If none are equal, try a case-insensitive string match.
 
         Args:
             attr_desc (str): Description of the attribute (only used for log
@@ -552,7 +543,7 @@ class DefaultDatasetParser:
             # key was found with expected name; copy to new_attr_d
             new_attr_d[key_name] = d[key_name]
 
-    def normalize_calendar(self, attr_d):
+    def normalize_calendar(self, attr_d: dict):
         """Finds the calendar attribute, if present, and normalizes it to one of
         the values in the CF standard before `xarray.decode_cf()
         <https://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__
@@ -621,7 +612,7 @@ class DefaultDatasetParser:
                                 # log warning but still update attrs
                                 self.log.warning("%s: discrepancy for attr '%s': '%s' != '%s'.",
                                                  name, k, vv, attrs_d[k])
-                    elif hasattr(v, '__iter__') and not isinstance(v, str) and v.any() not in attrs_d[k] \
+                    elif hasattr(v, '__iter__') and not isinstance(v, str) and v not in attrs_d[k] \
                             or v != attrs_d[k]:
                         self.log.warning("%s: discrepancy for attr '%s': '%s' != '%s'.",
                                          name, k, v, attrs_d[k])
@@ -1255,7 +1246,7 @@ class DefaultDatasetParser:
 
     # --- Top-level methods -----------------------------------------------
 
-    def parse(self, var, ds):
+    def parse(self, var, ds: xr.Dataset):
         """Calls the above metadata parsing functions in the intended order;
         intended to be called immediately after the Dataset *ds* is opened.
 
@@ -1285,19 +1276,18 @@ class DefaultDatasetParser:
             Except in specific cases, attributes of *var* are updated to reflect
             the 'ground truth' of data in *ds*.
         """
-        if var is not None:
-            self.log = var.log
+
         self.normalize_pre_decode(ds)
         ds = xr.decode_cf(ds,
                           decode_coords=True,  # parse coords attr
                           decode_times=True,
                           use_cftime=True  # use cftime instead of np.datetime64
                           )
-        ds = ds.cf.guess_coord_axis()
+        # ds = ds.cf.guess_coord_axis()  # may not need this
         self.restore_attrs_backup(ds)
-        self.normalize_metadata(var, ds)
+        #self.normalize_metadata(var, ds)
         self.check_calendar(ds)
-        self._post_normalize_hook(var, ds)
+        #self._post_normalize_hook(var, ds)
 
         if self.disable:
             return ds  # stop here; don't attempt to reconcile
@@ -1337,27 +1327,3 @@ class DefaultDatasetParser:
             if (ref not in all_arr_names) and (ref not in all_attr_names):
                 missing_refs[ref] = lookup[ref]
         return missing_refs
-
-
-class MultirunDefaultDatasetParser(DefaultDatasetParser):
-    """Class containing MDTF-specific methods for cleaning and normalizing
-    xarray metadata. Methods reference data_mgr only. The data_mgr references the pod
-    object that contains the cases, rather than a case object with all of the pods.
-
-    Top-level methods are :meth:`parse` and :meth:`get_unmapped_names`.
-    """
-
-    def __init__(self, data_mgr):
-        """Constructor.
-
-        Args:
-            data_mgr: DataSource instance calling the preprocessor: src.diagnostic.MultirunDiagnostic
-        """
-        config = core.ConfigManager()
-        self.disable = config.get('disable_preprocessor', False)
-        self.overwrite_ds = config.get('overwrite_file_metadata', False)
-        self.guess_names = False
-
-        self.fallback_cal = 'proleptic_gregorian'  # CF calendar used if no attribute found
-        self.attrs_backup = dict()
-        self.log = data_mgr.log  # temporary

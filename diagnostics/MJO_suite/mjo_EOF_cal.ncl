@@ -13,7 +13,7 @@ begin
 
   routine_name = "mjo_EOF_cal.ncl"
    casename = getenv("CASENAME")
-   file_dir = getenv("WK_DIR")+"/model/netCDF/"
+   file_dir = getenv("WORK_DIR")+"/model/netCDF/"
 
    neof    =  2
 

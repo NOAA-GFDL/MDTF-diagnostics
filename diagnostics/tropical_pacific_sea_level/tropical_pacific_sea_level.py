@@ -55,14 +55,10 @@ import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 import spherical_area as sa
 from xr_ufunc import da_linregress
 from dynamical_balance2 import curl_tau, curl_tau_3d
 from dynamical_balance2 import curl_var, curl_var_3d
-
-
-
 
 warnings.simplefilter("ignore")
 
@@ -71,8 +67,8 @@ print("Start reading set parameter (pod_env_vars)")
 print("--------------------------")
 
 # constant setting
-syear = int(os.getenv("FIRSTYR"))  # crop model data from year
-fyear = int(os.getenv("LASTYR"))  # crop model data to year
+syear = int(os.getenv("startdate"))  # crop model data from year
+fyear = int(os.getenv("enddate"))  # crop model data to year
 predef_obs = os.getenv("predef_obs")
 obs_start_year = int(os.getenv("obs_start_year"))  # crop obs data from year
 obs_end_year = int(os.getenv("obs_end_year"))  # crop obs data to year
@@ -98,7 +94,6 @@ modelfile = [
 ]
 areafile = os.getenv("AREACELLO_FILE")
 
-
 Model_varname = [os.getenv("tauuo_var"), os.getenv("tauvo_var"), os.getenv("zos_var")]
 Model_coordname = [os.getenv("lat_coord_name"), os.getenv("lon_coord_name")]
 
@@ -108,18 +103,16 @@ yname = os.getenv("y_axis_name")
 print("Ocean model axis name:", xname, yname)
 print("Ocean model coord name:", Model_coordname[1], Model_coordname[0])
 
-
 print("--------------------------")
 print("Start processing model outputs")
 print("--------------------------")
-
 
 ds_model_mlist = {}
 mean_mlist = {}
 season_mlist = {}
 linear_mlist = {}
 
-#### models
+# models
 for nmodel, model in enumerate(Model_name):
     ds_model_list = {}
     mean_list = {}
@@ -259,12 +252,12 @@ if predef_obs != "True":
                             [ds_obs, ds_obs_sub], dim="time", data_vars="minimal"
                         )
 
-            ############## CMEMS ##############
+            # CMEMS ##############
             if obs in ["CMEMS"]:
                 syear_obs = obs_year_range[nobs][0]
                 fyear_obs = obs_year_range[nobs][1]
                 fmon_obs = obs_year_range[nobs][2]
-                #### create time axis for overlapping period
+                # create time axis for overlapping period
                 timeax = xr.cftime_range(
                     start=cftime.datetime(syear_obs, 1, 1),
                     end=cftime.datetime(fyear_obs, fmon_obs, 1),
@@ -299,7 +292,7 @@ if predef_obs != "True":
             else:
                 syear_obs = obs_year_range[nobs][0]
                 fyear_obs = obs_year_range[nobs][1]
-                #### create time axis for overlapping period
+                # create time axis for overlapping period
                 timeax = xr.cftime_range(
                     start=cftime.datetime(syear_obs, 1, 1),
                     end=cftime.datetime(fyear_obs, 12, 31),
@@ -328,7 +321,7 @@ if predef_obs != "True":
                 ds_obs_list[var].groupby("time.month").mean(dim="time").compute()
             )
             ds_obs_list[var] = (
-                ds_obs_list[var].groupby("time.month") - obs_season_list[var]
+                    ds_obs_list[var].groupby("time.month") - obs_season_list[var]
             )
 
             # remove linear trend
@@ -345,7 +338,6 @@ if predef_obs != "True":
         obs_season_mlist[obs] = obs_season_list
         ds_obs_mlist[obs] = ds_obs_list
 
-
 # # Derive wind stress curl
 #########
 # Model
@@ -359,7 +351,7 @@ for nmodel, model in enumerate(Model_name):
     )
 
     linear_mlist[model]["curl_tau"] = (
-        linear_mlist[model]["curl_tauuo"] + linear_mlist[model]["curl_tauvo"]
+            linear_mlist[model]["curl_tauuo"] + linear_mlist[model]["curl_tauvo"]
     )
 
     mean_mlist[model]["curl_tauuo"], mean_mlist[model]["curl_tauvo"] = curl_tau(
@@ -367,7 +359,7 @@ for nmodel, model in enumerate(Model_name):
     )
 
     mean_mlist[model]["curl_tau"] = (
-        mean_mlist[model]["curl_tauuo"] + mean_mlist[model]["curl_tauvo"]
+            mean_mlist[model]["curl_tauuo"] + mean_mlist[model]["curl_tauvo"]
     )
 
     season_mlist[model]["curl_tauuo"], season_mlist[model]["curl_tauvo"] = curl_tau_3d(
@@ -379,7 +371,7 @@ for nmodel, model in enumerate(Model_name):
     )
 
     season_mlist[model]["curl_tau"] = (
-        season_mlist[model]["curl_tauuo"] + season_mlist[model]["curl_tauvo"]
+            season_mlist[model]["curl_tauuo"] + season_mlist[model]["curl_tauvo"]
     )
 
 #########
@@ -395,7 +387,7 @@ if predef_obs != "True":
     )
 
     obs_linear_mlist[obs]["curl_tau"] = (
-        obs_linear_mlist[obs]["curl_tx"] + obs_linear_mlist[obs]["curl_ty"]
+            obs_linear_mlist[obs]["curl_tx"] + obs_linear_mlist[obs]["curl_ty"]
     )
 
     obs_mean_mlist[obs]["curl_tx"], obs_mean_mlist[obs]["curl_ty"] = curl_var(
@@ -403,7 +395,7 @@ if predef_obs != "True":
     )
 
     obs_mean_mlist[obs]["curl_tau"] = (
-        obs_mean_mlist[obs]["curl_tx"] + obs_mean_mlist[obs]["curl_ty"]
+            obs_mean_mlist[obs]["curl_tx"] + obs_mean_mlist[obs]["curl_ty"]
     )
 
     obs_season_mlist[obs]["curl_tx"], obs_season_mlist[obs]["curl_ty"] = curl_var_3d(
@@ -415,7 +407,7 @@ if predef_obs != "True":
     )
 
     obs_season_mlist[obs]["curl_tau"] = (
-        obs_season_mlist[obs]["curl_tx"] + obs_season_mlist[obs]["curl_ty"]
+            obs_season_mlist[obs]["curl_tx"] + obs_season_mlist[obs]["curl_ty"]
     )
 
 else:
@@ -457,9 +449,8 @@ else:
         os.path.join(PREFILE_DIR, "waswind_curltau_season.nc")
     ).curl_tau
 
-
 # # Regional averaging
-#### setting regional range
+# setting regional range
 lon_range = lon_range_list
 lat_range = lat_range_list
 
@@ -469,8 +460,6 @@ lonmin = ds_model_mlist[model]["zos"].lon.min()
 ind1 = np.where(lon_range_mod < float(0))[0]
 lon_range_mod[ind1] = lon_range_mod[ind1] + 360.0  # change Lon range to 0-360
 
-
-
 #####################
 # MODEL
 #####################
@@ -478,16 +467,15 @@ regionalavg_mlist = {}
 for nmodel, model in enumerate(Model_name):
     regionalavg_list = {}
     for nvar, var in enumerate(["curl_tau", "zos"]):
-
         # read areacello
         da_area = ds_areacello[os.getenv("areacello_var")]
         da_area_temp = da_area.copy()
-        da_area_temp['lon'] = xr.where(da_area_temp.lon<0,
-                                       da_area_temp.lon+360.,
-                                       da_area_temp.lon)  
+        da_area_temp['lon'] = xr.where(da_area_temp.lon < 0,
+                                       da_area_temp.lon + 360.,
+                                       da_area_temp.lon)
 
         # crop region
-        #ds_mask = (
+        # ds_mask = (
         #    da_area
         #    .where(
         #          (da_area_temp[Model_coordname[1]] >= np.min(lon_range_mod))
@@ -497,7 +485,7 @@ for nmodel, model in enumerate(Model_name):
         #        drop=True,
         #    )
         #    .compute()
-        #)
+        # )
 
         # NOTE: the code below is substituted to solve issue with indexing boolean dask arrays
         # The solution proposed is to call compute on each boolean index first
@@ -508,11 +496,11 @@ for nmodel, model in enumerate(Model_name):
         lat_range_max = np.max(lat_range)
         da_area.where(
             (da_area_temp[Model_coordname[1]] >= lon_range_min
-            & da_area_temp[Model_coordname[1]] <= lon_range_max
-            & da_area_temp[Model_coordname[0]] >= lat_range_min
-            & da_area_temp[Model_coordname[0]] <= lat_range_max).compute(),
+             & da_area_temp[Model_coordname[1]] <= lon_range_max
+             & da_area_temp[Model_coordname[0]] >= lat_range_min
+             & da_area_temp[Model_coordname[0]] <= lat_range_max).compute(),
             drop=True
-            )
+        )
 
         ds_mask = ds_mask / ds_mask
 
@@ -520,27 +508,26 @@ for nmodel, model in enumerate(Model_name):
         regionalavg_list[
             "%s_%i_%i_%i_%i_season"
             % (var, lon_range[0], lon_range[1], lat_range[0], lat_range[1])
-        ] = (
-            (season_mlist[model][var] * ds_mask * da_area).sum(dim=[xname, yname])
-            / (ds_mask * da_area).sum(dim=[xname, yname])
+            ] = (
+                (season_mlist[model][var] * ds_mask * da_area).sum(dim=[xname, yname])
+                / (ds_mask * da_area).sum(dim=[xname, yname])
         ).compute()
 
         regionalavg_list[
             "%s_%i_%i_%i_%i_mean"
             % (var, lon_range[0], lon_range[1], lat_range[0], lat_range[1])
-        ] = (
-            (mean_mlist[model][var] * ds_mask * da_area).sum(dim=[xname, yname])
-            / (ds_mask * da_area).sum(dim=[xname, yname])
+            ] = (
+                (mean_mlist[model][var] * ds_mask * da_area).sum(dim=[xname, yname])
+                / (ds_mask * da_area).sum(dim=[xname, yname])
         ).compute()
 
         regionalavg_list[
             "%s_%i_%i_%i_%i_linear"
             % (var, lon_range[0], lon_range[1], lat_range[0], lat_range[1])
-        ] = (
-            (linear_mlist[model][var] * ds_mask * da_area).sum(dim=[xname, yname])
-            / (ds_mask * da_area).sum(dim=[xname, yname])
+            ] = (
+                (linear_mlist[model][var] * ds_mask * da_area).sum(dim=[xname, yname])
+                / (ds_mask * da_area).sum(dim=[xname, yname])
         ).compute()
-        
 
     regionalavg_mlist[model] = regionalavg_list
 
@@ -587,39 +574,37 @@ for nobs, obs in enumerate(Obs_name):
     obs_regionalavg_list[
         "%s_%i_%i_%i_%i_season"
         % (var, lon_range[0], lon_range[1], lat_range[0], lat_range[1])
-    ] = (
-        (obs_season_mlist[obs][var] * ds_obs_mask * da_area).sum(
-            dim=[obs_xname, obs_yname]
-        )
-        / (ds_obs_mask * da_area).sum(dim=[obs_xname, obs_yname])
+        ] = (
+            (obs_season_mlist[obs][var] * ds_obs_mask * da_area).sum(
+                dim=[obs_xname, obs_yname]
+            )
+            / (ds_obs_mask * da_area).sum(dim=[obs_xname, obs_yname])
     ).compute()
 
     obs_regionalavg_list[
         "%s_%i_%i_%i_%i_mean"
         % (var, lon_range[0], lon_range[1], lat_range[0], lat_range[1])
-    ] = (
-        (obs_mean_mlist[obs][var] * ds_obs_mask * da_area).sum(
-            dim=[obs_xname, obs_yname]
-        )
-        / (ds_obs_mask * da_area).sum(dim=[obs_xname, obs_yname])
+        ] = (
+            (obs_mean_mlist[obs][var] * ds_obs_mask * da_area).sum(
+                dim=[obs_xname, obs_yname]
+            )
+            / (ds_obs_mask * da_area).sum(dim=[obs_xname, obs_yname])
     ).compute()
 
     obs_regionalavg_list[
         "%s_%i_%i_%i_%i_linear"
         % (var, lon_range[0], lon_range[1], lat_range[0], lat_range[1])
-    ] = (
-        (obs_linear_mlist[obs][var] * ds_obs_mask * da_area).sum(
-            dim=[obs_xname, obs_yname]
-        )
-        / (ds_obs_mask * da_area).sum(dim=[obs_xname, obs_yname])
+        ] = (
+            (obs_linear_mlist[obs][var] * ds_obs_mask * da_area).sum(
+                dim=[obs_xname, obs_yname]
+            )
+            / (ds_obs_mask * da_area).sum(dim=[obs_xname, obs_yname])
     ).compute()
 
     obs_regionalavg_mlist[obs] = obs_regionalavg_list
 
-
-#### plotting
+#plotting
 fig = plt.figure(1)
-
 
 #######
 # mean
@@ -647,7 +632,7 @@ for nmodel, model in enumerate(Model_name):
     ssh = regionalavg_mlist[model][
         f"zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_mean"
     ]
-    
+
     ax1.scatter(wsc, ssh, label="%s" % (Model_legend_name[nmodel]))
     all_wsc.append(wsc)
     all_ssh.append(ssh)
@@ -655,7 +640,7 @@ for nmodel, model in enumerate(Model_name):
 all_wsc = np.array(all_wsc)
 all_ssh = np.array(all_ssh)
 
-#### setting the plotting format
+# setting the plotting format
 ax1.set_ylabel("SSH (m)", {"size": "20"}, color="k")
 ax1.set_ylim([all_ssh.min() - all_ssh.min() / 5.0, all_ssh.max() + all_ssh.max() / 5.0])
 ax1.set_xlabel("WSC (N/m$^3$)", {"size": "20"}, color="k")
@@ -674,10 +659,10 @@ all_wsc = []
 all_ssh = []
 
 wsc = obs_regionalavg_mlist["WASwind"][
-f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_linear"
+    f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_linear"
 ]
 ssh = obs_regionalavg_mlist["CMEMS"][
-f"adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_linear"
+    f"adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_linear"
 ].slope
 ax1.scatter(wsc, ssh, c="k", label="Observation")
 all_wsc.append(wsc)
@@ -685,10 +670,10 @@ all_ssh.append(ssh)
 
 for nmodel, model in enumerate(Model_name):
     wsc = regionalavg_mlist[model][
-    f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_linear"
+        f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_linear"
     ]
     ssh = regionalavg_mlist[model][
-    f"zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_linear"
+        f"zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_linear"
     ].slope
     ax1.scatter(wsc, ssh, label="%s" % (Model_legend_name[nmodel]))
     all_wsc.append(wsc)
@@ -697,8 +682,7 @@ for nmodel, model in enumerate(Model_name):
 all_wsc = np.array(all_wsc)
 all_ssh = np.array(all_ssh)
 
-
-#### setting the plotting format
+# setting the plotting format
 ax1.set_ylabel("SSH (m)", {"size": "20"}, color="k")
 ax1.set_ylim(
     [
@@ -719,7 +703,6 @@ ax1.set_title("Linear trend", {"size": "24"}, pad=24)
 ax1.legend(loc="upper left", bbox_to_anchor=(1.05, 1), fontsize=14, facecolor=None)
 ax1.grid(linestyle="dashed", alpha=0.5, color="grey")
 
-
 #########
 # Annual amp
 #########
@@ -729,20 +712,20 @@ all_wsc = []
 all_ssh = []
 
 wsc = (
-    obs_regionalavg_mlist["WASwind"][
-    f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
-    ].max()
-    - obs_regionalavg_mlist["WASwind"][
-    f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
-    ].min()
+        obs_regionalavg_mlist["WASwind"][
+            f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+        ].max()
+        - obs_regionalavg_mlist["WASwind"][
+            f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+        ].min()
 )
 ssh = (
-    obs_regionalavg_mlist["CMEMS"][
-    f"adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
-    ].max()
-    - obs_regionalavg_mlist["CMEMS"][
-    f"adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
-    ].min()
+        obs_regionalavg_mlist["CMEMS"][
+            f"adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+        ].max()
+        - obs_regionalavg_mlist["CMEMS"][
+            f"adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+        ].min()
 )
 wsc = np.abs(wsc)
 ssh = np.abs(ssh)
@@ -752,20 +735,20 @@ all_ssh.append(ssh)
 
 for nmodel, model in enumerate(Model_name):
     wsc = (
-        regionalavg_mlist[model][
-        f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
-        ].max()
-        - regionalavg_mlist[model][
-        f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
-        ].min()
+            regionalavg_mlist[model][
+                f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+            ].max()
+            - regionalavg_mlist[model][
+                f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+            ].min()
     )
     ssh = (
-        regionalavg_mlist[model][
-        f"zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
-        ].max()
-        - regionalavg_mlist[model][
-        f"zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
-        ].min()
+            regionalavg_mlist[model][
+                f"zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+            ].max()
+            - regionalavg_mlist[model][
+                f"zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+            ].min()
     )
     ax1.scatter(wsc, ssh, label="%s" % (Model_legend_name[nmodel]))
     wsc = np.abs(wsc)
@@ -773,12 +756,10 @@ for nmodel, model in enumerate(Model_name):
     all_wsc.append(wsc)
     all_ssh.append(ssh)
 
-
 all_wsc = np.array(all_wsc)
 all_ssh = np.array(all_ssh)
 
-
-#### setting the plotting format
+# setting the plotting format
 ax1.set_ylabel("SSH (m)", {"size": "20"}, color="k")
 ax1.set_ylim([all_ssh.min() - all_ssh.min() / 5.0, all_ssh.max() + all_ssh.max() / 5.0])
 ax1.set_xlabel("WSC (N/m$^3$)", {"size": "20"}, color="k")
@@ -788,22 +769,20 @@ ax1.tick_params(axis="x", labelsize=20, labelcolor="k", rotation=0)
 ax1.set_title("Annual amplitude", {"size": "24"}, pad=24)
 ax1.grid(linestyle="dashed", alpha=0.5, color="grey")
 
-
 #########
 # Annual phase
 #########
 ax1 = fig.add_axes([1.3, -1.5, 1, 1])
 
-
 all_wsc = []
 all_ssh = []
 
 ind = obs_regionalavg_mlist["WASwind"][
-f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+    f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
 ].argmax()
 wsc = (
     obs_regionalavg_mlist["WASwind"][
-    f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+        f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
     ]
     .isel(month=ind)
     .month.values
@@ -813,7 +792,7 @@ ind = obs_regionalavg_mlist["CMEMS"][
 ].argmax()
 ssh = (
     obs_regionalavg_mlist["CMEMS"][
-    f"adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+        f"adt_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
     ]
     .isel(month=ind)
     .month.values
@@ -825,21 +804,21 @@ all_ssh.append(ssh)
 
 for nmodel, model in enumerate(Model_name):
     ind = regionalavg_mlist[model][
-    f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+        f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
     ].argmax()
     wsc = (
         regionalavg_mlist[model][
-        f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+            f"curl_tau_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
         ]
         .isel(month=ind)
         .month.values
     )
     ind = regionalavg_mlist[model][
-    f"zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+        f"zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
     ].argmax()
     ssh = (
         regionalavg_mlist[model][
-        f"zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
+            f"zos_{lon_range[0]:.0f}_{lon_range[1]:.0f}_{lat_range[0]:.0f}_{lat_range[1]:.0f}_season"
         ]
         .isel(month=ind)
         .month.values
@@ -849,12 +828,10 @@ for nmodel, model in enumerate(Model_name):
     all_wsc.append(wsc)
     all_ssh.append(ssh)
 
-
 all_wsc = np.array(all_wsc)
 all_ssh = np.array(all_ssh)
 
-
-#### setting the plotting format
+# setting the plotting format
 ax1.set_ylabel("SSH (month)", {"size": "20"}, color="k")
 ax1.set_ylim([0.5, 12.5])
 ax1.set_xlabel("WSC (month)", {"size": "20"}, color="k")
@@ -864,9 +841,8 @@ ax1.tick_params(axis="x", labelsize=20, labelcolor="k", rotation=0)
 ax1.set_title("Annual phase", {"size": "24"}, pad=24)
 ax1.grid(linestyle="dashed", alpha=0.5, color="grey")
 
-
 fig.savefig(
-    os.getenv("WK_DIR") + "/model/PS/example_model_plot.eps",
+    os.getenv("WORK_DIR") + "/model/PS/example_model_plot.eps",
     facecolor="w",
     edgecolor="w",
     orientation="portrait",
@@ -876,7 +852,7 @@ fig.savefig(
     pad_inches=None,
 )
 fig.savefig(
-    os.getenv("WK_DIR") + "/obs/PS/example_obs_plot.eps",
+    os.getenv("WORK_DIR") + "/obs/PS/example_obs_plot.eps",
     facecolor="w",
     edgecolor="w",
     orientation="portrait",

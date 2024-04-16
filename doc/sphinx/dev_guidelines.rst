@@ -59,17 +59,23 @@ The environment variables most relevant for a POD's operation are:
 
 - ``POD_HOME``: Path to directory containing POD's scripts, e.g., ``diagnostics/convective_transition_diag/``.
 
-- ``OBS_DATA``: Path to directory containing POD's supporting/digested observation data, e.g., ``inputdata/obs_data/convective_transition_diag/``.
+- ``OBS_DATA``: Path to directory containing POD's supporting/digested observation data, e.g.,
+  ``inputdata/obs_data/convective_transition_diag/``.
 
-- ``DATADIR``: Path to directory containing model data files for one case/experiment, e.g., ``inputdata/model/QBOi.EXP1.AMIP.001/``.
+- ``DATADIR`` (deprecated; PODs written for MDTF-diagnostics v3.5 and earlier): Path to directory containing model data files for
+  one case/experiment, e.g., ``inputdata/model/QBOi.EXP1.AMIP.001/``.
 
-- ``WK_DIR``: Path to directory for POD to output files. Note that **this is the only directory a POD is allowed to write its output**. e.g., ``wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/convective_transition_diag/``.
+- ``WORK_DIR``: Path to directory for POD to output files. Note that **this is the only directory a POD is allowed
+   to write its output**. e.g., ``wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/convective_transition_diag/``.
 
-   1. Output figures to ``$WK_DIR/obs/`` and ``$WK_DIR/model/`` respectively.
+   1. Output figures to ``$WORK_DIR/obs/`` and ``$WORK_DIR/model/`` respectively.
 
-   2. ``$WK_DIR/obs/PS/`` and ``$WK_DIR/model/PS/``: If a POD chooses to save vector-format figures, save them as ``EPS`` under these two directories. Files in these locations will be converted by the framework to ``PNG`` for HTML output. Caution: avoid using ``PS`` because of potential bugs in recent ``matplotlib`` and converting to PNG.
+   2. ``$WORKK_DIR/obs/PS/`` and ``$WORK_DIR/model/PS/``: If a POD chooses to save vector-format figures, save them as
+   ``EPS`` under these two directories. Files in these locations will be converted by the framework to ``PNG`` for HTML
+   output. Caution: avoid using ``PS`` because of potential bugs in recent ``matplotlib`` and converting to PNG.
 
-   3. ``$WK_DIR/obs/netCDF/`` and ``$WK_DIR/model/netCDF/``: If a POD chooses to save digested data for later analysis/plotting, save them in these two directories in ``NetCDF``.
+   3. ``$WORK_DIR/obs/netCDF/`` and ``$WORK_DIR/model/netCDF/``: If a POD chooses to save digested data for later
+   analysis/plotting, save them in these two directories in ``NetCDF``.
 
 Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WK_DIR`` change when the framework executes different PODs; (2) the ``WK_DIR`` directory and subdirectories therein are automatically created by the framework. **Each POD should output files as described here** so that the framework knows where to find what, and also for the ease of code maintenance.
 
@@ -83,34 +89,55 @@ Test before distribution. Find people (eg, nearby postdocs/grads and members fro
 
 Test how the POD fails. Does it stop with clear errors if it doesn’t find the files it needs? How about if the dates requested are not presented in the model data? Can developers run it on data from another model? Here are some simple tests you should try:
 
-   - Move the ``inputdata`` directory around. Your POD should still work by simply updating the values of ``OBS_DATA_ROOT`` and ``MODEL_DATA_ROOT`` in the configuration input file.
+   - If your POD uses observational data, move the ``inputdata`` directory around. Your POD should still work by simply
+     updating the values of ``OBS_DATA_ROOT`` in the runtime configuration file.
 
    - Try to run your POD with a different set of model data. 
 
-   - If you have problems getting another set of data, try changing the files' ``CASENAME`` and variable naming convention. The POD should work by updating ``CASENAME`` and ``convention`` in the configuration input.
+   - If you have problems getting another set of data, try changing the files' ``CASENAME`` and variable naming
+     convention. The POD should work by updating ``CASENAME`` and ``convention`` in the configuration input.
 
-   - Try your POD on a different machine. Check that your POD can work with reasonable machine configuration and computation power, e.g., can run on a machine with 32 GB memory, and can finish computation in 10 min. Will memory and run time become a problem if one tries your POD on model output of high spatial resolution and temporal frequency (e.g., avoid memory problem by reading in data in segments)? Does it depend on a particular version of a certain library? Consult the lead team if there's any unsolvable problems.
+   - Try your POD on a different machine. Check that your POD can work with reasonable machine configuration and
+     computation power, e.g., can run on a machine with 32 GB memory, and can finish computation in 10 min. Will memory
+     and run time become a problem if one tries your POD on model output of high spatial resolution and temporal
+     frequency (e.g., avoid memory problem by reading in data in segments)? Does it depend on a particular version of a
+     certain library? Consult the lead team if there's any unsolvable problems.
 
 
 Other tips on implementation
 ----------------------------
 
-#. Structure of the code package: Implementing the constituent PODs in accordance with the structure described in earlier sections makes it easy to pass the package (or just part of it) to other groups.
+#. Structure of the code package: Implementing the constituent PODs in accordance with the structure described in
+   earlier sections makes it easy to pass the package (or just part of it) to other groups.
 
-#. Robustness to model file/variable names: Each POD should be robust to modest changes in the file/variable names of the model output; see :doc:`Getting Started <start_config>` regarding the model data filename structure, :ref:`ref-example-env-vars` and :ref:`ref-dev-checklist` regarding using the environment variables and robustness tests. Also, it would be easier to apply the code package to a broader range of model output.
+#. Robustness to model file/variable names: Each POD should be robust to modest changes in the file/variable names
+   of the model output; see :doc:`Getting Started <start_config>` regarding the model data filename structure,
+   :ref:`ref-example-env-vars` regarding using the environment variables and robustness tests. Also, it would be easier
+   to apply the code package to a broader range of model output.
 
-#. Save digested data after analysis: Can be used, e.g., to save time when there is a substantial computation that can be re-used when re-running or re-plotting diagnostics. See :ref:`ref-output-cleanup` regarding where to save the output.
+#. Save digested data after analysis: Can be used, e.g., to save time when there is a substantial computation that can
+   be re-used when re-running or re-plotting diagnostics.
 
-#. Self-documenting: For maintenance and adaptation, to provide references on the scientific underpinnings, and for the code package to work out of the box without support. See :ref:`ref-dev-checklist`.
+#. Self-documenting: For maintenance and adaptation, to provide references on the scientific underpinnings, and for the
+   code package to work out of the box without support.
 
-#. Handle large model data: The spatial resolution and temporal frequency of climate model output have increased in recent years. As such, developers should take into account the size of model data compared with the available memory. For instance, the example POD precip_diurnal_cycle and Wheeler_Kiladis only analyze part of the available model output for a period specified by the environment variables ``FIRSTYR`` and ``LASTYR``, and the convective_transition_diag module reads in data in segments.
+#. Handle large model data: The spatial resolution and temporal frequency of climate model output have increased in
+   recent years. As such, developers should take into account the size of model data compared with the available memory.
+   For instance, the example POD precip_diurnal_cycle and Wheeler_Kiladis only analyze part of the available model
+   output for a period specified by the environment variables ``startdate`` and ``enddate``, and the
+   convective_transition_diag module reads in data in segments.
 
-#. Basic vs. advanced diagnostics (within a POD): Separate parts of diagnostics, e.g., those might need adjustment when model performance out of obs range.
+#. Basic vs. advanced diagnostics (within a POD): Separate parts of diagnostics, e.g., those might need adjustment when
+   model performance out of obs range.
 
 #. Avoid special characters (``!@#$%^&*``) in file/script names.
 
 
-See :ref:`ref-execute` and :doc:` framework operation walkthrough <dev_walkthrough>` for details on how the package is called. See the :doc:`command line reference <ref_cli>` for documentation on command line options (or run ``mdtf --help``).
+See :ref:`ref-execute` and :doc:` framework operation walkthrough <dev_walkthrough>` for details on how the package is
+called. See the :doc:`command line reference <ref_cli>` for documentation on command line options
+(or run ``mdtf --help``).
 
-Avoid making assumptions about the machine on which the framework will run beyond what’s listed here; a development priority is to interface the framework with cluster and cloud job schedulers to enable individual PODs to run in a concurrent, distributed manner.
+Avoid making assumptions about the machine on which the framework will run beyond what’s listed here; a development
+priority is to interface the framework with cluster and cloud job schedulers to enable individual PODs to run in a
+concurrent, distributed manner.
 

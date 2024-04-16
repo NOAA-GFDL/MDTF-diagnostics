@@ -1,0 +1,79 @@
+# Runtime yaml configuration file template for the MDTF-diagnostics package
+# Create a copy of this file for personal use, and pass it to the framework
+# with the -f | --configfile flag
+
+# List of POD(s) to run
+pod_list:
+  - "example_multicase"
+
+# list of module(s) to run
+module_list:
+  "TempestExtremes":
+    "DetectNodes":
+      "args":
+        "--in_data": "../inputdata/mdtf_test_data/CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231/day/CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231.psl.day.nc"
+        "--timefilter": "6hr"
+        "--searchbymin": "psl"
+        "--out": "../wkdir/tempestextremes.dat"
+
+# Case list entries (must be unique IDs for each simulation)
+case_list:
+  "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231" :
+    model: "test"
+    convention: "CMIP"
+    startdate: "19800101120000"
+    enddate: "19841231000000"
+
+  "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231" :
+    model: "test"
+    convention: "CMIP"
+    startdate: "19850101000000"
+    enddate: "19891231000000"
+
+### Data location settings ###
+# Required: full or relative path to ESM-intake catalog header file
+DATA_CATALOG: "./diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json"
+# Optional: Parent directory containing observational data used by individual PODs.
+# If defined, the framework assumes observational data is in OBS_DATA_ROOT/[POD_NAME]
+OBS_DATA_ROOT: "../inputdata/obs_data"
+# Required: Working directory location. Temporary files are written here.
+# Final output is also written here if the OUTPUT_DIR is not defined.
+WORK_DIR: "../wkdir"
+# Optional: Location to write final output if you don't want it in the wkdir
+OUTPUT_DIR: "../wkdir"
+### Environment Settings ###
+# Required: Location of the Anaconda/miniconda installation to use for managing
+# dependencies (path returned by running `conda info --base`.)
+conda_root: ""
+# Optional: Directory containing the framework-specific conda environments. This should
+# be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
+# blank, the framework will look for its environments in conda_root/envs
+conda_env_root: ""
+# Location of micromamba executable; REQUIRED if using micromamba
+micromamba_exe: ""
+### Data type settings ###
+# set to true to handle data files > 4 GB
+large_file: False
+### Output Settings ###
+# Set to true to have PODs save postscript figures in addition to bitmaps.
+save_ps: False
+# If true, leave pp data in OUTPUT_DIR after preprocessing; if false, delete pp data after PODs
+# run to completion
+save_pp_data: True
+# Set to true to perform data translation; default is True:
+translate_data: True
+# Set to true to save HTML and bitmap plots in a .tar file.
+make_variab_tar: False
+# Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
+# under a unique name.
+overwrite: False
+# Generate html output for multiple figures per case
+"make_multicase_figure_html": False
+### Developer settings ###
+# Set to True to run the preprocessor
+run_pp: True
+# Additional custom preprocessing scripts to run on data
+# place these scripts in the MDTF-diagnostics/user_scripts directory
+# The framework will run the specified scripts whether run_pp is set to True or False
+user_pp_scripts:
+  - ""

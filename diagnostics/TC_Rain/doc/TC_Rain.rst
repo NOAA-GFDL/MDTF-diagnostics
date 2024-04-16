@@ -9,7 +9,7 @@
    https://docutils.sourceforge.io/docs/user/rst/quickref.html#section-structure
 
 TC Rain Rate Azimuthal Average Documentation
-================================
+============================================
 
 Last update: 5/27/2022
 

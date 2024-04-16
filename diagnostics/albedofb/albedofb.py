@@ -62,10 +62,10 @@ import albedofb_calcs
 podname = 'albedofb'
 
 # these yrs only refer to the hist period for comparing kernel of mod to CERES
-firstyr = "{FIRSTYR}".format(**os.environ)
-lastyr = "{LASTYR}".format(**os.environ)
+firstyr = "{STARTDATE}".format(**os.environ)
+lastyr = "{ENDDATE}".format(**os.environ)
 
-wk_dir = "{WK_DIR}".format(**os.environ)
+wk_dir = "{WORK_DIR}".format(**os.environ)
 obs_dir = "{OBS_DATA}/".format(**os.environ)
 output_dir = wk_dir+'/model/'
 figures_dir = wk_dir+'/model/'

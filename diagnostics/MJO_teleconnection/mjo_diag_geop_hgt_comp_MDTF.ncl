@@ -39,7 +39,7 @@ old_model = True
 ;-------------------------------------------------------------------------------------
 ;--directory for output files--
 dirobs   = getenv("OBS_DATA")+"/"                      ;Obs input directory
-diro     = getenv("WK_DIR")+"/model/netCDF/"        ;Output data directory
+diro     = getenv("WORK_DIR")+"/model/netCDF/"        ;Output data directory
 filz250  = getenv("z250_file")                                              ; input file
 tfile    = "t_table_data.txt"
 print("Output data path :" + diro)

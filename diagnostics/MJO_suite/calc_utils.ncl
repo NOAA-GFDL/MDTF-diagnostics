@@ -13,7 +13,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 
 setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
 
-;; Local variables for alll plot routines ;;
+;; Local variables for all plot routines ;;
 
 pwks = "ps"        ; Output format (ps,X11,png,gif)
 _FillValue = -999  ; Missing value for FLOAT variables.

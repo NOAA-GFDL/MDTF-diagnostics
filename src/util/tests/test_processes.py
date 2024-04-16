@@ -1,31 +1,31 @@
 import unittest
-import unittest.mock as mock
 from src.util import processes as util
+
 
 class TestSubprocessInteraction(unittest.TestCase):
     def test_run_shell_commands_stdout1(self):
-        input = 'echo "foo"'
-        out = util.run_shell_command(input)
+        in_args = ['echo "foo"']
+        out = util.run_shell_command(in_args)
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0], 'foo')
 
     def test_run_shell_commands_stdout2(self):
-        input = 'echo "foo" && echo "bar"'
-        out = util.run_shell_command(input)
+        in_args = ['echo "foo" && echo "bar"']
+        out = util.run_shell_command(in_args)
         self.assertEqual(len(out), 2)
         self.assertEqual(out[0], 'foo')
         self.assertEqual(out[1], 'bar')
 
     def test_run_shell_commands_exitcode(self):
-        input = 'echo "foo"; false'
+        in_args = ['echo "foo"; false']
         with self.assertRaises(Exception):
             # I couldn't get this to catch MDTFCalledProcessError specifically,
             # maybe because it takes args?
-            util.run_shell_command(input)
+            util.run_shell_command(in_args)
 
     def test_run_shell_commands_envvars(self):
-        input = 'echo $FOO; export FOO="baz"; echo $FOO'
-        out = util.run_shell_command(input, env={'FOO':'bar'})
+        in_args = ['echo $FOO; export FOO="baz"; echo $FOO']
+        out = util.run_shell_command(in_args, env={'FOO': 'bar'})
         self.assertEqual(len(out), 2)
         self.assertEqual(out[0], 'bar')
         self.assertEqual(out[1], 'baz')
@@ -51,11 +51,12 @@ class TestSubprocessInteraction(unittest.TestCase):
         self.assertEqual(out[0], '"foo"')
 
     def test_run_command_exitcode(self):
-        input = ['exit', '1']
+        in_args = ['exit', '1']
         with self.assertRaises(Exception):
             # I couldn't get this to catch MDTFCalledProcessError specifically,
             # maybe because it takes args?
-            util.run_command(input)
+            util.run_command(in_args)
+
 
 # ---------------------------------------------------
 

@@ -74,31 +74,39 @@ def parse_gfdl_pp_ts(file_name: str):
         member_id = file.parts[4]
         experiment_id = file.parts[5]
         source_id = file.parts[6]
-        freq = file.parts[10]
-        chunk_freq = file.parts[11]
+        chunk_freq = file.parts[len(file.parts)-2]
         variant_label = ""
         grid_label = ""
         table_id = ""
         assoc_files = ""
-        if 'mon' in freq.lower():
-            output_frequency = 'mon'
-        elif 'day' in freq.lower():
-            output_frequency = 'day'
-        elif '6hr' in freq.lower():
-            output_frequency = '6hr'
-        elif 'subhr' in freq.lower():
-            output_frequency = 'subhr'
+
+        freq_opts = ['mon', 'day', '6hr', '3hr', 'subhr', 'annual', 'year']
+        output_frequency = ""
+        for p in file.parts:
+            for f in freq_opts:
+                if f in p:
+                    output_frequency = f
+                    break
+            else:
+                continue
+            break
 
         # call to xr.open_dataset required by ecgtoos.builder.Builder
         with xr.open_dataset(file, chunks={}, decode_times=False) as ds:
             variable_list = [var for var in ds if 'standard_name' in ds[var].attrs or 'long_name' in ds[var].attrs]
-            if 'standard_name' in ds[var].attrs:
-                standard_name = ds[var].attrs['standard_name']
-            elif 'long_name' in ds[var].attrs:
-                standard_name = ds[var].attrs['long_name']
+            var_id = variable_list[0]
+            standard_name = ""
+            long_name = ""
+            if 'standard_name' in ds[var_id].attrs:
+                standard_name = ds[var_id].attrs['standard_name']
+                standard_name.replace("", "_")
+            elif 'long_name' in ds[var_id].attrs:
+                long_name = ds[var_id].attrs['long_name']
             else:
                 print('Asset variable does not contain a standard_name or long_name attribute')
                 exit(1)
+
+            units = ds[var_id].attrs['units']
             info = {
                 'activity_id': source_id,
                 'assoc_files': assoc_files,
@@ -112,9 +120,11 @@ def parse_gfdl_pp_ts(file_name: str):
                 'experiment_id': experiment_id,
                 'variant_label': variant_label,
                 'grid_label': grid_label,
+                'units': units,
                 'time_range': time_range,
                 'chunk_freq': chunk_freq,
                 'standard_name': standard_name,
+                'long_name': long_name,
                 'frequency': output_frequency,
                 'variable': variable_id,
                 'file_name': stem,

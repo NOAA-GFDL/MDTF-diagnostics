@@ -346,7 +346,7 @@ For the remainder of this section, we describe how to edit and use configuration
 since the paths to data, etc., we need to set won't change.
 
 Runtime configuration file json and yaml templates are located in the
-`templates/ <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/templates>`__ directory.
+`templates <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/templates>`__ directory.
 You can customize either template depending on your preferences; save a copy of the file at
 <*config_file_path*> and open it in a text editor.
 The following paths need to be configured before running the framework:

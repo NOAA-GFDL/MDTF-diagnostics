@@ -71,8 +71,6 @@
 
   "DATA_CATALOG": "./diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
 
-  // Backwards compatibility
-  "MODEL_DATA_ROOT": "../inputdata/mdtf_test_data",
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 

@@ -848,18 +848,47 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         cols = list(cat.df.columns.values)
         if 'date_range' not in [c.lower() for c in cols]:
             cols.append('date_range')
+
         for case_name, case_d in case_dict.items():
             # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
             # path_regex = re.compile(r'({})'.format(case_name))
             path_regex = case_name + '*'
             freq = case_d.varlist.T.frequency
+
             for v in case_d.varlist.iter_vars():
                 realm_regex = v.realm + '*'
-                cat_subset = cat.search(activity_id=case_d.convention,
-                                        standard_name=v.standard_name,
-                                        frequency=freq,
-                                        realm=realm_regex,
-                                        path=path_regex
+                # define initial query dictionary with variable settings requirements that do not change if
+                # the variable is translated
+                query_dict = dict(frequency=freq,
+                                  realm=realm_regex,
+                                  path=path_regex)
+                # search the catalog for a standard_name or long_name using the translated variable attributes
+                # the translated variable class will contain the same information as the variable class if no
+                # translation was performed
+                cat_subset = cat.search(standard_name=v.translation.standard_name)
+                if cat_subset.df.empty:
+                    cat_subset = cat.search(long_name=v.translation.long_name)
+                    if cat_subset.df.empty:
+                        raise util.DataRequestError(f"No standard_name or long_name found for "
+                                                    f"{v.translation.name} in {data_catalog}")
+                    else:
+                        query_dict.update({'long_name': v.translation.long_name})
+                else:
+                    query_dict.update({'standard_name': v.translation.standard_name})
+
+                # find the catalog column with the data convention information
+                cat_subset = cat.search(activity_id=case_d.convention)
+                if cat_subset.df.empty:
+                    cat_subset = cat.search(institution_id=case_d.convention)
+                    if cat_subset.df.empty:
+                        raise util.DataRequestError(f"No activity_id or institution_id found for "
+                                                    f"{case_d.convention} in {data_catalog}")
+                    else:
+                        query_dict.update({'institution_id': case_d.convention})
+                else:
+                    query_dict.update({'activity_id': case_d.convention})
+
+                cat_subset = cat.search(**query_dict
                                         )
                 if cat_subset.df.empty:
                     raise util.DataRequestError(f"No assets found for {case_name} in {data_catalog}")

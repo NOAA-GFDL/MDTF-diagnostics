@@ -27,11 +27,14 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     # DMVariable, which is converted to this type on assignment to the
     # VarlistEntry, since metadata fields are specific to the VarlistEntry
     # implementation.
+
     convention: str = util.MANDATORY
     name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
     standard_name: str = \
         dc.field(default=util.MANDATORY, metadata={'query': True})
+    long_name: str = \
+        dc.field(default=util.NOTSET, metadata={'query': True})
     units: Units = util.MANDATORY
     # dims: list           # fields inherited from data_model.DMVariable
     # modifier : str
@@ -39,13 +42,13 @@ class TranslatedVarlistEntry(data_model.DMVariable):
         dc.field(init=False, default_factory=list, metadata={'query': True})
     log: typing.Any = util.MANDATORY  # assigned from parent var
 
-
 @util.mdtf_dataclass
 class FieldlistEntry(data_model.DMDependentVariable):
     """Class corresponding to an entry in a fieldlist file.
     """
     # name: str             # fields inherited from DMDependentVariable
     # standard_name: str
+    # long_name: str
     # units: Units
     # modifier : str
     # dims: list            # fields inherited from _DMDimensionsMixin
@@ -104,10 +107,12 @@ class FieldlistEntry(data_model.DMDependentVariable):
                                   f"coord definition for fieldlist entry for {name}."))
 
         filter_kw = util.filter_dataclass(kwargs, cls, init=True)
-        assert filter_kw['coords']
+        assert filter_kw['coords'], "Did not find filter_kw entry `coords`"
         cls.standard_name = kwargs['standard_name']
         if filter_kw.get('realm'):
             cls.realm = filter_kw['realm']
+        if filter_kw.get('long_name'):
+            cls.long_name = filter_kw['long_name']
 
         return cls(name=name, **filter_kw)
 
@@ -231,6 +236,7 @@ class Fieldlist:
                 var_or_name,
                 realm: str,
                 modifier=None,
+                long_name=None,
                 num_dims: int = 0,
                 has_scalar_coords_att: bool = False,
                 name_only: bool = False):
@@ -244,6 +250,7 @@ class Fieldlist:
             realm: variable realm (atmos, ocean, land, ice, etc...)
             modifier:optional string to distinguish a 3-D field from a 4-D field with
             the same var_or_name value
+            long_name: str (optional) long name attribute of the variable
             num_dims: number of dimensions of the POD variable corresponding to var_or_name
             has_scalar_coords_att: boolean indicating that the POD variable has a scalar_coords
             attribute, and therefore requires a level from a 4-D field
@@ -286,17 +293,22 @@ class Fieldlist:
         raise KeyError((f"Standard name '{standard_name}' not defined in "
                         f"convention '{self.name}'."))
 
-    def from_CF_name(self, var_or_name: str, realm: str, modifier=None):
+    def from_CF_name(self, var_or_name: str, realm: str, long_name=None, modifier=None):
         """Like :meth:`from_CF`, but only return the variable's name in this
         convention.
 
         Args:
             var_or_name: variable or name of the variable
             realm: model realm of variable
+            long_name: str (optional): long_name attribute of the variable
             modifier:optional string to distinguish a 3-D field from a 4-D field with
             the same var_or_name value
         """
-        return self.from_CF(var_or_name, modifier=modifier, name_only=True, realm=realm).name
+        return self.from_CF(var_or_name,
+                            modifier=modifier,
+                            long_name=long_name,
+                            name_only=True,
+                            realm=realm).name
 
     def translate_coord(self, coord, log=_log):
         """Given a :class:`~data_model.DMCoordinate`, look up the corresponding
@@ -347,6 +359,7 @@ class Fieldlist:
             fl_entry = self.from_CF(var.standard_name,
                                     var.realm,
                                     var.modifier,
+                                    None,
                                     var.dims.__len__(),
                                     has_scalar_coords)
             new_name = fl_entry.name
@@ -365,7 +378,8 @@ class Fieldlist:
 
         return util.coerce_to_dataclass(
             fl_entry, TranslatedVarlistEntry,
-            name=new_name, coords=(new_dims + new_scalars),
+            name=new_name,
+            coords=(new_dims + new_scalars),
             convention=self.name, log=var.log
         )
 
@@ -432,6 +446,9 @@ class VariableTranslator(metaclass=util.Singleton):
     files.
     """
 
+    conventions: util.WormDict
+    aliases: util.WormDict
+    _unittest: bool=False
     def __init__(self, code_root=None, unittest=False):
         self._unittest = unittest
         self.conventions = util.WormDict()

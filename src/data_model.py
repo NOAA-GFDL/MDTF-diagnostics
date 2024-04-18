@@ -116,6 +116,13 @@ class AbstractDMDependentVariable(abc.ABC):
         """Whether the variable has time dependence (bool)."""
         pass
 
+    @property
+    @abc.abstractmethod
+    def long_name(self):
+        """Optional variable long_name used if standard_name attribute is not defined (str).
+        """
+        pass
+
 
 class AbstractDMCoordinateBounds(AbstractDMDependentVariable):
     """Defines interface (set of attributes) for :class:`DMCoordinateBounds`
@@ -662,6 +669,7 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
     """
     name: str = util.MANDATORY
     standard_name: str = util.MANDATORY
+    long_name: str =""
     realm: str = ""
     units: src.units.Units = ""  # not MANDATORY since may be set later from var translation
     modifier: str = ""

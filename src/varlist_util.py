@@ -170,6 +170,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
     env_var: str = dc.field(default="", compare=False)
     path_variable: str = dc.field(default="", compare=False)
     realm: str = dc.field(default="", compare=False)
+    long_name: str = dc.field(default="", compare=False)
     dest_path: str = ""
     requirement: VarlistEntryRequirement = dc.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False

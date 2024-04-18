@@ -57,66 +57,85 @@ catalog_class = ClassMaker()
 
 
 # custom parser for pp data stored on GFDL archive filesystem
+# assumed DRS of [root_dir]/pp/[realm]/[analysis type (e.g, 'ts')]/[frequency]/[chunk size (e.g., 1yr, 5yr)]
 def parse_gfdl_pp_ts(file_name: str):
     # files = sorted(glob.glob(os.path.join(file_name,'*.nc')))  # debug comment when ready to run
     # file = pathlib.Path(files[0])  # debug comment when ready to run
     file = pathlib.Path(file_name)  # uncomment when ready to run
 
     try:
+        num_parts = len(file.parts)  # file name index = num_parts 1
         # isolate file from rest of path
         stem = file.stem
         # split the file name into components based on _
         split = stem.split('.')
         realm = split[0]
+        cell_methods = ""
+        cell_measures = ""
         time_range = split[1]
         variable_id = split[2]
-        source_type = file.parts[3]
-        member_id = file.parts[4]
-        experiment_id = file.parts[5]
-        source_id = file.parts[6]
-        chunk_freq = file.parts[len(file.parts)-2]
+        source_type = ""
+        member_id = ""
+        experiment_id = ""
+        source_id = ""
+        chunk_freq = file.parts[num_parts-2]  # e.g, 1yr, 5yr
         variant_label = ""
         grid_label = ""
         table_id = ""
         assoc_files = ""
+        activity_id = "GFDL"
+        institution_id = "GFDL"
 
-        freq_opts = ['mon', 'day', '6hr', '3hr', 'subhr', 'annual', 'year']
+        freq_opts = ['mon',
+                     'day',
+                     'daily',
+                     '6hr',
+                     '3hr',
+                     '1hr',
+                     'subhr',
+                     'annual',
+                     'year']
         output_frequency = ""
-        for p in file.parts:
-            for f in freq_opts:
-                if f in p:
-                    output_frequency = f
-                    break
-            else:
-                continue
-            break
-
+        file_freq = file.parts[num_parts-3]
+        for f in freq_opts:
+            if f in file_freq:
+                output_frequency = f
+                break
         # call to xr.open_dataset required by ecgtoos.builder.Builder
         with xr.open_dataset(file, chunks={}, decode_times=False) as ds:
             variable_list = [var for var in ds if 'standard_name' in ds[var].attrs or 'long_name' in ds[var].attrs]
-            var_id = variable_list[0]
+            if variable_id not in variable_list:
+                print(f'Asset variable {variable_id} not found in {file}')
+                exit(1)
             standard_name = ""
             long_name = ""
-            if 'standard_name' in ds[var_id].attrs:
-                standard_name = ds[var_id].attrs['standard_name']
+            if 'standard_name' in ds[variable_id].attrs:
+                standard_name = ds[variable_id].attrs['standard_name']
                 standard_name.replace("", "_")
-            elif 'long_name' in ds[var_id].attrs:
-                long_name = ds[var_id].attrs['long_name']
-            else:
+            if 'long_name' in ds[variable_id].attrs:
+                long_name = ds[variable_id].attrs['long_name']
+            if len(long_name) == 0 and len(standard_name) == 0:
                 print('Asset variable does not contain a standard_name or long_name attribute')
                 exit(1)
 
-            units = ds[var_id].attrs['units']
+            if 'cell_methods' in ds[variable_id].attrs:
+                cell_methods = ds[variable_id].attrs['cell_methods']
+            if 'cell_measures' in ds[variable_id].attrs:
+                cell_measures = ds[variable_id].attrs['cell_measures']
+
+            units = ds[variable_id].attrs['units']
             info = {
-                'activity_id': source_id,
+                'activity_id': activity_id,
                 'assoc_files': assoc_files,
-                'institution_id': "GFDL",
+                'institution_id': institution_id,
                 'member_id': member_id,
                 'realm': realm,
                 'variable_id': variable_id,
                 'table_id': table_id,
                 'source_id': source_id,
                 'source_type': source_type,
+                'cell_methods': cell_methods,
+                'cell_measures': cell_measures,
                 'experiment_id': experiment_id,
                 'variant_label': variant_label,
                 'grid_label': grid_label,

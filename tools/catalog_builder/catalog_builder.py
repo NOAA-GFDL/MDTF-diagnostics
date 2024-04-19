@@ -84,7 +84,7 @@ def parse_gfdl_pp_ts(file_name: str):
         table_id = ""
         assoc_files = ""
         activity_id = "GFDL"
-        institution_id = "GFDL"
+        institution_id = ""
 
         freq_opts = ['mon',
                      'day',

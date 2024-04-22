@@ -854,44 +854,23 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # path_regex = re.compile(r'({})'.format(case_name))
             path_regex = case_name + '*'
             freq = case_d.varlist.T.frequency
-
-            for v in case_d.varlist.iter_vars():
+        
+            for v in case_d.varlist.iter_vars(): 
                 realm_regex = v.realm + '*'
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
-                query_dict = dict(frequency=freq,
-                                  realm=realm_regex,
-                                  path=path_regex)
-                # search the catalog for a standard_name or long_name using the translated variable attributes
-                # the translated variable class will contain the same information as the variable class if no
-                # translation was performed
-                cat_subset = cat.search(standard_name=v.translation.standard_name)
+                case_d.query['frequency']=freq 
+                case_d.query['path']=path_regex
+                case_d.query['variable']='tas'
+                # search translation for further query requirements
+                for q in case_d.query:
+                    if hasattr(v.translation,q):
+                        case_d.query[q] = getattr(v.translation, q)
+                
+                # search catalog for convention specific query object
+                cat_subset = cat.search(**case_d.query)
                 if cat_subset.df.empty:
-                    cat_subset = cat.search(long_name=v.translation.long_name)
-                    if cat_subset.df.empty:
-                        raise util.DataRequestError(f"No standard_name or long_name found for "
-                                                    f"{v.translation.name} in {data_catalog}")
-                    else:
-                        query_dict.update({'long_name': v.translation.long_name})
-                else:
-                    query_dict.update({'standard_name': v.translation.standard_name})
-
-                # find the catalog column with the data convention information
-                cat_subset = cat.search(activity_id=case_d.convention)
-                if cat_subset.df.empty:
-                    cat_subset = cat.search(institution_id=case_d.convention)
-                    if cat_subset.df.empty:
-                        raise util.DataRequestError(f"No activity_id or institution_id found for "
-                                                    f"{case_d.convention} in {data_catalog}")
-                    else:
-                        query_dict.update({'institution_id': case_d.convention})
-                else:
-                    query_dict.update({'activity_id': case_d.convention})
-
-                cat_subset = cat.search(**query_dict
-                                        )
-                if cat_subset.df.empty:
-                    raise util.DataRequestError(f"No assets found for {case_name} in {data_catalog}")
+                    raise util.DataRequestError(f"No assets matching query requirements found for {case_name} in {data_catalog}")
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
                 cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
@@ -899,13 +878,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict
                 cat_dict = cat_dict | cat_subset.to_dataset_dict(
-                    progressbar=False,
+                    progressbar=True,
                     xarray_open_kwargs=self.open_dataset_kwargs
                 )
-
         # rename cat_subset case dict keys to case names
         cat_dict_rename = self.rename_dataset_keys(cat_dict, case_dict)
-
         return cat_dict_rename
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):

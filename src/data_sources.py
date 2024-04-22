@@ -77,6 +77,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     # _AttributesClass = SampleDataAttributes
     # col_spec = sampleLocalFileDataSource_col_spec
     convention: str
+    query: dict
     date_range: util.DateRange = dataclasses.field(init=False)
     varlist: varlist_util.Varlist = None
     log_file: io.IOBase = dataclasses.field(default=None, init=False)
@@ -139,7 +140,10 @@ class CMIPDataSource(DataSourceBase):
     # col_spec = sampleLocalFileDataSource_col_spec
     # varlist = diagnostic.varlist
     convention: str = "CMIP"
-
+    query: dict = dict(frequency="",
+                       path="",
+                       standard_name=""
+                      )
 
 @data_source.maker
 class CESMDataSource(DataSourceBase):
@@ -150,7 +154,10 @@ class CESMDataSource(DataSourceBase):
     # col_spec = sampleLocalFileDataSource_col_spec
     # varlist = diagnostic.varlist
     convention: str = "CESM"
-
+    query: dict = dict(frequency="",
+                       path="",
+                       standard_name=""
+                      )
 
 @data_source.maker
 class GFDLDataSource(DataSourceBase):
@@ -161,7 +168,10 @@ class GFDLDataSource(DataSourceBase):
     # col_spec = sampleLocalFileDataSource_col_spec
     # varlist = diagnostic.varlist
     convention: str = "GFDL"
-
+    query: dict = dict(frequency="",
+                       path="",
+                       standard_name=""
+                      )
 
 dummy_regex = util.RegexPattern(
     r"""(?P<dummy_group>.*) # match everything; RegexPattern needs >= 1 named groups

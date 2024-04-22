@@ -14,6 +14,7 @@ import intake
 import numpy as np
 import xarray as xr
 import collections
+import re
 
 # TODO: Make the following lines a unit test
 # import sys
@@ -796,6 +797,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             log: log file
         """
         date_col = "date_range"
+        if not hasattr(group_df, 'start_time') or not hasattr(group_df, 'end_time'):
+            raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time`')
+
         try:
             # method throws ValueError if ranges aren't contiguous
             dates_df = group_df.loc[:, ['start_time', 'end_time']]
@@ -850,23 +854,24 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             cols.append('date_range')
 
         for case_name, case_d in case_dict.items():
-            # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
-            # path_regex = re.compile(r'({})'.format(case_name))
-            path_regex = case_name + '*'
+            #path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
+            path_regex = re.compile(r'({})'.format(case_name))
+            #path_regex = '*' + case_name + '*'
             freq = case_d.varlist.T.frequency
         
             for v in case_d.varlist.iter_vars(): 
                 realm_regex = v.realm + '*'
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
-                case_d.query['frequency']=freq 
-                case_d.query['path']=path_regex
-                case_d.query['variable']='tas'
+                case_d.query['frequency'] = freq
+                case_d.query['path'] = [path_regex]
+                case_d.query['variable'] = v.name
                 # search translation for further query requirements
                 for q in case_d.query:
-                    if hasattr(v.translation,q):
-                        case_d.query[q] = getattr(v.translation, q)
-                
+                    if hasattr(v.translation, q):
+                        case_d.query.update({q: getattr(v.translation, q)})
+                if hasattr(v.translation, 'name'):
+                    case_d.query.update({'variable': getattr(v.translation, 'name')})
                 # search catalog for convention specific query object
                 cat_subset = cat.search(**case_d.query)
                 if cat_subset.df.empty:
@@ -878,7 +883,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict
                 cat_dict = cat_dict | cat_subset.to_dataset_dict(
-                    progressbar=True,
+                    progressbar=False,
                     xarray_open_kwargs=self.open_dataset_kwargs
                 )
         # rename cat_subset case dict keys to case names

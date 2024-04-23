@@ -799,7 +799,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         date_col = "date_range"
         if not hasattr(group_df, 'start_time') or not hasattr(group_df, 'end_time'):
             raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time`')
-
         try:
             # method throws ValueError if ranges aren't contiguous
             dates_df = group_df.loc[:, ['start_time', 'end_time']]
@@ -808,7 +807,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 st = dates_df.at[idx, 'start_time']
                 en = dates_df.at[idx, 'end_time']
                 date_range_vals.append(util.DateRange(st, en))
-
             group_df = group_df.assign(date_range=date_range_vals)
             sorted_df = group_df.sort_values(by=date_col)
 
@@ -878,8 +876,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     raise util.DataRequestError(f"No assets matching query requirements found for {case_name} in {data_catalog}")
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
-                cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
-                v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
+                #cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
+                #v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict
                 cat_dict = cat_dict | cat_subset.to_dataset_dict(
@@ -887,7 +885,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     xarray_open_kwargs=self.open_dataset_kwargs
                 )
         # rename cat_subset case dict keys to case names
-        cat_dict_rename = self.rename_dataset_keys(cat_dict, case_dict)
+        cat_dict_rename = self.rename_dataset_keys(cat_dict, case_dict)        
         return cat_dict_rename
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
@@ -1170,10 +1168,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """
         # get the initial model data subset from the ESM-intake catalog
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
-
         for case_name, case_xr_dataset in cat_subset.items():
             for v in case_list[case_name].varlist.iter_vars():
-                self.edit_request(v, convention=cat_subset[case_name].convention)
+                self.edit_request(v, convention=case_list[case_name].convention)
                 cat_subset[case_name] = self.parse_ds(v, case_xr_dataset)
                 self.execute_pp_functions(v,
                                           cat_subset[case_name],

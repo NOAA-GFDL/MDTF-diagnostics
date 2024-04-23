@@ -74,6 +74,90 @@
       "scalar_coord_templates": {"plev": "wap{value}"},
       "ndim": 4
     },
+    "hurs": {
+      "standard_name": "relative_humidity",
+      "realm": "atmos",
+      "units": "%",
+      "ndim": 3
+    },
+    "ua850": {
+      "standard_name": "eastward_wind",
+      "long_name": "eastward wind at 850 hPa",
+      "realm": "atmos",
+      "units": "m s-1",
+      "ndim": 3
+    },
+    "va850": {
+      "standard_name": "northward_wind",
+      "long_name": "northward wind at 850 hPa",
+      "realm": "atmos",
+      "units": "m s-1",
+      "ndim": 3
+    },
+    "ua200": {
+      "standard_name": "eastward_wind",
+      "long_name": "eastward wind at 200 hPa",
+      "realm": "atmos",
+      "units": "m s-1",
+      "ndim": 3
+    },
+    "va200": {
+      "standard_name": "northward_wind",
+      "long_name": "northward wind at 200 hPa",
+      "realm": "atmos",
+      "units": "m s-1",
+      "ndim": 3
+    },
+    "ua10": {
+      "standard_name": "eastward_wind",
+      "long_name": "eastward wind at 10 hPa",
+      "realm": "atmos",
+      "units": "m s-1",
+      "ndim": 3
+    },
+    "va10": {
+      "standard_name": "northward_wind",
+      "long_name": "northward wind at 10 hPa",
+      "realm": "atmos",
+      "units": "m s-1",
+      "ndim": 3
+    },
+    "uas": {
+      "standard_name": "eastward_wind",
+      "long_name": "eastward near-surface wind",
+      "realm": "atmos",
+      "units": "m s-1",
+      "modifier": "atmos_height",
+      "ndim": 3
+    },
+    "vas": {
+      "standard_name": "northward_wind",
+      "long_name": "northward near-surface wind",
+      "realm": "atmos",
+      "units": "m s-1",
+      "modifier": "atmos_height",
+      "ndim": 3
+    },
+    "zg500": {
+      "standard_name": "geopotential_height",
+      "long_name": "geopotential_height at 500 hPa",
+      "realm": "atmos",
+      "units": "m",
+      "ndim": 3
+    },
+    "wap500": {
+      "standard_name": "lagrangian_tendency_of_air_pressure",
+      "long_name": "lagrangian tendency of air pressure at 500 hPa",
+      "realm": "atmos",
+      "units": "Pa s-1",
+      "ndim": 3
+    },
+    "hur_unmsk": {
+      "standard_name": "relative_humidity",
+      "realm": "atmos",
+      "units": "%",
+      "ndim": 3
+    },
     "o3": {
       "standard_name": "mole_fraction_of_ozone_in_air",
       "realm": "atmos",

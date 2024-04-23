@@ -73,6 +73,8 @@ def parse_gfdl_pp_ts(file_name: str):
         cell_methods = ""
         cell_measures = ""
         time_range = split[1]
+        start_time = time_range.split('-')[0]
+        end_time = time_range.split('-')[1]
         variable_id = split[2]
         source_type = ""
         member_id = ""
@@ -141,6 +143,8 @@ def parse_gfdl_pp_ts(file_name: str):
                 'grid_label': grid_label,
                 'units': units,
                 'time_range': time_range,
+                'start_time': start_time,
+                'end_time': end_time,
                 'chunk_freq': chunk_freq,
                 'standard_name': standard_name,
                 'long_name': long_name,

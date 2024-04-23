@@ -38,7 +38,7 @@
          "standard_name": "",
          "long_name": "spectral band",
          "units": "1",
-         "ndim": 1,
+         "ndim": 1
       }
 
     // "deptho": {

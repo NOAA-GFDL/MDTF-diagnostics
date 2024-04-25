@@ -129,7 +129,8 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
     conda_dir: str = ""
     env_list: list = []
     conda_exe: str = "" 
-    log: logger.log
+    log: logging.log
+
     def __init__(self, config: util.NameSpace, log):
         self.code_root = config.CODE_ROOT
         self.conda_dir = os.path.join(self.code_root, 'src', 'conda')

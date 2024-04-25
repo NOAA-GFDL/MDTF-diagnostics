@@ -275,19 +275,6 @@ Version YYYYMMDD[1].Earth System Grid Federation. https://doi.org/10.22033/ESGF/
 E. D. Maloney et al. (2019): Process-Oriented Evaluation of Climate and Weather Forecasting Models. BAMS, 100 (9),
 1665–1686, [doi:10.1175/BAMS-D-18-0042.1](https://doi.org/10.1175/BAMS-D-18-0042.1).
 
-## Contributors
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
-[![All Contributors](https://img.shields.io/github/NOAA-GFDL/MDTF-diagnostics/all-contributors?color=ee8449&style=flat-square)](#contributors-)
-
 ## Disclaimer
 
 This repository is a scientific product and is not an official communication of the National Oceanic and Atmospheric

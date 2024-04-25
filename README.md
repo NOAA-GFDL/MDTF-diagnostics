@@ -1,7 +1,4 @@
 # MDTF-diagnostics: A Portable Framework for Weather and Climate Model Data Analysis
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/github/all-contributors/NOAA-GFDL/MDTF-diagnostics?color=ee8449&style=flat-square)](#contributors)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![MDTF_test](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/mdtf_tests.yml/badge.svg)](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/mdtf_tests.yml) [![CodeQL](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/codeql.yml/badge.svg)](https://github.com/NOAA-GFDL/MDTF-diagnostics/actions/workflows/codeql.yml) [![Documentation Status](https://readthedocs.org/projects/mdtf-diagnostics/badge/?version=main)](https://mdtf-diagnostics.readthedocs.io/en/main/?badge=main)
 

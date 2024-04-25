@@ -8,6 +8,12 @@
   "commitConvention": "angular",
   "contributors": [
     {
+      "login": "bitterbark",
+      "name": "Dani Coleman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30841536?v=4",
+      "profile": "https://github.com/bitterbark",
+      "contributions": [
+        "test"
       "login": "jkrasting",
       "name": "John Krasting",
       "avatar_url": "https://avatars.githubusercontent.com/u/6594675?v=4",

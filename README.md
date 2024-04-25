@@ -287,7 +287,7 @@ Department of Commerce. The Department of Commerce seal and logo, or the seal an
 used in any manner to imply endorsement of any commercial product or activity by DOC or the United States Government.
 
 ## Contributors ✨
-
+Thanks goes to [our code contributors](https://github.com/NOAA-GFDL/MDTF-diagnostics/graphs/contributors). <br>
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
@@ -297,6 +297,8 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tbody>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/bitterbark"><img src="https://avatars.githubusercontent.com/u/30841536?v=4?s=100" width="100px;" alt="Dani Coleman"/><br /><sub><b>Dani Coleman</b></sub></a><br /><a href="https://github.com/NOAA-GFDL/MDTF-diagnostics/commits?author=bitterbark" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.gfdl.noaa.gov/john-krasting-homepage"><img src="https://avatars.githubusercontent.com/u/6594675?v=4?s=100" width="100px;" alt="John Krasting"/><br /><sub><b>John Krasting</b></sub></a><br /><a href="https://github.com/NOAA-GFDL/MDTF-diagnostics/pulls?q=is%3Apr+reviewed-by%3Ajkrasting" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/aradhakrishnanGFDL"><img src="https://avatars.githubusercontent.com/u/26334954?v=4?s=100" width="100px;" alt="Aparna Radhakrishnan"/><br /><sub><b>Aparna Radhakrishnan</b></sub></a><br /><a href="#ideas-aradhakrishnanGFDL" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
   </tbody>
 </table>
@@ -307,3 +309,4 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+

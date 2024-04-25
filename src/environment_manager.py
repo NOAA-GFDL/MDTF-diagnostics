@@ -1,4 +1,4 @@
-"""Classes which setup software dependencies for the PODs and which execute the
+f"""Classes which setup software dependencies for the PODs and which execute the
 PODs' code.
 """
 
@@ -128,15 +128,17 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
     code_root: str = ""
     conda_dir: str = ""
     env_list: list = []
-    conda_exe: str = ""
-
+    conda_exe: str = "" 
+    log: logger.log
     def __init__(self, config: util.NameSpace, log):
         self.code_root = config.CODE_ROOT
         self.conda_dir = os.path.join(self.code_root, 'src', 'conda')
+        self.log = log
         for file_ in os.listdir(self.conda_dir):
             if file_.endswith('.yml'):
                 name, _ = os.path.splitext(file_)
                 self.env_list.append(name.split('env_')[-1])
+        
 
         # find conda executable
         # conda_init for bash defines conda as a shell function; will get error

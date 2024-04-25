@@ -296,6 +296,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <table>
   <tbody>
     <tr>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.gfdl.noaa.gov/john-krasting-homepage"><img src="https://avatars.githubusercontent.com/u/6594675?v=4?s=100" width="100px;" alt="John Krasting"/><br /><sub><b>John Krasting</b></sub></a><br /><a href="https://github.com/NOAA-GFDL/MDTF-diagnostics/pulls?q=is%3Apr+reviewed-by%3Ajkrasting" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/aradhakrishnanGFDL"><img src="https://avatars.githubusercontent.com/u/26334954?v=4?s=100" width="100px;" alt="Aparna Radhakrishnan"/><br /><sub><b>Aparna Radhakrishnan</b></sub></a><br /><a href="#ideas-aradhakrishnanGFDL" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
   </tbody>

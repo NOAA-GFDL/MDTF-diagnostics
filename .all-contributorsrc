@@ -8,6 +8,12 @@
   "commitConvention": "angular",
   "contributors": [
     {
+      "login": "jkrasting",
+      "name": "John Krasting",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6594675?v=4",
+      "profile": "http://www.gfdl.noaa.gov/john-krasting-homepage",
+      "contributions": [
+        "review"
       "login": "aradhakrishnanGFDL",
       "name": "Aparna Radhakrishnan",
       "avatar_url": "https://avatars.githubusercontent.com/u/26334954?v=4",

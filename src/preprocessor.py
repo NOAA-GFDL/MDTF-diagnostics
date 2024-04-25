@@ -1189,8 +1189,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         cat_file_name = "MDTF_postprocessed_data"
         pp_cat_assets = util.define_pp_catalog_assets(config, cat_file_name)
         file_list = util.get_file_list(config.OUTPUT_DIR)
-        # fill in catalog information from pp file name
-        entries = list(map(util.mdtf_pp_parser, file_list))
+        # fill in catalog information from pp file name 
+        entries = [e.cat_entry for e in list(map(util.catalog.ppParser['ppParser'+'GFDL'], file_list))]
         # append columns defined in assets
         columns = [att['column_name'] for att in pp_cat_assets['attributes']]
         for col in columns:

@@ -287,7 +287,7 @@ Department of Commerce. The Department of Commerce seal and logo, or the seal an
 used in any manner to imply endorsement of any commercial product or activity by DOC or the United States Government.
 
 ## Contributors ✨
-
+Thanks goes to [our code contributors](https://github.com/NOAA-GFDL/MDTF-diagnostics/graphs/contributors). <br>
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->

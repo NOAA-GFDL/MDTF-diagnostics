@@ -283,7 +283,7 @@ E. D. Maloney et al. (2019): Process-Oriented Evaluation of Climate and Weather 
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-[![All Contributors](https://img.shields.io/github/aradhakrishnanGFDL/MDTF-diagnostics/all-contributors?color=ee8449&style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/github/NOAA-GFDL/MDTF-diagnostics/all-contributors?color=ee8449&style=flat-square)](#contributors-)
 
 ## Disclaimer
 

@@ -797,7 +797,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """
         date_col = "date_range"
         try:
-            if not isinstance(group_df['start_time'], datetime.date):
+            if not isinstance(group_df['start_time'].values[0], datetime.date):
                 # convert int to date type
                 date_format = ''
                 date_digits = math.floor(math.log10(group_df['start_time'].values[0]))+1

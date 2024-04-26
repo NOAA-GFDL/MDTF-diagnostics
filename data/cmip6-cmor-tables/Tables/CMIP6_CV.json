@@ -33,13 +33,13 @@
             "variant_label"
         ],
         "version_metadata":{
-            "CV_collection_modified":"Tue Mar 21 10:41:04 2023 -0700",
-            "CV_collection_version":"6.2.58.54",
+            "CV_collection_modified":"Thu Mar 28 15:37:58 2024 -0700",
+            "CV_collection_version":"6.2.58.67",
             "author":"Paul J. Durack <durack1@llnl.gov>",
             "experiment_id_CV_modified":"Tue Dec 15 12:25:59 2020 -0800",
             "experiment_id_CV_note":"Revise experiment_id historical parent experiments",
             "institution_id":"PCMDI",
-            "previous_commit":"3cb5e465e9db02571fa2f6934978933440add7ee",
+            "previous_commit":"908bb4e3885ae09cd4155a3a0914635de1d42a26",
             "specs_doc":"v6.2.7 (10th September 2018; https://goo.gl/v1drZl)"
         },
         "license":[
@@ -365,6 +365,29 @@
                 "source_id":"AWI-ESM-1-1-LR",
                 "source":"AWI-ESM 1.1 LR (2018): \naerosol: none\natmos: ECHAM6.3.04p1 (T63L47 native atmosphere T63 gaussian grid; 192 x 96 longitude/latitude; 47 levels; top level 80 km)\natmosChem: none\nland: JSBACH 3.20 with dynamic vegetation\nlandIce: none\nocean: FESOM 1.4 (unstructured grid in the horizontal with 126859 wet nodes; 46 levels; top grid cell 0-5 m)\nocnBgchem: none\nseaIce: FESOM 1.4"
             },
+            "AWI-ESM-1-REcoM":{
+                "activity_participation":[
+                    "C4MIP",
+                    "CMIP",
+                    "ScenarioMIP"
+                ],
+                "cohort":[
+                    "Registered"
+                ],
+                "institution_id":[
+                    "AWI"
+                ],
+                "license_info":{
+                    "exceptions_contact":"@awi.de <- mip-contact",
+                    "history":"2024-01-25: initially published under CC BY 4.0",
+                    "id":"CC BY 4.0",
+                    "license":"Creative Commons Attribution 4.0 International (CC BY 4.0; https://creativecommons.org/licenses/by/4.0/)",
+                    "source_specific_info":"",
+                    "url":"https://creativecommons.org/licenses/by/4.0/"
+                },
+                "source_id":"AWI-ESM-1-REcoM",
+                "source":"AWI-ESM 1 REcoM (2024): \naerosol: none\natmos: ECHAM6.3.04p1 (T63L47 native atmosphere T63 gaussian grid; 192 x 96 longitude/latitude; 47 levels; top level 80 km)\natmosChem: none\nland: JSBACH 3.20 with dynamic vegetation\nlandIce: none\nocean: FESOM 1.4 (unstructured grid in the horizontal with 126859 wet nodes; 46 levels; top grid cell 0-5 m)\nocnBgchem: REcoM2 (same grid as ocean component)\nseaIce: FESOM 1.4 (same grid as ocean component)"
+            },
             "AWI-ESM-2-1-LR":{
                 "activity_participation":[
                     "CMIP",
@@ -516,6 +539,7 @@
                 "activity_participation":[
                     "AerChemMIP",
                     "C4MIP",
+                    "CDRMIP",
                     "CFMIP",
                     "CMIP",
                     "CORDEX",
@@ -684,7 +708,9 @@
             },
             "CESM2-FV2":{
                 "activity_participation":[
-                    "CMIP"
+                    "CMIP",
+                    "PMIP",
+                    "ScenarioMIP"
                 ],
                 "cohort":[
                     "Published"
@@ -730,7 +756,8 @@
             },
             "CESM2-WACCM-FV2":{
                 "activity_participation":[
-                    "CMIP"
+                    "CMIP",
+                    "PMIP"
                 ],
                 "cohort":[
                     "Published"
@@ -940,6 +967,7 @@
                     "CDRMIP",
                     "CMIP",
                     "CORDEX",
+                    "DCPP",
                     "GMMIP",
                     "GeoMIP",
                     "LS3MIP",
@@ -1179,6 +1207,27 @@
                     "CMIP"
                 ],
                 "cohort":[
+                    "Published"
+                ],
+                "institution_id":[
+                    "E3SM-Project"
+                ],
+                "license_info":{
+                    "exceptions_contact":"@llnl.gov <- e3sm-data-support",
+                    "history":"2023-04-26: initially published under CC BY 4.0",
+                    "id":"CC BY 4.0",
+                    "license":"Creative Commons Attribution 4.0 International (CC BY 4.0; https://creativecommons.org/licenses/by/4.0/)",
+                    "source_specific_info":"",
+                    "url":"https://creativecommons.org/licenses/by/4.0/"
+                },
+                "source_id":"E3SM-2-0-NARRM",
+                "source":"E3SM 2.0 NARRM (2022): \naerosol: MAM4 w/ new resuspension, marine organics, secondary organics, and dust (atmos grid)\natmos: EAM (v2.0, Dynamics: cubed sphere spectral-element grid, 130,088 columns; Physics: 2x2 finite volume cells within each spectral element, 57,816 columns. N. American (NA): 25 to 100 km; outside ~100 km. 72 vertical layers w/ top at 60 km)\natmosChem: Troposphere specified oxidants (except passive ozone with the lower boundary sink) for aerosols. Stratosphere linearized interactive ozone (LINOZ v2) (atmos grid)\nland: ELM (v1.0, satellite phenology mode, atmos grid), MOSART (v1.0, 0.125 degree latitude/longitude)\nlandIce: none\nocean: MPAS-Ocean (E3SMv2.0, WC14to60E2r5 unstructured SCVTs mesh with 407420 cells, 1240672 edges, NA: ~14 km; outside: 30 to 60 km; 60 levels; top grid cell 0-10 m)\nocnBgchem: none\nseaIce: MPAS-Seaice (E3SMv2.0, ocean grid, variable resolution 30 to 60 km; 5 ice categories; 7 ice, 5 snow layers)"
+            },
+            "E3SM-2-1":{
+                "activity_participation":[
+                    "CMIP"
+                ],
+                "cohort":[
                     "Registered"
                 ],
                 "institution_id":[
@@ -1186,13 +1235,14 @@
                 ],
                 "license_info":{
                     "exceptions_contact":"@llnl.gov <- e3sm-data-support",
-                    "history":"",
+                    "history":"2024-01-30: initially published under CC BY 4.0",
                     "id":"CC BY 4.0",
                     "license":"Creative Commons Attribution 4.0 International (CC BY 4.0; https://creativecommons.org/licenses/by/4.0/)",
+                    "source_specific_info":"",
                     "url":"https://creativecommons.org/licenses/by/4.0/"
                 },
-                "source_id":"E3SM-2-0-NARRM",
-                "source":"E3SM 2.0 NARRM (2022): \naerosol: MAM4 w/ new resuspension, marine organics, secondary organics, and dust (atmos grid)\natmos: EAM (v2.0, Dynamics: cubed sphere spectral-element grid, 130,088 columns; Physics: 2x2 finite volume cells within each spectral element, 57,816 columns. N. American (NA): 25 to 100 km; outside ~100 km. 72 vertical layers w/ top at 60 km)\natmosChem: Troposphere specified oxidants (except passive ozone with the lower boundary sink) for aerosols. Stratosphere linearized interactive ozone (LINOZ v2) (atmos grid)\nland: ELM (v1.0, satellite phenology mode, atmos grid), MOSART (v1.0, 0.125 degree latitude/longitude)\nlandIce: none\nocean: MPAS-Ocean (E3SMv2.0, WC14to60E2r5 unstructured SCVTs mesh with 407420 cells, 1240672 edges, NA: ~14 km; outside: 30 to 60 km; 60 levels; top grid cell 0-10 m)\nocnBgchem: none\nseaIce: MPAS-Seaice (E3SMv2.0, ocean grid, variable resolution 30 to 60 km; 5 ice categories; 7 ice, 5 snow layers)"
+                "source_id":"E3SM-2-1",
+                "source":"E3SM 2.1 (2024): \naerosol: MAM4 w/ new resuspension, marine organics, secondary organics, and dust (atmos physics grid)\natmos: EAM (E3SMv2.1, cubed sphere spectral-element; 5400 els., 30x30 per cube face. Dynamics: degree 3 (p=3) polynomials within each spectral els., 112 km ave. resolution. Physics: 2x2 finite volume cells within each spectral els., 1.5 degree (168 km) average grid spacing; 72 vertical layers w/ top at 60 km)\natmosChem: Troposphere specified oxidants (except passive ozone with the lower boundary sink) for aerosols. Stratosphere linearized interactive ozone (LINOZ v2) (atmos physics grid)\nland: ELM (E3SMv2.1, atmos physics grid, satellite phenology mode), MOSART (E3SMv2.1, 0.5 deg lat/lon grid)\nlandIce: none\nocean: MPAS-Ocean (E3SMv2.1, EC30to60E2r2 unstructured SVTs mesh with 236853 cells and 719506 edges, variable resolution 60 km to 30 km; 60 levels; top grid cell 0-10 m)\nocnBgchem: none\nseaIce: MPAS-Seaice (E3SMv2.1, MPAS-Ocean grid; 5 ice categories, 7 ice layers, 5 snow layers)"
             },
             "EC-Earth3":{
                 "activity_participation":[
@@ -1279,6 +1329,32 @@
                 "source_id":"EC-Earth3-CC",
                 "source":"EC-Earth3-CC (2019): \naerosol: none\natmos: IFS cy36r4 (TL255, linearly reduced Gaussian grid equivalent to 512 x 256 longitude/latitude; 91 levels; top level 0.01 hPa)\natmosChem: TM5 (3 x 2 degrees; 120 x 90 longitude/latitude; 34 levels; top level: 0.1 hPa)\nland: HTESSEL (land surface scheme built in IFS) and LPJ-GUESS v4\nlandIce: none\nocean: NEMO3.6 (ORCA1 tripolar primarily 1 degree with meridional refinement down to 1/3 degree in the tropics; 362 x 292 longitude/latitude; 75 levels; top grid cell 0-1 m)\nocnBgchem: PISCES v2\nseaIce: LIM3"
             },
+            "EC-Earth3-ESM-1":{
+                "activity_participation":[
+                    "C4MIP",
+                    "CDRMIP",
+                    "CMIP",
+                    "DCPP",
+                    "LUMIP",
+                    "OMIP",
+                    "ScenarioMIP"
+                ],
+                "cohort":[
+                    "Registered"
+                ],
+                "institution_id":[
+                    "EC-Earth-Consortium"
+                ],
+                "license_info":{
+                    "exceptions_contact":"@ec-earth.org <- cmip6-data",
+                    "history":"",
+                    "id":"CC BY 4.0",
+                    "license":"Creative Commons Attribution 4.0 International (CC BY 4.0; https://creativecommons.org/licenses/by/4.0/)",
+                    "url":"https://creativecommons.org/licenses/by/4.0/"
+                },
+                "source_id":"EC-Earth3-ESM-1",
+                "source":"EC-Earth3-ESM-1 (2024): \naerosol: none\natmos: IFS cy36r4 (TL255, linearly reduced Gaussian grid equivalent to 512 x 256 longitude/latitude; 91 levels; top level 0.01 hPa) and co2box v1.0 (CO2 box model; global grid)\natmosChem: none\nland: HTESSEL (land surface scheme built in IFS) and LPJ-GUESS v4.1.2 (same grid as atmos)\nlandIce: PISM v1.2 (5 km x 5 km for Greenland, 31 levels)\nocean: NEMO3.6 (ORCA1 tripolar primarily 1 degree with meridional refinement down to 1/3 degree in the tropics; 362 x 292 longitude/latitude; 75 levels; top grid cell 0-1 m) and MWE v1.0 (Melt Water Emulator; same grid as ocean for Antarctic surroundings)\nocnBgchem: PISCES v2 (same grid as ocean)\nseaIce: LIM3 (same grid as ocean)"
+            },
             "EC-Earth3-GrIS":{
                 "activity_participation":[
                     "CMIP",
@@ -1300,7 +1376,7 @@
                     "url":"https://creativecommons.org/licenses/by/4.0/"
                 },
                 "source_id":"EC-Earth3-GrIS",
-                "source":"EC-Earth3-GrIS (2019): \naerosol: none\natmos: IFS cy36r4 (TL255, linearly reduced Gaussian grid equivalent to 512 x 256 longitude/latitude; 91 levels; top level 0.01 hPa)\natmosChem: none\nland: HTESSEL (land surface scheme built in IFS)\nlandIce: PISM 0.7 (5 km x 5 km, 442 levels)\nocean: NEMO3.6 (ORCA1 tripolar primarily 1 degree with meridional refinement down to 1/3 degree in the tropics; 362 x 292 longitude/latitude; 75 levels; top grid cell 0-1 m)\nocnBgchem: none\nseaIce: LIM3"
+                "source":"EC-Earth3-GrIS (2023): \naerosol: none\natmos: IFS cy36r4 (TL255, linearly reduced Gaussian grid equivalent to 512 x 256 longitude/latitude; 91 levels; top level 0.01 hPa)\natmosChem: none\nland: HTESSEL (land surface scheme built in IFS)\nlandIce: PISM v1.2 (5 km x 5 km for Greenland, 31 levels)\nocean: NEMO3.6 (ORCA1 tripolar primarily 1 degree with meridional refinement down to 1/3 degree in the tropics; 362 x 292 longitude/latitude; 75 levels; top grid cell 0-1 m)\nocnBgchem: none\nseaIce: LIM3"
             },
             "EC-Earth3-HR":{
                 "activity_participation":[
@@ -1859,7 +1935,8 @@
             "GISS-E2-1-G-CC":{
                 "activity_participation":[
                     "C4MIP",
-                    "CMIP"
+                    "CMIP",
+                    "ScenarioMIP"
                 ],
                 "cohort":[
                     "Published"
@@ -1902,7 +1979,7 @@
                     "url":"https://creativecommons.org/publicdomain/zero/1.0/"
                 },
                 "source_id":"GISS-E2-1-H",
-                "source":"GISS-E2.1H (2019): \naerosol: Varies with physics-version (p==1 none, p==3 OMA, p==4 TOMAS, p==5 MATRIX)\natmos: GISS-E2.1 (2.5x2 degree; 144 x 90 longitude/latitude; 40 levels; top level 0.1 hPa)\natmosChem: Varies with physics-version (p==1 Non-interactive, p>1 GPUCCINI)\nland: GISS LSM\nlandIce: none\nocean: HYCOM Ocean (~1 degree tripolar grid; 360 x 180 longitude/latitude; 32 levels; top grid cell 0-10 m)\nocnBgchem: none\nseaIce: GISS SI"
+                "source":"GISS-E2.1H (2019): \naerosol: Varies with physics-version (p==1 none, p==3 OMA, p==4 TOMAS, p==5 MATRIX)\natmos: GISS-E2.1 (2.5x2 degree; 144 x 90 longitude/latitude; 40 levels; top level 0.1 hPa)\natmosChem: Varies with physics-version (p==1 Non-interactive, p>1 GPUCCINI)\nland: GISS LSM\nlandIce: none\nocean: HYCOM Ocean (~1 degree tripolar grid; 360 x 180 longitude/latitude; 33 levels; top grid cell 0-10 m)\nocnBgchem: none\nseaIce: GISS SI"
             },
             "GISS-E2-2-G":{
                 "activity_participation":[
@@ -1944,6 +2021,7 @@
             },
             "GISS-E2-2-H":{
                 "activity_participation":[
+                    "CFMIP",
                     "CMIP",
                     "SIMIP",
                     "ScenarioMIP"
@@ -1963,7 +2041,7 @@
                     "url":"https://creativecommons.org/publicdomain/zero/1.0/"
                 },
                 "source_id":"GISS-E2-2-H",
-                "source":"GISS-E2.2H (2021): \naerosol: Varies with physics-version (p==1 none, p==3 OMA, p==4 TOMAS, p==5 MATRIX)\natmos: GISS-E2.2 (High Top, 2.5x2 degree; 144 x 90 longitude/latitude; 102 levels; top level 0.002 hPa)\natmosChem: Varies with physics-version (p==1 Non-interactive, p>1 GPUCCINI)\nland: GISS LSM\nlandIce: none\nocean: HYCOM Ocean (~1 degree tripolar grid; 360 x 180 longitude/latitude; 32 levels; top grid cell 0-10 m)\nocnBgchem: none\nseaIce: GISS SI (same grid as atmos)"
+                "source":"GISS-E2.2H (2021): \naerosol: Varies with physics-version (p==1 none, p==3 OMA, p==4 TOMAS, p==5 MATRIX)\natmos: GISS-E2.2 (High Top, 2.5x2 degree; 144 x 90 longitude/latitude; 102 levels; top level 0.002 hPa)\natmosChem: Varies with physics-version (p==1 Non-interactive, p>1 GPUCCINI)\nland: GISS LSM\nlandIce: none\nocean: HYCOM Ocean (~1 degree tripolar grid; 360 x 180 longitude/latitude; 33 levels; top grid cell 0-10 m)\nocnBgchem: none\nseaIce: GISS SI (same grid as atmos)"
             },
             "GISS-E3-G":{
                 "activity_participation":[
@@ -2516,27 +2594,6 @@
                 },
                 "source_id":"IPSL-CM6A-LR-INCA",
                 "source":"IPSL-CM6A-LR-INCA (2019): \naerosol: INCA v6 AER\natmos: LMDZ (NPv6 ; 144 x 143 longitude/latitude; 79 levels; top level 80000 m)\natmosChem: none\nland: ORCHIDEE (v2.0, Water/Carbon/Energy mode)\nlandIce: none\nocean: NEMO-OPA (eORCA1.3, tripolar primarily 1deg; 362 x 332 longitude/latitude; 75 levels; top grid cell 0-2 m)\nocnBgchem: NEMO-PISCES\nseaIce: NEMO-LIM3"
-            },
-            "IPSL-CM6A-MR025":{
-                "activity_participation":[
-                    "CMIP"
-                ],
-                "cohort":[
-                    "Registered"
-                ],
-                "institution_id":[
-                    "IPSL"
-                ],
-                "license_info":{
-                    "exceptions_contact":"@listes.ipsl.fr <- ipsl-cmip6",
-                    "history":"",
-                    "id":"CC BY 4.0",
-                    "license":"Creative Commons Attribution 4.0 International (CC BY 4.0; https://creativecommons.org/licenses/by/4.0/)",
-                    "source_specific_info":"",
-                    "url":"https://creativecommons.org/licenses/by/4.0/"
-                },
-                "source_id":"IPSL-CM6A-MR025",
-                "source":"IPSL-CM6A-MR025 (2021): \naerosol: none\natmos: LMDZ (NPv6; 256 x 256 longitude/latitude; 79 levels; top level 80000 m)\natmosChem: none\nland: ORCHIDEE (v2.2, Water/Carbon/Energy mode; same grid as atmos)\nlandIce: none\nocean: NEMO-OPA (eORCA025, tripolar primarily 0.25deg; 1442 x 1207 longitude/latitude; 75 levels; top grid cell 0-2 m)\nocnBgchem: none\nseaIce: NEMO-LIM3 (same grid as ocean)"
             },
             "IPSL-CM6A-MR1":{
                 "activity_participation":[
@@ -3280,6 +3337,7 @@
                     "LUMIP",
                     "PAMIP",
                     "PMIP",
+                    "RFMIP",
                     "ScenarioMIP"
                 ],
                 "cohort":[

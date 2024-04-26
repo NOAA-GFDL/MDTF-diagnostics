@@ -65,7 +65,7 @@
     },
     "o3": {
       "standard_name" : "mole_fraction_of_ozone_in_air",
-      "realm": "atmos",
+      "realm": "aerosol",
       "use_exact_name": true,
       "units" : "mol mol-1",
       "frequency": "mon",

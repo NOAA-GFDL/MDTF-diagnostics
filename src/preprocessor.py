@@ -797,6 +797,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """
         date_col = "date_range"
         try:
+            # convert int to date type
+            date_format = ''
+            date_digits = math.floor(math.log10(group_df['start_time'].values[0]))+1
+            match date_digits:
+                case 8:
+                    date_format = '%Y%m%d'
+                case 14:
+                    date_format = '%Y%m%d%H%M%S'
+            group_df['start_time'] = pd.to_datetime(group_df['start_time'].values[0], format=date_format)
+            group_df['end_time'] = pd.to_datetime(group_df['end_time'].values[0], format=date_format)
             # method throws ValueError if ranges aren't contiguous
             dates_df = group_df.loc[:, ['start_time', 'end_time']]
             date_range_vals = []

@@ -139,7 +139,6 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
             if file_.endswith('.yml'):
                 name, _ = os.path.splitext(file_)
                 self.env_list.append(name.split('env_')[-1])
-        
 
         # find conda executable
         # conda_init for bash defines conda as a shell function; will get error
@@ -168,7 +167,7 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         # find where environments are installed
         self.conda_env_root = config.conda_env_root
         if not os.path.isdir(self.conda_env_root):
-            self.log.warning("Conda env directory '%s' not found; creating.",
+            self.log.log.warning("Conda env directory '%s' not found; creating.",
                              self.conda_env_root)
             os.makedirs(self.conda_env_root)  # recursive mkdir if needed
         else:
@@ -179,8 +178,8 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         # check to see if conda env exists, and if not, try to create it
         conda_prefix = os.path.join(self.conda_env_root, env_name)
         if not os.path.exists(conda_prefix):
-            self.log.warning(("Conda env '%s' not found (grepped for '%s'); "
-                              "continuing."), env_name, conda_prefix)
+            self.log.log.warning(("Conda env '%s' not found (grepped for '%s'); "
+                                  "continuing."), env_name, conda_prefix)
 
     def _call_conda_create(self, env_name):
         if env_name.startswith(self.env_name_prefix):
@@ -189,10 +188,10 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
             short_name = env_name
         path = f"{self.conda_dir}/env_{short_name}.yml"
         if not os.path.exists(path):
-            self.log.error("Can't find %s", path)
+            self.log.log.error("Can't find %s", path)
         else:
             conda_prefix = os.path.join(self.conda_env_root, env_name)
-            self.log.info("Creating conda env '%s' in '%s'.", env_name, conda_prefix)
+            self.log.log.info("Creating conda env '%s' in '%s'.", env_name, conda_prefix)
         cmd = (
             f'source {self.conda_dir}/conda_init.sh {self.conda_root} && '
             f'{self.conda_exe} env create --force -q -p "{conda_prefix}" -f "{path}"'

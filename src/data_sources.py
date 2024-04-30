@@ -122,9 +122,15 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     def translate_varlist(self,
                           model_paths: util.ModelDataPathManager,
                           case_name: str,
+                          from_convention: str,
                           to_convention: str):
         for v in self.varlist.iter_vars():
-            self.varlist.setup_var(model_paths, case_name, v, to_convention, self.date_range)
+            self.varlist.setup_var(model_paths,
+                                   case_name,
+                                   v,
+                                   from_convention,
+                                   to_convention,
+                                   self.date_range)
 
 
 # instantiate the class maker so that the convention-specific classes can be instantiated using

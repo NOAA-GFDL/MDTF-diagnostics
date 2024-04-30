@@ -42,6 +42,7 @@ class TranslatedVarlistEntry(data_model.DMVariable):
         dc.field(init=False, default_factory=list, metadata={'query': True})
     log: typing.Any = util.MANDATORY  # assigned from parent var
 
+
 @util.mdtf_dataclass
 class FieldlistEntry(data_model.DMDependentVariable):
     """Class corresponding to an entry in a fieldlist file.
@@ -226,12 +227,20 @@ class Fieldlist:
         else:
             return self.entries[var_or_name]
 
-    def to_CF_name(self, var_or_name):
+    def to_CF_name(self, var_or_name: str):
         """Like :meth:`to_CF`, but only return the CF standard name, given the
         name in this convention.
         """
         return self.to_CF(var_or_name).standard_name
 
+    def to_CF_standard_name(self, standard_name: str,
+                            realm: str):
+
+        for key, lut_entry in self.lut.items():
+            print(key)
+            if standard_name in key:
+                for k, v in lut_entry[realm].items():
+                    return v.name
     def from_CF(self,
                 var_or_name,
                 realm: str,
@@ -340,7 +349,7 @@ class Fieldlist:
                                    **(util.filter_dataclass(new_coord, coord)))
         return new_coord
 
-    def translate(self, var):
+    def translate(self, var, from_convention: str):
         """Returns :class:`TranslatedVarlistEntry` instance, with populated
         coordinate axes. Units of scalar coord slices are translated to the units
         of the conventions' coordinates. Includes logic to translate and rename
@@ -355,14 +364,20 @@ class Fieldlist:
             new_name = var.name
         else:
             has_scalar_coords = bool(var.scalar_coords)
+            # Fieldlist for POD convention
+            from_convention_tl = VariableTranslator().get_convention(from_convention)
+            # Fieldlist entry for POD variable
+            fl_entry = from_convention_tl.from_CF(var.standard_name,
+                                                  var.realm,
+                                                  var.modifier,
+                                                  None,
+                                                  var.dims.__len__(),
+                                                  has_scalar_coords)
 
-            fl_entry = self.from_CF(var.standard_name,
-                                    var.realm,
-                                    var.modifier,
-                                    None,
-                                    var.dims.__len__(),
-                                    has_scalar_coords)
-            new_name = fl_entry.name
+            # Use the POD variable standard name and realm to get the corresponding
+            # information from FieldList for the DataSource convention
+            new_name = self.to_CF_standard_name(fl_entry.standard_name,
+                                                var.realm)
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]
         new_scalars = [self.translate_coord(dim, log=var.log) for dim in var.scalar_coords]
@@ -449,6 +464,7 @@ class VariableTranslator(metaclass=util.Singleton):
     conventions: util.WormDict
     aliases: util.WormDict
     _unittest: bool=False
+
     def __init__(self, code_root=None, unittest=False):
         self._unittest = unittest
         self.conventions = util.WormDict()

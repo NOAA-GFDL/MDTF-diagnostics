@@ -1,0 +1,673 @@
+GFDL_varname,CMOR_varname,standard_name,long_name,modeling_realm,cmor_units
+prec_conv,prc,convective_precipitation_flux,Convective Precipitation,atmos,kg m-2 s-1
+expcalc,expcalc,sinking_mole_flux_of_calcite_expressed_as_carbon_in_sea_water,Sinking Calcite Flux,ocean_biochem,mol m-2 s-1
+conv_freq,ci,convection_time_fraction,Fraction of Time Convection Occurs,atmos,1
+cltcalipso,cltcalipso,cloud_area_fraction,CALIPSO Total Cloud Fraction,atmos,%
+ps,ps,surface_air_pressure,Surface Air Pressure,atmos,Pa
+tauu,tauuClim,surface_downward_eastward_stress,Surface Downward Eastward Wind Stress,atmos,Pa
+pme_river,wfonocorr,water_flux_into_sea_water_without_flux_correction,Water Flux into Sea Water Without Flux Correction,ocean,kg m-2 s-1
+cLeaf,cLeaf,leaf_carbon_content,Carbon Mass in Leaves,land,kg m-2
+precip,pr,precipitation_flux,Precipitation,atmos,kg m-2 s-1
+so2_wet_dep,wetso2,tendency_of_atmosphere_mass_content_of_sulfur_dioxide_due_to_wet_deposition,Wet Deposition Rate of SO2,aerosol,kg m-2 s-1
+sconcbc,sconcbc,mass_concentration_of_black_carbon_dry_aerosol_in_air,Surface Concentration of Black Carbon Aerosol,aerosol,kg m-3
+thetaoga,thetaoga,sea_water_potential_temperature,Global Average Sea Water Potential Temperature,ocean,K
+WVP,prwClim,atmosphere_water_vapor_content,Water Vapor Path,atmos,kg m-2
+tnt2,tnt,tendency_of_air_temperature,Tendency of Air Temperature,atmos,K s-1
+tauu,tauu,surface_downward_eastward_stress,Surface Downward Eastward Wind Stress,atmos,Pa
+t_ref,tas,air_temperature,Air Temperature,atmos,K
+hfxba,hfxba,ocean_heat_x_transport_due_to_bolus_advection,Ocean Heat X Transport due to Bolus Advection,ocean,W
+q_ref,huss,specific_humidity,Near-Surface Specific Humidity,atmos,1
+areacella,areacella,cell_area,Atmosphere Grid-Cell Area,atmosphere & land,m2
+pdi,pdi,tendency_of_mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water_due_to_net_primary_production_by_diatoms,Diatom Primary Carbon Production,ocean_biochem,mol m-3 s-1
+ialb,ialb,bare_sea_ice_albedo,Bare Sea Ice Albedo,ocean & ice,1
+dispkexyfo,dispkexyfo,ocean_kinetic_energy_dissipation_per_unit_area_due_to_xy_friction,Ocean Kinetic Energy Dissipation Per Unit Area due to XY Friction,ocean,W m-2
+total_mass_seawater,masso,sea_water_mass,Sea Water Mass,ocean,kg
+ps,psClim,surface_air_pressure,Surface Air Pressure,atmos,Pa
+agessc,agessc,sea_water_age_since_surface_contact,Sea Water Age Since Surface Contact,ocean,yr
+hfx,hfx,ocean_heat_x_transport,Ocean Heat X Transport,ocean,W
+qo3v,tro3Clim,mole_fraction_of_ozone_in_air,Mole Fraction of O3,atmos,1e-9
+sos,sos,sea_surface_salinity,Sea Surface Salinity,ocean,psu
+clmcalipso,clmcalipso,cloud_area_fraction_in_atmosphere_layer,CALIPSO Mid Level Cloud Fraction,atmos,%
+pon,pon,mole_concentration_of_particulate_organic_matter_expressed_as_nitrogen_in_sea_water,Particulate Organic Nitrogen Concentration at Surface,ocean_biochem,mol m-3
+swup_toa,rsut,toa_outgoing_shortwave_flux,TOA Outgoing Shortwave Radiation,atmos,W m-2
+bc_wet_dep,wetbc,tendency_of_atmosphere_mass_content_of_black_carbon_dry_aerosol_due_to_wet_deposition,Wet Deposition Rate of Black Carbon Aerosol Mass,aerosol,kg m-2 s-1
+po4,po4,mole_concentration_of_phosphate_in_sea_water,Dissolved Phosphate Concentration at Surface,ocean_biochem,mol m-3
+evap,evap,water_evaporation_flux,Water Evaporation Flux from Sea Ice,ocean & ice,kg m-2 s-1
+calc,calc,mole_concentration_of_calcite_expressed_as_carbon_in_sea_water,Calcite Concentration,ocean_biochem,mol m-3
+dissoc,dissoc,mole_concentration_of_dissolved_organic_carbon_in_sea_water,Dissolved Organic Carbon Concentration,ocean_biochem,mol m-3
+dem_s,dems,stratiform_cloud_longwave_emissivity,Stratiform Cloud Emissivity,atmos,1
+sst,tos,surface_temperature,Sea Surface Temperature,ocean,K
+chldiaz,chldiaz,mass_concentration_of_diazotrophs_expressed_as_chlorophyll_in_sea_water,"Mass Concentration of Diazotrophs expressed as Chlorophyll in Sea Water
+",ocean_biochem,kg m-3
+sconcpoa,sconcpoa,mass_concentration_of_primary_particulate_organic_matter_dry_aerosol_in_air,Surface Concentration of Dry Aerosol Primary Organic Matter,atmos,kg m-3
+Gmwork,tnkebto,tendency_of_ocean_eddy_kinetic_energy_content_due_to_bolus_transport,Tendency of Ocean Eddy Kinetic Energy Content due to Bolus Transport,ocean,W m-2
+snomelt,snomelt,snow_melt_rate,Snow Melt Rate,ocean & ice,kg m-2 s-1
+DMS_ddep_cmip,drydms,tendency_of_atmosphere_mass_content_of_dimethyl_sulfide_due_to_dry_deposition,Dry Deposition Rate of DMS,aerosol,kg m-2 s-1
+ph,ph,sea_water_ph_reported_on_total_scale,pH,ocean_biochem,1
+transiy,transiy,sea_ice_y_transport,Northward sea ice transport,ocean & ice,kg s-1
+SOA_wet_dep,wetsoa,tendency_of_atmosphere_mass_content_of_secondary_particulate_organic_matter_dry_aerosol_due_to_wet_deposition,Wet Deposition Rate of Dry Aerosol Secondary Organic Matter,aerosol,kg m-2 s-1
+SO2_emis_cmip2,emiso2,tendency_of_atmosphere_mass_content_of_sulfur_dioxide_due_to_emission,Total Emission Rate of SO2,aerosol,kg m-2 s-1
+visc_cbu,difvmo,ocean_vertical_momentum_diffusivity,Ocean Vertical Momentum Diffusivity,ocean,m2 s-1
+clc,clc,convective_cloud_area_fraction_in_atmosphere_layer,Convective Cloud Area Fraction,atmos,%
+pbot_t,pbo,sea_water_pressure_at_sea_floor,Sea Water Pressure at Sea floor,ocean,dbar
+difvho,difvho,ocean_vertical_heat_diffusivity,Ocean Vertical Heat Diffusivity,ocean,m2 s-1
+c3PftFrac,c3PftFrac,area_fraction,Total C3 PFT Cover Fraction,land,%
+sftof,sftof,sea_area_fraction,Sea Area Fraction,ocean,%
+total_volume_seawater,volo,sea_water_volume,Sea Water Volume,ocean,m3
+concso4,concso4,mass_concentration_of_sulfate_dry_aerosol_in_air,Concentration of SO4,aerosol,kg m-3
+talk,talk,sea_water_alkalinity_expressed_as_mole_equivalent,Total Alkalinity at Surface,ocean_biochem,mol m-3	
+pr,pr,rainfall_flux,Surface Rainfall Rate into the Sea Ice Portion of the Grid Cell,ocean & ice,kg m-2 s-1
+mrros,mrrosClim,surface_runoff_flux,Surface Runoff,land,kg m-2 s-1
+nh4,nh4,mole_concentration_of_ammonium_in_sea_water,Dissolved Ammonium Concentration,ocean_biochem,mol m-3
+tasmin,tasminClim,air_temperature,Daily Minimum Near-Surface Air Temperature,atmos,K
+cld_amt_2d,cltClim,cloud_area_fraction,Total Cloud Fraction,atmos,
+phypmisc,phypmisc,tendency_of_mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water_due_to_net_primary_production_by_miscellaneous_phytoplankton,Other Phytoplankton Carbon Production,ocean_biochem,mol m-3 s-1
+intparag,intparag,tendency_of_ocean_mole_content_of_aragonite_expressed_as_carbon_due_to_biological_production,Aragonite Production,ocean_biochem,mol m-2 s-1
+tos_atm,tos,sea_surface_temperature,Sea Surface Temperature,ocean,K
+fl_lssnow,prlsns,large_scale_snowfall_flux,Stratiform Snowfall Flux,atmos,kg m-2 s-1
+evspsblveg,evspsblveg,water_evaporation_flux_from_canopy,Evaporation from Canopy,land,kg m-2 s-1
+clcalipso_sat,clcalipso,cloud_area_fraction_in_atmosphere_layer,CALIPSO Cloud Fraction,atmos,%
+fFire,fFire,surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_fires_excluding_anthropogenic_land_use_change,Carbon Mass Flux into Atmosphere due to CO2 Emission from Fire,land,kg m-2 s-1
+tran,tranClim,transpiration_flux,Transpiration,land,kg m-2 s-1
+rh_ref_cmip_min,rhsmin,relative_humidity,Surface Daily Minimum Relative Humidity,atmos,%
+sic,sic,sea_ice_area_fraction,Sea Ice Area Fraction,ocean & ice,%
+dust_col,loaddust,atmosphere_mass_content_of_dust_dry_aerosol,Load of Dust,atmos,kg m-2
+dht,thkcello,cell_thickness,Ocean Model Cell Thickness,land,m
+tau_x,tauuo,surface_downward_x_stress,Surface Downward X Stress,ocean & ice,N m-2
+msftbarot,msftbarot,ocean_barotropic_mass_streamfunction,Streamfunction,ocean,kg s-1
+fgo2,fgo2,surface_downward_mole_flux_of_molecular_oxygen,Surface Downward O2 Flux,ocean_biochem,mol m-2 s-1
+rh_ref_cmip,rhs,relative_humidity,Near-Surface Relative Humidity,atmos,%
+zooc,zooc,mole_concentration_of_zooplankton_expressed_as_carbon_in_sea_water,Zooplankton Carbon Concentration at Surface,ocean_biochem,mol m-3
+o2min,o2min,mole_concentration_of_molecular_oxygen_in_sea_water_at_shallowest_local_minimum_in_vertical_profile,Oxygen Minimum Concentration,ocean_biochem,mol m-3
+emipoav2,emipoa,tendency_of_atmosphere_mass_content_of_primary_particulate_organic_matter_dry_aerosol_due_to_net_chemical_production,Emission Rate of Dry Aerosol Primary Organic Matter,aerosol,kg m-2 s-1
+dissoc,dissoc,mole_concentration_of_dissolved_organic_carbon_in_sea_water,Dissolved Organic Carbon Concentration at Surface,ocean_biochem,mol m-3
+omldamax,omldamax,ocean_mixed_layer_thickness_defined_by_mixing_scheme,Daily Maximum Ocean Mixed Layer Thickness Defined by Mixing Scheme,ocean,m
+bddtdic,bddtdic,tendency_of_mole_concentration_of_dissolved_inorganic_carbon_in_sea_water_due_to_biological_processes,Rate of Change of Dissolved Inorganic Carbon due to Biological Activity,ocean_biochem,mol m-3 s-1
+phydiaz,phydiaz,mole_concentration_of_diazotrophs_expressed_as_carbon_in_sea_water,"Mole Concentration of Diazotrophs Expressed as Carbon in Sea Water
+",ocean_biochem,mol m-3
+wmo,wmo,upward_ocean_mass_transport,Upward Ocean Mass Transport,ocean,kg s-1
+phymisc,phymisc,mole_concentration_of_miscellaneous_phytoplankton_expressed_as_carbon_in_sea_water,Mole Concentration of Miscellaneous Phytoplankton expressed as Carbon in Sea Water at Surface,ocean_biochem,mol m-3
+strocny,strocny,upward_y_stress_at_sea_ice_base,Northward Ocean Stress On Sea Ice,ocean & ice,N m-2
+sphum,hus,specific_humidity,Specific Humidity,atmos,1
+cfadLidarsr532,cfadLidarsr532,histogram_of_backscattering_ratio_over_height_above_reference_ellipsoid,CALIPSO Scattering Ratio,atmos,1
+intpp,intpp,net_primary_mole_productivity_of_carbon_by_phytoplankton,Primary Organic Carbon Production by All Types of Phytoplankton,ocean_biochem,mol m-2 s-1
+swdn_tot_dif,rsdsdiff,surface_diffuse_downwelling_shortwave_flux_in_air,Surface Diffuse Downwelling Shortwave Radiation,atmos,W m-2
+umo,umo,ocean_mass_x_transport,Ocean Mass X Transport,ocean,kg s-1
+zg,zg,geopotential_height,Geopotential Height,atmos,m
+vcomp,vaClim,northward_wind,Northward Wind,atmos,m s-1
+temp,taClim,air_temperature,Temperature,atmos,K
+rlds,rlds,surface_net_downward_longwave_flux,Surface Net Downward Longwave Radiation,ocean,W m-2
+rsucs,rsucs,upwelling_shortwave_flux_in_air_assuming_clear_sky,Upwelling Clear-Sky Shortwave Radiation,atmos,W m-2
+IWP_all_clouds,cliviClim,atmosphere_cloud_ice_content,Ice Water Path,atmos,kg m-2
+rh_cmip,hurClim,relative_humidity,Relative Humidity,atmos,%
+thetao,thetao,sea_water_potential_temperature,Sea Water Potential Temperature,ocean,K
+hght,zgClim,geopotential_height,Geopotential Height,atmos,m
+pop,pop,mole_concentration_of_particulate_organic_matter_expressed_as_phosphorus_in_sea_water,Particulate Organic Phosphorus Concentration,ocean_biochem,mol m-3
+clhcalipso,clhcalipso,cloud_area_fraction_in_atmosphere_layer,CALIPSO High Level Cloud Fraction,atmos,%
+hfls,hfls,surface_upward_latent_heat_flux,Surface Upward Latent Heat Flux,atmos,W m-2
+lwup_sfc,rlusClim,surface_upwelling_longwave_flux_in_air,Surface Upwelling Longwave Radiation,atmos,W m-2
+pop,pop,mole_concentration_of_particulate_organic_matter_expressed_as_phosphorus_in_sea_water,Particulate Organic Phosphorus Concentration at Surface,ocean_biochem,mol m-3	
+co2_dvmr,co2,mole_fraction_of_carbon_dioxide_in_air,Mole Fraction of CO2,atmos,1e-6
+fbddtdisi,fbddtdisi,tendency_of_ocean_mole_content_of_dissolved_inorganic_silicon_due_to_biological_processes,Rate of Change of Dissolved Inorganic Silicate due to Biological Activity,ocean_biochem,mol m-2 s-1
+bddtdife,bddtdife,tendency_of_mole_concentration_of_dissolved_inorganic_iron_in_sea_water_due_to_biological_processes,Rate of Change of Dissolved Inorganic Iron due to Biological Activity,ocean_biochem,mol m-3 s-1
+sconcdust,sconcdust,mass_concentration_of_dust_dry_aerosol_in_air,Surface Concentration of Dust,atmos,kg m-3
+hfibthermds,hfibthermds,heat_flux_into_sea_water_due_to_iceberg_thermodynamics,Heat Flux into Sea Water due to Iceberg Thermodynamics,ocean,W m-2
+tx_trans,umo,ocean_mass_x_transport,Ocean Mass X Transport,ocean,kg s-1
+volcello,volcello,ocean_volume,Ocean Grid-Cell Volume,ocean,m-3
+chldiaz,chldiaz,mass_concentration_of_diazotrophs_expressed_as_chlorophyll_in_sea_water,Mass Concentration of Diazotrophs expressed as Chlorophyll in Sea Water at Surface,ocean_biochem,kg m-3
+chlmisc,chlmisc,mass_concentration_of_miscellaneous_phytoplankton_expressed_as_chlorophyll_in_sea_water,Other Phytoplankton Chlorophyll Mass Concentration at Surface,ocean_biochem,kg m-3
+clw,clwClim,mass_fraction_of_cloud_liquid_water_in_air,Mass Fraction of Cloud Liquid Water,atmos,1
+hfy,hfy,ocean_heat_y_transport,Ocean Heat Y Transport,ocean,W
+lwdn_sfc_clr,rldscs,surface_downwelling_longwave_flux_in_air_assuming_clear_sky,Surface Downwelling Clear-Sky Longwave Radiation,atmos,W m-2
+diff_cbt_t,difvho,ocean_vertical_heat_diffusivity,Ocean Vertical Heat Diffusivity,ocean,m2 s-1
+masscello,masscello,sea_water_mass_per_unit_area,Sea Water Mass Per Unit Area,ocean,kg m-2
+tnhusd,tnhusd,tendency_of_specific_humidity_due_to_diffusion,Tendency of Specific Humidity due to Diffusion,atmos,s-1
+"reffclwc
+",reffclwc,effective_radius_of_convective_cloud_liquid_water_particle,Convective Cloud Droplet Effective Radius,atmos,m
+sit,sit,sea_ice_thickness,Sea Ice Thickness,ocean & ice,m
+wap,wap,lagrangian_tendency_of_air_pressure,wap,atmos,Pa s-1
+bc_ddep,drybc,tendency_of_atmosphere_mass_content_of_black_carbon_dry_aerosol_due_to_dry_deposition,Dry Deposition Rate of Black Carbon Aerosol Mass,aerosol,kg m-2 s-1
+Kd_itidal_z,difvtrto,ocean_vertical_tracer_diffusivity_due_to_tides,Ocean Vertical Tracer Diffusivity due to Tides,ocean,m2 s-1
+evap,evspsbl,water_evaporation_flux,Evaporation,ocean & ice,kg m-2 s-1
+hcice,hcice,sea_ice_total_heat_content,Sea Ice Total Heat Content,ocean & ice,J
+concss,concss,mass_concentration_of_seasalt_dry_aerosol_in_air,Concentration of Seasalt,aerosol,kg m-3
+reffclws,reffclws,effective_radius_of_stratiform_cloud_liquid_water_particle,Stratiform Cloud Droplet Effective Radius,atmos,m
+sfc_hflux_from_water_prec,hfrainds,temperature_flux_due_to_rainfall_expressed_as_heat_flux_into_sea_water,Temperature Flux due to Rainfall Expressed as Heat Flux into Sea Water,ocean,W m-2
+slp,psl,air_pressure_at_sea_level,Sea Level Pressure,atmos,Pa
+evspsblveg,evspsblvegClim,water_evaporation_flux_from_canopy,Evaporation from Canopy,land,kg m-2 s-1
+residualFrac,residualFrac,area_fraction,Fraction of Grid Cell that is Land but Neither Vegetation-Covered nor Bare Soil,land,%
+pastureFrac,pastureFrac,area_fraction,Anthropogenic Pasture Fraction,land,%
+hblt_max,omldamax,ocean_mixed_layer_thickness_defined_by_mixing_scheme,Mean Daily Maximum Ocean Mixed Layer Thickness Defined by Mixing Scheme,ocean,m
+rlussi,rlussi,surface_upwelling_longwave_flux_in_air,Upward Long Wave over Sea Ice,ocean & ice,W m-2
+salt,so,sea_water_salinity,Sea Water Salinity,ocean,psu
+phyc,phyc,mole_concentration_of_phytoplankton_expressed_as_carbon_in_sea_water,Phytoplankton Carbon Concentration,ocean_biochem,mol m-3
+visc_cbu_tides,difvmto,ocean_vertical_momentum_diffusivity_due_to_tides,Ocean Vertical Momentum Diffusivity due to Tides,ocean,m2 s-1
+rrvch4,ch4global,mole_fraction_of_methane_in_air,Global Mean Mole Fraction of CH4,atmosChem,1e-9
+fbddtdife,fbddtdife,tendency_of_ocean_mole_content_of_dissolved_inorganic_iron_due_to_biological_processes,Rate of Change of Dissolved Inorganic Iron due to Biological Activity,ocean_biochem,mol m-2 s-1
+hfnorthba,hfynorthba,northward_ocean_heat_transport_due_to_bolus_advection,Northward Ocean Heat Transport due to Bolus Advection,ocean,W
+concno3,concno3,mass_concentration_ of_nitrate_dry_aerosol_in_air,Concentration of NO3 Aerosol,aerosol,kg m-3
+intpbsi,intpbsi,tendency_of_ocean_mole_content_of_silicon_due_to_biological_production,Silica Production,ocean_biochem,mol m-2 s-1
+swflx,rsntds,net_downward_shortwave_flux_at_sea_water_surface,Net Downward Shortwave Radiation at Sea Water Surface,ocean,W m-2
+gridspec,gridspec,[gridspec_ocnBgchem],Gridspec,ocean_biochem,
+zo2min,zo2min,depth_at_shallowest_local_minimum_in_vertical_profile_of_mole_concentration_of_molecular_oxygen_in_sea_water,Depth of Oxygen Minimum Concentration,ocean_biochem,m
+rlncs,rlncs,net_upward_longwave_flux_in_air_assuming_clear_sky,"Net Upwelling Clear-Sky Longwave Radiation
+",atmos,W m-2
+evap,evspsblClim,water_evaporation_flux,Evaporation,ocean & ice,kg m-2 s-1
+fbddtalk,fbddtalk,integral_wrt_depth_of_tendency_of_sea_water_alkalinity_expressed_as_mole_equivalent_due_to_biological_processes,Rate of Change of Biological Alkalinity due to Biological Activity,ocean_biochem,mol m-2 s-1
+reff_lsclliq,reffclws,effective_radius_of_stratiform_cloud_liquid_water_particle,Hydrometeor Effective Radius of Stratiform Cloud Liquid Water,atmos,m
+bmelt,bmelt,rate_of_melt_at_sea_ice_base,Rate of Melt at Sea Ice Base,ocean & ice,kg m-2 s-1
+agm,diftrblo,ocean_tracer_bolus_laplacian_diffusivity,Ocean Tracer Bolus Laplacian Diffusivity,ocean,m2 s-1
+precip,prClim,precipitation_flux,Precipitation,atmos,kg m-2 s-1
+evap_heat,hfls,surface_downward_latent_heat_flux,Surface Downward Latent Heat Flux,ocean,W m-2
+transix,transix,sea_ice_x_transport,Eastward Sea Ice Transport,ocean & ice,kg s-1
+cl,clClim,cloud_area_fraction_in_atmosphere_layer,Cloud Area Fraction,atmos,%
+divice,divice,??,Strain Rate Divergence of Sea Ice,ocean & ice,s-1
+grCongel,grCongel,tendency_of_sea_ice_amount_due_to_congelation_ice_accumulation,Congelation Sea Ice Growth Rate,ocean & ice,kg m-2 s-1
+sconcoa,sconcoa,mass_concentration_of_particulate_organic_matter_dry_aerosol_in_air,Surface Concentration of Dry Aerosol Organic Matter,aerosol,kg m-3
+rGrowth,rGrowth,surface_upward_carbon_mass_flux_due_to_plant_respiration_for_biomass_growth,Carbon Mass Flux into Atmosphere due to Growth Autotrophic Respiration on Land,land,kg m-2 s-1
+grassFrac,grassFrac,area_fraction,Natural Grass Fraction,land,%
+fco2fos,fco2fos,tendency_of_atmosphere_mass_content_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_fossil_fuel_combustion,Carbon Mass Flux into Atmosphere Due to Fossil Fuel Emissions of CO2,atmos,kg m-2 s-1
+swup_toa_clr,rsutcs,toa_outgoing_shortwave_flux_assuming_clear_sky,TOA Outgoing Clear-Sky Shortwave Radiation,atmos,W m-2
+sblsi,sblsi,surface_snow_and_ice_sublimation_flux,Sublimation over Sea Ice,ocean & ice,kg m-2
+vsi,vsi,northward_sea_ice_velocity,Northward Sea Ice Velocity,seaIce & ocean,m s-1
+shflx,hfss,surface_upward_sensible_heat_flux,Surface Upward Sensible Heat Flux,atmos,W m-2
+power_diss_tides,tnpeot,tendency_of_ocean_potential_energy_content_due_to_tides,Tendency of Ocean Potential Energy Content due to Tides,ocean,W m-2
+phyfe,phyfe,mole_concentration_of_phytoplankton_expressed_as_iron_in_sea_water,Phytoplankton Iron Concentration at Surface,ocean_biochem,mol m-3
+lwdn_sfc_clr,rldscsClim,surface_downwelling_longwave_flux_in_air_assuming_clear_sky,Downwelling Surface Clear-Sky Longwave,atmos,W m-2
+pot_rho_0,rhopoto,sea_water_potential_density,Sea Water Potential Density,ocean,kg m-3
+ssalt_emis,emiss,tendency_of_atmosphere_mass_content_of_seasalt_dry_aerosol_due_to_emission,Total Emission Rate of Seasalt,aerosol,kg m-2 s-1
+fbddtdip,fbddtdip,tendency_of_ocean_mole_content_of_dissolved_inorganic_phosphorus_due_to_biological_processes,Rate of Change of Dissolved Inorganic Phosphate due to Biological Activity,ocean_biochem,mol m-2 s-1
+tau_y,tauvo,surface_downward_y_stress,Surface Downward Y Stress,ocean & ice,N m-2
+ra,ra,plant_respiration_carbon_flux,Carbon Mass Flux into Atmosphere due to Autotrophic (Plant) Respiration on Land,land,kg m-2 s-1
+clcalipso2_sat,clcalipso2,cloud_area_fraction_in_atmosphere_layer,CALIPSO Cloud Fraction Undetected by CloudSat,atmos,%
+aiso_lap,difmxylo,ocean_momentum_xy_laplacian_diffusivity,Ocean Momentum XY Laplacian Diffusivity,ocean,m2 s-1
+pbp,pbp,tendency_of_mole_concentration_of_phosphorus_in_sea_water_due_to_biological_production,Biogenic Phosphorus Production,ocean_biochem,mol m-3 s-1
+tot_h2o,h2o,mass_fraction_of_water_in_air,Mass Fraction of Water,aerosol,1
+tntc,tntc,tendency_of_air_temperature_due_to_convection,Tendency of Air Temperature due to Moist Convection,atmos,K s-1
+phydiat,phydiat,mole_concentration_of_diatoms_expressed_as_carbon_in_sea_water,Mole Concentration of Diatoms expressed as Carbon in Sea Water at Surface,ocean_biochem,mol m-3
+DMS_wet_dep,wetdms,tendency_of_atmosphere_mass_content_of_dimethyl_sulfide_due_to_wet_deposition,Wet Deposition Rate of DMS,aerosol,kg m-2 s-1
+ssalt_wet_dep,wetss,tendency_of_atmosphere_mass_content_of_seasalt_dry_aerosol_due_to_wet_deposition,Wet Deposition Rate of Seasalt,aerosol,kg m-2 s-1
+Heat_PmE,hfrainds,temperature_flux_due_to_rainfall_expressed_as_heat_flux_into_sea_water,Temperature Flux due to Rainfall Expressed as Heat Flux into Sea Water,ocean,W m-2
+ucomp,uaClim,eastward_wind,Eastward Wind,atmos,m s-1
+sftgif,sftgif,land_ice_area_fraction,Fraction of Grid Cell Covered with Glacier,land,%
+vcomp,va,northward_wind,Northward Wind,atmos,m s-1
+cProduct,cProduct,carbon_content_of_products_of_anthropogenic_land_use_change,Carbon Mass in Products of Land Use Change,land,kg m-2
+u_ref,uas,eastward_wind,Eastward Near-Surface Wind,aerosol,m s-1
+intpbfe,intpbfe,tendency_of_ocean_mole_content_of_iron_due_to_biological_production,Iron Production,ocean_biochem,mol m-2 s-1
+tnhusc,tnhusc,tendency_of_specific_humidity_due_to_convection,Tendency of Specific Humidity due to Convection,atmos,s-1
+mc,mc,atmosphere_net_upward_convective_mass_flux,Convective Mass Flux,atmos,kg m-2 s-1
+intpn2,intpn2,tendency_of_ocean_mole_content_of_elemental_nitrogen_due_to_fixation,Nitrogen Fixation Rate in Ocean,ocean_biochem,mol m-2 s-1
+ctpisccp,pctisccp,air_pressure_at_cloud_top,ISCCP Mean Cloud Top Pressure,atmos,Pa
+calving_melt_heat,hfibthermds,heat_flux_into_sea_water_due_to_iceberg_thermodynamics,Heat Flux into Sea Water due to Iceberg Thermodynamics,ocean,W m-2
+intpdiaz,intpdiaz,net_primary_mole_productivity_of_carbon_by_diazotrophs,Net Primary Mole Productivity of Carbon by Diazotrophs,ocean_biochem,mol m-2 s-1
+exparag,exparag,sinking_mole_flux_of_aragonite_expressed_as_carbon_in_sea_water,Sinking Aragonite Flux,ocean_biochem,mol m-2 s-1
+fsn,fsn,tendency_of_ocean_mole_content_of_elemental_nitrogen_due_to_deposition_and_fixation_and_runoff,Surface Downward Net Flux of Nitrogen,ocean_biochem,mol m-2 s-1
+dfe,dfe,mole_concentration_of_dissolved_iron_in_sea_water,Dissolved Iron Concentration,ocean_biochem,mol m-3
+cfadDbze94,cfadDbze94,histogram_of_equivalent_reflectivity_factor_over_height_above_reference_ellipsoid,CloudSat Radar Reflectivity CFAD,atmos,1
+dissic,dissic,mole_concentration_of_dissolved_inorganic_carbon_in_sea_water,Dissolved Inorganic Carbon Concentration,ocean_biochem,mol m-3
+ua,ua,eastward_wind,Eastward Wind,atmos,m s-1
+clhcalipso_sat,clhcalipso,cloud_area_fraction_in_atmosphere_layer,CALIPSO High Level Cloud Fraction,atmos,%
+qo3v,tro3,mole_fraction_of_ozone_in_air,Mole Fraction of O3,atmos,1e-9
+om_emis_col,emibb,tendency_of_atmosphere_mass_content_of_primary_particulate_organic_matter_dry_aerosol_due_to_emission,Total Emission of Primary Aerosol from Biomass Burning,aerosol,kg m-2 s-1
+clwc,clwc,mass_fraction_of_convective_cloud_liquid_water_in_air,Mass Fraction of Convective Cloud Liquid Water,atmos,1
+dust_ddep,drydust,tendency_of_atmosphere_mass_content_of_dust_dry_aerosol_due_to_dry_deposition,Dry Deposition Rate of Dust,aerosol,kg m-2 s-1
+deptho,deptho,sea_floor_depth_below_geoid,Sea Floor Depth,ocean,m
+tnhusscpbl2,tnhusscpbl,tendency_of_specific_humidity_due_to_stratiform_cloud_and_precipitation_and_boundary_layer_mixing,Tendency of Specific Humidity due to Stratiform Cloud Condensation and Evaporation,atmos,s-1
+fprec_melt_heat,hfsnthermds,heat_flux_into_sea_water_due_to_snow_thermodynamics,Heat Flux into Sea Water due to Snow Thermodynamics,ocean,W m-2
+o2,o2,mole_concentration_of_molecular_oxygen_in_sea_water,Dissolved Oxygen Concentration,ocean_biochem,mol m-3
+z,zfull,height_above_reference_ellipsoid,Altitude of Model Full-Levels,atmos,m
+mrlsl,mrlsl,moisture_content_of_soil_layer,Water Content of Soil Layer,land,kg m-2
+tntmp,tntmp,tendency_of_air_temperature_due_to_model_physics,Tendency of Air Temperature due to Diabatic Processes,atmos,K s-1
+ta700,ta700,air_temperature,"Air Temperature
+",atmos,K
+v_ref,vas,northward_wind,Northward Near-Surface Wind,aerosol,m s-1
+rln,rln,net_upward_longwave_flux_in_air,Net Upward Longwave Radiation,atmos,W m-2
+rh_ref_cmip,hurs,relative_humidity,Near-Surface Relative Humidity,atmos,%
+clic,clic,mass_fraction_of_convective_cloud_ice_in_air,Mass Fraction of Convective Cloud Ice,atmos,1
+cSoilSlow,cSoilSlow,slow_soil_pool_carbon_content,Carbon Mass in Slow Soil Pool,land,kg m-2
+tossq,tossq,square_of_sea_surface_temperature,Square of Sea Surface Temperature,ocean,K2
+clcalipso2,clcalipso,cloud_area_fraction_in_atmosphere_layer,CALIPSO Cloud Fraction,atmos,%
+difvso,difvso,ocean_vertical_salt_diffusivity,Ocean Vertical Salt Diffusivity,ocean,m2 s-1
+fddtdip,fddtdip,tendency_of_ocean_mole_content_of_dissolved_inorganic_phosphorus,Rate of Change of Net Dissolved Inorganic Phosphate,ocean_biochem,mol m-2 s-1
+expc,expc,sinking_mole_flux_of_particulate_organic_matter_expressed_as_carbon_in_sea_water,Sinking Particulate Organic Carbon Flux,ocean_biochem,mol m-2 s-1
+albisccp,albisccp,cloud_albedo,ISCCP Mean Cloud Albedo,atmos,1
+fl_lsrain,prlsprof,large_scale_rainfall_flux,Stratiform Rainfall Flux,atmos,kg m-2 s-1
+darag,darag,tendency_of_mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water_due_to_dissolution,Aragonite Dissolution,ocean_biochem,mol m-3 s-1
+cropFrac,cropFrac,area_fraction,Crop Fraction,land,%
+physi,physi,mole_concentration_of_phytoplankton_expressed_as_silicon_in_sea_water,Phytoplankton Silica Concentration,ocean_biochem,mol m-3
+tot_cld_amt,clt,cloud_area_fraction,Total Cloud Fraction,atmos,%
+frc,frc,tendency_of_ocean_mole_content_of_carbon_due_to_sedimentation,Downward Carbon Flux at Ocean Bottom,ocean_biochem,mol m-2 s-1
+bddtalk,bddtalk,tendency_of_sea_water_alkalinity_expressed_as_mole_equivalent_due_to_biological_processes,Rate of Change of Alkalinity due to Biological Activity,ocean_biochem,mol m-3 s-1
+cfadLidarsr532_sat,cfadLidarsr532,histogram_of_backscattering_ratio_over_height_above_reference_ellipsoid,CALIPSO Scattering Ratio,atmos,1
+sphum,husClim,specific_humidity,Specific Humidity,atmos,1
+cllcalipso_sat,cllcalipso,cloud_area_fraction_in_atmosphere_layer,CALIPSO Low Level Cloud Fraction,atmos,%
+rh_ref_cmip_max,rhsmax,relative_humidity,Surface Daily Maximum Relative Humidity,atmos,%
+hfls,hflsClim,surface_upward_latent_heat_flux,Surface Upward Latent Heat Flux,atmos,W m-2
+t_surf,ts,surface_temperature,Surface Temperature,land,K
+ccice,clic,mass_fraction_of_convective_cloud_ice_in_air,Mass Fraction of Convective Cloud Ice,atmos,1
+thkcello,thkcello,cell_thickness,Ocean Model Cell Thickness,ocean,m
+cl,cl,cloud_area_fraction_in_atmosphere_layer,Cloud Area Fraction,atmos,%
+WVP,prw,atmosphere_water_vapor_content,Water Vapor Path,atmos,kg m-2
+rh_cmip,hur,relative_humidity,Relative Humidity,atmos,%
+sconcss,sconcss,mass_concentration_of_seasalt_dry_aerosol_in_air,Surface Concentration of Seasalt,atmos,kg m-3
+zos,zos,sea_surface_height_above_geoid,Sea Surface Height Above Geoid,ocean,m
+pon,pon,mole_concentration_of_particulate_organic_matter_expressed_as_nitrogen_in_sea_water,Particulate Organic Nitrogen Concentration,ocean_biochem,mol m-3
+rsu,rsu,upwelling_shortwave_flux_in_air,Upwelling Shortwave Radiation,atmos,W m-2
+chlpico,chlpico,mass_concentration_of_picophytoplankton_expressed_as_chlorophyll_in_sea_water,Mass Concentration of Picophytoplankton expressed as Chlorophyll in Sea Water at Surface,ocean_biochem,kg m-3
+sfc_salt_flux_ice,sfdsi,downward_sea_ice_basal_salt_flux,Downward Sea Ice Basal Salt Flux,ocean & seaIce,kg m-2 s-1
+po4,po4,mole_concentration_of_phosphate_in_sea_water,Dissolved Phosphate Concentration,ocean_biochem,mol m-3
+wt,wo,upward_sea_water_velocity,Upward Sea Water Velocity,ocean,m s-1
+snoToice,snoToIce,tendency_of_sea_ice_amount_due_to_snow_conversion,Snow-Ice Formation Rate,ocean & ice,kg m-2 s-1
+hfss,hfss,surface_downward_sensible_heat_flux,Surface Downward Sensible Heat Flux,ocean,W m-2
+fescav,fescav,tendency_of_mole_concentration_of_dissolved_iron_in_sea_water_due_to_scavenging_by_inorganic_particles,Nonbiogenic Iron Scavenging,ocean_biochem,mol m-3 s-1
+strairx,strairx,surface_downward_x_stress,Eastward atmospheric stress on sea ice,ocean & ice,N m-2
+SO2_ddep_cmip,dryso2,tendency_of_atmosphere_mass_content_of_sulfur_dioxide_due_to_dry_deposition,Dry Deposition Rate of SO2,aerosol,kg m-2 s-1
+snw,snw,surface_snow_amount,Surface Snow Amount,land_ice,kg m-2
+NH3_ddep_cmip,drynh3,tendency_of_atmosphere_mass_content_of_ammonia_due_to_dry_deposition,Dry Deposition Rate of NH3,aerosol,kg m-2 s-1
+pp,pp,tendency_of_mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water_due_to_net_primary_production,Primary Carbon Production by Phytoplankton,ocean_biochem,mol m-3 s-1
+cldnvi,cldnvi,atmosphere_number_content_of_cloud_droplets,Column Integrated Cloud Droplet Number,atmos,m-2
+water,mrso,soil_moisture_content,Total Soil Moisture Content,land,kg m-2
+swup_toa_clr,rsutcsClim,toa_outgoing_shortwave_flux_assuming_clear_sky,TOA Outgoing Clear-Sky Shortwave Radiation,atmos,W m-2
+clis,clis,mass_fraction_of_stratiform_cloud_ice_in_air,Mass Fraction of Stratiform Cloud Ice,atmos,1
+hfnorthdiff,hfnorthdiff,northward_ocean_heat_transport_due_to_diffusion,Northward Ocean Heat Transport due to Diffusion,ocean,W
+omlmax,omlmax,ocean_mixed_layer_thickness_defined_by_mixing_scheme,Monthly Maximum Ocean Mixed Layer Thickness Defined by Mixing Scheme,ocean,m
+pbsi,pbsi,tendency_of_mole_concentration_of_silicon_in_sea_water_due_to_biological_production,Biogenic Silica Production,ocean_biochem,mol m-3 s-1
+tz_trans_sq,wmosq,square_of_upward_ocean_mass_transport,Square of Upward Ocean Mass Transport,ocean,kg2 s-2
+dem_c,demc,convective_cloud_longwave_emissivity,Convective Cloud Emissivity,atmos,1
+tauvo,tauvo,surface_downward_y_stress,Surface Downward Y Stress,ocean,N m-2
+u_ref,uasClim,eastward_wind,Eastward Near-Surface Wind,aerosol,m s-1
+mld_sq,mlotstsq,square_of_ocean_mixed_layer_thickness_defined_by_sigma_t,Square of Ocean Mixed Layer Thickness Defined by Sigma T,ocean,m2
+reff_lsclice,reffclis,effective_radius_of_stratiform_cloud_ice_particle,Hydrometeor Effective Radius of Stratiform Cloud Ice,atmos,m
+cld_amt_2d,clt,cloud_area_fraction,Total Cloud Fraction,atmos,%
+mfo,mfo,sea_water_transport_across_line,Sea Water Transport,ocean,kg s-1
+clisccp,clisccp,cloud_area_fraction_in_atmosphere_layer,ISCCP Cloud Area Fraction,atmos,%
+si,si,mole_concentration_of_silicate_in_sea_water,Dissolved Silicate Concentration,ocean_biochem,mol m-3
+bfe,bfe,mole_concentration_of_particulate_organic_matter_expressed_as_iron_in_sea_water,Particulate Biogenic Iron Concentration at Surface,ocean_biochem,mol m-3
+pbfe,pbfe,tendency_of_mole_concentration_of_iron_in_sea_water_due_to_biological_production,Biogenic Iron Production,ocean_biochem,mol m-3 s-1
+phyn,phyn,mole_concentration_of_phytoplankton_expressed_as_nitrogen_in_sea_water,Phytoplankton Nitrogen Concentration,ocean_biochem,mol m-3
+bsi,bsi,mole_concentration_of_particulate_matter_expressed_as_silicon_in_sea_water,Particulate Biogenic Silica Concentration at Surface,ocean_biochem,mol m-3
+rsdssi,rsdssi,surface_downwelling_shortwave_flux_in_air,Downward Shortwave over Sea Ice,ocean & ice,W m-2
+rho_dzt,masscello,sea_water_mass_per_unit_area,Sea Water Mass Per Unit Area,ocean,kg m-2
+dtau_c,dtauc,atmosphere_optical_thickness_due_to_convective_cloud,Convective Cloud Optical Depth,atmos,1
+sfc_hflux_from_runoff,hfrunoffds,temperature_flux_due_to_runoff_expressed_as_heat_flux_into_sea_water,Temperature Flux due to Runoff Expressed as Heat Flux into Sea Water,ocean,W m-2
+eviscu,eviscu,atmosphere_momentum_diffusivity,Eddy Viscosity Coefficients for Momentum,atmos,m2 s-1
+grFrazil,grFrazil,tendency_of_sea_ice_amount_due_to_frazil_ice_accumulation_in_leads,Frazil Sea Ice Growth (Leads) Rate,ocean & ice,kg m-2 s-1
+zossga,zossga,global_average_steric_sea_level_change,Global Average Steric Sea Level Change,ocean,m
+swup_sfc,rsus,surface_upwelling_shortwave_flux_in_air,Surface Upwelling Shortwave Radiation,atmos,W m-2
+rsdcs,rsdcs,downwelling_shortwave_flux_in_air_assuming_clear_sky,Downwelling Clear-Sky Shortwave Radiation,atmos,W m-2
+msftyyzba,msftyyzba,ocean_y_overturning_mass_streamfunction_due_to_bolus_advection,Ocean Y Overturning Mass Streamfunction due to Bolus Advection,ocean,kg s-1
+tsnint,tsnint,temperature_at_interface_between_sea_ice_and_snow,Temperature at Interface Between Sea Ice and Snow,ocean & ice,K
+intpbp,intpbp,tendency_of_ocean_mole_content_of_phosphorus_due_to_biological_production,Phosphorus Production,ocean_biochem,mol m-2 s-1	
+pme_river,wfo,water_flux_into_sea_water,Water Flux Into Sea Water,ocean,kg m-2 s-1
+concso2,concso2,mole_fraction_of_sulfur_dioxide_in_air,Mole Fraction of SO2,aerosol,1
+phyfe,phyfe,mole_concentration_of_phytoplankton_expressed_as_iron_in_sea_water,Phytoplankton Iron Concentration,ocean_biochem,mol m-3
+fbddtdic,fbddtdic,tendency_of_ocean_mole_content_of_dissolved_inorganic_carbon_due_to_biological_processes,Rate of Change of Dissolved Inorganic Carbon due to Biological Activity,ocean_biochem,mol m-2 s-1
+mrsofc,mrsofc,soil_moisture_content_at_field_capacity,Capacity of Soil to Store Water,land,kg m-2
+concpoa,concpoa,mass_concentration_of_primary_particulate_organic_matter_dry_aerosol_in_air,Concentration of Dry Aerosol Primary Organic Matter,aerosol,kg m-3
+mrso,mrsoClim,soil_moisture_content,Total Soil Moisture Content,land,kg m-2
+sfc_po45,po4,??,phosphate,atmos,mol P m-3
+cfadDbze94_sat,cfadDbze94,histogram_of_equivalent_reflectivity_factor_over_height_above_reference_ellipsoid,CloudSat Radar Reflectivity CFAD,atmos,1
+intpcalcite,intpcalcite,tendency_of_ocean_mole_content_of_calcite_expressed_as_carbon_due_to_biological_production,Calcite Production,ocean_biochem,mol m-2 s-1
+snc,snc,surface_snow_area_fraction,Surface Snow Area Fraction,ocean & ice,%
+clcalipso2,clcalipso2,cloud_area_fraction_in_atmosphere_layer,CALIPSO Cloud Fraction Undetected by CloudSat,atmos,%
+rsds,rsds,downwelling_shortwave_flux_in_sea_water,Downwelling Shortwave Radiation in Sea Water,ocean,W m-2
+volo,volo,sea_water_volume,Sea Water Volume,ocean,m3
+cdnc,cdnc,number_concentration_of_cloud_liquid_water_particles_in_air,Cloud Droplet Number Concentration,aerosol,m-3
+epcalc100,epcalc100,sinking_mole_flux_of_calcite_expressed_as_carbon_in_sea_water,Downward Flux of Calcite,ocean_biochem,mol m-2 s-1
+si,si,mole_concentration_of_silicate_in_sea_water,Dissolved Silicate Concentration at Surface,ocean_biochem,mol m-3
+o2,o2,mole_concentration_of_molecular_oxygen_in_sea_water,Dissolved Oxygen Concentration at Surface,ocean_biochem,mol m-3	
+reff_ccclliq,reffclwc,effective_radius_of_convective_cloud_liquid_water_particle,Hydrometeor Effective Radius of Convective Cloud Liquid Water,atmos,m
+sfc_hflux_from_water_evap,hfevapds,temperature_flux_due_to_evaporation_expressed_as_heat_flux_out_of_sea_water,Temperature Flux due to Evaporation Expressed as Heat Flux Out of Sea Water,ocean,W m-2
+tasmin,tasmin,air_temperature,Daily Minimum Near-Surface Air Temperature,atmos,K
+rh_ref,rh_ref,relative_humidity,relative humidity at 2 m,atmos,percent
+wfo,wfo,water_flux_into_sea_water,Water Flux Into Sea Water,ocean,kg m-2 s-1
+conv_freq,ciClim,convection_time_fraction,Fraction of Time Convection Occurs,atmos,1
+hfgeou,hfgeou,upward_geothermal_heat_flux_at_sea_floor,Upward Geothermal Heat Flux at Sea Floor,ocean,W m-2
+detoc,detoc,mole_concentration_of_organic_detritus_expressed_as_carbon_in_sea_water,Detrital Organic Carbon Concentration,ocean_biochem,mol m-3
+graz,graz,tendency_of_mole_concentration_of_dissolved_iron_in_sea_water_due_to_grazing_of_phytoplankton,Total Grazing of Phytoplankton by Zooplankton,ocean_biochem,mol m-3 s-1
+omldamax_mon,omldamax,ocean_mixed_layer_thickness_defined_by_mixing_scheme,Mean Daily Maximum Ocean Mixed Layer Thickness Defined by Mixing Scheme,ocean,m
+concbc,concbc,mass_concentration_of_black_carbon_dry_aerosol_in_air,Concentration of Black Carbon Aerosol,aerosol,kg m-3
+dpocdtpico,dpocdtpico,tendency_of_mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water_due_to_net_primary_production_by_picophytoplankton,Tendency of Mole Concentration of Organic Carbon in Sea Water due to Net Primary Production by Picophytoplankton,ocean_biochem,mol m-3 s-1
+tntr,tntr,tendency_of_air_temperature_due_to_radiative_heating,Tendency of Air Temperature due to Radiative Heating,atmos,K s-1
+eparag100,eparag100,sinking_mole_flux_of_aragonite_expressed_as_carbon_in_sea_water,Downward Flux of Aragonite,ocean_biochem,mol m-2 s-1
+SOA_ddep,drysoa,tendency_of_atmosphere_mass_content_of_secondary_particulate_organic_matter_dry_aerosol_due_to_dry_deposition,Dry Deposition Rate of Dry Aerosol Secondary Organic Matter,aerosol,kg m-2 s-1
+mld,mlotst,ocean_mixed_layer_thickness_defined_by_sigma_t,Ocean Mixed Layer Thickness Defined by Sigma T,ocean,m
+sea_level,zos,sea_surface_height_above_geoid,Sea Surface Height Above Geoid,ocean,m
+gridspec,gridspec,[gridspec_seaIce],Gridspec,ocean & ice,
+diff_t,edt,atmosphere_heat_diffusivity,Eddy Diffusivity Coefficient for Temperature Variable,atmos,m2 s-1
+diff_cbt_tides,difvtrto,ocean_vertical_tracer_diffusivity_due_to_tides,Ocean Vertical Tracer Diffusivity due to Tides,ocean,m2 s-1
+temp_global_ave,thetaoga,sea_water_potential_temperature,Global Average Sea Water Potential Temperature,ocean,K
+swup_toa,rsut4co2,toa_outgoing_shortwave_flux,TOA Outgoing Shortwave Radiation in 4XCO2 Atmosphere,atmos,W m-2
+prec_conv,prcClim,convective_precipitation_flux,Convective Precipitation,atmos,kg m-2 s-1
+msftyrhozba,msftyrhozba,ocean_y_overturning_mass_streamfunction_due_to_bolus_advection,Ocean Y Overturning Mass Streamfunction due to Bolus Advection,ocean,kg s-1
+SWDN,rsds,downwelling_shortwave_flux_in_sea_water,Downwelling Shortwave Radiation in Sea Water,ocean,W m-2
+clws,clws,mass_fraction_of_stratiform_cloud_liquid_water_in_air,Mass Fraction of Stratiform Cloud Liquid Water,atmos,1
+sconcso4,sconcso4,mass_concentration_of_sulfate_dry_aerosol_in_air,Surface Concentration of SO4,atmos,kg m-3
+msftmyz,msftmyz,ocean_meridional_overturning_mass_streamfunction,Ocean Meridional Overturning Mass Streamfunction,ocean,kg s-1
+vmo,vmo,ocean_mass_y_transport,Ocean Mass Y Transport,ocean,kg s-1
+mc_half,mc,atmosphere_net_upward_convective_mass_flux,Convective Mass Flux,atmos,kg m-2 s-1
+dpo2,dpo2,surface_molecular_oxygen_partial_pressure_difference_between_sea_water_and_air,Delta PO2,ocean_biochem,Pa
+hflssi,hflssi,surface_upward_latent_heat_flux,Surface Upward Latent Heat Flux over Sea Ice,ocean & ice,W m-2
+t_ref,tasClim,air_temperature,Near-Surface Air Temperature,atmos,K
+power_diss,tnpeo,tendency_of_ocean_potential_energy_content,Tendency of Ocean Potential Energy Content,ocean,W m-2
+olr_clr,rlutcs,toa_outgoing_longwave_flux_assuming_clear_sky,TOA Outgoing Clear-Sky Longwave Radiation,atmos,W m-2
+rootd,rootd,soil_moisture_content_at_field_capacity,Capacity of Soil to Store Water,land,kg m-2
+tauv,tauvClim,surface_downward_northward_stress,Surface Downward Northward Wind Stress,atmos,Pa
+cRoot,cRoot,root_carbon_content,Carbon Mass in Roots,land,kg m-2
+mrros,mrros,surface_runoff_flux,Surface Runoff,land,kg m-2 s-1
+snow_tot,prsn,snowfall_flux,Snowfall Flux,atmos,kg m-2 s-1
+pnew,pnew,tendency_of_mole_concentration_of_organic_carbon_in_sea_water_due_to_net_new_primary_production,Primary Carbon Production by Phytoplankton Based on NO3 Alone,ocean_biochem,mol m-3 s-1
+msftmrhoz,msftmrhoz,ocean_meridional_overturning_mass_streamfunction,Ocean Meridional Overturning Mass Streamfunction,ocean,kg s-1
+detoc,detoc,mole_concentration_of_organic_detritus_expressed_as_carbon_in_sea_water,Detrital Organic Carbon Concentration at Surface,ocean_biochem,mol m-3	
+masso,masso,sea_water_mass,Sea Water Mass,ocean,kg
+dtau_s,dtaus,atmosphere_optical_thickness_due_to_stratiform_cloud,Stratiform Cloud Optical Depth,atmos,1
+epn100,epn100,sinking_mole_flux_of_particulate_organic_nitrogen_in_sea_water,Downward Flux of Particulate Organic Nitrogen,ocean_biochem,mol m-2 s-1
+psiu,msftbarot,ocean_barotropic_mass_streamfunction,Ocean Barotropic Mass Streamfunction,ocean,kg s-1
+fbddtdin,fbddtdin,tendency_of_ocean_mole_content_of_dissolved_inorganic_nitrogen_due_to_biological_processes,Rate of Change of Dissolved Inorganic Nitrogen due to Biological Activity,ocean_biochem,mol m-2 s-1
+diftrelo,diftrelo,ocean_tracer_epineutral_laplacian_diffusivity,Ocean Tracer Epineutral Laplacian Diffusivity,ocean,m2 s-1
+SH,hfss,surface_downward_sensible_heat_flux,Surface Downward Sensible Heat Flux,ocean,W m-2
+lsice,clis,mass_fraction_of_stratiform_cloud_ice_in_air,Mass Fraction of Stratiform Cloud Ice,atmos,1
+evisct,evisct,atmosphere_heat_diffusivity,Eddy Diffusivity Coefficients for Temperature,atmos,m2 s-1
+chlmisc,chlmisc,mass_concentration_of_miscellaneous_phytoplankton_expressed_as_chlorophyll_in_sea_water,"Other Phytoplankton Chlorophyll Mass Concentration
+",ocean_biochem,kg m-3
+fLuc,fLuc,surface_net_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_anthropogenic_land_use_change,Net Carbon Mass Flux into Atmosphere due to Land Use Change,land,kg m-2 s-1
+swup_toa,rsutClim,toa_outgoing_shortwave_flux,TOA Outgoing Shortwave Radiation,atmos,W m-2
+swdn_sfc_clr,rsdscs,surface_downwelling_shortwave_flux_in_air_assuming_clear_sky,Surface Downwelling Clear-Sky Shortwave Radiation,atmos,W m-2
+tsice,tsice,surface_temperature,Surface Temperature of Sea Ice,ocean & ice,K
+cldncl,cldncl,number_concentration_of_cloud_liquid_water_particles_in_air_at_liquid_water_cloud_top,Cloud Droplet Number Concentration of Cloud Tops,atmos,m-3
+soga,soga,sea_water_salinity,Global Mean Sea Water Salinity,ocean,psu
+conv_cld_base,ccbClim,air_pressure_at_convective_cloud_base,Air Pressure at Convective Cloud Base,atmos,Pa
+tclisccp,cltisccp,cloud_area_fraction,ISCCP Total Cloud Fraction,atmos,%
+tran,tran,transpiration_flux,Transpiration,land,kg m-2 s-1
+nh4,nh4,mole_concentration_of_ammonium_in_sea_water,Dissolved Ammonium Concentration at Surface,ocean_biochem,mol m-3	
+ph,ph,sea_water_ph_reported_on_total_scale,pH at Surface,ocean_biochem,1
+rh,rh,heterotrophic_respiration_carbon_flux,Carbon Mass Flux into Atmosphere due to Heterotrophic Respiration on Land,land,kg m-2 s-1
+msftyyz,msftyyz,ocean_y_overturning_mass_streamfunction,Ocean Y Overturning Mass Streamfunction,ocean,kg s-1
+SSH,zos,sea_surface_height_above_geoid,Sea Surface Height Above Geoid,ocean,m
+ice_calving,ficeberg,water_flux_into_sea_water_from_icebergs,Water Flux into Sea Water From Icebergs,ocean,kg m-2 s-1
+cfc_11,cfc11,moles_per_unit_mass_of_cfc11_in_sea_water,Moles Per Unit Mass of CFC-11 in Sea Water,ocean,mol kg-1
+pfull_cmip,pfull,air_pressure,Pressure on Model Full-Levels,atmos,Pa
+lwdn_sfc,rlds,surface_downwelling_longwave_flux_in_air,Surface Downwelling Longwave Radiation,atmos,W m-2
+cllcalipso,cllcalipso,cloud_area_fraction_in_atmosphere_layer,CALIPSO Low Level Cloud Fraction,atmos,%
+omg500,wap500,lagrangian_tendency_of_air_pressure,omega (=dp/dt),atmos,Pa s-1
+usi,usi,eastward_sea_ice_velocity,Eastward Sea Ice Velocity,seaIce & ocean,m s-1
+tntscpbl2,tntscpbl,tendency_of_air_temperature_due_to_stratiform_cloud_and_precipitation_and_boundary_layer_mixing,Tendency of Air Temperature due to Stratiform Cloud Condensation and Evaporation,atmos,K s-1
+cVeg,cVeg,vegetation_carbon_content,Carbon Mass in Vegetation,land,kg m-2
+dispkevfo,dispkevfo,ocean_kinetic_energy_dissipation_per_unit_area_due_to_vertical_friction,Ocean Kinetic Energy Dissipation Per Unit Area due to Vertical Friction,ocean,W m-2
+mlotst,mlotst,ocean_mixed_layer_thickness_defined_by_sigma_t,Ocean Mixed Layer Thickness Defined by Sigma T,ocean,m
+bddtdisi,bddtdisi,tendency_of_mole_concentration_of_dissolved_inorganic_silicate_in_sea_water_due_to_biological_processes,Rate of Change of Dissolved Inorganic Silicate due to Biological Activity,ocean_biochem,mol m-3 s-1
+cSoilFast,cSoilFast,fast_soil_pool_carbon_content,Carbon Mass in Fast Soil Pool,land,kg m-2
+aer_ab_c_vs,abs550aer,atmosphere_absorption_optical_thickness_due_to_ambient_aerosol,Ambient Aerosol Absorption Optical Thickness at 550 nm,aerosol,1
+bsi,bsi,mole_concentration_of_particulate_matter_expressed_as_silicon_in_sea_water,Particulate Biogenic Silica Concentration,ocean_biochem,mol m-3
+power_diss_back,tnpeotb,tendency_of_ocean_potential_energy_content_due_to_background,Tendency of Ocean Potential Energy Content due to Background,ocean,W m-2
+cli,cliClim,mass_fraction_of_cloud_ice_in_air,Mass Fraction of Cloud Ice,atmos,1
+talk,talk,sea_water_alkalinity_expressed_as_mole_equivalent,Total Alkalinity,ocean_biochem,mol m-3
+sconcsoa,sconcsoa,mass_concentration_of_secondary_particulate_organic_matter_dry_aerosol_in_air,Surface Concentration of Dry Aerosol Secondary Organic Matter,aerosol,kg m-3
+phyp,phyp,mole_concentration_of_phytoplankton_expressed_as_phosphorus_in_sea_water,Phytoplankton Phosphorus Concentration at Surface,ocean_biochem,mol m-3
+phydiat,phydiat,mole_concentration_of_diatoms_expressed_as_carbon_in_sea_water,"Mole Concentration of Diatoms expressed as Carbon in Sea Water
+",ocean_biochem,mol m-3
+mrsos,mrsosClim,moisture_content_of_soil_layer,Moisture in Upper Portion of Soil Column,land,kg m-2
+NH3_emis_cmip2,eminh3,tendency_of_atmosphere_mass_content_of_ammonia_due_to_emission,Total Emission Rate of NH3,aerosol,kg m-2 s-1
+VI,vsi,northward_sea_ice_velocity,Northward Sea Ice Velocity,seaIce & ocean,m s-1
+t_ref_max,tasmax,air_temperature,Daily Maximum Near-Surface Air Temperature,atmos,K
+runoff,friver,water_flux_into_sea_water_from_rivers,Water Flux into Sea Water From Rivers,ocean,kg m-2 s-1
+soil_T,tsl,soil_temperature,Temperature of Soil,land,K
+hght,zg,geopotential_height,Geopotential Height,atmos,m
+sss,sos,sea_surface_salinity,Sea Surface Salinity,ocean,psu
+msftbarot,msftbarot,ocean_barotropic_mass_streamfunction,Ocean Barotropic Mass Streamfunction,ocean,kg s-1
+intppico,intppico,net_primary_mole_productivity_of_carbon_by_picophytoplankton,Net Primary Mole Productivity of Carbon by Picophytoplankton,ocean_biochem,mol m-2 s-1
+SOA_col,loadsoa,atmosphere_mass_content_of_secondary_particulate_organic_matter_dry_aerosol,Load of Dry Aerosol Secondary Organic Matter,atmos,kg m-2
+aer_ex_c_870,od870aer,atmosphere_optical_thickness_due_to_ambient_aerosol,Ambient Aerosol Opitical Thickness at 870 nm,aerosol,1
+fprec,prsn,snowfall_flux,Snowfall Flux where Ice Free Ocean over Sea,ocean,kg m-2 s-1
+snm,snmClim,surface_snow_melt_flux,Surface Snow Melt,ocean & ice,kg m-2 s-1
+ridgice,ridgice,tendency_of_sea_ice_area_fraction_due_to_ridging,Sea Ice Ridging Rate,ocean & ice,s-1
+rh_ref_cmip,hursClim,relative_humidity,Near-Surface Relative Humidity,atmos,%
+temp,ta,air_temperature,Air Temperature,atmos,K
+intdic,intdic,ocean_mass_content_of_dissolved_inorganic_carbon,Dissolved Inorganic Carbon Content,ocean_biochem,kg m-2	
+om_ddep,drypoa,tendency_of_atmosphere_mass_content_of_primary_particulate_organic_matter_dry_aerosol_due_to_dry_deposition,Dry Deposition Rate of Dry Aerosol Primary Organic Matter,aerosol,kg m-2 s-1
+physi,physi,mole_concentration_of_phytoplankton_expressed_as_silicon_in_sea_water,Phytoplankton Silica Concentration at Surface,ocean_biochem,mol m-3
+fHarvest,fHarvest,surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_crop_harvesting,Carbon Mass Flux into Atmosphere due to Crop Harvesting,land,kg m-2 s-1
+expn,expn,sinking_mole_flux_of_particulate_organic_nitrogen_in_sea_water,Sinking Particulate Organic Nitrogen Flux,ocean_biochem,mol m-2 s-1
+dcalc,dcalc,tendency_of_mole_concentration_of_calcite_expressed_as_carbon_in_sea_water_due_to_dissolution,Calcite Dissolution,ocean_biochem,mol m-3 s-1
+olr,rlut,toa_outgoing_longwave_flux,TOA Outgoing Longwave Radiation,atmos,W m-2
+cfc11,cfc11,moles_of_cfc11_per_unit_mass_in_sea_water,Moles Per Unit Mass of CFC-11 in Sea Water,ocean,mol kg-1
+vhgm_rho,msftyyzba,ocean_y_overturning_mass_streamfunction_due_to_bolus_advection,Ocean Y Overturning Mass Streamfunction due to Bolus Advection,ocean,kg s-1
+tasmax,tasmaxClim,air_temperature,Daily Maximum Near-Surface Air Temperature,atmos,K
+concdms,concdms,mole_fraction_of_dimethyl_sulfide_in_air,Mole Fraction of DMS,aerosol,1
+diff_cbt_back,difvtrbo,ocean_vertical_tracer_diffusivity_due_to_background,Ocean Vertical Tracer Diffusivity due to Background,ocean,m2 s-1
+pbo,pbo,sea_water_pressure_at_sea_floor,Sea Water Pressure at Sea floor,ocean,dbar
+concoa,concoa,mass_concentration_of_particulate_organic_matter_dry_aerosol_in_air,Concentration of Dry Aerosol Organic Matter,aerosol,kg m-3
+diff_m,evu,atmosphere_momentum_diffusivity,Eddy Viscosity Coefficient for Momentum Variables,atmos,m2 s-1
+dissic,dissic,mole_concentration_of_dissolved_inorganic_carbon_in_sea_water,Dissolved Inorganic Carbon Concentration at Surface,ocean_biochem,mol m-3
+t_ref_min,tasmin,air_temperature,Daily Minimum Near-Surface Air Temperature,atmos,K
+fddtdic,fddtdic,tendency_of_ocean_mole_content_of_dissolved_inorganic_carbon,Rate of Change of Net Dissolved Inorganic Carbon,ocean_biochem,mol m-2 s-1
+cli,cli,mass_fraction_of_cloud_ice_in_air,Mass Fraction of Cloud Ice,atmos,1
+intpmisc,intpmisc,net_primary_mole_productivity_of_carbon_by_miscellaneous_phytoplankton,Primary Organic Carbon Production by Other Phytoplankton,ocean_biochem,mol m-2 s-1
+lsliq,clws,mass_fraction_of_stratiform_cloud_liquid_water_in_air,Mass Fraction of Stratiform Cloud Liquid Water,atmos,1
+cltcalipso_sat,cltcalipso,cloud_area_fraction,CALIPSO Total Cloud Fraction,atmos,%
+tnhus2,tnhus,tendency_of_specific_humidity,Tendency of Specific Humidity,atmos,s-1
+tnhusa,tnhusa,tendency_of_specific_humidity_due_to_advection,Tendency of Specific Humidity due to Advection,atmos,s-1
+sconcnh4,sconcnh4,mass_concentration_of_ammonium_dry_aerosol_in_air,Surface Concentration of NH4,aerosol,kg m-3
+hur,hur,relative_humidity,Relative Humidity,atmos,%
+snw,snwClim,surface_snow_amount,Surface Snow Amount,land_ice,kg m-2
+swup_sfc,rsusClim,surface_upwelling_shortwave_flux_in_air,Surface Upwelling Shortwave Radiation,atmos,W m-2
+simpleDMS_emis_cmip,emidms,tendency_of_atmosphere_mass_content_of_dimethyl_sulfide_due_to_emission,Total Emission Rate of DMS,aerosol,kg m-2 s-1
+temp,thetao,sea_water_potential_temperature,Sea Water Potential Temperature,ocean,K
+t_surf,tsClim,surface_temperature,Surface Temperature,land,K
+mrlso,mrfsoClim,soil_frozen_water_content,Soil Frozen Water Content,land & landIce,kg m-2
+snow_tot,prsnClim,snowfall_flux,Snowfall Flux,atmos,kg m-2 s-1
+netrad_1_Pa,rtmt,net_downward_radiative_flux_at_top_of_atmosphere_model,Net Downward Flux at Top of Model,atmos,W m-2
+pcalc,pcalc,tendency_of_mole_concentration_of_calcite_expressed_as_carbon_in_sea_water_due_to_biological_production,Calcite Production,ocean_biochem,mol m-3 s-1
+chldiat,chldiat,mass_concentration_of_diatoms_expressed_as_chlorophyll_in_sea_water,Diatom Chlorophyll Mass Concentration at Surface,ocean_biochem,kg m-3
+hfls,hfls,surface_downward_latent_heat_flux,Surface Downward Latent Heat Flux,ocean,W m-2
+sconcno3,sconcno3,mass_concentration_of_nitrate_dry_aerosol_in_air,Surface Concentration of NO3,aerosol,kg m-3
+t_ref,tas,air_temperature,Near-Surface Air Temperature Where Land,land,K
+cSoil,cSoil,soil_carbon_content,Carbon in Soil Pool,land,kg m-2
+rsussi,rsussi,surface_upwelling_shortwave_flux_in_air,Upward Shortwave over Sea Ice,ocean & ice,W m-2
+fddtalk,fddtalk,integral_wrt_depth_of_tendency_of_sea_water_alkalinity_expressed_as_mole_equivalent,Rate of Change of Alkalinity,ocean_biochem,mol m-2 s-1
+bddtdip,bddtdip,tendency_of_mole_concentration_of_dissolved_inorganic_phosphate_in_sea_water_due_to_biological_processes,Rate of Change of Dissolved Phosphate due to Biological Activity,ocean_biochem,mol m-3 s-1
+hus,hus,specific_humidity,Specific Humidity,atmos,1
+parasol_refl_sat,parasolRefl,toa_bidirectional_reflectance,PARASOL Reflectance,atmos,1
+va,va,northward_wind,Northward Wind,atmos,m s-1
+fl_ccsnow,prsnc,convective_snowfall_flux,Convective Snowfall Flux,atmos,kg m-2 s-1
+zostoga,zostoga,global_average_thermosteric_sea_level_change,Global Average Thermosteric Sea Level Change,ocean,m
+evap,evs,water_evaporation_flux,Water Evaporation Flux Where Ice Free Ocean over Sea,ocean,kg m-2 s-1
+concdust,concdust,mass_concentration_ of_dust_dry_aerosol_in_air,Concentration of Dust,aerosol,kg m-3
+strairy,strairy,surface_downward_y_stress,Northward Atmospheric Stress On Sea Ice,ocean & ice,N m-2
+parag,parag,tendency_of_mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water_due_to_biological_production,Aragonite Production,ocean_biochem,mol m-3 s-1
+soil_T,tslClim,soil_temperature,Temperature of Soil,land,K
+fgco2,fgco2,surface_downward_mass_flux_of_carbon_dioxide_expressed_as_carbon,Surface Downward CO2 Flux,ocean_biochem,kg m-2 s-1
+tau_x,tauu,surface_downward_eastward_stress,Surface Downward Eastward Wind Stress,atmos,Pa
+tnta,tnta,tendency_of_air_temperature_due_to_advection,Tendency of Air Temperature due to Advection,atmos,K s-1
+zooc,zooc,mole_concentration_of_zooplankton_expressed_as_carbon_in_sea_water,Zooplankton Carbon Concentration,ocean_biochem,mol m-3
+hfydiff,hfydiff,ocean_heat_y_transport_due_to_diffusion,Ocean Heat Y Transport due to Diffussion,ocean,W
+netrad_1_Pa,rtmtClim,net_downward_radiative_flux_at_top_of_atmosphere_model,Net Downward Flux at Top of Model,atmos,W m-2
+baresoilFrac,baresoilFrac,area_fraction,Bare Soil Fraction,land,%
+phypico,phypico,mole_concentration_of_picophytoplankton_expressed_as_carbon_in_sea_water,Mole Concentration of Picophytoplankton expressed as Carbon in Sea Water at Surface,ocean_biochem,mol m-3
+ucomp,ua,eastward_wind,Eastward Wind,atmos,m s-1
+SOA_chem_col,chepsoa,tendency_of_atmosphere_mass_content_of_secondary_particulate_organic_matter_dry_aerosol_due_to_net_chemical_production,Production Rate of Dry Aerosol Secondary Organic Matter,aerosol,kg m-2 s-1
+u,uo,sea_water_x_velocity,Sea Water X Velocity,ocean,m s-1
+diftrblo,diftrblo,ocean_tracer_bolus_laplacian_diffusivity,Ocean Tracer Bolus Laplacian Diffusivity,ocean,m2 s-1
+tasmax,tasmax,air_temperature,Daily Maximum Near-Surface Air Temperature,atmos,K
+dpco2,dpco2,surface_carbon_dioxide_partial_pressure_difference_between_sea_water_and_air,Delta PCO2,ocean_biochem,Pa
+dust_emis,emidust,tendency_of_atmosphere_mass_content_of_dust_dry_aerosol_due_to_emission,Total Emission Rate of Dust,aerosol,kg m-2 s-1
+swup_sfc_clr,rsuscsClim,surface_upwelling_shortwave_flux_in_air_assuming_clear_sky,Surface Upwelling Clear-Sky Shortwave Radiation,atmos,W m-2
+SO4_ddep_cmip,dryso4,tendency_of_atmosphere_mass_content_of_sulfate_dry_aerosol_due_to_dry_deposition,Dry Deposition Rate of SO4,aerosol,kg m-2 s-1
+tz_trans,wmo,upward_ocean_mass_transport,Upward Ocean Mass Transport,ocean,kg s-1
+Kd_z,difvso,ocean_vertical_salt_diffusivity,Ocean Vertical Salt Diffusivity,ocean,m2 s-1
+nbp,nbp,surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_all_land_processes,Carbon Mass Flux out of Atmosphere due to Net Biospheric Production on Land,land,kg m-2 s-1
+msftmrhozba,msftmrhozba,ocean_meridional_overturning_mass_streamfunction_due_to_bolus_advection,Ocean Meridional Overturning Mass Streamfunction due to Bolus Advection,ocean,kg s-1
+calc,calc,mole_concentration_of_calcite_expressed_as_carbon_in_sea_water,Calcite Concentration at Surface,ocean_biochem,mol m-3	
+hfssi,hfssi,surface_upward_sensible_heat_flux,Surface Upward Sensible Heat Flux over Sea Ice,ocean & ice,W m-2
+parasolRefl,parasolRefl,toa_bidirectional_reflectance,PARASOL Reflectance,atmos,1
+aredi,diftrelo,ocean_tracer_epineutral_laplacian_diffusivity,Ocean Tracer Epineutral Laplacian Diffusivity,ocean,m2 s-1
+conv_cld_top,cct,air_pressure_at_convective_cloud_top,Air Pressure at Convective Cloud Top,atmos,Pa
+hfyba,hfyba,ocean_heat_y_transport_due_to_bolus_advection,Ocean Heat Y Transport due to Bolus Advection,ocean,W
+v,vo,sea_water_y_velocity,Sea Water Y Velocity,ocean,m s-1
+omega,wap,lagrangian_tendency_of_air_pressure,omega (=dp/dt),atmos,Pa s-1
+sftlf,sftlf,land_area_fraction,Land Area Fraction,atmos,%
+olr_clr,rlutcsClim,toa_outgoing_longwave_flux_assuming_clear_sky,TOA Outgoing Clear-Sky Longwave Radiation,atmos,W m-2
+netrad_toa,rtoa,toa_net_downward_radiative_flux,TOA Net Downward Radiation,atmos,W m-2
+om_wet_dep,wetpoa,tendency_of_atmosphere_mass_content_of_primary_particulate_organic_matter_dry_aerosol_due_to_wet_deposition,Wet Deposition Rate of Dry Aerosol Primary Organic Matter,aerosol,kg m-2 s-1
+hfxdiff,hfxdiff,ocean_heat_x_transport_due_to_diffusion,Ocean Heat X Transport due to Diffusion,ocean,W
+mcd,mcd,atmosphere_downdraft_convective_mass_flux,Downdraught Convective Mass Flux,atmos,kg m-2 s-1
+ageice,ageice,age_of_sea_ice,Age of Sea Ice,ocean & ice,years
+areacello,areacello,cell_area,Ocean Grid-Cell Area,ocean,m-2
+phyp,phyp,mole_concentration_of_phytoplankton_expressed_as_phosphorus_in_sea_water,Phytoplankton Phosphorus Concentration,ocean_biochem,mol m-3
+totNH4_wet_dep,wetnh4,tendency_of_atmosphere_mass_content_of_ammonium_dry_aerosol_due_to_wet_deposition,Wet Deposition Rate of NH4+NH3,aerosol,kg m-2 s-1
+sst_sq,tossq,square_of_sea_surface_temperature,Square of Sea Surface Temperature,ocean,K2
+gm_eddy_ke_source,tnkebto,tendency_of_ocean_eddy_kinetic_energy_content_due_to_bolus_transport,Tendency of Ocean Eddy Kinetic Energy Content due to Bolus Transport,ocean,W m-2
+tnhusmp,tnhusmp,tendency_of_specific_humidity_due_to_model_physics,Tendency of Specific Humidity due to Model Physics,atmos,s-1
+WP_all_clouds,clwviClim,atmosphere_cloud_condensed_water_content,Condensed Water Path,atmos,kg m-2
+cSoilMedium,cSoilMedium,medium_soil_pool_carbon_content,Carbon Mass in Medium Soil Pool,land,kg m-2
+lai,lai,leaf_area_index,Leaf Area Index,land,1
+IWP_all_clouds,clivi,atmosphere_cloud_ice_content,Ice Water Path,atmos,kg m-2
+mrsos,mrsos,moisture_content_of_soil_layer,Moisture in Upper Portion of Soil Column,land,kg m-2
+no3,no3,mole_concentration_of_nitrate_in_sea_water,Dissolved Nitrate Concentration at Surface,ocean_biochem,mol m-3
+zsatarag,zsatarag,minimum_depth_of_aragonite_undersaturation_in_sea_water,Aragonite Saturation Depth,ocean_biochem,m
+aiso_bih,difmxybo,ocean_momentum_xy_biharmonic_diffusivity,Ocean Momentum XY Biharmonic Diffusivity,ocean,m4 s-1
+prsn,prsn,snowfall_flux,Snowfall Flux where Ice Free Ocean over Sea,ocean,kg m-2 s-1
+sens_heat,hfss,surface_downward_sensible_heat_flux,Surface Downward Sensible Heat Flux,ocean,W m-2
+evspsblsoi,evspsblsoiClim,water_evaporation_flux_from_soil,Water Evaporation from Soil,land,kg m-2 s-1
+sulfate_col_cmip,loadso4,atmosphere_mass_content_of_sulfate_dry_aerosol,Load of SO4,atmos,kg m-2
+ccliq,clwc,mass_fraction_of_convective_cloud_liquid_water_in_air,Mass Fraction of Convective Cloud Liquid Water,atmos,1
+clmcalipso_sat,clmcalipso,cloud_area_fraction_in_atmosphere_layer,CALIPSO Mid Level Cloud Fraction,atmos,%
+tot_nh4_col,loadnh4,atmosphere_mass_content_of_ammonium_dry_aerosol,Load of NH4,atmos,kg m-2
+pr_ocean,pr,rainfall_flux,Rainfall Flux where Ice Free Ocean over Sea,ocean,kg m-2 s-1
+lw_heat,rlds,surface_net_downward_longwave_flux,Surface Net Downward Longwave Radiation,ocean,W m-2
+streng,streng,compressive_strength_of_sea_ice,Compressive Sea Ice Strength,ocean & ice,N m-1
+psl,pslClim,air_pressure_at_sea_level,Sea Level Pressure,atmos,Pa
+expp,expp,sinking_mole_flux_of_particulate_organic_phosphorus_in_sea_water,Sinking Particulate Organic Phosphorus Flux,ocean_biochem,mol m-2 s-1
+fddtdin,fddtdin,tendency_of_ocean_mole_content_of_dissolved_inorganic_nitrogen,Rate of Change of Net Dissolved Inorganic Nitrogen,ocean_biochem,mol m-2 s-1
+LH,hfls,surface_downward_latent_heat_flux,Surface Downward Latent Heat Flux,ocean,W m-2
+snd,snd,surface_snow_thickness,Snow Depth,ocean & ice,m
+prsn,prsn,snowfall_flux,Surface Snowfall Rate into the Sea Ice Portion of the Grid Cell,ocean & ice,kg m-2 s-1
+conv_cld_base,ccb,air_pressure_at_convective_cloud_base,Air Pressure at Convective Cloud Base,atmos,Pa
+phypico,phypico,mole_concentration_of_picophytoplankton_expressed_as_carbon_in_sea_water,"Mole Concentration of Picophytoplankton expressed as Carbon in Sea Water
+",ocean_biochem,mol m-3
+phyn,phyn,mole_concentration_of_phytoplankton_expressed_as_nitrogen_in_sea_water,Phytoplankton Nitrogen Concentration at Surface,ocean_biochem,mol m-3
+hblt_max,omlmax,ocean_mixed_layer_thickness_defined_by_mixing_scheme,Monthly Maximum Ocean Mixed Layer Thickness Defined by Mixing Scheme,ocean,m
+rh_cm,rh,relative_humidity,Relative Humidity,atmos,%
+emibcv2,emibc,tendency_of_atmosphere_mass_content_of_black_carbon_dry_aerosol_due_to_emission,Emission Rate of Black Carbon Aerosol Mass,aerosol,kg m-2 s-1
+fl_ccrain,prcprof,convective_rainfall_flux,Convective Rainfall Flux,atmos,kg m-2 s-1
+zh,zhalf,height_above_reference_ellipsoid,Altitude of Model Half-Levels,atmos,m
+evap_hflux,hfevapds,temperature_flux_due_to_evaporation_expressed_as_heat_flux_out_of_sea_water,Temperature Flux due to Evaporation Expressed as Heat Flux Out of Sea Water,ocean,W m-2
+co3,co3,mole_concentration_of_carbonate_expressed_as_carbon_in_sea_water,Mole Concentration of Carbonate expressed as Carbon in Sea Water,ocean_biochem,mol m-3
+mrlsl,mrlslClim,moisture_content_of_soil_layer,Water Content of Soil Layer,land,kg m-2
+sea_level_sq,zossq,square_of_sea_surface_height_above_geoid,Square of Sea Surface Height Above Geoid,ocean,m2
+treeFrac,treeFrac,area_fraction,Tree Cover Fraction,land,%
+wetso4,wetso4,tendency_of_atmosphere_mass_content_of_sulfate_dry_aerosol_due_to_wet_deposition,Wet Deposition Rate of SO4,aerosol,kg m-2 s-1
+tot_no3_col,loadno3,atmosphere_mass_content_of_nitrate_dry_aerosol,Load of NO3,atmos,kg m-2
+fsfe,fsfe,tendency_of_ocean_mole_content_of_iron_due_to_deposition_and_runoff_and_sediment_dissolution,Surface Downward Net Flux of Iron,ocean_biochem,mol m-2 s-1
+wind_ref,sfcWind,wind_speed,"Daily-Mean Near-Surface Wind Speed
+",atmos,m s-1
+chldiat,chldiat,mass_concentration_of_diatoms_expressed_as_chlorophyll_in_sea_water,Diatom Chlorophyll Mass Concentration,ocean_biochem,kg m-3
+shrubFrac,shrubFrac,area_fraction,Shrub Fraction,land,%
+tmelt,tmelt,rate_of_melt_at_upper_surface_of_sea_ice,Rate of Melt at Upper Surface of Sea Ice,ocean & ice,kg m-2 s-1
+phyc,phyc,mole_concentration_of_phytoplankton_expressed_as_carbon_in_sea_water,Phytoplankton Carbon Concentration at Surface,ocean_biochem,mol m-3
+zosga,zosga,global_average_sea_level_change,Global Average Sea Level Change,ocean,m
+clw,clw,mass_fraction_of_cloud_liquid_water_in_air,Mass Fraction of Cloud Liquid Water,atmos,1
+chl,chl,mass_concentration_of_phytoplankton_expressed_as_chlorophyll_in_sea_water,Total Chlorophyll Mass Concentration,ocean_biochem,kg m-3
+cMisc,cMisc,miscellaneous_living_matter_carbon_content,Carbon Mass in Other Living Compartments on Land,land,kg m-2
+conv_cld_top,cctClim,air_pressure_at_convective_cloud_top,Air Pressure at Convective Cloud Top,atmos,Pa
+swdn_sfc,rsdsClim,surface_downwelling_shortwave_flux_in_air,Surface Downwelling Shortwave Radiation,atmos,W m-2
+swdn_toa,rsdt,toa_incoming_shortwave_flux,TOA Incident Shortwave Radiation,atmos,W m-2
+gridspec,gridspec,[gridspec_ocean],Gridspec,ocean,
+POA_col,loadpoa,atmosphere_mass_content_of_primary_particulate_organic_matter_dry_aerosol,Load of Dry Aerosol Primary Organic Matter,atmos,kg m-2
+salt_global_ave,soga,sea_water_salinity,Global Mean Sea Water Salinity,ocean,psu
+sic_atm,sic,sea_ice_area_fraction,Sea Ice Area Fraction,seaIce & ocean,%
+concsoa,concsoa,mass_concentration_of_secondary_particulate_organic_matter_dry_aerosol_in_air,Concentration of Dry Aerosol Secondary Organic Matter,aerosol,kg m-3
+strocnx,strocnx,upward_x_stress_at_sea_ice_base,Eastward Ocean Stress On Sea Ice,ocean & ice,N m-2
+frn,frn,tendency_of_ocean_mole_content_of_elemental_nitrogen_due_to_denitrification_and_sedimentation,Nitrogen Loss to Sediments and through Denitrification,ocean_biochem,mol m-2 s-1
+expsi,expsi,sinking_mole_flux_of_particulate_silicon_in_sea_water,Sinking Particulate Silica Flux,ocean_biochem,mol m-2 s-1
+shflx,hfssClim,surface_upward_sensible_heat_flux,Surface Upward Sensible Heat Flux,atmos,W m-2
+friver,friver,water_flux_into_sea_water_from_rivers,Water Flux into Sea Water From Rivers,ocean,kg m-2 s-1
+mrlso,mrfso,soil_frozen_water_content,Soil Frozen Water Content,land & landIce,kg m-2
+intpdiat,intpdiat,net_primary_mole_productivity_of_carbon_by_diatoms,Primary Organic Carbon Production by Diatoms,ocean_biochem,mol m-2 s-1
+lat_sat,lat,latitude,Latitude,atmos,degrees_north
+swdn_tot_dif_clr,rsdscsdiff,diffuse_downwelling_shortwave_flux_in_air_assuming_clear_sky,Surface Diffuse Downward Clear Sky Shortwave Radiation,aerosol & land,W m-2
+fediss,fediss,tendency_of_mole_concentration_of_dissolved_iron_in_sea_water_due_to_dissolution_from_inorganic_particles,Particle Source of Dissolved Iron,ocean_biochem,mol m-3 s-1
+tot_NH4_ddep_cmip,drynh4,tendency_of_atmosphere_mass_content_of_ammonium_dry_aerosol_due_to_dry_deposition,Dry Deposition Rate of NH4,aerosol,kg m-2 s-1
+t_ref,tas,air_temperature,Near-Surface Air Temperature,atmos,K
+rhopoto,rhopoto,sea_water_potential_density,Sea Water Potential Density,ocean,kg m-3
+phyppico,phyppico,tendency_of_mole_concentration_of_organic_carbon_in_sea_water_due_to_net_primary_production_by picophytoplankton,Tendency of Mole Concentration of Organic Carbon in Sea Water due to Net Primary Production by Picop,ocean_biochem,mol m-3 s-1
+tauuo,tauuo,surface_downward_x_stress,Surface Downward X Stress,ocean,N m-2
+UI,usi,eastward_sea_ice_velocity,Eastward Sea Ice Velocity,seaIce & ocean,m s-1
+lai,laiClim,leaf_area_index,Leaf Area Index,land,1
+arag,arag,mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water,Aragonite Concentration at Surface,ocean_biochem,mol m-3	
+tauv,tauv,surface_downward_northward_stress,Surface Downward Northward Wind Stress,atmos,Pa
+phymisc,phymisc,mole_concentration_of_miscellaneous_phytoplankton_expressed_as_carbon_in_sea_water,Mole Concentration of Miscellaneous Phytoplankton expressed as Carbon in Sea Water,ocean_biochem,mol m-3
+q_ref,hussClim,specific_humidity,Near-Surface Specific Humidity,atmos,1
+rldssi,rldssi,surface_downwelling_longwave_flux_in_air,Downward Long Wave over Sea Ice,ocean & ice,W m-2
+chlpico,chlpico,mass_concentration_of_picophytoplankton_expressed_as_chlorophyll_in_sea_water,"Mass Concentration of Picophytoplankton expressed as Chlorophyll in Sea Water
+",ocean_biochem,kg m-3
+orog,orog,surface_altitude,Surface Altitude,land,m
+swdn_sfc,rsds,surface_downwelling_shortwave_flux_in_air,Surface Downwelling Shortwave Radiation,atmos,W m-2
+psl,psl,air_pressure_at_sea_level,Sea Level Pressure,atmos,Pa
+mrro,mrroClim,runoff_flux,Total Runoff,land,kg m-2 s-1
+zsatcalc,zsatcalc,minimum_depth_of_calcite_undersaturation_in_sea_water,Calcite Saturation Depth,ocean_biochem,m
+dust_wet_dep,wetdust,tendency_of_atmosphere_mass_content_of_dust_dry_aerosol_due_to_wet_deposition,Wet Deposition Rate of Dust,aerosol,kg m-2 s-1
+rrvn2o,n2oglobal,mole_fraction_of_nitrous_oxide_in_air,Global Mean Mole Fraction of N2O,atmosChem,1e-9
+intpnitrate,intpnitrate,net_primary_mole_productivity_of_carbon_due_to_nitrate_utilization,Primary Organic Carbon Production by Phytoplankton Based on Nitrate Uptake Alone,ocean_biochem,mol m-2 s-1
+sfdsi,sfdsi,downward_sea_ice_basal_salt_flux,Downward Sea Ice Basal Salt Flux,ocean & seaIce,kg m-2 s-1
+snm,snm,surface_snow_melt_flux,Surface Snow Melt,ocean & ice,kg m-2 s-1
+arag,arag,mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water,Aragonite Concentration,ocean_biochem,mol m-3
+ec550aer,ec550aer,optical_thickness_of_atmosphere_layer_due_to_ambient_aerosol,Ambient Aerosol Extinction Optical Thickness at 550 nm,aerosol,m-1
+lwup_sfc,rlus,surface_upwelling_longwave_flux_in_air,Surface Upwelling Longwave Radiation,atmos,W m-2
+evspsblsoi,evspsblsoi,water_evaporation_flux_from_soil,Water Evaporation from Soil,land,kg m-2 s-1
+mrso,mrso,soil_moisture_content,Total Soil Moisture Content,land,kg m-2
+cWood,cWood,wood_carbon_content,Carbon Mass in Wood,land,kg m-2
+gpp,gpp,gross_primary_productivity_of_carbon,Carbon Mass Flux out of Atmosphere due to Gross Primary Production on Land,land,kg m-2 s-1
+swup_sfc_clr,rsuscs,surface_upwelling_shortwave_flux_in_air_assuming_clear_sky,Surface Upwelling Clear-Sky Shortwave Radiation,atmos,W m-2
+fGrazing,fGrazing,surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_grazing,Carbon Mass Flux into Atmosphere due to Grazing on Land,land,kg m-2 s-1
+cls,cls,stratiform_cloud_area_fraction_in_atmosphere_layer,Stratiform Cloud Area Fraction,atmos,%
+hfnorth,hfnorth,northward_ocean_heat_transport,Northward Ocean Heat Transport,ocean,W
+grLateral,grLateral,lateral_sea_ice_growth_rate,Lateral Sea Ice Growth Rate,ocean & ice,kg m-2 s-1
+sst_sq,tsosq,tendency_of_atmosphere_mass_content_of_sulfur_dioxide_due_to_dry_deposition,Mean Square of Sea Surface Temperature,aerosol,K2
+mrro,mrro,runoff_flux,Total Runoff,land,kg m-2 s-1
+snoToIce,snoToIce,tendency_of_sea_ice_amount_due_to_snow_conversion,Snow-Ice Formation Rate,ocean & ice,kg m-2 s-1
+2d_cld_amt,clt,cloud_area_fraction,Total Cloud Fraction,atmos,%
+bfe,bfe,mole_concentration_of_particulate_organic_matter_expressed_as_iron_in_sea_water,Particulate Biogenic Iron Concentration,ocean_biochem,mol m-3
+aer_ex_c_vs,od550aer,atmosphere_optical_thickness_due_to_ambient_aerosol,Ambient Aerosol Opitical Thickness at 550 nm,aerosol,1
+sfc_salt_flux_runoff,sfriver,salt_flux_into_sea_water_from_rivers,Salt Flux into Sea Water from Rivers,ocean,kg m-2 s-1
+pso,pso,sea_water_pressure_at_sea_water_surface,Sea Water Pressure at Sea Water Surface,ocean,dbar
+evs,evs,water_evaporation_flux,Water Evaporation Flux Where Ice Free Ocean over Sea,ocean,kg m-2 s-1
+expcfe,expcfe,sinking_mole_flux_of_particulate_iron_in_sea_water,Sinking Particulate Iron Flux,ocean_biochem,mol m-2 s-1
+fsc,fsc,tendency_of_ocean_mole_content_of_carbon_due_to_runoff_and_sediment_dissolution,Flux of Carbon Into Ocean Surface by Runoff and Sediment Dissolution,ocean_biochem,mol m-2 s-1
+ta,ta,air_temperature,Air Temperature,atmos,K
+msftyrhoz,msftyrhoz,ocean_y_overturning_mass_streamfunction,Ocean Y Overturning Mass Streamfunction,ocean,kg s-1
+transifs,transifs,sea_ice_transport_across_line,Sea Ice Mass Transport Through Fram Strait,ocean & ice,kg s-1
+ssi,ssi,sea_ice_salinity,Sea Ice Salinity,ocean & ice,psu
+wind_ref_max,sfcWindmax,wind_speed,Daily Maximum Near-Surface Wind Speed,atmos,m s-1
+reffclwtop,reffclwtop,effective_radius_of_cloud_liquid_water_particle_at_liquid_water_cloud_top,Cloud-Top Effective Droplet Radius,aerosol,m
+pm25_ex_c_vs,od550lt1aer,atmosphere_optical_thickness_due_to_pm1_ambient_aerosol,Ambient Fine Aerosol Opitical Thickness at 550 nm,aerosol,1
+ssalt_ddep,dryss,tendency_of_atmosphere_mass_content_of_seasalt_dry_aerosol_due_to_dry_deposition,Dry Deposition Rate of Seasalt,aerosol,kg m-2 s-1
+swdn_toa,rsdtClim,toa_incoming_shortwave_flux,TOA Incident Shortwave Radiation,atmos,W m-2
+lon_sat,lon,longitude,Longitude,atmos,degrees_east
+tos,tos,sea_surface_temperature,Sea Surface Temperature,ocean,K
+swdn_sfc_clr,rsdscsClim,surface_downwelling_shortwave_flux_in_air_assuming_clear_sky,Surface Downwelling Clear-Sky Shortwave Radiation,atmos,W m-2
+LWSs,lwsnl,liquid_water_content_of_snow_layer,Liquid Water Content of Snow Layer,land_ice,kg m-2
+reff_ccclice,reffclic,effective_radius_of_convective_cloud_ice_particle,Hydrometeor Effective Radius of Convective Cloud Ice,atmos,m
+olr,rlutClim,toa_outgoing_longwave_flux,TOA Outgoing Longwave Radiation,atmos,W m-2
+omega,wapClim,lagrangian_tendency_of_air_pressure,omega (=dp/dt),atmos,Pa s-1
+c4PftFrac,c4PftFrac,area_fraction,Total C4 PFT Cover Fraction,land,%
+lwdn_sfc,rldsClim,surface_downwelling_longwave_flux_in_air,Surface Downwelling Longwave Radiation,atmos,W m-2
+rsd,rsd,downwelling_shortwave_flux_in_air,Downwelling Shortwave Radiation,atmos,W m-2
+hfds,hfds,surface_downward_heat_flux_in_sea_water,Downward Heat Flux at Sea Water Surface,ocean,W m-2
+mc_full,mc,atmosphere_net_upward_convective_mass_flux,Convective Mass Flux,atmos,kg m-2 s-1
+concnh4,concnh4,mass_concentration_of_ammonium_dry_aerosol_in_air,Concentration of NH4,aerosol,kg m-3
+basin,basin,region,Region Selection Index,ocean,1
+fddtdife,fddtdife,tendency_of_ocean_mole_content_of_dissolved_inorganic_iron,Rate of Change of Net Dissolved Inorganic Iron,ocean_biochem,mol m-2 s-1
+phalf_cmip,phalf,air_pressure,Pressure on Model Half-Levels,aerosol,Pa
+wmosq,wmosq,square_of_upward_ocean_mass_transport,Square of Upward Ocean Mass Transport,ocean,kg2 s-2
+bddtdin,bddtdin,tendency_of_mole_concentration_of_dissolved_inorganic_nitrogen_in_sea_water_due_to_biological_processes,Rate of Change of Nitrogen Nutrient due to Biological Activity,ocean_biochem,mol m-3 s-1
+pr,pr,rainfall_flux,Rainfall Flux where Ice Free Ocean over Sea,atmos,kg m-2 s-1
+v_ref,vasClim,northward_wind,Northward Near-Surface Wind,aerosol,m s-1
+npp,npp,net_primary_productivity_of_carbon,Carbon Mass Flux out of Atmosphere due to Net Primary Production on Land,land,kg m-2 s-1
+fddtdisi,fddtdisi,tendency_of_ocean_mole_content_of_dissolved_inorganic_silicon,Rate of Change of Net Dissolved Inorganic Silicate,ocean_biochem,mol m-2 s-1
+rsntds,rsntds,net_downward_shortwave_flux_at_sea_water_surface,Net Downward Shortwave Radiation at Sea Water Surface,ocean,W m-2
+T,ta,air_temperature,Air Temperature,atmos,K
+mcu,mcu,atmosphere_updraft_convective_mass_flux,Updraught Convective Mass Flux,atmos,kg m-2 s-1
+WP_all_clouds,clwvi,atmosphere_cloud_condensed_water_content,Condensed Water Path,atmos,kg m-2
+visc_cbu_back,difvmbo,ocean_vertical_momentum_diffusivity_due_to_background,Ocean Vertical Momentum Diffusivity due to Background,ocean,m2 s-1
+tau_y,tauv,surface_downward_northward_stress,Surface Downward Northward Wind Stress,atmos,Pa

@@ -323,6 +323,13 @@ class Fieldlist:
                             name_only=True,
                             realm=realm).name
 
+    def get_variable_long_name(self, var, has_scalar_coords: bool):
+        if not var.long_name and has_scalar_coords:
+            v = var.scalar_coords[0]
+            return var.standard_name + 'at ' + v.value + ' ' + v.units
+        else:
+            return var.standard_name.strip('_')
+
     def translate_coord(self, coord, log=_log):
         """Given a :class:`~data_model.DMCoordinate`, look up the corresponding
         translated :class:`~data_model.DMCoordinate` in this convention.
@@ -361,20 +368,21 @@ class Fieldlist:
         (intrinsically 4D) @ 500mb could produce a :class:`TranslatedVarlistEntry`
         for 'u500' (3D slice), depending on naming convention.
         """
+        has_scalar_coords = bool(var.scalar_coords)
         if var.use_exact_name:
             # HACK; dataclass.asdict says VarlistEntry has no _id attribute & not sure why
             fl_entry = {f.name: getattr(var, f.name, util.NOTSET)
                         for f in dc.fields(TranslatedVarlistEntry) if hasattr(var, f.name)}
             new_name = var.name
         else:
-            has_scalar_coords = bool(var.scalar_coords)
             # Fieldlist for POD convention
             from_convention_tl = VariableTranslator().get_convention(from_convention)
             # Fieldlist entry for POD variable
+            long_name = self.get_variable_long_name(var, has_scalar_coords)
             fl_entry = from_convention_tl.from_CF(var.standard_name,
                                                   var.realm,
                                                   var.modifier,
-                                                  None,
+                                                  long_name,
                                                   var.dims.__len__(),
                                                   has_scalar_coords)
 
@@ -385,6 +393,8 @@ class Fieldlist:
             new_name = self.to_CF_standard_name(fl_entry.standard_name,
                                                 fl_entry.realm,
                                                 fl_entry.modifier)
+
+
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]
         new_scalars = [self.translate_coord(dim, log=var.log) for dim in var.scalar_coords]
@@ -470,7 +480,7 @@ class VariableTranslator(metaclass=util.Singleton):
 
     conventions: util.WormDict
     aliases: util.WormDict
-    _unittest: bool=False
+    _unittest: bool = False
 
     def __init__(self, code_root=None, unittest=False):
         self._unittest = unittest
@@ -552,6 +562,10 @@ class VariableTranslator(metaclass=util.Singleton):
 
     def from_CF_name(self, conv_name: str, standard_name: str, realm: str, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF_name',
+                                      standard_name, realm, modifier=modifier)
+
+    def to_CF_standard_name(self, conv_name: str, standard_name: str, realm: str, modifier=None):
+        return self._fieldlist_method(conv_name, 'to_CF_standard_name',
                                       standard_name, realm, modifier=modifier)
 
     def translate_coord(self, conv_name: str, coord, log=_log):

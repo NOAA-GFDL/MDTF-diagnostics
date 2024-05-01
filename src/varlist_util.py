@@ -71,7 +71,7 @@ class VarlistEntryBase(metaclass=util.MDTFABCMeta):
         path_variable: Name of env var containing path(s) to local data.
         dest_path: Path(s) to local data.
         alternates: List of lists of VarlistEntries.
-        translation: :class:`core.TranslatedVarlistEntry`, populated by DataSource.
+        translation: :class: `translation.TranslatedVarlistEntry`, populated by DataSource.
         data: dict mapping experiment_keys to DataKeys. Populated by DataSource.
         scalar_coords: dict
     """
@@ -154,7 +154,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         path_variable: Name of env var containing path to local data.
         dest_path: Path to local data.
         alternates: List of lists of VarlistEntries.
-        translation: :class:`core.TranslatedVarlistEntry`, populated by DataSource.
+        translation: :class:`translation.TranslatedVarlistEntry`, populated by DataSource.
         data: dict mapping experiment_keys to DataKeys. Populated by DataSource.
     """
     # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
@@ -529,6 +529,7 @@ class Varlist(data_model.DMDataSet):
         Could arguably be moved into VarlistEntry's init, at the cost of
         dependency inversion.
         """
+        # Note: VariableTranslator object is instantiated in mdtf_framework with runtime information
         translate = translation.VariableTranslator().get_convention(to_convention)
         if v.T is not None:
             v.change_coord(

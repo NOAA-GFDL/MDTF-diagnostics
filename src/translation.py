@@ -234,13 +234,17 @@ class Fieldlist:
         return self.to_CF(var_or_name).standard_name
 
     def to_CF_standard_name(self, standard_name: str,
-                            realm: str):
+                            realm: str,
+                            modifier: str):
 
-        for key, lut_entry in self.lut.items():
-            print(key)
-            if standard_name in key:
-                for k, v in lut_entry[realm].items():
-                    return v.name
+        # search the lookup table for the variable with the specified standard_name attribute
+        for lut_std_name, lut_entry in self.lut.items():
+            # print(lut_std_name)
+            if standard_name in lut_std_name:
+                for v in lut_entry[realm].values():
+                    if v.modifier == modifier:
+                        return v.name
+
     def from_CF(self,
                 var_or_name,
                 realm: str,
@@ -374,10 +378,13 @@ class Fieldlist:
                                                   var.dims.__len__(),
                                                   has_scalar_coords)
 
-            # Use the POD variable standard name and realm to get the corresponding
+            # Use the POD variable standard name, realm, and modifier to get the corresponding
             # information from FieldList for the DataSource convention
+            # Modifiers that are not defined are set to empty strings when variable and fieldlist
+            # objects are initialized
             new_name = self.to_CF_standard_name(fl_entry.standard_name,
-                                                var.realm)
+                                                fl_entry.realm,
+                                                fl_entry.modifier)
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]
         new_scalars = [self.translate_coord(dim, log=var.log) for dim in var.scalar_coords]

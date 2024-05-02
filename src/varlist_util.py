@@ -327,9 +327,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         })
 
         for ax, dim in self.dim_axes.items():
-            if not self.translation:
-                print('hold')
-            trans_dim = self.translation.dim_axes[ax]
+            trans_dim = self.translation.axes[ax]
             self.env_vars[dim.name + _coord_env_var_suffix] = trans_dim.name
             if trans_dim.has_bounds:
                 self.env_vars[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds

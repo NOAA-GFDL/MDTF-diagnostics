@@ -234,16 +234,21 @@ class Fieldlist:
         return self.to_CF(var_or_name).standard_name
 
     def to_CF_standard_name(self, standard_name: str,
+                            long_name: str,
                             realm: str,
                             modifier: str):
 
         # search the lookup table for the variable with the specified standard_name attribute
-        for lut_std_name, lut_entry in self.lut.items():
-            # print(lut_std_name)
-            if standard_name in lut_std_name:
-                for v in lut_entry[realm].values():
-                    if v.modifier == modifier:
-                        return v.name
+        try:
+            for var_name, var_dict in self.entries.items():
+                # print(var_name)
+                if var_dict.standard_name == standard_name and var_dict.realm == realm and var_dict.modifier == modifier:
+                    if not var_dict.long_name or var_dict.long_name.lower() == long_name.lower():
+                        return var_dict.name
+        except ValueError:
+            _log.error(f'Could not find variable in {self.name} fieldlist'
+                       f' with standard_name {standard_name}, long_name {long_name}'
+                       f' and realm {realm}')
 
     def from_CF(self,
                 var_or_name,
@@ -302,6 +307,8 @@ class Fieldlist:
 
             if not fl_entry:
                 raise ValueError("fl_entry evaluated as a None Type")
+            if not fl_entry.long_name:
+                fl_entry.long_name = long_name
             return copy.deepcopy(fl_entry)
         raise KeyError((f"Standard name '{standard_name}' not defined in "
                         f"convention '{self.name}'."))
@@ -323,37 +330,29 @@ class Fieldlist:
                             name_only=True,
                             realm=realm).name
 
-    def get_variable_long_name(self, var, has_scalar_coords: bool):
+    def get_variable_long_name(self, var, has_scalar_coords: bool) -> str:
         if not var.long_name and has_scalar_coords:
             v = var.scalar_coords[0]
-            return var.standard_name + 'at ' + v.value + ' ' + v.units
+            return var.standard_name.replace('_', ' ') + ' at ' + str(v.value) + ' ' + v.units
         else:
-            return var.standard_name.strip('_')
+            return var.standard_name.replace('_', ' ')
 
     def translate_coord(self, coord, log=_log):
         """Given a :class:`~data_model.DMCoordinate`, look up the corresponding
         translated :class:`~data_model.DMCoordinate` in this convention.
         """
-        ax = coord.axis
-        if ax not in self.axes_lut:
-            raise KeyError(f"Axis {ax} not defined in convention '{self.name}'.")
+        ax = coord.standard_name
+        if ax not in self.axes:
+            raise KeyError((f"Coordinate {coord.name} with standard name "
+                            f"'{coord.standard_name}' not defined in convention '{self.name}'."))
 
-        lut1 = self.axes_lut[ax]
-        if not hasattr(coord, 'standard_name'):
-            coords = tuple(lut1.values())
-            if len(coords) > 1:
-                raise ValueError((f"Coordinate dimension in convention '{self.name}' "
-                                  f"not uniquely determined by coordinate {coord.name}."))
-            new_coord = coords[0]
-        else:
-            if coord.standard_name not in lut1.values():
-                raise KeyError((f"Coordinate {coord.name} with standard name "
-                                f"'{coord.standard_name}' not defined in convention '{self.name}'."))
-            new_coord = [k for k in lut1.keys() if lut1[k] == coord.standard_name][0]
+        lut1 = {ax: self.axes[ax]}
+        new_coord = [lut1[k] for k in lut1.keys() if lut1[k].standard_name == coord.standard_name][0]
 
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             new_coord = copy.deepcopy(new_coord)
-            new_coord.value = units.convert_scalar_coord(coord, new_coord.units,
+            new_coord.value = units.convert_scalar_coord(coord,
+                                                         lut1[new_coord].units,
                                                          log=log)
         else:
             new_coord = dc.replace(coord,
@@ -391,10 +390,9 @@ class Fieldlist:
             # Modifiers that are not defined are set to empty strings when variable and fieldlist
             # objects are initialized
             new_name = self.to_CF_standard_name(fl_entry.standard_name,
+                                                fl_entry.long_name,
                                                 fl_entry.realm,
                                                 fl_entry.modifier)
-
-
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]
         new_scalars = [self.translate_coord(dim, log=var.log) for dim in var.scalar_coords]

@@ -39,18 +39,17 @@
          "long_name": "spectral band",
          "units": "1",
          "ndim": 1
+      },
+       "deptho": {
+          "standard_name": "sea_floor_depth_below_geoid",
+          "units": "m",
+          "ndim": 2
+       },
+      "thkcello": {
+         "standard_name": "cell_thickness",
+         "units": "m",
+         "ndim": 3
       }
-
-    // "deptho": {
-    //   "standard_name": "sea_floor_depth_below_geoid",
-    //   "units": "m",
-    //   "ndim": 2
-    // },
-    // "thkcello": {
-    //   "standard_name": "cell_thickness",
-    //   "units": "m",
-    //   "ndim": 3
-    // }
   },
   "variables" : {
     "areacello": {

@@ -253,11 +253,11 @@ class Fieldlist:
     def from_CF(self,
                 var_or_name,
                 realm: str,
-                modifier=None,
-                long_name=None,
+                modifier: str = "",
+                long_name: str = "",
                 num_dims: int = 0,
                 has_scalar_coords_att: bool = False,
-                name_only: bool = False):
+                name_only: bool = False) -> FieldlistEntry:
         """Look up :class:`FieldlistEntry` corresponding to the given standard
         name, optionally providing a modifier to resolve ambiguity.
 
@@ -313,7 +313,11 @@ class Fieldlist:
         raise KeyError((f"Standard name '{standard_name}' not defined in "
                         f"convention '{self.name}'."))
 
-    def from_CF_name(self, var_or_name: str, realm: str, long_name=None, modifier=None):
+    def from_CF_name(self,
+                     var_or_name: str,
+                     realm: str,
+                     long_name: str = "",
+                     modifier: str = "") -> FieldlistEntry:
         """Like :meth:`from_CF`, but only return the variable's name in this
         convention.
 
@@ -342,7 +346,10 @@ class Fieldlist:
         translated :class:`~data_model.DMCoordinate` in this convention.
         """
         ax = coord.standard_name
-        if ax not in self.axes:
+        axes_std_names = []
+        for d in self.axes.values():
+            axes_std_names.append(d.get('standard_name'))
+        if ax not in axes_std_names:
             raise KeyError((f"Coordinate {coord.name} with standard name "
                             f"'{coord.standard_name}' not defined in convention '{self.name}'."))
 
@@ -383,7 +390,8 @@ class Fieldlist:
                                                   var.modifier,
                                                   long_name,
                                                   var.dims.__len__(),
-                                                  has_scalar_coords)
+                                                  has_scalar_coords
+                                                  )
 
             # Use the POD variable standard name, realm, and modifier to get the corresponding
             # information from FieldList for the DataSource convention
@@ -434,7 +442,14 @@ class NoTranslationFieldlist(metaclass=util.Singleton):
         else:
             return var_or_name
 
-    def from_CF(self, var_or_name, modifier=None):
+    def from_CF(self,
+                var_or_name: str,
+                realm: str,
+                modifier=None,
+                long_name=None,
+                num_dims: int = 0,
+                has_scalar_coords_att: bool = False,
+                name_only: bool = False):
         # should never get here - not called externally
         raise NotImplementedError
 
@@ -444,11 +459,11 @@ class NoTranslationFieldlist(metaclass=util.Singleton):
         else:
             return var_or_name
 
-    def translate_coord(self, coord, log=_log):
+    def translate_coord(self, coord, log=_log) -> TranslatedVarlistEntry:
         # should never get here - not called externally
         raise NotImplementedError
 
-    def translate(self, var):
+    def translate(self, var, from_convention: str):
         """Returns :class:`TranslatedVarlistEntry` instance, populated with
         contents of input :class:`~diagnostic.VarlistEntry` instance.
 
@@ -554,9 +569,24 @@ class VariableTranslator(metaclass=util.Singleton):
     def to_CF_name(self, conv_name: str, name: str):
         return self._fieldlist_method(conv_name, 'to_CF_name', name)
 
-    def from_CF(self, conv_name: str, standard_name: str, modifier=None):
+    def from_CF(self,
+                conv_name: str,
+                standard_name: str,
+                realm: str = "",
+                modifier: str = "",
+                long_name: str = "",
+                num_dims: int = 0,
+                has_scalar_coords_att: bool = False,
+                name_only: bool = False):
+
         return self._fieldlist_method(conv_name, 'from_CF',
-                                      standard_name, modifier=modifier)
+                                      standard_name,
+                                      realm,
+                                      long_name,
+                                      num_dims,
+                                      has_scalar_coords_att,
+                                      name_only,
+                                      modifier=modifier)
 
     def from_CF_name(self, conv_name: str, standard_name: str, realm: str, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF_name',

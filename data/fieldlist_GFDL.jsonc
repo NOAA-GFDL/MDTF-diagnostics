@@ -10,8 +10,16 @@
     // only used for taking slices, unit conversion
     // 'PLACEHOLDER' prefix indicates that coordinate names are to be set based
     // on their values in model data
-    "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
-    "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
+    "lon": {
+      "axis": "X",
+      "standard_name": "longitude",
+      "units": "degrees_east"
+    },
+    "lat": {
+      "axis": "Y",
+      "standard_name": "latitude",
+      "units": "degrees_north"
+    },
     "plev": {
       "standard_name": "air_pressure",
       "long_name": "",
@@ -31,26 +39,17 @@
       "positive": "down",
       "axis": "Z"
     },
-    "time": {"axis": "T", "standard_name": "time", "units": "days"}
-  },
-  "aux_coords": {
-      "band":{
-         "standard_name": "",
-         "long_name": "spectral band",
-         "units": "1",
-         "ndim": 1
-      }
-
-    // "deptho": {
-    //   "standard_name": "sea_floor_depth_below_geoid",
-    //   "units": "m",
-    //   "ndim": 2
-    // },
-    // "thkcello": {
-    //   "standard_name": "cell_thickness",
-    //   "units": "m",
-    //   "ndim": 3
-    // }
+    "time": {
+      "axis": "T",
+      "standard_name": "time",
+      "units": "days"
+    },
+    "band": {
+      "standard_name": "spectral_band",
+      "long_name": "spectral band",
+      "units": "1",
+      "axis": ""
+    }
   },
   "variables" : {
     "areacello": {
@@ -58,6 +57,18 @@
       "realm": "ocean",
       "units": "m2",
       "ndim": 2
+    },
+    "deptho": {
+      "standard_name": "sea_floor_depth_below_geoid",
+      "units": "m",
+      "realm": "ocean",
+      "ndim": 2
+    },
+    "thkcello": {
+      "standard_name": "cell_thickness",
+      "units": "m",
+      "realm": "ocean",
+      "ndim": 3
     },
     "zos": {
       "standard_name": "sea_surface_height_above_geoid",

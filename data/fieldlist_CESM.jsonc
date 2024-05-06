@@ -9,11 +9,26 @@
   "models": ["CAM4", "CESM2", "CESM"], // others?
   "coords" : {
     // only used for taking slices, unit conversion
-    "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
-    "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
-    "TLONG": {"axis": "X", "standard_name": "array of t-grid longitudes", "units": "degrees_east"},
-    "TLAT": {"axis": "Y", "standard_name": "array of t-grid latitudes", "units": "degrees_north"},
-
+    "lon": {
+      "axis": "X",
+      "standard_name": "longitude",
+      "units": "degrees_east"
+    },
+    "lat": {
+       "axis": "Y",
+       "standard_name": "latitude",
+       "units": "degrees_north"
+    },
+    "TLONG": {
+      "axis": "X",
+      "standard_name": "array of t-grid longitudes",
+      "units": "degrees_east"
+    },
+    "TLAT": {
+      "axis": "Y",
+      "standard_name": "array of t-grid latitudes",
+      "units": "degrees_north"
+    },
     "plev": {
       "standard_name": "air_pressure",
       "units": "hPa",
@@ -31,20 +46,12 @@
       "units": "centimeters",
       "positive": "down",
       "axis": "Z"
-   },
-    "time": {"axis": "T", "standard_name": "time", "units": "days"}
-  },
-  "aux_coords": {
-    // "deptho": {
-    //   "standard_name": "sea_floor_depth_below_geoid",
-    //   "units": "m",
-    //   "ndim": 2
-    // },
-    // "thkcello": {
-    //   "standard_name": "cell_thickness",
-    //   "units": "m",
-    //   "ndim": 3
-    // }
+    },
+    "time": {
+      "axis": "T",
+      "standard_name": "time",
+      "units": "days"
+    }
   },
   "variables" : {
     "U": {

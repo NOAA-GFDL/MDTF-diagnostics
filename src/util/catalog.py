@@ -13,6 +13,7 @@ from pathlib import Path
 import itertools
 import logging
 from src import cli
+from . import ClassMaker
 
 _log = logging.getLogger(__name__)
 
@@ -58,6 +59,58 @@ def _filter_func(path: str) -> bool:
     )
 
 
+class ppParserBase:
+    def __init__(self, file_path: str):
+        # get catalog in information from pp file name
+        self.freq_regex = r'/1hr/|/3hr/|/6hr/|/day/|/fx/|/mon/|/monClim/|/subhr/|/seas/|/yr/'
+        # YYYYMMDD:HHMMSS-YYYYMMDD:HHMMSS
+        # (([numbers in range 0-9 ]{repeat previous exactly 4 time}[numbers in range 0-1]
+        # [numbers in range 0-9][numbers in range 0-3][numbers in range 0-9])
+        # (optional colon)(([numbers in range 0-2][numbers in range 0-3])([numbers in range 0-5][numbers in range 0-9])
+        # {repeat previous exactly 2 times})*=0 or more of the HHMMSS group
+        # -(repeat the same regex for the second date string in the date range)
+        self.time_range_regex = r'([0-9]{4}[0-1][0-9][0-3][0-9])' \
+                                r'(:?)(([0-2][0-3])([0-5][0-9]){2})*' \
+                                r'(-)([0-9]{4}[0-1][0-9][0-3][0-9])' \
+                                r'(:?)(([0-2][0-3])([0-5][0-9]){2})*'
+        self.file_basename = os.path.basename(file_path)
+        #  ^..^
+        # /o  o\
+        # oo--oo~~~
+        self.cat_entry = dict()
+
+
+ppParser = ClassMaker()
+
+
+@ppParser.maker
+class ppParserGFDL(ppParserBase):
+    def __init__(self, file_path: str):
+        super().__init__(file_path)
+
+        self.filename_template = (
+            '{realm}.{time_range}.{variable_id}.{frequency}.nc'
+        )
+        self.f = _reverse_filename_format(self.file_basename,
+                                          filename_template=self.filename_template
+                                          )
+
+        self.cat_entry.update(self.f)
+        self.cat_entry['path'] = file_path
+        self.cat_entry['dataset_name'] = self.cat_entry['realm'] + '.' + self.cat_entry['time_range']
+
+
+@ppParser.maker
+class ppParserCMIP(ppParserBase):
+    pass
+
+
+@ppParser.maker
+class ppParserCESM(ppParserBase):
+    pass
+
+
+# TODO: remove deprecated function "mdtf_pp_parser"
 def mdtf_pp_parser(file_path: str) -> dict:
     """ Extract attributes of a file using information from MDTF OUTPUT DRS
     """
@@ -76,7 +129,7 @@ def mdtf_pp_parser(file_path: str) -> dict:
     file_basename = os.path.basename(file_path)
 
     filename_template = (
-        '{dataset_name}.{variable_id}.{frequency}.nc'
+        '{dataset_name}.{time_range}.{variable_id}.{frequency}.nc'
     )
 
     f = _reverse_filename_format(file_basename, filename_template=filename_template)
@@ -86,10 +139,11 @@ def mdtf_pp_parser(file_path: str) -> dict:
     cat_entry = dict()
     cat_entry.update(f)
     cat_entry['path'] = file_path
-    cat_entry['frequency'] = _extract_attr_with_regex(file_path, regex=freq_regex, strip_chars='/')
-    cat_entry['time_range'] = _extract_attr_with_regex(cat_entry['dataset_name'], regex=time_range_regex)
-    cat_entry['experiment_id'] = cat_entry['dataset_name'].split('_' + cat_entry['time_range'])[0]
-
+    # cat_entry['frequency'] = _extract_attr_with_regex(file_path, regex=freq_regex, strip_chars='/')
+    # cat_entry['time_range'] = _extract_attr_with_regex(cat_entry['dataset_name'], regex=time_range_regex)
+    # cat_entry['experiment_id'] = cat_entry['dataset_name'].split('_' + cat_entry['time_range'])[0]
+    # BEWARE: hard codin stuf
+    cat_entry['dataset_name'] = 'atmos_cmip.' + cat_entry['time_range']
     return cat_entry
 
 
@@ -131,7 +185,7 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
     cat_dict = {'esmcat_version': datetime.datetime.today().strftime('%Y-%m-%d'),
                 'description': 'Post-processed dataset for MDTF-diagnostics package',
                 'attributes': []
-    }
+                }
 
     for att in cmip6_cv_info['CV']['required_global_attributes']:
         if att == 'Conventions':

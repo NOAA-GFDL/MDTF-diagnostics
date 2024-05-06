@@ -158,20 +158,25 @@ class Fieldlist:
     a unique identifier, but should include cell_methods, etc. as well as
     dimensionality.
     """
+    axes_standard_names: list
     lut_standard_names: list
     name: str = util.MANDATORY
     axes_lut: util.WormDict = dc.field(default_factory=util.WormDict)
     lut: util.WormDict = dc.field(default_factory=util.WormDict)
     env_vars: dict = dc.field(default_factory=dict)
+
     @classmethod
     def from_struct(cls, d: dict, code_root: str, log=None):
-        def _process_coord(section_name: str, d: dict, temp_d: dict, code_root: str, log=None):
+        def _process_coord(section_name: str,
+                           in_dict: collections.OrderedDict,
+                           root_dir: str,
+                           log=None):
             # build two-stage lookup table by axis type, then name
             # The name is the key since standard_names are not necessarily unique ID's
             # and coordinates may be assigned to variables in multiple realms
-            section_d = d.pop(section_name, dict())
+            section_d = in_dict.pop(section_name, dict())
             if '$ref' in section_d.keys():
-                ref_file_query = pathlib.Path(code_root, 'data', section_d['$ref'])
+                ref_file_query = pathlib.Path(root_dir, 'data', section_d['$ref'])
                 ref_file_path = str(ref_file_query)
                 assert ".json" in ref_file_query.suffix, f"{ref_file_path} is not a json(c) file"
                 coord_file_entries = util.read_json(ref_file_path, log=log)
@@ -182,27 +187,31 @@ class Fieldlist:
 
             return section_d
 
-        def _process_var(section_name, d, temp_d):
+        def _process_var(section_name: str, in_dict, lut_dict):
             # build two-stage lookup table (by standard name, then data
             # dimensionality)
-            section_d = d.pop(section_name, dict())
+            section_d = in_dict.pop(section_name, dict())
             for k, v in section_d.items():
-                temp_d['entries'][k] = v
+                lut_dict['entries'][k] = v
                 # note that realm and modifier class atts are empty strings
                 # by default and, therefore, so are the corresponding dictionary
                 # keys. TODO: be sure to handle empty keys in PP
                 if not hasattr(v, 'modifier'):
-                    temp_d['entries'][k].update({'modifier': ""})
-            return temp_d
+                    lut_dict['entries'][k].update({'modifier': ""})
+                if not hasattr(v, 'long_name'):
+                    lut_dict['entries'][k].update({'long_name': ""})
+            return lut_dict
 
-        temp_d = collections.defaultdict(util.WormDict)
         d['axes_lut'] = util.WormDict()
-        temp_d = _process_coord('coords', d, temp_d, code_root, log)
+        temp_d = _process_coord('coords', d, code_root, log)
         d['axes_lut'].update(temp_d)
+
+        d['axes_standard_names'] = []
+        for sn in d['axes_lut'].values():
+            d['axes_standard_names'].append(sn['standard_name'])
 
         temp_d = collections.defaultdict(util.WormDict)
         d['lut'] = util.WormDict()
-        temp_d = _process_var('aux_coords', d, temp_d)
         temp_d = _process_var('variables', d, temp_d)
         d['lut'].update(temp_d['entries'])
         d['lut_standard_names'] = []
@@ -228,19 +237,19 @@ class Fieldlist:
     def to_CF_standard_name(self, standard_name: str,
                             long_name: str,
                             realm: str,
-                            modifier: str):
+                            modifier: str) -> str:
 
-        # search the lookup table for the variable with the specified standard_name attribute
-        try:
-            for var_name, var_dict in self.lut.items():
-                # print(var_name)
-                if var_dict.standard_name == standard_name and var_dict.realm == realm and var_dict.modifier == modifier:
-                    if not var_dict.long_name or var_dict.long_name.lower() == long_name.lower():
-                        return var_dict.name
-        except ValueError:
-            _log.error(f'Could not find variable in {self.name} fieldlist'
-                       f' with standard_name {standard_name}, long_name {long_name}'
-                       f' and realm {realm}')
+        # search the lookup table for the variable with the specified standard_name
+        # realm, modifier, and long_name attributes
+        for var_name, var_dict in self.lut.items():
+            # print(var_name)
+            if var_dict['standard_name'] == standard_name\
+                    and var_dict['realm'] == realm\
+                    and var_dict['modifier'] == modifier:
+                if not var_dict['long_name'] or var_dict['long_name'].lower() == long_name.lower():
+                    return var_name
+            else:
+                continue
 
     def from_CF(self,
                 standard_name: str,
@@ -249,7 +258,7 @@ class Fieldlist:
                 long_name: str = "",
                 num_dims: int = 0,
                 has_scalar_coords_att: bool = False,
-                name_only: bool = False) -> FieldlistEntry:
+                name_only: bool = False) -> dict:
         """Look up :class:`FieldlistEntry` corresponding to the given standard
         name, optionally providing a modifier to resolve ambiguity.
 
@@ -269,7 +278,6 @@ class Fieldlist:
         """
         assert standard_name in self.lut_standard_names, f'{standard_name} not found in Fieldlist lut_standard_names'
         lut1 = dict()
-        flentry: FieldlistEntry = None
         for k, v in self.lut.items():
             if v['standard_name'] == standard_name and v['realm'] == realm and v['modifier'] == modifier:
                 if not hasattr(v, 'long_name'):
@@ -279,9 +287,8 @@ class Fieldlist:
 
         entries = tuple(lut1)
         if len(entries) > 1:
-            raise ValueError(f'Could not find a unique entry in Fieldlist for {standard_name}')
-        flentry = lut1
-        return copy.deepcopy(flentry)
+            _log.warning(f'Found multiple entries in {self.name} Fieldlist for {standard_name}')
+        return copy.deepcopy(lut1)
 
     def from_CF_name(self,
                      var_or_name: str,
@@ -317,12 +324,12 @@ class Fieldlist:
         """
         ax = coord.standard_name
 
-        if ax not in self.axes_std_names:
+        if ax not in self.axes_standard_names:
             raise KeyError((f"Coordinate {coord.name} with standard name "
                             f"'{coord.standard_name}' not defined in convention '{self.name}'."))
 
         lut1 = {ax: self.axes_lut[ax]}
-        new_coord = [lut1[k] for k in lut1.keys() if lut1[k].standard_name == coord.standard_name][0]
+        new_coord = [lut1[k] for k in lut1.keys() if lut1[k].get('standard_name') == coord.standard_name][0]
 
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             new_coord = copy.deepcopy(new_coord)

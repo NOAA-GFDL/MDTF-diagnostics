@@ -6,6 +6,7 @@ import dataclasses
 from src import util, cmip6, varlist_util
 
 import logging
+
 _log = logging.getLogger(__name__)
 
 # RegexPattern that matches any string (path) that doesn't end with ".nc".
@@ -149,7 +150,7 @@ class CMIPDataSource(DataSourceBase):
     query: dict = dict(frequency="",
                        path="",
                        standard_name=""
-                      )
+                       )
 
 
 @data_source.maker
@@ -164,7 +165,7 @@ class CESMDataSource(DataSourceBase):
     query: dict = dict(frequency="",
                        path="",
                        standard_name=""
-                      )
+                       )
 
 
 @data_source.maker
@@ -179,7 +180,8 @@ class GFDLDataSource(DataSourceBase):
     query: dict = dict(frequency="",
                        path="",
                        standard_name=""
-                      )
+                       )
+
 
 dummy_regex = util.RegexPattern(
     r"""(?P<dummy_group>.*) # match everything; RegexPattern needs >= 1 named groups
@@ -204,7 +206,7 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
     # date_range: util.DateRange
     # CASE_ROOT_DIR: str
     # log: dataclasses.InitVar = _log
-    convention: str = "CMIP" # hard-code naming convention
+    convention: str = "CMIP"  # hard-code naming convention
     activity_id: str = ""
     institution_id: str = ""
     source_id: str = ""
@@ -212,7 +214,7 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
     variant_label: str = ""
     grid_label: str = ""
     version_date: str = ""
-    model: dataclasses.InitVar = ""      # synonym for source_id
+    model: dataclasses.InitVar = ""  # synonym for source_id
     experiment: dataclasses.InitVar = ""  # synonym for experiment_id
     CATALOG_DIR: str = dataclasses.field(init=False)
 
@@ -229,7 +231,7 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
                         raise KeyError()
                     dest_val = cv.lookup_single(source_val, source, dest)
                     log.debug("Set %s='%s' based on %s='%s'.",
-                        dest, dest_val, source, source_val)
+                              dest, dest_val, source, source_val)
                     setattr(self, dest, dest_val)
                 except KeyError:
                     log.debug("Couldn't set %s from %s='%s'.",
@@ -259,8 +261,8 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
             try:
                 if not cv.is_in_cv(field.name, val):
                     log.error(("Supplied value '%s' for '%s' is not recognized by "
-                        "the CMIP6 CV. Continuing, but queries will probably fail."),
-                        val, field.name)
+                               "the CMIP6 CV. Continuing, but queries will probably fail."),
+                              val, field.name)
             except KeyError:
                 # raised if not a valid CMIP6 CV category
                 continue

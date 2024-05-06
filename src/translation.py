@@ -42,6 +42,7 @@ class TranslatedVarlistEntry(data_model.DMVariable):
         dc.field(init=False, default_factory=list, metadata={'query': True})
     log: typing.Any = util.MANDATORY  # assigned from parent var
 
+
 @util.mdtf_dataclass
 class FieldlistEntry(data_model.DMDependentVariable):
     """Class corresponding to an entry in a fieldlist file.
@@ -157,13 +158,11 @@ class Fieldlist:
     a unique identifier, but should include cell_methods, etc. as well as
     dimensionality.
     """
+    lut_standard_names: list
     name: str = util.MANDATORY
-    axes: util.WormDict = dc.field(default_factory=util.WormDict)
     axes_lut: util.WormDict = dc.field(default_factory=util.WormDict)
-    entries: util.WormDict = dc.field(default_factory=util.WormDict)
     lut: util.WormDict = dc.field(default_factory=util.WormDict)
     env_vars: dict = dc.field(default_factory=dict)
-
     @classmethod
     def from_struct(cls, d: dict, code_root: str, log=None):
         def _process_coord(section_name: str, d: dict, temp_d: dict, code_root: str, log=None):
@@ -181,40 +180,34 @@ class Fieldlist:
                 section_d.update([r for r in regex_dict.get_matching_value('axis')][0])
                 section_d.pop('$ref', None)
 
-            for k, v in section_d.items():
-                ax = v['axis']
-                entry = data_model.coordinate_from_struct(v, name=k)
-                d['axes'][k] = entry
-                temp_d[ax][k] = entry.standard_name
-            return d, temp_d
+            return section_d
 
         def _process_var(section_name, d, temp_d):
             # build two-stage lookup table (by standard name, then data
             # dimensionality)
             section_d = d.pop(section_name, dict())
             for k, v in section_d.items():
-                entry = FieldlistEntry.from_struct(d['axes'], name=k, **v)
-                d['entries'][k] = entry
+                temp_d['entries'][k] = v
                 # note that realm and modifier class atts are empty strings
                 # by default and, therefore, so are the corresponding dictionary
                 # keys. TODO: be sure to handle empty keys in PP
-                if not temp_d[entry.standard_name].get(entry.realm):
-                    temp_d[entry.standard_name][entry.realm] = dict()
-                temp_d[entry.standard_name][entry.realm][entry.modifier] = entry
-            return d, temp_d
+                if not hasattr(v, 'modifier'):
+                    temp_d['entries'][k].update({'modifier': ""})
+            return temp_d
 
         temp_d = collections.defaultdict(util.WormDict)
-        d['axes'] = util.WormDict()
         d['axes_lut'] = util.WormDict()
-        d, temp_d = _process_coord('coords', d, temp_d, code_root, log)
+        temp_d = _process_coord('coords', d, temp_d, code_root, log)
         d['axes_lut'].update(temp_d)
 
         temp_d = collections.defaultdict(util.WormDict)
-        d['entries'] = util.WormDict()
         d['lut'] = util.WormDict()
-        d, temp_d = _process_var('aux_coords', d, temp_d)
-        d, temp_d = _process_var('variables', d, temp_d)
-        d['lut'].update(temp_d)
+        temp_d = _process_var('aux_coords', d, temp_d)
+        temp_d = _process_var('variables', d, temp_d)
+        d['lut'].update(temp_d['entries'])
+        d['lut_standard_names'] = []
+        for sn in d['lut'].values():
+            d['lut_standard_names'].append(sn['standard_name'])
         return cls(**d)
 
     def to_CF(self, var_or_name):
@@ -222,24 +215,41 @@ class Fieldlist:
         name in this convention.
         """
         if hasattr(var_or_name, 'name'):
-            return self.entries[var_or_name.name]
+            return self.lut[var_or_name.name]
         else:
-            return self.entries[var_or_name]
+            return self.lut[var_or_name]
 
-    def to_CF_name(self, var_or_name):
+    def to_CF_name(self, var_or_name: str):
         """Like :meth:`to_CF`, but only return the CF standard name, given the
         name in this convention.
         """
         return self.to_CF(var_or_name).standard_name
 
+    def to_CF_standard_name(self, standard_name: str,
+                            long_name: str,
+                            realm: str,
+                            modifier: str):
+
+        # search the lookup table for the variable with the specified standard_name attribute
+        try:
+            for var_name, var_dict in self.lut.items():
+                # print(var_name)
+                if var_dict.standard_name == standard_name and var_dict.realm == realm and var_dict.modifier == modifier:
+                    if not var_dict.long_name or var_dict.long_name.lower() == long_name.lower():
+                        return var_dict.name
+        except ValueError:
+            _log.error(f'Could not find variable in {self.name} fieldlist'
+                       f' with standard_name {standard_name}, long_name {long_name}'
+                       f' and realm {realm}')
+
     def from_CF(self,
-                var_or_name,
+                standard_name: str,
                 realm: str,
-                modifier=None,
-                long_name=None,
+                modifier: str = "",
+                long_name: str = "",
                 num_dims: int = 0,
                 has_scalar_coords_att: bool = False,
-                name_only: bool = False):
+                name_only: bool = False) -> FieldlistEntry:
         """Look up :class:`FieldlistEntry` corresponding to the given standard
         name, optionally providing a modifier to resolve ambiguity.
 
@@ -257,43 +267,27 @@ class Fieldlist:
             name_only: boolean indicating to not return a modifier--hacky way to accommodate
             a from_CF_name call that does not provide other metadata
         """
-        if hasattr(var_or_name, 'standard_name'):
-            standard_name = var_or_name.standard_name
-        else:
-            standard_name = var_or_name
+        assert standard_name in self.lut_standard_names, f'{standard_name} not found in Fieldlist lut_standard_names'
+        lut1 = dict()
+        flentry: FieldlistEntry = None
+        for k, v in self.lut.items():
+            if v['standard_name'] == standard_name and v['realm'] == realm and v['modifier'] == modifier:
+                if not hasattr(v, 'long_name'):
+                    v['long_name'] = long_name
+                v['name'] = k
+                lut1.update({k: v})
 
-        if standard_name in self.lut:
-            lut1 = self.lut[standard_name][realm]  # abbreviate
-            fl_entry: FieldlistEntry = None
-            empty_mod_count = 0  # counter for modifier attributes that are blank strings in the fieldlist lookup table
-            if not modifier:  # empty strings and None types evaluate to False
-                entries = tuple(lut1.values())
-                if len(entries) > 1:
-                    for e in entries:
-                        if not e.modifier.strip():
-                            empty_mod_count += 1  # fieldlist LUT entry has no modifier attribute
-                            if has_scalar_coords_att or num_dims == len(e.dims) or name_only:
-                                # fieldlist lut entry has a blank modifier
-                                fl_entry = e
-                    if empty_mod_count > 1:
-                        raise ValueError((f"Variable name in convention '{self.name}' "
-                                          f"not uniquely determined by standard name '{standard_name}'."))
-                else:
-                    fl_entry = entries[0]
-            else:
-                if modifier not in lut1:
-                    raise KeyError((f"Queried standard name '{standard_name}' with an "
-                                    f"unexpected modifier {modifier} not in convention "
-                                    f"'{self.name}'."))
-                fl_entry = lut1[modifier]
+        entries = tuple(lut1)
+        if len(entries) > 1:
+            raise ValueError(f'Could not find a unique entry in Fieldlist for {standard_name}')
+        flentry = lut1
+        return copy.deepcopy(flentry)
 
-            if not fl_entry:
-                raise ValueError("fl_entry evaluated as a None Type")
-            return copy.deepcopy(fl_entry)
-        raise KeyError((f"Standard name '{standard_name}' not defined in "
-                        f"convention '{self.name}'."))
-
-    def from_CF_name(self, var_or_name: str, realm: str, long_name=None, modifier=None):
+    def from_CF_name(self,
+                     var_or_name: str,
+                     realm: str,
+                     long_name: str = "",
+                     modifier: str = "") -> FieldlistEntry:
         """Like :meth:`from_CF`, but only return the variable's name in this
         convention.
 
@@ -310,37 +304,37 @@ class Fieldlist:
                             name_only=True,
                             realm=realm).name
 
+    def get_variable_long_name(self, var, has_scalar_coords: bool) -> str:
+        if not var.long_name and has_scalar_coords:
+            v = var.scalar_coords[0]
+            return var.standard_name.replace('_', ' ') + ' at ' + str(v.value) + ' ' + v.units
+        else:
+            return var.standard_name.replace('_', ' ')
+
     def translate_coord(self, coord, log=_log):
         """Given a :class:`~data_model.DMCoordinate`, look up the corresponding
         translated :class:`~data_model.DMCoordinate` in this convention.
         """
-        ax = coord.axis
-        if ax not in self.axes_lut:
-            raise KeyError(f"Axis {ax} not defined in convention '{self.name}'.")
+        ax = coord.standard_name
 
-        lut1 = self.axes_lut[ax]
-        if not hasattr(coord, 'standard_name'):
-            coords = tuple(lut1.values())
-            if len(coords) > 1:
-                raise ValueError((f"Coordinate dimension in convention '{self.name}' "
-                                  f"not uniquely determined by coordinate {coord.name}."))
-            new_coord = coords[0]
-        else:
-            if coord.standard_name not in lut1.values():
-                raise KeyError((f"Coordinate {coord.name} with standard name "
-                                f"'{coord.standard_name}' not defined in convention '{self.name}'."))
-            new_coord = [k for k in lut1.keys() if lut1[k] == coord.standard_name][0]
+        if ax not in self.axes_std_names:
+            raise KeyError((f"Coordinate {coord.name} with standard name "
+                            f"'{coord.standard_name}' not defined in convention '{self.name}'."))
+
+        lut1 = {ax: self.axes_lut[ax]}
+        new_coord = [lut1[k] for k in lut1.keys() if lut1[k].standard_name == coord.standard_name][0]
 
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             new_coord = copy.deepcopy(new_coord)
-            new_coord.value = units.convert_scalar_coord(coord, new_coord.units,
+            new_coord.value = units.convert_scalar_coord(coord,
+                                                         lut1[new_coord].units,
                                                          log=log)
         else:
             new_coord = dc.replace(coord,
                                    **(util.filter_dataclass(new_coord, coord)))
         return new_coord
 
-    def translate(self, var):
+    def translate(self, var, from_convention: str):
         """Returns :class:`TranslatedVarlistEntry` instance, with populated
         coordinate axes. Units of scalar coord slices are translated to the units
         of the conventions' coordinates. Includes logic to translate and rename
@@ -348,21 +342,34 @@ class Fieldlist:
         (intrinsically 4D) @ 500mb could produce a :class:`TranslatedVarlistEntry`
         for 'u500' (3D slice), depending on naming convention.
         """
+        has_scalar_coords = bool(var.scalar_coords)
         if var.use_exact_name:
             # HACK; dataclass.asdict says VarlistEntry has no _id attribute & not sure why
             fl_entry = {f.name: getattr(var, f.name, util.NOTSET)
                         for f in dc.fields(TranslatedVarlistEntry) if hasattr(var, f.name)}
             new_name = var.name
         else:
-            has_scalar_coords = bool(var.scalar_coords)
+            # Fieldlist for POD convention
+            from_convention_tl = VariableTranslator().get_convention(from_convention)
+            # Fieldlist entry for POD variable
+            long_name = self.get_variable_long_name(var, has_scalar_coords)
+            fl_entry = from_convention_tl.from_CF(var.standard_name,
+                                                  var.realm,
+                                                  var.modifier,
+                                                  long_name,
+                                                  var.dims.__len__(),
+                                                  has_scalar_coords
+                                                  )
 
-            fl_entry = self.from_CF(var.standard_name,
-                                    var.realm,
-                                    var.modifier,
-                                    None,
-                                    var.dims.__len__(),
-                                    has_scalar_coords)
-            new_name = fl_entry.name
+            # Use the POD variable standard name, realm, and modifier to get the corresponding
+            # information from FieldList for the DataSource convention
+            # Modifiers that are not defined are set to empty strings when variable and fieldlist
+            # objects are initialized
+            fl_atts = [v for v in fl_entry.values()][0]
+            new_name = self.to_CF_standard_name(fl_atts['standard_name'],
+                                                fl_atts['long_name'],
+                                                fl_atts['realm'],
+                                                fl_atts['modifier'])
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]
         new_scalars = [self.translate_coord(dim, log=var.log) for dim in var.scalar_coords]
@@ -404,7 +411,14 @@ class NoTranslationFieldlist(metaclass=util.Singleton):
         else:
             return var_or_name
 
-    def from_CF(self, var_or_name, modifier=None):
+    def from_CF(self,
+                var_or_name: str,
+                realm: str,
+                modifier=None,
+                long_name=None,
+                num_dims: int = 0,
+                has_scalar_coords_att: bool = False,
+                name_only: bool = False):
         # should never get here - not called externally
         raise NotImplementedError
 
@@ -414,11 +428,11 @@ class NoTranslationFieldlist(metaclass=util.Singleton):
         else:
             return var_or_name
 
-    def translate_coord(self, coord, log=_log):
+    def translate_coord(self, coord, log=_log) -> TranslatedVarlistEntry:
         # should never get here - not called externally
         raise NotImplementedError
 
-    def translate(self, var):
+    def translate(self, var, from_convention: str):
         """Returns :class:`TranslatedVarlistEntry` instance, populated with
         contents of input :class:`~diagnostic.VarlistEntry` instance.
 
@@ -448,7 +462,8 @@ class VariableTranslator(metaclass=util.Singleton):
 
     conventions: util.WormDict
     aliases: util.WormDict
-    _unittest: bool=False
+    _unittest: bool = False
+
     def __init__(self, code_root=None, unittest=False):
         self._unittest = unittest
         self.conventions = util.WormDict()
@@ -523,12 +538,31 @@ class VariableTranslator(metaclass=util.Singleton):
     def to_CF_name(self, conv_name: str, name: str):
         return self._fieldlist_method(conv_name, 'to_CF_name', name)
 
-    def from_CF(self, conv_name: str, standard_name: str, modifier=None):
+    def from_CF(self,
+                conv_name: str,
+                standard_name: str,
+                realm: str = "",
+                modifier: str = "",
+                long_name: str = "",
+                num_dims: int = 0,
+                has_scalar_coords_att: bool = False,
+                name_only: bool = False):
+
         return self._fieldlist_method(conv_name, 'from_CF',
-                                      standard_name, modifier=modifier)
+                                      standard_name,
+                                      realm,
+                                      long_name,
+                                      num_dims,
+                                      has_scalar_coords_att,
+                                      name_only,
+                                      modifier=modifier)
 
     def from_CF_name(self, conv_name: str, standard_name: str, realm: str, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF_name',
+                                      standard_name, realm, modifier=modifier)
+
+    def to_CF_standard_name(self, conv_name: str, standard_name: str, realm: str, modifier=None):
+        return self._fieldlist_method(conv_name, 'to_CF_standard_name',
                                       standard_name, realm, modifier=modifier)
 
     def translate_coord(self, conv_name: str, coord, log=_log):

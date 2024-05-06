@@ -295,6 +295,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             # A 'noTranslationFieldlist' will be defined for the varlistEntry translation attribute
             cases[case_name].translate_varlist(model_paths,
                                                case_name,
+                                               pod_convention,
                                                data_convention)
 
         for case_name in cases.keys():

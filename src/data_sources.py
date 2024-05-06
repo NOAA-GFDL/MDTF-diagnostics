@@ -121,9 +121,15 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     def translate_varlist(self,
                           model_paths: util.ModelDataPathManager,
                           case_name: str,
+                          from_convention: str,
                           to_convention: str):
         for v in self.varlist.iter_vars():
-            self.varlist.setup_var(model_paths, case_name, v, to_convention, self.date_range)
+            self.varlist.setup_var(model_paths,
+                                   case_name,
+                                   v,
+                                   from_convention,
+                                   to_convention,
+                                   self.date_range)
 
 
 # instantiate the class maker so that the convention-specific classes can be instantiated using
@@ -145,6 +151,7 @@ class CMIPDataSource(DataSourceBase):
                        standard_name=""
                       )
 
+
 @data_source.maker
 class CESMDataSource(DataSourceBase):
     """DataSource for handling POD sample model data for multirun cases stored on a local filesystem.
@@ -158,6 +165,7 @@ class CESMDataSource(DataSourceBase):
                        path="",
                        standard_name=""
                       )
+
 
 @data_source.maker
 class GFDLDataSource(DataSourceBase):
@@ -188,20 +196,6 @@ class GlobbedDataFile:
     remote_path: str = util.MANDATORY
 
 
-
-    #def to_file_glob_tuple(self):
-    #    return dm.FileGlobTuple(
-    #        name=self.full_name, glob=self.glob,
-    #        attrs={
-    #            'glob_id': self.glob_id,
-    #            'pod_name': self.pod_name, 'name': self.name
-    #        }
-    #    )
-
-
-
-
-
 @util.mdtf_dataclass
 class CMIP6DataSourceAttributes(DataSourceAttributesBase):
     # CASENAME: str          # fields inherited from DataSourceAttributesBase
@@ -219,7 +213,7 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
     grid_label: str = ""
     version_date: str = ""
     model: dataclasses.InitVar = ""      # synonym for source_id
-    experiment: dataclasses.InitVar = "" # synonym for experiment_id
+    experiment: dataclasses.InitVar = ""  # synonym for experiment_id
     CATALOG_DIR: str = dataclasses.field(init=False)
 
     def __post_init__(self, log=_log, model=None, experiment=None):
@@ -248,7 +242,7 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
         # verify case root dir exists
         if not os.path.isdir(self.CASE_ROOT_DIR):
             log.critical("Data directory CASE_ROOT_DIR = '%s' not found.",
-                self.CASE_ROOT_DIR)
+                         self.CASE_ROOT_DIR)
             util.exit_handler(code=1)
 
         # should really fix this at the level of CLI flag synonyms
@@ -290,7 +284,7 @@ class CMIP6DataSourceAttributes(DataSourceAttributesBase):
             new_root = os.path.join(new_root, drs_val)
         if not os.path.isdir(new_root):
             log.error("Data directory '%s' not found; starting crawl at '%s'.",
-                new_root, self.CASE_ROOT_DIR)
+                      new_root, self.CASE_ROOT_DIR)
             self.CATALOG_DIR = self.CASE_ROOT_DIR
         else:
             self.CATALOG_DIR = new_root

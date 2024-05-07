@@ -1,0 +1,4656 @@
+{
+  "prec_conv": {
+    "CMOR_varname": "prc",
+    "standard_name": "convective_precipitation_flux",
+    "long_name": "Convective Precipitation",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "expcalc": {
+    "CMOR_varname": "expcalc",
+    "standard_name": "sinking_mole_flux_of_calcite_expressed_as_carbon_in_sea_water",
+    "long_name": "Sinking Calcite Flux",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "conv_freq": {
+    "CMOR_varname": "ci",
+    "standard_name": "convection_time_fraction",
+    "long_name": "Fraction of Time Convection Occurs",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "cltcalipso": {
+    "CMOR_varname": "cltcalipso",
+    "standard_name": "cloud_area_fraction",
+    "long_name": "CALIPSO Total Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "ps": {
+    "CMOR_varname": "ps",
+    "standard_name": "surface_air_pressure",
+    "long_name": "Surface Air Pressure",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "tauu": {
+    "CMOR_varname": "tauuClim",
+    "standard_name": "surface_downward_eastward_stress",
+    "long_name": "Surface Downward Eastward Wind Stress",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "pme_river": {
+    "CMOR_varname": "wfonocorr",
+    "standard_name": "water_flux_into_sea_water_without_flux_correction",
+    "long_name": "Water Flux into Sea Water Without Flux Correction",
+    "modeling_realm": "ocean",
+    "units": "kg m-2 s-1"
+  },
+  "cLeaf": {
+    "CMOR_varname": "cLeaf",
+    "standard_name": "leaf_carbon_content",
+    "long_name": "Carbon Mass in Leaves",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "precip": {
+    "CMOR_varname": "pr",
+    "standard_name": "precipitation_flux",
+    "long_name": "Precipitation",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "so2_wet_dep": {
+    "CMOR_varname": "wetso2",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_sulfur_dioxide_due_to_wet_deposition",
+    "long_name": "Wet Deposition Rate of SO2",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "sconcbc": {
+    "CMOR_varname": "sconcbc",
+    "standard_name": "mass_concentration_of_black_carbon_dry_aerosol_in_air",
+    "long_name": "Surface Concentration of Black Carbon Aerosol",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "thetaoga": {
+    "CMOR_varname": "thetaoga",
+    "standard_name": "sea_water_potential_temperature",
+    "long_name": "Global Average Sea Water Potential Temperature",
+    "modeling_realm": "ocean",
+    "units": "K"
+  },
+  "WVP": {
+    "CMOR_varname": "prwClim",
+    "standard_name": "atmosphere_water_vapor_content",
+    "long_name": "Water Vapor Path",
+    "modeling_realm": "atmos",
+    "units": "kg m-2"
+  },
+  "tnt2": {
+    "CMOR_varname": "tnt",
+    "standard_name": "tendency_of_air_temperature",
+    "long_name": "Tendency of Air Temperature",
+    "modeling_realm": "atmos",
+    "units": "K s-1"
+  },
+  "tauu": {
+    "CMOR_varname": "tauu",
+    "standard_name": "surface_downward_eastward_stress",
+    "long_name": "Surface Downward Eastward Wind Stress",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "t_ref": {
+    "CMOR_varname": "tas",
+    "standard_name": "air_temperature",
+    "long_name": "Air Temperature",
+    "modeling_realm": "atmos",
+    "units": "K"
+  },
+  "hfxba": {
+    "CMOR_varname": "hfxba",
+    "standard_name": "ocean_heat_x_transport_due_to_bolus_advection",
+    "long_name": "Ocean Heat X Transport due to Bolus Advection",
+    "modeling_realm": "ocean",
+    "units": "W"
+  },
+  "q_ref": {
+    "CMOR_varname": "huss",
+    "standard_name": "specific_humidity",
+    "long_name": "Near-Surface Specific Humidity",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "areacella": {
+    "CMOR_varname": "areacella",
+    "standard_name": "cell_area",
+    "long_name": "Atmosphere Grid-Cell Area",
+    "modeling_realm": "atmosphere & land",
+    "units": "m2"
+  },
+  "pdi": {
+    "CMOR_varname": "pdi",
+    "standard_name": "tendency_of_mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water_due_to_net_primary_production_by_diatoms",
+    "long_name": "Diatom Primary Carbon Production",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "ialb": {
+    "CMOR_varname": "ialb",
+    "standard_name": "bare_sea_ice_albedo",
+    "long_name": "Bare Sea Ice Albedo",
+    "modeling_realm": "ocean & ice",
+    "units": "1"
+  },
+  "dispkexyfo": {
+    "CMOR_varname": "dispkexyfo",
+    "standard_name": "ocean_kinetic_energy_dissipation_per_unit_area_due_to_xy_friction",
+    "long_name": "Ocean Kinetic Energy Dissipation Per Unit Area due to XY Friction",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "total_mass_seawater": {
+    "CMOR_varname": "masso",
+    "standard_name": "sea_water_mass",
+    "long_name": "Sea Water Mass",
+    "modeling_realm": "ocean",
+    "units": "kg"
+  },
+  "ps": {
+    "CMOR_varname": "psClim",
+    "standard_name": "surface_air_pressure",
+    "long_name": "Surface Air Pressure",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "agessc": {
+    "CMOR_varname": "agessc",
+    "standard_name": "sea_water_age_since_surface_contact",
+    "long_name": "Sea Water Age Since Surface Contact",
+    "modeling_realm": "ocean",
+    "units": "yr"
+  },
+  "hfx": {
+    "CMOR_varname": "hfx",
+    "standard_name": "ocean_heat_x_transport",
+    "long_name": "Ocean Heat X Transport",
+    "modeling_realm": "ocean",
+    "units": "W"
+  },
+  "qo3v": {
+    "CMOR_varname": "tro3Clim",
+    "standard_name": "mole_fraction_of_ozone_in_air",
+    "long_name": "Mole Fraction of O3",
+    "modeling_realm": "atmos",
+    "units": "1e-9"
+  },
+  "sos": {
+    "CMOR_varname": "sos",
+    "standard_name": "sea_surface_salinity",
+    "long_name": "Sea Surface Salinity",
+    "modeling_realm": "ocean",
+    "units": "psu"
+  },
+  "clmcalipso": {
+    "CMOR_varname": "clmcalipso",
+    "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "CALIPSO Mid Level Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "pon": {
+    "CMOR_varname": "pon",
+    "standard_name": "mole_concentration_of_particulate_organic_matter_expressed_as_nitrogen_in_sea_water",
+    "long_name": "Particulate Organic Nitrogen Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "swup_toa": {
+    "CMOR_varname": "rsut",
+    "standard_name": "toa_outgoing_shortwave_flux",
+    "long_name": "TOA Outgoing Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "bc_wet_dep": {
+    "CMOR_varname": "wetbc",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_black_carbon_dry_aerosol_due_to_wet_deposition",
+    "long_name": "Wet Deposition Rate of Black Carbon Aerosol Mass",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "po4": {
+    "CMOR_varname": "po4",
+    "standard_name": "mole_concentration_of_phosphate_in_sea_water",
+    "long_name": "Dissolved Phosphate Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "evap": {
+    "CMOR_varname": "evap",
+    "standard_name": "water_evaporation_flux",
+    "long_name": "Water Evaporation Flux from Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "calc": {
+    "CMOR_varname": "calc",
+    "standard_name": "mole_concentration_of_calcite_expressed_as_carbon_in_sea_water",
+    "long_name": "Calcite Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "dissoc": {
+    "CMOR_varname": "dissoc",
+    "standard_name": "mole_concentration_of_dissolved_organic_carbon_in_sea_water",
+    "long_name": "Dissolved Organic Carbon Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "dem_s": {
+    "CMOR_varname": "dems",
+    "standard_name": "stratiform_cloud_longwave_emissivity",
+    "long_name": "Stratiform Cloud Emissivity",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "sst": {
+    "CMOR_varname": "tos",
+    "standard_name": "surface_temperature",
+    "long_name": "Sea Surface Temperature",
+    "modeling_realm": "ocean",
+    "units": "K"
+  },
+  "chldiaz": {
+    "CMOR_varname": "chldiaz",
+    "standard_name": "mass_concentration_of_diazotrophs_expressed_as_chlorophyll_in_sea_water",
+    "long_name": ""Mass Concentration of Diazotrophs expressed as Chlorophyll in Sea Water",
+  },
+  """: {
+    "CMOR_varname": "ocean_biochem",
+    "standard_name": "kg m-3",
+  },
+  "sconcpoa": {
+    "CMOR_varname": "sconcpoa",
+    "standard_name": "mass_concentration_of_primary_particulate_organic_matter_dry_aerosol_in_air",
+    "long_name": "Surface Concentration of Dry Aerosol Primary Organic Matter",
+    "modeling_realm": "atmos",
+    "units": "kg m-3"
+  },
+  "Gmwork": {
+    "CMOR_varname": "tnkebto",
+    "standard_name": "tendency_of_ocean_eddy_kinetic_energy_content_due_to_bolus_transport",
+    "long_name": "Tendency of Ocean Eddy Kinetic Energy Content due to Bolus Transport",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "snomelt": {
+    "CMOR_varname": "snomelt",
+    "standard_name": "snow_melt_rate",
+    "long_name": "Snow Melt Rate",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "DMS_ddep_cmip": {
+    "CMOR_varname": "drydms",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_dimethyl_sulfide_due_to_dry_deposition",
+    "long_name": "Dry Deposition Rate of DMS",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "ph": {
+    "CMOR_varname": "ph",
+    "standard_name": "sea_water_ph_reported_on_total_scale",
+    "long_name": "pH",
+    "modeling_realm": "ocean_biochem",
+    "units": "1"
+  },
+  "transiy": {
+    "CMOR_varname": "transiy",
+    "standard_name": "sea_ice_y_transport",
+    "long_name": "Northward sea ice transport",
+    "modeling_realm": "ocean & ice",
+    "units": "kg s-1"
+  },
+  "SOA_wet_dep": {
+    "CMOR_varname": "wetsoa",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_secondary_particulate_organic_matter_dry_aerosol_due_to_wet_deposition",
+    "long_name": "Wet Deposition Rate of Dry Aerosol Secondary Organic Matter",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "SO2_emis_cmip2": {
+    "CMOR_varname": "emiso2",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_sulfur_dioxide_due_to_emission",
+    "long_name": "Total Emission Rate of SO2",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "visc_cbu": {
+    "CMOR_varname": "difvmo",
+    "standard_name": "ocean_vertical_momentum_diffusivity",
+    "long_name": "Ocean Vertical Momentum Diffusivity",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "clc": {
+    "CMOR_varname": "clc",
+    "standard_name": "convective_cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "Convective Cloud Area Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "pbot_t": {
+    "CMOR_varname": "pbo",
+    "standard_name": "sea_water_pressure_at_sea_floor",
+    "long_name": "Sea Water Pressure at Sea floor",
+    "modeling_realm": "ocean",
+    "units": "dbar"
+  },
+  "difvho": {
+    "CMOR_varname": "difvho",
+    "standard_name": "ocean_vertical_heat_diffusivity",
+    "long_name": "Ocean Vertical Heat Diffusivity",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "c3PftFrac": {
+    "CMOR_varname": "c3PftFrac",
+    "standard_name": "area_fraction",
+    "long_name": "Total C3 PFT Cover Fraction",
+    "modeling_realm": "land",
+    "units": "%"
+  },
+  "sftof": {
+    "CMOR_varname": "sftof",
+    "standard_name": "sea_area_fraction",
+    "long_name": "Sea Area Fraction",
+    "modeling_realm": "ocean",
+    "units": "%"
+  },
+  "total_volume_seawater": {
+    "CMOR_varname": "volo",
+    "standard_name": "sea_water_volume",
+    "long_name": "Sea Water Volume",
+    "modeling_realm": "ocean",
+    "units": "m3"
+  },
+  "concso4": {
+    "CMOR_varname": "concso4",
+    "standard_name": "mass_concentration_of_sulfate_dry_aerosol_in_air",
+    "long_name": "Concentration of SO4",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "talk": {
+    "CMOR_varname": "talk",
+    "standard_name": "sea_water_alkalinity_expressed_as_mole_equivalent",
+    "long_name": "Total Alkalinity at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3	"
+  },
+  "pr": {
+    "CMOR_varname": "pr",
+    "standard_name": "rainfall_flux",
+    "long_name": "Surface Rainfall Rate into the Sea Ice Portion of the Grid Cell",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "mrros": {
+    "CMOR_varname": "mrrosClim",
+    "standard_name": "surface_runoff_flux",
+    "long_name": "Surface Runoff",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "nh4": {
+    "CMOR_varname": "nh4",
+    "standard_name": "mole_concentration_of_ammonium_in_sea_water",
+    "long_name": "Dissolved Ammonium Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "tasmin": {
+    "CMOR_varname": "tasminClim",
+    "standard_name": "air_temperature",
+    "long_name": "Daily Minimum Near-Surface Air Temperature",
+    "modeling_realm": "atmos",
+    "units": "K"
+  },
+  "cld_amt_2d": {
+    "CMOR_varname": "cltClim",
+    "standard_name": "cloud_area_fraction",
+    "long_name": "Total Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": ""
+  },
+  "phypmisc": {
+    "CMOR_varname": "phypmisc",
+    "standard_name": "tendency_of_mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water_due_to_net_primary_production_by_miscellaneous_phytoplankton",
+    "long_name": "Other Phytoplankton Carbon Production",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "intparag": {
+    "CMOR_varname": "intparag",
+    "standard_name": "tendency_of_ocean_mole_content_of_aragonite_expressed_as_carbon_due_to_biological_production",
+    "long_name": "Aragonite Production",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "tos_atm": {
+    "CMOR_varname": "tos",
+    "standard_name": "sea_surface_temperature",
+    "long_name": "Sea Surface Temperature",
+    "modeling_realm": "ocean",
+    "units": "K"
+  },
+  "fl_lssnow": {
+    "CMOR_varname": "prlsns",
+    "standard_name": "large_scale_snowfall_flux",
+    "long_name": "Stratiform Snowfall Flux",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "evspsblveg": {
+    "CMOR_varname": "evspsblveg",
+    "standard_name": "water_evaporation_flux_from_canopy",
+    "long_name": "Evaporation from Canopy",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "clcalipso_sat": {
+    "CMOR_varname": "clcalipso",
+    "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "CALIPSO Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "fFire": {
+    "CMOR_varname": "fFire",
+    "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_fires_excluding_anthropogenic_land_use_change",
+    "long_name": "Carbon Mass Flux into Atmosphere due to CO2 Emission from Fire",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "tran": {
+    "CMOR_varname": "tranClim",
+    "standard_name": "transpiration_flux",
+    "long_name": "Transpiration",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "rh_ref_cmip_min": {
+    "CMOR_varname": "rhsmin",
+    "standard_name": "relative_humidity",
+    "long_name": "Surface Daily Minimum Relative Humidity",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "sic": {
+    "CMOR_varname": "sic",
+    "standard_name": "sea_ice_area_fraction",
+    "long_name": "Sea Ice Area Fraction",
+    "modeling_realm": "ocean & ice",
+    "units": "%"
+  },
+  "dust_col": {
+    "CMOR_varname": "loaddust",
+    "standard_name": "atmosphere_mass_content_of_dust_dry_aerosol",
+    "long_name": "Load of Dust",
+    "modeling_realm": "atmos",
+    "units": "kg m-2"
+  },
+  "dht": {
+    "CMOR_varname": "thkcello",
+    "standard_name": "cell_thickness",
+    "long_name": "Ocean Model Cell Thickness",
+    "modeling_realm": "land",
+    "units": "m"
+  },
+  "tau_x": {
+    "CMOR_varname": "tauuo",
+    "standard_name": "surface_downward_x_stress",
+    "long_name": "Surface Downward X Stress",
+    "modeling_realm": "ocean & ice",
+    "units": "N m-2"
+  },
+  "msftbarot": {
+    "CMOR_varname": "msftbarot",
+    "standard_name": "ocean_barotropic_mass_streamfunction",
+    "long_name": "Streamfunction",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "fgo2": {
+    "CMOR_varname": "fgo2",
+    "standard_name": "surface_downward_mole_flux_of_molecular_oxygen",
+    "long_name": "Surface Downward O2 Flux",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "rh_ref_cmip": {
+    "CMOR_varname": "rhs",
+    "standard_name": "relative_humidity",
+    "long_name": "Near-Surface Relative Humidity",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "zooc": {
+    "CMOR_varname": "zooc",
+    "standard_name": "mole_concentration_of_zooplankton_expressed_as_carbon_in_sea_water",
+    "long_name": "Zooplankton Carbon Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "o2min": {
+    "CMOR_varname": "o2min",
+    "standard_name": "mole_concentration_of_molecular_oxygen_in_sea_water_at_shallowest_local_minimum_in_vertical_profile",
+    "long_name": "Oxygen Minimum Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "emipoav2": {
+    "CMOR_varname": "emipoa",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_primary_particulate_organic_matter_dry_aerosol_due_to_net_chemical_production",
+    "long_name": "Emission Rate of Dry Aerosol Primary Organic Matter",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "dissoc": {
+    "CMOR_varname": "dissoc",
+    "standard_name": "mole_concentration_of_dissolved_organic_carbon_in_sea_water",
+    "long_name": "Dissolved Organic Carbon Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "omldamax": {
+    "CMOR_varname": "omldamax",
+    "standard_name": "ocean_mixed_layer_thickness_defined_by_mixing_scheme",
+    "long_name": "Daily Maximum Ocean Mixed Layer Thickness Defined by Mixing Scheme",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "bddtdic": {
+    "CMOR_varname": "bddtdic",
+    "standard_name": "tendency_of_mole_concentration_of_dissolved_inorganic_carbon_in_sea_water_due_to_biological_processes",
+    "long_name": "Rate of Change of Dissolved Inorganic Carbon due to Biological Activity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "phydiaz": {
+    "CMOR_varname": "phydiaz",
+    "standard_name": "mole_concentration_of_diazotrophs_expressed_as_carbon_in_sea_water",
+    "long_name": ""Mole Concentration of Diazotrophs Expressed as Carbon in Sea Water",
+  },
+  """: {
+    "CMOR_varname": "ocean_biochem",
+    "standard_name": "mol m-3",
+  },
+  "wmo": {
+    "CMOR_varname": "wmo",
+    "standard_name": "upward_ocean_mass_transport",
+    "long_name": "Upward Ocean Mass Transport",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "phymisc": {
+    "CMOR_varname": "phymisc",
+    "standard_name": "mole_concentration_of_miscellaneous_phytoplankton_expressed_as_carbon_in_sea_water",
+    "long_name": "Mole Concentration of Miscellaneous Phytoplankton expressed as Carbon in Sea Water at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "strocny": {
+    "CMOR_varname": "strocny",
+    "standard_name": "upward_y_stress_at_sea_ice_base",
+    "long_name": "Northward Ocean Stress On Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "N m-2"
+  },
+  "sphum": {
+    "CMOR_varname": "hus",
+    "standard_name": "specific_humidity",
+    "long_name": "Specific Humidity",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "cfadLidarsr532": {
+    "CMOR_varname": "cfadLidarsr532",
+    "standard_name": "histogram_of_backscattering_ratio_over_height_above_reference_ellipsoid",
+    "long_name": "CALIPSO Scattering Ratio",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "intpp": {
+    "CMOR_varname": "intpp",
+    "standard_name": "net_primary_mole_productivity_of_carbon_by_phytoplankton",
+    "long_name": "Primary Organic Carbon Production by All Types of Phytoplankton",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "swdn_tot_dif": {
+    "CMOR_varname": "rsdsdiff",
+    "standard_name": "surface_diffuse_downwelling_shortwave_flux_in_air",
+    "long_name": "Surface Diffuse Downwelling Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "umo": {
+    "CMOR_varname": "umo",
+    "standard_name": "ocean_mass_x_transport",
+    "long_name": "Ocean Mass X Transport",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "zg": {
+    "CMOR_varname": "zg",
+    "standard_name": "geopotential_height",
+    "long_name": "Geopotential Height",
+    "modeling_realm": "atmos",
+    "units": "m"
+  },
+  "vcomp": {
+    "CMOR_varname": "vaClim",
+    "standard_name": "northward_wind",
+    "long_name": "Northward Wind",
+    "modeling_realm": "atmos",
+    "units": "m s-1"
+  },
+  "temp": {
+    "CMOR_varname": "taClim",
+    "standard_name": "air_temperature",
+    "long_name": "Temperature",
+    "modeling_realm": "atmos",
+    "units": "K"
+  },
+  "rlds": {
+    "CMOR_varname": "rlds",
+    "standard_name": "surface_net_downward_longwave_flux",
+    "long_name": "Surface Net Downward Longwave Radiation",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "rsucs": {
+    "CMOR_varname": "rsucs",
+    "standard_name": "upwelling_shortwave_flux_in_air_assuming_clear_sky",
+    "long_name": "Upwelling Clear-Sky Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "IWP_all_clouds": {
+    "CMOR_varname": "cliviClim",
+    "standard_name": "atmosphere_cloud_ice_content",
+    "long_name": "Ice Water Path",
+    "modeling_realm": "atmos",
+    "units": "kg m-2"
+  },
+  "rh_cmip": {
+    "CMOR_varname": "hurClim",
+    "standard_name": "relative_humidity",
+    "long_name": "Relative Humidity",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "thetao": {
+    "CMOR_varname": "thetao",
+    "standard_name": "sea_water_potential_temperature",
+    "long_name": "Sea Water Potential Temperature",
+    "modeling_realm": "ocean",
+    "units": "K"
+  },
+  "hght": {
+    "CMOR_varname": "zgClim",
+    "standard_name": "geopotential_height",
+    "long_name": "Geopotential Height",
+    "modeling_realm": "atmos",
+    "units": "m"
+  },
+  "pop": {
+    "CMOR_varname": "pop",
+    "standard_name": "mole_concentration_of_particulate_organic_matter_expressed_as_phosphorus_in_sea_water",
+    "long_name": "Particulate Organic Phosphorus Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "clhcalipso": {
+    "CMOR_varname": "clhcalipso",
+    "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "CALIPSO High Level Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "hfls": {
+    "CMOR_varname": "hfls",
+    "standard_name": "surface_upward_latent_heat_flux",
+    "long_name": "Surface Upward Latent Heat Flux",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "lwup_sfc": {
+    "CMOR_varname": "rlusClim",
+    "standard_name": "surface_upwelling_longwave_flux_in_air",
+    "long_name": "Surface Upwelling Longwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "pop": {
+    "CMOR_varname": "pop",
+    "standard_name": "mole_concentration_of_particulate_organic_matter_expressed_as_phosphorus_in_sea_water",
+    "long_name": "Particulate Organic Phosphorus Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3	"
+  },
+  "co2_dvmr": {
+    "CMOR_varname": "co2",
+    "standard_name": "mole_fraction_of_carbon_dioxide_in_air",
+    "long_name": "Mole Fraction of CO2",
+    "modeling_realm": "atmos",
+    "units": "1e-6"
+  },
+  "fbddtdisi": {
+    "CMOR_varname": "fbddtdisi",
+    "standard_name": "tendency_of_ocean_mole_content_of_dissolved_inorganic_silicon_due_to_biological_processes",
+    "long_name": "Rate of Change of Dissolved Inorganic Silicate due to Biological Activity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "bddtdife": {
+    "CMOR_varname": "bddtdife",
+    "standard_name": "tendency_of_mole_concentration_of_dissolved_inorganic_iron_in_sea_water_due_to_biological_processes",
+    "long_name": "Rate of Change of Dissolved Inorganic Iron due to Biological Activity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "sconcdust": {
+    "CMOR_varname": "sconcdust",
+    "standard_name": "mass_concentration_of_dust_dry_aerosol_in_air",
+    "long_name": "Surface Concentration of Dust",
+    "modeling_realm": "atmos",
+    "units": "kg m-3"
+  },
+  "hfibthermds": {
+    "CMOR_varname": "hfibthermds",
+    "standard_name": "heat_flux_into_sea_water_due_to_iceberg_thermodynamics",
+    "long_name": "Heat Flux into Sea Water due to Iceberg Thermodynamics",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "tx_trans": {
+    "CMOR_varname": "umo",
+    "standard_name": "ocean_mass_x_transport",
+    "long_name": "Ocean Mass X Transport",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "volcello": {
+    "CMOR_varname": "volcello",
+    "standard_name": "ocean_volume",
+    "long_name": "Ocean Grid-Cell Volume",
+    "modeling_realm": "ocean",
+    "units": "m-3"
+  },
+  "chldiaz": {
+    "CMOR_varname": "chldiaz",
+    "standard_name": "mass_concentration_of_diazotrophs_expressed_as_chlorophyll_in_sea_water",
+    "long_name": "Mass Concentration of Diazotrophs expressed as Chlorophyll in Sea Water at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "kg m-3"
+  },
+  "chlmisc": {
+    "CMOR_varname": "chlmisc",
+    "standard_name": "mass_concentration_of_miscellaneous_phytoplankton_expressed_as_chlorophyll_in_sea_water",
+    "long_name": "Other Phytoplankton Chlorophyll Mass Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "kg m-3"
+  },
+  "clw": {
+    "CMOR_varname": "clwClim",
+    "standard_name": "mass_fraction_of_cloud_liquid_water_in_air",
+    "long_name": "Mass Fraction of Cloud Liquid Water",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "hfy": {
+    "CMOR_varname": "hfy",
+    "standard_name": "ocean_heat_y_transport",
+    "long_name": "Ocean Heat Y Transport",
+    "modeling_realm": "ocean",
+    "units": "W"
+  },
+  "lwdn_sfc_clr": {
+    "CMOR_varname": "rldscs",
+    "standard_name": "surface_downwelling_longwave_flux_in_air_assuming_clear_sky",
+    "long_name": "Surface Downwelling Clear-Sky Longwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "diff_cbt_t": {
+    "CMOR_varname": "difvho",
+    "standard_name": "ocean_vertical_heat_diffusivity",
+    "long_name": "Ocean Vertical Heat Diffusivity",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "masscello": {
+    "CMOR_varname": "masscello",
+    "standard_name": "sea_water_mass_per_unit_area",
+    "long_name": "Sea Water Mass Per Unit Area",
+    "modeling_realm": "ocean",
+    "units": "kg m-2"
+  },
+  "tnhusd": {
+    "CMOR_varname": "tnhusd",
+    "standard_name": "tendency_of_specific_humidity_due_to_diffusion",
+    "long_name": "Tendency of Specific Humidity due to Diffusion",
+    "modeling_realm": "atmos",
+    "units": "s-1"
+  },
+  ""reffclwc": {
+  },
+  """: {
+    "CMOR_varname": "reffclwc",
+    "standard_name": "effective_radius_of_convective_cloud_liquid_water_particle",
+    "long_name": "Convective Cloud Droplet Effective Radius",
+    "modeling_realm": "atmos",
+    "units": "m"
+  },
+  "sit": {
+    "CMOR_varname": "sit",
+    "standard_name": "sea_ice_thickness",
+    "long_name": "Sea Ice Thickness",
+    "modeling_realm": "ocean & ice",
+    "units": "m"
+  },
+  "wap": {
+    "CMOR_varname": "wap",
+    "standard_name": "lagrangian_tendency_of_air_pressure",
+    "long_name": "wap",
+    "modeling_realm": "atmos",
+    "units": "Pa s-1"
+  },
+  "bc_ddep": {
+    "CMOR_varname": "drybc",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_black_carbon_dry_aerosol_due_to_dry_deposition",
+    "long_name": "Dry Deposition Rate of Black Carbon Aerosol Mass",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "Kd_itidal_z": {
+    "CMOR_varname": "difvtrto",
+    "standard_name": "ocean_vertical_tracer_diffusivity_due_to_tides",
+    "long_name": "Ocean Vertical Tracer Diffusivity due to Tides",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "evap": {
+    "CMOR_varname": "evspsbl",
+    "standard_name": "water_evaporation_flux",
+    "long_name": "Evaporation",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "hcice": {
+    "CMOR_varname": "hcice",
+    "standard_name": "sea_ice_total_heat_content",
+    "long_name": "Sea Ice Total Heat Content",
+    "modeling_realm": "ocean & ice",
+    "units": "J"
+  },
+  "concss": {
+    "CMOR_varname": "concss",
+    "standard_name": "mass_concentration_of_seasalt_dry_aerosol_in_air",
+    "long_name": "Concentration of Seasalt",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "reffclws": {
+    "CMOR_varname": "reffclws",
+    "standard_name": "effective_radius_of_stratiform_cloud_liquid_water_particle",
+    "long_name": "Stratiform Cloud Droplet Effective Radius",
+    "modeling_realm": "atmos",
+    "units": "m"
+  },
+  "sfc_hflux_from_water_prec": {
+    "CMOR_varname": "hfrainds",
+    "standard_name": "temperature_flux_due_to_rainfall_expressed_as_heat_flux_into_sea_water",
+    "long_name": "Temperature Flux due to Rainfall Expressed as Heat Flux into Sea Water",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "slp": {
+    "CMOR_varname": "psl",
+    "standard_name": "air_pressure_at_sea_level",
+    "long_name": "Sea Level Pressure",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "evspsblveg": {
+    "CMOR_varname": "evspsblvegClim",
+    "standard_name": "water_evaporation_flux_from_canopy",
+    "long_name": "Evaporation from Canopy",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "residualFrac": {
+    "CMOR_varname": "residualFrac",
+    "standard_name": "area_fraction",
+    "long_name": "Fraction of Grid Cell that is Land but Neither Vegetation-Covered nor Bare Soil",
+    "modeling_realm": "land",
+    "units": "%"
+  },
+  "pastureFrac": {
+    "CMOR_varname": "pastureFrac",
+    "standard_name": "area_fraction",
+    "long_name": "Anthropogenic Pasture Fraction",
+    "modeling_realm": "land",
+    "units": "%"
+  },
+  "hblt_max": {
+    "CMOR_varname": "omldamax",
+    "standard_name": "ocean_mixed_layer_thickness_defined_by_mixing_scheme",
+    "long_name": "Mean Daily Maximum Ocean Mixed Layer Thickness Defined by Mixing Scheme",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "rlussi": {
+    "CMOR_varname": "rlussi",
+    "standard_name": "surface_upwelling_longwave_flux_in_air",
+    "long_name": "Upward Long Wave over Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "W m-2"
+  },
+  "salt": {
+    "CMOR_varname": "so",
+    "standard_name": "sea_water_salinity",
+    "long_name": "Sea Water Salinity",
+    "modeling_realm": "ocean",
+    "units": "psu"
+  },
+  "phyc": {
+    "CMOR_varname": "phyc",
+    "standard_name": "mole_concentration_of_phytoplankton_expressed_as_carbon_in_sea_water",
+    "long_name": "Phytoplankton Carbon Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "visc_cbu_tides": {
+    "CMOR_varname": "difvmto",
+    "standard_name": "ocean_vertical_momentum_diffusivity_due_to_tides",
+    "long_name": "Ocean Vertical Momentum Diffusivity due to Tides",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "rrvch4": {
+    "CMOR_varname": "ch4global",
+    "standard_name": "mole_fraction_of_methane_in_air",
+    "long_name": "Global Mean Mole Fraction of CH4",
+    "modeling_realm": "atmosChem",
+    "units": "1e-9"
+  },
+  "fbddtdife": {
+    "CMOR_varname": "fbddtdife",
+    "standard_name": "tendency_of_ocean_mole_content_of_dissolved_inorganic_iron_due_to_biological_processes",
+    "long_name": "Rate of Change of Dissolved Inorganic Iron due to Biological Activity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "hfnorthba": {
+    "CMOR_varname": "hfynorthba",
+    "standard_name": "northward_ocean_heat_transport_due_to_bolus_advection",
+    "long_name": "Northward Ocean Heat Transport due to Bolus Advection",
+    "modeling_realm": "ocean",
+    "units": "W"
+  },
+  "concno3": {
+    "CMOR_varname": "concno3",
+    "standard_name": "mass_concentration_ of_nitrate_dry_aerosol_in_air",
+    "long_name": "Concentration of NO3 Aerosol",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "intpbsi": {
+    "CMOR_varname": "intpbsi",
+    "standard_name": "tendency_of_ocean_mole_content_of_silicon_due_to_biological_production",
+    "long_name": "Silica Production",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "swflx": {
+    "CMOR_varname": "rsntds",
+    "standard_name": "net_downward_shortwave_flux_at_sea_water_surface",
+    "long_name": "Net Downward Shortwave Radiation at Sea Water Surface",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "gridspec": {
+    "CMOR_varname": "gridspec",
+    "standard_name": "[gridspec_ocnBgchem]",
+    "long_name": "Gridspec",
+    "modeling_realm": "ocean_biochem",
+    "units": ""
+  },
+  "zo2min": {
+    "CMOR_varname": "zo2min",
+    "standard_name": "depth_at_shallowest_local_minimum_in_vertical_profile_of_mole_concentration_of_molecular_oxygen_in_sea_water",
+    "long_name": "Depth of Oxygen Minimum Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "m"
+  },
+  "rlncs": {
+    "CMOR_varname": "rlncs",
+    "standard_name": "net_upward_longwave_flux_in_air_assuming_clear_sky",
+    "long_name": ""Net Upwelling Clear-Sky Longwave Radiation",
+  },
+  """: {
+    "CMOR_varname": "atmos",
+    "standard_name": "W m-2",
+  },
+  "evap": {
+    "CMOR_varname": "evspsblClim",
+    "standard_name": "water_evaporation_flux",
+    "long_name": "Evaporation",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "fbddtalk": {
+    "CMOR_varname": "fbddtalk",
+    "standard_name": "integral_wrt_depth_of_tendency_of_sea_water_alkalinity_expressed_as_mole_equivalent_due_to_biological_processes",
+    "long_name": "Rate of Change of Biological Alkalinity due to Biological Activity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "reff_lsclliq": {
+    "CMOR_varname": "reffclws",
+    "standard_name": "effective_radius_of_stratiform_cloud_liquid_water_particle",
+    "long_name": "Hydrometeor Effective Radius of Stratiform Cloud Liquid Water",
+    "modeling_realm": "atmos",
+    "units": "m"
+  },
+  "bmelt": {
+    "CMOR_varname": "bmelt",
+    "standard_name": "rate_of_melt_at_sea_ice_base",
+    "long_name": "Rate of Melt at Sea Ice Base",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "agm": {
+    "CMOR_varname": "diftrblo",
+    "standard_name": "ocean_tracer_bolus_laplacian_diffusivity",
+    "long_name": "Ocean Tracer Bolus Laplacian Diffusivity",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "precip": {
+    "CMOR_varname": "prClim",
+    "standard_name": "precipitation_flux",
+    "long_name": "Precipitation",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "evap_heat": {
+    "CMOR_varname": "hfls",
+    "standard_name": "surface_downward_latent_heat_flux",
+    "long_name": "Surface Downward Latent Heat Flux",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "transix": {
+    "CMOR_varname": "transix",
+    "standard_name": "sea_ice_x_transport",
+    "long_name": "Eastward Sea Ice Transport",
+    "modeling_realm": "ocean & ice",
+    "units": "kg s-1"
+  },
+  "cl": {
+    "CMOR_varname": "clClim",
+    "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "Cloud Area Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "divice": {
+    "CMOR_varname": "divice",
+    "standard_name": "??",
+    "long_name": "Strain Rate Divergence of Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "s-1"
+  },
+  "grCongel": {
+    "CMOR_varname": "grCongel",
+    "standard_name": "tendency_of_sea_ice_amount_due_to_congelation_ice_accumulation",
+    "long_name": "Congelation Sea Ice Growth Rate",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "sconcoa": {
+    "CMOR_varname": "sconcoa",
+    "standard_name": "mass_concentration_of_particulate_organic_matter_dry_aerosol_in_air",
+    "long_name": "Surface Concentration of Dry Aerosol Organic Matter",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "rGrowth": {
+    "CMOR_varname": "rGrowth",
+    "standard_name": "surface_upward_carbon_mass_flux_due_to_plant_respiration_for_biomass_growth",
+    "long_name": "Carbon Mass Flux into Atmosphere due to Growth Autotrophic Respiration on Land",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "grassFrac": {
+    "CMOR_varname": "grassFrac",
+    "standard_name": "area_fraction",
+    "long_name": "Natural Grass Fraction",
+    "modeling_realm": "land",
+    "units": "%"
+  },
+  "fco2fos": {
+    "CMOR_varname": "fco2fos",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_fossil_fuel_combustion",
+    "long_name": "Carbon Mass Flux into Atmosphere Due to Fossil Fuel Emissions of CO2",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "swup_toa_clr": {
+    "CMOR_varname": "rsutcs",
+    "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky",
+    "long_name": "TOA Outgoing Clear-Sky Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "sblsi": {
+    "CMOR_varname": "sblsi",
+    "standard_name": "surface_snow_and_ice_sublimation_flux",
+    "long_name": "Sublimation over Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2"
+  },
+  "vsi": {
+    "CMOR_varname": "vsi",
+    "standard_name": "northward_sea_ice_velocity",
+    "long_name": "Northward Sea Ice Velocity",
+    "modeling_realm": "seaIce & ocean",
+    "units": "m s-1"
+  },
+  "shflx": {
+    "CMOR_varname": "hfss",
+    "standard_name": "surface_upward_sensible_heat_flux",
+    "long_name": "Surface Upward Sensible Heat Flux",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "power_diss_tides": {
+    "CMOR_varname": "tnpeot",
+    "standard_name": "tendency_of_ocean_potential_energy_content_due_to_tides",
+    "long_name": "Tendency of Ocean Potential Energy Content due to Tides",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "phyfe": {
+    "CMOR_varname": "phyfe",
+    "standard_name": "mole_concentration_of_phytoplankton_expressed_as_iron_in_sea_water",
+    "long_name": "Phytoplankton Iron Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "lwdn_sfc_clr": {
+    "CMOR_varname": "rldscsClim",
+    "standard_name": "surface_downwelling_longwave_flux_in_air_assuming_clear_sky",
+    "long_name": "Downwelling Surface Clear-Sky Longwave",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "pot_rho_0": {
+    "CMOR_varname": "rhopoto",
+    "standard_name": "sea_water_potential_density",
+    "long_name": "Sea Water Potential Density",
+    "modeling_realm": "ocean",
+    "units": "kg m-3"
+  },
+  "ssalt_emis": {
+    "CMOR_varname": "emiss",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_seasalt_dry_aerosol_due_to_emission",
+    "long_name": "Total Emission Rate of Seasalt",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "fbddtdip": {
+    "CMOR_varname": "fbddtdip",
+    "standard_name": "tendency_of_ocean_mole_content_of_dissolved_inorganic_phosphorus_due_to_biological_processes",
+    "long_name": "Rate of Change of Dissolved Inorganic Phosphate due to Biological Activity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "tau_y": {
+    "CMOR_varname": "tauvo",
+    "standard_name": "surface_downward_y_stress",
+    "long_name": "Surface Downward Y Stress",
+    "modeling_realm": "ocean & ice",
+    "units": "N m-2"
+  },
+  "ra": {
+    "CMOR_varname": "ra",
+    "standard_name": "plant_respiration_carbon_flux",
+    "long_name": "Carbon Mass Flux into Atmosphere due to Autotrophic (Plant) Respiration on Land",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "clcalipso2_sat": {
+    "CMOR_varname": "clcalipso2",
+    "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "CALIPSO Cloud Fraction Undetected by CloudSat",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "aiso_lap": {
+    "CMOR_varname": "difmxylo",
+    "standard_name": "ocean_momentum_xy_laplacian_diffusivity",
+    "long_name": "Ocean Momentum XY Laplacian Diffusivity",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "pbp": {
+    "CMOR_varname": "pbp",
+    "standard_name": "tendency_of_mole_concentration_of_phosphorus_in_sea_water_due_to_biological_production",
+    "long_name": "Biogenic Phosphorus Production",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "tot_h2o": {
+    "CMOR_varname": "h2o",
+    "standard_name": "mass_fraction_of_water_in_air",
+    "long_name": "Mass Fraction of Water",
+    "modeling_realm": "aerosol",
+    "units": "1"
+  },
+  "tntc": {
+    "CMOR_varname": "tntc",
+    "standard_name": "tendency_of_air_temperature_due_to_convection",
+    "long_name": "Tendency of Air Temperature due to Moist Convection",
+    "modeling_realm": "atmos",
+    "units": "K s-1"
+  },
+  "phydiat": {
+    "CMOR_varname": "phydiat",
+    "standard_name": "mole_concentration_of_diatoms_expressed_as_carbon_in_sea_water",
+    "long_name": "Mole Concentration of Diatoms expressed as Carbon in Sea Water at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "DMS_wet_dep": {
+    "CMOR_varname": "wetdms",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_dimethyl_sulfide_due_to_wet_deposition",
+    "long_name": "Wet Deposition Rate of DMS",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "ssalt_wet_dep": {
+    "CMOR_varname": "wetss",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_seasalt_dry_aerosol_due_to_wet_deposition",
+    "long_name": "Wet Deposition Rate of Seasalt",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "Heat_PmE": {
+    "CMOR_varname": "hfrainds",
+    "standard_name": "temperature_flux_due_to_rainfall_expressed_as_heat_flux_into_sea_water",
+    "long_name": "Temperature Flux due to Rainfall Expressed as Heat Flux into Sea Water",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "ucomp": {
+    "CMOR_varname": "uaClim",
+    "standard_name": "eastward_wind",
+    "long_name": "Eastward Wind",
+    "modeling_realm": "atmos",
+    "units": "m s-1"
+  },
+  "sftgif": {
+    "CMOR_varname": "sftgif",
+    "standard_name": "land_ice_area_fraction",
+    "long_name": "Fraction of Grid Cell Covered with Glacier",
+    "modeling_realm": "land",
+    "units": "%"
+  },
+  "vcomp": {
+    "CMOR_varname": "va",
+    "standard_name": "northward_wind",
+    "long_name": "Northward Wind",
+    "modeling_realm": "atmos",
+    "units": "m s-1"
+  },
+  "cProduct": {
+    "CMOR_varname": "cProduct",
+    "standard_name": "carbon_content_of_products_of_anthropogenic_land_use_change",
+    "long_name": "Carbon Mass in Products of Land Use Change",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "u_ref": {
+    "CMOR_varname": "uas",
+    "standard_name": "eastward_wind",
+    "long_name": "Eastward Near-Surface Wind",
+    "modeling_realm": "aerosol",
+    "units": "m s-1"
+  },
+  "intpbfe": {
+    "CMOR_varname": "intpbfe",
+    "standard_name": "tendency_of_ocean_mole_content_of_iron_due_to_biological_production",
+    "long_name": "Iron Production",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "tnhusc": {
+    "CMOR_varname": "tnhusc",
+    "standard_name": "tendency_of_specific_humidity_due_to_convection",
+    "long_name": "Tendency of Specific Humidity due to Convection",
+    "modeling_realm": "atmos",
+    "units": "s-1"
+  },
+  "mc": {
+    "CMOR_varname": "mc",
+    "standard_name": "atmosphere_net_upward_convective_mass_flux",
+    "long_name": "Convective Mass Flux",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "intpn2": {
+    "CMOR_varname": "intpn2",
+    "standard_name": "tendency_of_ocean_mole_content_of_elemental_nitrogen_due_to_fixation",
+    "long_name": "Nitrogen Fixation Rate in Ocean",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "ctpisccp": {
+    "CMOR_varname": "pctisccp",
+    "standard_name": "air_pressure_at_cloud_top",
+    "long_name": "ISCCP Mean Cloud Top Pressure",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "calving_melt_heat": {
+    "CMOR_varname": "hfibthermds",
+    "standard_name": "heat_flux_into_sea_water_due_to_iceberg_thermodynamics",
+    "long_name": "Heat Flux into Sea Water due to Iceberg Thermodynamics",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "intpdiaz": {
+    "CMOR_varname": "intpdiaz",
+    "standard_name": "net_primary_mole_productivity_of_carbon_by_diazotrophs",
+    "long_name": "Net Primary Mole Productivity of Carbon by Diazotrophs",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "exparag": {
+    "CMOR_varname": "exparag",
+    "standard_name": "sinking_mole_flux_of_aragonite_expressed_as_carbon_in_sea_water",
+    "long_name": "Sinking Aragonite Flux",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "fsn": {
+    "CMOR_varname": "fsn",
+    "standard_name": "tendency_of_ocean_mole_content_of_elemental_nitrogen_due_to_deposition_and_fixation_and_runoff",
+    "long_name": "Surface Downward Net Flux of Nitrogen",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "dfe": {
+    "CMOR_varname": "dfe",
+    "standard_name": "mole_concentration_of_dissolved_iron_in_sea_water",
+    "long_name": "Dissolved Iron Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "cfadDbze94": {
+    "CMOR_varname": "cfadDbze94",
+    "standard_name": "histogram_of_equivalent_reflectivity_factor_over_height_above_reference_ellipsoid",
+    "long_name": "CloudSat Radar Reflectivity CFAD",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "dissic": {
+    "CMOR_varname": "dissic",
+    "standard_name": "mole_concentration_of_dissolved_inorganic_carbon_in_sea_water",
+    "long_name": "Dissolved Inorganic Carbon Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "ua": {
+    "CMOR_varname": "ua",
+    "standard_name": "eastward_wind",
+    "long_name": "Eastward Wind",
+    "modeling_realm": "atmos",
+    "units": "m s-1"
+  },
+  "clhcalipso_sat": {
+    "CMOR_varname": "clhcalipso",
+    "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "CALIPSO High Level Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "qo3v": {
+    "CMOR_varname": "tro3",
+    "standard_name": "mole_fraction_of_ozone_in_air",
+    "long_name": "Mole Fraction of O3",
+    "modeling_realm": "atmos",
+    "units": "1e-9"
+  },
+  "om_emis_col": {
+    "CMOR_varname": "emibb",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_primary_particulate_organic_matter_dry_aerosol_due_to_emission",
+    "long_name": "Total Emission of Primary Aerosol from Biomass Burning",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "clwc": {
+    "CMOR_varname": "clwc",
+    "standard_name": "mass_fraction_of_convective_cloud_liquid_water_in_air",
+    "long_name": "Mass Fraction of Convective Cloud Liquid Water",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "dust_ddep": {
+    "CMOR_varname": "drydust",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_dust_dry_aerosol_due_to_dry_deposition",
+    "long_name": "Dry Deposition Rate of Dust",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "deptho": {
+    "CMOR_varname": "deptho",
+    "standard_name": "sea_floor_depth_below_geoid",
+    "long_name": "Sea Floor Depth",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "tnhusscpbl2": {
+    "CMOR_varname": "tnhusscpbl",
+    "standard_name": "tendency_of_specific_humidity_due_to_stratiform_cloud_and_precipitation_and_boundary_layer_mixing",
+    "long_name": "Tendency of Specific Humidity due to Stratiform Cloud Condensation and Evaporation",
+    "modeling_realm": "atmos",
+    "units": "s-1"
+  },
+  "fprec_melt_heat": {
+    "CMOR_varname": "hfsnthermds",
+    "standard_name": "heat_flux_into_sea_water_due_to_snow_thermodynamics",
+    "long_name": "Heat Flux into Sea Water due to Snow Thermodynamics",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "o2": {
+    "CMOR_varname": "o2",
+    "standard_name": "mole_concentration_of_molecular_oxygen_in_sea_water",
+    "long_name": "Dissolved Oxygen Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "z": {
+    "CMOR_varname": "zfull",
+    "standard_name": "height_above_reference_ellipsoid",
+    "long_name": "Altitude of Model Full-Levels",
+    "modeling_realm": "atmos",
+    "units": "m"
+  },
+  "mrlsl": {
+    "CMOR_varname": "mrlsl",
+    "standard_name": "moisture_content_of_soil_layer",
+    "long_name": "Water Content of Soil Layer",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "tntmp": {
+    "CMOR_varname": "tntmp",
+    "standard_name": "tendency_of_air_temperature_due_to_model_physics",
+    "long_name": "Tendency of Air Temperature due to Diabatic Processes",
+    "modeling_realm": "atmos",
+    "units": "K s-1"
+  },
+  "ta700": {
+    "CMOR_varname": "ta700",
+    "standard_name": "air_temperature",
+    "long_name": ""Air Temperature",
+  },
+  """: {
+    "CMOR_varname": "atmos",
+    "standard_name": "K",
+  },
+  "v_ref": {
+    "CMOR_varname": "vas",
+    "standard_name": "northward_wind",
+    "long_name": "Northward Near-Surface Wind",
+    "modeling_realm": "aerosol",
+    "units": "m s-1"
+  },
+  "rln": {
+    "CMOR_varname": "rln",
+    "standard_name": "net_upward_longwave_flux_in_air",
+    "long_name": "Net Upward Longwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "rh_ref_cmip": {
+    "CMOR_varname": "hurs",
+    "standard_name": "relative_humidity",
+    "long_name": "Near-Surface Relative Humidity",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "clic": {
+    "CMOR_varname": "clic",
+    "standard_name": "mass_fraction_of_convective_cloud_ice_in_air",
+    "long_name": "Mass Fraction of Convective Cloud Ice",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "cSoilSlow": {
+    "CMOR_varname": "cSoilSlow",
+    "standard_name": "slow_soil_pool_carbon_content",
+    "long_name": "Carbon Mass in Slow Soil Pool",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "tossq": {
+    "CMOR_varname": "tossq",
+    "standard_name": "square_of_sea_surface_temperature",
+    "long_name": "Square of Sea Surface Temperature",
+    "modeling_realm": "ocean",
+    "units": "K2"
+  },
+  "clcalipso2": {
+    "CMOR_varname": "clcalipso",
+    "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "CALIPSO Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "difvso": {
+    "CMOR_varname": "difvso",
+    "standard_name": "ocean_vertical_salt_diffusivity",
+    "long_name": "Ocean Vertical Salt Diffusivity",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "fddtdip": {
+    "CMOR_varname": "fddtdip",
+    "standard_name": "tendency_of_ocean_mole_content_of_dissolved_inorganic_phosphorus",
+    "long_name": "Rate of Change of Net Dissolved Inorganic Phosphate",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "expc": {
+    "CMOR_varname": "expc",
+    "standard_name": "sinking_mole_flux_of_particulate_organic_matter_expressed_as_carbon_in_sea_water",
+    "long_name": "Sinking Particulate Organic Carbon Flux",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "albisccp": {
+    "CMOR_varname": "albisccp",
+    "standard_name": "cloud_albedo",
+    "long_name": "ISCCP Mean Cloud Albedo",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "fl_lsrain": {
+    "CMOR_varname": "prlsprof",
+    "standard_name": "large_scale_rainfall_flux",
+    "long_name": "Stratiform Rainfall Flux",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "darag": {
+    "CMOR_varname": "darag",
+    "standard_name": "tendency_of_mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water_due_to_dissolution",
+    "long_name": "Aragonite Dissolution",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "cropFrac": {
+    "CMOR_varname": "cropFrac",
+    "standard_name": "area_fraction",
+    "long_name": "Crop Fraction",
+    "modeling_realm": "land",
+    "units": "%"
+  },
+  "physi": {
+    "CMOR_varname": "physi",
+    "standard_name": "mole_concentration_of_phytoplankton_expressed_as_silicon_in_sea_water",
+    "long_name": "Phytoplankton Silica Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "tot_cld_amt": {
+    "CMOR_varname": "clt",
+    "standard_name": "cloud_area_fraction",
+    "long_name": "Total Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "frc": {
+    "CMOR_varname": "frc",
+    "standard_name": "tendency_of_ocean_mole_content_of_carbon_due_to_sedimentation",
+    "long_name": "Downward Carbon Flux at Ocean Bottom",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "bddtalk": {
+    "CMOR_varname": "bddtalk",
+    "standard_name": "tendency_of_sea_water_alkalinity_expressed_as_mole_equivalent_due_to_biological_processes",
+    "long_name": "Rate of Change of Alkalinity due to Biological Activity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "cfadLidarsr532_sat": {
+    "CMOR_varname": "cfadLidarsr532",
+    "standard_name": "histogram_of_backscattering_ratio_over_height_above_reference_ellipsoid",
+    "long_name": "CALIPSO Scattering Ratio",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "sphum": {
+    "CMOR_varname": "husClim",
+    "standard_name": "specific_humidity",
+    "long_name": "Specific Humidity",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "cllcalipso_sat": {
+    "CMOR_varname": "cllcalipso",
+    "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "CALIPSO Low Level Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "rh_ref_cmip_max": {
+    "CMOR_varname": "rhsmax",
+    "standard_name": "relative_humidity",
+    "long_name": "Surface Daily Maximum Relative Humidity",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "hfls": {
+    "CMOR_varname": "hflsClim",
+    "standard_name": "surface_upward_latent_heat_flux",
+    "long_name": "Surface Upward Latent Heat Flux",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "t_surf": {
+    "CMOR_varname": "ts",
+    "standard_name": "surface_temperature",
+    "long_name": "Surface Temperature",
+    "modeling_realm": "land",
+    "units": "K"
+  },
+  "ccice": {
+    "CMOR_varname": "clic",
+    "standard_name": "mass_fraction_of_convective_cloud_ice_in_air",
+    "long_name": "Mass Fraction of Convective Cloud Ice",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "thkcello": {
+    "CMOR_varname": "thkcello",
+    "standard_name": "cell_thickness",
+    "long_name": "Ocean Model Cell Thickness",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "cl": {
+    "CMOR_varname": "cl",
+    "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "Cloud Area Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "WVP": {
+    "CMOR_varname": "prw",
+    "standard_name": "atmosphere_water_vapor_content",
+    "long_name": "Water Vapor Path",
+    "modeling_realm": "atmos",
+    "units": "kg m-2"
+  },
+  "rh_cmip": {
+    "CMOR_varname": "hur",
+    "standard_name": "relative_humidity",
+    "long_name": "Relative Humidity",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "sconcss": {
+    "CMOR_varname": "sconcss",
+    "standard_name": "mass_concentration_of_seasalt_dry_aerosol_in_air",
+    "long_name": "Surface Concentration of Seasalt",
+    "modeling_realm": "atmos",
+    "units": "kg m-3"
+  },
+  "zos": {
+    "CMOR_varname": "zos",
+    "standard_name": "sea_surface_height_above_geoid",
+    "long_name": "Sea Surface Height Above Geoid",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "pon": {
+    "CMOR_varname": "pon",
+    "standard_name": "mole_concentration_of_particulate_organic_matter_expressed_as_nitrogen_in_sea_water",
+    "long_name": "Particulate Organic Nitrogen Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "rsu": {
+    "CMOR_varname": "rsu",
+    "standard_name": "upwelling_shortwave_flux_in_air",
+    "long_name": "Upwelling Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "chlpico": {
+    "CMOR_varname": "chlpico",
+    "standard_name": "mass_concentration_of_picophytoplankton_expressed_as_chlorophyll_in_sea_water",
+    "long_name": "Mass Concentration of Picophytoplankton expressed as Chlorophyll in Sea Water at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "kg m-3"
+  },
+  "sfc_salt_flux_ice": {
+    "CMOR_varname": "sfdsi",
+    "standard_name": "downward_sea_ice_basal_salt_flux",
+    "long_name": "Downward Sea Ice Basal Salt Flux",
+    "modeling_realm": "ocean & seaIce",
+    "units": "kg m-2 s-1"
+  },
+  "po4": {
+    "CMOR_varname": "po4",
+    "standard_name": "mole_concentration_of_phosphate_in_sea_water",
+    "long_name": "Dissolved Phosphate Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "wt": {
+    "CMOR_varname": "wo",
+    "standard_name": "upward_sea_water_velocity",
+    "long_name": "Upward Sea Water Velocity",
+    "modeling_realm": "ocean",
+    "units": "m s-1"
+  },
+  "snoToice": {
+    "CMOR_varname": "snoToIce",
+    "standard_name": "tendency_of_sea_ice_amount_due_to_snow_conversion",
+    "long_name": "Snow-Ice Formation Rate",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "hfss": {
+    "CMOR_varname": "hfss",
+    "standard_name": "surface_downward_sensible_heat_flux",
+    "long_name": "Surface Downward Sensible Heat Flux",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "fescav": {
+    "CMOR_varname": "fescav",
+    "standard_name": "tendency_of_mole_concentration_of_dissolved_iron_in_sea_water_due_to_scavenging_by_inorganic_particles",
+    "long_name": "Nonbiogenic Iron Scavenging",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "strairx": {
+    "CMOR_varname": "strairx",
+    "standard_name": "surface_downward_x_stress",
+    "long_name": "Eastward atmospheric stress on sea ice",
+    "modeling_realm": "ocean & ice",
+    "units": "N m-2"
+  },
+  "SO2_ddep_cmip": {
+    "CMOR_varname": "dryso2",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_sulfur_dioxide_due_to_dry_deposition",
+    "long_name": "Dry Deposition Rate of SO2",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "snw": {
+    "CMOR_varname": "snw",
+    "standard_name": "surface_snow_amount",
+    "long_name": "Surface Snow Amount",
+    "modeling_realm": "land_ice",
+    "units": "kg m-2"
+  },
+  "NH3_ddep_cmip": {
+    "CMOR_varname": "drynh3",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_ammonia_due_to_dry_deposition",
+    "long_name": "Dry Deposition Rate of NH3",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "pp": {
+    "CMOR_varname": "pp",
+    "standard_name": "tendency_of_mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water_due_to_net_primary_production",
+    "long_name": "Primary Carbon Production by Phytoplankton",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "cldnvi": {
+    "CMOR_varname": "cldnvi",
+    "standard_name": "atmosphere_number_content_of_cloud_droplets",
+    "long_name": "Column Integrated Cloud Droplet Number",
+    "modeling_realm": "atmos",
+    "units": "m-2"
+  },
+  "water": {
+    "CMOR_varname": "mrso",
+    "standard_name": "soil_moisture_content",
+    "long_name": "Total Soil Moisture Content",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "swup_toa_clr": {
+    "CMOR_varname": "rsutcsClim",
+    "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky",
+    "long_name": "TOA Outgoing Clear-Sky Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "clis": {
+    "CMOR_varname": "clis",
+    "standard_name": "mass_fraction_of_stratiform_cloud_ice_in_air",
+    "long_name": "Mass Fraction of Stratiform Cloud Ice",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "hfnorthdiff": {
+    "CMOR_varname": "hfnorthdiff",
+    "standard_name": "northward_ocean_heat_transport_due_to_diffusion",
+    "long_name": "Northward Ocean Heat Transport due to Diffusion",
+    "modeling_realm": "ocean",
+    "units": "W"
+  },
+  "omlmax": {
+    "CMOR_varname": "omlmax",
+    "standard_name": "ocean_mixed_layer_thickness_defined_by_mixing_scheme",
+    "long_name": "Monthly Maximum Ocean Mixed Layer Thickness Defined by Mixing Scheme",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "pbsi": {
+    "CMOR_varname": "pbsi",
+    "standard_name": "tendency_of_mole_concentration_of_silicon_in_sea_water_due_to_biological_production",
+    "long_name": "Biogenic Silica Production",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "tz_trans_sq": {
+    "CMOR_varname": "wmosq",
+    "standard_name": "square_of_upward_ocean_mass_transport",
+    "long_name": "Square of Upward Ocean Mass Transport",
+    "modeling_realm": "ocean",
+    "units": "kg2 s-2"
+  },
+  "dem_c": {
+    "CMOR_varname": "demc",
+    "standard_name": "convective_cloud_longwave_emissivity",
+    "long_name": "Convective Cloud Emissivity",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "tauvo": {
+    "CMOR_varname": "tauvo",
+    "standard_name": "surface_downward_y_stress",
+    "long_name": "Surface Downward Y Stress",
+    "modeling_realm": "ocean",
+    "units": "N m-2"
+  },
+  "u_ref": {
+    "CMOR_varname": "uasClim",
+    "standard_name": "eastward_wind",
+    "long_name": "Eastward Near-Surface Wind",
+    "modeling_realm": "aerosol",
+    "units": "m s-1"
+  },
+  "mld_sq": {
+    "CMOR_varname": "mlotstsq",
+    "standard_name": "square_of_ocean_mixed_layer_thickness_defined_by_sigma_t",
+    "long_name": "Square of Ocean Mixed Layer Thickness Defined by Sigma T",
+    "modeling_realm": "ocean",
+    "units": "m2"
+  },
+  "reff_lsclice": {
+    "CMOR_varname": "reffclis",
+    "standard_name": "effective_radius_of_stratiform_cloud_ice_particle",
+    "long_name": "Hydrometeor Effective Radius of Stratiform Cloud Ice",
+    "modeling_realm": "atmos",
+    "units": "m"
+  },
+  "cld_amt_2d": {
+    "CMOR_varname": "clt",
+    "standard_name": "cloud_area_fraction",
+    "long_name": "Total Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "mfo": {
+    "CMOR_varname": "mfo",
+    "standard_name": "sea_water_transport_across_line",
+    "long_name": "Sea Water Transport",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "clisccp": {
+    "CMOR_varname": "clisccp",
+    "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "ISCCP Cloud Area Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "si": {
+    "CMOR_varname": "si",
+    "standard_name": "mole_concentration_of_silicate_in_sea_water",
+    "long_name": "Dissolved Silicate Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "bfe": {
+    "CMOR_varname": "bfe",
+    "standard_name": "mole_concentration_of_particulate_organic_matter_expressed_as_iron_in_sea_water",
+    "long_name": "Particulate Biogenic Iron Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "pbfe": {
+    "CMOR_varname": "pbfe",
+    "standard_name": "tendency_of_mole_concentration_of_iron_in_sea_water_due_to_biological_production",
+    "long_name": "Biogenic Iron Production",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "phyn": {
+    "CMOR_varname": "phyn",
+    "standard_name": "mole_concentration_of_phytoplankton_expressed_as_nitrogen_in_sea_water",
+    "long_name": "Phytoplankton Nitrogen Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "bsi": {
+    "CMOR_varname": "bsi",
+    "standard_name": "mole_concentration_of_particulate_matter_expressed_as_silicon_in_sea_water",
+    "long_name": "Particulate Biogenic Silica Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "rsdssi": {
+    "CMOR_varname": "rsdssi",
+    "standard_name": "surface_downwelling_shortwave_flux_in_air",
+    "long_name": "Downward Shortwave over Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "W m-2"
+  },
+  "rho_dzt": {
+    "CMOR_varname": "masscello",
+    "standard_name": "sea_water_mass_per_unit_area",
+    "long_name": "Sea Water Mass Per Unit Area",
+    "modeling_realm": "ocean",
+    "units": "kg m-2"
+  },
+  "dtau_c": {
+    "CMOR_varname": "dtauc",
+    "standard_name": "atmosphere_optical_thickness_due_to_convective_cloud",
+    "long_name": "Convective Cloud Optical Depth",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "sfc_hflux_from_runoff": {
+    "CMOR_varname": "hfrunoffds",
+    "standard_name": "temperature_flux_due_to_runoff_expressed_as_heat_flux_into_sea_water",
+    "long_name": "Temperature Flux due to Runoff Expressed as Heat Flux into Sea Water",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "eviscu": {
+    "CMOR_varname": "eviscu",
+    "standard_name": "atmosphere_momentum_diffusivity",
+    "long_name": "Eddy Viscosity Coefficients for Momentum",
+    "modeling_realm": "atmos",
+    "units": "m2 s-1"
+  },
+  "grFrazil": {
+    "CMOR_varname": "grFrazil",
+    "standard_name": "tendency_of_sea_ice_amount_due_to_frazil_ice_accumulation_in_leads",
+    "long_name": "Frazil Sea Ice Growth (Leads) Rate",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "zossga": {
+    "CMOR_varname": "zossga",
+    "standard_name": "global_average_steric_sea_level_change",
+    "long_name": "Global Average Steric Sea Level Change",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "swup_sfc": {
+    "CMOR_varname": "rsus",
+    "standard_name": "surface_upwelling_shortwave_flux_in_air",
+    "long_name": "Surface Upwelling Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "rsdcs": {
+    "CMOR_varname": "rsdcs",
+    "standard_name": "downwelling_shortwave_flux_in_air_assuming_clear_sky",
+    "long_name": "Downwelling Clear-Sky Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "msftyyzba": {
+    "CMOR_varname": "msftyyzba",
+    "standard_name": "ocean_y_overturning_mass_streamfunction_due_to_bolus_advection",
+    "long_name": "Ocean Y Overturning Mass Streamfunction due to Bolus Advection",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "tsnint": {
+    "CMOR_varname": "tsnint",
+    "standard_name": "temperature_at_interface_between_sea_ice_and_snow",
+    "long_name": "Temperature at Interface Between Sea Ice and Snow",
+    "modeling_realm": "ocean & ice",
+    "units": "K"
+  },
+  "intpbp": {
+    "CMOR_varname": "intpbp",
+    "standard_name": "tendency_of_ocean_mole_content_of_phosphorus_due_to_biological_production",
+    "long_name": "Phosphorus Production",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1	"
+  },
+  "pme_river": {
+    "CMOR_varname": "wfo",
+    "standard_name": "water_flux_into_sea_water",
+    "long_name": "Water Flux Into Sea Water",
+    "modeling_realm": "ocean",
+    "units": "kg m-2 s-1"
+  },
+  "concso2": {
+    "CMOR_varname": "concso2",
+    "standard_name": "mole_fraction_of_sulfur_dioxide_in_air",
+    "long_name": "Mole Fraction of SO2",
+    "modeling_realm": "aerosol",
+    "units": "1"
+  },
+  "phyfe": {
+    "CMOR_varname": "phyfe",
+    "standard_name": "mole_concentration_of_phytoplankton_expressed_as_iron_in_sea_water",
+    "long_name": "Phytoplankton Iron Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "fbddtdic": {
+    "CMOR_varname": "fbddtdic",
+    "standard_name": "tendency_of_ocean_mole_content_of_dissolved_inorganic_carbon_due_to_biological_processes",
+    "long_name": "Rate of Change of Dissolved Inorganic Carbon due to Biological Activity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "mrsofc": {
+    "CMOR_varname": "mrsofc",
+    "standard_name": "soil_moisture_content_at_field_capacity",
+    "long_name": "Capacity of Soil to Store Water",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "concpoa": {
+    "CMOR_varname": "concpoa",
+    "standard_name": "mass_concentration_of_primary_particulate_organic_matter_dry_aerosol_in_air",
+    "long_name": "Concentration of Dry Aerosol Primary Organic Matter",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "mrso": {
+    "CMOR_varname": "mrsoClim",
+    "standard_name": "soil_moisture_content",
+    "long_name": "Total Soil Moisture Content",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "sfc_po45": {
+    "CMOR_varname": "po4",
+    "standard_name": "??",
+    "long_name": "phosphate",
+    "modeling_realm": "atmos",
+    "units": "mol P m-3"
+  },
+  "cfadDbze94_sat": {
+    "CMOR_varname": "cfadDbze94",
+    "standard_name": "histogram_of_equivalent_reflectivity_factor_over_height_above_reference_ellipsoid",
+    "long_name": "CloudSat Radar Reflectivity CFAD",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "intpcalcite": {
+    "CMOR_varname": "intpcalcite",
+    "standard_name": "tendency_of_ocean_mole_content_of_calcite_expressed_as_carbon_due_to_biological_production",
+    "long_name": "Calcite Production",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "snc": {
+    "CMOR_varname": "snc",
+    "standard_name": "surface_snow_area_fraction",
+    "long_name": "Surface Snow Area Fraction",
+    "modeling_realm": "ocean & ice",
+    "units": "%"
+  },
+  "clcalipso2": {
+    "CMOR_varname": "clcalipso2",
+    "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "CALIPSO Cloud Fraction Undetected by CloudSat",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "rsds": {
+    "CMOR_varname": "rsds",
+    "standard_name": "downwelling_shortwave_flux_in_sea_water",
+    "long_name": "Downwelling Shortwave Radiation in Sea Water",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "volo": {
+    "CMOR_varname": "volo",
+    "standard_name": "sea_water_volume",
+    "long_name": "Sea Water Volume",
+    "modeling_realm": "ocean",
+    "units": "m3"
+  },
+  "cdnc": {
+    "CMOR_varname": "cdnc",
+    "standard_name": "number_concentration_of_cloud_liquid_water_particles_in_air",
+    "long_name": "Cloud Droplet Number Concentration",
+    "modeling_realm": "aerosol",
+    "units": "m-3"
+  },
+  "epcalc100": {
+    "CMOR_varname": "epcalc100",
+    "standard_name": "sinking_mole_flux_of_calcite_expressed_as_carbon_in_sea_water",
+    "long_name": "Downward Flux of Calcite",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "si": {
+    "CMOR_varname": "si",
+    "standard_name": "mole_concentration_of_silicate_in_sea_water",
+    "long_name": "Dissolved Silicate Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "o2": {
+    "CMOR_varname": "o2",
+    "standard_name": "mole_concentration_of_molecular_oxygen_in_sea_water",
+    "long_name": "Dissolved Oxygen Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3	"
+  },
+  "reff_ccclliq": {
+    "CMOR_varname": "reffclwc",
+    "standard_name": "effective_radius_of_convective_cloud_liquid_water_particle",
+    "long_name": "Hydrometeor Effective Radius of Convective Cloud Liquid Water",
+    "modeling_realm": "atmos",
+    "units": "m"
+  },
+  "sfc_hflux_from_water_evap": {
+    "CMOR_varname": "hfevapds",
+    "standard_name": "temperature_flux_due_to_evaporation_expressed_as_heat_flux_out_of_sea_water",
+    "long_name": "Temperature Flux due to Evaporation Expressed as Heat Flux Out of Sea Water",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "tasmin": {
+    "CMOR_varname": "tasmin",
+    "standard_name": "air_temperature",
+    "long_name": "Daily Minimum Near-Surface Air Temperature",
+    "modeling_realm": "atmos",
+    "units": "K"
+  },
+  "rh_ref": {
+    "CMOR_varname": "rh_ref",
+    "standard_name": "relative_humidity",
+    "long_name": "relative humidity at 2 m",
+    "modeling_realm": "atmos",
+    "units": "percent"
+  },
+  "wfo": {
+    "CMOR_varname": "wfo",
+    "standard_name": "water_flux_into_sea_water",
+    "long_name": "Water Flux Into Sea Water",
+    "modeling_realm": "ocean",
+    "units": "kg m-2 s-1"
+  },
+  "conv_freq": {
+    "CMOR_varname": "ciClim",
+    "standard_name": "convection_time_fraction",
+    "long_name": "Fraction of Time Convection Occurs",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "hfgeou": {
+    "CMOR_varname": "hfgeou",
+    "standard_name": "upward_geothermal_heat_flux_at_sea_floor",
+    "long_name": "Upward Geothermal Heat Flux at Sea Floor",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "detoc": {
+    "CMOR_varname": "detoc",
+    "standard_name": "mole_concentration_of_organic_detritus_expressed_as_carbon_in_sea_water",
+    "long_name": "Detrital Organic Carbon Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "graz": {
+    "CMOR_varname": "graz",
+    "standard_name": "tendency_of_mole_concentration_of_dissolved_iron_in_sea_water_due_to_grazing_of_phytoplankton",
+    "long_name": "Total Grazing of Phytoplankton by Zooplankton",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "omldamax_mon": {
+    "CMOR_varname": "omldamax",
+    "standard_name": "ocean_mixed_layer_thickness_defined_by_mixing_scheme",
+    "long_name": "Mean Daily Maximum Ocean Mixed Layer Thickness Defined by Mixing Scheme",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "concbc": {
+    "CMOR_varname": "concbc",
+    "standard_name": "mass_concentration_of_black_carbon_dry_aerosol_in_air",
+    "long_name": "Concentration of Black Carbon Aerosol",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "dpocdtpico": {
+    "CMOR_varname": "dpocdtpico",
+    "standard_name": "tendency_of_mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water_due_to_net_primary_production_by_picophytoplankton",
+    "long_name": "Tendency of Mole Concentration of Organic Carbon in Sea Water due to Net Primary Production by Picophytoplankton",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "tntr": {
+    "CMOR_varname": "tntr",
+    "standard_name": "tendency_of_air_temperature_due_to_radiative_heating",
+    "long_name": "Tendency of Air Temperature due to Radiative Heating",
+    "modeling_realm": "atmos",
+    "units": "K s-1"
+  },
+  "eparag100": {
+    "CMOR_varname": "eparag100",
+    "standard_name": "sinking_mole_flux_of_aragonite_expressed_as_carbon_in_sea_water",
+    "long_name": "Downward Flux of Aragonite",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "SOA_ddep": {
+    "CMOR_varname": "drysoa",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_secondary_particulate_organic_matter_dry_aerosol_due_to_dry_deposition",
+    "long_name": "Dry Deposition Rate of Dry Aerosol Secondary Organic Matter",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "mld": {
+    "CMOR_varname": "mlotst",
+    "standard_name": "ocean_mixed_layer_thickness_defined_by_sigma_t",
+    "long_name": "Ocean Mixed Layer Thickness Defined by Sigma T",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "sea_level": {
+    "CMOR_varname": "zos",
+    "standard_name": "sea_surface_height_above_geoid",
+    "long_name": "Sea Surface Height Above Geoid",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "gridspec": {
+    "CMOR_varname": "gridspec",
+    "standard_name": "[gridspec_seaIce]",
+    "long_name": "Gridspec",
+    "modeling_realm": "ocean & ice",
+    "units": ""
+  },
+  "diff_t": {
+    "CMOR_varname": "edt",
+    "standard_name": "atmosphere_heat_diffusivity",
+    "long_name": "Eddy Diffusivity Coefficient for Temperature Variable",
+    "modeling_realm": "atmos",
+    "units": "m2 s-1"
+  },
+  "diff_cbt_tides": {
+    "CMOR_varname": "difvtrto",
+    "standard_name": "ocean_vertical_tracer_diffusivity_due_to_tides",
+    "long_name": "Ocean Vertical Tracer Diffusivity due to Tides",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "temp_global_ave": {
+    "CMOR_varname": "thetaoga",
+    "standard_name": "sea_water_potential_temperature",
+    "long_name": "Global Average Sea Water Potential Temperature",
+    "modeling_realm": "ocean",
+    "units": "K"
+  },
+  "swup_toa": {
+    "CMOR_varname": "rsut4co2",
+    "standard_name": "toa_outgoing_shortwave_flux",
+    "long_name": "TOA Outgoing Shortwave Radiation in 4XCO2 Atmosphere",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "prec_conv": {
+    "CMOR_varname": "prcClim",
+    "standard_name": "convective_precipitation_flux",
+    "long_name": "Convective Precipitation",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "msftyrhozba": {
+    "CMOR_varname": "msftyrhozba",
+    "standard_name": "ocean_y_overturning_mass_streamfunction_due_to_bolus_advection",
+    "long_name": "Ocean Y Overturning Mass Streamfunction due to Bolus Advection",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "SWDN": {
+    "CMOR_varname": "rsds",
+    "standard_name": "downwelling_shortwave_flux_in_sea_water",
+    "long_name": "Downwelling Shortwave Radiation in Sea Water",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "clws": {
+    "CMOR_varname": "clws",
+    "standard_name": "mass_fraction_of_stratiform_cloud_liquid_water_in_air",
+    "long_name": "Mass Fraction of Stratiform Cloud Liquid Water",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "sconcso4": {
+    "CMOR_varname": "sconcso4",
+    "standard_name": "mass_concentration_of_sulfate_dry_aerosol_in_air",
+    "long_name": "Surface Concentration of SO4",
+    "modeling_realm": "atmos",
+    "units": "kg m-3"
+  },
+  "msftmyz": {
+    "CMOR_varname": "msftmyz",
+    "standard_name": "ocean_meridional_overturning_mass_streamfunction",
+    "long_name": "Ocean Meridional Overturning Mass Streamfunction",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "vmo": {
+    "CMOR_varname": "vmo",
+    "standard_name": "ocean_mass_y_transport",
+    "long_name": "Ocean Mass Y Transport",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "mc_half": {
+    "CMOR_varname": "mc",
+    "standard_name": "atmosphere_net_upward_convective_mass_flux",
+    "long_name": "Convective Mass Flux",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "dpo2": {
+    "CMOR_varname": "dpo2",
+    "standard_name": "surface_molecular_oxygen_partial_pressure_difference_between_sea_water_and_air",
+    "long_name": "Delta PO2",
+    "modeling_realm": "ocean_biochem",
+    "units": "Pa"
+  },
+  "hflssi": {
+    "CMOR_varname": "hflssi",
+    "standard_name": "surface_upward_latent_heat_flux",
+    "long_name": "Surface Upward Latent Heat Flux over Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "W m-2"
+  },
+  "t_ref": {
+    "CMOR_varname": "tasClim",
+    "standard_name": "air_temperature",
+    "long_name": "Near-Surface Air Temperature",
+    "modeling_realm": "atmos",
+    "units": "K"
+  },
+  "power_diss": {
+    "CMOR_varname": "tnpeo",
+    "standard_name": "tendency_of_ocean_potential_energy_content",
+    "long_name": "Tendency of Ocean Potential Energy Content",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "olr_clr": {
+    "CMOR_varname": "rlutcs",
+    "standard_name": "toa_outgoing_longwave_flux_assuming_clear_sky",
+    "long_name": "TOA Outgoing Clear-Sky Longwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "rootd": {
+    "CMOR_varname": "rootd",
+    "standard_name": "soil_moisture_content_at_field_capacity",
+    "long_name": "Capacity of Soil to Store Water",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "tauv": {
+    "CMOR_varname": "tauvClim",
+    "standard_name": "surface_downward_northward_stress",
+    "long_name": "Surface Downward Northward Wind Stress",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "cRoot": {
+    "CMOR_varname": "cRoot",
+    "standard_name": "root_carbon_content",
+    "long_name": "Carbon Mass in Roots",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "mrros": {
+    "CMOR_varname": "mrros",
+    "standard_name": "surface_runoff_flux",
+    "long_name": "Surface Runoff",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "snow_tot": {
+    "CMOR_varname": "prsn",
+    "standard_name": "snowfall_flux",
+    "long_name": "Snowfall Flux",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "pnew": {
+    "CMOR_varname": "pnew",
+    "standard_name": "tendency_of_mole_concentration_of_organic_carbon_in_sea_water_due_to_net_new_primary_production",
+    "long_name": "Primary Carbon Production by Phytoplankton Based on NO3 Alone",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "msftmrhoz": {
+    "CMOR_varname": "msftmrhoz",
+    "standard_name": "ocean_meridional_overturning_mass_streamfunction",
+    "long_name": "Ocean Meridional Overturning Mass Streamfunction",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "detoc": {
+    "CMOR_varname": "detoc",
+    "standard_name": "mole_concentration_of_organic_detritus_expressed_as_carbon_in_sea_water",
+    "long_name": "Detrital Organic Carbon Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3	"
+  },
+  "masso": {
+    "CMOR_varname": "masso",
+    "standard_name": "sea_water_mass",
+    "long_name": "Sea Water Mass",
+    "modeling_realm": "ocean",
+    "units": "kg"
+  },
+  "dtau_s": {
+    "CMOR_varname": "dtaus",
+    "standard_name": "atmosphere_optical_thickness_due_to_stratiform_cloud",
+    "long_name": "Stratiform Cloud Optical Depth",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "epn100": {
+    "CMOR_varname": "epn100",
+    "standard_name": "sinking_mole_flux_of_particulate_organic_nitrogen_in_sea_water",
+    "long_name": "Downward Flux of Particulate Organic Nitrogen",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "psiu": {
+    "CMOR_varname": "msftbarot",
+    "standard_name": "ocean_barotropic_mass_streamfunction",
+    "long_name": "Ocean Barotropic Mass Streamfunction",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "fbddtdin": {
+    "CMOR_varname": "fbddtdin",
+    "standard_name": "tendency_of_ocean_mole_content_of_dissolved_inorganic_nitrogen_due_to_biological_processes",
+    "long_name": "Rate of Change of Dissolved Inorganic Nitrogen due to Biological Activity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "diftrelo": {
+    "CMOR_varname": "diftrelo",
+    "standard_name": "ocean_tracer_epineutral_laplacian_diffusivity",
+    "long_name": "Ocean Tracer Epineutral Laplacian Diffusivity",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "SH": {
+    "CMOR_varname": "hfss",
+    "standard_name": "surface_downward_sensible_heat_flux",
+    "long_name": "Surface Downward Sensible Heat Flux",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "lsice": {
+    "CMOR_varname": "clis",
+    "standard_name": "mass_fraction_of_stratiform_cloud_ice_in_air",
+    "long_name": "Mass Fraction of Stratiform Cloud Ice",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "evisct": {
+    "CMOR_varname": "evisct",
+    "standard_name": "atmosphere_heat_diffusivity",
+    "long_name": "Eddy Diffusivity Coefficients for Temperature",
+    "modeling_realm": "atmos",
+    "units": "m2 s-1"
+  },
+  "chlmisc": {
+    "CMOR_varname": "chlmisc",
+    "standard_name": "mass_concentration_of_miscellaneous_phytoplankton_expressed_as_chlorophyll_in_sea_water",
+    "long_name": ""Other Phytoplankton Chlorophyll Mass Concentration",
+  },
+  """: {
+    "CMOR_varname": "ocean_biochem",
+    "standard_name": "kg m-3",
+  },
+  "fLuc": {
+    "CMOR_varname": "fLuc",
+    "standard_name": "surface_net_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_anthropogenic_land_use_change",
+    "long_name": "Net Carbon Mass Flux into Atmosphere due to Land Use Change",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "swup_toa": {
+    "CMOR_varname": "rsutClim",
+    "standard_name": "toa_outgoing_shortwave_flux",
+    "long_name": "TOA Outgoing Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "swdn_sfc_clr": {
+    "CMOR_varname": "rsdscs",
+    "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky",
+    "long_name": "Surface Downwelling Clear-Sky Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "tsice": {
+    "CMOR_varname": "tsice",
+    "standard_name": "surface_temperature",
+    "long_name": "Surface Temperature of Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "K"
+  },
+  "cldncl": {
+    "CMOR_varname": "cldncl",
+    "standard_name": "number_concentration_of_cloud_liquid_water_particles_in_air_at_liquid_water_cloud_top",
+    "long_name": "Cloud Droplet Number Concentration of Cloud Tops",
+    "modeling_realm": "atmos",
+    "units": "m-3"
+  },
+  "soga": {
+    "CMOR_varname": "soga",
+    "standard_name": "sea_water_salinity",
+    "long_name": "Global Mean Sea Water Salinity",
+    "modeling_realm": "ocean",
+    "units": "psu"
+  },
+  "conv_cld_base": {
+    "CMOR_varname": "ccbClim",
+    "standard_name": "air_pressure_at_convective_cloud_base",
+    "long_name": "Air Pressure at Convective Cloud Base",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "tclisccp": {
+    "CMOR_varname": "cltisccp",
+    "standard_name": "cloud_area_fraction",
+    "long_name": "ISCCP Total Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "tran": {
+    "CMOR_varname": "tran",
+    "standard_name": "transpiration_flux",
+    "long_name": "Transpiration",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "nh4": {
+    "CMOR_varname": "nh4",
+    "standard_name": "mole_concentration_of_ammonium_in_sea_water",
+    "long_name": "Dissolved Ammonium Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3	"
+  },
+  "ph": {
+    "CMOR_varname": "ph",
+    "standard_name": "sea_water_ph_reported_on_total_scale",
+    "long_name": "pH at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "1"
+  },
+  "rh": {
+    "CMOR_varname": "rh",
+    "standard_name": "heterotrophic_respiration_carbon_flux",
+    "long_name": "Carbon Mass Flux into Atmosphere due to Heterotrophic Respiration on Land",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "msftyyz": {
+    "CMOR_varname": "msftyyz",
+    "standard_name": "ocean_y_overturning_mass_streamfunction",
+    "long_name": "Ocean Y Overturning Mass Streamfunction",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "SSH": {
+    "CMOR_varname": "zos",
+    "standard_name": "sea_surface_height_above_geoid",
+    "long_name": "Sea Surface Height Above Geoid",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "ice_calving": {
+    "CMOR_varname": "ficeberg",
+    "standard_name": "water_flux_into_sea_water_from_icebergs",
+    "long_name": "Water Flux into Sea Water From Icebergs",
+    "modeling_realm": "ocean",
+    "units": "kg m-2 s-1"
+  },
+  "cfc_11": {
+    "CMOR_varname": "cfc11",
+    "standard_name": "moles_per_unit_mass_of_cfc11_in_sea_water",
+    "long_name": "Moles Per Unit Mass of CFC-11 in Sea Water",
+    "modeling_realm": "ocean",
+    "units": "mol kg-1"
+  },
+  "pfull_cmip": {
+    "CMOR_varname": "pfull",
+    "standard_name": "air_pressure",
+    "long_name": "Pressure on Model Full-Levels",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "lwdn_sfc": {
+    "CMOR_varname": "rlds",
+    "standard_name": "surface_downwelling_longwave_flux_in_air",
+    "long_name": "Surface Downwelling Longwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "cllcalipso": {
+    "CMOR_varname": "cllcalipso",
+    "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "CALIPSO Low Level Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "omg500": {
+    "CMOR_varname": "wap500",
+    "standard_name": "lagrangian_tendency_of_air_pressure",
+    "long_name": "omega (=dp/dt)",
+    "modeling_realm": "atmos",
+    "units": "Pa s-1"
+  },
+  "usi": {
+    "CMOR_varname": "usi",
+    "standard_name": "eastward_sea_ice_velocity",
+    "long_name": "Eastward Sea Ice Velocity",
+    "modeling_realm": "seaIce & ocean",
+    "units": "m s-1"
+  },
+  "tntscpbl2": {
+    "CMOR_varname": "tntscpbl",
+    "standard_name": "tendency_of_air_temperature_due_to_stratiform_cloud_and_precipitation_and_boundary_layer_mixing",
+    "long_name": "Tendency of Air Temperature due to Stratiform Cloud Condensation and Evaporation",
+    "modeling_realm": "atmos",
+    "units": "K s-1"
+  },
+  "cVeg": {
+    "CMOR_varname": "cVeg",
+    "standard_name": "vegetation_carbon_content",
+    "long_name": "Carbon Mass in Vegetation",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "dispkevfo": {
+    "CMOR_varname": "dispkevfo",
+    "standard_name": "ocean_kinetic_energy_dissipation_per_unit_area_due_to_vertical_friction",
+    "long_name": "Ocean Kinetic Energy Dissipation Per Unit Area due to Vertical Friction",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "mlotst": {
+    "CMOR_varname": "mlotst",
+    "standard_name": "ocean_mixed_layer_thickness_defined_by_sigma_t",
+    "long_name": "Ocean Mixed Layer Thickness Defined by Sigma T",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "bddtdisi": {
+    "CMOR_varname": "bddtdisi",
+    "standard_name": "tendency_of_mole_concentration_of_dissolved_inorganic_silicate_in_sea_water_due_to_biological_processes",
+    "long_name": "Rate of Change of Dissolved Inorganic Silicate due to Biological Activity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "cSoilFast": {
+    "CMOR_varname": "cSoilFast",
+    "standard_name": "fast_soil_pool_carbon_content",
+    "long_name": "Carbon Mass in Fast Soil Pool",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "aer_ab_c_vs": {
+    "CMOR_varname": "abs550aer",
+    "standard_name": "atmosphere_absorption_optical_thickness_due_to_ambient_aerosol",
+    "long_name": "Ambient Aerosol Absorption Optical Thickness at 550 nm",
+    "modeling_realm": "aerosol",
+    "units": "1"
+  },
+  "bsi": {
+    "CMOR_varname": "bsi",
+    "standard_name": "mole_concentration_of_particulate_matter_expressed_as_silicon_in_sea_water",
+    "long_name": "Particulate Biogenic Silica Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "power_diss_back": {
+    "CMOR_varname": "tnpeotb",
+    "standard_name": "tendency_of_ocean_potential_energy_content_due_to_background",
+    "long_name": "Tendency of Ocean Potential Energy Content due to Background",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "cli": {
+    "CMOR_varname": "cliClim",
+    "standard_name": "mass_fraction_of_cloud_ice_in_air",
+    "long_name": "Mass Fraction of Cloud Ice",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "talk": {
+    "CMOR_varname": "talk",
+    "standard_name": "sea_water_alkalinity_expressed_as_mole_equivalent",
+    "long_name": "Total Alkalinity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "sconcsoa": {
+    "CMOR_varname": "sconcsoa",
+    "standard_name": "mass_concentration_of_secondary_particulate_organic_matter_dry_aerosol_in_air",
+    "long_name": "Surface Concentration of Dry Aerosol Secondary Organic Matter",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "phyp": {
+    "CMOR_varname": "phyp",
+    "standard_name": "mole_concentration_of_phytoplankton_expressed_as_phosphorus_in_sea_water",
+    "long_name": "Phytoplankton Phosphorus Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "phydiat": {
+    "CMOR_varname": "phydiat",
+    "standard_name": "mole_concentration_of_diatoms_expressed_as_carbon_in_sea_water",
+    "long_name": ""Mole Concentration of Diatoms expressed as Carbon in Sea Water",
+  },
+  """: {
+    "CMOR_varname": "ocean_biochem",
+    "standard_name": "mol m-3",
+  },
+  "mrsos": {
+    "CMOR_varname": "mrsosClim",
+    "standard_name": "moisture_content_of_soil_layer",
+    "long_name": "Moisture in Upper Portion of Soil Column",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "NH3_emis_cmip2": {
+    "CMOR_varname": "eminh3",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_ammonia_due_to_emission",
+    "long_name": "Total Emission Rate of NH3",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "VI": {
+    "CMOR_varname": "vsi",
+    "standard_name": "northward_sea_ice_velocity",
+    "long_name": "Northward Sea Ice Velocity",
+    "modeling_realm": "seaIce & ocean",
+    "units": "m s-1"
+  },
+  "t_ref_max": {
+    "CMOR_varname": "tasmax",
+    "standard_name": "air_temperature",
+    "long_name": "Daily Maximum Near-Surface Air Temperature",
+    "modeling_realm": "atmos",
+    "units": "K"
+  },
+  "runoff": {
+    "CMOR_varname": "friver",
+    "standard_name": "water_flux_into_sea_water_from_rivers",
+    "long_name": "Water Flux into Sea Water From Rivers",
+    "modeling_realm": "ocean",
+    "units": "kg m-2 s-1"
+  },
+  "soil_T": {
+    "CMOR_varname": "tsl",
+    "standard_name": "soil_temperature",
+    "long_name": "Temperature of Soil",
+    "modeling_realm": "land",
+    "units": "K"
+  },
+  "hght": {
+    "CMOR_varname": "zg",
+    "standard_name": "geopotential_height",
+    "long_name": "Geopotential Height",
+    "modeling_realm": "atmos",
+    "units": "m"
+  },
+  "sss": {
+    "CMOR_varname": "sos",
+    "standard_name": "sea_surface_salinity",
+    "long_name": "Sea Surface Salinity",
+    "modeling_realm": "ocean",
+    "units": "psu"
+  },
+  "msftbarot": {
+    "CMOR_varname": "msftbarot",
+    "standard_name": "ocean_barotropic_mass_streamfunction",
+    "long_name": "Ocean Barotropic Mass Streamfunction",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "intppico": {
+    "CMOR_varname": "intppico",
+    "standard_name": "net_primary_mole_productivity_of_carbon_by_picophytoplankton",
+    "long_name": "Net Primary Mole Productivity of Carbon by Picophytoplankton",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "SOA_col": {
+    "CMOR_varname": "loadsoa",
+    "standard_name": "atmosphere_mass_content_of_secondary_particulate_organic_matter_dry_aerosol",
+    "long_name": "Load of Dry Aerosol Secondary Organic Matter",
+    "modeling_realm": "atmos",
+    "units": "kg m-2"
+  },
+  "aer_ex_c_870": {
+    "CMOR_varname": "od870aer",
+    "standard_name": "atmosphere_optical_thickness_due_to_ambient_aerosol",
+    "long_name": "Ambient Aerosol Opitical Thickness at 870 nm",
+    "modeling_realm": "aerosol",
+    "units": "1"
+  },
+  "fprec": {
+    "CMOR_varname": "prsn",
+    "standard_name": "snowfall_flux",
+    "long_name": "Snowfall Flux where Ice Free Ocean over Sea",
+    "modeling_realm": "ocean",
+    "units": "kg m-2 s-1"
+  },
+  "snm": {
+    "CMOR_varname": "snmClim",
+    "standard_name": "surface_snow_melt_flux",
+    "long_name": "Surface Snow Melt",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "ridgice": {
+    "CMOR_varname": "ridgice",
+    "standard_name": "tendency_of_sea_ice_area_fraction_due_to_ridging",
+    "long_name": "Sea Ice Ridging Rate",
+    "modeling_realm": "ocean & ice",
+    "units": "s-1"
+  },
+  "rh_ref_cmip": {
+    "CMOR_varname": "hursClim",
+    "standard_name": "relative_humidity",
+    "long_name": "Near-Surface Relative Humidity",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "temp": {
+    "CMOR_varname": "ta",
+    "standard_name": "air_temperature",
+    "long_name": "Air Temperature",
+    "modeling_realm": "atmos",
+    "units": "K"
+  },
+  "intdic": {
+    "CMOR_varname": "intdic",
+    "standard_name": "ocean_mass_content_of_dissolved_inorganic_carbon",
+    "long_name": "Dissolved Inorganic Carbon Content",
+    "modeling_realm": "ocean_biochem",
+    "units": "kg m-2	"
+  },
+  "om_ddep": {
+    "CMOR_varname": "drypoa",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_primary_particulate_organic_matter_dry_aerosol_due_to_dry_deposition",
+    "long_name": "Dry Deposition Rate of Dry Aerosol Primary Organic Matter",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "physi": {
+    "CMOR_varname": "physi",
+    "standard_name": "mole_concentration_of_phytoplankton_expressed_as_silicon_in_sea_water",
+    "long_name": "Phytoplankton Silica Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "fHarvest": {
+    "CMOR_varname": "fHarvest",
+    "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_crop_harvesting",
+    "long_name": "Carbon Mass Flux into Atmosphere due to Crop Harvesting",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "expn": {
+    "CMOR_varname": "expn",
+    "standard_name": "sinking_mole_flux_of_particulate_organic_nitrogen_in_sea_water",
+    "long_name": "Sinking Particulate Organic Nitrogen Flux",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "dcalc": {
+    "CMOR_varname": "dcalc",
+    "standard_name": "tendency_of_mole_concentration_of_calcite_expressed_as_carbon_in_sea_water_due_to_dissolution",
+    "long_name": "Calcite Dissolution",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "olr": {
+    "CMOR_varname": "rlut",
+    "standard_name": "toa_outgoing_longwave_flux",
+    "long_name": "TOA Outgoing Longwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "cfc11": {
+    "CMOR_varname": "cfc11",
+    "standard_name": "moles_of_cfc11_per_unit_mass_in_sea_water",
+    "long_name": "Moles Per Unit Mass of CFC-11 in Sea Water",
+    "modeling_realm": "ocean",
+    "units": "mol kg-1"
+  },
+  "vhgm_rho": {
+    "CMOR_varname": "msftyyzba",
+    "standard_name": "ocean_y_overturning_mass_streamfunction_due_to_bolus_advection",
+    "long_name": "Ocean Y Overturning Mass Streamfunction due to Bolus Advection",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "tasmax": {
+    "CMOR_varname": "tasmaxClim",
+    "standard_name": "air_temperature",
+    "long_name": "Daily Maximum Near-Surface Air Temperature",
+    "modeling_realm": "atmos",
+    "units": "K"
+  },
+  "concdms": {
+    "CMOR_varname": "concdms",
+    "standard_name": "mole_fraction_of_dimethyl_sulfide_in_air",
+    "long_name": "Mole Fraction of DMS",
+    "modeling_realm": "aerosol",
+    "units": "1"
+  },
+  "diff_cbt_back": {
+    "CMOR_varname": "difvtrbo",
+    "standard_name": "ocean_vertical_tracer_diffusivity_due_to_background",
+    "long_name": "Ocean Vertical Tracer Diffusivity due to Background",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "pbo": {
+    "CMOR_varname": "pbo",
+    "standard_name": "sea_water_pressure_at_sea_floor",
+    "long_name": "Sea Water Pressure at Sea floor",
+    "modeling_realm": "ocean",
+    "units": "dbar"
+  },
+  "concoa": {
+    "CMOR_varname": "concoa",
+    "standard_name": "mass_concentration_of_particulate_organic_matter_dry_aerosol_in_air",
+    "long_name": "Concentration of Dry Aerosol Organic Matter",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "diff_m": {
+    "CMOR_varname": "evu",
+    "standard_name": "atmosphere_momentum_diffusivity",
+    "long_name": "Eddy Viscosity Coefficient for Momentum Variables",
+    "modeling_realm": "atmos",
+    "units": "m2 s-1"
+  },
+  "dissic": {
+    "CMOR_varname": "dissic",
+    "standard_name": "mole_concentration_of_dissolved_inorganic_carbon_in_sea_water",
+    "long_name": "Dissolved Inorganic Carbon Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "t_ref_min": {
+    "CMOR_varname": "tasmin",
+    "standard_name": "air_temperature",
+    "long_name": "Daily Minimum Near-Surface Air Temperature",
+    "modeling_realm": "atmos",
+    "units": "K"
+  },
+  "fddtdic": {
+    "CMOR_varname": "fddtdic",
+    "standard_name": "tendency_of_ocean_mole_content_of_dissolved_inorganic_carbon",
+    "long_name": "Rate of Change of Net Dissolved Inorganic Carbon",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "cli": {
+    "CMOR_varname": "cli",
+    "standard_name": "mass_fraction_of_cloud_ice_in_air",
+    "long_name": "Mass Fraction of Cloud Ice",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "intpmisc": {
+    "CMOR_varname": "intpmisc",
+    "standard_name": "net_primary_mole_productivity_of_carbon_by_miscellaneous_phytoplankton",
+    "long_name": "Primary Organic Carbon Production by Other Phytoplankton",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "lsliq": {
+    "CMOR_varname": "clws",
+    "standard_name": "mass_fraction_of_stratiform_cloud_liquid_water_in_air",
+    "long_name": "Mass Fraction of Stratiform Cloud Liquid Water",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "cltcalipso_sat": {
+    "CMOR_varname": "cltcalipso",
+    "standard_name": "cloud_area_fraction",
+    "long_name": "CALIPSO Total Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "tnhus2": {
+    "CMOR_varname": "tnhus",
+    "standard_name": "tendency_of_specific_humidity",
+    "long_name": "Tendency of Specific Humidity",
+    "modeling_realm": "atmos",
+    "units": "s-1"
+  },
+  "tnhusa": {
+    "CMOR_varname": "tnhusa",
+    "standard_name": "tendency_of_specific_humidity_due_to_advection",
+    "long_name": "Tendency of Specific Humidity due to Advection",
+    "modeling_realm": "atmos",
+    "units": "s-1"
+  },
+  "sconcnh4": {
+    "CMOR_varname": "sconcnh4",
+    "standard_name": "mass_concentration_of_ammonium_dry_aerosol_in_air",
+    "long_name": "Surface Concentration of NH4",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "hur": {
+    "CMOR_varname": "hur",
+    "standard_name": "relative_humidity",
+    "long_name": "Relative Humidity",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "snw": {
+    "CMOR_varname": "snwClim",
+    "standard_name": "surface_snow_amount",
+    "long_name": "Surface Snow Amount",
+    "modeling_realm": "land_ice",
+    "units": "kg m-2"
+  },
+  "swup_sfc": {
+    "CMOR_varname": "rsusClim",
+    "standard_name": "surface_upwelling_shortwave_flux_in_air",
+    "long_name": "Surface Upwelling Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "simpleDMS_emis_cmip": {
+    "CMOR_varname": "emidms",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_dimethyl_sulfide_due_to_emission",
+    "long_name": "Total Emission Rate of DMS",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "temp": {
+    "CMOR_varname": "thetao",
+    "standard_name": "sea_water_potential_temperature",
+    "long_name": "Sea Water Potential Temperature",
+    "modeling_realm": "ocean",
+    "units": "K"
+  },
+  "t_surf": {
+    "CMOR_varname": "tsClim",
+    "standard_name": "surface_temperature",
+    "long_name": "Surface Temperature",
+    "modeling_realm": "land",
+    "units": "K"
+  },
+  "mrlso": {
+    "CMOR_varname": "mrfsoClim",
+    "standard_name": "soil_frozen_water_content",
+    "long_name": "Soil Frozen Water Content",
+    "modeling_realm": "land & landIce",
+    "units": "kg m-2"
+  },
+  "snow_tot": {
+    "CMOR_varname": "prsnClim",
+    "standard_name": "snowfall_flux",
+    "long_name": "Snowfall Flux",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "netrad_1_Pa": {
+    "CMOR_varname": "rtmt",
+    "standard_name": "net_downward_radiative_flux_at_top_of_atmosphere_model",
+    "long_name": "Net Downward Flux at Top of Model",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "pcalc": {
+    "CMOR_varname": "pcalc",
+    "standard_name": "tendency_of_mole_concentration_of_calcite_expressed_as_carbon_in_sea_water_due_to_biological_production",
+    "long_name": "Calcite Production",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "chldiat": {
+    "CMOR_varname": "chldiat",
+    "standard_name": "mass_concentration_of_diatoms_expressed_as_chlorophyll_in_sea_water",
+    "long_name": "Diatom Chlorophyll Mass Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "kg m-3"
+  },
+  "hfls": {
+    "CMOR_varname": "hfls",
+    "standard_name": "surface_downward_latent_heat_flux",
+    "long_name": "Surface Downward Latent Heat Flux",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "sconcno3": {
+    "CMOR_varname": "sconcno3",
+    "standard_name": "mass_concentration_of_nitrate_dry_aerosol_in_air",
+    "long_name": "Surface Concentration of NO3",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "t_ref": {
+    "CMOR_varname": "tas",
+    "standard_name": "air_temperature",
+    "long_name": "Near-Surface Air Temperature Where Land",
+    "modeling_realm": "land",
+    "units": "K"
+  },
+  "cSoil": {
+    "CMOR_varname": "cSoil",
+    "standard_name": "soil_carbon_content",
+    "long_name": "Carbon in Soil Pool",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "rsussi": {
+    "CMOR_varname": "rsussi",
+    "standard_name": "surface_upwelling_shortwave_flux_in_air",
+    "long_name": "Upward Shortwave over Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "W m-2"
+  },
+  "fddtalk": {
+    "CMOR_varname": "fddtalk",
+    "standard_name": "integral_wrt_depth_of_tendency_of_sea_water_alkalinity_expressed_as_mole_equivalent",
+    "long_name": "Rate of Change of Alkalinity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "bddtdip": {
+    "CMOR_varname": "bddtdip",
+    "standard_name": "tendency_of_mole_concentration_of_dissolved_inorganic_phosphate_in_sea_water_due_to_biological_processes",
+    "long_name": "Rate of Change of Dissolved Phosphate due to Biological Activity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "hus": {
+    "CMOR_varname": "hus",
+    "standard_name": "specific_humidity",
+    "long_name": "Specific Humidity",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "parasol_refl_sat": {
+    "CMOR_varname": "parasolRefl",
+    "standard_name": "toa_bidirectional_reflectance",
+    "long_name": "PARASOL Reflectance",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "va": {
+    "CMOR_varname": "va",
+    "standard_name": "northward_wind",
+    "long_name": "Northward Wind",
+    "modeling_realm": "atmos",
+    "units": "m s-1"
+  },
+  "fl_ccsnow": {
+    "CMOR_varname": "prsnc",
+    "standard_name": "convective_snowfall_flux",
+    "long_name": "Convective Snowfall Flux",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "zostoga": {
+    "CMOR_varname": "zostoga",
+    "standard_name": "global_average_thermosteric_sea_level_change",
+    "long_name": "Global Average Thermosteric Sea Level Change",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "evap": {
+    "CMOR_varname": "evs",
+    "standard_name": "water_evaporation_flux",
+    "long_name": "Water Evaporation Flux Where Ice Free Ocean over Sea",
+    "modeling_realm": "ocean",
+    "units": "kg m-2 s-1"
+  },
+  "concdust": {
+    "CMOR_varname": "concdust",
+    "standard_name": "mass_concentration_ of_dust_dry_aerosol_in_air",
+    "long_name": "Concentration of Dust",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "strairy": {
+    "CMOR_varname": "strairy",
+    "standard_name": "surface_downward_y_stress",
+    "long_name": "Northward Atmospheric Stress On Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "N m-2"
+  },
+  "parag": {
+    "CMOR_varname": "parag",
+    "standard_name": "tendency_of_mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water_due_to_biological_production",
+    "long_name": "Aragonite Production",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "soil_T": {
+    "CMOR_varname": "tslClim",
+    "standard_name": "soil_temperature",
+    "long_name": "Temperature of Soil",
+    "modeling_realm": "land",
+    "units": "K"
+  },
+  "fgco2": {
+    "CMOR_varname": "fgco2",
+    "standard_name": "surface_downward_mass_flux_of_carbon_dioxide_expressed_as_carbon",
+    "long_name": "Surface Downward CO2 Flux",
+    "modeling_realm": "ocean_biochem",
+    "units": "kg m-2 s-1"
+  },
+  "tau_x": {
+    "CMOR_varname": "tauu",
+    "standard_name": "surface_downward_eastward_stress",
+    "long_name": "Surface Downward Eastward Wind Stress",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "tnta": {
+    "CMOR_varname": "tnta",
+    "standard_name": "tendency_of_air_temperature_due_to_advection",
+    "long_name": "Tendency of Air Temperature due to Advection",
+    "modeling_realm": "atmos",
+    "units": "K s-1"
+  },
+  "zooc": {
+    "CMOR_varname": "zooc",
+    "standard_name": "mole_concentration_of_zooplankton_expressed_as_carbon_in_sea_water",
+    "long_name": "Zooplankton Carbon Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "hfydiff": {
+    "CMOR_varname": "hfydiff",
+    "standard_name": "ocean_heat_y_transport_due_to_diffusion",
+    "long_name": "Ocean Heat Y Transport due to Diffussion",
+    "modeling_realm": "ocean",
+    "units": "W"
+  },
+  "netrad_1_Pa": {
+    "CMOR_varname": "rtmtClim",
+    "standard_name": "net_downward_radiative_flux_at_top_of_atmosphere_model",
+    "long_name": "Net Downward Flux at Top of Model",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "baresoilFrac": {
+    "CMOR_varname": "baresoilFrac",
+    "standard_name": "area_fraction",
+    "long_name": "Bare Soil Fraction",
+    "modeling_realm": "land",
+    "units": "%"
+  },
+  "phypico": {
+    "CMOR_varname": "phypico",
+    "standard_name": "mole_concentration_of_picophytoplankton_expressed_as_carbon_in_sea_water",
+    "long_name": "Mole Concentration of Picophytoplankton expressed as Carbon in Sea Water at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "ucomp": {
+    "CMOR_varname": "ua",
+    "standard_name": "eastward_wind",
+    "long_name": "Eastward Wind",
+    "modeling_realm": "atmos",
+    "units": "m s-1"
+  },
+  "SOA_chem_col": {
+    "CMOR_varname": "chepsoa",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_secondary_particulate_organic_matter_dry_aerosol_due_to_net_chemical_production",
+    "long_name": "Production Rate of Dry Aerosol Secondary Organic Matter",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "u": {
+    "CMOR_varname": "uo",
+    "standard_name": "sea_water_x_velocity",
+    "long_name": "Sea Water X Velocity",
+    "modeling_realm": "ocean",
+    "units": "m s-1"
+  },
+  "diftrblo": {
+    "CMOR_varname": "diftrblo",
+    "standard_name": "ocean_tracer_bolus_laplacian_diffusivity",
+    "long_name": "Ocean Tracer Bolus Laplacian Diffusivity",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "tasmax": {
+    "CMOR_varname": "tasmax",
+    "standard_name": "air_temperature",
+    "long_name": "Daily Maximum Near-Surface Air Temperature",
+    "modeling_realm": "atmos",
+    "units": "K"
+  },
+  "dpco2": {
+    "CMOR_varname": "dpco2",
+    "standard_name": "surface_carbon_dioxide_partial_pressure_difference_between_sea_water_and_air",
+    "long_name": "Delta PCO2",
+    "modeling_realm": "ocean_biochem",
+    "units": "Pa"
+  },
+  "dust_emis": {
+    "CMOR_varname": "emidust",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_dust_dry_aerosol_due_to_emission",
+    "long_name": "Total Emission Rate of Dust",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "swup_sfc_clr": {
+    "CMOR_varname": "rsuscsClim",
+    "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky",
+    "long_name": "Surface Upwelling Clear-Sky Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "SO4_ddep_cmip": {
+    "CMOR_varname": "dryso4",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_sulfate_dry_aerosol_due_to_dry_deposition",
+    "long_name": "Dry Deposition Rate of SO4",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "tz_trans": {
+    "CMOR_varname": "wmo",
+    "standard_name": "upward_ocean_mass_transport",
+    "long_name": "Upward Ocean Mass Transport",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "Kd_z": {
+    "CMOR_varname": "difvso",
+    "standard_name": "ocean_vertical_salt_diffusivity",
+    "long_name": "Ocean Vertical Salt Diffusivity",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "nbp": {
+    "CMOR_varname": "nbp",
+    "standard_name": "surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_all_land_processes",
+    "long_name": "Carbon Mass Flux out of Atmosphere due to Net Biospheric Production on Land",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "msftmrhozba": {
+    "CMOR_varname": "msftmrhozba",
+    "standard_name": "ocean_meridional_overturning_mass_streamfunction_due_to_bolus_advection",
+    "long_name": "Ocean Meridional Overturning Mass Streamfunction due to Bolus Advection",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "calc": {
+    "CMOR_varname": "calc",
+    "standard_name": "mole_concentration_of_calcite_expressed_as_carbon_in_sea_water",
+    "long_name": "Calcite Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3	"
+  },
+  "hfssi": {
+    "CMOR_varname": "hfssi",
+    "standard_name": "surface_upward_sensible_heat_flux",
+    "long_name": "Surface Upward Sensible Heat Flux over Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "W m-2"
+  },
+  "parasolRefl": {
+    "CMOR_varname": "parasolRefl",
+    "standard_name": "toa_bidirectional_reflectance",
+    "long_name": "PARASOL Reflectance",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "aredi": {
+    "CMOR_varname": "diftrelo",
+    "standard_name": "ocean_tracer_epineutral_laplacian_diffusivity",
+    "long_name": "Ocean Tracer Epineutral Laplacian Diffusivity",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "conv_cld_top": {
+    "CMOR_varname": "cct",
+    "standard_name": "air_pressure_at_convective_cloud_top",
+    "long_name": "Air Pressure at Convective Cloud Top",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "hfyba": {
+    "CMOR_varname": "hfyba",
+    "standard_name": "ocean_heat_y_transport_due_to_bolus_advection",
+    "long_name": "Ocean Heat Y Transport due to Bolus Advection",
+    "modeling_realm": "ocean",
+    "units": "W"
+  },
+  "v": {
+    "CMOR_varname": "vo",
+    "standard_name": "sea_water_y_velocity",
+    "long_name": "Sea Water Y Velocity",
+    "modeling_realm": "ocean",
+    "units": "m s-1"
+  },
+  "omega": {
+    "CMOR_varname": "wap",
+    "standard_name": "lagrangian_tendency_of_air_pressure",
+    "long_name": "omega (=dp/dt)",
+    "modeling_realm": "atmos",
+    "units": "Pa s-1"
+  },
+  "sftlf": {
+    "CMOR_varname": "sftlf",
+    "standard_name": "land_area_fraction",
+    "long_name": "Land Area Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "olr_clr": {
+    "CMOR_varname": "rlutcsClim",
+    "standard_name": "toa_outgoing_longwave_flux_assuming_clear_sky",
+    "long_name": "TOA Outgoing Clear-Sky Longwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "netrad_toa": {
+    "CMOR_varname": "rtoa",
+    "standard_name": "toa_net_downward_radiative_flux",
+    "long_name": "TOA Net Downward Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "om_wet_dep": {
+    "CMOR_varname": "wetpoa",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_primary_particulate_organic_matter_dry_aerosol_due_to_wet_deposition",
+    "long_name": "Wet Deposition Rate of Dry Aerosol Primary Organic Matter",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "hfxdiff": {
+    "CMOR_varname": "hfxdiff",
+    "standard_name": "ocean_heat_x_transport_due_to_diffusion",
+    "long_name": "Ocean Heat X Transport due to Diffusion",
+    "modeling_realm": "ocean",
+    "units": "W"
+  },
+  "mcd": {
+    "CMOR_varname": "mcd",
+    "standard_name": "atmosphere_downdraft_convective_mass_flux",
+    "long_name": "Downdraught Convective Mass Flux",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "ageice": {
+    "CMOR_varname": "ageice",
+    "standard_name": "age_of_sea_ice",
+    "long_name": "Age of Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "years"
+  },
+  "areacello": {
+    "CMOR_varname": "areacello",
+    "standard_name": "cell_area",
+    "long_name": "Ocean Grid-Cell Area",
+    "modeling_realm": "ocean",
+    "units": "m-2"
+  },
+  "phyp": {
+    "CMOR_varname": "phyp",
+    "standard_name": "mole_concentration_of_phytoplankton_expressed_as_phosphorus_in_sea_water",
+    "long_name": "Phytoplankton Phosphorus Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "totNH4_wet_dep": {
+    "CMOR_varname": "wetnh4",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_ammonium_dry_aerosol_due_to_wet_deposition",
+    "long_name": "Wet Deposition Rate of NH4+NH3",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "sst_sq": {
+    "CMOR_varname": "tossq",
+    "standard_name": "square_of_sea_surface_temperature",
+    "long_name": "Square of Sea Surface Temperature",
+    "modeling_realm": "ocean",
+    "units": "K2"
+  },
+  "gm_eddy_ke_source": {
+    "CMOR_varname": "tnkebto",
+    "standard_name": "tendency_of_ocean_eddy_kinetic_energy_content_due_to_bolus_transport",
+    "long_name": "Tendency of Ocean Eddy Kinetic Energy Content due to Bolus Transport",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "tnhusmp": {
+    "CMOR_varname": "tnhusmp",
+    "standard_name": "tendency_of_specific_humidity_due_to_model_physics",
+    "long_name": "Tendency of Specific Humidity due to Model Physics",
+    "modeling_realm": "atmos",
+    "units": "s-1"
+  },
+  "WP_all_clouds": {
+    "CMOR_varname": "clwviClim",
+    "standard_name": "atmosphere_cloud_condensed_water_content",
+    "long_name": "Condensed Water Path",
+    "modeling_realm": "atmos",
+    "units": "kg m-2"
+  },
+  "cSoilMedium": {
+    "CMOR_varname": "cSoilMedium",
+    "standard_name": "medium_soil_pool_carbon_content",
+    "long_name": "Carbon Mass in Medium Soil Pool",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "lai": {
+    "CMOR_varname": "lai",
+    "standard_name": "leaf_area_index",
+    "long_name": "Leaf Area Index",
+    "modeling_realm": "land",
+    "units": "1"
+  },
+  "IWP_all_clouds": {
+    "CMOR_varname": "clivi",
+    "standard_name": "atmosphere_cloud_ice_content",
+    "long_name": "Ice Water Path",
+    "modeling_realm": "atmos",
+    "units": "kg m-2"
+  },
+  "mrsos": {
+    "CMOR_varname": "mrsos",
+    "standard_name": "moisture_content_of_soil_layer",
+    "long_name": "Moisture in Upper Portion of Soil Column",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "no3": {
+    "CMOR_varname": "no3",
+    "standard_name": "mole_concentration_of_nitrate_in_sea_water",
+    "long_name": "Dissolved Nitrate Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "zsatarag": {
+    "CMOR_varname": "zsatarag",
+    "standard_name": "minimum_depth_of_aragonite_undersaturation_in_sea_water",
+    "long_name": "Aragonite Saturation Depth",
+    "modeling_realm": "ocean_biochem",
+    "units": "m"
+  },
+  "aiso_bih": {
+    "CMOR_varname": "difmxybo",
+    "standard_name": "ocean_momentum_xy_biharmonic_diffusivity",
+    "long_name": "Ocean Momentum XY Biharmonic Diffusivity",
+    "modeling_realm": "ocean",
+    "units": "m4 s-1"
+  },
+  "prsn": {
+    "CMOR_varname": "prsn",
+    "standard_name": "snowfall_flux",
+    "long_name": "Snowfall Flux where Ice Free Ocean over Sea",
+    "modeling_realm": "ocean",
+    "units": "kg m-2 s-1"
+  },
+  "sens_heat": {
+    "CMOR_varname": "hfss",
+    "standard_name": "surface_downward_sensible_heat_flux",
+    "long_name": "Surface Downward Sensible Heat Flux",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "evspsblsoi": {
+    "CMOR_varname": "evspsblsoiClim",
+    "standard_name": "water_evaporation_flux_from_soil",
+    "long_name": "Water Evaporation from Soil",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "sulfate_col_cmip": {
+    "CMOR_varname": "loadso4",
+    "standard_name": "atmosphere_mass_content_of_sulfate_dry_aerosol",
+    "long_name": "Load of SO4",
+    "modeling_realm": "atmos",
+    "units": "kg m-2"
+  },
+  "ccliq": {
+    "CMOR_varname": "clwc",
+    "standard_name": "mass_fraction_of_convective_cloud_liquid_water_in_air",
+    "long_name": "Mass Fraction of Convective Cloud Liquid Water",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "clmcalipso_sat": {
+    "CMOR_varname": "clmcalipso",
+    "standard_name": "cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "CALIPSO Mid Level Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "tot_nh4_col": {
+    "CMOR_varname": "loadnh4",
+    "standard_name": "atmosphere_mass_content_of_ammonium_dry_aerosol",
+    "long_name": "Load of NH4",
+    "modeling_realm": "atmos",
+    "units": "kg m-2"
+  },
+  "pr_ocean": {
+    "CMOR_varname": "pr",
+    "standard_name": "rainfall_flux",
+    "long_name": "Rainfall Flux where Ice Free Ocean over Sea",
+    "modeling_realm": "ocean",
+    "units": "kg m-2 s-1"
+  },
+  "lw_heat": {
+    "CMOR_varname": "rlds",
+    "standard_name": "surface_net_downward_longwave_flux",
+    "long_name": "Surface Net Downward Longwave Radiation",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "streng": {
+    "CMOR_varname": "streng",
+    "standard_name": "compressive_strength_of_sea_ice",
+    "long_name": "Compressive Sea Ice Strength",
+    "modeling_realm": "ocean & ice",
+    "units": "N m-1"
+  },
+  "psl": {
+    "CMOR_varname": "pslClim",
+    "standard_name": "air_pressure_at_sea_level",
+    "long_name": "Sea Level Pressure",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "expp": {
+    "CMOR_varname": "expp",
+    "standard_name": "sinking_mole_flux_of_particulate_organic_phosphorus_in_sea_water",
+    "long_name": "Sinking Particulate Organic Phosphorus Flux",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "fddtdin": {
+    "CMOR_varname": "fddtdin",
+    "standard_name": "tendency_of_ocean_mole_content_of_dissolved_inorganic_nitrogen",
+    "long_name": "Rate of Change of Net Dissolved Inorganic Nitrogen",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "LH": {
+    "CMOR_varname": "hfls",
+    "standard_name": "surface_downward_latent_heat_flux",
+    "long_name": "Surface Downward Latent Heat Flux",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "snd": {
+    "CMOR_varname": "snd",
+    "standard_name": "surface_snow_thickness",
+    "long_name": "Snow Depth",
+    "modeling_realm": "ocean & ice",
+    "units": "m"
+  },
+  "prsn": {
+    "CMOR_varname": "prsn",
+    "standard_name": "snowfall_flux",
+    "long_name": "Surface Snowfall Rate into the Sea Ice Portion of the Grid Cell",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "conv_cld_base": {
+    "CMOR_varname": "ccb",
+    "standard_name": "air_pressure_at_convective_cloud_base",
+    "long_name": "Air Pressure at Convective Cloud Base",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "phypico": {
+    "CMOR_varname": "phypico",
+    "standard_name": "mole_concentration_of_picophytoplankton_expressed_as_carbon_in_sea_water",
+    "long_name": ""Mole Concentration of Picophytoplankton expressed as Carbon in Sea Water",
+  },
+  """: {
+    "CMOR_varname": "ocean_biochem",
+    "standard_name": "mol m-3",
+  },
+  "phyn": {
+    "CMOR_varname": "phyn",
+    "standard_name": "mole_concentration_of_phytoplankton_expressed_as_nitrogen_in_sea_water",
+    "long_name": "Phytoplankton Nitrogen Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "hblt_max": {
+    "CMOR_varname": "omlmax",
+    "standard_name": "ocean_mixed_layer_thickness_defined_by_mixing_scheme",
+    "long_name": "Monthly Maximum Ocean Mixed Layer Thickness Defined by Mixing Scheme",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "rh_cm": {
+    "CMOR_varname": "rh",
+    "standard_name": "relative_humidity",
+    "long_name": "Relative Humidity",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "emibcv2": {
+    "CMOR_varname": "emibc",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_black_carbon_dry_aerosol_due_to_emission",
+    "long_name": "Emission Rate of Black Carbon Aerosol Mass",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "fl_ccrain": {
+    "CMOR_varname": "prcprof",
+    "standard_name": "convective_rainfall_flux",
+    "long_name": "Convective Rainfall Flux",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "zh": {
+    "CMOR_varname": "zhalf",
+    "standard_name": "height_above_reference_ellipsoid",
+    "long_name": "Altitude of Model Half-Levels",
+    "modeling_realm": "atmos",
+    "units": "m"
+  },
+  "evap_hflux": {
+    "CMOR_varname": "hfevapds",
+    "standard_name": "temperature_flux_due_to_evaporation_expressed_as_heat_flux_out_of_sea_water",
+    "long_name": "Temperature Flux due to Evaporation Expressed as Heat Flux Out of Sea Water",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "co3": {
+    "CMOR_varname": "co3",
+    "standard_name": "mole_concentration_of_carbonate_expressed_as_carbon_in_sea_water",
+    "long_name": "Mole Concentration of Carbonate expressed as Carbon in Sea Water",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "mrlsl": {
+    "CMOR_varname": "mrlslClim",
+    "standard_name": "moisture_content_of_soil_layer",
+    "long_name": "Water Content of Soil Layer",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "sea_level_sq": {
+    "CMOR_varname": "zossq",
+    "standard_name": "square_of_sea_surface_height_above_geoid",
+    "long_name": "Square of Sea Surface Height Above Geoid",
+    "modeling_realm": "ocean",
+    "units": "m2"
+  },
+  "treeFrac": {
+    "CMOR_varname": "treeFrac",
+    "standard_name": "area_fraction",
+    "long_name": "Tree Cover Fraction",
+    "modeling_realm": "land",
+    "units": "%"
+  },
+  "wetso4": {
+    "CMOR_varname": "wetso4",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_sulfate_dry_aerosol_due_to_wet_deposition",
+    "long_name": "Wet Deposition Rate of SO4",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "tot_no3_col": {
+    "CMOR_varname": "loadno3",
+    "standard_name": "atmosphere_mass_content_of_nitrate_dry_aerosol",
+    "long_name": "Load of NO3",
+    "modeling_realm": "atmos",
+    "units": "kg m-2"
+  },
+  "fsfe": {
+    "CMOR_varname": "fsfe",
+    "standard_name": "tendency_of_ocean_mole_content_of_iron_due_to_deposition_and_runoff_and_sediment_dissolution",
+    "long_name": "Surface Downward Net Flux of Iron",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "wind_ref": {
+    "CMOR_varname": "sfcWind",
+    "standard_name": "wind_speed",
+    "long_name": ""Daily-Mean Near-Surface Wind Speed",
+  },
+  """: {
+    "CMOR_varname": "atmos",
+    "standard_name": "m s-1",
+  },
+  "chldiat": {
+    "CMOR_varname": "chldiat",
+    "standard_name": "mass_concentration_of_diatoms_expressed_as_chlorophyll_in_sea_water",
+    "long_name": "Diatom Chlorophyll Mass Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "kg m-3"
+  },
+  "shrubFrac": {
+    "CMOR_varname": "shrubFrac",
+    "standard_name": "area_fraction",
+    "long_name": "Shrub Fraction",
+    "modeling_realm": "land",
+    "units": "%"
+  },
+  "tmelt": {
+    "CMOR_varname": "tmelt",
+    "standard_name": "rate_of_melt_at_upper_surface_of_sea_ice",
+    "long_name": "Rate of Melt at Upper Surface of Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "phyc": {
+    "CMOR_varname": "phyc",
+    "standard_name": "mole_concentration_of_phytoplankton_expressed_as_carbon_in_sea_water",
+    "long_name": "Phytoplankton Carbon Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "zosga": {
+    "CMOR_varname": "zosga",
+    "standard_name": "global_average_sea_level_change",
+    "long_name": "Global Average Sea Level Change",
+    "modeling_realm": "ocean",
+    "units": "m"
+  },
+  "clw": {
+    "CMOR_varname": "clw",
+    "standard_name": "mass_fraction_of_cloud_liquid_water_in_air",
+    "long_name": "Mass Fraction of Cloud Liquid Water",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "chl": {
+    "CMOR_varname": "chl",
+    "standard_name": "mass_concentration_of_phytoplankton_expressed_as_chlorophyll_in_sea_water",
+    "long_name": "Total Chlorophyll Mass Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "kg m-3"
+  },
+  "cMisc": {
+    "CMOR_varname": "cMisc",
+    "standard_name": "miscellaneous_living_matter_carbon_content",
+    "long_name": "Carbon Mass in Other Living Compartments on Land",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "conv_cld_top": {
+    "CMOR_varname": "cctClim",
+    "standard_name": "air_pressure_at_convective_cloud_top",
+    "long_name": "Air Pressure at Convective Cloud Top",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "swdn_sfc": {
+    "CMOR_varname": "rsdsClim",
+    "standard_name": "surface_downwelling_shortwave_flux_in_air",
+    "long_name": "Surface Downwelling Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "swdn_toa": {
+    "CMOR_varname": "rsdt",
+    "standard_name": "toa_incoming_shortwave_flux",
+    "long_name": "TOA Incident Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "gridspec": {
+    "CMOR_varname": "gridspec",
+    "standard_name": "[gridspec_ocean]",
+    "long_name": "Gridspec",
+    "modeling_realm": "ocean",
+    "units": ""
+  },
+  "POA_col": {
+    "CMOR_varname": "loadpoa",
+    "standard_name": "atmosphere_mass_content_of_primary_particulate_organic_matter_dry_aerosol",
+    "long_name": "Load of Dry Aerosol Primary Organic Matter",
+    "modeling_realm": "atmos",
+    "units": "kg m-2"
+  },
+  "salt_global_ave": {
+    "CMOR_varname": "soga",
+    "standard_name": "sea_water_salinity",
+    "long_name": "Global Mean Sea Water Salinity",
+    "modeling_realm": "ocean",
+    "units": "psu"
+  },
+  "sic_atm": {
+    "CMOR_varname": "sic",
+    "standard_name": "sea_ice_area_fraction",
+    "long_name": "Sea Ice Area Fraction",
+    "modeling_realm": "seaIce & ocean",
+    "units": "%"
+  },
+  "concsoa": {
+    "CMOR_varname": "concsoa",
+    "standard_name": "mass_concentration_of_secondary_particulate_organic_matter_dry_aerosol_in_air",
+    "long_name": "Concentration of Dry Aerosol Secondary Organic Matter",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "strocnx": {
+    "CMOR_varname": "strocnx",
+    "standard_name": "upward_x_stress_at_sea_ice_base",
+    "long_name": "Eastward Ocean Stress On Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "N m-2"
+  },
+  "frn": {
+    "CMOR_varname": "frn",
+    "standard_name": "tendency_of_ocean_mole_content_of_elemental_nitrogen_due_to_denitrification_and_sedimentation",
+    "long_name": "Nitrogen Loss to Sediments and through Denitrification",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "expsi": {
+    "CMOR_varname": "expsi",
+    "standard_name": "sinking_mole_flux_of_particulate_silicon_in_sea_water",
+    "long_name": "Sinking Particulate Silica Flux",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "shflx": {
+    "CMOR_varname": "hfssClim",
+    "standard_name": "surface_upward_sensible_heat_flux",
+    "long_name": "Surface Upward Sensible Heat Flux",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "friver": {
+    "CMOR_varname": "friver",
+    "standard_name": "water_flux_into_sea_water_from_rivers",
+    "long_name": "Water Flux into Sea Water From Rivers",
+    "modeling_realm": "ocean",
+    "units": "kg m-2 s-1"
+  },
+  "mrlso": {
+    "CMOR_varname": "mrfso",
+    "standard_name": "soil_frozen_water_content",
+    "long_name": "Soil Frozen Water Content",
+    "modeling_realm": "land & landIce",
+    "units": "kg m-2"
+  },
+  "intpdiat": {
+    "CMOR_varname": "intpdiat",
+    "standard_name": "net_primary_mole_productivity_of_carbon_by_diatoms",
+    "long_name": "Primary Organic Carbon Production by Diatoms",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "lat_sat": {
+    "CMOR_varname": "lat",
+    "standard_name": "latitude",
+    "long_name": "Latitude",
+    "modeling_realm": "atmos",
+    "units": "degrees_north"
+  },
+  "swdn_tot_dif_clr": {
+    "CMOR_varname": "rsdscsdiff",
+    "standard_name": "diffuse_downwelling_shortwave_flux_in_air_assuming_clear_sky",
+    "long_name": "Surface Diffuse Downward Clear Sky Shortwave Radiation",
+    "modeling_realm": "aerosol & land",
+    "units": "W m-2"
+  },
+  "fediss": {
+    "CMOR_varname": "fediss",
+    "standard_name": "tendency_of_mole_concentration_of_dissolved_iron_in_sea_water_due_to_dissolution_from_inorganic_particles",
+    "long_name": "Particle Source of Dissolved Iron",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "tot_NH4_ddep_cmip": {
+    "CMOR_varname": "drynh4",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_ammonium_dry_aerosol_due_to_dry_deposition",
+    "long_name": "Dry Deposition Rate of NH4",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "t_ref": {
+    "CMOR_varname": "tas",
+    "standard_name": "air_temperature",
+    "long_name": "Near-Surface Air Temperature",
+    "modeling_realm": "atmos",
+    "units": "K"
+  },
+  "rhopoto": {
+    "CMOR_varname": "rhopoto",
+    "standard_name": "sea_water_potential_density",
+    "long_name": "Sea Water Potential Density",
+    "modeling_realm": "ocean",
+    "units": "kg m-3"
+  },
+  "phyppico": {
+    "CMOR_varname": "phyppico",
+    "standard_name": "tendency_of_mole_concentration_of_organic_carbon_in_sea_water_due_to_net_primary_production_by picophytoplankton",
+    "long_name": "Tendency of Mole Concentration of Organic Carbon in Sea Water due to Net Primary Production by Picop",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "tauuo": {
+    "CMOR_varname": "tauuo",
+    "standard_name": "surface_downward_x_stress",
+    "long_name": "Surface Downward X Stress",
+    "modeling_realm": "ocean",
+    "units": "N m-2"
+  },
+  "UI": {
+    "CMOR_varname": "usi",
+    "standard_name": "eastward_sea_ice_velocity",
+    "long_name": "Eastward Sea Ice Velocity",
+    "modeling_realm": "seaIce & ocean",
+    "units": "m s-1"
+  },
+  "lai": {
+    "CMOR_varname": "laiClim",
+    "standard_name": "leaf_area_index",
+    "long_name": "Leaf Area Index",
+    "modeling_realm": "land",
+    "units": "1"
+  },
+  "arag": {
+    "CMOR_varname": "arag",
+    "standard_name": "mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water",
+    "long_name": "Aragonite Concentration at Surface",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3	"
+  },
+  "tauv": {
+    "CMOR_varname": "tauv",
+    "standard_name": "surface_downward_northward_stress",
+    "long_name": "Surface Downward Northward Wind Stress",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "phymisc": {
+    "CMOR_varname": "phymisc",
+    "standard_name": "mole_concentration_of_miscellaneous_phytoplankton_expressed_as_carbon_in_sea_water",
+    "long_name": "Mole Concentration of Miscellaneous Phytoplankton expressed as Carbon in Sea Water",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "q_ref": {
+    "CMOR_varname": "hussClim",
+    "standard_name": "specific_humidity",
+    "long_name": "Near-Surface Specific Humidity",
+    "modeling_realm": "atmos",
+    "units": "1"
+  },
+  "rldssi": {
+    "CMOR_varname": "rldssi",
+    "standard_name": "surface_downwelling_longwave_flux_in_air",
+    "long_name": "Downward Long Wave over Sea Ice",
+    "modeling_realm": "ocean & ice",
+    "units": "W m-2"
+  },
+  "chlpico": {
+    "CMOR_varname": "chlpico",
+    "standard_name": "mass_concentration_of_picophytoplankton_expressed_as_chlorophyll_in_sea_water",
+    "long_name": ""Mass Concentration of Picophytoplankton expressed as Chlorophyll in Sea Water",
+  },
+  """: {
+    "CMOR_varname": "ocean_biochem",
+    "standard_name": "kg m-3",
+  },
+  "orog": {
+    "CMOR_varname": "orog",
+    "standard_name": "surface_altitude",
+    "long_name": "Surface Altitude",
+    "modeling_realm": "land",
+    "units": "m"
+  },
+  "swdn_sfc": {
+    "CMOR_varname": "rsds",
+    "standard_name": "surface_downwelling_shortwave_flux_in_air",
+    "long_name": "Surface Downwelling Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "psl": {
+    "CMOR_varname": "psl",
+    "standard_name": "air_pressure_at_sea_level",
+    "long_name": "Sea Level Pressure",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  },
+  "mrro": {
+    "CMOR_varname": "mrroClim",
+    "standard_name": "runoff_flux",
+    "long_name": "Total Runoff",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "zsatcalc": {
+    "CMOR_varname": "zsatcalc",
+    "standard_name": "minimum_depth_of_calcite_undersaturation_in_sea_water",
+    "long_name": "Calcite Saturation Depth",
+    "modeling_realm": "ocean_biochem",
+    "units": "m"
+  },
+  "dust_wet_dep": {
+    "CMOR_varname": "wetdust",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_dust_dry_aerosol_due_to_wet_deposition",
+    "long_name": "Wet Deposition Rate of Dust",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "rrvn2o": {
+    "CMOR_varname": "n2oglobal",
+    "standard_name": "mole_fraction_of_nitrous_oxide_in_air",
+    "long_name": "Global Mean Mole Fraction of N2O",
+    "modeling_realm": "atmosChem",
+    "units": "1e-9"
+  },
+  "intpnitrate": {
+    "CMOR_varname": "intpnitrate",
+    "standard_name": "net_primary_mole_productivity_of_carbon_due_to_nitrate_utilization",
+    "long_name": "Primary Organic Carbon Production by Phytoplankton Based on Nitrate Uptake Alone",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "sfdsi": {
+    "CMOR_varname": "sfdsi",
+    "standard_name": "downward_sea_ice_basal_salt_flux",
+    "long_name": "Downward Sea Ice Basal Salt Flux",
+    "modeling_realm": "ocean & seaIce",
+    "units": "kg m-2 s-1"
+  },
+  "snm": {
+    "CMOR_varname": "snm",
+    "standard_name": "surface_snow_melt_flux",
+    "long_name": "Surface Snow Melt",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "arag": {
+    "CMOR_varname": "arag",
+    "standard_name": "mole_concentration_of_aragonite_expressed_as_carbon_in_sea_water",
+    "long_name": "Aragonite Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "ec550aer": {
+    "CMOR_varname": "ec550aer",
+    "standard_name": "optical_thickness_of_atmosphere_layer_due_to_ambient_aerosol",
+    "long_name": "Ambient Aerosol Extinction Optical Thickness at 550 nm",
+    "modeling_realm": "aerosol",
+    "units": "m-1"
+  },
+  "lwup_sfc": {
+    "CMOR_varname": "rlus",
+    "standard_name": "surface_upwelling_longwave_flux_in_air",
+    "long_name": "Surface Upwelling Longwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "evspsblsoi": {
+    "CMOR_varname": "evspsblsoi",
+    "standard_name": "water_evaporation_flux_from_soil",
+    "long_name": "Water Evaporation from Soil",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "mrso": {
+    "CMOR_varname": "mrso",
+    "standard_name": "soil_moisture_content",
+    "long_name": "Total Soil Moisture Content",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "cWood": {
+    "CMOR_varname": "cWood",
+    "standard_name": "wood_carbon_content",
+    "long_name": "Carbon Mass in Wood",
+    "modeling_realm": "land",
+    "units": "kg m-2"
+  },
+  "gpp": {
+    "CMOR_varname": "gpp",
+    "standard_name": "gross_primary_productivity_of_carbon",
+    "long_name": "Carbon Mass Flux out of Atmosphere due to Gross Primary Production on Land",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "swup_sfc_clr": {
+    "CMOR_varname": "rsuscs",
+    "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky",
+    "long_name": "Surface Upwelling Clear-Sky Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "fGrazing": {
+    "CMOR_varname": "fGrazing",
+    "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_grazing",
+    "long_name": "Carbon Mass Flux into Atmosphere due to Grazing on Land",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "cls": {
+    "CMOR_varname": "cls",
+    "standard_name": "stratiform_cloud_area_fraction_in_atmosphere_layer",
+    "long_name": "Stratiform Cloud Area Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "hfnorth": {
+    "CMOR_varname": "hfnorth",
+    "standard_name": "northward_ocean_heat_transport",
+    "long_name": "Northward Ocean Heat Transport",
+    "modeling_realm": "ocean",
+    "units": "W"
+  },
+  "grLateral": {
+    "CMOR_varname": "grLateral",
+    "standard_name": "lateral_sea_ice_growth_rate",
+    "long_name": "Lateral Sea Ice Growth Rate",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "sst_sq": {
+    "CMOR_varname": "tsosq",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_sulfur_dioxide_due_to_dry_deposition",
+    "long_name": "Mean Square of Sea Surface Temperature",
+    "modeling_realm": "aerosol",
+    "units": "K2"
+  },
+  "mrro": {
+    "CMOR_varname": "mrro",
+    "standard_name": "runoff_flux",
+    "long_name": "Total Runoff",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "snoToIce": {
+    "CMOR_varname": "snoToIce",
+    "standard_name": "tendency_of_sea_ice_amount_due_to_snow_conversion",
+    "long_name": "Snow-Ice Formation Rate",
+    "modeling_realm": "ocean & ice",
+    "units": "kg m-2 s-1"
+  },
+  "2d_cld_amt": {
+    "CMOR_varname": "clt",
+    "standard_name": "cloud_area_fraction",
+    "long_name": "Total Cloud Fraction",
+    "modeling_realm": "atmos",
+    "units": "%"
+  },
+  "bfe": {
+    "CMOR_varname": "bfe",
+    "standard_name": "mole_concentration_of_particulate_organic_matter_expressed_as_iron_in_sea_water",
+    "long_name": "Particulate Biogenic Iron Concentration",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3"
+  },
+  "aer_ex_c_vs": {
+    "CMOR_varname": "od550aer",
+    "standard_name": "atmosphere_optical_thickness_due_to_ambient_aerosol",
+    "long_name": "Ambient Aerosol Opitical Thickness at 550 nm",
+    "modeling_realm": "aerosol",
+    "units": "1"
+  },
+  "sfc_salt_flux_runoff": {
+    "CMOR_varname": "sfriver",
+    "standard_name": "salt_flux_into_sea_water_from_rivers",
+    "long_name": "Salt Flux into Sea Water from Rivers",
+    "modeling_realm": "ocean",
+    "units": "kg m-2 s-1"
+  },
+  "pso": {
+    "CMOR_varname": "pso",
+    "standard_name": "sea_water_pressure_at_sea_water_surface",
+    "long_name": "Sea Water Pressure at Sea Water Surface",
+    "modeling_realm": "ocean",
+    "units": "dbar"
+  },
+  "evs": {
+    "CMOR_varname": "evs",
+    "standard_name": "water_evaporation_flux",
+    "long_name": "Water Evaporation Flux Where Ice Free Ocean over Sea",
+    "modeling_realm": "ocean",
+    "units": "kg m-2 s-1"
+  },
+  "expcfe": {
+    "CMOR_varname": "expcfe",
+    "standard_name": "sinking_mole_flux_of_particulate_iron_in_sea_water",
+    "long_name": "Sinking Particulate Iron Flux",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "fsc": {
+    "CMOR_varname": "fsc",
+    "standard_name": "tendency_of_ocean_mole_content_of_carbon_due_to_runoff_and_sediment_dissolution",
+    "long_name": "Flux of Carbon Into Ocean Surface by Runoff and Sediment Dissolution",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "ta": {
+    "CMOR_varname": "ta",
+    "standard_name": "air_temperature",
+    "long_name": "Air Temperature",
+    "modeling_realm": "atmos",
+    "units": "K"
+  },
+  "msftyrhoz": {
+    "CMOR_varname": "msftyrhoz",
+    "standard_name": "ocean_y_overturning_mass_streamfunction",
+    "long_name": "Ocean Y Overturning Mass Streamfunction",
+    "modeling_realm": "ocean",
+    "units": "kg s-1"
+  },
+  "transifs": {
+    "CMOR_varname": "transifs",
+    "standard_name": "sea_ice_transport_across_line",
+    "long_name": "Sea Ice Mass Transport Through Fram Strait",
+    "modeling_realm": "ocean & ice",
+    "units": "kg s-1"
+  },
+  "ssi": {
+    "CMOR_varname": "ssi",
+    "standard_name": "sea_ice_salinity",
+    "long_name": "Sea Ice Salinity",
+    "modeling_realm": "ocean & ice",
+    "units": "psu"
+  },
+  "wind_ref_max": {
+    "CMOR_varname": "sfcWindmax",
+    "standard_name": "wind_speed",
+    "long_name": "Daily Maximum Near-Surface Wind Speed",
+    "modeling_realm": "atmos",
+    "units": "m s-1"
+  },
+  "reffclwtop": {
+    "CMOR_varname": "reffclwtop",
+    "standard_name": "effective_radius_of_cloud_liquid_water_particle_at_liquid_water_cloud_top",
+    "long_name": "Cloud-Top Effective Droplet Radius",
+    "modeling_realm": "aerosol",
+    "units": "m"
+  },
+  "pm25_ex_c_vs": {
+    "CMOR_varname": "od550lt1aer",
+    "standard_name": "atmosphere_optical_thickness_due_to_pm1_ambient_aerosol",
+    "long_name": "Ambient Fine Aerosol Opitical Thickness at 550 nm",
+    "modeling_realm": "aerosol",
+    "units": "1"
+  },
+  "ssalt_ddep": {
+    "CMOR_varname": "dryss",
+    "standard_name": "tendency_of_atmosphere_mass_content_of_seasalt_dry_aerosol_due_to_dry_deposition",
+    "long_name": "Dry Deposition Rate of Seasalt",
+    "modeling_realm": "aerosol",
+    "units": "kg m-2 s-1"
+  },
+  "swdn_toa": {
+    "CMOR_varname": "rsdtClim",
+    "standard_name": "toa_incoming_shortwave_flux",
+    "long_name": "TOA Incident Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "lon_sat": {
+    "CMOR_varname": "lon",
+    "standard_name": "longitude",
+    "long_name": "Longitude",
+    "modeling_realm": "atmos",
+    "units": "degrees_east"
+  },
+  "tos": {
+    "CMOR_varname": "tos",
+    "standard_name": "sea_surface_temperature",
+    "long_name": "Sea Surface Temperature",
+    "modeling_realm": "ocean",
+    "units": "K"
+  },
+  "swdn_sfc_clr": {
+    "CMOR_varname": "rsdscsClim",
+    "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky",
+    "long_name": "Surface Downwelling Clear-Sky Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "LWSs": {
+    "CMOR_varname": "lwsnl",
+    "standard_name": "liquid_water_content_of_snow_layer",
+    "long_name": "Liquid Water Content of Snow Layer",
+    "modeling_realm": "land_ice",
+    "units": "kg m-2"
+  },
+  "reff_ccclice": {
+    "CMOR_varname": "reffclic",
+    "standard_name": "effective_radius_of_convective_cloud_ice_particle",
+    "long_name": "Hydrometeor Effective Radius of Convective Cloud Ice",
+    "modeling_realm": "atmos",
+    "units": "m"
+  },
+  "olr": {
+    "CMOR_varname": "rlutClim",
+    "standard_name": "toa_outgoing_longwave_flux",
+    "long_name": "TOA Outgoing Longwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "omega": {
+    "CMOR_varname": "wapClim",
+    "standard_name": "lagrangian_tendency_of_air_pressure",
+    "long_name": "omega (=dp/dt)",
+    "modeling_realm": "atmos",
+    "units": "Pa s-1"
+  },
+  "c4PftFrac": {
+    "CMOR_varname": "c4PftFrac",
+    "standard_name": "area_fraction",
+    "long_name": "Total C4 PFT Cover Fraction",
+    "modeling_realm": "land",
+    "units": "%"
+  },
+  "lwdn_sfc": {
+    "CMOR_varname": "rldsClim",
+    "standard_name": "surface_downwelling_longwave_flux_in_air",
+    "long_name": "Surface Downwelling Longwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "rsd": {
+    "CMOR_varname": "rsd",
+    "standard_name": "downwelling_shortwave_flux_in_air",
+    "long_name": "Downwelling Shortwave Radiation",
+    "modeling_realm": "atmos",
+    "units": "W m-2"
+  },
+  "hfds": {
+    "CMOR_varname": "hfds",
+    "standard_name": "surface_downward_heat_flux_in_sea_water",
+    "long_name": "Downward Heat Flux at Sea Water Surface",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "mc_full": {
+    "CMOR_varname": "mc",
+    "standard_name": "atmosphere_net_upward_convective_mass_flux",
+    "long_name": "Convective Mass Flux",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "concnh4": {
+    "CMOR_varname": "concnh4",
+    "standard_name": "mass_concentration_of_ammonium_dry_aerosol_in_air",
+    "long_name": "Concentration of NH4",
+    "modeling_realm": "aerosol",
+    "units": "kg m-3"
+  },
+  "basin": {
+    "CMOR_varname": "basin",
+    "standard_name": "region",
+    "long_name": "Region Selection Index",
+    "modeling_realm": "ocean",
+    "units": "1"
+  },
+  "fddtdife": {
+    "CMOR_varname": "fddtdife",
+    "standard_name": "tendency_of_ocean_mole_content_of_dissolved_inorganic_iron",
+    "long_name": "Rate of Change of Net Dissolved Inorganic Iron",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "phalf_cmip": {
+    "CMOR_varname": "phalf",
+    "standard_name": "air_pressure",
+    "long_name": "Pressure on Model Half-Levels",
+    "modeling_realm": "aerosol",
+    "units": "Pa"
+  },
+  "wmosq": {
+    "CMOR_varname": "wmosq",
+    "standard_name": "square_of_upward_ocean_mass_transport",
+    "long_name": "Square of Upward Ocean Mass Transport",
+    "modeling_realm": "ocean",
+    "units": "kg2 s-2"
+  },
+  "bddtdin": {
+    "CMOR_varname": "bddtdin",
+    "standard_name": "tendency_of_mole_concentration_of_dissolved_inorganic_nitrogen_in_sea_water_due_to_biological_processes",
+    "long_name": "Rate of Change of Nitrogen Nutrient due to Biological Activity",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-3 s-1"
+  },
+  "pr": {
+    "CMOR_varname": "pr",
+    "standard_name": "rainfall_flux",
+    "long_name": "Rainfall Flux where Ice Free Ocean over Sea",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "v_ref": {
+    "CMOR_varname": "vasClim",
+    "standard_name": "northward_wind",
+    "long_name": "Northward Near-Surface Wind",
+    "modeling_realm": "aerosol",
+    "units": "m s-1"
+  },
+  "npp": {
+    "CMOR_varname": "npp",
+    "standard_name": "net_primary_productivity_of_carbon",
+    "long_name": "Carbon Mass Flux out of Atmosphere due to Net Primary Production on Land",
+    "modeling_realm": "land",
+    "units": "kg m-2 s-1"
+  },
+  "fddtdisi": {
+    "CMOR_varname": "fddtdisi",
+    "standard_name": "tendency_of_ocean_mole_content_of_dissolved_inorganic_silicon",
+    "long_name": "Rate of Change of Net Dissolved Inorganic Silicate",
+    "modeling_realm": "ocean_biochem",
+    "units": "mol m-2 s-1"
+  },
+  "rsntds": {
+    "CMOR_varname": "rsntds",
+    "standard_name": "net_downward_shortwave_flux_at_sea_water_surface",
+    "long_name": "Net Downward Shortwave Radiation at Sea Water Surface",
+    "modeling_realm": "ocean",
+    "units": "W m-2"
+  },
+  "T": {
+    "CMOR_varname": "ta",
+    "standard_name": "air_temperature",
+    "long_name": "Air Temperature",
+    "modeling_realm": "atmos",
+    "units": "K"
+  },
+  "mcu": {
+    "CMOR_varname": "mcu",
+    "standard_name": "atmosphere_updraft_convective_mass_flux",
+    "long_name": "Updraught Convective Mass Flux",
+    "modeling_realm": "atmos",
+    "units": "kg m-2 s-1"
+  },
+  "WP_all_clouds": {
+    "CMOR_varname": "clwvi",
+    "standard_name": "atmosphere_cloud_condensed_water_content",
+    "long_name": "Condensed Water Path",
+    "modeling_realm": "atmos",
+    "units": "kg m-2"
+  },
+  "visc_cbu_back": {
+    "CMOR_varname": "difvmbo",
+    "standard_name": "ocean_vertical_momentum_diffusivity_due_to_background",
+    "long_name": "Ocean Vertical Momentum Diffusivity due to Background",
+    "modeling_realm": "ocean",
+    "units": "m2 s-1"
+  },
+  "tau_y": {
+    "CMOR_varname": "tauv",
+    "standard_name": "surface_downward_northward_stress",
+    "long_name": "Surface Downward Northward Wind Stress",
+    "modeling_realm": "atmos",
+    "units": "Pa"
+  }
+}

@@ -1220,16 +1220,16 @@
   "irrLut": {
     "CMOR_varname": "irrLut",
     "standard_name": "surface_downward_mass_flux_of_water_due_to_irrigation",
-    "long_name": ""Irrigation flux including any irrigation for crops",
-    "mipTable": " trees",
-    "units": " pasture"
+    "long_name": "Irrigation flux including any irrigation for crops",
+    "mipTable": "trees",
+    "units": "pasture"
   },
   "fahLut": {
     "CMOR_varname": "fahLut",
     "standard_name": "surface_upward_heat_flux_due_to_anthropogenic_energy_consumption",
-    "long_name": ""Anthropogenic heat flux generated from non-renewable human primary energy consumption",
-    "mipTable": " including energy use by vehicles",
-    "units": " commercial and residential buildings"
+    "long_name": "Anthropogenic heat flux generated from non-renewable human primary energy consumption",
+    "mipTable": "including energy use by vehicles",
+    "units": "commercial and residential buildings"
   },
   "fProductDecompLut": {
     "CMOR_varname": "fProductDecompLut",
@@ -1262,9 +1262,9 @@
   "cProductLut": {
     "CMOR_varname": "cProductLut",
     "standard_name": "carbon_mass_content_of_forestry_and_agricultural_products",
-    "long_name": ""wood and agricultural product pool carbon associated with land use tiles; examples of products include paper",
-    "mipTable": " cardboard",
-    "units": " timber for construction"
+    "long_name": "wood and agricultural product pool carbon associated with land use tiles; examples of products include paper",
+    "mipTable": "cardboard",
+    "units": "timber for construction"
   },
   "cProduct": {
     "CMOR_varname": "cProduct",
@@ -3712,8 +3712,8 @@
   "fAnthDisturb": {
     "CMOR_varname": "fAnthDisturb",
     "standard_name": "tendency_of_atmosphere_mass_content_of_carbon_dioxide_expressed_as_carbon_due_to_anthropogenic_emission",
-    "long_name": ""Carbon Mass Flux from Vegetation",
-    "mipTable": " Litter or Soil Pools into the Atmosphere due to Any Human Activity"",
+    "long_name": "Carbon Mass Flux from Vegetation",
+    "mipTable": "Litter or Soil Pools into the Atmosphere due to Any Human Activity",
     "units": "Emon"
   },
   "fDeforestToProduct": {
@@ -3754,9 +3754,9 @@
   "fNloss": {
     "CMOR_varname": "fNloss",
     "standard_name": "surface_upward_mass_flux_of_nitrogen_compounds_expressed_as_nitrogen_out_of_vegetation_and_litter_and_soil",
-    "long_name": ""Total N lost (including NHx",
-    "mipTable": " NOx",
-    "units": " N2O"
+    "long_name": "Total N lost (including NHx",
+    "mipTable": "NOx",
+    "units": "N2O"
   },
   "fNdep": {
     "CMOR_varname": "fNdep",
@@ -3775,8 +3775,8 @@
   "fNup": {
     "CMOR_varname": "fNup",
     "standard_name": "tendency_of_vegetation_mass_content_of_nitrogen_compounds_expressed_as_nitrogen_due_to_fixation",
-    "long_name": ""total plant nitrogen uptake (sum of ammonium and nitrate)",
-    "mipTable": " irrespective of the source of nitrogen"",
+    "long_name": "total plant nitrogen uptake (sum of ammonium and nitrate)",
+    "mipTable": "irrespective of the source of nitrogen",
     "units": "Emon"
   },
   "fNnetmin": {
@@ -3852,8 +3852,8 @@
   "cOther": {
     "CMOR_varname": "cOther",
     "standard_name": "miscellaneous_living_matter_mass_content_of_carbon",
-    "long_name": ""Carbon Mass in Vegetation Components other than Leaves",
-    "mipTable": " Stems and Roots"",
+    "long_name": "Carbon Mass in Vegetation Components other than Leaves",
+    "mipTable": "Stems and Roots",
     "units": "Emon"
   },
   "cLitterCwd": {
@@ -3887,23 +3887,23 @@
   "fLitterFire": {
     "CMOR_varname": "fLitterFire",
     "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_litter_in_fires",
-    "long_name": ""Carbon Mass Flux from Litter",
-    "mipTable": " CWD or any non-living pool into Atmosphere due to CO2 Emission from all Fire"",
+    "long_name": "Carbon Mass Flux from Litter",
+    "mipTable": "CWD or any non-living pool into Atmosphere due to CO2 Emission from all Fire",
     "units": "Emon"
   },
   "fFireAll": {
     "CMOR_varname": "fFireAll",
     "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_fires",
-    "long_name": ""Carbon Mass Flux into Atmosphere due to CO2 emissions from Fire resulting from all sources including natural",
-    "mipTable": " anthropogenic and land use change."",
+    "long_name": "Carbon Mass Flux into Atmosphere due to CO2 emissions from Fire resulting from all sources including natural",
+    "mipTable": "anthropogenic and land use change.",
     "units": "Emon"
   },
   "fVegLitterSenescence": {
     "CMOR_varname": "fVegLitterSenescence",
     "standard_name": "mass_flux_of_carbon_into_litter_from_vegetation_due_to_senescence",
-    "long_name": ""Total Carbon Mass Flux from Vegetation to Litter as a Result of Leaf",
-    "mipTable": " Branch",
-    "units": " and Root Senescence""
+    "long_name": "Total Carbon Mass Flux from Vegetation to Litter as a Result of Leaf",
+    "mipTable": "Branch",
+    "units": "and Root Senescence"
   },
   "fVegLitterMortality": {
     "CMOR_varname": "fVegLitterMortality",
@@ -4013,8 +4013,8 @@
   "nOther": {
     "CMOR_varname": "nOther",
     "standard_name": "miscellaneous_living_matter_mass_content_of_nitrogen",
-    "long_name": ""Nitrogen mass in vegetation components other than leaves",
-    "mipTable": " stem and root"",
+    "long_name": "Nitrogen mass in vegetation components other than leaves",
+    "mipTable": "stem and root",
     "units": "Emon"
   },
   "nLitterCwd": {
@@ -4055,30 +4055,30 @@
   "fNleach": {
     "CMOR_varname": "fNleach",
     "standard_name": "mass_flux_of_carbon_out_of_soil_due_to_leaching_and_runoff",
-    "long_name": ""Total N loss to leaching or runoff (sum of ammonium",
-    "mipTable": " nitrite and nitrate)"",
+    "long_name": "Total N loss to leaching or runoff (sum of ammonium",
+    "mipTable": "nitrite and nitrate)",
     "units": "Emon"
   },
   "fNgas": {
     "CMOR_varname": "fNgas",
     "standard_name": "surface_upward_mass_flux_of_nitrogen_compounds_expressed_as_nitrogen",
-    "long_name": ""Total Nitrogen lost to the atmosphere (sum of NHx",
-    "mipTable": " NOx",
-    "units": " N2O"
+    "long_name": "Total Nitrogen lost to the atmosphere (sum of NHx",
+    "mipTable": "NOx",
+    "units": "N2O"
   },
   "fNgasNonFire": {
     "CMOR_varname": "fNgasNonFire",
     "standard_name": "surface_upward_mass_flux_of_nitrogen_compounds_expressed_as_nitrogen_due_to_all_land_processes_excluding_fires",
-    "long_name": ""Total N lost to the atmosphere (including NHx",
-    "mipTable": " NOx",
-    "units": " N2O"
+    "long_name": "Total N lost to the atmosphere (including NHx",
+    "mipTable": "NOx",
+    "units": "N2O"
   },
   "fNgasFire": {
     "CMOR_varname": "fNgasFire",
     "standard_name": "surface_upward_mass_flux_of_nitrogen_compounds_expressed_as_nitrogen_due_to_emission_from_fires",
-    "long_name": ""Total N lost to the atmosphere (including NHx",
-    "mipTable": " NOx",
-    "units": " N2O"
+    "long_name": "Total N lost to the atmosphere (including NHx",
+    "mipTable": "NOx",
+    "units": "N2O"
   },
   "fNOx": {
     "CMOR_varname": "fNOx",
@@ -4300,15 +4300,15 @@
   "jpdftaureliqmodis": {
     "CMOR_varname": "jpdftaureliqmodis",
     "standard_name": "cloud_area_fraction_in_atmosphere_layer",
-    "long_name": ""MODIS Optical Thickness-Particle Size joint  distribution",
-    "mipTable": " liquid"",
+    "long_name": "MODIS Optical Thickness-Particle Size joint  distribution",
+    "mipTable": "liquid",
     "units": "Emon"
   },
   "jpdftaureicemodis": {
     "CMOR_varname": "jpdftaureicemodis",
     "standard_name": "cloud_area_fraction_in_atmosphere_layer",
-    "long_name": ""MODIS Optical Thickness-Particle Size joint  distribution",
-    "mipTable": " ice"",
+    "long_name": "MODIS Optical Thickness-Particle Size joint  distribution",
+    "mipTable": "ice",
     "units": "Emon"
   },
   "clwmodis": {
@@ -4349,15 +4349,15 @@
   "jpdftaureliqmodis": {
     "CMOR_varname": "jpdftaureliqmodis",
     "standard_name": "cloud_area_fraction_in_atmosphere_layer",
-    "long_name": ""MODIS Optical Thickness-Particle Size joint  distribution",
-    "mipTable": " liquid"",
+    "long_name": "MODIS Optical Thickness-Particle Size joint  distribution",
+    "mipTable": "liquid",
     "units": "Eday"
   },
   "jpdftaureicemodis": {
     "CMOR_varname": "jpdftaureicemodis",
     "standard_name": "cloud_area_fraction_in_atmosphere_layer",
-    "long_name": ""MODIS Optical Thickness-Particle Size joint  distribution",
-    "mipTable": " ice"",
+    "long_name": "MODIS Optical Thickness-Particle Size joint  distribution",
+    "mipTable": "ice",
     "units": "Eday"
   },
   "clcalipso": {
@@ -5700,8 +5700,8 @@
   "rsutcsaf": {
     "CMOR_varname": "rsutcsaf",
     "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky_and_no_aerosol",
-    "long_name": ""TOA Outgoing Clear-Sky",
-    "mipTable": " Aerosol-Free Shortwave Radiation"",
+    "long_name": "TOA Outgoing Clear-Sky",
+    "mipTable": "Aerosol-Free Shortwave Radiation",
     "units": "AERmon"
   },
   "rsutaf": {
@@ -5721,8 +5721,8 @@
   "rlutcsaf": {
     "CMOR_varname": "rlutcsaf",
     "standard_name": "toa_outgoing_longwave_flux_assuming_clear_sky",
-    "long_name": ""TOA Outgoing Clear-Sky",
-    "mipTable": " Aerosol-Free Longwave Radiation"",
+    "long_name": "TOA Outgoing Clear-Sky",
+    "mipTable": "Aerosol-Free Longwave Radiation",
     "units": "AERmon"
   },
   "ec550aer": {
@@ -5875,15 +5875,15 @@
   "rsutcsaf": {
     "CMOR_varname": "rsutcsaf",
     "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky_and_no_aerosol",
-    "long_name": ""TOA Outgoing Clear-Sky",
-    "mipTable": " Aerosol-Free Shortwave Radiation"",
+    "long_name": "TOA Outgoing Clear-Sky",
+    "mipTable": "Aerosol-Free Shortwave Radiation",
     "units": "E3hrPt"
   },
   "rsdscsaf": {
     "CMOR_varname": "rsdscsaf",
     "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky_and_no_aerosol",
-    "long_name": ""Surface Downwelling Clear-Sky",
-    "mipTable": " Aerosol-Free Shortwave Radiation"",
+    "long_name": "Surface Downwelling Clear-Sky",
+    "mipTable": "Aerosol-Free Shortwave Radiation",
     "units": "E3hrPt"
   },
   "rsuscsaf": {
@@ -5896,22 +5896,22 @@
   "rsutcsafbnd": {
     "CMOR_varname": "rsutcsafbnd",
     "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky_and_no_aerosol",
-    "long_name": ""TOA Outgoing Clear-Sky",
-    "mipTable": " Aerosol-Free Shortwave Radiation in Bands"",
+    "long_name": "TOA Outgoing Clear-Sky",
+    "mipTable": "Aerosol-Free Shortwave Radiation in Bands",
     "units": "E3hrPt"
   },
   "rsdscsafbnd": {
     "CMOR_varname": "rsdscsafbnd",
     "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky_and_no_aerosol",
-    "long_name": ""Surface Downwelling Clear-Sky",
-    "mipTable": " Aerosol-Free Shortwave Radiation in Bands"",
+    "long_name": "Surface Downwelling Clear-Sky",
+    "mipTable": "Aerosol-Free Shortwave Radiation in Bands",
     "units": "E3hrPt"
   },
   "rsuscsafbnd": {
     "CMOR_varname": "rsuscsafbnd",
     "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky_and_no_aerosol",
-    "long_name": ""Surface Upwelling Clear-Sky",
-    "mipTable": " Aerosol-Free Shortwave Radiation in Bands"",
+    "long_name": "Surface Upwelling Clear-Sky",
+    "mipTable": "Aerosol-Free Shortwave Radiation in Bands",
     "units": "E3hrPt"
   },
   "rsucsaf": {
@@ -5931,16 +5931,16 @@
   "rsucsafbnd": {
     "CMOR_varname": "rsucsafbnd",
     "standard_name": "upwelling_shortwave_flux_in_air_assuming_clear_sky_and_no_aerosol",
-    "long_name": ""Upwelling Clear-Sky",
-    "mipTable": " Aerosol-Free Shortwave Radiation in Bands"",
+    "long_name": "Upwelling Clear-Sky",
+    "mipTable": "Aerosol-Free Shortwave Radiation in Bands",
     "units": "E3hrPt"
   },
   "rsdcsafbnd": {
     "CMOR_varname": "rsdcsafbnd",
     "standard_name": "downwelling_shortwave_flux_in_air_assuming_clear_sky_and_no_aerosol",
-    "long_name": ""Downwelling Clear-Sky",
-    "mipTable": " Aerosol-Free",
-    "units": " Shortwave Radiation in Bands""
+    "long_name": "Downwelling Clear-Sky",
+    "mipTable": "Aerosol-Free",
+    "units": "Shortwave Radiation in Bands"
   },
   "rsuscs": {
     "CMOR_varname": "rsuscs",
@@ -12203,8 +12203,8 @@
   "cTotFireLut": {
     "CMOR_varname": "cTotFireLut",
     "standard_name": "surface_upward_mass_flux_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_fires",
-    "long_name": ""Total carbon loss from natural and managed fire on land use tile",
-    "mipTable": " including deforestation fires"",
+    "long_name": "Total carbon loss from natural and managed fire on land use tile",
+    "mipTable": "including deforestation fires",
     "units": "Emon"
   },
   "rhLut": {
@@ -12231,8 +12231,8 @@
   "tasLut": {
     "CMOR_varname": "tasLut",
     "standard_name": "air_temperature",
-    "long_name": ""near-surface air temperature (2m above displacement height",
-    "mipTable": " i.e. t_ref) on land use tile"",
+    "long_name": "near-surface air temperature (2m above displacement height",
+    "mipTable": "i.e. t_ref) on land use tile",
     "units": "Emon"
   },
   "tslsiLut": {
@@ -13729,9 +13729,9 @@
   "fVegSoilSenescence": {
     "CMOR_varname": "fVegSoilSenescence",
     "standard_name": "mass_flux_of_carbon_into_soil_from_vegetation_due_to_senescence",
-    "long_name": ""Total Carbon Mass Flux from Vegetation to Soil as a result of leaf",
-    "mipTable": " branch",
-    "units": " and root senescence""
+    "long_name": "Total Carbon Mass Flux from Vegetation to Soil as a result of leaf",
+    "mipTable": "branch",
+    "units": "and root senescence"
   },
   "fVegSoilMortality": {
     "CMOR_varname": "fVegSoilMortality",
@@ -14044,8 +14044,8 @@
   "jpdftaureicemodis": {
     "CMOR_varname": "jpdftaureicemodis",
     "standard_name": "cloud_area_fraction_in_atmosphere_layer",
-    "long_name": ""MODIS Optical Thickness-Particle Size joint  distribution",
-    "mipTable": " ice"",
+    "long_name": "MODIS Optical Thickness-Particle Size joint  distribution",
+    "mipTable": "ice",
     "units": "E3hrPt"
   },
   "hus27": {
@@ -14093,8 +14093,8 @@
   "jpdftaureliqmodis": {
     "CMOR_varname": "jpdftaureliqmodis",
     "standard_name": "cloud_area_fraction_in_atmosphere_layer",
-    "long_name": ""MODIS Optical Thickness-Particle Size joint  distribution",
-    "mipTable": " liquid"",
+    "long_name": "MODIS Optical Thickness-Particle Size joint  distribution",
+    "mipTable": "liquid",
     "units": "E3hrPt"
   },
   "ua7h": {

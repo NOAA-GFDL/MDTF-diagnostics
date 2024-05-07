@@ -268,9 +268,9 @@
   "chldiaz": {
     "CMOR_varname": "chldiaz",
     "standard_name": "mass_concentration_of_diazotrophs_expressed_as_chlorophyll_in_sea_water",
-    "long_name": ""Mass Concentration of Diazotrophs expressed as Chlorophyll in Sea Water",
+    "long_name": "Mass Concentration of Diazotrophs expressed as Chlorophyll in Sea Water",
   },
-  """: {
+  "": {
     "CMOR_varname": "ocean_biochem",
     "standard_name": "kg m-3",
   },
@@ -585,9 +585,9 @@
   "phydiaz": {
     "CMOR_varname": "phydiaz",
     "standard_name": "mole_concentration_of_diazotrophs_expressed_as_carbon_in_sea_water",
-    "long_name": ""Mole Concentration of Diazotrophs Expressed as Carbon in Sea Water",
+    "long_name": "Mole Concentration of Diazotrophs Expressed as Carbon in Sea Water",
   },
-  """: {
+  "": {
     "CMOR_varname": "ocean_biochem",
     "standard_name": "mol m-3",
   },
@@ -850,9 +850,9 @@
     "modeling_realm": "atmos",
     "units": "s-1"
   },
-  ""reffclwc": {
+  "reffclwc": {
   },
-  """: {
+  "": {
     "CMOR_varname": "reffclwc",
     "standard_name": "effective_radius_of_convective_cloud_liquid_water_particle",
     "long_name": "Convective Cloud Droplet Effective Radius",
@@ -1044,9 +1044,9 @@
   "rlncs": {
     "CMOR_varname": "rlncs",
     "standard_name": "net_upward_longwave_flux_in_air_assuming_clear_sky",
-    "long_name": ""Net Upwelling Clear-Sky Longwave Radiation",
+    "long_name": "Net Upwelling Clear-Sky Longwave Radiation",
   },
-  """: {
+  "": {
     "CMOR_varname": "atmos",
     "standard_name": "W m-2",
   },
@@ -1515,9 +1515,9 @@
   "ta700": {
     "CMOR_varname": "ta700",
     "standard_name": "air_temperature",
-    "long_name": ""Air Temperature",
+    "long_name": "Air Temperature",
   },
-  """: {
+  "": {
     "CMOR_varname": "atmos",
     "standard_name": "K",
   },
@@ -2560,9 +2560,9 @@
   "chlmisc": {
     "CMOR_varname": "chlmisc",
     "standard_name": "mass_concentration_of_miscellaneous_phytoplankton_expressed_as_chlorophyll_in_sea_water",
-    "long_name": ""Other Phytoplankton Chlorophyll Mass Concentration",
+    "long_name": "Other Phytoplankton Chlorophyll Mass Concentration",
   },
-  """: {
+  "": {
     "CMOR_varname": "ocean_biochem",
     "standard_name": "kg m-3",
   },
@@ -2807,9 +2807,9 @@
   "phydiat": {
     "CMOR_varname": "phydiat",
     "standard_name": "mole_concentration_of_diatoms_expressed_as_carbon_in_sea_water",
-    "long_name": ""Mole Concentration of Diatoms expressed as Carbon in Sea Water",
+    "long_name": "Mole Concentration of Diatoms expressed as Carbon in Sea Water",
   },
-  """: {
+  "": {
     "CMOR_varname": "ocean_biochem",
     "standard_name": "mol m-3",
   },
@@ -3775,9 +3775,9 @@
   "phypico": {
     "CMOR_varname": "phypico",
     "standard_name": "mole_concentration_of_picophytoplankton_expressed_as_carbon_in_sea_water",
-    "long_name": ""Mole Concentration of Picophytoplankton expressed as Carbon in Sea Water",
+    "long_name": "Mole Concentration of Picophytoplankton expressed as Carbon in Sea Water",
   },
-  """: {
+  "": {
     "CMOR_varname": "ocean_biochem",
     "standard_name": "mol m-3",
   },
@@ -3882,9 +3882,9 @@
   "wind_ref": {
     "CMOR_varname": "sfcWind",
     "standard_name": "wind_speed",
-    "long_name": ""Daily-Mean Near-Surface Wind Speed",
+    "long_name": "Daily-Mean Near-Surface Wind Speed",
   },
-  """: {
+  "": {
     "CMOR_varname": "atmos",
     "standard_name": "m s-1",
   },
@@ -4157,9 +4157,9 @@
   "chlpico": {
     "CMOR_varname": "chlpico",
     "standard_name": "mass_concentration_of_picophytoplankton_expressed_as_chlorophyll_in_sea_water",
-    "long_name": ""Mass Concentration of Picophytoplankton expressed as Chlorophyll in Sea Water",
+    "long_name": "Mass Concentration of Picophytoplankton expressed as Chlorophyll in Sea Water",
   },
-  """: {
+  "": {
     "CMOR_varname": "ocean_biochem",
     "standard_name": "kg m-3",
   },

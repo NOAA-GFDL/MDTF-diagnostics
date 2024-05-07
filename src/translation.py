@@ -7,6 +7,7 @@ import dataclasses as dc
 import glob
 import typing
 import pathlib
+import itertools
 from src import util, data_model, units
 from src.units import Units
 
@@ -58,7 +59,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
 
     def __post_init__(self, coords=None):
         super(FieldlistEntry, self).__post_init__(coords)
-        assert len(self.scalar_coords) == 0, 'FieldlistEntry scalar_coords attribute has nonzero length'
+        # assert len(self.scalar_coords) == 0, 'FieldlistEntry scalar_coords attribute has nonzero length'
         # if specified, verify that POD modifier attributes are valid
         if not self.modifier.lower().strip() in (None, ''):
             _str = VariableTranslator()
@@ -72,6 +73,8 @@ class FieldlistEntry(data_model.DMDependentVariable):
         2: ('PLACEHOLDER_Y_COORD', 'PLACEHOLDER_X_COORD'),
         3: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Y_COORD', 'PLACEHOLDER_X_COORD'),
         4: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Z_COORD', 'PLACEHOLDER_Y_COORD',
+            'PLACEHOLDER_X_COORD'),
+        5: ('PLACEHOLDER_N_COORD','PLACEHOLDER_T_COORD', 'PLACEHOLDER_Z_COORD', 'PLACEHOLDER_Y_COORD',
             'PLACEHOLDER_X_COORD')
     }
     _placeholder_class_dict = {
@@ -79,6 +82,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         'PLACEHOLDER_Y_COORD': data_model.DMPlaceholderYCoordinate,
         'PLACEHOLDER_Z_COORD': data_model.DMPlaceholderZCoordinate,
         'PLACEHOLDER_T_COORD': data_model.DMPlaceholderTCoordinate,
+        'PLACEHOLDER_N_COORD': data_model.DMPlaceholderNCoordinate,
         'PLACEHOLDER_COORD': data_model.DMPlaceholderCoordinate
     }
 
@@ -285,10 +289,14 @@ class Fieldlist:
                 v['name'] = k
                 lut1.update({k: v})
 
-        entries = tuple(lut1)
+        entries = tuple(lut1.values())
         if len(entries) > 1:
-            _log.warning(f'Found multiple entries in {self.name} Fieldlist for {standard_name}')
-        return copy.deepcopy(lut1)
+            _log.error(f'Found multiple entries in {self.name} Fieldlist for {standard_name}')
+        fl_entries = dict()
+        for e in entries:
+            fl_entry: FieldlistEntry = e
+            fl_entries.update({fl_entry['name']: copy.deepcopy(fl_entry)})
+        return fl_entries
 
     def from_CF_name(self,
                      var_or_name: str,
@@ -360,7 +368,7 @@ class Fieldlist:
             from_convention_tl = VariableTranslator().get_convention(from_convention)
             # Fieldlist entry for POD variable
             long_name = self.get_variable_long_name(var, has_scalar_coords)
-            fl_entry = from_convention_tl.from_CF(var.standard_name,
+            fl_entries = from_convention_tl.from_CF(var.standard_name,
                                                   var.realm,
                                                   var.modifier,
                                                   long_name,
@@ -372,7 +380,7 @@ class Fieldlist:
             # information from FieldList for the DataSource convention
             # Modifiers that are not defined are set to empty strings when variable and fieldlist
             # objects are initialized
-            fl_atts = [v for v in fl_entry.values()][0]
+            fl_atts = [v for v in fl_entries.values()][0]
             new_name = self.to_CF_standard_name(fl_atts['standard_name'],
                                                 fl_atts['long_name'],
                                                 fl_atts['realm'],
@@ -386,12 +394,12 @@ class Fieldlist:
             assert not var.use_exact_name, "assertion error: var.use_exact_name set to true for " + var.full_name
             # change translated name to request the slice instead of the full var
             # keep the scalar_coordinate value attribute on the translated var
-            new_name = fl_entry.scalar_name(
+            new_name = fl_atts.scalar_name(
                 var.scalar_coords[0], new_scalars[0], log=var.log
             )
 
         return util.coerce_to_dataclass(
-            fl_entry, TranslatedVarlistEntry,
+            fl_atts, TranslatedVarlistEntry,
             name=new_name,
             coords=(new_dims + new_scalars),
             convention=self.name, log=var.log

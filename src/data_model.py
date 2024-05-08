@@ -588,7 +588,8 @@ class _DMDimensionsMixin:
     def __post_init__(self, coords=None):
         if coords is None:
             # if we're called to rebuild dicts, rather than after __init__
-            assert (self.dims or self.scalar_coords)
+            assert (self.dims or self.scalar_coords), \
+                f'dims and/or scalar_coords not defined for _DMDimensionsMixin instance'
             coords = self.dims + self.scalar_coords
         self.dims = []
         self.scalar_coords = []

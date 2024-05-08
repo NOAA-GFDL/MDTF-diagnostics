@@ -74,7 +74,7 @@ class FieldlistEntry(data_model.DMDependentVariable):
         3: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Y_COORD', 'PLACEHOLDER_X_COORD'),
         4: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Z_COORD', 'PLACEHOLDER_Y_COORD',
             'PLACEHOLDER_X_COORD'),
-        5: ('PLACEHOLDER_N_COORD','PLACEHOLDER_T_COORD', 'PLACEHOLDER_Z_COORD', 'PLACEHOLDER_Y_COORD',
+        5: ('PLACEHOLDER_N_COORD', 'PLACEHOLDER_T_COORD', 'PLACEHOLDER_Z_COORD', 'PLACEHOLDER_Y_COORD',
             'PLACEHOLDER_X_COORD')
     }
     _placeholder_class_dict = {
@@ -336,13 +336,43 @@ class Fieldlist:
             raise KeyError((f"Coordinate {coord.name} with standard name "
                             f"'{coord.standard_name}' not defined in convention '{self.name}'."))
 
-        lut1 = {ax: self.axes_lut[ax]}
-        new_coord = [lut1[k] for k in lut1.keys() if lut1[k].get('standard_name') == coord.standard_name][0]
+        lut1 = dict()
+        for k, v in self.axes_lut.items():
+            if v.get('standard_name') == coord.standard_name:
+                lut1.update({k: v})
+
+        if len(lut1) > 1:
+            if ax in lut1.keys():
+                new_coord = lut1[ax]
+            else:
+                # TODO refine the following query
+                # The logic below optimized for identifying the correct pressure level coordinate to select
+                # from the CMIP CV by comparing the varlistentry scalar coord value (supplied by the POD settings file)
+                # in hPa with the CV values in Pa (hPa * 100 = pa).
+                # If both coordinate values are strings, then there is just a simple check to see if the varlistentry
+                # value is contained by the CV string value. This is not robust, but sufficient for testing purposes
+
+                if bool(coord.value):
+                    for v in lut1.values():
+                        if v.get('value', None):
+                            if isinstance(coord.value, int) and isinstance(v.get('value'), str):
+                                v_int = int(float(v.get('value')))
+                                if v_int > coord.value and v_int/coord.value == 100 \
+                                        or v_int < coord.value and coord.value/v_int == 100 or \
+                                        v_int == coord.value:
+                                    new_coord = v
+                                    break
+                            elif isinstance(coord.value, str) and isinstance(v.get('value'), str):
+                                if coord.value in v.get('value'):
+                                    new_coord = v
+                                    break
+        else:
+            new_coord = [lut1.values()][0]
 
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             new_coord = copy.deepcopy(new_coord)
             new_coord.value = units.convert_scalar_coord(coord,
-                                                         lut1[new_coord].units,
+                                                         new_coord['units'],
                                                          log=log)
         else:
             new_coord = dc.replace(coord,

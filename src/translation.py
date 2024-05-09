@@ -110,6 +110,8 @@ class FieldlistEntry(data_model.DMDependentVariable):
             if d_name not in dims_d:
                 raise ValueError((f"Unknown dimension name {d_name} in scalar "
                                   f"coord definition for fieldlist entry for {name}."))
+            if d_name:
+                cls.scalar_coord_templates.update(d_name)
 
         filter_kw = util.filter_dataclass(kwargs, cls, init=True)
         assert filter_kw['coords'], "Did not find filter_kw entry `coords`"
@@ -120,31 +122,6 @@ class FieldlistEntry(data_model.DMDependentVariable):
             cls.long_name = filter_kw['long_name']
 
         return cls(name=name, **filter_kw)
-
-    def scalar_name(self, old_coord, new_coord, log=_log):
-        """Uses one of the scalar_coord_templates to construct the translated
-        variable name for this variable on a scalar coordinate slice (eg.
-        pressure level).
-        """
-        c = old_coord
-        assert c.is_scalar
-        key = new_coord.name
-        if key not in self.scalar_coord_templates:
-            raise ValueError((f"Don't know how to name {c.name} ({c.axis}) slice "
-                              f"of {self.name}."
-                              ))
-        # construct convention's name for this variable on a level
-        name_template = self.scalar_coord_templates[key]
-        new_name = name_template.format(value=int(new_coord.value))
-        if units.units_equal(c.units, new_coord.units):
-            log.debug("Renaming %s %s %s slice of '%s' to '%s'.",
-                      c.value, c.units, c.axis, self.name, new_name)
-        else:
-            log.debug("Renaming %s slice of '%s' to '%s' (@ %s %s = %s %s).",
-                      c.axis, self.name, new_name, c.value, c.units,
-                      new_coord.value, new_coord.units
-                      )
-        return new_name
 
     def scalar_coords(self):
         pass
@@ -168,6 +145,7 @@ class Fieldlist:
     axes_lut: util.WormDict = dc.field(default_factory=util.WormDict)
     lut: util.WormDict = dc.field(default_factory=util.WormDict)
     env_vars: dict = dc.field(default_factory=dict)
+    scalar_coord_templates: dict = dc.field(default_factory=dict)
 
     @classmethod
     def from_struct(cls, d: dict, code_root: str, log=None):
@@ -194,17 +172,20 @@ class Fieldlist:
         def _process_var(section_name: str, in_dict, lut_dict):
             # build two-stage lookup table (by standard name, then data
             # dimensionality)
+            sct_dict = dict()
             section_d = in_dict.pop(section_name, dict())
             for k, v in section_d.items():
                 lut_dict['entries'][k] = v
                 # note that realm and modifier class atts are empty strings
                 # by default and, therefore, so are the corresponding dictionary
                 # keys. TODO: be sure to handle empty keys in PP
-                if not hasattr(v, 'modifier'):
+                if 'modifier' not in v:
                     lut_dict['entries'][k].update({'modifier': ""})
-                if not hasattr(v, 'long_name'):
+                if 'long_name' not in v:
                     lut_dict['entries'][k].update({'long_name': ""})
-            return lut_dict
+                if 'scalar_coord_templates' in v:
+                    sct_dict.update({k: v['scalar_coord_templates']})
+            return lut_dict, sct_dict
 
         d['axes_lut'] = util.WormDict()
         temp_d = _process_coord('coords', d, code_root, log)
@@ -216,8 +197,10 @@ class Fieldlist:
 
         temp_d = collections.defaultdict(util.WormDict)
         d['lut'] = util.WormDict()
-        temp_d = _process_var('variables', d, temp_d)
+        d['scalar_coord_templates'] = util.WormDict()
+        temp_d, sc_d = _process_var('variables', d, temp_d)
         d['lut'].update(temp_d['entries'])
+        d['scalar_coord_templates'].update(sc_d)
         d['lut_standard_names'] = []
         for sn in d['lut'].values():
             d['lut_standard_names'].append(sn['standard_name'])
@@ -284,7 +267,7 @@ class Fieldlist:
         lut1 = dict()
         for k, v in self.lut.items():
             if v['standard_name'] == standard_name and v['realm'] == realm and v['modifier'] == modifier:
-                if not hasattr(v, 'long_name'):
+                if 'long_name' not in v or v['long_name'].strip('') == '':
                     v['long_name'] = long_name
                 v['name'] = k
                 lut1.update({k: v})
@@ -326,7 +309,41 @@ class Fieldlist:
         else:
             return var.standard_name.replace('_', ' ')
 
-    def translate_coord(self, coord, log=_log):
+    def create_scalar_name(self, old_coord, new_coord: dict, var_id: str, log=_log) -> str:
+        """Uses one of the scalar_coord_templates to construct the translated
+        variable name for this variable on a scalar coordinate slice (eg.
+        pressure level).
+        """
+        c = old_coord
+        assert c.is_scalar, f'{c.name} is not a scalar coordinate'
+        if 'name' in new_coord:
+            key = new_coord['name']
+        elif 'out_name' in new_coord:
+            key = new_coord['out_name']
+        for v in self.scalar_coord_templates.values():
+            if key not in v.keys():
+                raise ValueError((f"Don't know how to name {c.name} ({c.axis}) slice "
+                                  f"of {self.name}."
+                                  ))
+        # construct convention's name for this variable on a level
+        name_template = self.scalar_coord_templates[var_id][key]
+        if new_coord['units'].strip('').lower() == 'pa':
+            val = int(new_coord['value']/100)
+        else:
+            val = int(new_coord['value'])
+
+        new_name = name_template.format(value=val)
+        if units.units_equal(c.units, new_coord['units']):
+            log.debug("Renaming %s %s %s slice of '%s' to '%s'.",
+                      c.value, c.units, c.axis, self.name, new_name)
+        else:
+            log.debug("Renaming %s slice of '%s' to '%s' (@ %s %s = %s %s).",
+                      c.axis, self.name, new_name, c.value, c.units,
+                      new_coord['value'], new_coord['units']
+                      )
+        return new_name
+
+    def translate_coord(self, coord, log=_log) -> dict:
         """Given a :class:`~data_model.DMCoordinate`, look up the corresponding
         translated :class:`~data_model.DMCoordinate` in this convention.
         """
@@ -371,9 +388,9 @@ class Fieldlist:
 
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             new_coord = copy.deepcopy(new_coord)
-            new_coord.value = units.convert_scalar_coord(coord,
-                                                         new_coord['units'],
-                                                         log=log)
+            new_coord['value'] = units.convert_scalar_coord(coord,
+                                                            new_coord['units'],
+                                                            log=log)
         else:
             new_coord = dc.replace(coord,
                                    **(util.filter_dataclass(new_coord, coord)))
@@ -424,9 +441,9 @@ class Fieldlist:
             assert not var.use_exact_name, "assertion error: var.use_exact_name set to true for " + var.full_name
             # change translated name to request the slice instead of the full var
             # keep the scalar_coordinate value attribute on the translated var
-            new_name = fl_atts.scalar_name(
-                var.scalar_coords[0], new_scalars[0], log=var.log
-            )
+            new_name = self.create_scalar_name(
+                var.scalar_coords[0], new_scalars[0],
+                new_name, log=var.log)
 
         return util.coerce_to_dataclass(
             fl_atts, TranslatedVarlistEntry,

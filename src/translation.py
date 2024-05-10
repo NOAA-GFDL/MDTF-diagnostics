@@ -444,6 +444,14 @@ class Fieldlist:
             new_name = self.create_scalar_name(
                 var.scalar_coords[0], new_scalars[0],
                 new_name, log=var.log)
+            # append an is_scalar attribute for the coordinate check in
+            # data_model._DMDimensionsMixin.__post_init__() call from
+            # TranslatedVarlistEntry
+            for s in new_scalars:
+                if 'is_scalar' not in s:
+                    s['is_scalar'] = True
+
+            new_scalars = util.NameSpace.fromDict(new_scalars)
 
         return util.coerce_to_dataclass(
             fl_atts, TranslatedVarlistEntry,

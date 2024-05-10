@@ -276,7 +276,7 @@ class Fieldlist:
             else:
                 # TODO refine the following query
                 # The logic below optimized for identifying the correct pressure level coordinate to select
-                # from the CMIP CV by comparing the varlistentry scalar coord value (supplied by the POD settings file)
+                # from the CMIP CV by comparing the VarlistEntry scalar coord value (supplied by the POD settings file)
                 # in hPa with the CV values in Pa (hPa * 100 = pa).
                 # If both coordinate values are strings, then there is just a simple check to see if the varlistentry
                 # value is contained by the CV string value. This is not robust, but sufficient for testing purposes
@@ -295,6 +295,9 @@ class Fieldlist:
                                 if coord.value in v.get('value'):
                                     new_coord = v
                                     break
+                            else:
+                                raise KeyError(f'coord value and/or Varlist value could not be parsed'
+                                               f' by translate_coord')
         else:
             new_coord = [lut1.values()][0]
 

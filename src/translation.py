@@ -45,92 +45,6 @@ class TranslatedVarlistEntry(data_model.DMVariable):
 
 
 @util.mdtf_dataclass
-class FieldlistEntry(data_model.DMDependentVariable):
-    """Class corresponding to an entry in a fieldlist file.
-    """
-    # name: str             # fields inherited from DMDependentVariable
-    # standard_name: str
-    # long_name: str
-    # units: Units
-    # modifier : str
-    # dims: list            # fields inherited from _DMDimensionsMixin
-    # scalar_coords: list
-    scalar_coord_templates: dict = dc.field(default_factory=dict)
-
-    def __post_init__(self, coords=None):
-        super(FieldlistEntry, self).__post_init__(coords)
-        # assert len(self.scalar_coords) == 0, 'FieldlistEntry scalar_coords attribute has nonzero length'
-        # if specified, verify that POD modifier attributes are valid
-        if not self.modifier.lower().strip() in (None, ''):
-            _str = VariableTranslator()
-            if self.modifier not in _str.modifier:
-                raise ValueError(f"Modifier {self.modifier} is not a recognized value.")
-
-    _ndim_to_axes_set = {
-        # allow specifying dimensionality as shorthand for explicit list
-        # of coordinate dimension names
-        1: 'PLACEHOLDER_T_COORD',
-        2: ('PLACEHOLDER_Y_COORD', 'PLACEHOLDER_X_COORD'),
-        3: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Y_COORD', 'PLACEHOLDER_X_COORD'),
-        4: ('PLACEHOLDER_T_COORD', 'PLACEHOLDER_Z_COORD', 'PLACEHOLDER_Y_COORD',
-            'PLACEHOLDER_X_COORD'),
-        5: ('PLACEHOLDER_N_COORD', 'PLACEHOLDER_T_COORD', 'PLACEHOLDER_Z_COORD', 'PLACEHOLDER_Y_COORD',
-            'PLACEHOLDER_X_COORD')
-    }
-    _placeholder_class_dict = {
-        'PLACEHOLDER_X_COORD': data_model.DMPlaceholderXCoordinate,
-        'PLACEHOLDER_Y_COORD': data_model.DMPlaceholderYCoordinate,
-        'PLACEHOLDER_Z_COORD': data_model.DMPlaceholderZCoordinate,
-        'PLACEHOLDER_T_COORD': data_model.DMPlaceholderTCoordinate,
-        'PLACEHOLDER_N_COORD': data_model.DMPlaceholderNCoordinate,
-        'PLACEHOLDER_COORD': data_model.DMPlaceholderCoordinate
-    }
-
-    @classmethod
-    def from_struct(cls, dims_d: dict, name: str, **kwargs):
-        # if we only have ndim, map to axes names
-        if 'dimensions' not in kwargs and 'ndim' in kwargs:
-            kwargs['dimensions'] = cls._ndim_to_axes_set[kwargs.pop('ndim')]
-
-        # map dimension names to coordinate objects
-        kwargs['coords'] = []
-        if 'dimensions' not in kwargs or not kwargs['dimensions']:
-            raise ValueError(f"No dimensions specified for fieldlist entry {name}.")
-        for d_name in kwargs.pop('dimensions'):
-            if d_name in cls._placeholder_class_dict:
-                coord_cls = cls._placeholder_class_dict[d_name]
-                kwargs['coords'].append(coord_cls())
-            elif d_name not in dims_d:
-                raise ValueError((f"Unknown dimension name {d_name} in fieldlist "
-                                  f"entry for {name}."))
-            else:
-                kwargs['coords'].append(dims_d[d_name])
-
-        for d_name in kwargs.get('scalar_coord_templates', dict()):
-            if d_name not in dims_d:
-                raise ValueError((f"Unknown dimension name {d_name} in scalar "
-                                  f"coord definition for fieldlist entry for {name}."))
-            if d_name:
-                cls.scalar_coord_templates.update(d_name)
-
-        filter_kw = util.filter_dataclass(kwargs, cls, init=True)
-        assert filter_kw['coords'], "Did not find filter_kw entry `coords`"
-        cls.standard_name = kwargs['standard_name']
-        if filter_kw.get('realm'):
-            cls.realm = filter_kw['realm']
-        if filter_kw.get('long_name'):
-            cls.long_name = filter_kw['long_name']
-
-        return cls(name=name, **filter_kw)
-
-    def scalar_coords(self):
-        pass
-
-    def dims(self):
-        pass
-
-
-@util.mdtf_dataclass
 class Fieldlist:
     """Class corresponding to a single variable naming convention (single file
     in data/fieldlist_*.jsonc).
@@ -206,8 +120,8 @@ class Fieldlist:
             d['lut_standard_names'].append(sn['standard_name'])
         return cls(**d)
 
-    def to_CF(self, var_or_name):
-        """Returns :class:`FieldlistEntry` for the variable having the given
+    def to_CF(self, var_or_name) -> util.WormDict:
+        """Returns FieldList lookup table entry for the variable having the given
         name in this convention.
         """
         if hasattr(var_or_name, 'name'):
@@ -246,13 +160,12 @@ class Fieldlist:
                 num_dims: int = 0,
                 has_scalar_coords_att: bool = False,
                 name_only: bool = False) -> dict:
-        """Look up :class:`FieldlistEntry` corresponding to the given standard
+        """Look up Fieldlist lookup table entries corresponding to the given standard
         name, optionally providing a modifier to resolve ambiguity.
 
-        TODO: this is a hacky implementation; FieldlistEntry needs to be
-        expanded with more ways to uniquely identify variable (eg cell methods).
+        TODO: expand with more ways to uniquely identify variable (eg cell methods).
         Args:
-            var_or_name: variable or name of the variable
+            standard_name: variable or name of the variable
             realm: variable realm (atmos, ocean, land, ice, etc...)
             modifier:optional string to distinguish a 3-D field from a 4-D field with
             the same var_or_name value
@@ -277,15 +190,14 @@ class Fieldlist:
             _log.error(f'Found multiple entries in {self.name} Fieldlist for {standard_name}')
         fl_entries = dict()
         for e in entries:
-            fl_entry: FieldlistEntry = e
-            fl_entries.update({fl_entry['name']: copy.deepcopy(fl_entry)})
+            fl_entries.update({e['name']: copy.deepcopy(e)})
         return fl_entries
 
     def from_CF_name(self,
                      var_or_name: str,
                      realm: str,
                      long_name: str = "",
-                     modifier: str = "") -> FieldlistEntry:
+                     modifier: str = "") -> collections.OrderedDict:
         """Like :meth:`from_CF`, but only return the variable's name in this
         convention.
 

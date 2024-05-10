@@ -861,6 +861,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 realm_regex = v.realm + '*'
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
+                # TODO: add method to convert freq from DateFrequency object to string
                 case_d.query['frequency'] = freq
                 case_d.query['path'] = [path_regex]
                 case_d.query['variable'] = v.name

@@ -71,8 +71,9 @@ class VarlistEntryBase(metaclass=util.MDTFABCMeta):
         path_variable: Name of env var containing path(s) to local data.
         dest_path: Path(s) to local data.
         alternates: List of lists of VarlistEntries.
-        translation: :class:`core.TranslatedVarlistEntry`, populated by DataSource.
+        translation: :class: `translation.TranslatedVarlistEntry`, populated by DataSource.
         data: dict mapping experiment_keys to DataKeys. Populated by DataSource.
+        scalar_coords: dict
     """
 
     def __init_subclass__(cls):
@@ -80,6 +81,7 @@ class VarlistEntryBase(metaclass=util.MDTFABCMeta):
             'use_exact_name',
             'env_var',
             'requirement',
+            'scalar_coords',
             'alternates',
             'translation',
             'data',
@@ -152,7 +154,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         path_variable: Name of env var containing path to local data.
         dest_path: Path to local data.
         alternates: List of lists of VarlistEntries.
-        translation: :class:`core.TranslatedVarlistEntry`, populated by DataSource.
+        translation: :class:`translation.TranslatedVarlistEntry`, populated by DataSource.
         data: dict mapping experiment_keys to DataKeys. Populated by DataSource.
     """
     # _id = util.MDTF_ID()           # fields inherited from core.MDTFObjectBase
@@ -211,10 +213,14 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         if not self.path_variable:
             self.path_variable = self.name.upper() + _file_env_var_suffix
         # self.alternates is either [] or a list of nonempty lists of VEs
-        if self.alternates:
-            if not isinstance(self.alternates[0], list):
-                self.alternates = [self.alternates]
-            self.alternates = [vs for vs in self.alternates if vs]
+        if hasattr(self, 'alternates'):
+            if isinstance(self.alternates, list):
+                if any(self.alternates):
+                    if not isinstance(self.alternates[0], list):
+                        self.alternates = [self.alternates]
+                    self.alternates = [vs for vs in self.alternates if vs]
+        if hasattr(self, 'scalar_coords'):
+            self.scalar_coords = self.scalar_coords
 
     def dims(self):
         pass
@@ -319,8 +325,9 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
             "realm": self.realm,
             **assoc_dict
         })
+
         for ax, dim in self.dim_axes.items():
-            trans_dim = self.translation.dim_axes[ax]
+            trans_dim = self.translation.axes[ax]
             self.env_vars[dim.name + _coord_env_var_suffix] = trans_dim.name
             if trans_dim.has_bounds:
                 self.env_vars[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
@@ -510,7 +517,8 @@ class Varlist(data_model.DMDataSet):
                   model_paths: util.ModelDataPathManager,
                   case_name: str,
                   v: VarlistEntry,
-                  data_convention: str,
+                  from_convention: str,
+                  to_convention: str,
                   date_range: util.DateRange):
         """Update VarlistEntry fields with information that only becomes
         available after DataManager and Diagnostic have been configured (ie,
@@ -519,7 +527,8 @@ class Varlist(data_model.DMDataSet):
         Could arguably be moved into VarlistEntry's init, at the cost of
         dependency inversion.
         """
-        translate = translation.VariableTranslator().get_convention(data_convention)
+        # Note: VariableTranslator object is instantiated in mdtf_framework with runtime information
+        translate = translation.VariableTranslator().get_convention(to_convention)
         if v.T is not None:
             v.change_coord(
                 'T',
@@ -534,7 +543,8 @@ class Varlist(data_model.DMDataSet):
             )
         v.dest_path = self.variable_dest_path(model_paths, case_name, v)
         try:
-            trans_v = translate.translate(v)
+            trans_v = translate.translate(v, from_convention)
+            assert trans_v is not None, f'translation for varlistentry {v.name} failed'
             v.translation = trans_v
             # copy preferred gfdl post-processing component during translation
             if hasattr(trans_v, "component"):

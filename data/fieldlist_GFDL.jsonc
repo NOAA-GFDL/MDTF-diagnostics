@@ -10,8 +10,40 @@
     // only used for taking slices, unit conversion
     // 'PLACEHOLDER' prefix indicates that coordinate names are to be set based
     // on their values in model data
-    "lon": {"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
-    "lat": {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
+    "lon": {
+      "axis": "X",
+      "standard_name": "longitude",
+      "units": "degrees_east"
+    },
+    "lat": {
+      "axis": "Y",
+      "standard_name": "latitude",
+      "units": "degrees_north"
+    },
+    "yh": {
+      "axis": "Y",
+      "standard_name": "h_point_nominal_longitude",
+      "long_name": "h point nominal latitude",
+      "units": "degrees_north"
+    },
+    "xq": {
+      "axis": "X",
+      "standard_name": "x_point_nominal_latitude",
+      "long_name": "x point nominal latitude",
+      "units": "degrees_north"
+    },
+    "yh": {
+      "axis": "Y",
+      "standard_name": "h_point_nominal_longitude",
+      "long_name": "h point nominal longitude",
+      "units": "degrees_north"
+    },
+    "yq": {
+      "axis": "Y",
+      "standard_name": "q_point_nominal_longitude",
+      "long_name": "q point nominal longitude",
+      "units": "degrees_north"
+    },
     "plev": {
       "standard_name": "air_pressure",
       "long_name": "",
@@ -31,33 +63,59 @@
       "positive": "down",
       "axis": "Z"
     },
-    "time": {"axis": "T", "standard_name": "time", "units": "days"}
-  },
-  "aux_coords": {
-      "band":{
-         "standard_name": "",
-         "long_name": "spectral band",
-         "units": "1",
-         "ndim": 1
-      }
-
-    // "deptho": {
-    //   "standard_name": "sea_floor_depth_below_geoid",
-    //   "units": "m",
-    //   "ndim": 2
-    // },
-    // "thkcello": {
-    //   "standard_name": "cell_thickness",
-    //   "units": "m",
-    //   "ndim": 3
-    // }
+    "z_i": {
+      "standard_name": "depth_at_interface",
+      "long_name": "depth at interface",
+      "units": "m",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "z_l": {
+      "standard_name": "depth_at_cell_center",
+      "long_name": "depth at cell center",
+      "units": "m",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {
+      "axis": "T",
+      "standard_name": "time",
+      "units": "days"
+    },
+    "band": {
+      "standard_name": "spectral_band",
+      "long_name": "spectral band",
+      "units": "1",
+      "axis": "N"
+    },
+    "nv": {
+      "standard_name": "vertex_number",
+      "long_name": "vertex number",
+      "units": "1",
+      "axis": "N"
+    }
   },
   "variables" : {
+    "$ref": "./gfdl-cmor-tables/gfdl_to_cmip6_vars.json",
+    "$ref": "./gfdl-cmor-tables/gfdl_to_cmip5_vars.json",
+
     "areacello": {
       "standard_name": "cell_area",
       "realm": "ocean",
       "units": "m2",
       "ndim": 2
+    },
+    "deptho": {
+      "standard_name": "sea_floor_depth_below_geoid",
+      "units": "m",
+      "realm": "ocean",
+      "ndim": 2
+    },
+    "thkcello": {
+      "standard_name": "cell_thickness",
+      "units": "m",
+      "realm": "ocean",
+      "ndim": 3
     },
     "zos": {
       "standard_name": "sea_surface_height_above_geoid",

@@ -142,11 +142,11 @@ def conversion_factor(source_unit, dest_unit):
 
 # --------------------------------------------------------------------
 
-def convert_scalar_coord(coord, dest_units, log=_log):
+def convert_scalar_coord(coord, dest_units: str, log=_log):
     """Given scalar coordinate *coord*, return the appropriate scalar value in
     new units *dest_units*.
     """
-    assert hasattr(coord, 'is_scalar') and coord.is_scalar
+    assert hasattr(coord, 'is_scalar') and coord.is_scalar, 'coord is missing is_scalar attribute or is_scalar = False'
     if not units_equal(coord.units, dest_units):
         # convert units of scalar value to convention's coordinate's units
         dest_value = coord.value * conversion_factor(coord.units, dest_units)

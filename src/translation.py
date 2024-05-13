@@ -7,7 +7,6 @@ import dataclasses as dc
 import glob
 import typing
 import pathlib
-import itertools
 from src import util, data_model, units
 from src.units import Units
 

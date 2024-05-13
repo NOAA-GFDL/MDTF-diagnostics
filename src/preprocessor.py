@@ -14,6 +14,7 @@ import intake
 import numpy as np
 import xarray as xr
 import collections
+import re
 
 # TODO: Make the following lines a unit test
 # import sys
@@ -308,7 +309,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         new_v = copy_as_alternate(v)
         new_v.translation = new_tv
         return new_v
-        #v = new_v
+        # v = new_v
 
     def execute(self, var, ds, **kwargs):
         """Convert units of dependent variable *ds* between precip rate and
@@ -796,6 +797,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             log: log file
         """
         date_col = "date_range"
+        if not hasattr(group_df, 'start_time') or not hasattr(group_df, 'end_time'):
+            raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time`')
         try:
             if not isinstance(group_df['start_time'].values[0], datetime.date):
                 # convert int to date type
@@ -815,7 +818,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 st = dates_df.at[idx, 'start_time']
                 en = dates_df.at[idx, 'end_time']
                 date_range_vals.append(util.DateRange(st, en))
-
             group_df = group_df.assign(date_range=date_range_vals)
             sorted_df = group_df.sort_values(by=date_col)
 
@@ -862,61 +864,41 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         for case_name, case_d in case_dict.items():
             # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
-            # path_regex = re.compile(r'({})'.format(case_name))
-            path_regex = case_name + '*'
+            path_regex = re.compile(r'({})'.format(case_name))
+            # path_regex = '*' + case_name + '*'
             freq = case_d.varlist.T.frequency
 
             for v in case_d.varlist.iter_vars():
                 realm_regex = v.realm + '*'
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
-                query_dict = dict(frequency=freq,
-                                  realm=realm_regex,
-                                  path=path_regex)
-                # search the catalog for a standard_name or long_name using the translated variable attributes
-                # the translated variable class will contain the same information as the variable class if no
-                # translation was performed
-                cat_subset = cat.search(standard_name=v.translation.standard_name)
+                # TODO: add method to convert freq from DateFrequency object to string
+                case_d.query['frequency'] = freq
+                case_d.query['path'] = [path_regex]
+                case_d.query['variable'] = v.name
+                # search translation for further query requirements
+                for q in case_d.query:
+                    if hasattr(v.translation, q):
+                        case_d.query.update({q: getattr(v.translation, q)})
+                if hasattr(v.translation, 'name'):
+                    case_d.query.update({'variable': getattr(v.translation, 'name')})
+                # search catalog for convention specific query object
+                cat_subset = cat.search(**case_d.query)
                 if cat_subset.df.empty:
-                    cat_subset = cat.search(long_name=v.translation.long_name)
-                    if cat_subset.df.empty:
-                        raise util.DataRequestError(f"No standard_name or long_name found for "
-                                                    f"{v.translation.name} in {data_catalog}")
-                    else:
-                        query_dict.update({'long_name': v.translation.long_name})
-                else:
-                    query_dict.update({'standard_name': v.translation.standard_name})
-
-                # find the catalog column with the data convention information
-                cat_subset = cat.search(activity_id=case_d.convention)
-                if cat_subset.df.empty:
-                    cat_subset = cat.search(institution_id=case_d.convention)
-                    if cat_subset.df.empty:
-                        raise util.DataRequestError(f"No activity_id or institution_id found for "
-                                                    f"{case_d.convention} in {data_catalog}")
-                    else:
-                        query_dict.update({'institution_id': case_d.convention})
-                else:
-                    query_dict.update({'activity_id': case_d.convention})
-
-                cat_subset = cat.search(**query_dict
-                                        )
-                if cat_subset.df.empty:
-                    raise util.DataRequestError(f"No assets found for {case_name} in {data_catalog}")
+                    raise util.DataRequestError(
+                        f"No assets matching query requirements found for {case_name} in {data_catalog}")
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
-                cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
-                v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
+                # cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
+                # v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict
                 cat_dict = cat_dict | cat_subset.to_dataset_dict(
                     progressbar=False,
                     xarray_open_kwargs=self.open_dataset_kwargs
                 )
-
         # rename cat_subset case dict keys to case names
         cat_dict_rename = self.rename_dataset_keys(cat_dict, case_dict)
-
         return cat_dict_rename
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
@@ -1199,10 +1181,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """
         # get the initial model data subset from the ESM-intake catalog
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
-
         for case_name, case_xr_dataset in cat_subset.items():
             for v in case_list[case_name].varlist.iter_vars():
-                self.edit_request(v, convention=cat_subset[case_name].convention)
+                self.edit_request(v, convention=case_list[case_name].convention)
                 cat_subset[case_name] = self.parse_ds(v, case_xr_dataset)
                 self.execute_pp_functions(v,
                                           cat_subset[case_name],
@@ -1222,7 +1203,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         pp_cat_assets = util.define_pp_catalog_assets(config, cat_file_name)
         file_list = util.get_file_list(config.OUTPUT_DIR)
         # fill in catalog information from pp file name
-        entries = list(map(util.mdtf_pp_parser, file_list))
+        entries = [e.cat_entry for e in list(map(util.catalog.ppParser['ppParser' + 'GFDL'], file_list))]
         # append columns defined in assets
         columns = [att['column_name'] for att in pp_cat_assets['attributes']]
         for col in columns:

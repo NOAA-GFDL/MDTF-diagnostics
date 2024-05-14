@@ -29,12 +29,8 @@ from ecgtools.parsers import parse_cmip6
 from ecgtools.parsers.cesm import parse_cesm_timeseries
 import logging
 
-path_parts = os.path.dirname(os.path.realpath(__file__)).split(os.sep)
-nparts = len(path_parts)
-code_root = os.path.join(path_parts[0:nparts-3])
-sys.path.insert(0, os.path.join(code_root, 'src'))
-
-
+root_dir = os.path.dirname(os.path.realpath(__file__)).split('/tools/catalog_builder')[0]
+sys.path.insert(0, os.path.join(root_dir, 'src'))
 from src import util
 
 # Define a log object for debugging
@@ -70,7 +66,7 @@ catalog_class = ClassMaker()
 # custom parser for GFDL am5 data that uses fieldlist metadata and the DRS to populate
 # required catalog fields
 def parse_gfdl_am5_data(file_name: str):
-    root_dir = os.path.dirname(os.path.realpath(__file__)).split('/tools/catalog_builder')[0]
+
     file = pathlib.Path(file_name)  # uncomment when ready to run
 
     try:

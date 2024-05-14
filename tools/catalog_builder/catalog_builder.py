@@ -21,15 +21,17 @@ import time
 import traceback
 import typing
 import xarray as xr
-import json
-from src.util import json_utils, basic
 import yaml
-from datetime import datetime, timedelta
+from datetime import timedelta
 from ecgtools import Builder
 from ecgtools.builder import INVALID_ASSET, TRACEBACK
 from ecgtools.parsers import parse_cmip6
 from ecgtools.parsers.cesm import parse_cesm_timeseries
 import logging
+
+root_dir = os.path.dirname(os.path.realpath(__file__)).split('/tools/catalog_builder')[0]
+sys.path.insert(0, os.path.join(root_dir, 'src'))
+from src import util
 
 # Define a log object for debugging
 _log = logging.getLogger(__name__)
@@ -64,7 +66,7 @@ catalog_class = ClassMaker()
 # custom parser for GFDL am5 data that uses fieldlist metadata and the DRS to populate
 # required catalog fields
 def parse_gfdl_am5_data(file_name: str):
-    root_dir = os.path.dirname(os.path.realpath(__file__)).split('/tools/catalog_builder')[0]
+
     file = pathlib.Path(file_name)  # uncomment when ready to run
 
     try:
@@ -123,11 +125,11 @@ def parse_gfdl_am5_data(file_name: str):
         else:
             gfdl_fieldlist = os.path.join(root_dir, 'data/fieldlist_GFDL.jsonc')
         try:
-            json_config = json_utils.read_json(gfdl_fieldlist, log=_log)
+            json_config = util.json_utils.read_json(gfdl_fieldlist, log=_log)
         except IOError:
             print("Unable to open file", gfdl_fieldlist)
             sys.exit(1)
-        gfdl_info = basic.NameSpace.fromDict(json_config)
+        gfdl_info = util.basic.NameSpace.fromDict(json_config)
 
         if hasattr(gfdl_info.variables, variable_id):
             var_metadata = gfdl_info.variables.get(variable_id)

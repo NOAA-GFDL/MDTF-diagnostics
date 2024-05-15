@@ -16,6 +16,21 @@ _log = logging.getLogger(__name__)
 
 _NO_TRANSLATION_CONVENTION = 'no_translation'  # naming convention for disabling translation
 
+# only correct for this application
+_liquid_water_density = units.Units('1000.0 kg m-3')
+# list of recognized standard_names for which transformation is applicable
+# NOTE: not exhaustive
+_std_name_tuples = [
+    # flux in CF, rate is not
+    ("precipitation_rate", "precipitation_flux"),
+    # both in CF
+    ("convective_precipitation_rate", "convective_precipitation_flux"),
+    # not in CF; here for compatibility with NCAR-CAM
+    ("large_scale_precipitation_rate", "large_scale_precipitation_flux")
+]
+_rate_d = {tup[0]: tup[1] for tup in _std_name_tuples}
+_flux_d = {tup[1]: tup[0] for tup in _std_name_tuples}
+
 
 @util.mdtf_dataclass
 class TranslatedVarlistEntry(data_model.DMVariable):
@@ -310,6 +325,45 @@ class Fieldlist:
                                    **(util.filter_dataclass(new_coord, coord)))
         return new_coord
 
+    def precip_rate_to_flux(self, v, to_convention: str):
+        """Convert the dependent variable's units, for
+        the specific case of precipitation. Flux and precip rate differ by a factor
+        of the density of water, so can't be handled by the udunits2 implementation
+        provided by :class:`~src.units.Units`. Instead, they're handled here as a
+        special case. The general case of unit conversion is handled by
+        :class:`ConvertUnitsFunction`.
+
+        CF ``standard_names`` recognized for the conversion are ``precipitation_flux``,
+        ``convective_precipitation_flux``, ``large_scale_precipitation_flux``, and
+        likewise for ``*_rate``.
+        """
+        # Incorrect but matches convention for this conversion.
+
+        std_name = getattr(v, 'standard_name', "")
+
+        if std_name not in _rate_d and std_name not in _flux_d:
+            # logic not applicable to this VE; do nothing and return varlistEntry for
+            # next function to run edit_request on
+            return v
+        # var.translation.units set by edit_request will have been overwritten by
+        # DefaultDatasetParser to whatever they are in ds. Change them back.
+        if std_name in _rate_d:
+            # requested rate, received alternate for flux
+            new_units = units.Units(v.units) / _liquid_water_density
+        elif std_name in _flux_d:
+            # requested flux, received alternate for rate
+            new_units = units.Units(v.units) * _liquid_water_density
+
+        v.log.debug(('Assumed implicit factor of water density in units for %s: '
+                     'given %s, will convert as %s.'),
+                    v.full_name, v.units, new_units.units,
+                    tags=util.ObjectLogTag.NC_HISTORY
+                    )
+        v.units = new_units.units
+        #v.standard_name =
+        #v.conversion =
+        return v
+
     def translate(self, var, from_convention: str):
         """Returns :class:`TranslatedVarlistEntry` instance, with populated
         coordinate axes. Units of scalar coord slices are translated to the units
@@ -329,6 +383,7 @@ class Fieldlist:
             from_convention_tl = VariableTranslator().get_convention(from_convention)
             # Fieldlist entry for POD variable
             long_name = self.get_variable_long_name(var, has_scalar_coords)
+
             fl_entries = from_convention_tl.from_CF(var.standard_name,
                                                   var.realm,
                                                   var.modifier,
@@ -552,5 +607,5 @@ class VariableTranslator(metaclass=util.Singleton):
     def translate_coord(self, conv_name: str, coord, log=_log):
         return self._fieldlist_method(conv_name, 'translate_coord', coord, log=log)
 
-    def translate(self, conv_name: str, var):
-        return self._fieldlist_method(conv_name, 'translate', var)
+    def translate(self, var, to_convention: str, from_convention: str):
+        return self._fieldlist_method(to_convention, 'translate', var, from_convention)

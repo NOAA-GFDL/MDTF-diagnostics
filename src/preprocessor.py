@@ -41,7 +41,6 @@ def copy_as_alternate(old_v, **kwargs):
     new_v = dataclasses.replace(
         old_v,
         _id=util.MDTF_ID(),  # assign distinct ID
-        stage=varlist_util.VarlistEntryStage.INITED,  # reset state from old_v
         status=util.ObjectStatus.INACTIVE,  # new VE meant as an alternate
         requirement=varlist_util.VarlistEntryRequirement.ALTERNATE,
         # plus the specific replacements we want to make:
@@ -293,14 +292,15 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             )
 
         translate = translation.VariableTranslator()
-        for key, val in kwargs:
+        for key, val in kwargs.items():
             if 'convention' in key:
-                to_convention = val
+                to_convention = val.lower()
             else:
                 to_convention = None
-        assert to_convention, 'to_convention not defined in *args of PrecipRatetoFLuxConversion'
         try:
-            new_tv = translate.translate(to_convention, v_to_translate)
+            # current varlist.translation object is already in to_convention format
+            # so from_convention arg = to_convention arg in this translation call
+            new_tv = translate.translate(v_to_translate, to_convention, to_convention)
         except KeyError as exc:
             v.log.debug(('%s edit_request on %s: caught %r when trying to '
                          'translate \'%s\'; varlist unaltered.'), self.__class__.__name__,
@@ -309,7 +309,6 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         new_v = copy_as_alternate(v)
         new_v.translation = new_tv
         return new_v
-        # v = new_v
 
     def execute(self, var, ds, **kwargs):
         """Convert units of dependent variable *ds* between precip rate and
@@ -539,10 +538,10 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         if len(tv.scalar_coords) == 0:
             raise AssertionError  # should never get here
         elif len(tv.scalar_coords) > 1:
-            raise NotImplementedError()
+           _log.debug(f'scalar_coords attribute for {v.name} has more than one entry; using first entry in list')
         # wraps method in data_model; makes a modified copy of translated var
         # restore name to that of 4D data (eg. 'u500' -> 'ua')
-        new_ax_set = set(v.axes_set).add('Z')
+        new_ax_set = set(v.axes).add('Z')
         if v.use_exact_name:
             new_tv_name = v.name
         else:
@@ -1168,11 +1167,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with each case in the case_list dictionary
         """
+        for case_name, case_dict in case_list.items():
+            for v in case_dict.varlist.iter_vars():
+                self.edit_request(v, convention=case_dict.convention)
         # get the initial model data subset from the ESM-intake catalog
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
             for v in case_list[case_name].varlist.iter_vars():
-                self.edit_request(v, convention=case_list[case_name].convention)
                 cat_subset[case_name] = self.parse_ds(v, case_xr_dataset)
                 self.execute_pp_functions(v,
                                           cat_subset[case_name],

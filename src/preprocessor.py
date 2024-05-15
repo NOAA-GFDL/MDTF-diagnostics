@@ -863,7 +863,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # the variable is translated
                 # TODO: add method to convert freq from DateFrequency object to string
                 case_d.query['frequency'] = freq
-                print(freq)
                 case_d.query['path'] = [path_regex]
                 case_d.query['variable'] = v.name
                 # search translation for further query requirements

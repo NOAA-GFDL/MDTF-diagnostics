@@ -855,7 +855,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
             path_regex = re.compile(r'({})'.format(case_name))
             # path_regex = '*' + case_name + '*'
-            freq = case_d.varlist.T.frequency
+            freq = case_d.varlist.T.frequency.format()
 
             for v in case_d.varlist.iter_vars():
                 realm_regex = v.realm + '*'
@@ -863,6 +863,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # the variable is translated
                 # TODO: add method to convert freq from DateFrequency object to string
                 case_d.query['frequency'] = freq
+                print(freq)
                 case_d.query['path'] = [path_regex]
                 case_d.query['variable'] = v.name
                 # search translation for further query requirements

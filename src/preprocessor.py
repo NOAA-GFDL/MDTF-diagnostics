@@ -514,14 +514,15 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
     """
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
-        """Edit the *pod*'s :class:`~src.diagnostic.Varlist` prior to data query.
-        If given a :class:`~src.diagnostic.VarlistEntry` *v* has a
+        """ Create an 4-D alternate for a scalar variable.
+        If given a :class:`~src.varlist_util.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
         pressure level), return a copy of *v* with that ``scalar_coordinate``
-        removed (i.e., requesting a full 3D variable) to be used as an alternate
+        removed (i.e., requesting a full 4D variable) to be used as an alternate
         variable for *v*.
 
         """
+        data_convention = 'CMIP'
         for key, val in kwargs.items():
             if 'convention' in key:
                 data_convention = val
@@ -541,15 +542,23 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
            _log.debug(f'scalar_coords attribute for {v.name} has more than one entry; using first entry in list')
         # wraps method in data_model; makes a modified copy of translated var
         # restore name to that of 4D data (eg. 'u500' -> 'ua')
-        new_ax_set = set(v.axes).add('Z')
+        new_ax_set = set(v.axes_set).add('Z')
+
+        new_tv_name = ""
         if v.use_exact_name:
             new_tv_name = v.name
         else:
-            new_tv_name = translation.VariableTranslator().from_CF_name(
-                data_convention, v.standard_name, new_ax_set, v.realm
+            new_tv_dict = translation.VariableTranslator().from_CF_name(
+                data_convention, v.standard_name, v.realm, v.modifier
             )
+            # CMIP CV will return multiple values for same standard name (e.g., ua250, ua10, ua)
+            # so choose the 4-D value (assumes that 4-D vars from same realm do not share the same standard name)
+            for v in new_tv_dict.values():
+                if v['ndim'] == 4:
+                    new_tv_name = v['name']
+        sc_axis = [c for c in tv.scalar_coords if c.axis == 'Z'][0]
         new_tv = tv.remove_scalar(
-            tv.scalar_coords[0].axis,
+            sc_axis.axis,
             name=new_tv_name
         )
         new_v = copy_as_alternate(v)

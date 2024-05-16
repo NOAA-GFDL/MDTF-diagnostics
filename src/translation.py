@@ -211,7 +211,7 @@ class Fieldlist:
                      var_or_name: str,
                      realm: str,
                      long_name: str = "",
-                     modifier: str = "") -> collections.OrderedDict:
+                     modifier: str = "") -> dict:
         """Like :meth:`from_CF`, but only return the variable's name in this
         convention.
 
@@ -222,11 +222,12 @@ class Fieldlist:
             modifier:optional string to distinguish a 3-D field from a 4-D field with
             the same var_or_name value
         """
+
         return self.from_CF(var_or_name,
                             modifier=modifier,
                             long_name=long_name,
                             name_only=True,
-                            realm=realm).name
+                            realm=realm)
 
     def get_variable_long_name(self, var, has_scalar_coords: bool) -> str:
         if not var.long_name and has_scalar_coords:
@@ -242,10 +243,11 @@ class Fieldlist:
         """
         c = old_coord
         assert c.is_scalar, f'{c.name} is not a scalar coordinate'
-        if 'name' in new_coord:
-            key = new_coord['name']
-        elif 'out_name' in new_coord:
-            key = new_coord['out_name']
+        key = ""
+        if hasattr(new_coord, 'name'):
+            key = new_coord.name
+        elif hasattr(new_coord, 'out_name'):
+            key = new_coord.out_name
         for v in self.scalar_coord_templates.values():
             if key not in v.keys():
                 raise ValueError((f"Don't know how to name {c.name} ({c.axis}) slice "
@@ -253,23 +255,23 @@ class Fieldlist:
                                   ))
         # construct convention's name for this variable on a level
         name_template = self.scalar_coord_templates[var_id][key]
-        if new_coord['units'].strip('').lower() == 'pa':
-            val = int(new_coord['value']/100)
+        if new_coord.units.strip('').lower() == 'pa':
+            val = int(new_coord.value/100)
         else:
-            val = int(new_coord['value'])
+            val = int(new_coord.value)
 
         new_name = name_template.format(value=val)
-        if units.units_equal(c.units, new_coord['units']):
+        if units.units_equal(c.units, new_coord.units):
             log.debug("Renaming %s %s %s slice of '%s' to '%s'.",
                       c.value, c.units, c.axis, self.name, new_name)
         else:
             log.debug("Renaming %s slice of '%s' to '%s' (@ %s %s = %s %s).",
                       c.axis, self.name, new_name, c.value, c.units,
-                      new_coord['value'], new_coord['units']
+                      new_coord.value, new_coord.units
                       )
         return new_name
 
-    def translate_coord(self, coord, log=_log) -> dict:
+    def translate_coord(self, coord, class_dict=None, log=_log) -> dict:
         """Given a :class:`~data_model.DMCoordinate`, look up the corresponding
         translated :class:`~data_model.DMCoordinate` in this convention.
         """
@@ -316,10 +318,21 @@ class Fieldlist:
             new_coord = [lut1.values()][0]
 
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
-            new_coord = copy.deepcopy(new_coord)
-            new_coord['value'] = units.convert_scalar_coord(coord,
-                                                            new_coord['units'],
-                                                            log=log)
+            coord_name = ""
+            if new_coord.get('name', None):
+                coord_name = new_coord['name']
+            elif new_coord.get('out_name', None):
+                coord_name = new_coord['out_name']
+            coord_copy = copy.deepcopy(new_coord)
+            coord_copy['value'] = units.convert_scalar_coord(coord,
+                                                             coord_copy['units'],
+                                                             log=log)
+            try:
+                new_coord = data_model.coordinate_from_struct(coord_copy,
+                                                              class_dict=class_dict,
+                                                              name=coord_name)
+            except Exception as exc:
+                print(exc)
         else:
             new_coord = dc.replace(coord,
                                    **(util.filter_dataclass(new_coord, coord)))
@@ -362,9 +375,16 @@ class Fieldlist:
                                                 fl_atts['long_name'],
                                                 fl_atts['realm'],
                                                 fl_atts['modifier'])
+        # build reference dictionary of axes classes so that any scalar_coords are cast to
+        # corresponding Varlist[]Coordinate classes
+        class_dict = None
+        if has_scalar_coords:
+            class_dict = dict()
+            for k, v in var.axes.items():
+                class_dict.update({k: v.__class__})
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]
-        new_scalars = [self.translate_coord(dim, log=var.log) for dim in var.scalar_coords]
+        new_scalars = [self.translate_coord(dim, class_dict=class_dict, log=var.log) for dim in var.scalar_coords]
         if len(new_scalars) > 1:
             raise NotImplementedError()
         elif len(new_scalars) == 1:
@@ -378,10 +398,8 @@ class Fieldlist:
             # data_model._DMDimensionsMixin.__post_init__() call from
             # TranslatedVarlistEntry
             for s in new_scalars:
-                if 'is_scalar' not in s:
-                    s['is_scalar'] = True
-
-            new_scalars = util.NameSpace.fromDict(new_scalars)
+                if not s.is_scalar:
+                    s.is_scalar = True
 
         return util.coerce_to_dataclass(
             fl_atts, TranslatedVarlistEntry,
@@ -521,7 +539,7 @@ class VariableTranslator(metaclass=util.Singleton):
             return NoTranslationFieldlist()
         else:
             # normal case: translate according to data source's naming convention
-            conv_name = self.get_convention_name(conv_name)
+            conv_name = self.get_convention_name(conv_name.lower())
             return self.conventions[conv_name]
 
     def _fieldlist_method(self, conv_name: str, method_name: str, *args, **kwargs):

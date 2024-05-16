@@ -325,45 +325,6 @@ class Fieldlist:
                                    **(util.filter_dataclass(new_coord, coord)))
         return new_coord
 
-    def precip_rate_to_flux(self, v, to_convention: str):
-        """Convert the dependent variable's units, for
-        the specific case of precipitation. Flux and precip rate differ by a factor
-        of the density of water, so can't be handled by the udunits2 implementation
-        provided by :class:`~src.units.Units`. Instead, they're handled here as a
-        special case. The general case of unit conversion is handled by
-        :class:`ConvertUnitsFunction`.
-
-        CF ``standard_names`` recognized for the conversion are ``precipitation_flux``,
-        ``convective_precipitation_flux``, ``large_scale_precipitation_flux``, and
-        likewise for ``*_rate``.
-        """
-        # Incorrect but matches convention for this conversion.
-
-        std_name = getattr(v, 'standard_name', "")
-
-        if std_name not in _rate_d and std_name not in _flux_d:
-            # logic not applicable to this VE; do nothing and return varlistEntry for
-            # next function to run edit_request on
-            return v
-        # var.translation.units set by edit_request will have been overwritten by
-        # DefaultDatasetParser to whatever they are in ds. Change them back.
-        if std_name in _rate_d:
-            # requested rate, received alternate for flux
-            new_units = units.Units(v.units) / _liquid_water_density
-        elif std_name in _flux_d:
-            # requested flux, received alternate for rate
-            new_units = units.Units(v.units) * _liquid_water_density
-
-        v.log.debug(('Assumed implicit factor of water density in units for %s: '
-                     'given %s, will convert as %s.'),
-                    v.full_name, v.units, new_units.units,
-                    tags=util.ObjectLogTag.NC_HISTORY
-                    )
-        v.units = new_units.units
-        #v.standard_name =
-        #v.conversion =
-        return v
-
     def translate(self, var, from_convention: str):
         """Returns :class:`TranslatedVarlistEntry` instance, with populated
         coordinate axes. Units of scalar coord slices are translated to the units

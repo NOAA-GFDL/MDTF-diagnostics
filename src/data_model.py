@@ -5,6 +5,7 @@ This is based on the `CF standard terminology
 <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.9/cf-conventions.html>`__.
 """
 import abc
+import copy
 import dataclasses as dc
 import itertools
 import typing
@@ -643,7 +644,7 @@ class _DMDimensionsMixin:
         """Whether the variable has time dependence (bool)."""
         return (self.T is None) or self.T.is_static
 
-    def get_scalar(self, ax_name):
+    def get_scalar(self, ax_name: str):
         """If the axis label *ax_name* is a scalar coordinate, return the
         corresponding :class:`AbstractDMCoordinate` object, otherwise return None.
         """
@@ -799,15 +800,16 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
                           **kwargs
                           )
 
-    def remove_scalar(self, ax, position=-1, **kwargs):
+    def remove_scalar(self, ax: str, position=-1, **kwargs):
         """Metadata operation that's the inverse of :meth:`add_scalar`. Given an
         axis label *ax* that's currently a scalar coordinate, remove the slice
         value and add it to the list of dimension coordinates at *position*
         (default end of the list.)
         """
         dim = self.get_scalar(ax)
-        assert dim is not None
-        new_dim = dc.replace(dim, value=None)
+        assert dim is not None, 'remove_scalar.get_scalar did not return dim information'
+        new_dim = copy.deepcopy(dim)
+        new_dim.update({'value': None})
         new_dims = self.dims.copy()
         new_dims.insert(position, new_dim)
         new_scalars = self.scalar_coords.copy()

@@ -808,8 +808,7 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
         """
         dim = self.get_scalar(ax)
         assert dim is not None, 'remove_scalar.get_scalar did not return dim information'
-        new_dim = copy.deepcopy(dim)
-        new_dim.update({'value': None})
+        new_dim = dc.replace(dim, value=None)
         new_dims = self.dims.copy()
         new_dims.insert(position, new_dim)
         new_scalars = self.scalar_coords.copy()

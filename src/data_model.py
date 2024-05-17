@@ -5,7 +5,6 @@ This is based on the `CF standard terminology
 <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.9/cf-conventions.html>`__.
 """
 import abc
-import copy
 import dataclasses as dc
 import itertools
 import typing

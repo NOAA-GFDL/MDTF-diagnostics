@@ -174,6 +174,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
     realm: str = dc.field(default="", compare=False)
     long_name: str = dc.field(default="", compare=False)
     dest_path: str = ""
+    convention: str = ""
     requirement: VarlistEntryRequirement = dc.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False
     )
@@ -259,7 +260,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         """
         new_kw = global_settings_d.copy()
         new_kw['coords'] = []
-
+        new_kw['convention'] = parent.pod_settings.get('convention', 'cmip')
         if 'dimensions' not in kwargs:
             raise ValueError(f"No dimensions specified for Varlist entry {name}.")
         # validate: check for duplicate coord names
@@ -287,6 +288,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
                     raise ValueError((f"Unknown dimension name {d_name} in varlist "
                                       f"entry for {name}."))
                 new_kw['coords'].append(dims_d[d_name].make_scalar(scalar_val))
+
         filter_kw = util.filter_dataclass(kwargs, cls, init=True)
         obj = cls(name=name, _parent=parent, **new_kw, **filter_kw)
         # specialize time coord
@@ -550,7 +552,7 @@ class Varlist(data_model.DMDataSet):
             if hasattr(trans_v, "component"):
                 v.component = trans_v.component
         except KeyError as exc:
-            # can happen in normal operation (eg. precip flux vs. rate)
+            # can happen in normal operation (e.g., precip flux vs. rate)
             chained_exc = util.PodConfigEvent((f"Deactivating {v.full_name} due to "
                                                f"variable name translation: {str(exc)}."))
             # store but don't deactivate, because preprocessor.edit_request()

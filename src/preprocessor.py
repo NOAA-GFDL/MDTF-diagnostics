@@ -41,7 +41,6 @@ def copy_as_alternate(old_v, **kwargs):
     new_v = dataclasses.replace(
         old_v,
         _id=util.MDTF_ID(),  # assign distinct ID
-        stage=varlist_util.VarlistEntryStage.INITED,  # reset state from old_v
         status=util.ObjectStatus.INACTIVE,  # new VE meant as an alternate
         requirement=varlist_util.VarlistEntryRequirement.ALTERNATE,
         # plus the specific replacements we want to make:
@@ -270,6 +269,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         The signature of this method is altered by the :func:`edit_request_wrapper`
         decorator.
         """
+        v_to_translate = None
         std_name = getattr(v, 'standard_name', "")
         if std_name not in self._rate_d and std_name not in self._flux_d:
             # logic not applicable to this VE; do nothing and return varlistEntry for
@@ -293,14 +293,15 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             )
 
         translate = translation.VariableTranslator()
-        for key, val in kwargs:
+        for key, val in kwargs.items():
             if 'convention' in key:
-                to_convention = val
+                to_convention = val.lower()
             else:
                 to_convention = None
-        assert to_convention, 'to_convention not defined in *args of PrecipRatetoFLuxConversion'
         try:
-            new_tv = translate.translate(to_convention, v_to_translate)
+            # current varlist.translation object is already in to_convention format
+            # so from_convention arg = to_convention arg in this translation call
+            new_tv = translate.translate(v_to_translate, to_convention, to_convention)
         except KeyError as exc:
             v.log.debug(('%s edit_request on %s: caught %r when trying to '
                          'translate \'%s\'; varlist unaltered.'), self.__class__.__name__,
@@ -309,7 +310,6 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         new_v = copy_as_alternate(v)
         new_v.translation = new_tv
         return new_v
-        # v = new_v
 
     def execute(self, var, ds, **kwargs):
         """Convert units of dependent variable *ds* between precip rate and
@@ -515,14 +515,15 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
     """
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
-        """Edit the *pod*'s :class:`~src.diagnostic.Varlist` prior to data query.
-        If given a :class:`~src.diagnostic.VarlistEntry` *v* has a
+        """ Create an 4-D alternate for a scalar variable.
+        If given a :class:`~src.varlist_util.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
         pressure level), return a copy of *v* with that ``scalar_coordinate``
-        removed (i.e., requesting a full 3D variable) to be used as an alternate
+        removed (i.e., requesting a full 4D variable) to be used as an alternate
         variable for *v*.
 
         """
+        data_convention = 'CMIP'
         for key, val in kwargs.items():
             if 'convention' in key:
                 data_convention = val
@@ -539,18 +540,26 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         if len(tv.scalar_coords) == 0:
             raise AssertionError  # should never get here
         elif len(tv.scalar_coords) > 1:
-            raise NotImplementedError()
+           _log.debug(f'scalar_coords attribute for {v.name} has more than one entry; using first entry in list')
         # wraps method in data_model; makes a modified copy of translated var
         # restore name to that of 4D data (eg. 'u500' -> 'ua')
         new_ax_set = set(v.axes_set).add('Z')
+
+        new_tv_name = ""
         if v.use_exact_name:
             new_tv_name = v.name
         else:
-            new_tv_name = translation.VariableTranslator().from_CF_name(
-                data_convention, v.standard_name, new_ax_set, v.realm
+            new_tv_dict = translation.VariableTranslator().from_CF_name(
+                data_convention, v.standard_name, v.realm, v.modifier
             )
+            # CMIP CV will return multiple values for same standard name (e.g., ua250, ua10, ua)
+            # so choose the 4-D value (assumes that 4-D vars from same realm do not share the same standard name)
+            for var_dict in new_tv_dict.values():
+                if var_dict['ndim'] == 4:
+                    new_tv_name = var_dict['name']
+        time_coord = [c for c in tv.scalar_coords if c.axis == 'T'][0]
         new_tv = tv.remove_scalar(
-            tv.scalar_coords[0].axis,
+            time_coord.axis,
             name=new_tv_name
         )
         new_v = copy_as_alternate(v)
@@ -1168,11 +1177,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """Top-level wrapper method for doing all preprocessing of data files
         associated with each case in the case_list dictionary
         """
+        for case_name, case_dict in case_list.items():
+            for v in case_dict.varlist.iter_vars():
+                self.edit_request(v, convention=case_dict.convention)
         # get the initial model data subset from the ESM-intake catalog
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
             for v in case_list[case_name].varlist.iter_vars():
-                self.edit_request(v, convention=case_list[case_name].convention)
                 cat_subset[case_name] = self.parse_ds(v, case_xr_dataset)
                 self.execute_pp_functions(v,
                                           cat_subset[case_name],

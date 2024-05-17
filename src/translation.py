@@ -16,20 +16,6 @@ _log = logging.getLogger(__name__)
 
 _NO_TRANSLATION_CONVENTION = 'no_translation'  # naming convention for disabling translation
 
-# only correct for this application
-_liquid_water_density = units.Units('1000.0 kg m-3')
-# list of recognized standard_names for which transformation is applicable
-# NOTE: not exhaustive
-_std_name_tuples = [
-    # flux in CF, rate is not
-    ("precipitation_rate", "precipitation_flux"),
-    # both in CF
-    ("convective_precipitation_rate", "convective_precipitation_flux"),
-    # not in CF; here for compatibility with NCAR-CAM
-    ("large_scale_precipitation_rate", "large_scale_precipitation_flux")
-]
-_rate_d = {tup[0]: tup[1] for tup in _std_name_tuples}
-_flux_d = {tup[1]: tup[0] for tup in _std_name_tuples}
 
 
 @util.mdtf_dataclass

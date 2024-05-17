@@ -331,8 +331,8 @@ class Fieldlist:
                 new_coord = data_model.coordinate_from_struct(coord_copy,
                                                               class_dict=class_dict,
                                                               name=coord_name)
-            except Exception as exc:
-                print(exc)
+            except ValueError:
+                log.error('unable to obtain new_coord from coordinate_from_struct call in translate.translate_coord')
         else:
             new_coord = dc.replace(coord,
                                    **(util.filter_dataclass(new_coord, coord)))

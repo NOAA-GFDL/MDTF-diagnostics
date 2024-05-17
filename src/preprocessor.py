@@ -269,6 +269,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         The signature of this method is altered by the :func:`edit_request_wrapper`
         decorator.
         """
+        v_to_translate = None
         std_name = getattr(v, 'standard_name', "")
         if std_name not in self._rate_d and std_name not in self._flux_d:
             # logic not applicable to this VE; do nothing and return varlistEntry for

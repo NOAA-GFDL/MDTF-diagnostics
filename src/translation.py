@@ -17,7 +17,6 @@ _log = logging.getLogger(__name__)
 _NO_TRANSLATION_CONVENTION = 'no_translation'  # naming convention for disabling translation
 
 
-
 @util.mdtf_dataclass
 class TranslatedVarlistEntry(data_model.DMVariable):
     """Class returned by :meth:`VarlistTranslator.translate`. Marks some

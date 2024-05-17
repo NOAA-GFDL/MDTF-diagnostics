@@ -266,6 +266,7 @@ class Fieldlist:
             raise KeyError((f"Coordinate {coord.name} with standard name "
                             f"'{coord.standard_name}' not defined in convention '{self.name}'."))
 
+        new_coord = dict()
         lut1 = dict()
         for k, v in self.axes_lut.items():
             if v.get('standard_name') == coord.standard_name:

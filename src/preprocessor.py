@@ -553,12 +553,12 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             )
             # CMIP CV will return multiple values for same standard name (e.g., ua250, ua10, ua)
             # so choose the 4-D value (assumes that 4-D vars from same realm do not share the same standard name)
-            for v in new_tv_dict.values():
-                if v['ndim'] == 4:
-                    new_tv_name = v['name']
-        sc_axis = [c for c in tv.scalar_coords if c.axis == 'Z'][0]
+            for var_dict in new_tv_dict.values():
+                if var_dict['ndim'] == 4:
+                    new_tv_name = var_dict['name']
+        time_coord = [c for c in tv.scalar_coords if c.axis == 'T'][0]
         new_tv = tv.remove_scalar(
-            sc_axis.axis,
+            time_coord.axis,
             name=new_tv_name
         )
         new_v = copy_as_alternate(v)

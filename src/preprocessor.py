@@ -809,6 +809,17 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         if not hasattr(group_df, 'start_time') or not hasattr(group_df, 'end_time'):
             raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time`')
         try:
+            if not isinstance(group_df['start_time'].values[0], datetime.date):
+                # convert int to date type
+                date_format = ''
+                date_digits = math.floor(math.log10(group_df['start_time'].values[0]))+1
+                match date_digits:
+                    case 8:
+                        date_format = '%Y%m%d'
+                    case 14:
+                        date_format = '%Y%m%d%H%M%S'
+                group_df['start_time'] = pd.to_datetime(group_df['start_time'].values[0], format=date_format)
+                group_df['end_time'] = pd.to_datetime(group_df['end_time'].values[0], format=date_format)
             # method throws ValueError if ranges aren't contiguous
             dates_df = group_df.loc[:, ['start_time', 'end_time']]
             date_range_vals = []

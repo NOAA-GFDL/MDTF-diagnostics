@@ -123,7 +123,7 @@ np.ndarray[DTYPE1_t, ndim=1] ind_low):
             ## Mid-level ##
 #             if (j<il) & (j>=im):
 #                 op4[i]+=var[j,i]*dp[j,i]
-#                 op5[i]+=lwa_baro[j,i]*dp[j,i]
+#                 op5[i]+=var1[j,i]*dp[j,i]
             
 
 def vert_integ_exneri_variable_bl(np.ndarray[DTYPE_t, ndim=2] var,

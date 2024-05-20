@@ -3,7 +3,7 @@
 # Calculate finite-amplitude wave diagnostics that quantifies wave-mean flow
 # interactions.
 #
-# Last update: 03/18/2024
+# Last update: 05/19/2024
 # ================================================================================
 #   Version & Contact info
 # 
@@ -52,31 +52,24 @@ if socket.gethostname() == 'otc':
 # Here <variable_name> and frequency are requested in the "varlist" part of 
 # settings.json.
 already_done_gridfill: bool = True
-load_environ: bool = (socket.gethostname() == 'otc')
+# load_environ: bool = (socket.gethostname() == 'otc')
 frequency = "day"  # TODO: change later
 
-if load_environ:  # otc path
-    print(
-        f"""
-        Start running on OTC. Print out all environment variables:
-        {os.environ}
-        """)
-    wk_dir = os.environ["WK_DIR"]
-    uvt_path = f"{os.environ['DATADIR']}/{frequency}/{os.environ['CASENAME']}.[uvt]a.{frequency}.nc"
-    casename = os.environ["CASENAME"]
-else:  # iMac path
-    wk_dir = "/Users/claresyhuang/Dropbox/GitHub/hn2016_falwa/github_data_storage"
-    uvt_path = f"{os.environ['HOME']}/Dropbox/GitHub/mdtf/MDTF-diagnostics/diagnostics/finite_amplitude_wave_diag/" + \
-               "GFDL-CM3_historical_r1i1p1_20050101-20051231_10tslice.nc"
-    casename = "GFDL-CM3_historical_r1i1p1"
+print(
+    f"""
+    Start running on OTC. Print out all environment variables:
+    {os.environ}
+    """)
+wk_dir = os.environ["WK_DIR"]
+uvt_path = f"{os.environ['DATADIR']}/{frequency}/{os.environ['CASENAME']}.[uvt]a.{frequency}.nc"
+casename = os.environ["CASENAME"]
 
 print(
     f"""
     wk_dir = {wk_dir}
     uvt_path = {uvt_path}
     casename = {casename}
-    """
-)
+    """)
 
 # *** Coordinates of input dataset ***
 u_var_name = "ua"

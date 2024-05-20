@@ -1,7 +1,6 @@
 """Functionality for transforming model data into the format expected by PODs
 once it's been downloaded`.
 """
-import copy
 import math
 import os
 import shutil

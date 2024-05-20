@@ -608,6 +608,10 @@ class _DMDimensionsMixin:
         """
         return self.build_axes(self.dims, verify=False)
 
+    @dim_axes.setter
+    def dim_axes(self, value):
+        self._dim_axes = value
+
     @property
     def X(self):
         """Return X axis dimension coordinate if defined, else None."""
@@ -637,6 +641,10 @@ class _DMDimensionsMixin:
     def dim_axes_set(self):
         """Return frozenset of dimension coordinate axes labels."""
         return frozenset(self.dim_axes.keys())
+
+    @dim_axes_set.setter
+    def dim_axes_set(self, value):
+        self._dim_axes_set = value
 
     @property
     def is_static(self):
@@ -773,6 +781,10 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
         """
         return self.build_axes(self.dims, self.scalar_coords, verify=False)
 
+    @axes.setter
+    def axes(self, value):
+        self._axes = value
+
     @property
     def axes_set(self):
         """Superset of the :meth:`dim_axes_set` frozenset (which contains axes labels
@@ -780,6 +792,53 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
         corresponding to scalar coordinates.
         """
         return frozenset(self.axes.keys())
+
+    @axes_set.setter
+    def axes_set(self, value):
+        self._axes_set = value
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        self._name = value
+
+    @property
+    def standard_name(self):
+        return self._standard_name
+
+    @standard_name.setter
+    def standard_name(self, value: str):
+        self._standard_name = value.lower()
+
+    @property
+    def units(self):
+        return self._units
+
+    @units.setter
+    def units(self, value):
+        self._units = value
+
+    @property
+    def long_name(self):
+        return self._long_name
+
+    @long_name.setter
+    def long_name(self, value: str):
+        self._long_name = value
+
+    @property
+    def realm(self):
+        return self._realm
+
+    @realm.setter
+    def realm(self, value: str):
+        self._realm = value
+
+
+
 
     def add_scalar(self, ax, ax_value, **kwargs):
         """Metadata operation corresponding to taking a slice of a higher-dimensional

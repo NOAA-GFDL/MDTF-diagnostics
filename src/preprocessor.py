@@ -270,7 +270,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         The signature of this method is altered by the :func:`edit_request_wrapper`
         decorator.
         """
-        v_to_translate = None
+
         std_name = getattr(v, 'standard_name', "")
         if std_name not in self._rate_d and std_name not in self._flux_d:
             # logic not applicable to this VE; do nothing and return varlistEntry for
@@ -310,7 +310,10 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             return None
         new_v = copy_as_alternate(v)
         new_v.translation = new_tv
-        return new_v
+        v.translation.standard_name = new_tv.standard_name
+        v.translation.units = new_tv.units
+        v.translation.long_name = new_tv.long_name
+        return v
 
     def execute(self, var, ds, **kwargs):
         """Convert units of dependent variable *ds* between precip rate and
@@ -565,7 +568,14 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         )
         new_v = copy_as_alternate(v)
         new_v.translation = new_tv
-        return new_v
+        v.alternates.append(v.translation)
+        v.translation.name = new_tv.name
+        v.translation.long_name = new_tv.long_name
+        v.translation.units = new_tv.units
+        v.translation.dim_axes = new_tv.dim_axes
+        v.translation.dim_axes_set = new_tv.dim_axes_set
+
+        return v
 
     def execute(self, var, ds, **kwargs):
         """Determine if level extraction is needed (if *var* has a scalar Z

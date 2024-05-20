@@ -13,6 +13,7 @@ import pandas as pd
 from src import util, varlist_util, translation, xr_parser, units
 import cftime
 import intake
+import math
 import numpy as np
 import xarray as xr
 import collections

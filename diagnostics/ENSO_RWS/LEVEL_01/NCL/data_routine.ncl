@@ -11,8 +11,8 @@ begin
     outdir  =  getenv("ENSO_RWS_WKDIR") + "/model" ; envvar set in ENSO_MSE.py
     case    =  getenv( "CASENAME")
 
-      iy1 =  toint( ( getenv("FIRSTYR")) )
-      iy2 =  toint( (  getenv("LASTYR")) )
+      iy1 =  toint( ( getenv("startdate")) )
+      iy2 =  toint( (  getenv("enddate")) )
 
 ;;;    selected variables    import from system defined vars.
 ;;     3 D vars

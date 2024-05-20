@@ -1,0 +1,89 @@
+{
+  "pod_list" : [
+     "example_multicase"
+   ],
+   "case_list":
+    {
+      "c384L65_am5f3b1r0_amip":
+      {
+        "model" : "test",
+        "convention" : "CMIP",
+        "startdate" : 19810101,
+        "enddate" : 19821231
+      },
+      "c384L65_am5f3b1r0_amip":
+      {
+        "model" : "test",
+        "convention" : "CMIP",
+        "startdate" : 19810101,
+        "enddate" : 19821231
+      }
+  },
+  // PATHS ---------------------------------------------------------------------
+  // Location of supporting data downloaded when the framework was installed.
+  // If a relative path is given, it's resolved relative to the MDTF-diagnostics
+  // code directory. Environment variables (eg, $HOME) can be referenced with a
+  // "$" and will be expended to their current values when the framework runs.
+  // Full or relative path to model data ESM-intake catalog header file
+  "DATA_CATALOG":"/home/a1r/github/MDTF-diagnostics/diagnostics/example_multicase/c384L65_am5f3b1r0_amip.json",
+
+  // Backwards compatibility
+  "MODEL_DATA_ROOT": "../mdtf_test_data",
+
+  // Parent directory containing observational data used by individual PODs.
+  "OBS_DATA_ROOT": "../inputdata/obs_data",
+
+  // Working directory.
+  "WORK_DIR": "../wkdir",
+
+  // Directory to write output. The results of each run of the framework will be
+  // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.
+  "OUTPUT_DIR": "../wkdir",
+
+  // Location of the Anaconda/miniconda or micromamba installation to use for managing
+  // dependencies (path returned by running `[conda | micromamba] info`.) If empty,
+  // framework will attempt to determine location of system's conda installation.
+  "conda_root": "~/.local/bin",
+
+  // Directory containing the framework-specific conda environments. This should
+  // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
+  // blank, the framework will look for its environments in conda_root/envs
+  "conda_env_root": "~/miniconda3/envs",
+
+  // Path to micromamba executable if using micromamba
+  "micromamba_exe": "",
+
+  // SETTINGS ------------------------------------------------------------------
+  // Any command-line option recognized by the mdtf script
+  // can be set here, in the form "flag name": "desired setting".
+
+  // Settings affecting what output is generated:
+  // Set to true to run the preprocessor; default true:
+  "run_pp": true,
+
+  // Set to true to perform data translation; default false:
+  "translate_data": true,
+
+  // Set to true to have PODs save postscript figures in addition to bitmaps.
+  "save_ps": false,
+
+  // Set to true for files > 4 GB
+  "large_file": false,
+
+  // If true, leave pp data in OUTPUT_DIR after preprocessing; if false, delete pp data after PODs
+  // run to completion
+  "save_pp_data": true,
+
+  // Set to true to save HTML and bitmap plots in a .tar file.
+  "make_variab_tar": false,
+
+  // Generate html output for multiple figures per case
+  "make_multicase_figure_html": false,
+
+  // Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
+  // under a unique name.
+  "overwrite": false,
+  // List with custom preprocessing script(s) to run on data
+  // Place these scripts in the user_scripts directory of your copy of the MDTF-diagnostics repository
+  "user_pp_scripts" : []
+}

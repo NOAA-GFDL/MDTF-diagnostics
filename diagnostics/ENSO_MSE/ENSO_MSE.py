@@ -23,7 +23,7 @@ import datetime
 now = datetime.datetime.now()
 print( "STARTING ENSO_MSE.py  on:" + now.strftime("%Y-%m-%d %H:%M"))
 
-os.environ["ENSO_MSE_WKDIR"] = os.environ["WK_DIR"]
+os.environ["ENSO_MSE_WKDIR"] = os.environ["WORK_DIR"]
 
 # TODO remove the ENSO module environment switch definitions after framework
 # pod_env_vars issue is fixed
@@ -40,12 +40,12 @@ os.environ["slat2"] = "5"
 
 # Subpackage control variables optionally set in namelist eg. VAR ENSO_COMPOSITE 1
 # nb. OBS isn't really a subpackage but is a switch used by all subpackages
-subpackages = ["OBS","COMPOSITE","MSE","MSE_VAR","SCATTER"]
-subpack_default = "1"  #Run all subpackage unless envvars are set not to
+subpackages = ["OBS", "COMPOSITE", "MSE", "MSE_VAR", "SCATTER"]
+subpack_default = "1"  # Run all subpackage unless envvars are set not to
 
 for subpack in subpackages:
-    os.environ["ENSO_"+subpack] = os.environ.get("ENSO_"+subpack,subpack_default)
-    os.environ["ENSO_MSE_WKDIR_"+subpack] = os.environ["ENSO_MSE_WKDIR"]+"/"+subpack
+    os.environ["ENSO_" + subpack] = os.environ.get("ENSO_" + subpack,subpack_default)
+    os.environ["ENSO_MSE_WKDIR_"+subpack] = os.environ["ENSO_MSE_WKDIR"] + "/"+subpack
     print(subpack, os.environ["ENSO_"+subpack])
     if os.environ["ENSO_"+subpack] == "1":
         print(" ENSO_MSE subpackage ENSO_"+subpack+" active, output will be in " + os.environ["ENSO_MSE_WKDIR_"+subpack])
@@ -53,14 +53,14 @@ for subpack in subpackages:
         print(" ENSO_MSE subpackage ENSO_"+subpack+" off. Turn on by adding line to namelist input: VAR ENSO_"+subpack+" 1 ")
 
 
-#DRB: unfortunately these don't get copied to namelist_save, which means
-#debugging requires starting from this script. To add them here requires
-#adding the POD_HOME/util path (easy, see mdtf.py) and getting the envvars
-#dict here, but currently the file is written before the pods are called.
+# DRB: unfortunately these don't get copied to namelist_save, which means
+# debugging requires starting from this script. To add them here requires
+# adding the POD_HOME/util path (easy, see mdtf.py) and getting the envvars
+# dict here, but currently the file is written before the pods are called.
 
 # ==================================================================================================
 
-#### 1.  COMPOSITE
+# 1.  COMPOSITE
 if os.environ["ENSO_COMPOSITE"] == "1":
     try:
         print("=================================================================")
@@ -96,13 +96,12 @@ if os.environ["ENSO_COMPOSITE"] == "1":
         print("         RLUT - TOA outgoing LW ")
         print("=================================================================")
 
-
         print("=================================================================")
         print(" More detailed information regarding the COMPOSITE module is in  ")
         print(" README_LEVEL_01.docx/README_LEVEL_01.pdf files under ~/diagnostics/ENSO_MSE/COMPOSITE/")
         print("=================================================================")
 
-###  set if to run Observational Preprocessing :
+# set if to run Observational Preprocessing:
         if os.environ["ENSO_OBS"] == "1":
             print("=================================================================")
             print(" Starting Observational COMPOSITE module                         ")
@@ -115,34 +114,34 @@ if os.environ["ENSO_COMPOSITE"] == "1":
             print(" Finished Observational COMPOSITE module                         ")
             print("=================================================================")
 
-###  check for model input dat
+# check for model input dat
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/check_input_files.py")
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/get_directories.py")
         os.system("python "+os.environ["POD_HOME"]+"/COMPOSITE/COMPOSITE.py")
-###       copy the banner file : mdtf_diag_banner.png to "ENSO_MSE_WKDIR" needed by
-###                             individual component html files
-        file_src  = os.environ["POD_HOME"]+"/mdtf_diag_banner.png"
+#      copy the banner file : mdtf_diag_banner.png to "ENSO_MSE_WKDIR" needed by
+#                             individual component html files
+        file_src = os.environ["POD_HOME"]+"/mdtf_diag_banner.png"
         file_dest = os.environ["ENSO_MSE_WKDIR"]+"/mdtf_diag_banner.png"
-        if os.path.isfile( file_dest ):
+        if os.path.isfile(file_dest):
             os.system("rm -f "+file_dest)
             os.system("cp "+file_src+" "+file_dest)
-        file_src  = os.environ["POD_HOME"]+"/ENSO_MSE.html"
+        file_src = os.environ["POD_HOME"]+"/ENSO_MSE.html"
         file_dest = os.environ["ENSO_MSE_WKDIR"]+"/ENSO_MSE.html"
-        if os.path.isfile( file_dest ):
+        if os.path.isfile( file_dest):
             os.system("rm -f "+file_dest)
             os.system("cp "+file_src+" "+file_dest)
 
-        file_src  = os.environ["POD_HOME"]+"/doc/ENSO_MSE.pdf"
+        file_src = os.environ["POD_HOME"]+"/doc/ENSO_MSE.pdf"
         file_dest = os.environ["ENSO_MSE_WKDIR"]+"/ENSO_MSE.pdf"
-        if os.path.isfile( file_dest ):
-            os.system("rm -f "+file_dest)
+        if os.path.isfile(file_dest):
+            os.system("rm -f " + file_dest)
         os.system("cp "+file_src+" "+file_dest)
 
         print("=================================================================")
         print("                         COMPOSITES FINISHED                     ")
         print("=================================================================")
     except OSError as e:
-        print('WARNING',e.errno,e.strerror)
+        print('WARNING', e.errno, e.strerror)
         print("COMPOSITE is NOT Executed as Expected!")
 
 
@@ -179,7 +178,7 @@ if os.environ["ENSO_MSE"] == "1":
         print("=================================================================")
 
     except OSError as e:
-        print('WARNING',e.errno,e.strerror)
+        print('WARNING', e.errno, e.strerror)
         print("MSE is NOT Executed as Expected!")
 
 # 3. MSE variances
@@ -213,7 +212,7 @@ if os.environ["ENSO_MSE_VAR"] == "1":
         print("=================================================================")
 
     except OSError as e:
-        print('WARNING',e.errno,e.strerror)
+        print('WARNING', e.errno, e.strerror)
         print("MSE VARIANCE is NOT Executed as Expected!")
 #####
 # 4.  CMIP5 scatter plots
@@ -240,9 +239,9 @@ if os.environ["ENSO_SCATTER"] == "1":
         print("=================================================================")
 
     except OSError as e:
-        print('WARNING',e.errno,e.strerror)
+        print('WARNING', e.errno, e.strerror)
         print("MSE VARIANCE is NOT Executed as Expected!")
 
 now = datetime.datetime.now()
-print( "FINISHED ENSO_MSE.py  on:" + now.strftime("%Y-%m-%d %H:%M"))
+print("FINISHED ENSO_MSE.py  on:" + now.strftime("%Y-%m-%d %H:%M"))
 # ======================================================================

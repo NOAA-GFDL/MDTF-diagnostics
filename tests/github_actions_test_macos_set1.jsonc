@@ -2,29 +2,28 @@
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.)
 {
-  "case_list" : [
-    {
-      "CASENAME" : "NCAR.Synthetic",
-      "convention" : "CESM",
-      "FIRSTYR" : 1975,
-      "LASTYR" : 1981,
-      "pod_list": [
-        "convective_transition_diag",
-        "Wheeler_Kiladis",
-        "MJO_suite",
-        "MJO_teleconnection",
-        "precip_diurnal_cycle",
-        "EOF_500hPa"
-        ]
-      }
+  "pod_list": [
+     "convective_transition_diag",
+     "Wheeler_Kiladis",
+     "MJO_suite",
+     "MJO_teleconnection",
+     "precip_diurnal_cycle",
+     "EOF_500hPa"
     ],
+  "case_list": {
+      "NCAR.Synthetic": {
+      "convention" : "CESM",
+      "startdate" : "19750101",
+      "enddate" : "19811231"
+      }
+  },
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
 
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
-
+  "DATA_CATALOG": "../tests/esm_catalog_CESM_macos.json",
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
@@ -32,7 +31,7 @@
   "MODEL_DATA_ROOT": "../mdtf_test_data",
 
   // Working directory. Defaults to working directory if blank.
-  "WORKING_DIR": "../wkdir",
+  "WORK_DIR": "../wkdir",
 
   // Directory to write output. The results of each run of the framework will be
   // put in a subdirectory of this directory.
@@ -54,39 +53,36 @@
   "conda_env_root": "/Users/runner/micromamba/envs",
 
   // SETTINGS ------------------------------------------------------------------
-  // Any command-line option recognized by the mdtf script (type `mdtf --help`)
+  // Any command-line option recognized by the mdtf script
   // can be set here, in the form "flag name": "desired setting".
 
-  // Method used to fetch model data.
-  "data_manager": "Local_File",
-
-  // Method used to manage dependencies.
-  "environment_manager": "Conda",
-
   // Settings affecting what output is generated:
+  // Set to true to run the preprocessor; default true:
+  "run_pp": true,
+
+  // Set to true to perform data translation; default false:
+  "translate_data": true,
 
   // Set to true to have PODs save postscript figures in addition to bitmaps.
   "save_ps": false,
 
-  // Set to true to have PODs save netCDF files of processed data.
-  "save_nc": false,
+  // Set to true for files > 4 GB
+  "large_file": false,
+
+  // If true, leave pp data in OUTPUT_DIR after preprocessing; if false, delete pp data after PODs
+  // run to completion
+  "save_pp_data": true,
 
   // Set to true to save HTML and bitmap plots in a .tar file.
   "make_variab_tar": false,
 
+  // Generate html output for multiple figures per case
+  "make_multicase_figure_html": false,
+
   // Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
   // under a unique name.
   "overwrite": false,
-
-  // Settings used in debugging:
-
-  // Log verbosity level.
-  "verbose": 1,
-
-  // Set to true for framework test. Data is fetched but PODs are not run.
-  "test_mode": false,
-
-  // Set to true for framework test. No external commands are run and no remote
-  // data is copied. Implies test_mode.
-  "dry_run": false
+  // List with custom preprocessing script(s) to run on data
+  // Place these scripts in the user_scripts directory of your copy of the MDTF-diagnostics repository
+  "user_pp_scripts" : []
 }

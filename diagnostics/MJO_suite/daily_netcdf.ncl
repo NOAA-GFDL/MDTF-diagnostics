@@ -29,7 +29,7 @@ debug_print("Starting...",routine_name,debug)
 casename = getenv("CASENAME")
 datadir = getenv("DATADIR")
 level = getenv("lev_coord")
-wk_dir = getenv("WK_DIR")+"/model/netCDF/"
+wk_dir = getenv("WORK_DIR")+"/model/netCDF/"
 
 
 file_u200 = getenv("U200_FILE")
@@ -42,8 +42,8 @@ print("daily_netcdf.ncl reading "+file_pr+" for time coordinates.")
 print("   Assuming without checking that all have same time coordinates!")
 f = addfile(file_pr,"r")
 
-yr1 = stringtointeger(getenv("FIRSTYR"))
-yr2 = stringtointeger(getenv("LASTYR"))
+yr1 = stringtointeger(getenv("startdate"))
+yr2 = stringtointeger(getenv("enddate"))
 
 lat_coord = getenv("lat_coord")
 lon_coord = getenv("lon_coord")

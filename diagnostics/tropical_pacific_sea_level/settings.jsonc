@@ -2,7 +2,7 @@
   "settings" : {
     "driver" : "tropical_pacific_sea_level.py",
     "long_name" : "tropical pacific sea level",
-    "realm" : "ocean",
+    "convention": "cmip",
     "description" : "Tropical pacific sea level diagnostic",
     "runtime_requirements": {
         "python3" : ["matplotlib","xarray","cartopy","cftime","numpy","dask"]
@@ -28,10 +28,14 @@
     
   "dimensions": {
       "lat": {
-          "standard_name": "latitude"
+          "standard_name": "latitude",
+          "units": "degrees_north",
+          "axis": "Y"
       },
       "lon": {
-          "standard_name": "longitude"
+          "standard_name": "longitude",
+          "units": "degrees_east",
+          "axis": "X"
       },
       "time": {
           "standard_name": "time"
@@ -41,24 +45,28 @@
   "varlist" : {
       "zos": {
         "standard_name": "sea_surface_height_above_geoid",
+        "realm": "ocean",
         "units": "m",
         "dimensions" : ["time", "lat", "lon"]
         },
         
       "tauuo": {
         "standard_name": "downward_x_stress_at_sea_water_surface",
+        "realm": "ocean",
         "units": "N m-2",
         "dimensions" : ["time", "lat", "lon"]
         },
         
       "tauvo": {
         "standard_name": "downward_y_stress_at_sea_water_surface",
+        "realm": "ocean",
         "units": "N m-2",
         "dimensions" : ["time", "lat", "lon"]
         },
         
       "areacello": {
         "standard_name": "cell_area",
+        "realm": "ocean",
         "units": "m2",
         "modifier" : "ocean_realm",
         "dimensions" : ["lat", "lon"]

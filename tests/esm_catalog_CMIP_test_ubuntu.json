@@ -1,0 +1,191 @@
+{
+  "esmcat_version": "0.0.1",
+  "attributes": [
+    {
+      "column_name": "activity_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "branch_method",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "branch_time_in_child",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "branch_time_in_parent",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "experiment",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "experiment_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "frequency",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "grid",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "grid_label",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "institution_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "nominal_resolution",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "parent_activity_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "parent_experiment_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "parent_source_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "parent_time_units",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "parent_variant_label",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "product",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "realm",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "source_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "source_type",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "sub_experiment",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "sub_experiment_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "table_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "variable_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "variant_label",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "member_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "standard_name",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "long_name",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "units",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "vertical_levels",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "init_year",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "start_time",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "end_time",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "time_range",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "path",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "version",
+      "vocabulary": ""
+    }
+  ],
+  "assets": {
+    "column_name": "path",
+    "format": "netcdf",
+    "format_column_name": null
+  },
+  "aggregation_control": {
+    "variable_column_name": "variable_id",
+    "groupby_attrs": [
+      "activity_id",
+      "institution_id",
+      "source_id",
+      "experiment_id",
+      "frequency",
+      "member_id",
+      "table_id",
+      "grid_label",
+      "realm",
+      "variant_label",
+      "time_range"
+    ],
+    "aggregations": [
+      {
+        "type": "union",
+        "attribute_name": "variable_id",
+        "options": {}
+      },
+      {
+        "type": "join_existing",
+        "attribute_name": "time_range",
+        "options": {
+          "dim": "time",
+          "coords": "minimal",
+          "compat": "override"
+        }
+      }
+    ]
+  },
+  "id": "esm_catalog_CMIP_test_ubuntu.csv",
+  "description": null,
+  "title": null,
+  "last_updated": "2024-03-11",
+  "catalog_file": "file:/home/runner/mdtf/MDTF-diagnostics/tests/esm_catalog_CMIP_test_ubuntu.csv"
+}

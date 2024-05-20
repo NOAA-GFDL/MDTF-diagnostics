@@ -16,10 +16,10 @@ time_coord = getenv("time_coord")
 lat_coord = getenv("lat_coord")
 lon_coord = getenv("lon_coord")
 
-file_dir = getenv("WK_DIR")+"/model/netCDF/"
+file_dir = getenv("WORK_DIR")+"/model/netCDF/"
 datadir = getenv("DATADIR")
-yr1 = stringtointeger(getenv("FIRSTYR"))
-yr2 = stringtointeger(getenv("LASTYR"))
+yr1 = stringtointeger(getenv("startdate"))
+yr2 = stringtointeger(getenv("enddate"))
 start_date = yr1*10000+201
 end_date = (yr2+1)*10000+101
 

@@ -3,7 +3,8 @@ import numpy as np
 import metpy.calc
 from metpy.units import units
 
-def regional_var(varlist, lon_lim, lat_lim, year_lim):
+
+def regional_var(varlist: list, lon_lim: list, lat_lim: list, year_lim: list):
     """
     The model io for needed variables and crop based on the 
     region and period of interest.
@@ -46,26 +47,25 @@ def regional_var(varlist, lon_lim, lat_lim, year_lim):
     ds_atm_regional (xr.Dataset) : a xarray dataset including all variables
 
     """
-
     
-    for nvar,var in enumerate(varlist):
+    for nvar, var in enumerate(varlist):
         ds_temp = xr.open_mfdataset(varlist[nvar])
         
         if nvar == 0:
             ds_atm = ds_temp.copy()
         else:
-            ds_atm = xr.merge([ds_atm,ds_temp],compat='override')
+            ds_atm = xr.merge([ds_atm, ds_temp] ,compat='override')
     
     ###########################################################################
     # cropping dataset
 
     ds_atm_regional = ((ds_atm).where(
-                           (ds_atm.lon>=np.array(lon_lim).min())&
-                           (ds_atm.lon<=np.array(lon_lim).max())&
-                           (ds_atm.lat>=np.array(lat_lim).min())&
-                           (ds_atm.lat<=np.array(lat_lim).max())&
-                           (ds_atm['time.year']>=np.array(year_lim).min())&
-                           (ds_atm['time.year']<=np.array(year_lim).max()),
+                           (ds_atm.lon >= np.array(lon_lim).min())&
+                           (ds_atm.lon <= np.array(lon_lim).max())&
+                           (ds_atm.lat >= np.array(lat_lim).min())&
+                           (ds_atm.lat <= np.array(lat_lim).max())&
+                           (ds_atm['time.year'] >= np.array(year_lim).min())&
+                           (ds_atm['time.year'] <= np.array(year_lim).max()),
                            drop=True)
                       )
 
@@ -82,9 +82,9 @@ def regional_var(varlist, lon_lim, lat_lim, year_lim):
     da_q_surf = ds_atm_regional['huss'].copy()*np.nan
 
     mixing_ratio_surf = (metpy.calc.saturation_mixing_ratio(
-                                ds_atm_regional['psl'].values*units.Pa,
-                                ds_atm_regional['ts'].values*units.K)
-                        )
+        ds_atm_regional['psl'].values*units.Pa,
+        ds_atm_regional['ts'].values*units.K)
+    )
     q_surf = metpy.calc.specific_humidity_from_mixing_ratio(mixing_ratio_surf)
 
     # unit for mixing ratio and specific humidity is kg/kg

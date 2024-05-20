@@ -33,9 +33,9 @@ begin
   phase_only = False ; Set true iff not amplitude color saturation is required.
   
 ;  ps_dir = "/datalocal/haystack/cchen/dcycle/"
-  ps_dir = getenv("WK_DIR")+"/model/PS/"
-  firstyr = stringtoint(getenv("FIRSTYR"))
-  lastyr = stringtoint(getenv("LASTYR"))
+  ps_dir = getenv("WORK_DIR")+"/model/PS/"
+  firstyr = stringtoint(getenv("startdate"))
+  lastyr = stringtoint(getenv("enddate"))
   print(firstyr)
   print(lastyr)
 ;;;;; For model only   ;;;;;

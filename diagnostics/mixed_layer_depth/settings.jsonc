@@ -2,15 +2,23 @@
   "settings" : {
     "driver" : "mixed_layer_depth.py",
     "long_name" : "Mixed Layer Depth Calculation",
-    "realm" : "ocean",
+    "convention" : "cmip",
     "description" : "Compute Mixed Layer Depth Mean from 3D Ocean Variables",
     "runtime_requirements": {
         "python3": ["scipy","matplotlib","xarray","netCDF4","xesmf","dask","numpy","pandas","cartopy","gsw"]
     }
   },
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+     "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
     "lev": {
       "standard_name": "depth",
       "units": "m",
@@ -22,12 +30,14 @@
   "varlist" : {
     "so": {
       "standard_name": "sea_water_salinity",
+      "realm": "ocean",
       "frequency" : "mon",
       "units": "psu",
       "dimensions": ["time", "lev", "lat", "lon"]
     },
     "thetao": {
       "standard_name": "sea_water_potential_temperature",
+      "realm": "ocean",
       "units": "degC",
       "frequency" : "mon",
       "dimensions": ["time", "lev","lat", "lon"]

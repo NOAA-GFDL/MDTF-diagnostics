@@ -14,7 +14,7 @@ begin
 
   routine_name = "mjo_life_cycle"
    casename = getenv("CASENAME")
-   file_dir = getenv("WK_DIR")+"/model/netCDF/"
+   file_dir = getenv("WORK_DIR")+"/model/netCDF/"
 
    latS    = -20
    latN    =  20

@@ -31,7 +31,7 @@ with open("README.md", 'r') as f:
 packages = find_packages()
 setup(
     name='MDTF-diagnostics',
-    version='3.4',
+    version='4.0',
     description='Process-oriented diagnostics for weather and climate simulations',
     license='LGPLv3',
     long_description=long_description,
@@ -45,10 +45,13 @@ setup(
             'Programming Language :: Python',
             'Programming Language :: Python :: 3.11',
     ],
-    scripts=[
-        'mdtf_framework.py'
-    ],
-    packages=packages,
+    packages=find_packages(),
+    include_package_data=True,
+    #entry_points={
+    #    'console_scripts': [
+    #        'mdtf = MDTF-diagnostics.mdtf_framework:main'
+    #    ],
+    #},
     cmdclass={  # hook for post-install commands
         'develop': PostDevelopCommand,
         'install': PostInstallCommand

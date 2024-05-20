@@ -1,5 +1,5 @@
 Top-Heaviness Metric Diagnostic Documentation
-================================
+=============================================
 
 Last update: 5/30/2021
 

@@ -14,15 +14,13 @@
 #       programming :  Jan Hafner,  jhafner@hawaii.edu
 #
 #      This package is distributed under the LGPLv3 license (see LICENSE.txt)
-### 
-###    the OBServational routine just reads and plots 
-###    pre-digested Observational Data 
-##     
+#
+#   the OBServational routine just reads and plots
+#    pre-digested Observational Data
+#
 
 import sys
-
 import datetime
-
 import os
 
 shared_dir = os.path.join(
@@ -79,37 +77,35 @@ from generate_ncl_call import generate_ncl_call
 
 '''
 
-### declaration and set up of relavant directories 
+# declaration and set up of relavant directories
 
 outdir = os.environ["ENSO_MSE_WKDIR_MSE"] + "/model"
 
-## base path of all input files (created by COMPOSITE package)
+# base path of all input files (created by COMPOSITE package)
 now = datetime.datetime.now()
 
 print("===============================================================")
-print("      Start of Observational Moist Static Energy  Module  " +  now.strftime("%Y-%m-%d %H:%M"))
+print("      Start of Observational Moist Static Energy  Module  " + now.strftime("%Y-%m-%d %H:%M"))
 print("===============================================================")
-print( "  ")
+print("  ")
 
-###     data routine for all El Nino/La Nina cases
-generate_ncl_call(os.environ["POD_HOME"]+ "/MSE/NCL_DATA/get_MSE_data.ncl")
+# data routine for all El Nino/La Nina cases
+generate_ncl_call(os.environ["POD_HOME"] + "/MSE/NCL_DATA/get_MSE_data.ncl")
 
-###     plotting routine for all El Nino/La Nina cases 
-generate_ncl_call(os.environ["POD_HOME"]+ "/MSE/NCL/plot_composite_all.ncl")
+# plotting routine for all El Nino/La Nina cases
+generate_ncl_call(os.environ["POD_HOME"] + "/MSE/NCL/plot_composite_all.ncl")
 
-file_src  = os.environ["POD_HOME"]+"/MSE/MSE.html"
+file_src = os.environ["POD_HOME"] + "/MSE/MSE.html"
 file_dest = os.environ["ENSO_MSE_WKDIR"]+"/MSE.html"
-if os.path.isfile( file_dest ):
-    os.system("rm -f "+file_dest)
-os.system("cp "+file_src+" "+file_dest)
- 
-   
+if os.path.isfile(file_dest):
+    os.system("rm -f " + file_dest)
+os.system("cp " + file_src + " " + file_dest)
+
 now = datetime.datetime.now()
 
-print ("   Seasonal Model ENSO MSE composites completed  " + now.strftime("%Y-%m-%d %H:%M") )
-print ("   plots of ENSO seasonal MSE anomalies finished  ")
-print ("   resulting plots are located in : " + outdir )
-print ("   with prefix composite  + ELNINO/LANINA +  variable name ")
-print ("  " )
-#============================================================
-############  end 
+print("   Seasonal Model ENSO MSE composites completed  " + now.strftime("%Y-%m-%d %H:%M"))
+print("   plots of ENSO seasonal MSE anomalies finished  ")
+print("   resulting plots are located in : " + outdir)
+print("   with prefix composite  + ELNINO/LANINA +  variable name ")
+print("  ")
+# ============================================================

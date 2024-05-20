@@ -9,6 +9,7 @@
     "driver" : "SM_ET_coupling.py",
     "long_name" : "Coupling between Soil Moisture and EvapoTranspiration",
     "realm" : ["atmos", "land"],
+    "convention" : "cmip",
     "description" : "Coupling of Soil Moisture with Evapotranspiration",
     "runtime_requirements": {
       "python3": [],
@@ -19,23 +20,34 @@
     "frequency": "mon"
   },
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
     "time": {"standard_name": "time"}
   },
   "varlist" : {
     "mrsos": {
       "standard_name": "mass_content_of_water_in_soil_layer",
+      "realm" : "land",
       "units": "kg m-2",
       "dimensions": ["time", "lat", "lon"]
     },
     "evspsbl": {
       "standard_name": "water_evapotranspiration_flux",
+      "realm": "land",
       "units": "kg m-2 s-1",
       "dimensions": ["time", "lat", "lon"]
     },
     "pr": {
       "standard_name": "precipitation_flux",
+      "realm": "atmos",
       "units": "kg m-2 s-1",
       "dimensions": ["time", "lat", "lon"]
     }

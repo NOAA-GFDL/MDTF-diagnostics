@@ -1148,7 +1148,7 @@ class DateFrequency(datetime.timedelta):
         if self.unit == 'fx':
             return 'fx'
         else:
-            if self.quantity == '1':
+            if self.quantity == 1:
                 return self.unit
             else:
                 return "{}{}".format(self.quantity, self.unit)

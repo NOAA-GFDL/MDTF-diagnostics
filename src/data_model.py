@@ -585,6 +585,9 @@ class _DMDimensionsMixin:
     dims: list = dc.field(init=False, default_factory=list)
     scalar_coords: list = dc.field(init=False, default_factory=list)
 
+    def __init__(self):
+        self._dim_axes = None
+
     def __post_init__(self, coords=None):
         if coords is None:
             # if we're called to rebuild dicts, rather than after __init__

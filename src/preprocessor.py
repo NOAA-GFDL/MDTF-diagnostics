@@ -567,7 +567,6 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             time_coord.axis,
             name=new_tv_name
         )
-        #new_v = copy_as_alternate(v)
 
         # add original 4D var defined in new_tv as an alternate TranslatedVarlistEntry
         # to query if no entries on specified levels are found in the data catalog

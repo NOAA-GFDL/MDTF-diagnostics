@@ -541,14 +541,14 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             # hit this if VE didn't request Z level extraction; do nothing
             return v
 
-        tv = v.translation  # abbreviate
+        tv = v.translation
         if len(tv.scalar_coords) == 0:
-            raise AssertionError  # should never get here
+            raise AssertionError  # should never get here assuming that all translated vars at least
+            # have a time dimension
         elif len(tv.scalar_coords) > 1:
-           _log.debug(f'scalar_coords attribute for {v.name} has more than one entry; using first entry in list')
+            _log.debug(f'scalar_coords attribute for {v.name} has more than one entry; using first entry in list')
         # wraps method in data_model; makes a modified copy of translated var
         # restore name to that of 4D data (eg. 'u500' -> 'ua')
-        new_ax_set = set(v.axes_set).add('Z')
 
         new_tv_name = ""
         if v.use_exact_name:
@@ -820,7 +820,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             if not isinstance(group_df['start_time'].values[0], datetime.date):
                 # convert int to date type
                 date_format = ''
-                date_digits = math.floor(math.log10(group_df['start_time'].values[0]))+1
+                date_digits = math.floor(math.log10(group_df['start_time'].values[0])) + 1
                 match date_digits:
                     case 8:
                         date_format = '%Y%m%d'
@@ -902,32 +902,34 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # search catalog for convention specific query object
                 cat_subset = cat.search(**case_d.query)
                 if cat_subset.df.empty:
-                    # check whether there is a vertical coordinate
-                    if any(v.translation.scalar_coords) and any(v.alternates):
+                    # check whether there is an alternate variable to substitute
+                    if any(v.alternates):
+                        try_new_query = True
                         for a in v.alternates:
-                            found_entry = False
-                            for c in a.scalar_coords:
-                                if c.axis == 'Z':
-                                    case_d.query.update({'variable_id': a.name})
-                                    v.translation.requires_level_extraction = True
-                                    try_new_query = True
-                                    found_entry = True
+                            case_d.query.update({'variable_id': a.name})
+                            if any(v.translation.scalar_coords):
+                                found_z_entry = False
+                                # check for vertical coordinate to determine if level extraction is needed
+                                for c in a.scalar_coords:
+                                    if c.axis == 'Z':
+                                        v.translation.requires_level_extraction = True
+                                        found_z_entry = True
+                                        break
+                                    else:
+                                        continue
+                                if found_z_entry:
                                     break
-                                else:
-                                    continue
-                            if found_entry:
-                                break
                     if try_new_query:
                         # search catalog for convention specific query object
                         cat_subset = cat.search(**case_d.query)
                         if cat_subset.df.empty:
                             raise util.DataRequestError(
                                 f"No assets matching query requirements found for {a.name} for"
-                                f" case{case_name} in {data_catalog}")
+                                f" case {case_name} in {data_catalog}")
                     else:
                         raise util.DataRequestError(
-                          f"Unable to find match or alternate for {v.translation.name}"
-                          f" for case {case_name} in {data_catalog}")
+                            f"Unable to find match or alternate for {v.translation.name}"
+                            f" for case {case_name} in {data_catalog}")
                 else:
                     # Get files in specified date range
                     # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html

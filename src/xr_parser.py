@@ -725,7 +725,7 @@ class DefaultDatasetParser:
         ds_name_split = [i for i in ds_name.split('_') if i not in exclude]
         isect = set(our_name_split).intersection(ds_name_split)
 
-        if len(isect) >= len(our_name_split)-2 and len(isect) > 0:
+        if len(isect) >= len(our_name_split) - 2 and len(isect) > 0:
             return True
         else:
             return False
@@ -1284,10 +1284,10 @@ class DefaultDatasetParser:
                           use_cftime=True  # use cftime instead of np.datetime64
                           )
         # ds = ds.cf.guess_coord_axis()  # may not need this
-        self.restore_attrs_backup(ds)
-        #self.normalize_metadata(var, ds)
+        # self.restore_attrs_backup(ds)
+        # self.normalize_metadata(var, ds)
         self.check_calendar(ds)
-        #self._post_normalize_hook(var, ds)
+        # self._post_normalize_hook(var, ds)
 
         if self.disable:
             return ds  # stop here; don't attempt to reconcile

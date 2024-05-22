@@ -930,24 +930,24 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         raise util.DataRequestError(
                             f"Unable to find match or alternate for {v.translation.name}"
                             f" for case {case_name} in {data_catalog}")
+
+                # Get files in specified date range
+                # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
+                # cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
+                # v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
+                # convert subset catalog to an xarray dataset dict
+                # and concatenate the result with the final dict
+                cat_subset_df = cat_dict | cat_subset.to_dataset_dict(
+                    progressbar=False,
+                    xarray_open_kwargs=self.open_dataset_kwargs
+                )
+                dict_key = list(cat_subset_df)[0]
+                if dict_key not in cat_dict:
+                    cat_dict[dict_key] = cat_subset_df[dict_key]
                 else:
-                    # Get files in specified date range
-                    # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
-                    # cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
-                    # v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
-                    # convert subset catalog to an xarray dataset dict
-                    # and concatenate the result with the final dict
-                    cat_subset_df = cat_dict | cat_subset.to_dataset_dict(
-                        progressbar=False,
-                        xarray_open_kwargs=self.open_dataset_kwargs
-                    )
-                    dict_key = list(cat_subset_df)[0]
-                    if dict_key not in cat_dict:
-                        cat_dict[dict_key] = cat_subset_df[dict_key]
-                    else:
-                        cat_dict[dict_key] = xr.merge([cat_dict[dict_key], cat_subset_df[dict_key]])
-                  #  print(cat_dict)
-                    # rename cat_subset case dict keys to case names
+                    cat_dict[dict_key] = xr.merge([cat_dict[dict_key], cat_subset_df[dict_key]])
+                # print(cat_dict)
+                # rename cat_subset case dict keys to case names
         cat_dict_rename = self.rename_dataset_keys(cat_dict, case_dict)
         return cat_dict_rename
 

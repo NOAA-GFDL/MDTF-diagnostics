@@ -41,7 +41,10 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
     log: typing.Any = util.MANDATORY  # assigned from parent var
-    requires_level_extraction: bool = False
+
+    def __init__(self):
+        super().__init__()
+        self._requires_level_extraction = None
 
     @property
     def requires_level_extraction(self) -> bool:

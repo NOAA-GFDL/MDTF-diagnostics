@@ -562,9 +562,8 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
             for var_dict in new_tv_dict.values():
                 if var_dict['ndim'] == 4:
                     new_tv_name = var_dict['name']
-        time_coord = [c for c in tv.scalar_coords if c.axis == 'T'][0]
         new_tv = tv.remove_scalar(
-            time_coord.axis,
+            'Z',
             name=new_tv_name
         )
 

@@ -188,6 +188,9 @@ class _DMCoordinateShared:
     value: typing.Union[int, float, str] = None
     need_bounds: bool = False
 
+    def __init__(self):
+        self._is_scalar = None
+
     @property
     def bounds(self):
         """The *bounds_var* attribute is stored as a pointer to the actual object
@@ -212,7 +215,18 @@ class _DMCoordinateShared:
         <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#scalar-coordinate-variables>`__
         (bool).
         """
-        return self.value is not None
+        if not isinstance(self.value, str):
+            return self.value is not None
+        else:
+            return ''.join(self.value.split()) != ""
+
+    @is_scalar.setter
+    def is_scalar(self, value: bool):
+        """Whether the coordinate is a `scalar coordinate
+        <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#scalar-coordinate-variables>`__
+        (bool).
+        """
+        self._is_scalar = value
 
     def make_scalar(self, new_value):
         """Returns a copy of the coordinate, converted to a scalar coordinate

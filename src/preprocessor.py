@@ -936,7 +936,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict
-                cat_subset_df = cat_dict | cat_subset.to_dataset_dict(
+                cat_subset_df = cat_subset.to_dataset_dict(
                     progressbar=False,
                     xarray_open_kwargs=self.open_dataset_kwargs
                 )

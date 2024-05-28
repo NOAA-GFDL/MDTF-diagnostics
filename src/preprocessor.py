@@ -936,7 +936,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict
-                cat_subset_df = cat_dict | cat_subset.to_dataset_dict(
+                cat_subset_df = cat_subset.to_dataset_dict(
                     progressbar=False,
                     xarray_open_kwargs=self.open_dataset_kwargs
                 )
@@ -945,7 +945,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     cat_dict[dict_key] = cat_subset_df[dict_key]
                 else:
                     cat_dict[dict_key] = xr.merge([cat_dict[dict_key], cat_subset_df[dict_key]])
-                # print(cat_dict)
                 # rename cat_subset case dict keys to case names
         cat_dict_rename = self.rename_dataset_keys(cat_dict, case_dict)
         return cat_dict_rename

@@ -31,7 +31,7 @@ import logging
 
 root_dir = os.path.dirname(os.path.realpath(__file__)).split('/tools/catalog_builder')[0]
 sys.path.insert(0, os.path.join(root_dir, 'src'))
-from src import util
+# from src import util
 
 # Define a log object for debugging
 _log = logging.getLogger(__name__)
@@ -124,17 +124,17 @@ def parse_gfdl_am5_data(file_name: str):
             gfdl_fieldlist = os.path.join(root_dir, 'data/fieldlist_CMIP.jsonc')
         else:
             gfdl_fieldlist = os.path.join(root_dir, 'data/fieldlist_GFDL.jsonc')
-        try:
-            json_config = util.json_utils.read_json(gfdl_fieldlist, log=_log)
-        except IOError:
-            print("Unable to open file", gfdl_fieldlist)
-            sys.exit(1)
-        gfdl_info = util.basic.NameSpace.fromDict(json_config)
+        #try:
+        #    json_config = util.json_utils.read_json(gfdl_fieldlist, log=_log)
+        #except IOError:
+        #    print("Unable to open file", gfdl_fieldlist)
+        #    sys.exit(1)
+        #gfdl_info = util.basic.NameSpace.fromDict(json_config)
 
-        if hasattr(gfdl_info.variables, variable_id):
-            var_metadata = gfdl_info.variables.get(variable_id)
-        else:
-            raise KeyError(f'{variable_id} not found in {gfdl_fieldlist}')
+        #if hasattr(gfdl_info.variables, variable_id):
+        #    var_metadata = gfdl_info.variables.get(variable_id)
+        #else:
+        #    raise KeyError(f'{variable_id} not found in {gfdl_fieldlist}')
 
         if hasattr(var_metadata, 'standard_name'):
             standard_name = var_metadata.standard_name

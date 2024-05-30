@@ -1278,21 +1278,19 @@ class DefaultDatasetParser:
         """
 
         self.normalize_pre_decode(ds)
-        cal = ds['time'].attrs['calendar']
         ds = xr.decode_cf(ds,
                           decode_coords=True,  # parse coords attr
                           decode_times=True,
                           use_cftime=True  # use cftime instead of np.datetime64
                           )
-        ds['time'].attrs['calendar'] = cal
         # ds = ds.cf.guess_coord_axis()  # may not need this
         # self.restore_attrs_backup(ds)
         # self.normalize_metadata(var, ds)
         self.check_calendar(ds)
         # self._post_normalize_hook(var, ds)
 
-        #if self.disable:
-        #    return ds  # stop here; don't attempt to reconcile
+        if self.disable:
+            return ds  # stop here; don't attempt to reconcile
         #if var is not None:
         #    self.reconcile_variable(var, ds)
         #    self.check_ds_attrs(var, ds)

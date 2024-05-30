@@ -129,7 +129,8 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         objects so that they can be compared with the model data's time axis.
         """
         tv_name = var.name_in_model
-        t_coord = ds.cf.dim_axes(tv_name).get('T', None)
+        # t_coord = ds.cf.dim_axes(tv_name).get('T', None)
+        t_coord = ds.time
         if t_coord is None:
             var.log.debug("Exit %s for %s: time-independent.",
                           self.__class__.__name__, var.full_name)
@@ -137,12 +138,12 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         # time coordinate will be a list if variable has
         # multiple coordinates/coordinate attributes
         if isinstance(t_coord, list):
-            cal = t_coord[0].attrs['calendar']
+            cal = t_coord[0].encoding['calendar']
             t_start = t_coord[0].values[0]
             t_end = t_coord[0].values[-1]
             t_size = t_coord[0].size
         else:
-            cal = t_coord.attrs['calendar']
+            cal = t_coord.encoding['calendar']
             t_start = t_coord.values[0]
             t_end = t_coord.values[-1]
             t_size = t_coord.size

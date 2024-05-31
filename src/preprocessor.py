@@ -826,8 +826,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         date_format = '%Y%m%d'
                     case 14:
                         date_format = '%Y%m%d%H%M%S'
-                group_df['start_time'] = pd.to_datetime(group_df['start_time'].values[0], format=date_format)
-                group_df['end_time'] = pd.to_datetime(group_df['end_time'].values[0], format=date_format)
+                # convert start_times to date_format for all files in query
+                group_df['start_time'] = pd.to_datetime(group_df['start_time'].values, format=date_format)
+                # convert end_times to date_format for all files in query
+                group_df['end_time'] = pd.to_datetime(group_df['end_time'].values, format=date_format)
             # method throws ValueError if ranges aren't contiguous
             dates_df = group_df.loc[:, ['start_time', 'end_time']]
             date_range_vals = []
@@ -924,7 +926,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         cat_subset = cat.search(**case_d.query)
                         if cat_subset.df.empty:
                             raise util.DataRequestError(
-                                f"No assets matching query requirements found for {a.name} for"
+                                f"No assets matching query requirements found for {v.translation.name} for"
                                 f" case {case_name} in {data_catalog}")
                     else:
                         raise util.DataRequestError(
@@ -933,7 +935,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
-                # cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
+                cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
+                if cat_subset.df.empty:
+                    raise util.DataRequestError(
+                        f"check_group_daterange returned empty data frame for {v.translation.name}"
+                        f" case {case_name} in {data_catalog}, indicating issues with data continuity")
                 # v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict

@@ -1216,7 +1216,10 @@ class DefaultDatasetParser:
         """
         for attr in attr_names:
             if attr not in ds_var.attrs:
-                ds_var.attrs[attr] = ATTR_NOT_FOUND
+                if attr in ds_var.encoding:
+                    ds_var.attrs[attr] = ds_var.encoding[attr]
+                else:
+                    ds_var.attrs[attr] = ATTR_NOT_FOUND
             if ds_var.attrs[attr] is ATTR_NOT_FOUND:
                 raise util.MetadataEvent(
                     f"'{attr}' metadata attribute not found on '{ds_var.name}'."
@@ -1291,11 +1294,11 @@ class DefaultDatasetParser:
 
         if self.disable:
             return ds  # stop here; don't attempt to reconcile
-        #if var is not None:
-        #    self.reconcile_variable(var, ds)
-        #    self.check_ds_attrs(var, ds)
-        #else:
-        #    self.check_ds_attrs(None, ds)
+        if var is not None:
+            # self.reconcile_variable(var, ds)
+            self.check_ds_attrs(var, ds)
+        else:
+            self.check_ds_attrs(None, ds)
         return ds
 
     @staticmethod

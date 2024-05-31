@@ -7,8 +7,6 @@ import abc
 import dataclasses
 import datetime
 import importlib
-
-import numpy
 import pandas as pd
 from src import util, varlist_util, translation, xr_parser, units
 import cftime
@@ -940,7 +938,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
                 if cat_subset.df.empty:
                     raise util.DataRequestError(
-                        f"check_group_daterange returned empty data frame for {a.name}"
+                        f"check_group_daterange returned empty data frame for {v.translation.name}"
                         f" case {case_name} in {data_catalog}, indicating issues with data continuity")
                 # v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
                 # convert subset catalog to an xarray dataset dict

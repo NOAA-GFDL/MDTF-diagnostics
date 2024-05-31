@@ -403,9 +403,14 @@ class AtomicInterval(object):
         """
         ints = sorted(args, key=op.attrgetter('lower'))
         for i in list(range(0, len(ints) - 1)):
+            # the following check is questionable since it assumes that
+            # the upper bound of date range A should match the lower bound of date range B
+            # in a sorted list for A and B to be considered contiguous
+            # For example, if range A ends on 19791231595959 and Range B begins on 19800101000000,
+            # they are considered to be not contiguous
             if not ints[i].adjoins_left(ints[i + 1]):
-                raise ValueError(("Intervals {} and {} not contiguous and "
-                                  "nonoverlapping.").format(ints[i], ints[i + 1]))
+                _log.warning(("Intervals {} and {} may not be contiguous and "
+                              "nonoverlapping.").format(ints[i], ints[i + 1]))
         return AtomicInterval(ints[0].left, ints[0].lower,
                               ints[-1].upper, ints[-1].right)
 

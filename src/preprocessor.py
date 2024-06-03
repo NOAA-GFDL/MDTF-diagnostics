@@ -951,13 +951,18 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 )
                 date_range_dict = {f: cat_subset_df[f].attrs['intake_esm_attrs:time_range'] for f in list(cat_subset_df)}
                 date_range_dict = dict(sorted(date_range_dict.items(), key=lambda item: item[1]))
+                var_xr = []
                 for k in list(date_range_dict):
                     date_range_k = dl.DateRange(cat_subset_df[k].attrs['intake_esm_attrs:time_range'])
                     if date_range_k in date_range:
-                        if case_name not in cat_dict:
-                            cat_dict[case_name] = cat_subset_df[k]
+                        if not var_xr:
+                            var_xr = cat_subset_df[k]
                         else:
-                            cat_dict[case_name] = xr.concat([cat_dict[case_name],cat_subset_df[k]], "time")
+                            var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+                if case_name not in cat_dict:
+                    cat_dict[case_name] = var_xr
+                else:
+                    cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr])
                 # rename cat_subset case dict keys to case names
         cat_dict_rename = self.rename_dataset_keys(cat_dict, case_dict)
         return cat_dict_rename

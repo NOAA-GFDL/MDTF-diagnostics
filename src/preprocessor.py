@@ -406,13 +406,13 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
         tv = var.translation  # abbreviate
         rename_d = dict()
         # rename var
-        if tv.name != var.name:
-            var.log.debug("Rename '%s' variable in %s to '%s'.",
-                          tv.name, var.full_name, var.name,
-                          tags=util.ObjectLogTag.NC_HISTORY
-                          )
-            rename_d[tv.name] = var.name
-            tv.name = var.name
+        #if tv.name != var.name:
+        #    var.log.debug("Rename '%s' variable in %s to '%s'.",
+        #                  tv.name, var.full_name, var.name,
+        #                  tags=util.ObjectLogTag.NC_HISTORY
+        #                  )
+        #    rename_d[tv.name] = var.name
+        #    tv.name = var.name
 
         # rename coords
         for c in tv.dim_axes.values():
@@ -1153,15 +1153,15 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         <https://xarray.pydata.org/en/stable/generated/xarray.Dataset.to_netcdf.html>`__.
         May be overwritten by child classes.
         """
-        # TODO: remove any netCDF Variables that were present in the input file
-        # (and ds) but not needed for PODs' data request
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
+        var_ds = ds[var.translation.name].to_dataset()
+        var_ds = var_ds.rename_vars(name_dict={var.translation.name:var.name})
         # var.log.info("Writing '%s'.", var.dest_path, tags=util.ObjectLogTag.OUT_FILE)
         if var.is_static:
             unlimited_dims = []
         else:
             unlimited_dims = [var.T.name]
-        ds.to_netcdf(
+        var_ds.to_netcdf(
             path=var.dest_path,
             mode='w',
             **self.save_dataset_kwargs,

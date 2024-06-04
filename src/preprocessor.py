@@ -9,6 +9,7 @@ import datetime
 import importlib
 import pandas as pd
 from src import util, varlist_util, translation, xr_parser, units
+from src.util import datelabel as dl
 import cftime
 import intake
 import math
@@ -890,6 +891,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
             for v in case_d.varlist.iter_vars():
                 realm_regex = v.realm + '*'
+                date_range = v.translation.T.range
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
                 # TODO: add method to convert freq from DateFrequency object to string
@@ -947,11 +949,20 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     progressbar=False,
                     xarray_open_kwargs=self.open_dataset_kwargs
                 )
-                dict_key = list(cat_subset_df)[0]
-                if dict_key not in cat_dict:
-                    cat_dict[dict_key] = cat_subset_df[dict_key]
+                date_range_dict = {f: cat_subset_df[f].attrs['intake_esm_attrs:time_range'] for f in list(cat_subset_df)}
+                date_range_dict = dict(sorted(date_range_dict.items(), key=lambda item: item[1]))
+                var_xr = []
+                for k in list(date_range_dict):
+                    date_range_k = dl.DateRange(cat_subset_df[k].attrs['intake_esm_attrs:time_range'])
+                    if date_range_k in date_range:
+                        if not var_xr:
+                            var_xr = cat_subset_df[k]
+                        else:
+                            var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+                if case_name not in cat_dict:
+                    cat_dict[case_name] = var_xr
                 else:
-                    cat_dict[dict_key] = xr.merge([cat_dict[dict_key], cat_subset_df[dict_key]])
+                    cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr])
                 # rename cat_subset case dict keys to case names
         cat_dict_rename = self.rename_dataset_keys(cat_dict, case_dict)
         return cat_dict_rename

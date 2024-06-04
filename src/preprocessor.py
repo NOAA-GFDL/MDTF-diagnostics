@@ -129,25 +129,18 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
         <https://unidata.github.io/cftime/api.html#cftime.datetime>`__
         objects so that they can be compared with the model data's time axis.
         """
-        tv_name = var.name_in_model
-        # t_coord = ds.cf.dim_axes(tv_name).get('T', None)
-        t_coord = ds.time
+        tv_name = var.translation.name
+        t_coord = ds[tv_name].coords.get('time', None)
         if t_coord is None:
             var.log.debug("Exit %s for %s: time-independent.",
                           self.__class__.__name__, var.full_name)
             return ds
         # time coordinate will be a list if variable has
         # multiple coordinates/coordinate attributes
-        if isinstance(t_coord, list):
-            cal = t_coord[0].encoding['calendar']
-            t_start = t_coord[0].values[0]
-            t_end = t_coord[0].values[-1]
-            t_size = t_coord[0].size
-        else:
-            cal = t_coord.encoding['calendar']
-            t_start = t_coord.values[0]
-            t_end = t_coord.values[-1]
-            t_size = t_coord.size
+        cal = t_coord.encoding['calendar']
+        t_start = t_coord.values[0]
+        t_end = t_coord.values[-1]
+        t_size = t_coord.size
         dt_range = var.T.range
         # lower/upper are earliest/latest datetimes consistent with the date we
         # were given, up to the precision that was specified (eg lower for "2000"
@@ -205,17 +198,10 @@ class CropDateRangeFunction(PreprocessorFunctionBase):
                        f"requested date range end ({dt_end_lower}).")
             var.log.error(err_str)
             raise IndexError(err_str)
-        if isinstance(t_coord, list):
-            ds = ds.sel({t_coord[0].name: slice(dt_start_lower, dt_end_upper)})
-        else:
-            ds = ds.sel({t_coord.name: slice(dt_start_lower, dt_end_upper)})
-        new_t = ds.cf.dim_axes(tv_name).get('T')
-        if isinstance(new_t, list):
-            nt_size = new_t[0].size
-            nt_values = new_t[0].values
-        else:
-            nt_size = new_t.size
-            nt_values = new_t.values
+        ds = ds.sel({t_coord.name: slice(dt_start_lower, dt_end_upper)})
+        new_t = ds[tv_name].coords.get('time', None)
+        nt_size = new_t.size
+        nt_values = new_t.values
         if t_size == nt_size:
             var.log.info(("Requested dates for %s coincide with range of dataset "
                           "'%s -- %s'; left unmodified."),
@@ -949,7 +935,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     progressbar=False,
                     xarray_open_kwargs=self.open_dataset_kwargs
                 )
-                date_range_dict = {f: cat_subset_df[f].attrs['intake_esm_attrs:time_range'] for f in list(cat_subset_df)}
+                date_range_dict = {f: cat_subset_df[f].attrs['intake_esm_attrs:time_range']
+                                   for f in list(cat_subset_df)}
                 date_range_dict = dict(sorted(date_range_dict.items(), key=lambda item: item[1]))
                 var_xr = []
                 for k in list(date_range_dict):
@@ -963,9 +950,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     cat_dict[case_name] = var_xr
                 else:
                     cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr])
-                # rename cat_subset case dict keys to case names
-        cat_dict_rename = self.rename_dataset_keys(cat_dict, case_dict)
-        return cat_dict_rename
+        return cat_dict
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
         """Top-level method to edit *pod*\'s data request, based on the child
@@ -1013,7 +998,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             "decode_cf": False,  # all decoding done by DefaultDatasetParser
             "decode_coords": False,  # so disable it here
             "decode_times": False,
-            "use_cftime": False
+            "use_cftime": False,
+            "chunks": "auto"
         }
 
     @property

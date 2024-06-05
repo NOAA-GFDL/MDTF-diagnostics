@@ -1025,7 +1025,17 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             (path, filename) = os.path.split(case_d.attrs['intake_esm_attrs:path'])
             rename_key(ds, new_dict, old_key, [c for c in case_names if c in filename][0])
         return new_dict
-
+    
+    def rename_dataset_vars(self, ds: dict, case_list: dict) -> collections.OrderedDict:
+        """Rename variables in dataset to conform with variable names requested by the POD"""
+        case_names = [c for c in case_list.keys()]
+        for c in case_names:
+            name_dict = {}
+            for var in case_list[c].varlist.iter_vars():
+                name_dict[var.translation.name] = var.name
+            ds[c] = ds[c].rename_vars(name_dict=name_dict)
+        return ds
+    
     def clean_nc_var_encoding(self, var, name, ds_obj):
         """Clean up the ``attrs`` and ``encoding`` dicts of *ds_obj*
         prior to writing to a netCDF file, as a workaround for the following

@@ -196,6 +196,8 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     cat_subset = data_pp.process(cases, ctx.config, model_paths.MODEL_WORK_DIR)
     # write the preprocessed files
     data_pp.write_ds(cases, cat_subset, pod_runtime_reqs)
+    # rename vars in cat_subset to align with POD convention
+    cat_subset = data_pp.rename_dataset_vars(cat_subset, cases)
     # write the ESM intake catalog for the preprocessed  files
     data_pp.write_pp_catalog(cat_subset, model_paths, log.log)
     # configure the runtime environments and run the POD(s)

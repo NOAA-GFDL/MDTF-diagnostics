@@ -1257,6 +1257,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         return cat_subset
 
     def write_pp_catalog(self,
+                         cases: dict,
                          input_catalog_ds: xr.Dataset,
                          config: util.PodPathManager,
                          log: logging.log):
@@ -1270,10 +1271,23 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         entries = [e.cat_entry for e in list(map(util.catalog.ppParser['ppParser' + 'GFDL'], file_list))]
         # append columns defined in assets
         columns = [att['column_name'] for att in pp_cat_assets['attributes']]
-        for col in columns:
-            for e in entries:
-                if col not in e.keys():
-                    e[col] = ""
+        columns.extend(('dataset_name', 'path'))
+        entries_b = []
+        # each key is a case
+        for case_name, case_dict in cases.items():
+            ds_match = input_catalog_ds[case_name]
+            for var in case_dict.varlist.iter_vars():
+                ds_var = ds_match.data_vars.get(var.translation.name, None)
+                if ds_var is None:
+                    log.error(f'No var {var.translation.name}')
+                d = dict.fromkeys(columns, "")
+                for key, val in ds_match.attrs.items():
+                    if 'intake_esm_attrs' in key:
+                        for c in columns:
+                            if key.split('intake_esm_attrs:')[1] == c:
+                                d[c] = val
+                d.update({'path': var.dest_path})
+                entries_b.append(d)
         # copy information from input catalog to pp catalog entries
         global_attrs = ['convention', 'realm']
         for e in entries:
@@ -1285,8 +1299,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 if key in columns:
                     e[key] = val
 
-        # create a Pandas dataframe rom the the catalog entries
-        cat_df = pd.DataFrame(entries)
+        # create a Pandas dataframe romthe catalog entries
+
+        cat_df = pd.DataFrame(entries_b)
         cat_df.head()
         # validate the catalog
         try:
@@ -1334,7 +1349,6 @@ class NullPreprocessor(MDTFPreprocessorBase):
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
             for v in case_list[case_name].varlist.iter_vars():
-                self.edit_request(v, convention=cat_subset[case_name].convention)
                 cat_subset[case_name] = self.parse_ds(v, case_xr_dataset)
 
         return cat_subset

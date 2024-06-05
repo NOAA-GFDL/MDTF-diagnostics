@@ -87,9 +87,8 @@ ppParser = ClassMaker()
 class ppParserGFDL(ppParserBase):
     def __init__(self, file_path: str):
         super().__init__(file_path)
-
         self.filename_template = (
-            '{realm}.{time_range}.{variable_id}.{frequency}.nc'
+            '{realm}.{variable_id}.{frequency}.nc'
         )
         self.f = _reverse_filename_format(self.file_basename,
                                           filename_template=self.filename_template
@@ -97,7 +96,7 @@ class ppParserGFDL(ppParserBase):
 
         self.cat_entry.update(self.f)
         self.cat_entry['path'] = file_path
-        self.cat_entry['dataset_name'] = self.cat_entry['realm'] + '.' + self.cat_entry['time_range']
+        self.cat_entry['dataset_name'] = self.cat_entry['realm']
 
 
 @ppParser.maker

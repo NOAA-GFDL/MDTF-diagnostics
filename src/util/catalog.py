@@ -18,134 +18,6 @@ from . import ClassMaker
 _log = logging.getLogger(__name__)
 
 
-def _reverse_filename_format(file_basename, filename_template=None, gridspec_template=None):
-    """
-    Uses intake's ``reverse_format`` utility to reverse the string method format.
-    Given format_string and resolved_string, find arguments
-    that would give format_string.format(arguments) == resolved_string
-    """
-    try:
-        return reverse_format(filename_template, file_basename)
-    except ValueError:
-        try:
-            return reverse_format(gridspec_template, file_basename)
-        except Exception as exc:
-            print(
-                f'Failed to parse file: {file_basename} using patterns: {filename_template}: {exc}'
-            )
-            return {}
-
-
-def _extract_attr_with_regex(input_str: str, regex: str, strip_chars=None):
-    pattern = re.compile(regex, re.IGNORECASE)
-    match = re.findall(pattern, input_str)
-    if match:
-        match = max(match, key=len)
-        if isinstance(match, tuple):
-            match = ''.join(match)
-        if strip_chars:
-            match = match.strip(strip_chars)
-        return match
-    else:
-        return None
-
-
-exclude_patterns = ['*/files/*', '*/latest/*']
-
-
-def _filter_func(path: str) -> bool:
-    return not any(
-        fnmatch.fnmatch(path, pat=exclude_pattern) for exclude_pattern in exclude_patterns
-    )
-
-
-class ppParserBase:
-    def __init__(self, file_path: str):
-        # get catalog in information from pp file name
-        self.freq_regex = r'/1hr/|/3hr/|/6hr/|/day/|/fx/|/mon/|/monClim/|/subhr/|/seas/|/yr/'
-        # YYYYMMDD:HHMMSS-YYYYMMDD:HHMMSS
-        # (([numbers in range 0-9 ]{repeat previous exactly 4 time}[numbers in range 0-1]
-        # [numbers in range 0-9][numbers in range 0-3][numbers in range 0-9])
-        # (optional colon)(([numbers in range 0-2][numbers in range 0-3])([numbers in range 0-5][numbers in range 0-9])
-        # {repeat previous exactly 2 times})*=0 or more of the HHMMSS group
-        # -(repeat the same regex for the second date string in the date range)
-        self.time_range_regex = r'([0-9]{4}[0-1][0-9][0-3][0-9])' \
-                                r'(:?)(([0-2][0-3])([0-5][0-9]){2})*' \
-                                r'(-)([0-9]{4}[0-1][0-9][0-3][0-9])' \
-                                r'(:?)(([0-2][0-3])([0-5][0-9]){2})*'
-        self.file_basename = os.path.basename(file_path)
-        #  ^..^
-        # /o  o\
-        # oo--oo~~~
-        self.cat_entry = dict()
-
-
-ppParser = ClassMaker()
-
-
-@ppParser.maker
-class ppParserGFDL(ppParserBase):
-    def __init__(self, file_path: str):
-        super().__init__(file_path)
-        self.filename_template = (
-            '{realm}.{variable_id}.{frequency}.nc'
-        )
-        self.f = _reverse_filename_format(self.file_basename,
-                                          filename_template=self.filename_template
-                                          )
-
-        self.cat_entry.update(self.f)
-        self.cat_entry['path'] = file_path
-        self.cat_entry['dataset_name'] = self.cat_entry['realm']
-
-
-@ppParser.maker
-class ppParserCMIP(ppParserBase):
-    pass
-
-
-@ppParser.maker
-class ppParserCESM(ppParserBase):
-    pass
-
-
-# TODO: remove deprecated function "mdtf_pp_parser"
-def mdtf_pp_parser(file_path: str) -> dict:
-    """ Extract attributes of a file using information from MDTF OUTPUT DRS
-    """
-    # get catalog in information from pp file name
-    freq_regex = r'/1hr/|/3hr/|/6hr/|/day/|/fx/|/mon/|/monClim/|/subhr/|/seas/|/yr/'
-    # YYYYMMDD:HHMMSS-YYYYMMDD:HHMMSS
-    # (([numbers in range 0-9 ]{repeat previous exactly 4 time}[numbers in range 0-1]
-    # [numbers in range 0-9][numbers in range 0-3][numbers in range 0-9])
-    # (optional colon)(([numbers in range 0-2][numbers in range 0-3])([numbers in range 0-5][numbers in range 0-9])
-    # {repeat previous exactly 2 times})*=0 or more of the HHMMSS group
-    # -(repeat the same regex for the second date string in the date range)
-    time_range_regex = r'([0-9]{4}[0-1][0-9][0-3][0-9])' \
-                       r'(:?)(([0-2][0-3])([0-5][0-9]){2})*' \
-                       r'(-)([0-9]{4}[0-1][0-9][0-3][0-9])' \
-                       r'(:?)(([0-2][0-3])([0-5][0-9]){2})*'
-    file_basename = os.path.basename(file_path)
-
-    filename_template = (
-        '{dataset_name}.{time_range}.{variable_id}.{frequency}.nc'
-    )
-
-    f = _reverse_filename_format(file_basename, filename_template=filename_template)
-    #  ^..^
-    # /o  o\
-    # oo--oo~~~
-    cat_entry = dict()
-    cat_entry.update(f)
-    cat_entry['path'] = file_path
-    # cat_entry['frequency'] = _extract_attr_with_regex(file_path, regex=freq_regex, strip_chars='/')
-    # cat_entry['time_range'] = _extract_attr_with_regex(cat_entry['dataset_name'], regex=time_range_regex)
-    # cat_entry['experiment_id'] = cat_entry['dataset_name'].split('_' + cat_entry['time_range'])[0]
-    # BEWARE: hard codin stuf
-    cat_entry['dataset_name'] = 'atmos_cmip.' + cat_entry['time_range']
-    return cat_entry
-
-
 def get_file_list(output_dir: str) -> list:
     """Get a list of files in a directory"""
 
@@ -196,6 +68,13 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
                  )
         )
 
+    # add columns required for GFDL/CESM institutions
+    append_atts = ['chunk freq', 'path']
+    for att in append_atts:
+        cat_dict["attributes"].append(
+            dict(column_name=att)
+        )
+
     cat_dict["assets"] = {
         "column_name": "path",
         "format": "netcdf"
@@ -211,6 +90,7 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
             "table_id",
             "grid_label",
             "realm",
+            "chunk_freq",
             "variant_label",
             "time_range"
         ],

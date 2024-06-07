@@ -199,7 +199,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # rename vars in cat_subset to align with POD convention
     cat_subset = data_pp.rename_dataset_vars(cat_subset, cases)
     # write the ESM intake catalog for the preprocessed  files
-    data_pp.write_pp_catalog(cat_subset, model_paths, log.log)
+    data_pp.write_pp_catalog(cases, cat_subset, model_paths, log.log)
     # configure the runtime environments and run the POD(s)
     if not any(p.failed for p in pods.values()):
         log.log.info("### %s: running pods '%s'.", [p for p in pods.keys()])

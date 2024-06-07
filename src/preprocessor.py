@@ -875,34 +875,35 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # path_regex = '*' + case_name + '*'
             freq = case_d.varlist.T.frequency.format()
 
-            for v in case_d.varlist.iter_vars():
-                realm_regex = v.realm + '*'
-                date_range = v.translation.T.range
+            for var in case_d.varlist.iter_vars():
+                realm_regex = var.realm + '*'
+                date_range = var.translation.T.range
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
-                # TODO: add method to convert freq from DateFrequency object to string
                 case_d.query['frequency'] = freq
                 case_d.query['path'] = [path_regex]
-                case_d.query['variable_id'] = v.translation.name
-                # search translation for further query requirements
-                for q in case_d.query:
-                    if hasattr(v.translation, q):
-                        case_d.query.update({q: getattr(v.translation, q)})
+                case_d.query['variable_id'] = var.translation.name
+                case_d.query['realm'] = realm_regex
+                case_d.query['standard_name'] = var.translation.standard_name
+
+                # change realm key name if necessary
+                if cat.df.get('modeling_realm', None) is not None:
+                    case_d.query['modeling_realm'] = case_d.query.pop('realm')
 
                 # search catalog for convention specific query object
                 cat_subset = cat.search(**case_d.query)
                 if cat_subset.df.empty:
                     # check whether there is an alternate variable to substitute
-                    if any(v.alternates):
+                    if any(var.alternates):
                         try_new_query = True
-                        for a in v.alternates:
+                        for a in var.alternates:
                             case_d.query.update({'variable_id': a.name})
-                            if any(v.translation.scalar_coords):
+                            if any(var.translation.scalar_coords):
                                 found_z_entry = False
                                 # check for vertical coordinate to determine if level extraction is needed
                                 for c in a.scalar_coords:
                                     if c.axis == 'Z':
-                                        v.translation.requires_level_extraction = True
+                                        var.translation.requires_level_extraction = True
                                         found_z_entry = True
                                         break
                                     else:
@@ -1257,6 +1258,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         return cat_subset
 
     def write_pp_catalog(self,
+                         cases: dict,
                          input_catalog_ds: xr.Dataset,
                          config: util.PodPathManager,
                          log: logging.log):
@@ -1267,26 +1269,32 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         pp_cat_assets = util.define_pp_catalog_assets(config, cat_file_name)
         file_list = util.get_file_list(config.OUTPUT_DIR)
         # fill in catalog information from pp file name
-        entries = [e.cat_entry for e in list(map(util.catalog.ppParser['ppParser' + 'GFDL'], file_list))]
         # append columns defined in assets
         columns = [att['column_name'] for att in pp_cat_assets['attributes']]
-        for col in columns:
-            for e in entries:
-                if col not in e.keys():
-                    e[col] = ""
-        # copy information from input catalog to pp catalog entries
-        global_attrs = ['convention', 'realm']
-        for e in entries:
-            ds_match = input_catalog_ds[e['dataset_name']]
-            for att in global_attrs:
-                e[att] = ds_match.attrs.get(att, '')
-            ds_var = ds_match.data_vars.get(e['variable_id'])
-            for key, val in ds_var.attrs.items():
-                if key in columns:
-                    e[key] = val
+        cat_entries = []
+        # each key is a case
+        for case_name, case_dict in cases.items():
+            ds_match = input_catalog_ds[case_name]
+            for var in case_dict.varlist.iter_vars():
+                ds_var = ds_match.data_vars.get(var.translation.name, None)
+                if ds_var is None:
+                    log.error(f'No var {var.translation.name}')
+                d = dict.fromkeys(columns, "")
+                for key, val in ds_match.attrs.items():
+                    if 'intake_esm_attrs' in key:
+                        for c in columns:
+                            if key.split('intake_esm_attrs:')[1] == c:
+                                d[c] = val
+                if var.translation.convention == 'no_translation':
+                    d.update({'convention': var.convention})
+                else:
+                    d.update({'convention': var.translation.convention})
+                d.update({'path': var.dest_path})
+                cat_entries.append(d)
 
-        # create a Pandas dataframe rom the the catalog entries
-        cat_df = pd.DataFrame(entries)
+        # create a Pandas dataframe romthe catalog entries
+
+        cat_df = pd.DataFrame(cat_entries)
         cat_df.head()
         # validate the catalog
         try:
@@ -1298,7 +1306,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 )
             )
         except Exception as exc:
-            log.error(f'Unable to validate esm intake catalog for pp data: {exc}')
+            log.error(f'Error validating ESM intake catalog for pp data: {exc}')
         try:
             log.debug(f'Writing pp data catalog {cat_file_name} csv and json files to {config.OUTPUT_DIR}')
             validated_cat.serialize(cat_file_name,
@@ -1334,7 +1342,6 @@ class NullPreprocessor(MDTFPreprocessorBase):
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
             for v in case_list[case_name].varlist.iter_vars():
-                self.edit_request(v, convention=cat_subset[case_name].convention)
                 cat_subset[case_name] = self.parse_ds(v, case_xr_dataset)
 
         return cat_subset

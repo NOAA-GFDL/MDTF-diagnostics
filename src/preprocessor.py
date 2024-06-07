@@ -880,14 +880,18 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 date_range = v.translation.T.range
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
-                # TODO: add method to convert freq from DateFrequency object to string
                 case_d.query['frequency'] = freq
                 case_d.query['path'] = [path_regex]
                 case_d.query['variable_id'] = v.translation.name
+                case_d.query['realm'] = realm_regex
                 # search translation for further query requirements
-                for q in case_d.query:
-                    if hasattr(v.translation, q):
-                        case_d.query.update({q: getattr(v.translation, q)})
+                for key, val in case_d.query.items():
+                    if hasattr(v.translation, key) and len(val.strip()) == 0:
+                        case_d.query.update({key: getattr(v.translation, key)})
+
+                # change realm key name if necessary
+                if cat.df.get('modeling_realm', None) is not None:
+                    case_d.query['modeling_realm'] = case_d.query.pop('realm')
 
                 # search catalog for convention specific query object
                 cat_subset = cat.search(**case_d.query)
@@ -1268,11 +1272,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         pp_cat_assets = util.define_pp_catalog_assets(config, cat_file_name)
         file_list = util.get_file_list(config.OUTPUT_DIR)
         # fill in catalog information from pp file name
-        entries = [e.cat_entry for e in list(map(util.catalog.ppParser['ppParser' + 'GFDL'], file_list))]
         # append columns defined in assets
         columns = [att['column_name'] for att in pp_cat_assets['attributes']]
-        columns.extend(('dataset_name', 'path'))
-        entries_b = []
+        cat_entries = []
         # each key is a case
         for case_name, case_dict in cases.items():
             ds_match = input_catalog_ds[case_name]
@@ -1286,22 +1288,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         for c in columns:
                             if key.split('intake_esm_attrs:')[1] == c:
                                 d[c] = val
+                if var.translation.convention == 'no_translation':
+                    d.update({'convention': var.convention})
+                else:
+                    d.update({'convention': var.translation.convention})
                 d.update({'path': var.dest_path})
-                entries_b.append(d)
-        # copy information from input catalog to pp catalog entries
-        global_attrs = ['convention', 'realm']
-        for e in entries:
-            ds_match = input_catalog_ds[e['dataset_name']]
-            for att in global_attrs:
-                e[att] = ds_match.attrs.get(att, '')
-            ds_var = ds_match.data_vars.get(e['variable_id'])
-            for key, val in ds_var.attrs.items():
-                if key in columns:
-                    e[key] = val
+                cat_entries.append(d)
 
         # create a Pandas dataframe romthe catalog entries
 
-        cat_df = pd.DataFrame(entries_b)
+        cat_df = pd.DataFrame(cat_entries)
         cat_df.head()
         # validate the catalog
         try:
@@ -1313,7 +1309,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 )
             )
         except Exception as exc:
-            log.error(f'Unable to validate esm intake catalog for pp data: {exc}')
+            log.error(f'Error validating ESM intake catalog for pp data: {exc}')
         try:
             log.debug(f'Writing pp data catalog {cat_file_name} csv and json files to {config.OUTPUT_DIR}')
             validated_cat.serialize(cat_file_name,

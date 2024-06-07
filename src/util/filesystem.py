@@ -378,6 +378,8 @@ class TempDirManager:
             temp_root = tempfile.gettempdir()
         else:
             temp_root = config.TEMP_DIR_ROOT
+            if config.CODE_ROOT not in temp_root:
+                temp_root = os.path.join(config.CODE_ROOT, temp_root)
         if not self._unittest:
             assert os.path.isdir(temp_root), "Could not find temp_root directory"
         self._root = temp_root

@@ -875,19 +875,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # path_regex = '*' + case_name + '*'
             freq = case_d.varlist.T.frequency.format()
 
-            for v in case_d.varlist.iter_vars():
-                realm_regex = v.realm + '*'
-                date_range = v.translation.T.range
+            for var in case_d.varlist.iter_vars():
+                realm_regex = var.realm + '*'
+                date_range = var.translation.T.range
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
                 case_d.query['frequency'] = freq
                 case_d.query['path'] = [path_regex]
-                case_d.query['variable_id'] = v.translation.name
+                case_d.query['variable_id'] = var.translation.name
                 case_d.query['realm'] = realm_regex
-                # search translation for further query requirements
-                for key, val in case_d.query.items():
-                    if hasattr(v.translation, key) and len(val.strip()) == 0:
-                        case_d.query.update({key: getattr(v.translation, key)})
+                case_d.query['standard_name'] = var.translation.standard_name
 
                 # change realm key name if necessary
                 if cat.df.get('modeling_realm', None) is not None:
@@ -897,16 +894,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 cat_subset = cat.search(**case_d.query)
                 if cat_subset.df.empty:
                     # check whether there is an alternate variable to substitute
-                    if any(v.alternates):
+                    if any(var.alternates):
                         try_new_query = True
-                        for a in v.alternates:
+                        for a in var.alternates:
                             case_d.query.update({'variable_id': a.name})
-                            if any(v.translation.scalar_coords):
+                            if any(var.translation.scalar_coords):
                                 found_z_entry = False
                                 # check for vertical coordinate to determine if level extraction is needed
                                 for c in a.scalar_coords:
                                     if c.axis == 'Z':
-                                        v.translation.requires_level_extraction = True
+                                        var.translation.requires_level_extraction = True
                                         found_z_entry = True
                                         break
                                     else:

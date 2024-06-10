@@ -59,8 +59,8 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
                 }
 
     for att in cmip6_cv_info['CV']['required_global_attributes']:
-        if att == 'Conventions':
-            att = "convention"
+        if att == 'variant_label':
+            att = "member_id"
         cat_dict["attributes"].append(
             dict(column_name=att,
                  vocabulary=f"https://github.com/WCRP-CMIP/CMIP6_CVs/blob/master/"
@@ -69,7 +69,7 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
         )
 
     # add columns required for GFDL/CESM institutions
-    append_atts = ['chunk freq', 'path']
+    append_atts = ['chunk_freq', 'path']
     for att in append_atts:
         cat_dict["attributes"].append(
             dict(column_name=att)
@@ -82,9 +82,9 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
     cat_dict["aggregation_control"] = {
         "variable_column_name": "variable_id",
         "groupby_attrs": [
-            "activity_id",
             "institution_id",
             "source_id",
+            "member_id",
             "experiment_id",
             "frequency",
             "table_id",

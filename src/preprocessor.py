@@ -1286,9 +1286,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             if key.split('intake_esm_attrs:')[1] == c:
                                 d[c] = val
                 if var.translation.convention == 'no_translation':
-                    d.update({'convention': var.convention})
+                    d.update({'project_id': var.convention})
                 else:
-                    d.update({'convention': var.translation.convention})
+                    d.update({'project_id': var.translation.convention})
                 d.update({'path': var.dest_path})
                 cat_entries.append(d)
 

@@ -2,6 +2,7 @@
   "settings" : {
     "driver" : "forcing_feedback.py",
     "long_name" : "Radiative Forcing and Feedback Diagnostics",
+    "convention" : "cmip",
     "realm" : "atmos",
     "runtime_requirements": {
       "python3": ["os", "numpy", "xarray", "pandas", "netCDF4", "scipy", "matplotlib", "cartopy"]
@@ -23,8 +24,16 @@
     "max_duration": "any"
   },
    "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+    "lat": {
+            "standard_name": "latitude",
+            "units": "degrees_north",
+            "axis": "Y"
+           },
+    "lon": {
+            "standard_name": "longitude",
+            "units": "degrees_east",
+            "axis": "X"
+           },
     "plev": {
       "standard_name": "air_pressure",
       "units": "Pa",

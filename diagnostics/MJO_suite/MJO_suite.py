@@ -21,7 +21,7 @@ def generate_ncl_plots(nclPlotFile):
     nclPlotFile (string) - full path to ncl plotting file name
     """
     # check if the nclPlotFile exists - 
-    # don't exit if it does not exists just print a warning.
+    # don't exit if it does not exist just print a warning.
     try:
         pipe = subprocess.Popen(['ncl {0}'.format(nclPlotFile)], shell=True, stdout=subprocess.PIPE)
         output = pipe.communicate()[0].decode()

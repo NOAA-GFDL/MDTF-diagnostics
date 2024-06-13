@@ -37,7 +37,7 @@ filename_v850 = file_dir+casename+".v850.day.anom.nc"
 ;  fili   = "uwnd.day.850.anomalies.1980-2005.nc"
 ;  f      = addfile(diri+fili, "r")  
 
-  pltDir  = getenv("WK_DIR")+"/model/PS"
+  pltDir  = getenv("WORK_DIR")+"/model/PS"
   pltType = "ps"
   
 

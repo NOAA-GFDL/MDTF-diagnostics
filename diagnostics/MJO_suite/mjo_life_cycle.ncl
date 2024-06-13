@@ -27,7 +27,7 @@ begin
 
    pltSubTitle = "Anomalous: OLR, U850, V850"
 
-   pltDir  = getenv("WK_DIR")+"/model/PS/"                           ; plot directory
+   pltDir  = getenv("WORK_DIR")+"/model/PS/"                           ; plot directory
    pltType = "ps"  
    pltName = casename+".MJO.life.cycle"                      ; yrStrt+"_"+yrLast
   

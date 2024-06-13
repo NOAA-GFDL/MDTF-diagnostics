@@ -1167,7 +1167,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         var_ds = ds[var.translation.name].to_dataset()
         var_ds = var_ds.rename_vars(name_dict={var.translation.name:var.name})
-        # var.log.info("Writing '%s'.", var.dest_path, tags=util.ObjectLogTag.OUT_FILE)
+        var.log.info("Writing '%s'.", var.dest_path, tags=util.ObjectLogTag.OUT_FILE)
         if var.is_static:
             unlimited_dims = []
         else:

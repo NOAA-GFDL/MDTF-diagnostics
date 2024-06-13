@@ -26,7 +26,7 @@ begin
 ;   yrStrt  = ymdStrt/10000
 ;   yrLast  = ymdLast/10000
 
-   pltDir  = getenv("WK_DIR")+"/model/PS/"                             ; plot directory
+   pltDir  = getenv("WORK_DIR")+"/model/PS/"                             ; plot directory
    pltType = "ps"  
    pltName = "mjoclivar"                      ; yrStrt+"_"+yrLast
   

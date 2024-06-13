@@ -55,7 +55,7 @@ nameSeason = (/"winter","summer","annual"/)
 
   pltName    = casename+".MJO.lag.lat.lon"       ; output plot name         
   pltType    = "ps"       ; x11, ps, eps, pdf, png 
-  pltDir     = getenv("WK_DIR")+"/model/PS/"       ; output plot directory
+  pltDir     = getenv("WORK_DIR")+"/model/PS/"       ; output plot directory
 
 ;************************************************
 ; create Lanczos BandPass Filter

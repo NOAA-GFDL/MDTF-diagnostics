@@ -562,7 +562,15 @@ class DateRange(AtomicInterval, DateMixin):
         """
         if not end:
             if isinstance(start, str):
-                (start, end) = re.split('[-, :]', start)
+                split_str = re.split('[-, :]', start)
+                if len(split_str) == 2:
+                    (start, end) = split_str
+                else:
+                    nelem = len(split_str)
+                    nelem_half = nelem // 2
+                    # start: split_str[start index of 0: nelem_half elements total], end[start index at nelem_half,
+                    (start, end) = ''.join(split_str[:nelem_half]), ''.join(split_str[nelem_half:])
+
             elif len(start) == 2:
                 (start, end) = start
             else:

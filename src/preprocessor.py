@@ -804,19 +804,38 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         if not hasattr(group_df, 'start_time') or not hasattr(group_df, 'end_time'):
             raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time`')
         try:
-            if not isinstance(group_df['start_time'].values[0], datetime.date):
+            start_time_vals = group_df['start_time'].values
+            end_time_vals = group_df['end_time'].values
+            if not isinstance(start_time_vals[0], datetime.date):
+                # convert string values to ints
+                if isinstance(start_time_vals[0], str):
+                    new_start_time_vals = []
+                    new_end_time_vals = []
+                    delimiters = ",.!?/&-:;@_'"
+                    for s in start_time_vals:
+                        new_start_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]", s)
+                                                               if w)))
+                    for e in end_time_vals:
+                        new_end_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]", e)
+                                                             if w)))
+
+                    date_digits = math.floor(math.log10(new_start_time_vals[0])) + 1
+                    start_time_vals = new_start_time_vals
+                    end_time_vals = new_end_time_vals
+                else:
+                    date_digits = math.floor(math.log10(start_time_vals[0])) + 1
+
                 # convert int to date type
                 date_format = ''
-                date_digits = math.floor(math.log10(group_df['start_time'].values[0])) + 1
                 match date_digits:
                     case 8:
                         date_format = '%Y%m%d'
                     case 14:
                         date_format = '%Y%m%d%H%M%S'
                 # convert start_times to date_format for all files in query
-                group_df['start_time'] = pd.to_datetime(group_df['start_time'].values, format=date_format)
+                group_df['start_time'] = pd.to_datetime(start_time_vals, format=date_format)
                 # convert end_times to date_format for all files in query
-                group_df['end_time'] = pd.to_datetime(group_df['end_time'].values, format=date_format)
+                group_df['end_time'] = pd.to_datetime(end_time_vals, format=date_format)
             # method throws ValueError if ranges aren't contiguous
             dates_df = group_df.loc[:, ['start_time', 'end_time']]
             date_range_vals = []
@@ -927,7 +946,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
                 if cat_subset.df.empty:
                     raise util.DataRequestError(
-                        f"check_group_daterange returned empty data frame for {v.translation.name}"
+                        f"check_group_daterange returned empty data frame for {var.translation.name}"
                         f" case {case_name} in {data_catalog}, indicating issues with data continuity")
                 # v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
                 # convert subset catalog to an xarray dataset dict

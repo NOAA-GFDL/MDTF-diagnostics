@@ -910,6 +910,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     case_d.query['modeling_realm'] = case_d.query.pop('realm')
 
                 # search catalog for convention specific query object
+                var.log.info("Querying %s for %s.",
+                            data_catalog,
+                            var.translation.name)
                 cat_subset = cat.search(**case_d.query)
                 if cat_subset.df.empty:
                     # check whether there is an alternate variable to substitute

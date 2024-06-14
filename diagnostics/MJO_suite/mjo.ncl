@@ -16,7 +16,7 @@ begin
 routine_name = "mjo.ncl"
 pod_home = getenv("POD_HOME")
 casename = getenv("CASENAME")
-file_dir = getenv("WORK_DIR")+"/model/netCDF/"
+file_dir = getenv("WORK_DIR")+"/model/"
 yr1 = getenv("startdate")
 yr2 = getenv("enddate")
 time_coord = getenv("time_coord")

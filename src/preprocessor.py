@@ -938,11 +938,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         cat_subset = cat.search(**case_d.query)
                         if cat_subset.df.empty:
                             raise util.DataRequestError(
-                                f"No assets matching query requirements found for {v.translation.name} for"
+                                f"No assets matching query requirements found for {var.translation.name} for"
                                 f" case {case_name} in {data_catalog}")
                     else:
                         raise util.DataRequestError(
-                            f"Unable to find match or alternate for {v.translation.name}"
+                            f"Unable to find match or alternate for {var.translation.name}"
                             f" for case {case_name} in {data_catalog}")
 
                 # Get files in specified date range

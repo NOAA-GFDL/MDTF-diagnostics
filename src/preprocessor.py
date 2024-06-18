@@ -856,7 +856,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # assert files_date_range.contains(self.attrs.date_range)
             return sorted_df
         except ValueError:
-            print("Non-contiguous or malformed date range in files:", group_df["path"].values)
+            log.error("Non-contiguous or malformed date range in files:", group_df["path"].values)
         except AssertionError:
             log.debug(("Eliminating expt_key since date range of files (%s) doesn't "
                        "span query range (%s)."), files_date_range, self.attrs.date_range)

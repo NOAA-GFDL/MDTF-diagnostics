@@ -828,6 +828,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # convert int to date type
                 date_format = ''
                 match date_digits:
+                    case 6:
+                        date_format = '%Y%m'
                     case 8:
                         date_format = '%Y%m%d'
                     case 14:
@@ -854,7 +856,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # assert files_date_range.contains(self.attrs.date_range)
             return sorted_df
         except ValueError:
-            log.error("Non-contiguous or malformed date range in files:", sorted_df["path"].values)
+            log.error("Non-contiguous or malformed date range in files:", group_df["path"].values)
         except AssertionError:
             log.debug(("Eliminating expt_key since date range of files (%s) doesn't "
                        "span query range (%s)."), files_date_range, self.attrs.date_range)
@@ -892,7 +894,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
             path_regex = re.compile(r'({})'.format(case_name))
             # path_regex = '*' + case_name + '*'
-            freq = case_d.varlist.T.frequency.format()
+            freq = case_d.varlist.T.frequency.format_local()
 
             for var in case_d.varlist.iter_vars():
                 realm_regex = var.realm + '*'
@@ -908,7 +910,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # change realm key name if necessary
                 if cat.df.get('modeling_realm', None) is not None:
                     case_d.query['modeling_realm'] = case_d.query.pop('realm')
-
+               
                 # search catalog for convention specific query object
                 var.log.info("Querying %s for variable %s for case %s.",
                             data_catalog,

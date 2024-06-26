@@ -1003,7 +1003,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # Call function with the arguments
                 # user_scripts.example_pp_script.main(xarray_ds, v)
                 xarray_ds = user_module.main(xarray_ds, v.name)
-
+        
+        return xarray_ds
     def setup(self, pod):
         """Method to do additional configuration immediately before :meth:`process`
         is called on each variable for *pod*. Implements metadata cleaning via
@@ -1274,12 +1275,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
             for v in case_list[case_name].varlist.iter_vars():
-                cat_subset[case_name] = self.parse_ds(v, case_xr_dataset)
-                self.execute_pp_functions(v,
-                                          cat_subset[case_name],
-                                          work_dir=model_work_dir[case_name],
-                                          case_name=case_name)
-
+                tv_name = v.translation.name #abbreviate
+                var_xr_dataset = self.parse_ds(v, case_xr_dataset)
+                cat_subset[case_name]['time'] = var_xr_dataset['time']
+                cat_subset[case_name].update({tv_name: var_xr_dataset[tv_name]})
+                pp_func_dataset = self.execute_pp_functions(v,
+                                                            cat_subset[case_name],
+                                                            work_dir=model_work_dir[case_name],
+                                                            case_name=case_name)
+                cat_subset[case_name].update({tv_name: pp_func_dataset[tv_name]})
+        
         return cat_subset
 
     def write_pp_catalog(self,

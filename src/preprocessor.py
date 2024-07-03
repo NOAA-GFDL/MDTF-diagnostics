@@ -786,7 +786,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """
         # normal operation: run all functions
         return [
-            CropDateRangeFunction, AssociatedVariablesFunction,
+            AssociatedVariablesFunction,
             PrecipRateToFluxFunction, ConvertUnitsFunction,
             ExtractLevelFunction, RenameVariablesFunction,
         ]

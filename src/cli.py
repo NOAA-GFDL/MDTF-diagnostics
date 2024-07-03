@@ -108,13 +108,16 @@ def check_date_format(date_string: str):
         Credit: https://stackoverflow.com/questions/23581128/how-to-format-date-string-via-multiple-formats-in-python
     """
 
-    for fmt in ('%Y-%m-%d', '%Y-%m-%d:%H:%M:%S', '%Y%m%d:%H%M%S', '%Y-%m-%d:%H-%M-%S', '%Y%m%d', '%Y%m%d%H%M%S'):
+    for fmt in ('%Y', '%Y%m', '%Y-%m', '%Y%m%d',
+                '%Y-%m-%d', '%Y-%m-%d:%H:%M:%S', '%Y%m%d:%H%M%S',
+                '%Y-%m-%d:%H-%M-%S', '%Y%m%d%H%M%S'):
         try:
             return datetime.strptime(date_string, fmt)
         except ValueError:
             pass
     raise util.exceptions.MDTFBaseException(
-                f"Input date string {date_string} does not match accepted formats: YYYY-mm-dd, YYYYmmdd,"
+                f"Input date string {date_string} does not match accepted formats: YYYY, YYYYmm,"
+                f" YYYY-mm, YYYY-mm-dd, YYYYmmdd,"
                 f"YYYYmmdd:HHMMSS, YYYY-mm-dd:HH:MM:SS, YYYY-mm-dd:HH-MM-SS"
             )
 

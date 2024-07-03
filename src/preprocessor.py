@@ -918,12 +918,15 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             case_name)
                 cat_subset = cat.search(**case_d.query)
 
+                rename_var = False
                 if cat_subset.df.empty:
                     # check if variable_id is grabbed by catalog search without plev value appended
                     for c in var.scalar_coords:
                         if c.name == 'plev':
                             case_d.query['variable_id'] = case_d.query['variable_id'].removesuffix(str(c.value))
                             cat_subset = cat.search(**case_d.query)
+                            if not cat_subset.df.empty:
+                                rename_var = True
                             break
 
                 if cat_subset.df.empty:
@@ -981,6 +984,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             var_xr = cat_subset_df[k]
                         else:
                             var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+                if rename_var:
+                    var_xr = var_xr.rename_vars(name_dict={case_d.query['variable_id']:var.translation.name})
                 if case_name not in cat_dict:
                     cat_dict[case_name] = var_xr
                 else:

@@ -631,10 +631,13 @@ class DateRange(AtomicInterval, DateMixin):
             )
         else:
             tmp = Date._coerce_to_self(dt)
+            date_precision = tmp.precision
+            if date_precision <= DatePrecision.MONTH:
+                date_precision = DatePrecision.DAY
             if is_lower:
-                return tmp.lower, tmp.precision
+                return tmp.lower, date_precision
             else:
-                return tmp.upper, tmp.precision
+                return tmp.upper, date_precision
 
     @classmethod
     def _coerce_to_self(cls, item, precision=None):

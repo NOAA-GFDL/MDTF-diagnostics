@@ -910,13 +910,22 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # change realm key name if necessary
                 if cat.df.get('modeling_realm', None) is not None:
                     case_d.query['modeling_realm'] = case_d.query.pop('realm')
-               
+ 
                 # search catalog for convention specific query object
                 var.log.info("Querying %s for variable %s for case %s.",
                             data_catalog,
                             var.translation.name,
                             case_name)
                 cat_subset = cat.search(**case_d.query)
+
+                if cat_subset.df.empty:
+                    # check if variable_id is grabbed by catalog search without plev value appended
+                    for c in var.scalar_coords:
+                        if c.name == 'plev':
+                            case_d.query['variable_id'] = case_d.query['variable_id'].removesuffix(str(c.value))
+                            cat_subset = cat.search(**case_d.query)
+                            break
+
                 if cat_subset.df.empty:
                     # check whether there is an alternate variable to substitute
                     if any(var.alternates):

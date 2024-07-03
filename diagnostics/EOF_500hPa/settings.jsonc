@@ -31,7 +31,7 @@
     "lon": {
              "standard_name": "longitude",
              "units": "degrees_east",
-             "axis": "x"
+             "axis": "X"
            },
     "plev": {
       "standard_name": "air_pressure",

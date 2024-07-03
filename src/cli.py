@@ -116,7 +116,8 @@ def check_date_format(date_string: str):
         except ValueError:
             pass
     raise util.exceptions.MDTFBaseException(
-                f"Input date string {date_string} does not match accepted formats: YYYY, YYYY-mm-dd, YYYYmmdd,"
+                f"Input date string {date_string} does not match accepted formats: YYYY, YYYYmm,"
+                f" YYYY-mm, YYYY-mm-dd, YYYYmmdd,"
                 f"YYYYmmdd:HHMMSS, YYYY-mm-dd:HH:MM:SS, YYYY-mm-dd:HH-MM-SS"
             )
 

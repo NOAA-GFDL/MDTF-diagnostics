@@ -2,8 +2,7 @@
 `cfunits <https://ncas-cms.github.io/cfunits/index.html>`__ library.
 """
 import cfunits
-from src import util
-
+import unittest
 import logging
 
 _log = logging.getLogger(__name__)
@@ -163,7 +162,7 @@ def convert_scalar_coord(coord, dest_units: str, log=_log):
     return dest_value
 
 
-def convert_dataarray(ds, da_name, src_unit=None, dest_unit=None, log=_log):
+def convert_dataarray(ds, da_name: str, src_unit=None, dest_unit=None, log=_log):
     """Wrapper for cfunits `conform()
     <https://ncas-cms.github.io/cfunits/generated/cfunits.Units.conform.html#cfunits.Units.conform>`__
     that does unit conversion in-place on a member of an xarray Dataset,
@@ -171,7 +170,7 @@ def convert_dataarray(ds, da_name, src_unit=None, dest_unit=None, log=_log):
 
     Args:
         ds (Dataset): xarray Dataset containing the DataArray to convert.
-        da_name (str): Name of the DataArray to do the unit conversion on.
+        da_name (str): variable name or standard_name of the associated DataArray to do the unit conversion on.
         src_unit: Current units of *da_name*. Coerced to a :class:`Units` object
             via :func:`to_cfunits`. Optional; if not given this is populated from
             the ``units`` attribute of *da_name*, if it exists.
@@ -187,6 +186,21 @@ def convert_dataarray(ds, da_name, src_unit=None, dest_unit=None, log=_log):
         Dataset *ds*, with *da_name* modified in-place.
     """
     da = ds.get(da_name, None)
+    search_attrs = ['standard_name', 'long_name']
+    if da is None:
+        # search attributes for standard_name or long_name that matches input name
+        ds_vars = [ds.variables, ds.coords.variables]
+        merged = frozenset().union(*ds_vars)
+        for var in merged:
+            dset = ds.get(var)
+            for attr in search_attrs:
+                if dset.attrs.get(attr, None):
+                    filt = filter(lambda x: x in [ds.attrs.get(attr)], [da_name.split('_')])
+                    m = next(filt, None)
+                    if m:
+                        print(list(filt))
+                        da = dset
+                        break
     if da is None:
         raise ValueError(f"convert_dataarray: '{da_name}' not found in dataset.")
     if src_unit is None:
@@ -194,15 +208,17 @@ def convert_dataarray(ds, da_name, src_unit=None, dest_unit=None, log=_log):
             src_unit = da.attrs['units']
         except KeyError:
             raise TypeError((f"convert_dataarray: 'units' attribute not defined "
-                             f"on {da.name}."))
+                             f"on {da_name}."))
     if dest_unit is None:
         raise TypeError((f"convert_dataarray: dest_unit not given for unit "
-                         "conversion on {da.name}."))
-
+                         "conversion on {da_name}."))
+    std_name = ""
     if 'standard_name' in da.attrs:
-        std_name = f" ({da.attrs['standard_name']})"
-    else:
-        std_name = ""
+        if isinstance(da.attrs['standard_name'], str):
+            std_name = f"({da.attrs['standard_name']})"
+    elif 'long_name' in da.attrs:
+        std_name = f"({da.attrs['long_name']})"
+
     if units_equal(src_unit, dest_unit):
         log.debug(("Source, dest units of '%s'%s identical (%s); no conversion "
                    "done."), da.name, std_name, dest_unit)

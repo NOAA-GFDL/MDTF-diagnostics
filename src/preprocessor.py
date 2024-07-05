@@ -369,7 +369,7 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
                 continue  # TODO: separate function to handle calendar conversion
             dest_c = var.axes[c.axis]
             ds = units.convert_dataarray(
-                ds, c.name, src_unit=None, dest_unit=dest_c.units, log=var.log
+                ds, c.standard_name, src_unit=None, dest_unit=dest_c.units, log=var.log
             )
             if c.has_bounds and c.bounds_var.name in ds:
                 ds = units.convert_dataarray(

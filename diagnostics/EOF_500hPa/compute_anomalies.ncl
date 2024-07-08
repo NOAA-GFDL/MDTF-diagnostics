@@ -7,10 +7,10 @@ begin
 
 setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
 
-wk_dir = getenv("WK_DIR")
+wk_dir = getenv("WORK_DIR")
 casename = getenv("CASENAME")
-yr1 = getenv("FIRSTYR")
-yr2 = getenv("LASTYR")
+yr1 = getenv("startdate")
+yr2 = getenv("enddate")
 date_off = getenv("date_int_offset")
 use_hybrid_sigma = (getenv("USE_HYBRID_SIGMA").eq."1")
 

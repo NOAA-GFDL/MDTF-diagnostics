@@ -3,6 +3,7 @@
 import abc
 import collections
 import collections.abc
+import copy
 import enum
 import itertools
 import string
@@ -709,3 +710,9 @@ class RegexDict(dict):
         return (match for query in queries for match in self.get_matching_value(query))
 
 
+# source: https://stackoverflow.com/questions/5844672/delete-an-element-from-a-dictionary
+def new_dict_wo_key(dictionary: dict, key: str) -> dict:
+    """Returns a **shallow** copy of the input dictionary without a key."""
+    _dict = copy.copy(dictionary)
+    _dict.pop(key, None)
+    return _dict

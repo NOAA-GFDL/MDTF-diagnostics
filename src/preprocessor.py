@@ -1282,7 +1282,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
             for v in case_list[case_name].varlist.iter_vars():
-                tv_name = v.translation.name #abbreviate
+                tv_name = v.translation.name
                 var_xr_dataset = self.parse_ds(v, case_xr_dataset)
                 cat_subset[case_name]['time'] = var_xr_dataset['time']
                 cat_subset[case_name].update({tv_name: var_xr_dataset[tv_name]})

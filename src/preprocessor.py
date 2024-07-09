@@ -437,6 +437,17 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
                 rename_d[c.name] = dest_c.name
                 c.name = dest_c.name
 
+        # check to see if coord has already been translated
+        translated = []
+        for dname, tname in rename_d.items():
+            # will raise an exception if translated coord exists
+            try:
+                if ds[tname] is not None:
+                    translated.append(dname)
+            except:
+                pass
+        [rename_d.pop(t) for t in translated]
+    
         return ds.rename(rename_d)
 
 
@@ -1282,6 +1293,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
             for v in case_list[case_name].varlist.iter_vars():
+                print("start")
+                print(cat_subset[case_name])
                 tv_name = v.translation.name
                 var_xr_dataset = self.parse_ds(v, case_xr_dataset)
                 cat_subset[case_name]['time'] = var_xr_dataset['time']
@@ -1290,7 +1303,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                                             cat_subset[case_name],
                                                             work_dir=model_work_dir[case_name],
                                                             case_name=case_name)
-                cat_subset[case_name].update({tv_name: pp_func_dataset[tv_name]})
+                print("pp_func")
+                print(pp_func_dataset)
+                cat_subset[case_name] = pp_func_dataset
         
         return cat_subset
 

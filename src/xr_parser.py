@@ -1218,6 +1218,11 @@ class DefaultDatasetParser:
             if attr not in ds_var.attrs:
                 if attr in ds_var.encoding:
                     ds_var.attrs[attr] = ds_var.encoding[attr]
+                # TODO: maybe move the following block to reconcile_attrs and refactor
+                elif attr == 'standard_name' and 'long_name' in ds_var.attrs:
+                    ds_var.attrs[attr] = ds_var.attrs['long_name']
+                elif attr == 'standard_name' and 'long_name' in ds_var.encoding:
+                    ds_var.attrs[attr] = ds_var.encoding['long_name']
                 else:
                     ds_var.attrs[attr] = ATTR_NOT_FOUND
             if ds_var.attrs[attr] is ATTR_NOT_FOUND:
@@ -1240,7 +1245,18 @@ class DefaultDatasetParser:
             # Only check attributes on the dependent variable var_name and its
             # coordinates.
             tv_name = var.translation.name
-            names_to_check = [tv_name] + list(ds[tv_name].dims)
+            if tv_name in ds.variables:
+                names_to_check = [tv_name] + list(ds[tv_name].dims)
+            # try searching for 4-D field instead of variable name for a specific level
+            # (e.g., U instead of U500)
+            elif len(var.translation.scalar_coords) > 0:
+                var_basename = ''.join(filter(lambda x: not x.isdigit(), tv_name))
+                if var_basename in ds.variables:
+                    names_to_check = [var_basename] + list(ds[var_basename].dims)
+                else:
+                    raise util.MetadataError(f'Did not find variable key {tv_name} or {var_basename}'
+                                             f'in queried xarray dataset.')
+
         for v_name in names_to_check:
             try:
                 self.check_metadata(ds[v_name], 'standard_name', 'units')

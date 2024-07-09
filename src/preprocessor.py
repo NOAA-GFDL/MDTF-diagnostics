@@ -557,6 +557,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
 
         # add original 4D var defined in new_tv as an alternate TranslatedVarlistEntry
         # to query if no entries on specified levels are found in the data catalog
+
         v.alternates.append(new_tv)
 
         return v
@@ -922,7 +923,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     if any(var.alternates):
                         try_new_query = True
                         for a in var.alternates:
-                            case_d.query.update({'variable_id': a.name})
+                            if hasattr(a, 'translation'):
+                                if a.translation is not None:
+                                    case_d.query.update({'variable_id': a.translation.name})
+                                    case_d.query.update({'standard_name': a.translation.standard_name})
+                            else:
+                                case_d.query.update({'variable_id': a.name})
+                                case_d.query.update({'standard_name': a.standard_name})
                             if any(var.translation.scalar_coords):
                                 found_z_entry = False
                                 # check for vertical coordinate to determine if level extraction is needed
@@ -1275,7 +1282,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
             for v in case_list[case_name].varlist.iter_vars():
-                tv_name = v.translation.name #abbreviate
+                tv_name = v.translation.name
                 var_xr_dataset = self.parse_ds(v, case_xr_dataset)
                 cat_subset[case_name]['time'] = var_xr_dataset['time']
                 cat_subset[case_name].update({tv_name: var_xr_dataset[tv_name]})

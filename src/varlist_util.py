@@ -188,6 +188,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
     status: util.ObjectStatus = dc.field(default=util.ObjectStatus.NOTSET, compare=False)
     name: str = util.MANDATORY
     _parent: typing.Any = dc.field(default=util.MANDATORY, compare=False)
+    is_alternate: bool = False
 
     def __post_init__(self, coords=None):
         # set up log (VarlistEntryLoggerMixin)
@@ -215,11 +216,12 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
             self.path_variable = self.name.upper() + _file_env_var_suffix
         # self.alternates is either [] or a list of nonempty lists of VEs
         if hasattr(self, 'alternates'):
-            if isinstance(self.alternates, list):
-                if any(self.alternates):
-                    if not isinstance(self.alternates[0], list):
-                        self.alternates = [self.alternates]
-                    self.alternates = [vs for vs in self.alternates if vs]
+            if not isinstance(self.alternates, list):
+                self.alternates = [self.alternates]
+        else:
+            self.alternates = []
+        if self.requirement == VarlistEntryRequirement.ALTERNATE:
+            self.is_alternate = True
         if hasattr(self, 'scalar_coords'):
             self.scalar_coords = self.scalar_coords
 
@@ -332,10 +334,15 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         })
 
         for ax, dim in self.dim_axes.items():
-            trans_dim = self.translation.axes[ax]
-            self.env_vars[dim.name + _coord_env_var_suffix] = trans_dim.name
-            if trans_dim.has_bounds:
-                self.env_vars[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
+            if self.translation is not None:
+                trans_dim = self.translation.axes[ax]
+                self.env_vars[dim.name + _coord_env_var_suffix] = trans_dim.name
+                if trans_dim.has_bounds:
+                    self.env_vars[dim.name + _coord_bounds_env_var_suffix] = trans_dim.bounds
+            else:
+                self.env_vars[dim.name + _coord_env_var_suffix] = dim.name
+                if dim.has_bounds:
+                    self.env_vars[dim.name + _coord_bounds_env_var_suffix] = dim.bounds
 
     def iter_alternates(self):
         """Breadth-first traversal of "sets" of alternate VarlistEntries,
@@ -567,8 +574,30 @@ class Varlist(data_model.DMDataSet):
             # store but don't deactivate, because preprocessor.edit_request()
             # may supply alternate variables
             v.log.store_exception(chained_exc)
-        # set the VarlistEntry env_vars (required for backwards compatibility with first-gen PODs)
+
+        # set the VarlistEntry env_vars (required for backwards compatibility with first-gen PODs
         v.set_env_vars()
+        # Translate alternate vars if necessary
+        for alt_v in v.alternates:
+            if alt_v.T is not None:
+                alt_v.change_coord(
+                    'T',
+                    new_class={
+                        'self': VarlistTimeCoordinate,
+                        'range': util.DateRange,
+                        'frequency': util.DateFrequency
+                    },
+                    range=date_range,
+                    calendar=util.NOTSET,
+                    units=util.NOTSET
+                )
+            alt_v.dest_path = self.variable_dest_path(model_paths, case_name, alt_v)
+            trans_alt = translate.translate(alt_v, from_convention)
+            alt_v.translation = trans_alt
+            if trans_alt is None:
+                alt_v.info(f'Note: alternate variable {alt_v.full_name} not translated from {from_convention} to'
+                           f' {to_convention}')
+            alt_v.set_env_vars()
 
     def variable_dest_path(self,
                            model_paths: util.ModelDataPathManager,
@@ -615,13 +644,6 @@ class Varlist(data_model.DMDataSet):
             except Exception:
                 raise ValueError(f"Couldn't parse dimension entry for {name}: {dd}")
 
-        def _iter_shallow_alternates(var):
-            """Iterator over all VarlistEntries referenced as alternates. Doesn't
-            traverse alternates of alternates, etc.
-            """
-            for alt_vs in var.alternates:
-                yield from alt_vs
-
         vlist_settings = util.coerce_to_dataclass(
             parent.pod_data, VarlistSettings)
         globals_d = vlist_settings.global_settings
@@ -634,12 +656,17 @@ class Varlist(data_model.DMDataSet):
         }
         for v in vlist_vars.values():
             # validate & replace names of alt vars with references to VE objects
-            for altv_name in _iter_shallow_alternates(v):
+            for altv_name in v.alternates:
                 if altv_name not in vlist_vars:
                     raise ValueError((f"Unknown variable name {altv_name} listed "
                                       f"in alternates for varlist entry {v.name}."))
-            linked_alts = []
-            for alts in v.alternates:
-                linked_alts.append([vlist_vars[v_name] for v_name in alts])
+            linked_alts = [vlist_vars[v_name] for v_name in v.alternates]
             v.alternates = linked_alts
+        alt_vars = [k for k, v in vlist_vars.items() if v.is_alternate]
+        for a in alt_vars:
+            vlist_vars = util.new_dict_wo_key(vlist_vars, a)
+
+        # remove alternates from VarlistEntries since they are now attributes of variable
+        # VarlistEntry objects that they can be substituted for
+
         return cls(contents=list(vlist_vars.values()))

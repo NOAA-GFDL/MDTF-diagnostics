@@ -781,6 +781,11 @@ class DefaultDatasetParser:
                               ds_attr_name, ds_var.name, str(our_attr))
                 ds_var.attrs[ds_attr_name] = str(our_attr)
                 return
+            elif ds_var.encoding[ds_attr_name] is not None:
+                self.log.info("No %s for '%s' found in dataset attrs; setting to '%s' from encoding.",
+                              ds_attr_name, ds_var.name, ds_var.encoding[ds_attr_name])
+                ds_var.attrs[ds_attr_name] = ds_var.encoding[ds_attr_name]
+                return
             else:
                 # don't change ds, raise exception
                 raise util.MetadataError((f"No {ds_attr_name} set for '{ds_var.name}'; "
@@ -1311,7 +1316,7 @@ class DefaultDatasetParser:
         if self.disable:
             return ds  # stop here; don't attempt to reconcile
         if var is not None:
-            # self.reconcile_variable(var, ds)
+            self.reconcile_variable(var, ds)
             self.check_ds_attrs(var, ds)
         else:
             self.check_ds_attrs(None, ds)

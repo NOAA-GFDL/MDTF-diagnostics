@@ -56,12 +56,12 @@ while (( "$#" )); do
           ;;
         -a|--all)
             # install all envs except dev environment
-            env_glob="env_!(dev).yml"
+            env_glob="env_!(dev)_micromamba.yml"
             shift 1
             ;;
         -e|--env)
             # specify one env by name
-            env_glob="env_${2}.yml"
+            env_glob="env_${2}_micromamba.yml"
             if [ ! -f "${script_dir}/${env_glob}" ]; then
                 echo "ERROR: ${script_dir}/${env_glob} not found."
                 exit 1
@@ -75,7 +75,7 @@ while (( "$#" )); do
             ;;
         --all-dev)
             # all envs, including dev
-            env_glob="env_*.yml"
+            env_glob="env_@(*micromamba|dev).yml"
             shift 1
             ;;
         -d|--env_dir)

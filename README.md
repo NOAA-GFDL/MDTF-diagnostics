@@ -112,8 +112,9 @@ for, the Windows Subsystem for Linux.
   You can omit this flag, and the environments will be installed within `$CONDA_ROOT/envs/` by default.
 
   #### NOTE: The micromamba environments may differ from the conda environments because of package compatibility discrepancies between solvers
-  The micromamba installation script only builds the **base** environment, and a limited version of the **python3_base** 
-  enviroment that excludes the following packages and dependencies that may be required by the POD(s) you want to run:
+  `% ./src/conda/micromamba_env_setup.sh --all --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR` builds
+  the **base** environment, **NCL_base** environment, and a limited version of the **python3_base** enviroment that excludes the following packages
+  and dependencies that may be required by the POD(s) you want to run:
   - falwa
   - gridfill
 ## 2. Download the sample data

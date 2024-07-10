@@ -111,6 +111,11 @@ for, the Windows Subsystem for Linux.
   (for space reasons, or if you don’t have write access).
   You can omit this flag, and the environments will be installed within `$CONDA_ROOT/envs/` by default.
 
+  #### NOTE: The micromamba environments may differ from the conda environments because of package compatibility discrepancies between solvers
+  The micromamba installation script only builds the **base** environment, and a limited version of the **python3_base** 
+  enviroment that excludes the following packages and dependencies that may be required by the POD(s) you want to run:
+  - falwa
+  - gridfill
 ## 2. Download the sample data
 
 Supporting observational data and sample model data are available via anonymous FTP at [ftp://ftp.cgd.ucar.edu/archive/mdtf](ftp://ftp.cgd.ucar.edu/archive/mdtf).

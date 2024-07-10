@@ -42,8 +42,6 @@ dependencies:
     - falwa==1.2.1
     - cmocean
     - regionmask
-    - git+https://github.com/csyhuang/hn2016_falwa
-    - git+https://github.com/ajdawson/gridfill
     - git+https://github.com/raphaeldussin/static_downsampler
     - git+https://github.com/jkrasting/xcompare
     - git+https://github.com/raphaeldussin/xoverturning

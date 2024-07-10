@@ -905,9 +905,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         for case_name, case_d in case_dict.items():
             # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
             path_regex = re.compile(r'({})'.format(case_name))
-            # path_regex = '*' + case_name + '*'
-            freq = case_d.varlist.T.frequency.format_local()
-
+            # path_regex = '*' + case_name + '*' 
+            freq = case_d.varlist.T.frequency
+            if not isinstance(freq, str):
+                freq = freq.format_local()
+            
             for var in case_d.varlist.iter_vars():
                 realm_regex = var.realm + '*'
                 date_range = var.translation.T.range
@@ -1295,8 +1297,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             for v in case_list[case_name].varlist.iter_vars():
                 tv_name = v.translation.name
                 var_xr_dataset = self.parse_ds(v, case_xr_dataset)
-                cat_subset[case_name]['time'] = var_xr_dataset['time']
-                cat_subset[case_name].update({tv_name: var_xr_dataset[tv_name]})
+                for v_d in var_xr_dataset.variables:
+                    cat_subset[case_name][v_d] = var_xr_dataset[v_d]
                 pp_func_dataset = self.execute_pp_functions(v,
                                                             cat_subset[case_name],
                                                             work_dir=model_work_dir[case_name],

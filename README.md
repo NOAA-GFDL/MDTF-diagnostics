@@ -96,9 +96,9 @@ for, the Windows Subsystem for Linux.
 ### MICROMAMBA on machines that do NOT have Apple M-series chips
 `% ./src/conda/micromamba_env_setup.sh --all --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR`
 ### MICROMAMBA on machines with Apple M-series chips
-`% ./src/conda/micromamba_env_setup.sh --e base --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR`
+`% ./src/conda/micromamba_env_setup.sh -e base --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR`
 
-`% ./src/conda/micromamba_env_setup.sh --e python3_base --micromamba_root $MICROMAMBA_ROOT ---micromamba_exe $MICROMAMBA_EXE -env_dir $CONDA_ENV_DIR`
+`% ./src/conda/micromamba_env_setup.sh -e python3_base --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR`
 
   - Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, `$MICROMAMBA_ROOT`, `MICROMAMBA_EXE`, and
     `$CONDA_ENV_DIR`.

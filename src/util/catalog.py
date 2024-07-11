@@ -107,5 +107,13 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
             }
         ]
     }
+    
+    # check groupby_attrs to prevent Key Error in PODs
+    for att in cat_dict["aggregation_control"]["groupby_attrs"]:
+        if att not in cat_dict["attributes"]:
+            cat_dict["attributes"].append(
+                dict(column_name=att)
+            )
+
 
     return cat_dict

@@ -386,8 +386,16 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
                     ds, c.name, src_unit=None, dest_unit=dest_c.units,
                     log=var.log
                 )
+                c.value = None
+                if len(ds[c.name]) > 1:
+                    for v in ds[c.name].values:
+                        if int(v) / dest_c.value == 100:  # v = dest_c in Pa
+                            c.value = dest_c.value
+                        elif int(v) == dest_c.value:
+                            c.value = v
+                else:
+                    c.value = ds[c.name].item()
                 c.units = dest_c.units
-                c.value = ds[c.name].item()
 
         var.log.info("Converted units on %s.", var.full_name)
         return ds
@@ -1298,7 +1306,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 tv_name = v.translation.name
                 var_xr_dataset = self.parse_ds(v, case_xr_dataset)
                 varlist_ex = [v_l.translation.name for v_l in case_list[case_name].varlist.iter_vars()]
-                varlist_ex.remove(tv_name)
+                if tv_name in varlist_ex:
+                    varlist_ex.remove(tv_name)
                 for v_d in var_xr_dataset.variables:
                     if v_d not in varlist_ex:
                         cat_subset[case_name].update({v_d: var_xr_dataset[v_d]})

@@ -1297,14 +1297,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             for v in case_list[case_name].varlist.iter_vars():
                 tv_name = v.translation.name
                 var_xr_dataset = self.parse_ds(v, case_xr_dataset)
+                varlist_ex = [v_l.translation.name for v_l in case_list[case_name].varlist.iter_vars()]
+                varlist_ex.remove(tv_name)
                 for v_d in var_xr_dataset.variables:
-                    cat_subset[case_name][v_d] = var_xr_dataset[v_d]
+                    if v_d not in varlist_ex:
+                        cat_subset[case_name].update({v_d: var_xr_dataset[v_d]})
                 pp_func_dataset = self.execute_pp_functions(v,
                                                             cat_subset[case_name],
                                                             work_dir=model_work_dir[case_name],
                                                             case_name=case_name)
                 cat_subset[case_name] = pp_func_dataset
-        
         return cat_subset
 
     def write_pp_catalog(self,

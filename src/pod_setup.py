@@ -103,7 +103,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     @property
     def _children(self):
         # property required by MDTFObjectBase
-        return self.multi_case_dict.values()
+        return self.multi_case_dict.get('CASELIST', None)
 
     @property
     def full_name(self):

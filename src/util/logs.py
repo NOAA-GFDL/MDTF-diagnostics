@@ -483,7 +483,7 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
         # then log contents:
         #str_ += self._log_handler.buffer_contents().rstrip()
         # then contents of children:
-        if children:
+        if children and self.iter_children() is not None:
             str_ += '\n'
             for child in self.iter_children():
                 str_ += '\n'
@@ -932,6 +932,3 @@ class MDTFObjectBase(metaclass=basic.MDTFABCMeta):
                 # call handler on parent, which may change parent and/or siblings
                 self._parent.child_deactivation_handler(self, exc)
                 self._parent.child_status_update()
-            # update children (deactivate all)
-            for obj in self.iter_children(status_neq=basic.ObjectStatus.FAILED):
-                obj.deactivate(exceptions.PropagatedEvent(exc=exc, parent=self), level=None)

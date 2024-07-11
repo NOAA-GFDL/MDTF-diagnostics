@@ -325,7 +325,7 @@ class SubprocessRuntimePODWrapper:
         self.pod.log.info("%s will run using '%s' from conda env '%s'.",
                           self.pod.full_name, self.pod.program, self.env)
 
-        self.pod.log.debug("%s", self.pod.format_log(children=True))
+        self.pod.log.debug("%s", self.pod.format_log(children=False))
     #    self.pod._log_handler.reset_buffer()
         self.write_case_env_file(cases)
         self.setup_env_vars()
@@ -375,7 +375,18 @@ class SubprocessRuntimePODWrapper:
                         case_info['CASE_LIST'][case_name][kk] = v.dest_path
                     else:
                         case_info['CASE_LIST'][case_name][kk] = vv
-        
+                # append env_vars for alternates
+                if len(v.alternates) > 0:
+                    for alt in v.alternates:
+                        if hasattr(alt, 'env_vars'):
+                            for kk, vv in alt.env_vars.items():
+                                if alt.name.lower() + '_var' in kk.lower():
+                                    case_info['CASE_LIST'][case_name][kk] = alt.name
+                                elif alt.name.lower() + '_file' in kk.lower():
+                                    case_info['CASE_LIST'][case_name][kk] = alt.dest_path
+                                else:
+                                    case_info['CASE_LIST'][case_name][kk] = vv
+
         f = open(out_file, 'w+')
         assert os.path.isfile(out_file), f"Could not find case env file {out_file}"
         yaml.dump(case_info, f, allow_unicode=True, default_flow_style=False)
@@ -521,6 +532,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         assert os.path.isdir(p.pod.paths.POD_WORK_DIR)
         env_vars = env_vars_base.copy()
         env_vars.update(p.env_vars)
+        env_vars.update(p.pod.pod_env_vars)
         # Need to run bash explicitly because 'conda activate' sources
         # env vars (can't do that in posix sh). tcsh could also work.
         return subprocess.Popen(

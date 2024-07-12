@@ -12,7 +12,6 @@ casename = getenv("CASENAME")
 yr1 = getenv("startdate")
 yr2 = getenv("enddate")
 convention = getenv("convention")
-print(convention)
 
 ; 1 for native CESM, 0 for GFDL & CMIP
 if (str_match_bool_ic(convention, "CMIP") .or. str_match_bool_ic(convention, "CMIP"))
@@ -20,7 +19,7 @@ if (str_match_bool_ic(convention, "CMIP") .or. str_match_bool_ic(convention, "CM
 else
    date_offset=1
 end if
-print(date_offset)
+
 
 use_hybrid_sigma = (getenv("USE_HYBRID_SIGMA").eq."1")
 
@@ -83,11 +82,11 @@ if (date_offset.eq.0) then
    print("Using CMIP/GFDL date index YYYYMM")
    ; CMIP / GFDL date index, use YYYYMM
    date_all = cd_calendar(time_all,-1)
-   print("cd_calendar_end")
    year_all = date_all/100
    start_date = firstyr*100+1
    end_date = (lastyr)*100+12
 else if (date_offset.eq.1) then
+     print("Using CESM date index YYYYMMDD")
    ; CESM native date index, use YYYYMMDD
    date_all = cd_calendar(time_all,-2)
    year_all = date_all/10000
@@ -95,10 +94,8 @@ else if (date_offset.eq.1) then
    end_date = (lastyr+1)*10000+101
 end if
 end if
-print(date_all)
+
 ; in either case, above only used to set following indices
-print(start_date)
-print(end_date)
 do i=0,dimsizes(date_all)-1
    if( date_all(i).eq.start_date ) then
       i1 = i

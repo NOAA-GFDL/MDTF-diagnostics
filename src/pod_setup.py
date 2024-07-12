@@ -277,7 +277,12 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         if 'pod_env_vars' in self.pod_settings:
             if len(self.pod_settings['pod_env_vars']) > 0:
                 for k, v in self.pod_settings['pod_env_vars'].items():
-                    self.pod_env_vars[k] = v
+                    try:
+                        if not isinstance(v, str):
+                            v = str(v)
+                        self.pod_env_vars[k] = v
+                    except:
+                        raise util.exceptions.MDTFBaseException(f"failed to convert pod_env_vars '{k}' with value '{v}' to type string")
         self.set_interpreter(pod_input.settings)
         self.runtime_requirements = pod_input.settings['runtime_requirements']
         pod_convention = self.pod_settings['convention'].lower()

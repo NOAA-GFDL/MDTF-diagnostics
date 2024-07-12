@@ -105,7 +105,7 @@ class PodPathManager(PathManagerBase):
         filesystem.check_dir(self.POD_WORK_DIR, 'POD_WORK_DIR', create=True)
         filesystem.check_dir(self.POD_OUTPUT_DIR, 'POD_OUTPUT_DIR', create=True)
         # OBS data are unique to POD, so the obs output is copied to the POD subdirectory
-        dirs = ('model/PS', 'obs/PS', 'obs/netCDF')
+        dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
         for d in dirs:
             filesystem.check_dir(os.path.join(self.POD_WORK_DIR, d), create=True)
 

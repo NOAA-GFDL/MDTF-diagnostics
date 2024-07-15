@@ -66,7 +66,6 @@ It contains the following subdirectories:
 - ``diagnostics/``: directory containing source code and documentation of individual PODs.
 - ``doc/``: source code for the documentation website.
 - ``shared/``: shared code and resources for use by both the framework and PODs.
-- ``sites/``: site-specific code and configuration files.
 - ``src/``: source code of the framework itself.
 - ``submodules/``: 3rd party software included in the framework workflow as submodules
 - ``templates/``: runtime configuration template files
@@ -86,7 +85,8 @@ Installing dependencies
 Installing XQuartz on MacOS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you're installing on a MacOS system, you will need to install `XQuartz <https://www.xquartz.org/>`__.
+If you're installing on an MacOS system with Intel processors, you will need to install
+`XQuartz <https://www.xquartz.org/>`__.
 If the XQuartz executable isn't present in ``/Applications/Utilities``, you will need to download and run the installer
 from the previous link.
 

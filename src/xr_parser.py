@@ -1226,6 +1226,32 @@ class DefaultDatasetParser:
         t_coord.attrs['calendar'] = self.guess_attr(
             'calendar', cftime_cal, _cf_calendars, default=self.fallback_cal)
 
+    def check_time_units(self, var, ds):
+        """Replaces the units on the time coordinate found in var if
+           one is supplied in the ds, if not replace with ""
+        """
+        
+        if 'units' in ds['time'].attrs:
+            ds_T_units = ds['time'].attrs['units']    
+        elif 'units' in ds['time'].encoding:
+            ds_T_units = ds['time'].encoding['units']
+        else:
+            ds_T_units = None
+
+        var_T_units = var.translation.T.units
+        
+        if ds_T_units is not None:
+            if str(var_T_units) != str(ds_T_units):
+                var.translation.T.units = ds_T_units
+                self.log.info("Units for 'time' on var '%s' found in dataset; setting to '%s'.",
+                               var.translation.name, ds_T_units)
+        else:
+            var.translation.T.units = ""
+            self.log.info("Units for 'time' on var '%s' not found in dataset; setting to ''.",
+                          var.translation.name)
+ 
+        return
+    
     def check_metadata(self, ds_var, *attr_names):
         """Wrapper for :meth:`~DefaultDatasetParser.normalize_attr`, specialized
         to the case of getting a variable's standard_name.
@@ -1322,6 +1348,7 @@ class DefaultDatasetParser:
         # self.restore_attrs_backup(ds)
         # self.normalize_metadata(var, ds)
         self.check_calendar(ds)
+        self.check_time_units(var, ds)
         # self._post_normalize_hook(var, ds)
 
         if self.disable:

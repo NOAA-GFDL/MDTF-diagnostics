@@ -278,6 +278,7 @@ fluxanom_Rcre_SW_TOA = fluxanom_Rtot_SW_TOA - fluxanom_Rclr_SW_TOA
 # the sum of all individual radiative flux anomalies. Total-sky IRF computed as
 # Clear-Sky IRF divided by cloud masking constant. NOTE, these cloud masking constants may not apply
 # to user's specific model experiment.
+
 IRF_lw_clr_TOA = fluxanom_Rclr_LW_TOA - fluxanom_pl_clr_TOA_tropo - fluxanom_lr_clr_TOA_tropo - \
                  fluxanom_lw_q_clr_TOA_tropo - fluxanom_pl_sfc_clr_TOA - fluxanom_pl_clr_TOA_tropo - \
                  fluxanom_lr_clr_TOA_strato - fluxanom_lw_q_clr_TOA_strato

@@ -102,7 +102,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
     """Performs cleanup tasks specific to a single POD when that POD has
     finished running.
     """
-    save_ps: bool = False
+    save_ps: bool = True
     save_nc: bool = True
     save_non_nc: bool = False
     CODE_ROOT: str = ""
@@ -120,9 +120,9 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
                 output files from all PODs.
         """
         try:
-            self.save_ps = config['save_ps']
-            self.save_nc = config['save_pp_data']
-            self.save_non_nc = config['save_pp_data']
+            self.save_ps = config.get('save_ps', True)
+            self.save_nc = config.get('save_pp_data', True)
+            self.save_non_nc = config.get('save_pp_data', False)
         except KeyError as exc:
             pod.deactivate(exc)
             raise
@@ -186,6 +186,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
 
         abs_src_subdir = os.path.join(self.WORK_DIR, src_subdir)
         abs_dest_subdir = os.path.join(self.WORK_DIR, dest_subdir)
+
         files = util.find_files(
             abs_src_subdir,
             ['*.ps', '*.PS', '*.eps', '*.EPS', '*.pdf', '*.PDF']
@@ -250,15 +251,15 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
 
         # remove .eps files if requested (actually, contents of any 'PS' subdirs)
         if not self.save_ps:
-            for d in util.find_files(self.WORK_DIR, 'PS'+os.sep):
+            for d in util.find_files(self.WORK_DIR, 'obs/PS'):
                 shutil.rmtree(d)
 
         # delete all generated data
         # actually deletes contents of any 'netCDF' subdirs
         elif not self.save_nc:
-            for d in util.find_files(self.WORK_DIR, 'netCDF'+os.sep):
+            for d in util.find_files(self.WORK_DIR, 'model/netCDF'+os.sep):
                 shutil.rmtree(d)
-            for f in util.find_files(self.WORK_DIR, '*.nc'):
+            for f in util.find_files(self.WORK_DIR, 'model/netCDF/*.nc'):
                 os.remove(f)
 
     def make_output(self, config: util.NameSpace):

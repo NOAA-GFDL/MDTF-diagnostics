@@ -36,9 +36,9 @@ lev_coord = getenv("lev_coord")
 file_path = getenv("DATADIR")
 
 ; Z500 
-if( fileexists(wk_dir+"/model/"+casename+".Z500.ANOMS.nc") ) then
+if( fileexists(wk_dir+"/model/netCDF/"+casename+".Z500.ANOMS.nc") ) then
 
-print(wk_dir+"/"+casename+".Z500.ANOMS.nc exists!!")
+print(wk_dir+"/model/netCDF/"+casename+".Z500.ANOMS.nc exists!!")
 
 else
 

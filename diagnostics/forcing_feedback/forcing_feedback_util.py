@@ -381,7 +381,7 @@ def fluxanom_nc_create(variable, lat, lon, fbname):
 
     """
     var = xr.DataArray(variable, coords=[lat, lon], dims=['lat', 'lon'], name=fbname)
-    var.to_netcdf(os.environ['WORK_DIR'] + '/model/fluxanom2D_' + fbname + '.nc')
+    var.to_netcdf(os.environ['WORK_DIR'] + '/model/netCDF/fluxanom2D_' + fbname + '.nc')
 
     return None
 

@@ -34,7 +34,7 @@ lon_obs = nc_obs.lon.values
 llons_obs, llats_obs = np.meshgrid(lon_obs, lat_obs)
 
 # Read in model results
-path_prefix = "/model/"
+path_prefix = "/model/netCDF/"
 nc_pl = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_Planck.nc")
 nc_lr = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_LapseRate.nc")
 nc_lw_q = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_LW_WaterVapor.nc")

@@ -253,7 +253,8 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         if not self.save_ps:
             for d in util.find_files(self.WORK_DIR, 'obs/PS'):
                 shutil.rmtree(d)
-
+            for d in util.find_files(self.WORK_DIR, 'model/PS'):
+                shutil.rmtree(d)
         # delete all generated data
         # actually deletes contents of any 'netCDF' subdirs
         elif not self.save_nc:

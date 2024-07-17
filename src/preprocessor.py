@@ -951,7 +951,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
-                cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, var.translation)
+                cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
                 if cat_subset.df.empty:
                     raise util.DataRequestError(
                         f"check_group_daterange returned empty data frame for {var.translation.name}"

@@ -51,9 +51,9 @@
       "dimensions": ["time", "lat", "lon"]
     },
     "pr": {
-      "standard_name": "precipitation_flux",
+      "standard_name": "precipitation_rate",
       "realm": "atmos",
-      "units": "kg m-2 s-1",
+      "units": "m s-1",
       "dimensions": ["time", "lat", "lon"]
     },
     "u250": {

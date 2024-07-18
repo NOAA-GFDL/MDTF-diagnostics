@@ -44,12 +44,21 @@ import re
 import datetime
 import operator as op
 import warnings
+
+import cftime
+
 from src import util
 
 import logging
 
 _log = logging.getLogger(__name__)
 
+
+# convert cftime.Datetime to a string
+def cftime_to_str(cf_time: cftime.datetime, fmt=None):
+    if fmt is None:
+        fmt = '%Y%m%d-%H:%M:%S'
+    return cf_time.strftime(fmt)
 
 # ===============================================================
 # following adapted from Alexandre Decan's python-intervals

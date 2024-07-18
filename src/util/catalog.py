@@ -68,8 +68,8 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
                  )
         )
 
-    # add columns required for GFDL/CESM institutions
-    append_atts = ['chunk_freq', 'path']
+    # add columns required for GFDL/CESM institutions and MDTF-diagnostics functionality
+    append_atts = ['chunk_freq', 'path', 'standard_name', 'start_time', 'end_time']
     for att in append_atts:
         cat_dict["attributes"].append(
             dict(column_name=att)

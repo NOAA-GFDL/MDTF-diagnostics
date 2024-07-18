@@ -794,6 +794,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             log: log file
         """
         date_col = "date_range"
+        delimiters = ",.!?/&-:;@_'"
         if not hasattr(group_df, 'start_time') or not hasattr(group_df, 'end_time'):
             raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time`')
         try:
@@ -804,7 +805,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 if isinstance(start_time_vals[0], str):
                     new_start_time_vals = []
                     new_end_time_vals = []
-                    delimiters = ",.!?/&-:;@_'"
+
                     for s in start_time_vals:
                         new_start_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]", s)
                                                                if w)))
@@ -1013,6 +1014,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 xarray_ds = user_module.main(xarray_ds, v.name)
         
         return xarray_ds
+
     def setup(self, pod):
         """Method to do additional configuration immediately before :meth:`process`
         is called on each variable for *pod*. Implements metadata cleaning via
@@ -1331,6 +1333,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 else:
                     d.update({'project_id': var.translation.convention})
                 d.update({'path': var.dest_path})
+                d.update({'start_time': util.cftime_to_str(input_catalog_ds[case_name].time.values[0])})
+                d.update({'end_time': util.cftime_to_str(input_catalog_ds[case_name].time.values[-1])})
                 cat_entries.append(d)
 
         # create a Pandas dataframe romthe catalog entries
@@ -1360,6 +1364,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 class NullPreprocessor(MDTFPreprocessorBase):
     """A class that skips preprocessing and just symlinks files from the input dir to the work dir
     """
+    _XarrayParserClass = xr_parser.NullDatasetParser
 
     def __init__(self,
                  model_paths: util.ModelDataPathManager,

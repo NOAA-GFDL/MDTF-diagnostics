@@ -54,11 +54,28 @@ import logging
 _log = logging.getLogger(__name__)
 
 
+# convert a string to a cftime object
+def str_to_cftime(time_str: str, fmt=None, calendar=None):
+    if fmt is None:
+        fmt = '%Y%m%d-%H:%M:%S'
+    if calendar is None:
+        calendar = 'julian'
+    dt = datetime.datetime.strptime(time_str, fmt)
+    cf_date = cftime.datetime(
+        dt.year,
+        dt.month,
+        dt.day,
+        calendar=calendar,
+    )
+    return cf_date
+
+
 # convert cftime.Datetime to a string
 def cftime_to_str(cf_time: cftime.datetime, fmt=None):
     if fmt is None:
         fmt = '%Y%m%d-%H:%M:%S'
     return cf_time.strftime(fmt)
+
 
 # ===============================================================
 # following adapted from Alexandre Decan's python-intervals

@@ -25,7 +25,7 @@ from .datelabel import (
     DatePrecision, DateRange, Date, DateFrequency,
     FXDateMin, FXDateMax, FXDateRange, FXDateFrequency,
     AbstractDateRange, AbstractDate, AbstractDateFrequency,
-    cftime_to_str
+    cftime_to_str, str_to_cftime
 )
 
 from .filesystem import (

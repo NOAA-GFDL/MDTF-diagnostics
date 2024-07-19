@@ -115,6 +115,12 @@
       "units": "m s-1",
       "ndim": 3
     },
+    "PRECFLUX": {
+      "standard_name": "precipitation_flux",
+      "realm": "atmos",
+      "units": "kg m-2 s-1",
+      "ndim": 3
+    },
     "PRECC": {
       "standard_name": "convective_precipitation_rate",
       "realm": "atmos",

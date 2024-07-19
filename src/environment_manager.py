@@ -306,7 +306,7 @@ class SubprocessRuntimePODWrapper:
                 except util.WormKeyError:
                     continue
 
-    def pre_run_setup(self, cases: dict):
+    def pre_run_setup(self, cases: dict, catalog_file: str):
         self.pod.log_file = io.open(
             os.path.join(self.pod.paths.POD_WORK_DIR, self.pod.name+".log"),
             'w', encoding='utf-8'
@@ -327,7 +327,7 @@ class SubprocessRuntimePODWrapper:
 
         self.pod.log.debug("%s", self.pod.format_log(children=False))
     #    self.pod._log_handler.reset_buffer()
-        self.write_case_env_file(cases)
+        self.write_case_env_file(cases, catalog_file)
         self.setup_env_vars()
 
     def setup_env_vars(self):
@@ -355,11 +355,11 @@ class SubprocessRuntimePODWrapper:
         self.pod.log_file.write("\n".join(["### Shell env vars: "] + sorted(env_list)))
         self.pod.log_file.write("\n\n")
 
-    def write_case_env_file(self, case_list):
+    def write_case_env_file(self, case_list: dict, catalog_file: str):
         out_file = os.path.join(self.pod.paths.POD_WORK_DIR, 'case_info.yml')
         self.pod.pod_env_vars["case_env_file"] = out_file
         case_info = dict()
-        case_info['CATALOG_FILE'] = os.path.join(self.pod.paths.WORK_DIR, 'MDTF_postprocessed_data.json')
+        case_info['CATALOG_FILE'] = catalog_file
         case_info['CASE_LIST'] = dict()
         assert os.path.isfile(case_info['CATALOG_FILE']), 'CATALOG_FILE json not found in WORK_DIR'
         for case_name, case in case_list.items():
@@ -496,6 +496,8 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
     _EnvironmentManagerClass = CondaEnvironmentManager
     pods: list = []
     bash_exec: str = ""
+    no_preprocessing: bool = False
+    catalog_file: str = ""
 
     def __init__(self, pod_dict: dict, config: util.NameSpace, _log: logging.log):
         # transfer all pods, even failed ones, because we need to call their
@@ -506,6 +508,12 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         # Need to run bash explicitly because 'conda activate' sources
         # env vars (can't do that in posix sh). tcsh could also work.
         self.bash_exec = find_executable('bash')
+
+        self.no_preprocessing = not(config.get('run_pp', False))
+        if self.no_preprocessing:
+            self.catalog_file = config.get('DATA_CATALOG')
+        else:
+            self.catalog_file = os.path.join(config.get('OUTPUT_DIR'), 'MDTF_postprocessed_data.json')
 
     def iter_active_pods(self):
         """Generator iterating over all wrapped pods which are currently active,
@@ -558,7 +566,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         for p in self.iter_active_pods():
             p.pod.log.info('%s: run %s.', self.__class__.__name__, p.pod.full_name)
             try:
-                p.pre_run_setup(cases)
+                p.pre_run_setup(cases, self.catalog_file)
             except Exception as exc:
                 p.setup_exception_handler(exc)
                 continue

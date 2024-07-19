@@ -794,6 +794,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             log: log file
         """
         date_col = "date_range"
+        delimiters = ",.!?/&-:;@_'"
         if not hasattr(group_df, 'start_time') or not hasattr(group_df, 'end_time'):
             raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time`')
         try:
@@ -804,7 +805,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 if isinstance(start_time_vals[0], str):
                     new_start_time_vals = []
                     new_end_time_vals = []
-                    delimiters = ",.!?/&-:;@_'"
+
                     for s in start_time_vals:
                         new_start_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]", s)
                                                                if w)))
@@ -1013,6 +1014,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 xarray_ds = user_module.main(xarray_ds, v.name)
         
         return xarray_ds
+
     def setup(self, pod):
         """Method to do additional configuration immediately before :meth:`process`
         is called on each variable for *pod*. Implements metadata cleaning via
@@ -1200,7 +1202,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         var_ds = ds[var.translation.name].to_dataset()
-        var_ds = var_ds.rename_vars(name_dict={var.translation.name:var.name})
+        var_ds = var_ds.rename_vars(name_dict={var.translation.name: var.name})
         var.log.info("Writing '%s'.", var.dest_path, tags=util.ObjectLogTag.OUT_FILE)
         if var.is_static:
             unlimited_dims = []
@@ -1272,7 +1274,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def process(self,
                 case_list: dict,
                 config: util.NameSpace,
-                model_work_dir: dict) -> collections.OrderedDict:
+                model_work_dir: dict) -> dict:
         """Top-level wrapper method for doing all preprocessing of data files
         associated with each case in the case_list dictionary
         """
@@ -1331,6 +1333,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 else:
                     d.update({'project_id': var.translation.convention})
                 d.update({'path': var.dest_path})
+                d.update({'start_time': util.cftime_to_str(input_catalog_ds[case_name].time.values[0])})
+                d.update({'end_time': util.cftime_to_str(input_catalog_ds[case_name].time.values[-1])})
                 cat_entries.append(d)
 
         # create a Pandas dataframe romthe catalog entries
@@ -1368,14 +1372,14 @@ class NullPreprocessor(MDTFPreprocessorBase):
         super().__init__(model_paths, config)
         self.file_preproc_functions = []
 
-    def edit_request(self, v, **kwargs):
+    def edit_request(self, v: varlist_util.VarlistEntry, **kwargs) -> varlist_util.VarlistEntry:
         """Dummy implementation of edit_request to meet abstract base class requirements
         """
         return v
 
     def process(self, case_list: dict,
                 config: util.NameSpace,
-                model_work_dir: dict) -> collections.OrderedDict:
+                model_work_dir: dict) -> dict:
         """Top-level wrapper method for doing all preprocessing of data files
         associated with each case in the caselist dictionary
         """
@@ -1383,9 +1387,39 @@ class NullPreprocessor(MDTFPreprocessorBase):
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
             for v in case_list[case_name].varlist.iter_vars():
-                cat_subset[case_name] = self.parse_ds(v, case_xr_dataset)
+                # reset the variable dest_paths to point to input catalog paths
+                ds = cat_subset[case_name].get(v.name)
+                if ds.encoding.get('source', None) is not None:
+                    v.dest_path = ds.encoding.get('source')
+                for a in v.alternates:
+                    if cat_subset[case_name].get(a.name, None) is not None:
+                        ds = cat_subset[case_name].get(a.name)
+                        a.dest_path = ds.encoding.get('source')
 
         return cat_subset
+
+    def write_ds(self, case_list: dict,
+                 catalog_subset: collections.OrderedDict,
+                 pod_reqs: dict):
+        """Dummy method that just sets class attribute
+        """
+        for k, v in pod_reqs.items():
+            if 'ncl' in v:
+                self.output_to_ncl = True
+
+    def write_pp_catalog(self,
+                         cases: dict,
+                         input_catalog_ds: xr.Dataset,
+                         config: util.PodPathManager,
+                         log: logging.log):
+        """Dummy method; Same catalog specified at runtime is passed to POD(s)
+        """
+        log.info(f"Using data catalog specified at runtime")
+
+    def rename_dataset_vars(self, ds: dict, case_list: dict) -> dict:
+        """Dummy method for NullPreprocessor """
+        return ds
+
 
 
 class DaskMultiFilePreprocessor(MDTFPreprocessorBase):

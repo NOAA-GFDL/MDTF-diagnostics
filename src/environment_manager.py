@@ -513,7 +513,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         if self.no_preprocessing:
             self.catalog_file = config.get('DATA_CATALOG')
         else:
-            self.catalog_file = os.path.join(config.get('OUTPUT_DIR', 'MDTF_postprocessed_data.json' ))
+            self.catalog_file = os.path.join(config.get('OUTPUT_DIR'), 'MDTF_postprocessed_data.json')
 
     def iter_active_pods(self):
         """Generator iterating over all wrapped pods which are currently active,

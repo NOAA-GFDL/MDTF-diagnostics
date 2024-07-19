@@ -1415,7 +1415,6 @@ class NullPreprocessor(MDTFPreprocessorBase):
         """Dummy method; Same catalog specified at runtime is passed to POD(s)
         """
         log.info(f"Using data catalog specified at runtime")
-        pass
 
     def rename_dataset_vars(self, ds: dict, case_list: dict) -> dict:
         """Dummy method for NullPreprocessor """

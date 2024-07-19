@@ -66,7 +66,7 @@ def print_summary(pods, _log: logging.log):
         _log.info(f"Exiting with errors.")
         for case_name, tup in d.items():
             _log.info(f"Summary for {case_name}:")
-            if tup[0][0] == 'dummy sentinel string':
+            if tup[0] == 'dummy sentinel string':
                 _log.info('\tAn error occurred in setup. No PODs were run.')
             else:
                 if tup[1]:

@@ -1389,6 +1389,3 @@ class DefaultDatasetParser:
             if (ref not in all_arr_names) and (ref not in all_attr_names):
                 missing_refs[ref] = lookup[ref]
         return missing_refs
-
-
-

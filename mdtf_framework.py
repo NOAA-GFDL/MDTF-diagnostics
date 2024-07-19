@@ -194,14 +194,13 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
                 func(args)
     # read the subset of data for the cases and date range(s) and preprocess the data
     cat_subset = data_pp.process(cases, ctx.config, model_paths.MODEL_WORK_DIR)
-    if type(data_pp).__name__ != 'NullPreprocessor':
-        # write the preprocessed files
-        data_pp.write_ds(cases, cat_subset, pod_runtime_reqs)
-        # rename vars in cat_subset to align with POD convention
-        cat_subset = data_pp.rename_dataset_vars(cat_subset, cases)
-        # write the ESM intake catalog for the preprocessed  files
-        data_pp.write_pp_catalog(cases, cat_subset, model_paths, log.log)
-        # configure the runtime environments and run the POD(s)
+    # write the preprocessed files
+    data_pp.write_ds(cases, cat_subset, pod_runtime_reqs)
+    # rename vars in cat_subset to align with POD convention
+    cat_subset = data_pp.rename_dataset_vars(cat_subset, cases)
+    # write the ESM intake catalog for the preprocessed  files
+    data_pp.write_pp_catalog(cases, cat_subset, model_paths, log.log)
+    # configure the runtime environments and run the POD(s)
     if not any(p.failed for p in pods.values()):
         log.log.info("### %s: running pods '%s'.", [p for p in pods.keys()])
         run_mgr = environment_manager.SubprocessRuntimeManager(pods, ctx.config, log)

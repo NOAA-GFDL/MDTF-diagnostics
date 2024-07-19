@@ -1391,38 +1391,4 @@ class DefaultDatasetParser:
         return missing_refs
 
 
-class NullDatasetParser(DefaultDatasetParser):
-    def parse(self, var, ds: xr.Dataset):
-        """Calls the above metadata parsing functions in the intended order;
-        intended to be called immediately after the Dataset *ds* is opened.
-
-        .. note::
-           ``decode_cf=False`` should be passed to the xarray open_dataset
-           method, since that parsing is done here instead.
-
-        - Calls :meth:`normalize_pre_decode` to do basic cleaning of metadata
-          attributes.
-        - Call xarray's `decode_cf
-          <http://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__,
-          using `cftime <https://unidata.github.io/cftime/>`__ to decode
-          CF-compliant date/time axes.
-
-        Args:
-            var (:class:`~src.diagnostic.VarlistEntry`): VerlistEntry describing
-                metadata we expect to find in *ds*.
-            ds (Dataset): xarray Dataset of locally downloaded model data.
-
-        Returns:
-            *ds*, with data unchanged but metadata normalized to expected values.
-            Except in specific cases, attributes of *var* are updated to reflect
-            the 'ground truth' of data in *ds*.
-        """
-
-        self.normalize_pre_decode(ds)
-        ds = xr.decode_cf(ds,
-                          decode_coords=True,  # parse coords attr
-                          decode_times=True,
-                          use_cftime=True  # use cftime instead of np.datetime64
-                          )
-        return ds
 

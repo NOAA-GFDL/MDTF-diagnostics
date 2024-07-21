@@ -39,7 +39,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     pod_data = dict()
     pod_vars = dict()
     pod_settings = dict()
-    multi_case_dict = dict()  # populated with case_info entries in enviroment_manager
+    multicase_dict = dict()  # populated with case_info entries in enviroment_manager
     overwrite: bool = False
     # explict 'program' attribute in settings
     _interpreters = dict
@@ -76,6 +76,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                                          env=self.pod_env_vars,
                                          new_work_dir=False)
         self.paths.setup_pod_paths(self.name)
+        self.multicase_dict = runtime_config.case_list
         util.MDTFObjectBase.__init__(self, name=self.name, _parent=None)
 
     # Explicitly invoke MDTFObjectBase post_init and init methods so that _id and other inherited

@@ -137,6 +137,8 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
         decorator.
         """
 
+        # check non-translated variable entry to determine if POD expects flux/rate
+        # then apply units conversion to variable.translation if necessary
         std_name = getattr(v, 'standard_name', "")
         if std_name not in self._rate_d and std_name not in self._flux_d:
             # logic not applicable to this VE; do nothing and return varlistEntry for
@@ -165,21 +167,24 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
                 to_convention = val.lower()
             else:
                 to_convention = None
-        try:
-            # current varlist.translation object is already in to_convention format
-            # so from_convention arg = to_convention arg in this translation call
-            new_tv = translate.translate(v_to_translate, to_convention, to_convention)
-        except KeyError as exc:
-            v.log.debug(('%s edit_request on %s: caught %r when trying to '
-                         'translate \'%s\'; varlist unaltered.'), self.__class__.__name__,
-                        v.full_name, exc, v_to_translate.standard_name)
-            return None
-        new_v = copy_as_alternate(v)
-        new_v.translation = new_tv
-        v.translation.name = new_tv.name
-        v.translation.standard_name = new_tv.standard_name
-        v.translation.units = new_tv.units
-        v.translation.long_name = new_tv.long_name
+        # check if pod variable standard name is the same as translation standard name
+        if std_name != v.translation.standard_name:
+            try:
+                # current varlist.translation object is already in to_convention format
+                # so from_convention arg = to_convention arg in this translation call
+                new_tv = translate.translate(v_to_translate, to_convention, to_convention)
+            except KeyError as exc:
+                v.log.debug(('%s edit_request on %s: caught %r when trying to '
+                             'translate \'%s\'; varlist unaltered.'), self.__class__.__name__,
+                            v.full_name, exc, v_to_translate.standard_name)
+                return None
+            new_v = copy_as_alternate(v)
+            new_v.translation = new_tv
+            v.alternates.append(new_v)
+            v.translation.name = new_tv.name
+            v.translation.standard_name = new_tv.standard_name
+            v.translation.units = new_tv.units
+            v.translation.long_name = new_tv.long_name
         return v
 
     def execute(self, var, ds, **kwargs):

@@ -54,8 +54,8 @@ def print_summary(pods, _log: logging.log):
         """create tuple of ([failed cases], [not failed cases], POD_OUTPUT_DIR) for input pod
         """
         return (
-            [p_name for p_name, p in pod.multi_case_dict['CASE_LIST'].items() if pod.failed],
-            [p_name for p_name, p in pod.multi_case_dict['CASE_LIST'].items() if not pod.failed],
+            [p_name for p_name, p in pod.multicase_dict.items() if pod.failed],
+            [p_name for p_name, p in pod.multicase_dict.items() if not pod.failed],
             getattr(pod.paths, 'POD_OUTPUT_DIR', '<ERROR: dir not created.>')
         )
 

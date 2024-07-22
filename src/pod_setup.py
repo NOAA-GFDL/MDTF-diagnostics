@@ -51,6 +51,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     nc_largefile: bool = False
     bash_exec: str
     global_env_vars: dict
+    paths: util.PodPathManager
 
     def __init__(self, name: str, runtime_config: util.NameSpace):
         self.name = name
@@ -72,10 +73,11 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         self.bash_exec = find_executable('bash')
         # Initialize the POD path object and define the POD output paths
         # Don't need a new working directory since one is created when the model data directories are initialized
-        self.paths = util.PodPathManager(runtime_config,
+        self.paths = util.PodPathManager(self.name,
+                                         runtime_config,
                                          env=self.pod_env_vars,
+                                         unittest=False,
                                          new_work_dir=False)
-        self.paths.setup_pod_paths(self.name)
         self.multicase_dict = runtime_config.case_list
         util.MDTFObjectBase.__init__(self, name=self.name, _parent=None)
 
@@ -262,7 +264,8 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
 
     def setup_pod(self, runtime_config: util.NameSpace,
                   model_paths: util.ModelDataPathManager,
-                  cases: dict):
+                  cases: dict,
+                  append_vars: bool=False):
         """Update POD information from settings and runtime configuration files
         """
         # Parse the POD settings file
@@ -289,7 +292,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         pod_convention = self.pod_settings['convention'].lower()
 
         for case_name, case_dict in runtime_config.case_list.items():
-            cases[case_name].read_varlist(self)
+            cases[case_name].read_varlist(self, append_vars=append_vars)
             # Translate the data if desired and the pod convention does not match the case convention
             data_convention = case_dict.convention.lower()
             if runtime_config.translate_data and pod_convention != data_convention:

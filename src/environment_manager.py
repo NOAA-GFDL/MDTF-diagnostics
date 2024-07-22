@@ -556,27 +556,27 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         signal.signal(signal.SIGTERM, self.runtime_terminate)
         signal.signal(signal.SIGINT, self.runtime_terminate)
 
-        test_list = [p for p in self.iter_active_pods()]
-        if not test_list:
+        pod_list = [p for p in self.iter_active_pods()]
+        if not pod_list:
             _log.log.error('%s: no PODs met data requirements; returning',
                            self.__class__.__name__)
             return
 
         env_vars_base = os.environ.copy()
-        for p in self.iter_active_pods():
-            p.pod.log.info('%s: run %s.', self.__class__.__name__, p.pod.full_name)
+        for podwrapper in pod_list:
+            podwrapper.pod.log.info('%s: run %s.', self.__class__.__name__, podwrapper.pod.full_name)
             try:
-                p.pre_run_setup(cases, self.catalog_file)
+                podwrapper.pre_run_setup(cases, self.catalog_file)
             except Exception as exc:
-                p.setup_exception_handler(exc)
+                podwrapper.setup_exception_handler(exc)
                 continue
             try:
-                p.pod.log_file.write(f"### Start execution of {p.pod.full_name}\n")
-                p.pod.log_file.write(80 * '-' + '\n')
-                p.pod.log_file.flush()
-                p.process = self.spawn_subprocess(p, env_vars_base)
+                podwrapper.pod.log_file.write(f"### Start execution of {podwrapper.pod.full_name}\n")
+                podwrapper.pod.log_file.write(80 * '-' + '\n')
+                podwrapper.pod.log_file.flush()
+                podwrapper.process = self.spawn_subprocess(podwrapper, env_vars_base)
             except Exception as exc:
-                p.runtime_exception_handler(exc)
+                podwrapper.runtime_exception_handler(exc)
                 continue
         # should use asyncio, instead wait for each process
         # to terminate and close all log files
@@ -586,7 +586,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             if p.process is not None:
                 p.process.wait()
             p.tear_down()
-        p.pod.log.info('%s: completed all PODs.', self.__class__.__name__)
+        _log.log.info('%s: completed all PODs.', self.__class__.__name__)
         self.tear_down()
 
     def tear_down(self):

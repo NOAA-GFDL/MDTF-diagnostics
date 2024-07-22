@@ -24,7 +24,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     date_range: util.DateRange = dataclasses.field(init=False)
     varlist: varlist_util.Varlist = None
     log_file: io.IOBase = dataclasses.field(default=None, init=False)
-    env_vars: util.WormDict()
+    env_vars: util.WormDict
     query: dict = dict(frequency="",
                        path="",
                        standard_name="",
@@ -60,8 +60,8 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     def iter_vars_only(self, active=None):
         yield from self.varlist.iter_vars_only(active=active)
 
-    def read_varlist(self, parent):
-        self.varlist = varlist_util.Varlist.from_struct(parent)
+    def read_varlist(self, parent, append_vars: bool=False):
+        self.varlist = varlist_util.Varlist.from_struct(parent, append_vars)
 
     def set_date_range(self, startdate: str, enddate: str):
         self.date_range = util.DateRange(start=startdate, end=enddate)

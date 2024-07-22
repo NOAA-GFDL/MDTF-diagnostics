@@ -177,9 +177,12 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     pods = dict.fromkeys(ctx.config.pod_list, [])
     pod_runtime_reqs = dict()
     # configure pod object(s)
-    for pod_name in ctx.config.pod_list:
+    append_vars = False
+    for count, pod_name in enumerate(ctx.config.pod_list):
+        if count > 0:
+            append_vars = True
         pods[pod_name] = pod_setup.PodObject(pod_name, ctx.config)
-        pods[pod_name].setup_pod(ctx.config, model_paths, cases)
+        pods[pod_name].setup_pod(ctx.config, model_paths, cases, append_vars)
         pods[pod_name].log.info(f"Preprocessing data for {pod_name}")
         for k, v in pods[pod_name].runtime_requirements.items():
             if not hasattr(pod_runtime_reqs, k):

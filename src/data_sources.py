@@ -1,9 +1,8 @@
 """Implementation classes for model data query
 """
-import os
 import io
 import dataclasses
-from src import util, cmip6, varlist_util
+from src import util, varlist_util
 
 import logging
 
@@ -24,7 +23,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     date_range: util.DateRange = dataclasses.field(init=False)
     varlist: varlist_util.Varlist = None
     log_file: io.IOBase = dataclasses.field(default=None, init=False)
-    env_vars: util.WormDict()
+    env_vars: util.WormDict
     query: dict = dict(frequency="",
                        path="",
                        standard_name="",
@@ -60,24 +59,26 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     def iter_vars_only(self, active=None):
         yield from self.varlist.iter_vars_only(active=active)
 
-    def read_varlist(self, parent):
-        self.varlist = varlist_util.Varlist.from_struct(parent)
+    def read_varlist(self, parent, append_vars: bool=False):
+        self.varlist = varlist_util.Varlist.from_struct(parent, append_vars)
+
 
     def set_date_range(self, startdate: str, enddate: str):
         self.date_range = util.DateRange(start=startdate, end=enddate)
 
     def translate_varlist(self,
+                          var: varlist_util.VarlistEntry,
                           model_paths: util.ModelDataPathManager,
                           case_name: str,
                           from_convention: str,
                           to_convention: str):
-        for v in self.varlist.iter_vars():
-            self.varlist.setup_var(model_paths,
-                                   case_name,
-                                   v,
-                                   from_convention,
-                                   to_convention,
-                                   self.date_range)
+
+        self.varlist.setup_var(model_paths,
+                               case_name,
+                               var,
+                               from_convention,
+                               to_convention,
+                               self.date_range)
 
 
 # instantiate the class maker so that the convention-specific classes can be instantiated using

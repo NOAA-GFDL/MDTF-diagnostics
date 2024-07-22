@@ -893,14 +893,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         for case_name, case_d in case_dict.items():
             # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
             path_regex = re.compile(r'({})'.format(case_name))
-            # path_regex = '*' + case_name + '*' 
-            freq = case_d.varlist.T.frequency
-            if not isinstance(freq, str):
-                freq = freq.format_local()
+            # path_regex = '*' + case_name + '*'
             
             for var in case_d.varlist.iter_vars():
                 realm_regex = var.realm + '*'
                 date_range = var.translation.T.range
+                freq = var.T.frequency
+                if not isinstance(freq, str):
+                    freq = freq.format_local()
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
                 case_d.query['frequency'] = freq
@@ -1289,6 +1289,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # get the initial model data subset from the ESM-intake catalog
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
+            # delete height attribute because it
+            # creates issues when merging: xr cannot determine if it is a coordinate
+            # TODO: implement something less kluge-y to remove problem attributes/variables
+            if case_xr_dataset.get('height', None) is not None:
+                del case_xr_dataset['height']
             for v in case_list[case_name].varlist.iter_vars():
                 tv_name = v.translation.name
                 var_xr_dataset = self.parse_ds(v, case_xr_dataset)

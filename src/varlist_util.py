@@ -515,6 +515,8 @@ class Varlist(data_model.DMDataSet):
         single POD for multiple cases/ensemble members
     """
 
+    vlist_vars: dict
+
     def find_var(self, v):
         """If a variable matching *v* is already present in the Varlist, return
         (a reference to) it (so that we don't try to add duplicates), otherwise
@@ -616,7 +618,7 @@ class Varlist(data_model.DMDataSet):
             return os.path.join(model_paths.MODEL_WORK_DIR[case_name], freq, f_name)
 
     @classmethod
-    def from_struct(cls, parent):
+    def from_struct(cls, parent, append_vars: bool=False):
         """Parse the "dimensions", "data" and "varlist" sections of the POD's
         settings.jsonc file when instantiating a new :class:`Diagnostic` object.
 
@@ -650,23 +652,31 @@ class Varlist(data_model.DMDataSet):
         dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings)
                   for k, v in parent.pod_dims.items()}
 
-        vlist_vars = {
+        verify_axes = True
+        if not append_vars:
+            cls.vlist_vars = dict()
+        else:
+             verify_axes = False
+
+        cls.vlist_vars.update({
             k: VarlistEntry.from_struct(globals_d, dims_d, name=k, parent=parent, **v)
-            for k, v in parent.pod_vars.items()
-        }
-        for v in vlist_vars.values():
+            for k, v in parent.pod_vars.items()}
+        )
+
+        for v in cls.vlist_vars.values():
             # validate & replace names of alt vars with references to VE objects
             for altv_name in v.alternates:
-                if altv_name not in vlist_vars:
+                if altv_name not in cls.vlist_vars:
                     raise ValueError((f"Unknown variable name {altv_name} listed "
                                       f"in alternates for varlist entry {v.name}."))
-            linked_alts = [vlist_vars[v_name] for v_name in v.alternates]
+            linked_alts = [cls.vlist_vars[v_name] for v_name in v.alternates]
             v.alternates = linked_alts
-        alt_vars = [k for k, v in vlist_vars.items() if v.is_alternate]
+        alt_vars = [k for k, v in cls.vlist_vars.items() if v.is_alternate]
         for a in alt_vars:
-            vlist_vars = util.new_dict_wo_key(vlist_vars, a)
+            cls.vlist_vars = util.new_dict_wo_key(cls.vlist_vars, a)
 
         # remove alternates from VarlistEntries since they are now attributes of variable
         # VarlistEntry objects that they can be substituted for
 
-        return cls(contents=list(vlist_vars.values()))
+        args_list = list(cls.vlist_vars.values())
+        return cls(verify_axes=verify_axes, contents=args_list)

@@ -339,6 +339,8 @@ class DMGenericTimeCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
     axis: str = 'T'
     """Coordinate axis identifier. Always 'T' for this coordinate."""
     calendar: str = ""
+    """Data frequency"""
+    frequency: str = ""
     """CF standard calendar for time data."""
     range: typing.Any = None
 
@@ -602,7 +604,7 @@ class _DMDimensionsMixin:
     def __init__(self):
         self._dim_axes = None
 
-    def __post_init__(self, coords=None):
+    def __post_init__(self, coords=None, verify_axes: bool=True):
         if coords is None:
             # if we're called to rebuild dicts, rather than after __init__
             assert (self.dims or self.scalar_coords), \
@@ -616,7 +618,7 @@ class _DMDimensionsMixin:
             else:
                 self.dims.append(c)
         # raises exceptions if axes are inconsistent
-        _ = self.build_axes(self.dims, verify=True)
+        _ = self.build_axes(self.dims, verify=verify_axes)
 
     @property
     def dim_axes(self):
@@ -977,7 +979,7 @@ class DMDataSet(_DMDimensionsMixin):
     common dimensions.
     """
     contents: dc.InitVar = util.MANDATORY
-    """All members of the collection (input)."""
+    """switch to use axis verification"""
     vars: list = dc.field(init=False, default_factory=list)
     """List of dependent variables in the collection."""
     coord_bounds: list = dc.field(init=False, default_factory=list)
@@ -987,8 +989,10 @@ class DMDataSet(_DMDimensionsMixin):
     <https://cfconventions.org/cf-conventions/cf-conventions.html#data-model-coordinates>`__
     referenced by variables in the collection.
     """
+    verify_axes: dc.InitVar = bool
 
-    def __post_init__(self, coords=None, contents=None):
+
+    def __post_init__(self, coords=None, contents=None, verify_axes: bool=True):
         """Populate shared ``vars``, ``coord_bounds``, ``aux_coords`` attributes
         from collection of input variables.
         """
@@ -1019,7 +1023,7 @@ class DMDataSet(_DMDimensionsMixin):
             new_t = DMGenericTimeCoordinate.from_instances(*t_axes)
             coords.append(new_t)
         # can't have duplicate dims, but duplicate scalar_coords are OK.
-        super(DMDataSet, self).__post_init__(coords)
+        super(DMDataSet, self).__post_init__(coords, verify_axes)
 
     def iter_contents(self):
         """Generator iterating over the full contents of the DataSet (variables,

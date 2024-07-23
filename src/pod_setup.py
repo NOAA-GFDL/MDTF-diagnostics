@@ -78,7 +78,6 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                                          env=self.pod_env_vars,
                                          unittest=False,
                                          new_work_dir=False)
-        self.multicase_dict = runtime_config.case_list
         util.MDTFObjectBase.__init__(self, name=self.name, _parent=None)
 
     # Explicitly invoke MDTFObjectBase post_init and init methods so that _id and other inherited
@@ -106,7 +105,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     @property
     def _children(self):
         # property required by MDTFObjectBase
-        return self.multi_case_dict.get('CASELIST', None)
+        return self.multicase_dict.get('CASELIST', None)
 
     @property
     def full_name(self):
@@ -121,7 +120,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     def iter_case_names(self):
         """Iterator returning :c
         """
-        yield self.multi_case_dict.keys()
+        yield self.multicase_dict.keys()
 
     def parse_pod_settings_file(self, code_root: str) -> util.NameSpace:
         """Parse the POD settings file"""

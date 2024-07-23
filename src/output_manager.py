@@ -28,16 +28,16 @@ def html_templating_dict(pod) -> dict:
         d[attr] = str(pod.pod_settings.get(attr, ""))
         if not any(d[attr]):
             d[attr] = str(getattr(pod, attr, ""))
-    if len(pod.multicase_dict) > 1:  # multi-case PODs
+    if len(pod.multicase_dict['CASE_LIST']) > 1:  # multi-case PODs
         case_number = 1
-        for case_name, case_dict in pod.multicase_dict.items():
+        for case_name, case_dict in pod.multicase_dict['CASE_LIST'].items():
             case_str = f'CASE_{case_number}'
             d[case_str] = case_name
             case_number += 1
             for att_name, att in case_dict.items():
                 d[att_name] = att
     else:  # single-case PODs
-        for case_name, case_dict in pod.multicase_dict.items():
+        for case_name, case_dict in pod.multicase_dict['CASE_LIST'].items():
             for att_name, att in case_dict.items():
                 d[att_name] = att
     return d
@@ -81,7 +81,7 @@ class HTMLSourceFileMixin:
             str_1 = f"POD {self.obj.name}"
         elif isinstance(self, HTMLOutputManager):
             str_1 = ""
-            for case_name in self.obj.multicase_dict.keys():
+            for case_name in self.obj.multicase_dict['CASE_LIST'].keys():
                 str_1 += f"case {case_name} \n"
         else:
             raise AssertionError("self is not an instance of HTMLPodOutputManager or HTMLOutputManager")
@@ -403,6 +403,7 @@ class HTMLOutputManager(AbstractOutputManager,
                         "<A href={{PODNAME}}_model_plot_{{CASENAME}}.png>{{CASENAME}}\n</A>"
         for case_name, case_settings in case_info.items():
             case_settings['PODNAME'] = template_dict['PODNAME']
+            case_settings['CASENAME'] = template_dict['CASENAME']
             output_template = util._DoubleBraceTemplate(case_template).safe_substitute(case_settings)
             dest_file_handle.write(output_template)
 
@@ -461,8 +462,8 @@ class HTMLOutputManager(AbstractOutputManager,
         util.append_html_template(self.CASE_TEMP_HTML, dest, {})
         with io.open(dest, 'a', encoding='utf-8') as f:
             if self.multi_case_figure:
-                self.generate_html_file_case_loop(self.obj.multicase_dict, template_dict, f)
-            self.append_case_info_html(self.obj.multicase_dict, f)
+                self.generate_html_file_case_loop(self.obj.multicase_dict['CASE_LIST'], template_dict, f)
+            self.append_case_info_html(self.obj.multicase_dict['CASE_LIST'], f)
         f.close()
         util.append_html_template(
             self.html_src_file('mdtf_footer.html'), dest, template_dict

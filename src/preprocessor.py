@@ -827,21 +827,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         new_end_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]", e)
                                                              if w)))
 
-                    date_digits = math.floor(math.log10(new_start_time_vals[0])) + 1
                     start_time_vals = new_start_time_vals
                     end_time_vals = new_end_time_vals
-                else:
-                    date_digits = math.floor(math.log10(start_time_vals[0])) + 1
-
-                # convert int to date type
-                date_format = ''
-                match date_digits:
-                    case 6:
-                        date_format = '%Y%m'
-                    case 8:
-                        date_format = '%Y%m%d'
-                    case 14:
-                        date_format = '%Y%m%d%H%M%S'
+                date_format = dl.date_fmt(start_time_vals[0])
                 # convert start_times to date_format for all files in query
                 group_df['start_time'] = pd.to_datetime(start_time_vals, format=date_format)
                 # convert end_times to date_format for all files in query

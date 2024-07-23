@@ -54,18 +54,29 @@ import logging
 
 _log = logging.getLogger(__name__)
 
+# match-case statment to give date format
+# input can be int or str
+def date_fmt(date):
+    if isinstance(date, str):
+        date = int(date)
+    date_digits = math.floor(math.log10(date)) + 1
+    match date_digits:
+        case 6:
+            fmt = '%Y%m'
+        case 8:
+            fmt = '%Y%m%d'
+        case 10:
+            fmt = '%Y%m%d%H'
+        case 12:
+            fmt = '%Y%m%d%H%M'
+        case 14:
+            fmt = '%Y%m%d-%H%M%S'
+    return fmt
 
 # convert a string to a cftime object
 def str_to_cftime(time_str: str, fmt=None, calendar=None):
     if fmt is None:
-        date_digits = math.floor(math.log10(int(time_str))) + 1
-        match date_digits:
-            case 6:
-                fmt = '%Y%m'
-            case 8:
-                fmt = '%Y%m%d'
-            case 14:
-                fmt = '%Y%m%d-%H%M%S'
+        fmt = date_fmt(time_str)
     if calendar is None:
         calendar = 'julian'
     dt = datetime.datetime.strptime(time_str, fmt)

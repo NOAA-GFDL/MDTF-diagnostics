@@ -59,7 +59,6 @@ _log = logging.getLogger(__name__)
 def str_to_cftime(time_str: str, fmt=None, calendar=None):
     if fmt is None:
         date_digits = math.floor(math.log10(int(time_str))) + 1
-        # convert int to date type
         match date_digits:
             case 6:
                 fmt = '%Y%m'

@@ -719,9 +719,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         objects so that they can be compared with the model data's time axis.
         """
         dt_range = var.T.range
-        ds_decode = xr.decode_cf(ds)
+        ds_decode = xr.decode_cf(ds, use_cftime=True)
         t_coord = ds_decode[var.T.name]
-
         # time coordinate will be a list if variable has
         # multiple coordinates/coordinate attributes
         if hasattr(t_coord, 'calendar'):
@@ -801,7 +800,17 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         date_col = "date_range"
         delimiters = ",.!?/&-:;@_'"
         if not hasattr(group_df, 'start_time') or not hasattr(group_df, 'end_time'):
-            raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time`')
+            if hasattr(group_df, 'time_range'):
+                start_times = []
+                end_times = []
+                for tr in group_df['time_range'].values:
+                    tr = tr.split('-')
+                    start_times.append(tr[0])
+                    end_times.append(tr[1])
+                group_df['start_time'] = pd.Series(start_times)
+                group_df['end_time'] = pd.Series(end_times)
+            else:
+                raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time` and can not infer from `time_range`')
         try:
             start_time_vals = group_df['start_time'].values
             end_time_vals = group_df['end_time'].values
@@ -837,7 +846,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 group_df['start_time'] = pd.to_datetime(start_time_vals, format=date_format)
                 # convert end_times to date_format for all files in query
                 group_df['end_time'] = pd.to_datetime(end_time_vals, format=date_format)
-
             # method throws ValueError if ranges aren't contiguous
             dates_df = group_df.loc[:, ['start_time', 'end_time']]
             date_range_vals = []

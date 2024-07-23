@@ -663,15 +663,15 @@ class Varlist(data_model.DMDataSet):
             for k, v in parent.pod_vars.items()}
         )
 
+        alt_vars = [k for k, v in cls.vlist_vars.items() if v.is_alternate]
         for v in cls.vlist_vars.values():
             # validate & replace names of alt vars with references to VE objects
             for altv_name in v.alternates:
                 if altv_name not in cls.vlist_vars:
                     raise ValueError((f"Unknown variable name {altv_name} listed "
                                       f"in alternates for varlist entry {v.name}."))
-            linked_alts = [cls.vlist_vars[v_name] for v_name in v.alternates]
+            linked_alts = [cls.vlist_vars[v_name] for v_name in alt_vars]
             v.alternates = linked_alts
-        alt_vars = [k for k, v in cls.vlist_vars.items() if v.is_alternate]
         for a in alt_vars:
             cls.vlist_vars = util.new_dict_wo_key(cls.vlist_vars, a)
 

@@ -345,8 +345,8 @@ class SubprocessRuntimePODWrapper:
                          for k, v in self.pod.pod_env_vars.items() if k not in skip_items}
 
         # append varlist env vars for backwards compatibility with single-run PODs
-        if len(self.pod.multi_case_dict['CASE_LIST']) == 1:
-            for case_name, case_info in self.pod.multi_case_dict['CASE_LIST'].items():
+        if len(self.pod.multicase_dict['CASE_LIST']) == 1:
+            for case_name, case_info in self.pod.multicase_dict['CASE_LIST'].items():
                 for k, v in case_info.items():
                     self.env_vars[k] = v
 
@@ -390,7 +390,7 @@ class SubprocessRuntimePODWrapper:
         f = open(out_file, 'w+')
         assert os.path.isfile(out_file), f"Could not find case env file {out_file}"
         yaml.dump(case_info, f, allow_unicode=True, default_flow_style=False)
-        self.pod.multi_case_dict = case_info
+        self.pod.multicase_dict = case_info
         f.close()
 
     def setup_exception_handler(self, exc):

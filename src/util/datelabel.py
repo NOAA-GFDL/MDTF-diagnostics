@@ -42,6 +42,7 @@ import copy
 import enum
 import re
 import datetime
+import math
 import operator as op
 import warnings
 
@@ -57,7 +58,15 @@ _log = logging.getLogger(__name__)
 # convert a string to a cftime object
 def str_to_cftime(time_str: str, fmt=None, calendar=None):
     if fmt is None:
-        fmt = '%Y%m%d-%H:%M:%S'
+        date_digits = math.floor(math.log10(int(time_str))) + 1
+        # convert int to date type
+        match date_digits:
+            case 6:
+                fmt = '%Y%m'
+            case 8:
+                fmt = '%Y%m%d'
+            case 14:
+                fmt = '%Y%m%d-%H%M%S'
     if calendar is None:
         calendar = 'julian'
     dt = datetime.datetime.strptime(time_str, fmt)

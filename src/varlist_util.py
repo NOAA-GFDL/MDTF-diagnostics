@@ -558,7 +558,7 @@ class Varlist(data_model.DMDataSet):
             )
         v.dest_path = self.variable_dest_path(model_paths, case_name, v)
         try:
-            trans_v = translate.translate(v, from_convention, to_convention)
+            trans_v = translate.translate(v, from_convention)
             assert trans_v is not None, f'translation for varlistentry {v.name} failed'
             v.translation = trans_v
             # copy preferred gfdl post-processing component during translation

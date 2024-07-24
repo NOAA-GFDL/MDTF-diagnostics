@@ -148,23 +148,20 @@ class Fieldlist:
                             realm: str,
                             modifier: str) -> str:
 
-        precip_vars: ['precipitation_rate', 'precipitation_flux']
+        precip_vars = ['precipitation_rate', 'precipitation_flux']
         # search the lookup table for the variable with the specified standard_name
         # realm, modifier, and long_name attributes
         for var_name, var_dict in self.lut.items():
-            # print(var_name)
             if var_dict['standard_name'] == standard_name\
                     and var_dict['realm'] == realm\
                     and var_dict['modifier'] == modifier:
                 if not var_dict['long_name'] or var_dict['long_name'].lower() == long_name.lower():
                     return var_name
             else:
-                precip_rate_flux = list(set(var_dict['standard_name'], standard_name) & set(precip_vars))
-                if len(precip_rate_flux) > 0:
-                    return precip_rate_flux[0]
+                if var_dict['standard_name'] in precip_vars and standard_name in precip_vars:
+                    return var_name
                 else:
                     continue
-
 
     def from_CF(self,
                 standard_name: str,
@@ -340,7 +337,7 @@ class Fieldlist:
 
         return new_coord
 
-    def translate(self, var, from_convention: str, to_convention: str):
+    def translate(self, var, from_convention: str):
         """Returns :class:`TranslatedVarlistEntry` instance, with populated
         coordinate axes. Units of scalar coord slices are translated to the units
         of the conventions' coordinates. Includes logic to translate and rename
@@ -403,8 +400,10 @@ class Fieldlist:
                 if not s.is_scalar:
                     s.is_scalar = True
 
+        new_atts = self.lut[new_name]
+
         return util.coerce_to_dataclass(
-            fl_atts, TranslatedVarlistEntry,
+            new_atts, TranslatedVarlistEntry,
             name=new_name,
             coords=(new_dims + new_scalars),
             convention=self.name, log=var.log

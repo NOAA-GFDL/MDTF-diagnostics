@@ -538,10 +538,11 @@ class Varlist(data_model.DMDataSet):
         available after DataManager and Diagnostic have been configured (ie,
         only known at runtime, not from settings.jsonc.)
 
-        Could arguably be moved into VarlistEntry's init, at the cost of
-        dependency inversion.
         """
-        # Note: VariableTranslator object is instantiated in mdtf_framework with runtime information
+        # Note: VariableTranslator object is instantiated in mdtf_framework with runtime information from the POD
+        # settings file
+
+        # instantiate a translation object for the Data convention
         translate = translation.VariableTranslator().get_convention(to_convention)
         if v.T is not None:
             v.change_coord(

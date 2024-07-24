@@ -148,17 +148,20 @@ class Fieldlist:
                             realm: str,
                             modifier: str) -> str:
 
+        precip_vars = ['precipitation_rate', 'precipitation_flux']
         # search the lookup table for the variable with the specified standard_name
         # realm, modifier, and long_name attributes
         for var_name, var_dict in self.lut.items():
-            # print(var_name)
             if var_dict['standard_name'] == standard_name\
                     and var_dict['realm'] == realm\
                     and var_dict['modifier'] == modifier:
                 if not var_dict['long_name'] or var_dict['long_name'].lower() == long_name.lower():
                     return var_name
             else:
-                continue
+                if var_dict['standard_name'] in precip_vars and standard_name in precip_vars:
+                    return var_name
+                else:
+                    continue
 
     def from_CF(self,
                 standard_name: str,
@@ -184,6 +187,7 @@ class Fieldlist:
             name_only: boolean indicating to not return a modifier--hacky way to accommodate
             a from_CF_name call that does not provide other metadata
         """
+        # self.lut corresponds to POD convention
         assert standard_name in self.lut_standard_names, f'{standard_name} not found in Fieldlist lut_standard_names'
         lut1 = dict()
         for k, v in self.lut.items():
@@ -354,12 +358,12 @@ class Fieldlist:
             long_name = self.get_variable_long_name(var, has_scalar_coords)
 
             fl_entries = from_convention_tl.from_CF(var.standard_name,
-                                                  var.realm,
-                                                  var.modifier,
-                                                  long_name,
-                                                  var.dims.__len__(),
-                                                  has_scalar_coords
-                                                  )
+                                                    var.realm,
+                                                    var.modifier,
+                                                    long_name,
+                                                    var.dims.__len__(),
+                                                    has_scalar_coords
+                                                    )
 
             # Use the POD variable standard name, realm, and modifier to get the corresponding
             # information from FieldList for the DataSource convention
@@ -396,8 +400,10 @@ class Fieldlist:
                 if not s.is_scalar:
                     s.is_scalar = True
 
+        new_atts = self.lut[new_name]
+
         return util.coerce_to_dataclass(
-            fl_atts, TranslatedVarlistEntry,
+            new_atts, TranslatedVarlistEntry,
             name=new_name,
             coords=(new_dims + new_scalars),
             convention=self.name, log=var.log

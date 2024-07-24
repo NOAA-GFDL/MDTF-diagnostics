@@ -162,11 +162,10 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             )
 
         translate = translation.VariableTranslator()
+        to_convention = None
         for key, val in kwargs.items():
-            if 'convention' in key:
+            if 'to_convention' in key:
                 to_convention = val.lower()
-            else:
-                to_convention = None
         # check if pod variable standard name is the same as translation standard name
         if std_name != v.translation.standard_name:
             try:
@@ -178,9 +177,9 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
                              'translate \'%s\'; varlist unaltered.'), self.__class__.__name__,
                             v.full_name, exc, v_to_translate.standard_name)
                 return None
-            new_v = copy_as_alternate(v)
-            new_v.translation = new_tv
-            v.alternates.append(new_v)
+            v.alternates.append(v.translation)
+            #new_v = copy_as_alternate(v)
+            #new_v.translation = new_tv
             v.translation.name = new_tv.name
             v.translation.standard_name = new_tv.standard_name
             v.translation.units = new_tv.units
@@ -218,6 +217,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
                       )
         ds[tv.name].attrs['units'] = str(new_units)
         tv.units = new_units
+        tv.standard_name = var.standard_name
         # actual conversion done by ConvertUnitsFunction; this assures
         # units.convert_dataarray is called with correct parameters.
         return ds
@@ -1281,7 +1281,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """
         for case_name, case_dict in case_list.items():
             for v in case_dict.varlist.iter_vars():
-                self.edit_request(v, convention=case_dict.convention)
+                self.edit_request(v, to_convention=case_dict.convention)
         # get the initial model data subset from the ESM-intake catalog
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():

@@ -62,7 +62,6 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     def read_varlist(self, parent, append_vars: bool=False):
         self.varlist = varlist_util.Varlist.from_struct(parent, append_vars)
 
-
     def set_date_range(self, startdate: str, enddate: str):
         self.date_range = util.DateRange(start=startdate, end=enddate)
 

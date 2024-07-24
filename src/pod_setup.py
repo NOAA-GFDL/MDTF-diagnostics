@@ -292,7 +292,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
 
         for case_name, case_dict in runtime_config.case_list.items():
             cases[case_name].read_varlist(self, append_vars=append_vars)
-            # Translate the data if desired and the pod convention does not match the case convention
+            # Translate the varlistEntries from the POD convention to the data convention if desired and the pod convention does not match the case convention
             data_convention = case_dict.convention.lower()
             if runtime_config.translate_data and pod_convention != data_convention:
                 self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')

@@ -139,13 +139,13 @@ class MDTFCFAccessorMixin(object):
         return ds.coords[t_names[0]].attrs.get('calendar', None)
 
     def _old_axes_dict(self, var_name=None):
-        """Code for the "axes" accessor behavior as defined in `cf\_xarray
+        """Code for the "axes" accessor behavior as defined in `cf_xarray
         <https://cf-xarray.readthedocs.io/en/latest/generated/xarray.DataArray.cf.axes.html#xarray.DataArray.cf.axes>`__,
         which we override in various ways below.
 
         Args:
             var_name (optional): If supplied, return a dict containing the subset
-                of coordinates used by the dependent variable *var\_name*, instead
+                of coordinates used by the dependent variable *var_name*, instead
                 of all coordinates in the dataset.
 
         Returns:
@@ -305,10 +305,10 @@ class MDTFCFDatasetAccessorMixin(MDTFCFAccessorMixin):
 
         Args:
             var_name (optional): If supplied, return a dict containing the subset
-                of coordinates used by the dependent variable *var\_name*, instead
+                of coordinates used by the dependent variable *var_name*, instead
                 of all coordinates in the dataset.
             filter_set (optional): Optional iterable of coordinate names. If
-                supplied, restrict the returned dict to coordinates in *filter\_set*.
+                supplied, restrict the returned dict to coordinates in *filter_set*.
 
         Returns:
             Dict mapping axis labels to lists of the Dataset variables themselves,
@@ -629,7 +629,7 @@ class DefaultDatasetParser:
 
     def normalize_unit(self, new_attr_d, attr_d):
         """Hook to convert unit strings to values that are correctly parsed by
-        `cfunits <https://ncas-cms.github.io/cfunits/>`__\/`UDUnits2
+        `cfunits <https://ncas-cms.github.io/cfunits/>`__/`UDUnits2
         <https://www.unidata.ucar.edu/software/udunits/>`__. Currently we handle
         the case where "mb" is interpreted as "millibarn", a unit of area (see
         UDUnits `mailing list
@@ -1019,7 +1019,7 @@ class DefaultDatasetParser:
                                        our_var.name, our_var.value, our_var.units)
                         delattr(our_var, attr_name)
 
-        assert (hasattr(our_var, 'is_scalar') and our_var.is_scalar),\
+        assert (hasattr(our_var, 'is_scalar') and our_var.is_scalar), \
             self.log.error('is_scalar att missing and/or is_scalar is false for ', our_var)
         # Check equivalence of units: if units inequivalent, raises MetadataEvent
         try:
@@ -1230,28 +1230,28 @@ class DefaultDatasetParser:
         """Replaces the units on the time coordinate found in var if
            one is supplied in the ds, if not replace with ""
         """
-        
+
         if 'units' in ds['time'].attrs:
-            ds_T_units = ds['time'].attrs['units']    
+            ds_T_units = ds['time'].attrs['units']
         elif 'units' in ds['time'].encoding:
             ds_T_units = ds['time'].encoding['units']
         else:
             ds_T_units = None
 
         var_T_units = var.translation.T.units
-        
+
         if ds_T_units is not None:
             if str(var_T_units) != str(ds_T_units):
                 var.translation.T.units = ds_T_units
                 self.log.info("Units for 'time' on var '%s' found in dataset; setting to '%s'.",
-                               var.translation.name, ds_T_units)
+                              var.translation.name, ds_T_units)
         else:
             var.translation.T.units = ""
             self.log.info("Units for 'time' on var '%s' not found in dataset; setting to ''.",
                           var.translation.name)
- 
+
         return
-    
+
     def check_metadata(self, ds_var, *attr_names):
         """Wrapper for :meth:`~DefaultDatasetParser.normalize_attr`, specialized
         to the case of getting a variable's standard_name.

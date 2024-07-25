@@ -19,8 +19,14 @@ begin
 ; Set variables for two runs.
 
 
-  date_off = getenv("date_int_offset")
-  date_offset = stringtointeger(date_off) ; 1 for native CESM, 0 for GFDL & CMIP
+  ; date_off = getenv("date_int_offset")
+  ; date_offset = stringtointeger(date_off) ; 1 for native CESM, 0 for GFDL & CMIP
+  
+  date_offset = 0
+  if getenv("convention").eq."CESM" then
+    date_offset = 1
+  end if
+  print(date_offset)
 
   setfileoption("nc", "SuppressClose", False)
 
@@ -34,8 +40,8 @@ begin
   
 ;  ps_dir = "/datalocal/haystack/cchen/dcycle/"
   ps_dir = getenv("WORK_DIR")+"/model/PS/"
-  firstyr = stringtoint(getenv("startdate"))
-  lastyr = stringtoint(getenv("enddate"))
+  firstyr = stringtoint(str_get_cols(getenv("startdate"),0,3))
+  lastyr = stringtoint(str_get_cols(getenv("enddate"),0,3))
   print(firstyr)
   print(lastyr)
 ;;;;; For model only   ;;;;;

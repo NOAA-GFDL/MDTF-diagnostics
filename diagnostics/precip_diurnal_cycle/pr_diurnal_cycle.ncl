@@ -13,7 +13,7 @@ begin
 
 case_desc = getenv("CASENAME")
 casename = getenv("CASENAME")
-dir_stub = getenv("OR_DIR")
+dir_stub = getenv("WORK_DIR")
 filename = getenv("PR_FILE")
 ;fincl = getenv("fincl")
 ver = getenv("ver")

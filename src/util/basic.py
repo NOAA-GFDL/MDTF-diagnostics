@@ -575,7 +575,7 @@ def filter_kwargs(kwarg_dict, function):
         function (function): Function to be called.
 
     Returns:
-        dict: Subset of *key*\:*value* entries of *kwarg_dict* where *key*\s are
+        dict: Subset of *key*:*value* entries of *kwarg_dict* where *key*s are
         keyword arguments recognized by *function*.
     """
     named_args = set(function.__code__.co_varnames)
@@ -690,7 +690,8 @@ def deactivate(obj, exc, level=None):
         if obj._parent is not None:
             # call handler on parent, which may change parent and/or siblings
             obj._parent.child_deactivation_handler(obj, exc)
-            obj._parent.child_status_update()
+            if obj._parent._children is not None:
+                obj._parent.child_status_update()
         # update children (deactivate all)
         for obj in obj.iter_children(status_neq=ObjectStatus.FAILED):
             obj.deactivate(PropagatedEvent(exc=exc, parent=obj), level=None)

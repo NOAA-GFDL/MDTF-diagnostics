@@ -285,6 +285,8 @@ class Fieldlist:
             if v.get('standard_name') == coord.standard_name:
                 lut1.update({k: v})
 
+        if 'p10' in lut1:
+            print('hurr')
         if len(lut1) > 1:
             if ax in lut1.keys():
                 new_coord = lut1[ax]
@@ -297,22 +299,35 @@ class Fieldlist:
                 # value is contained by the CV string value. This is not robust, but sufficient for testing purposes
 
                 if bool(coord.value):
-                    for v in lut1.values():
+                    lut_val = None
+                    for k, v in lut1.items():
                         if v.get('value', None):
-                            if isinstance(coord.value, int) and isinstance(v.get('value'), str):
-                                v_int = int(float(v.get('value')))
+                            lut_val = v.get('value')
+                            if isinstance(coord.value, int) and isinstance(lut_val, str):
+                                v_int = int(float(lut_val))
                                 if v_int > coord.value and v_int/coord.value == 100 \
                                         or v_int < coord.value and coord.value/v_int == 100 or \
                                         v_int == coord.value:
                                     new_coord = v
                                     break
-                            elif isinstance(coord.value, str) and isinstance(v.get('value'), str):
-                                if coord.value in v.get('value'):
+                            elif isinstance(coord.value, str) and isinstance(lut_val, str):
+                                if coord.value in lut_val:
                                     new_coord = v
                                     break
                             else:
                                 raise KeyError(f'coord value and/or Varlist value could not be parsed'
                                                f' by translate_coord')
+                        elif v.get('requested', None):
+                            lut_val = v.get('requested')
+                            if isinstance(lut_val, list) and k == 'plev19':
+                                for val in lut_val:
+                                    if isinstance(coord.value, int) and isinstance(val, str):
+                                        v_int = int(float(val))
+                                        if v_int > coord.value and v_int / coord.value == 100 \
+                                                or v_int < coord.value and coord.value / v_int == 100 or \
+                                                v_int == coord.value:
+                                            new_coord = v
+                                            break
         else:
             new_coord = [lut1.values()][0]
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
@@ -390,7 +405,7 @@ class Fieldlist:
             assert not var.use_exact_name, "assertion error: var.use_exact_name set to true for " + var.full_name
             # change translated name to request the slice instead of the full var
             # keep the scalar_coordinate value attribute on the translated var
-            new_name = self.create_scalar_name(
+            new_scalar_name = self.create_scalar_name(
                 var.scalar_coords[0], new_scalars[0],
                 new_name, log=var.log)
             # append an is_scalar attribute for the coordinate check in
@@ -399,6 +414,8 @@ class Fieldlist:
             for s in new_scalars:
                 if not s.is_scalar:
                     s.is_scalar = True
+            if new_scalar_name in self.lut:
+                new_name = new_scalar_name
 
         new_atts = self.lut[new_name]
 

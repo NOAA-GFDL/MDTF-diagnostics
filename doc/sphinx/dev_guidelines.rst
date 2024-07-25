@@ -14,7 +14,7 @@ The framework itself is written in Python, and can call PODs written in any scri
 
 - If your POD was previously developed in NCL or R (and development is *not* funded through a CPO grant), you do not need to re-write existing scripts in Python 3 if doing so is likely to introduce new bugs into stable code, especially if you’re unfamiliar with Python.
 
-- If scripts were written in closed-source languages, translation to Python 3.11 or above is required.
+- If scripts were written in closed-source languages, translation to Python 3.12 or above is required.
 
 Preparation for POD implementation
 ----------------------------------
@@ -140,4 +140,3 @@ called. See the :doc:`command line reference <ref_cli>` for documentation on com
 Avoid making assumptions about the machine on which the framework will run beyond what’s listed here; a development
 priority is to interface the framework with cluster and cloud job schedulers to enable individual PODs to run in a
 concurrent, distributed manner.
-

@@ -369,7 +369,7 @@ napoleon_include_private_with_doc = False
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3.11', None),
+    'python': ('https://docs.python.org/3.12', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'xarray': ('https://xarray.pydata.org/en/stable/', None)

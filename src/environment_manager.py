@@ -458,6 +458,7 @@ class SubprocessRuntimePODWrapper:
                 pass
             self.process = None
 
+        log_str = ""
         if self.pod.status != util.ObjectStatus.INACTIVE:
             if retcode == 0:
                 log_str = f"{self.pod.full_name} exited successfully (code={retcode})."

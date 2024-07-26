@@ -404,7 +404,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         return s
 
     def iter_associated_files_keys(self, status=None, status_neq=None):
-        """Yield :class:`~data_manager.DataKeyBase`\s
+        """ Yield file key
         from v's *associated_files* dict, filtering out those DataKeys
         that have beeneliminated via previous failures in fetching or preprocessing.
         """
@@ -416,7 +416,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         yield from list(iter_)
 
     def iter_data_keys(self, status=None, status_neq=None):
-        """Yield :class:`~data_manager.DataKeyBase`\s
+        """Yield data key
         from v's *data* dict, filtering out those DataKeys that have been
         eliminated via previous failures in fetching or preprocessing.
         """

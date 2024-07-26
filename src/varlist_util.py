@@ -670,7 +670,6 @@ class Varlist(data_model.DMDataSet):
                 if vv == 'alternate':
                     alt_vars.append(k)
         vvars = tuple(parent.pod_vars.keys())
-        print(vvars)
         for k, v in parent.pod_vars.items():
             # validate & replace names of alt vars with references to VE objects
             if v.get('alternates', None) is not None:

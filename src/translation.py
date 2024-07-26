@@ -285,8 +285,6 @@ class Fieldlist:
             if v.get('standard_name') == coord.standard_name:
                 lut1.update({k: v})
 
-        if 'p10' in lut1:
-            print('hurr')
         if len(lut1) > 1:
             if ax in lut1.keys():
                 new_coord = lut1[ax]
@@ -301,6 +299,8 @@ class Fieldlist:
                 if bool(coord.value):
                     lut_val = None
                     for k, v in lut1.items():
+                        # some plev entries have a single value that might match the requested level
+                        # (e.g., plev700, plev850)
                         if v.get('value', None):
                             lut_val = v.get('value')
                             if isinstance(coord.value, int) and isinstance(lut_val, str):
@@ -318,6 +318,9 @@ class Fieldlist:
                                 raise KeyError(f'coord value and/or Varlist value could not be parsed'
                                                f' by translate_coord')
                         elif v.get('requested', None):
+                            # if no single-level plev coordinate matches the requested pressure level,
+                            # search plev19 for the correct level, set the coordinate value to the level if found,
+                            # and use the rest of the plev attributes to populate the coordinate information
                             lut_val = v.get('requested')
                             if isinstance(lut_val, list) and k == 'plev19':
                                 for val in lut_val:
@@ -399,6 +402,7 @@ class Fieldlist:
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]
         new_scalars = [self.translate_coord(dim, class_dict=class_dict, log=var.log) for dim in var.scalar_coords]
+        new_atts = self.lut[new_name]
         if len(new_scalars) > 1:
             raise NotImplementedError()
         elif len(new_scalars) == 1:
@@ -414,10 +418,9 @@ class Fieldlist:
             for s in new_scalars:
                 if not s.is_scalar:
                     s.is_scalar = True
-            if new_scalar_name in self.lut:
                 new_name = new_scalar_name
-
-        new_atts = self.lut[new_name]
+                if new_name in self.lut:
+                    new_atts = self.lut[new_name]
 
         return util.coerce_to_dataclass(
             new_atts, TranslatedVarlistEntry,

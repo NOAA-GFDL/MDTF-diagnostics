@@ -412,15 +412,16 @@ class Fieldlist:
             new_scalar_name = self.create_scalar_name(
                 var.scalar_coords[0], new_scalars[0],
                 new_name, log=var.log)
+
+            new_name = new_scalar_name
+            if new_name in self.lut:
+                new_atts = self.lut[new_name]
             # append an is_scalar attribute for the coordinate check in
             # data_model._DMDimensionsMixin.__post_init__() call from
             # TranslatedVarlistEntry
             for s in new_scalars:
                 if not s.is_scalar:
                     s.is_scalar = True
-                new_name = new_scalar_name
-                if new_name in self.lut:
-                    new_atts = self.lut[new_name]
 
         return util.coerce_to_dataclass(
             new_atts, TranslatedVarlistEntry,

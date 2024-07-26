@@ -404,7 +404,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         return s
 
     def iter_associated_files_keys(self, status=None, status_neq=None):
-        """Yield :class:`~data_manager.DataKeyBase`\s
+        """ Yield file key
         from v's *associated_files* dict, filtering out those DataKeys
         that have beeneliminated via previous failures in fetching or preprocessing.
         """
@@ -416,7 +416,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         yield from list(iter_)
 
     def iter_data_keys(self, status=None, status_neq=None):
-        """Yield :class:`~data_manager.DataKeyBase`\s
+        """Yield data key
         from v's *data* dict, filtering out those DataKeys that have been
         eliminated via previous failures in fetching or preprocessing.
         """
@@ -664,15 +664,21 @@ class Varlist(data_model.DMDataSet):
             for k, v in parent.pod_vars.items()}
         )
 
-        alt_vars = [k for k, v in cls.vlist_vars.items() if v.is_alternate]
-        for v in cls.vlist_vars.values():
+        alt_vars = []
+        for k, v in parent.pod_vars.items():
+            for vv in v.values():
+                if vv == 'alternate':
+                    alt_vars.append(k)
+        vvars = tuple(parent.pod_vars.keys())
+        for k, v in parent.pod_vars.items():
             # validate & replace names of alt vars with references to VE objects
-            for altv_name in v.alternates:
-                if altv_name not in cls.vlist_vars:
-                    raise ValueError((f"Unknown variable name {altv_name} listed "
-                                      f"in alternates for varlist entry {v.name}."))
-            linked_alts = [cls.vlist_vars[v_name] for v_name in alt_vars]
-            v.alternates = linked_alts
+            if v.get('alternates', None) is not None:
+                for altv_name in v.get('alternates'):
+                    if altv_name not in vvars:
+                        raise ValueError((f"Unknown variable name {altv_name} listed "
+                                          f"in alternates for varlist entry {v.name}."))
+                linked_alts = [cls.vlist_vars[v_name] for v_name in alt_vars]
+                cls.vlist_vars[k].alternates = linked_alts
         for a in alt_vars:
             cls.vlist_vars = util.new_dict_wo_key(cls.vlist_vars, a)
 

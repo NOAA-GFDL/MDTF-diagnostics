@@ -67,11 +67,11 @@ class HTMLSourceFileMixin:
 
 
     def pod_html(self, pod):
-        """Path to *pod*\'s html output file in the working directory."""
+        """Path to *pod*'s html output file in the working directory."""
         return os.path.join(pod.paths.POD_WORK_DIR, self.pod_header_html_template_file_name(pod))
 
     def write_data_log_file(self):
-        """Writes \*.data.log file to output containing info on data files used.
+        """Writes *.data.log file to output containing info on data files used.
         """
         log_file = io.open(
             os.path.join(self.WORK_DIR, self.obj.name+".data.log"),
@@ -162,15 +162,15 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         )
 
     def convert_pod_figures(self, src_subdir: str, dest_subdir: str):
-        """Convert all vector graphics in ``$POD_WORK_DIR/`` *src\_subdir* to .png
+        """Convert all vector graphics in ``$POD_WORK_DIR/`` *src_subdir* to .png
         files using `ghostscript <https://www.ghostscript.com/>`__ (included in
-        the \_MDTF\_base conda environment).
+        the _MDTF_base conda environment).
 
         All vector graphics files (identified by extension) in any subdirectory
-        of ``$POD_WORK_DIR/`` *src\_subdir* are converted to .png files by running
-        ghostscript in a subprocess. Afterwards, any bitmap files (identified by
-        extension) in any subdirectory of ``$POD_WORK_DIR/`` *src\_subdir* are
-        moved to ``$POD_WORK_DIR/`` *dest\_subdir*, preserving subdirectories (via
+        of ``$POD_WORK_DIR/`` *src_subdir* are converted to .png files by running
+        ghostscript in a subprocess. Afterward, any bitmap files (identified by
+        extension) in any subdirectory of ``$POD_WORK_DIR/`` *src_subdir* are
+        moved to ``$POD_WORK_DIR/`` *dest_subdir*, preserving subdirectories (via
         :func:`~util.recursive_copy`.)
 
         Args:

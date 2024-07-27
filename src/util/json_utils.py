@@ -12,7 +12,7 @@ import logging
 _log = logging.getLogger(__name__)
 
 
-def get_config_file_type(file_path: str)->str:
+def get_config_file_type(file_path: str) -> str:
     """Verify that configuration file is json or yaml"""
     ext = os.path.splitext(file_path)[-1].lower()
 
@@ -43,7 +43,7 @@ def strip_comments(str_, delimiter=None):
         # If delimiter appears quoted in a string, don't want to treat it as
         # a comment. So for each occurrence of delimiter, count number of
         # "s to its left and only truncate when that's an even number.
-        # First we get rid of \-escaped single "s.
+        # First we get rid of -escaped single "s.
         replaced_line = lines[i].replace('\\\"', ESCAPED_QUOTE_PLACEHOLDER)
         line_parts = replaced_line.split(delimiter)
         quote_counts = [s.count('"') for s in line_parts]
@@ -63,7 +63,7 @@ def strip_comments(str_, delimiter=None):
 
 
 def parse_json(str_):
-    """Parse JSONC (JSON with ``//``-comments) string *str\_* into a Python object.
+    """Parse JSONC (JSON with ``//``-comments) string *str_* into a Python object.
     Comments are discarded. Wraps standard library :py:func:`json.loads`.
 
     Syntax errors in the input (:py:class:`~json.JSONDecodeError`) are passed

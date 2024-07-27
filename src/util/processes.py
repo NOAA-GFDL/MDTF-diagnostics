@@ -152,7 +152,7 @@ def run_shell_command(command, env=None, cwd=None, log=_log):
             nonzero exit code. Stderr for that command is stored in the ``output``
             attribute of the exception.
     """
-    # shouldn't lookup on each invocation, but need abs path to bash in order
+    # shouldn't look up on each invocation, but need abs path to bash in order
     # to pass as executable argument. Pass executable argument because we want
     # bash specifically (not default /bin/sh, and we save a bit of overhead by
     # starting bash directly instead of from sh.)

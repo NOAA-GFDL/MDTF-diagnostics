@@ -436,7 +436,7 @@ ObjectStatus.__doc__ = """
 - *NOTSET*: the object hasn't been fully initialized.
 - *ACTIVE*: the object is currently being processed by the framework.
 - *INACTIVE*: the object has been initialized, but isn't being processed (e.g.,
-  alternate :class:`~diagnostic.VarlistEntry`\s).
+  alternate :class:`~varlist_util.VarlistEntry`s).
 - *FAILED*: processing of the object has encountered an error, and no further
   work will be done.
 - *SUCCEEDED*: Processing finished successfully.
@@ -460,7 +460,7 @@ class MDTF_ID:
     def __init__(self, id_=None):
         """
         Args:
-            id\_ (optional): hard-code an ID instead of generating one.
+            id_ (optional): hard-code an ID instead of generating one.
         """
         if id_ is None:
             # set node=0 to eliminate hostname; only dependent on system clock
@@ -508,8 +508,8 @@ def is_iterable(obj):
     Returns:
         bool: True if *obj* is an iterable collection and not a string.
     """
-    return isinstance(obj, collections.abc.Iterable) \
-           and not isinstance(obj, str)  # py3 strings have __iter__
+    return (isinstance(obj, collections.abc.Iterable)
+            and not isinstance(obj, str))  # py3 strings have __iter__
 
 
 def to_iter(obj, coll_type=list):
@@ -581,12 +581,12 @@ def filter_kwargs(kwarg_dict, function):
     named_args = set(function.__code__.co_varnames)
     # if 'kwargs' in named_args:
     #    return kwarg_dict # presumably can handle anything
-    return dict((k, kwarg_dict[k]) for k in named_args \
+    return dict((k, kwarg_dict[k]) for k in named_args
                 if k in kwarg_dict and k not in ['self', 'args', 'kwargs'])
 
 
 def splice_into_list(list_, splice_d, key_fn=None, log=_log):
-    """Splice sub-lists (values of *splice_d*) into list *list\_* after their
+    """Splice sub-lists (values of *splice_d*) into list *list_* after their
     corresponding entries (keys of *slice_d*). Example:
 
     .. code-block:: python
@@ -595,15 +595,15 @@ def splice_into_list(list_, splice_d, key_fn=None, log=_log):
        ['a', 'b', 'b1', 'b2', 'c']
 
     Args:
-        list\_ (list): Parent list to splice sub-lists into.
+        list_ (list): Parent list to splice sub-lists into.
         splice_d (dict): Sub-lists to splice in. Keys are entries in *list\_*
             and values are the sub-lists to insert after that entry. Duplicate
             or missing entries are handled appropriately.
         key_fn (function): Optional. If supplied, function applied to elements
-            of *list\_* to compare to keys of *splice_d*.
+            of *list_* to compare to keys of *splice_d*.
 
     Returns:
-        Spliced *list\_* as described above.
+        Spliced *list_* as described above.
     """
     if key_fn is None:
         key_fn = lambda x: x
@@ -648,7 +648,7 @@ def plugin_key(plugin_name):
 def word_wrap(str_):
     """Clean whitespace and perform 80-column word wrapping for multi-line help
     and description strings. Explicit paragraph breaks must be encoded as a
-    double newline \(``\\n\\n``\).
+    double newline (``\\n\\n``).
     """
     paragraphs = textwrap.dedent(str_).split('\n\n')
     paragraphs = [re.sub(r'\s+', ' ', s).strip() for s in paragraphs]

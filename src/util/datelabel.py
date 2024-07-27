@@ -54,7 +54,8 @@ import logging
 
 _log = logging.getLogger(__name__)
 
-# match-case statment to give date format
+
+# match-case statement to give date format
 # input can be int or str
 def date_fmt(date):
     if isinstance(date, str):
@@ -73,7 +74,9 @@ def date_fmt(date):
             fmt = '%Y%m%d-%H%M%S'
     return fmt
 
+
 # convert a string to a cftime object
+
 def str_to_cftime(time_str: str, fmt=None, calendar=None):
     if fmt is None:
         fmt = date_fmt(time_str)
@@ -99,7 +102,7 @@ def cftime_to_str(cf_time: cftime.datetime, fmt=None):
 # ===============================================================
 # following adapted from Alexandre Decan's python-intervals
 # https://github.com/AlexandreDecan/python-intervals ; LGPLv3
-# We neglect the case of noncontiguous or semi-infinite intervals here
+# We neglect the case of noncontinuous or semi-infinite intervals here
 
 
 class AtomicInterval(object):

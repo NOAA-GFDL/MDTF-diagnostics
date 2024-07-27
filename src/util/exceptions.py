@@ -29,7 +29,7 @@ def exit_on_exception(exc, msg=None):
 
 def exit_handler(code=1, msg=None):
     """Wraps all calls to :py:func:`sys.exit`; could do additional
-    cleanup not handled by atexit() here.
+    cleanup not handled by exit() here.
     """
     if msg:
         print(msg)

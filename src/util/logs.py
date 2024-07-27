@@ -826,11 +826,11 @@ def transfer_log_cache(target_log=None, close=False):
 class MDTFObjectBase(metaclass=basic.MDTFABCMeta):
     """Base class providing shared functionality for the case object hierarchy, which is:
 
-    - :class:`~data_manager.DataSourceBase`\s belonging to a run of the package;
-    - :class:`~pod_setup.PODObject`\s POD belonging to a
-      :class:`~data_manager.DataSourceBase`;
-    - :class:`~diagnostic.VarlistEntry`\s (requested model variables) belonging
-      to a :class:`~diagnostic.Diagnostic`.
+    - :class:`~data_sources.DataSourceBase`s belonging to a run of the package;
+    - :class:`~pod_setup.PODObject`s POD belonging to a
+      :class:`~data_sources.DataSourceBase`;
+    - :class:`~varlist_util.VarlistEntry`s (requested model variables) belonging
+      to a :class:`~pod_setup.PodObject`.
     """
     _id: basic.MDTF_ID = None
     name: str = dataclass.MANDATORY

@@ -24,7 +24,7 @@ def get_config_file_type(file_path: str)->str:
 
 
 def strip_comments(str_, delimiter=None):
-    """Remove comments from *str\_*. Comments are taken to start with an
+    """Remove comments from *str_*. Comments are taken to start with an
     arbitrary *delimiter* and run to the end of the line.
     """
     # would be better to use shlex, but that doesn't support multi-character

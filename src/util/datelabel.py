@@ -174,7 +174,7 @@ class AtomicInterval(object):
         """
         return (
                 self._lower > self._upper or
-                (self._lower == self._upper \
+                (self._lower == self._upper
                  and (self._left == self.OPEN or self._right == self.OPEN))
         )
 
@@ -467,9 +467,9 @@ class AtomicInterval(object):
 
 class DatePrecision(enum.IntEnum):
     """:py:class:`~enum.IntEnum` to encode the recognized levels of precision
-    for :class:`Date`\s and :class:`DateRange`\s. Example:
+    for :class:`Date`s and :class:`DateRange`s. Example:
 
-    .. code-block:: python
+    . code-block:: python
 
        >>> Date('200012').precision == DatePrecision.MONTH
        True
@@ -753,8 +753,8 @@ class DateRange(AtomicInterval, DateMixin):
 
     @classmethod
     def from_date_span(cls, *args):
-        """Return a DateRange coresponding to the interval containing a set of
-        :class:`Date`\s. Differs from :meth:`from_contiguous_span` in that we
+        """Return a DateRange corresponding to the interval containing a set of
+        :class:`Date`s. Differs from :meth:`from_contiguous_span` in that we
         don't expect intervals to be contiguous.
         """
         dt_args = [Date._coerce_to_self(arg) for arg in args]
@@ -854,7 +854,7 @@ class Date(DateRange):
     the interval (which is why this inherits from :class:`DateRange` and not vice
     versa.)
 
-    Date objects are mapped to :py:class:`~datetime.datetime`\s representing the
+    Date objects are mapped to :py:class:`~datetime.datetime`s representing the
     *start* of the interval implied by their precision, e.g. Date('2000-05') maps
     to 0:00 on 1 May 2000.
 

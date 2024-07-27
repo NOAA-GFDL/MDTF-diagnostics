@@ -233,7 +233,7 @@ class MDTFEvent(MDTFBaseException):
 
 
 class FatalErrorEvent(MDTFBaseException):
-    """Dummy class used to "convert" :class:`MDTFEvent`\s to fatal errors
+    """Dummy class used to "convert" :class:`MDTFEvent`s to fatal errors
     (resulting in deactivation of a variable, pod or case.) via exception
     chaining.
     """

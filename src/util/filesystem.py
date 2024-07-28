@@ -130,7 +130,7 @@ def check_executable(exec_name: str) -> bool:
     return find_executable(exec_name) is not None
 
 
-def find_files(src_dirs: tuple[str, list], filename_globs: tuple[str, list], n_files=None) -> list:
+def find_files(src_dirs: str | list, filename_globs: str | list, n_files=None) -> list:
     """Return list of files in *src_dirs*, or any subdirectories, matching any
     of *filename_globs*. Wraps Python :py:class:`glob.glob`.
 

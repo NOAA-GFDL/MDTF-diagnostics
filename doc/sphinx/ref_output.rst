@@ -31,7 +31,7 @@ To explain the contents within:
    * :code-rst:`MDTF_postprocessed_data.csv` and :code-rst:`MDTF_postprocessed_data.json` are two of the most
      important files in this folder as far as the POD is concerned as these file correspond to the intake-ESM catalog 
      generated for the data processed by the framework.
-   * The catalog points towards data that can be found in the folders :code-rst:`MDTF_CMIP_Synthetic_*`
+   * The catalog points towards data that can be found in the folders :code-rst:`MDTF_CMIP_Synthetic_*`.
    * The rest of the files serve as a method of logging information about what the framework did and various issues that
      might have arised. Information inside these files could greatly help both POD developers and the framework 
      development team!
@@ -57,8 +57,8 @@ This directory, :code-rst:`example_multicase`, contains all of the output for th
 These files and folders being:
    * :code-rst:`case_info.yml` and :code-rst:`config_save.json` provide information about the cases ran for the POD.
    * :code-rst:`model/` and :code-rst:`obs/` contain both plots and data for both the model data and observation data respectively.
-   * :code-rst:`index.html` is the compiled html page for the POD run. This serves as the main way to view all related plots for this POD in
+   * :code-rst:`index.html` is the compiled html page for the POD run. This serves as the main way to view all related plots for this POD in a
      nice, condensed manner.
-   * There can also be found various log files which function the same as mentioned previously.
+   * There also exists various log files which function the same as mentioned previously.
 
 If multiple PODs were to be ran, you would find such a directory for each POD in the :code-rst:`MDTF_output` directory.

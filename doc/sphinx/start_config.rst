@@ -50,7 +50,7 @@ model datasets and verify POD data requirements. The MDTF-diagnostics package pr
 that uses `ecgtools <https://ecgtools.readthedocs.io/en/latest/>`__ APIs to generate data catalogs.
 
 The NOAA-GFDL workflow team also maintains an `intake-ESM catalog builder
-<https://noaa-gfdl.github.io/CatalogBuilder/>`__ that uses the directory structure to generate data catalogs.
+<https://noaa-gfdl.github.io/CatalogBuilder>`__ that uses the directory structure to generate data catalogs.
 It is optimized for the files stored on GFDL systems, but can be configured to generate catalogs on a local file system.
 The GFDL catalog builder has canned cases to embrace interoperability with the MDTF’s preprocessor rewrite and support
 for ongoing GFDL model development. The package has been tested on GFDL AM5 simulations and CMIP directory structures

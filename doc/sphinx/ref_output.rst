@@ -4,7 +4,7 @@
 Output Reference
 ===============================
 After a run of the MDTF framework is completed, the output can be found in the 
-output/work directory that is indicated in the runtime_config.jsonc file that is
+output/work directory that is indicated in the :code-rst:`runtime_config.jsonc` file that is
 passed as a command-line argument. The default setting is normally :code-rst:`"../wkdir".` 
 In this section, we will take a look into such an output directory and explain 
 the structure as well as the files within.

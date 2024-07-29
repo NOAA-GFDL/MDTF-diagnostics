@@ -57,8 +57,7 @@ for ongoing GFDL model development. The package has been tested on GFDL AM5 simu
 at this time. Please open a `GitHub issue <https://github.com/NOAA-GFDL/CatalogBuilder/issues>`__ or start
 a `discussion<https://github.com/NOAA-GFDL/CatalogBuilder/discussions>`__ if you need assistance with the GFDL builder.
 
-Both catalog builders are community-developed tools, and we encourage MDTF-diagnostics users to try running both catalog
-builders. Feel free to extend either tool to suit your needs, and consider submitting your additions to the appropriate
+We encourage MDTF-diagnostics users to try running both catalog builders. Feel free to extend either tool to suit your needs, and consider submitting your additions to the appropriate
 repository(ies).
 
 Adding your observational data files

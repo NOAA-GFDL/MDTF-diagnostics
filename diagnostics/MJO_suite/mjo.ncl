@@ -65,7 +65,7 @@ do n = 50,nfil-51
 end do
 
 ; MAKE PLOTS
-psplot = getenv("WK_DIR")+"/model/PS/"+casename+".MJO"
+psplot = getenv("WORK_DIR")+"/model/PS/"+casename+".MJO"
 wks = gsn_open_wks("ps",psplot)
 plot = new(3,graphic)
 res = True

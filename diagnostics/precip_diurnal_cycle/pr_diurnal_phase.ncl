@@ -218,8 +218,8 @@ ps_name = ps_name0+"_pr."+region_plot+".dc."
 ;      end if
 ;      print(ps_dir+ps_name+sprinti("%0.4i",min(mrun_years))+"."+season+tphase)
             
-       wks1 = gsn_open_wks("ps",ps_dir+"/"+ps_name1+season)
-       wks2 = gsn_open_wks("ps",ps_dir+"/"+ps_name2+season)
+       wks1 = gsn_open_wks("ps",ps_dir+ps_name1+season)
+       wks2 = gsn_open_wks("ps",ps_dir+ps_name2+season)
 
       nmonths = dimsizes(months)
       nyears = dimsizes(mrun_years)

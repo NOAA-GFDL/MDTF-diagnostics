@@ -1110,8 +1110,8 @@ with no time dependence.
 class DateFrequency(datetime.timedelta):
     """Class representing a frequency or time period.
 
-    .. warning::
-       Period lengths are *not* defined accurately, eg. a year is taken as
+    . warning::
+       Period lengths are *not* defined accurately; e.g., a year is taken as
        365 days and a month is taken as 30 days. For this reason, we do not
        implement addition and subtraction of DateFrequency objects to Dates,
        as is possible for :py:class:`~datetime.timedelta` and

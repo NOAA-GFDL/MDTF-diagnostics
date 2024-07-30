@@ -69,7 +69,6 @@ import yaml
 # Part 1: Read in the model data
 # ------------------------------
 # Debugging: remove following line in final PR
-# os.environ["WORK_DIR"] = "/Users/jess/mdtf/wkdir/MDTF_output/example_multicase"
 work_dir = os.environ["WORK_DIR"]
 # Receive a dictionary of case information from the framework
 print("reading case_info")

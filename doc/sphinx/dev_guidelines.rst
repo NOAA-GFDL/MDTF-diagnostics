@@ -1,5 +1,4 @@
 .. _ref-dev-guidelines:
-
 POD development guidelines
 ==========================
 
@@ -59,6 +58,11 @@ instructions below, and help understand how a POD is expected to write output.
 
 - Your scripts should not access the internet or other networked resources.
 
+- Develop your POD using the latest stable version of the framework. When you are ready to submit your POD for review
+  sync your development branch with the main branch following the
+  :ref:`instructions for updating branches<ref-update-main>`
+  in the Git-based development :ref:`workflow documentation <ref-git-intro>`.
+
 Implementation of ESM-intake APIs to read data catalogs
 -------------------------------------------------------
 PODs developed primarily with version 4+ of MDTF-diagnostics should implement
@@ -93,11 +97,11 @@ or $WORK_DIR/obs/PS. The framework will convert the figures to .png format and c
 $WORK_DIR/obs. The $WORK_DIR/model and $WORK_DIR/obs directories are created by the framework at runtime. The
 output_manager will automatically clear the PS directories after converting any .(e)ps figures.
 
-PODs that generate additional netCDF files should write them to the `$WORK_DIR/model/netCDF` directory that the
-framework creates at runtime, and reference them using `os.environ` calls.
+PODs that generate additional netCDF files should write them to the ``$WORK_DIR/model/netCDF`` directory that the
+framework creates at runtime, and reference them using ``os.environ`` calls.
 
-POD html templates can reference the figures using relative paths wrt the `$WORK_DIR/model` and `$WORK_DIR/obs`
-directories (e.g., `model/[figure name].png`, `obs/[figure name].png`). See the
+POD html templates can reference the figures using relative paths wrt the ``$WORK_DIR/model`` and ``$WORK_DIR/obs``
+directories (e.g., ``model/[figure name].png``, ``obs/[figure name].png``). See the
 `example <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/example.html>`__ and
 `example_multicase<https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase/example_multicase.html>`__
 html templates for more information.
@@ -136,8 +140,8 @@ Other tips on implementation
    earlier sections makes it easy to pass the package (or just part of it) to other groups.
 
 #. Robustness to model file/variable names: Each POD should be robust to modest changes in the file/variable names
-   of the model output; see :doc:`Getting Started <start_config>` regarding the model data filename structure,
-   :ref:`ref-example-env-vars` regarding using the environment variables and robustness tests. Also, it would be easier
+   of the model output; see :doc:`Getting Started <start_config>` regarding the model data filename structure, and
+   :ref:`ref-env-vars` regarding using the environment variables and robustness tests. Also, it would be easier
    to apply the code package to a broader range of model output.
 
 #. Save digested data after analysis: Can be used, e.g., to save time when there is a substantial computation that can
@@ -158,9 +162,8 @@ Other tips on implementation
 #. Avoid special characters (``!@#$%^&*``) in file/script names.
 
 
-See :ref:`ref-execute` and :doc:` framework operation walkthrough <dev_walkthrough>` for details on how the package is
-called. See the :doc:`command line reference <ref_cli>` for documentation on command line options
-(or run ``mdtf --help``).
+See :ref:`ref-execute` for details on how the package is called. See the :doc:`command line reference <ref-cli>` for
+documentation on command line options.
 
 Avoid making assumptions about the machine on which the framework will run beyond what’s listed here; a development
 priority is to interface the framework with cluster and cloud job schedulers to enable individual PODs to run in a

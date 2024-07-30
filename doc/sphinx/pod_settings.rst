@@ -1,10 +1,7 @@
 .. _ref-pod-settings:
 
-POD settings file summary
-=========================
-
-This page gives a quick introduction to how to write the settings file for your POD. See the full
-:doc:`documentation <./ref_settings>` on this file format for a complete list of all the options you can specify.
+POD settings file
+=================
 
 Overview
 --------
@@ -13,9 +10,9 @@ The MDTF framework can be viewed as a "wrapper" for your code that handles data 
 communicates with this wrapper in two ways:
 
 - The *settings file* is where your code talks to the framework: when you write your code, you document what model data
-your code uses and what format it expects it in. When the framework is run, it will fulfill the requests you make here
-(or tell the user what went wrong).
-- When your code is run, the framework talks to it by setting :doc:`environment variables <ref_envvars>`
+  your code uses and what format it expects it in. When the framework is run, it will fulfill the requests you make here
+  (or tell the user what went wrong).
+- When your code is run, the framework talks to it by setting :doc:`environment variables <ref-envvars>`
  containing paths to the data files and other information specific to the run.
 
 In the settings file, you specify what model data your diagnostic uses in a vocabulary you're already familiar with:
@@ -25,7 +22,6 @@ In the settings file, you specify what model data your diagnostic uses in a voca
   `variables <https://www.unidata.ucar.edu/software/netcdf/workshops/2010/datamodels/NcVars.html>`__ and
   `dimensions <https://www.unidata.ucar.edu/software/netcdf/workshops/2010/datamodels/NcDims.html>`__ as they're used
   in a netCDF file.
-
 
 Example
 -------

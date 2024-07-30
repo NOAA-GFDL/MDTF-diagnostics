@@ -1,6 +1,6 @@
+.. _ref-git-intro:
 Git-based development workflow
 ==============================
-
 Steps for brand new users:
 ------------------------------
 1. Fork the MDTF-diagnostics branch to your GitHub account (:ref:`ref-fork-code`)

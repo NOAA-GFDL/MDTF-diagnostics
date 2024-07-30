@@ -1,6 +1,6 @@
+.. _ref-git-intro:
 Git-based development workflow
 ==============================
-
 Steps for brand new users:
 ------------------------------
 1. Fork the MDTF-diagnostics branch to your GitHub account (:ref:`ref-fork-code`)
@@ -51,9 +51,12 @@ command is available on your machine (`installation instructions <https://git-sc
 
 - *Clone* your fork onto your computer: ``git clone git@github.com:<your_github_account>/MDTF-diagnostics.git``.
   This not only downloads the files, but due to the magic of git  also gives you the full commit history of all branches.
+
 - Enter the project directory: ``cd MDTF-diagnostics``.
+
 - Git knows about your fork, but you need to tell it about NOAA's repo if you wish to contribute changes back to the
   code base. To do this, type ``git remote add upstream git@github.com:NOAA-GFDL/MDTF-diagnostics.git``.
+
 Now you have two remote repos: ``origin``, your GitHub fork which you can read and write to, and ``upstream``,
 NOAA's code base which you can only read from.
 
@@ -144,12 +147,17 @@ Updating your remote and local main branches
 
 Method 1: Web interface+command line
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-See the `MDTF Best Practices Overview <https://docs.google.com/presentation/d/18jbi50vC9X89vFbL0W1Ska1dKuW_yWY51SomWx_ahYE/edit?usp=sharing>`__  presentation for instructions with figures.
+See the `MDTF Best Practices Overview <https://docs.google.com/presentation/d/18jbi50vC9X89vFbL0W1Ska1dKuW_yWY51SomWx_ahYE/edit?usp=sharing>`__
+presentation for instructions with figures.
 
-1. Click the *Fetch Upstream* link on the main page of your MDTF-diagnostics fork, then click the *Open Pull Request* button
+1. Click the *Fetch Upstream* link on the main page of your MDTF-diagnostics fork, then click the *Open Pull Request*
+   button
+
 2. Verify that your fork is set as the **base** repository, and *main* is set as the **base branch**,
    that *NOAA-GFDL* is set as the **head repository**, and *main* is set as the **head** branch
+
 3. Create a title for your PR, add a description if you want, then click *Create pull request*
+
 4. Click **Merge pull request**
 
 Your remote main branch is now up-to-date with the NOAA-GFDL/main branch.
@@ -177,92 +185,7 @@ This method requires adding the *NOAA-GFDL/MDTF-diagnostics* repo to the *.git/c
 and is described in the GitHub discussion post
 `Working with multiple remote repositories in your git config file <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/96>`__.
 
-.. _ref-rebase:
-
-Updating your POD branch by rebasing it onto the main branch (a bit more difficult than merging, but cleaner)
--------------------------------------------------------------------------------------------------------------
-Rebasing is procedure to integrate the changes from one branch into another branch. ``git rebase`` differs from
-``git merge`` in that it reorders the commit history so that commits from the branch that is being updated are moved
-to the `tip` of the branch. This makes it easier to isolate changes in the POD branch, and usually results in
-fewer merge conflicts when the POD branch is merged into the main branch.
-1. Create a backup copy of your MDTF-diagnostics repo on your local machine
-
-2. Update the local and remote main branches on your fork as described in :ref:`ref-update-main`, then check out your POD branch
-::
-
-   git checkout [POD branch name]
-
-and launch an interactive rebase of your branch onto the main branch:: git rebase -i main
-3. Your text editor will open in the terminal (Vim by default)
-and display your commit hashes with the oldest commit at the top
-::
-
-   pick 39n3b42 oldest commit
-   pick 320cnyn older commit
-   pick 20ac93c newest commit
-
-You may squash commits by replacing *pick* with *squash* for the commit(s) that are newer than the commit you
-want to combine with (i.e., the commits below the target commit).
-For example
-::
-
-   pick 39n3b42 oldest commit
-   squash 320cnyn older commit
-   pick 20ac93c newest commit
-
-combines commit 320cnyn with commit 29n3b42, while
-::
-
-   pick 39n3b42 oldest commit
-   squash 320cnyn older commit
-   squash 20ac93c newest commit
-
-combines 20ac93c and 320cnyn with 39n3b42.
-
-Note that squashing commits is not required. However, doing so creates a more streamlined commit history.
-
-4. Once you're done squashing commits (if you chose to do so), save your changes and close the editor ``ESC + SHIFT + wq`` to save and quit in Vim), and the rebase will launch. If the rebase stops because there are merge conflicts and resolve the conflicts. To show the files with merge conflicts, type
-::
-
-   git status
-
-This will show files with a message that there are merge conflicts, or that a file has been added/deleted by only one of the branches. Open the files in an editor, resolve the conflicts, then add edited (or remove deleted) files to the staging area
-::
-
-   git add file1
-   git add file2
-   ...
-   git rm file3
-
-5. Next, continue the rebase
-::
-
-   git rebase --continue
-
-The editor will open with the modified commit history. Simply save the changes and close the editor (``ESC+SHIFT+wq``),
-and the rebase will continue. If the rebase stops with errors, repeat the merge conflict resolution process,
-add/remove the files to staging area, type ``git rebase --continue``, and proceed.
-
-If you have not updated your branch in a long time, you'll likely find that you have to keep fixing the same conflicts
-over and over again (every time your commits collide with the commits on the main branch). This is why we strongly
-advise POD developers to pull updates into their forks and rebase their branches onto the main branch frequently.
-
-Note that if you want to stop the rebase at any time and revert to the original state of your branch, type
-::
-
-   git rebase --abort
-
-6. Once the rebase has completed, push your changes to the remote copy of your branch
-::
-
-   git push -u origin [POD branch name] --force
-
-The ``--force`` option is necessary because rebasing modified the commit history.
-
-7. Now that your branch is up-to-date, write your code!
-
 .. _ref-merge:
-
 Updating your POD branch by merging in changes from the main branch
 ---------------------------------------------------------------------------
 1. Create a backup copy of your repo on your machine.
@@ -315,7 +238,9 @@ Set up SSH with GitHub
 ----------------------
 
 - You have to generate an `SSH key <https://help.github.com/en/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent>`__ and `add it <https://help.github.com/en/articles/adding-a-new-ssh-key-to-your-github-account>`__ to your GitHub account. This will save you from having to re-enter your GitHub username and password every time you interact with their servers.
+
 - When generating the SSH key, you'll be asked to pick a *passphrase* (i.e., password).
+
 - The following instructions assume you've generated an SSH key. If you're using manual authentication instead,
   replace the "``git@github.com:``" addresses in what follows with "``https://github.com/``".
 
@@ -328,8 +253,10 @@ If you are new to git and unfamiliar with many of the terminologies, `Dangit, Gi
 There are many comprehensive online git tutorials, such as:
 
 - The official `git tutorial <https://git-scm.com/docs/gittutorial>`__.
+
 - A more verbose `introduction <https://www.atlassian.com/git/tutorials/what-is-version-control>`__
   to the ideas behind git and version control.
+
 - A still more detailed `walkthrough <http://swcarpentry.github.io/git-novice/>`__, assuming no prior knowledge.
 
 Git Tips and Tricks
@@ -357,11 +284,14 @@ Git Tips and Tricks
   accessible recent snapshot of your code in the event that your system goes down, or you go crazy with ``rm -f *``.
 
 * A commit creates a snapshot of the code into the history in your local repo.
+
    - The snapshot will exist until you intentionally delete it (after confirming a warning message).
      You can always revert to a previous snapshot.
-   - Don't commit code that you know is buggy or non-functional!
+
    - You'll be asked to enter a commit message. Good commit messages are key to making the project's history useful.
+
    - Write in *present tense* describing what the commit, when applied, does to the code -- not what you did to the code.
+
    - Messages should start with a brief, one-line summary, less than 80 characters. If this is too short, you may want
      to consider entering your changes as multiple commits.
 
@@ -378,7 +308,9 @@ Git Tips and Tricks
   is located in the `Primary email address` section under Settings > emails.
 
 * When the POD branch is no longer needed, delete the branch locally with ``git branch -d [POD branch name]``.
-  If you pushed the POD branch to your fork, you can delete it remotely with ``git push --delete origin [POD branch name]``.
+  If you pushed the POD branch to your fork, you can delete it remotely with
+  ``git push --delete origin [POD branch name]``.
+
   - Remember that branches in git are just pointers to a particular commit, so by deleting a branch you *don't* lose
     any history.
 

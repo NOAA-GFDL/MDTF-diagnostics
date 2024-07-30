@@ -136,9 +136,8 @@ code and data provided.
        MJO_suite/ERA.u200.EOF.summer-1.png
 
 After following the above instructions, please refer to 
-`the GitHub Discussion on transfering obs_data <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/125>`__ 
-or email Dani Coleman at bundy at ucar dot edu or contact your liason on the
-MDTF Leads Team.
+`the GitHub Discussion on transferring obs_data <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/125>`__
+or email Dani Coleman at bundy at ucar dot edu or contact your liaison on the MDTF Leads Team.
 
 Files will be posted for Guest/anonymous access :
 ftp://ftp.cgd.ucar.edu/archive/mdtf/obs_data_latest/{$pod_name}.latest.tar

@@ -1,10 +1,7 @@
 .. _ref-pod-settings:
 
-POD settings file summary
-=========================
-
-This page gives a quick introduction to how to write the settings file for your POD. See the full
-:doc:`documentation <./ref_settings>` on this file format for a complete list of all the options you can specify.
+POD settings file
+=================
 
 Overview
 --------
@@ -13,9 +10,9 @@ The MDTF framework can be viewed as a "wrapper" for your code that handles data 
 communicates with this wrapper in two ways:
 
 - The *settings file* is where your code talks to the framework: when you write your code, you document what model data
-your code uses and what format it expects it in. When the framework is run, it will fulfill the requests you make here
-(or tell the user what went wrong).
-- When your code is run, the framework talks to it by setting :doc:`environment variables <ref_envvars>`
+  your code uses and what format it expects it in. When the framework is run, it will fulfill the requests you make here
+  (or tell the user what went wrong).
+- When your code is run, the framework talks to it by setting :doc:`environment variables <ref-envvars>`
  containing paths to the data files and other information specific to the run.
 
 In the settings file, you specify what model data your diagnostic uses in a vocabulary you're already familiar with:
@@ -25,7 +22,6 @@ In the settings file, you specify what model data your diagnostic uses in a voca
   `variables <https://www.unidata.ucar.edu/software/netcdf/workshops/2010/datamodels/NcVars.html>`__ and
   `dimensions <https://www.unidata.ucar.edu/software/netcdf/workshops/2010/datamodels/NcDims.html>`__ as they're used
   in a netCDF file.
-
 
 Example
 -------
@@ -145,21 +141,20 @@ Latitude and Longitude
   supports decimal ``degrees_north`` and ``degrees_east``, respectively.
 
 ``range``:
-  :ref:`Array<array>` (list) of two numbers. Optional. If given, specifies the range of values the diagnostic expects
+  Optional. :ref:`Array<array>` (list) of two numbers. If given, specifies the range of values the diagnostic expects
   this dimension to take. For example, ``"range": [-180, 180]`` for longitude will have the first entry of the longitude
   variable in each data file be near -180 degrees (not exactly -180, because dimension values are cell midpoints), and
   the last entry near +180 degrees.
 
 ``need_bounds``:
-  Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
+  Optional, boolean. Assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
   for this dimension, in addition to its midpoint values, following the
   `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__:
   the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds
   information.
 
 ``axis``:
-  String, optional. Assumed to be ``Y`` and ``X`` respectively if omitted, or if ``standard_name`` is
-  ``"latitude"`` or ``"longitude"``. Included here to enable future support for non-lat-lon horizontal coordinates.
+  **Required**, string. ``Y`` for latitude coordinates, and ``X`` for longitude coordinates.
 
 Time
 ^^^^
@@ -201,13 +196,13 @@ Z axis (height/depth, pressure, ...)
   `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
 
 ``positive``:
-  String, **required**. Must be ``"up"`` or ``"down"``, according to the
+  **Required**, string. Must be ``"up"`` or ``"down"``, according to the
   `CF conventions <http://cfconventions.org/faq.html#vertical_coords_positive_attribute>`__.
   A pressure axis is always ``"down"`` (increasing values are closer to the center of the earth), but this is not set
   automatically.
 
 ``need_bounds``:
-  Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
+  Optional, boolean. Assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
   for this dimension, in addition to its midpoint values, following the
   `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__:
   the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds
@@ -228,12 +223,13 @@ Other dimensions (wavelength, ...)
   Optional, a :ref:`CFunit<cfunit>`. Units the diagnostic expects the dimension to be in. **If not provided, the framework will assume CF convention** `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
 
 ``need_bounds``:
-  Boolean. Optional: assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
+  Boolean, optional. Assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
   for this dimension, in addition to its midpoint values, following the
   `CF conventions <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#cell-boundaries>`__:
   the ``bounds`` attribute of this dimension will be set to the name of another netCDF variable containing the bounds
   information.
-
+``axis``:
+   **Required**, string. Value is ``N`` for dimensions that do not correspond to `X`, `Y`, `Z`, `T`.
 .. _sec_varlist:
 
 Varlist section

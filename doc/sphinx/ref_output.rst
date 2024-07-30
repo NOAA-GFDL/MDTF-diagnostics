@@ -1,6 +1,6 @@
 .. role:: code-rst(code)
    :language: reStructuredText
-
+.. _ref-output:
 Output Reference
 ===============================
 Processed data, ESM-intake catalogs, POD output, and logs from the MDTF-framework run are stored in a directory called 

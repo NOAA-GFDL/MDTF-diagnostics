@@ -6,7 +6,7 @@ Output Reference
 Processed data, ESM-intake catalogs, POD output, and logs from the MDTF-framework run are stored in a directory called 
 :code-rst:`MDTF_output` that is appended to the :code-rst:`OUTPUT_DIR` (defaults to :code-rst:`WORK_DIR` if 
 :code-rst:`OUTPUT_DIR` is not set) specified in the runtime configuration file. Each new run will generate an output 
-directory with _v# appended to the code-rst:`MDTF_output` base name if the :code-rst:`OUTPUT_DIR` contains directories 
+directory with _v# appended to the :code-rst:`MDTF_output` base name if the :code-rst:`OUTPUT_DIR` contains directories 
 from prior framework runs.
 
 Example Directory

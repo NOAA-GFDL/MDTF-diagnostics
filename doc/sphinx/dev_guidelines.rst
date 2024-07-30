@@ -6,49 +6,92 @@ POD development guidelines
 Admissible languages
 --------------------
 
-The framework itself is written in Python, and can call PODs written in any scripting language. However, Python support by the lead team will be “first among equals” in terms of priority for allocating developer resources, etc.
+The framework itself is written in Python, and can call PODs written in any scripting language.
+However, Python support by the lead team will be “first among equals” in terms of priority for allocating developer
+resources, etc.
 
-- To achieve portability, the MDTF **cannot** accept PODs written in closed-source languages (e.g., MATLAB and IDL; try `Octave <https://www.gnu.org/software/octave/>`__ and `GDL <https://github.com/gnudatalanguage/gdl>`__ if possible). We also **cannot** accept PODs written in compiled languages (e.g., C or Fortran): installation would rapidly become impractical if users had to check compilation options for each POD.
+- To achieve portability, the MDTF **cannot** accept PODs written in closed-source languages
+  (e.g., MATLAB and IDL; try `Octave <https://www.gnu.org/software/octave/>`__ and
+  `GDL <https://github.com/gnudatalanguage/gdl>`__ if possible).
+  We also **cannot** accept PODs written in compiled languages (e.g., C or Fortran): installation would rapidly
+  become impractical if users had to check compilation options for each POD.
 
-- Python is strongly encouraged for new PODs; PODs funded through the CPO grant are requested to be developed in Python. Python version >= 3.11 is required.
+- Python is strongly encouraged for new PODs; PODs funded through the CPO grant are requested to be developed in
+  Python. Python version >= 3.12 is required.
 
-- If your POD was previously developed in NCL or R (and development is *not* funded through a CPO grant), you do not need to re-write existing scripts in Python 3 if doing so is likely to introduce new bugs into stable code, especially if you’re unfamiliar with Python.
+- If your POD was previously developed in NCL or R (and development is *not* funded through a CPO grant),
+  you do not need to re-write existing scripts in Python 3 if doing so is likely to introduce new bugs into stable
+  code, especially if you’re unfamiliar with Python.
 
 - If scripts were written in closed-source languages, translation to Python 3.12 or above is required.
 
 Preparation for POD implementation
 ----------------------------------
 
-We assume that, at this point, you have a set of scripts, written in languages consistent with the framework's open source policy, that a) read in model data, b) perform analysis, and c) output figures. Here are 3 steps to prepare your scripts for POD implementation.
+We assume that, at this point, you have a set of scripts, written in languages consistent with the framework's open
+source policy, that a) read in model data, b) perform analysis, and c) output figures.
+Here are 3 steps to prepare your scripts for POD implementation.
 
-We recommend running the framework on the sample model data again with both ``save_ps`` and ``save_nc`` in the configuration input ``src/default_tests.jsonc`` set to ``true``. This will preserve directories and files created by individual PODs in the output directory, which could come in handy when you go through the instructions below, and help understand how a POD is expected to write output.
+We recommend running the framework on the sample model data again with both ``save_ps`` and ``save_pp_data``
+in the configuration input ``templates/runtime_config.[jsonc|yml]`` set to ``true``. This will preserve directories and
+files created by individual PODs in the output directory, which could come in handy when you go through the
+instructions below, and help understand how a POD is expected to write output.
 
-- Give your POD an official name (e.g., *Convective Transition*; referred to as ``long_name``) and a short name (e.g., *convective_transition_diag*). The latter will be used consistently to name the directories and files associated with your POD, so it should (1) loosely resemble the long_name, (2) avoid space bar and special characters (!@#$%^&\*), and (3) not repeat existing PODs' name (i.e., the directory names under ``diagnostics/``). Try to make your POD's name specific enough that it will be distinct from PODs contributed now or in the future by other groups working on similar phenomena.
+- Give your POD an official name (e.g., *Convective Transition*; referred to as ``long_name``) and a
+  short name (e.g., *convective_transition_diag*). The latter will be used consistently to name the directories
+  and files associated with your POD, so it should (1) loosely resemble the long_name,
+  (2) avoid space bar and special characters (!@#$%^&\*), and (3) not repeat existing PODs' name
+  (i.e., the directory names under ``diagnostics/``). Try to make your POD's name specific enough that it will be
+  distinct from PODs contributed now or in the future by other groups working on similar phenomena.
 
-- If you have multiple scripts, organize them so that there is a main driver script calling the other scripts, i.e., a user only needs to execute the driver script to perform all read-in data, analysis, and plotting tasks. This driver script should be named after the POD's short name (e.g., ``convective_transition_diag.py``).
+- If you have multiple scripts, organize them so that there is a main driver script calling the other scripts,
+  i.e., a user only needs to execute the driver script to perform all read-in data, analysis, and plotting tasks.
+  This driver script should be named after the POD's short name (e.g., ``convective_transition_diag.py``).
 
-- You should have no problem getting scripts working as long as you have (1) the location and filenames of model data, (2) the model variable naming convention, and (3) where to output files/figures. The framework will provide these as *environment variables* that you can access (e.g., using ``os.environ`` in Python, or ``getenv`` in NCL). *DO NOT* hard code these paths/filenames/variable naming convention, etc., into your scripts. See the `complete list <ref_envvars.html>`__ of environment variables supplied by the framework.
+- You should have no problem getting scripts working as long as you have (1) the location and filenames of model data,
+  (2) the model variable naming convention, and (3) where to output files/figures.
+  The framework will provide these as *environment variables* that you can access by reading the `case_info.yml` written
+  to the ``WORK_DIR`` (e.g., ``MDTF_output/[pod_name]/case_info.yml``) as demonstrated in
+  `diagnostics/example_multicase/example_multicase.py
+  <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase/example_multicase.py>`__.
+  *DO NOT* hard code these paths/filenames/variable naming convention, etc...,
+  into your scripts. See the `complete list <ref_envvars.html>`__ of environment variables supplied by the framework.
 
 - Your scripts should not access the internet or other networked resources.
 
-.. _ref-example-env-vars:
+Implementation of ESM-intake APIs to read data catalogs
+-------------------------------------------------------
+PODs developed primarily with version 4+ of MDTF-diagnostics should implement
+`ESM-intake APIs<https://intake-esm.readthedocs.io/en/stable/>`__ to read
+data from the catalog files generated by the framework. The catalog csv and json header files arewritten to the
+`OUTPUT_DIR` and accessed from the `CATALOG_FILE` environment variable in `case_info.yml`.
+If the `run_pp` option is set to `false` in the runtime configuration
+file, `CATALOG_FILE` will point to the json header file corresponding to the `DATA_CATALOG` entry specified in the
+runtime configuration file.
 
-An example of using framework-provided environment variables
+The `example_multicase driver script
+<https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase/example_multicase.py>`__  and
+`Python notebook
+<https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase/example_multirun_demo.ipynb>`__
+provide examples for accessing `environment variables<ref_envvars.html>`__ and reading data from an ESM-intake catalog.
+
+PODs developed with MDTF-diagnostics version 3.5 and earlier
 ------------------------------------------------------------
 
-The framework provides a collection of environment variables, mostly in the format of strings but also some numbers, so that you can and *MUST* use in your code to make your POD portable and reusable.
 
-For instance, using 3 of the environment variables provided by the framework, ``CASENAME``, ``DATADIR``, and ``pr_var``, the full path to the hourly precipitation file can be expressed as
+For instance, using 3 of the environment variables provided by the framework, ``CASENAME``,  and
+``pr_var``, the full path to the hourly precipitation file can be expressed as
 
 ::
+   work_dir = os.environ["WORK_DIR"]
 
-   MODEL_OUTPUT_DIR = os.environ["DATADIR"]+"/1hr/"
    pr_filename = os.environ["CASENAME"]+"."+os.environ["pr_var"]+".1hr.nc"
    pr_filepath = MODEL_OUTPUT_DIR + pr_filename
 
 You can then use ``pr_filepath`` in your code to load the precipitation data.
 
-Note that in Linux shell or NCL, the values of environment variables are accessed via a ``$`` sign, e.g., ``os.environ["CASENAME"]`` in Python is equivalent to ``$CASENAME`` in Linux shell/NCL.
+Note that in Linux shell or NCL, the values of environment variables are accessed via a ``$`` sign, e.g.,
+``os.environ["CASENAME"]`` in Python is equivalent to ``$CASENAME`` in Linux shell/NCL.
 
 .. _ref-using-env-vars:
 
@@ -66,28 +109,38 @@ The environment variables most relevant for a POD's operation are:
   one case/experiment, e.g., ``inputdata/model/QBOi.EXP1.AMIP.001/``.
 
 - ``WORK_DIR``: Path to directory for POD to output files. Note that **this is the only directory a POD is allowed
-   to write its output**. e.g., ``wkdir/MDTF_QBOi.EXP1.AMIP.001_1977_1981/convective_transition_diag/``.
+   to write its output**. e.g., ``wkdir/MDTF_output/convective_transition_diag/``.
 
    1. Output figures to ``$WORK_DIR/obs/`` and ``$WORK_DIR/model/`` respectively.
 
-   2. ``$WORKK_DIR/obs/PS/`` and ``$WORK_DIR/model/PS/``: If a POD chooses to save vector-format figures, save them as
+   2. ``$WORK_DIR/obs/PS/`` and ``$WORK_DIR/model/PS/``: If a POD chooses to save vector-format figures, save them as
    ``EPS`` under these two directories. Files in these locations will be converted by the framework to ``PNG`` for HTML
    output. Caution: avoid using ``PS`` because of potential bugs in recent ``matplotlib`` and converting to PNG.
 
    3. ``$WORK_DIR/obs/netCDF/`` and ``$WORK_DIR/model/netCDF/``: If a POD chooses to save digested data for later
    analysis/plotting, save them in these two directories in ``NetCDF``.
 
-Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WK_DIR`` change when the framework executes different PODs; (2) the ``WK_DIR`` directory and subdirectories therein are automatically created by the framework. **Each POD should output files as described here** so that the framework knows where to find what, and also for the ease of code maintenance.
+Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WORK_DIR`` change when the framework executes different
+PODs; (2) the ``WORK_DIR`` directory and subdirectories therein are automatically created by the framework.
+**Each POD should output files as described here** so that the framework knows where to find what, and also for the
+ease of code maintenance.
 
-More environment variables for specifying model variable naming convention can be found in the ``data/fieldlist_$convention.jsonc`` files. Also see the `list <ref_envvars.html>`__  of environment variables supplied by the framework.
+More environment variables for specifying model variable naming convention can be found in the
+``data/fieldlist_$convention.jsonc`` files. Also see the `list <ref_envvars.html>`__  of environment variables
+supplied by the framework.
 
 
 Guidelines for testing your POD
 -------------------------------
 
-Test before distribution. Find people (eg, nearby postdocs/grads and members from other POD-developing groups) who are not involved in your POD's implementation and are willing to help. Give the tar files and point your GitHub repo to them. Ask them to try running the framework with your POD following the Getting Started instructions. Ask for comments on whether they can understand the documentation.
+Test before distribution. Find people (eg, nearby postdocs/grads and members from other POD-developing groups)
+who are not involved in your POD's implementation and are willing to help. Give the tar files and point your
+GitHub repo to them. Ask them to try running the framework with your POD following the Getting Started instructions.
+Ask for comments on whether they can understand the documentation.
 
-Test how the POD fails. Does it stop with clear errors if it doesn’t find the files it needs? How about if the dates requested are not presented in the model data? Can developers run it on data from another model? Here are some simple tests you should try:
+Test how the POD fails. Does it stop with clear errors if it doesn’t find the files it needs?
+How about if the dates requested are not presented in the model data? Can developers run it on data from another
+model? Here are some simple tests you should try:
 
    - If your POD uses observational data, move the ``inputdata`` directory around. Your POD should still work by simply
      updating the values of ``OBS_DATA_ROOT`` in the runtime configuration file.

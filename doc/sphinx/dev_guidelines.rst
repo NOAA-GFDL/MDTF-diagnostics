@@ -77,58 +77,30 @@ provide examples for accessing `environment variables<ref_envvars.html>`__ and r
 
 PODs developed with MDTF-diagnostics version 3.5 and earlier
 ------------------------------------------------------------
+The framework has retained the ability for PODs to reference model data and settings using `os.environ` for
+backwards compatibility. PODs developed following this environment variable reference style that was the standard in
+MDTF-diagnostics version 3.5 and earlier but submitted for review after the release of MDTF-diagnostics version 4 may
+retain this style. Please refer to the the full `list <ref_envvars.html>`__  of environment variables
+supplied by the framework and the
+`example POD<https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/example_diag.py>`__ for more
+information on accessing data in your POD using `os.environ` calls.
 
+Where to write POD figures and files
+------------------------------------
+Pod figures from model output and observational output should be written to `$WORK_DIR/model` and `$WORK_DIR/obs` if
+they are output directly to .png format. Figures written as .ps or .eps files should be placed in $WORK_DIR/model/PS
+or $WORK_DIR/obs/PS. The framework will convert the figures to .png format and copy them to $WORK_DIR/model or
+$WORK_DIR/obs. The $WORK_DIR/model and $WORK_DIR/obs directories are created by the framework at runtime. The
+output_manager will automatically clear the PS directories after converting any .(e)ps figures.
 
-For instance, using 3 of the environment variables provided by the framework, ``CASENAME``,  and
-``pr_var``, the full path to the hourly precipitation file can be expressed as
+PODs that generate additional netCDF files should write them to the `$WORK_DIR/model/netCDF` directory that the
+framework creates at runtime, and reference them using `os.environ` calls.
 
-::
-   work_dir = os.environ["WORK_DIR"]
-
-   pr_filename = os.environ["CASENAME"]+"."+os.environ["pr_var"]+".1hr.nc"
-   pr_filepath = MODEL_OUTPUT_DIR + pr_filename
-
-You can then use ``pr_filepath`` in your code to load the precipitation data.
-
-Note that in Linux shell or NCL, the values of environment variables are accessed via a ``$`` sign, e.g.,
-``os.environ["CASENAME"]`` in Python is equivalent to ``$CASENAME`` in Linux shell/NCL.
-
-.. _ref-using-env-vars:
-
-Relevant environment variables
-------------------------------
-
-The environment variables most relevant for a POD's operation are:
-
-- ``POD_HOME``: Path to directory containing POD's scripts, e.g., ``diagnostics/convective_transition_diag/``.
-
-- ``OBS_DATA``: Path to directory containing POD's supporting/digested observation data, e.g.,
-  ``inputdata/obs_data/convective_transition_diag/``.
-
-- ``DATADIR`` (deprecated; PODs written for MDTF-diagnostics v3.5 and earlier): Path to directory containing model data files for
-  one case/experiment, e.g., ``inputdata/model/QBOi.EXP1.AMIP.001/``.
-
-- ``WORK_DIR``: Path to directory for POD to output files. Note that **this is the only directory a POD is allowed
-   to write its output**. e.g., ``wkdir/MDTF_output/convective_transition_diag/``.
-
-   1. Output figures to ``$WORK_DIR/obs/`` and ``$WORK_DIR/model/`` respectively.
-
-   2. ``$WORK_DIR/obs/PS/`` and ``$WORK_DIR/model/PS/``: If a POD chooses to save vector-format figures, save them as
-   ``EPS`` under these two directories. Files in these locations will be converted by the framework to ``PNG`` for HTML
-   output. Caution: avoid using ``PS`` because of potential bugs in recent ``matplotlib`` and converting to PNG.
-
-   3. ``$WORK_DIR/obs/netCDF/`` and ``$WORK_DIR/model/netCDF/``: If a POD chooses to save digested data for later
-   analysis/plotting, save them in these two directories in ``NetCDF``.
-
-Note that (1) values of ``POD_HOME``, ``OBS_DATA``, and ``WORK_DIR`` change when the framework executes different
-PODs; (2) the ``WORK_DIR`` directory and subdirectories therein are automatically created by the framework.
-**Each POD should output files as described here** so that the framework knows where to find what, and also for the
-ease of code maintenance.
-
-More environment variables for specifying model variable naming convention can be found in the
-``data/fieldlist_$convention.jsonc`` files. Also see the `list <ref_envvars.html>`__  of environment variables
-supplied by the framework.
-
+POD html templates can reference the figures using relative paths wrt the `$WORK_DIR/model` and `$WORK_DIR/obs`
+directories (e.g., `model/[figure name].png`, `obs/[figure name].png`). See the
+`example <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/example.html>`__ and
+`example_multicase<https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase/example_multicase.html>`__
+html templates for more information.
 
 Guidelines for testing your POD
 -------------------------------

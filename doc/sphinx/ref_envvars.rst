@@ -1,6 +1,6 @@
 MDTF-diagnostics Environment variables
 ======================================
-
+.. _ref-envvars:
 This page describes the environment variables that the framework will set for your diagnostic when it's run.
 
 Overview

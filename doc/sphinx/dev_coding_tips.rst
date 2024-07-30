@@ -41,43 +41,51 @@ Python: General
   others to understand your code, find bugs, etc.
 
 
-- **Filesystem commands**: Use commands in the `os <https://docs.python.org/3.11/library/os.html>`__ and
+- **Filesystem commands**: Use commands in the `os <https://docs.python.org/3.12/library/os.html>`__ and
   `shutil <https://docs.python.org/3.11/library/shutil.html>`__ modules to interact with the filesystem,
   instead of running unix commands using ``os.system()``, ``commands`` (which is deprecated), or ``subprocess``.
 
   *Why*: Hard-coding unix commands makes code less portable. Calling out to a subprocess introduces overhead and makes
   error handling and logging more difficult. The main reason, however, is that Python already provides these tools in a
-  portable way. Please see the documentation for the `os <https://docs.python.org/3.11/library/os.html>`__ and
-  `shutil <https://docs.python.org/3.11/library/shutil.html>`__ modules, summarized in this table:
+  portable way. Please see the documentation for the `os <https://docs.python.org/3.12/library/os.html>`__ and
+  `shutil <https://docs.python.org/3.12/library/shutil.html>`__ modules, summarized in this table:
 
   .. list-table:: Recommended python functions for filesystem interaction
      :header-rows: 1
 
      * - Task
        - Recommended function
+
      * - Construct a path from *dir1*, *dir2*, ..., *filename*
-       - `os.path.join <https://docs.python.org/3.11/library/os.path.html?highlight=os%20path#os.path.join>`__
+       - `os.path.join <https://docs.python.org/3.12/library/os.path.html?highlight=os%20path#os.path.join>`__
        \(*dir1*, *dir2*, ..., *filename*)
 
      * - Split a *path* into directory and filename
-       - `os.path.split <https://docs.python.org/3.11/library/os.path.html?highlight=os%20path#os.path.split>`__
-       \(*path*) and related functions in `os.path <https://docs.python.org/3.7/library/os.path.html?highlight=os%20path>`__
-     * - List files in directory *dir*
-       - `os.scandir <https://docs.python.org/3.11/library/os.html#os.scandir>`__\(*dir*)
-     * - Move or rename a file or directory from *old_path* to *new_path*
-       - `shutil.move <https://docs.python.org/3.11/library/shutil.html#shutil.move>`__\(*old_path*, *new_path*)
-     * - Create a directory or sequence of directories *dir*
-       - `os.makedirs <https://docs.python.org/3.11/library/os.html#os.makedirs>`__\(*dir*)
-     * - Copy a file from *path* to *new_path*
-       - `shutil.copy2 <https://docs.python.org/3.11/library/shutil.html#shutil.copy2>`__\(*path*, *new_path*)
-     * - Copy a directory *dir*, and everything inside it, to *new_dir*
-       - `shutil.copytree <https://docs.python.org/3.11/library/shutil.html#shutil.copytree>`__\(*dir*, *new_dir*)
-     * - Delete a single file at *path*
-       - `os.remove <https://docs.python.org/3.11/library/os.html#os.remove>`__\(*path*)
-     * - Delete a directory *dir* and everything inside it
-       - `shutil.rmtree <https://docs.python.org/3.11/library/shutil.html#shutil.rmtree>`__\(*dir*)
+       - `os.path.split <https://docs.python.org/3.12/library/os.path.html?highlight=os%20path#os.path.split>`__
+       \(*path*) and related functions in `os.path <https://docs.python.org/3.12/library/os.path.html>`__
 
-  In particular, using `os.path.join <https://docs.python.org/3.10/library/os.path.html?highlight=os%20path#os.path.join>`__
+     * - List files in directory *dir*
+       - `os.scandir <https://docs.python.org/3.12/library/os.html#os.scandir>`__\(*dir*)
+
+     * - Move or rename a file or directory from *old_path* to *new_path*
+       - `shutil.move <https://docs.python.org/3.12/library/shutil.html#shutil.move>`__\(*old_path*, *new_path*)
+
+     * - Create a directory or sequence of directories *dir*
+       - `os.makedirs <https://docs.python.org/3.12/library/os.html#os.makedirs>`__\(*dir*)
+
+     * - Copy a file from *path* to *new_path*
+       - `shutil.copy2 <https://docs.python.org/3.12/library/shutil.html#shutil.copy2>`__\(*path*, *new_path*)
+
+     * - Copy a directory *dir*, and everything inside it, to *new_dir*
+       - `shutil.copytree <https://docs.python.org/3.12/library/shutil.html#shutil.copytree>`__\(*dir*, *new_dir*)
+
+     * - Delete a single file at *path*
+       - `os.remove <https://docs.python.org/3.12/library/os.html#os.remove>`__\(*path*)
+
+     * - Delete a directory *dir* and everything inside it
+       - `shutil.rmtree <https://docs.python.org/3.12/library/shutil.html#shutil.rmtree>`__\(*dir*)
+
+  In particular, using `os.path.join <https://docs.python.org/3.12/library/os.path.html?highlight=os%20path#os.path.join>`__
   is more verbose than joining strings but eliminates bugs arising from missing or redundant directory separators.
 
 Python: Arrays
@@ -96,7 +104,7 @@ NumPy and xarray both have extensive documentation and many tutorials, such as:
     `examples <http://xarray.pydata.org/en/stable/examples.html>`__;
 
   + A `demonstration <https://rabernat.github.io/research_computing/xarray.html>`__ of the features of xarray using
-  Earth science data;
+    Earth science data;
 
   + The 2020 SciPy conference has open-source, interactive
     `tutorials <https://www.scipy2020.scipy.org/tutorial-information>`__
@@ -171,7 +179,6 @@ NumPy and xarray both have extensive documentation and many tutorials, such as:
   + "`How can I tell if NumPy creates a view or a copy? <https://stackoverflow.com/questions/11524664/how-can-i-tell-if-numpy-creates-a-view-or-a-copy>`__"
   on stackoverflow.
 
-
 - **MaskedArrays instead of NaNs or sentinel values**: Use NumPy's
   `MaskedArrays <https://numpy.org/doc/stable/reference/maskedarray.generic.html>`__
   for data that may contain missing or invalid values, instead of setting those entries to NaN or a sentinel value.
@@ -190,12 +197,11 @@ NumPy and xarray both have extensive documentation and many tutorials, such as:
   trying to divide an array element by zero or taking the square root of a negative element will mask it off, indicating
   that the value is invalid: you don't need to remember to do these sorts of checks explicitly.
 
-
 Python: Plotting
 ----------------
 
 - **Use the 'Agg' backend when testing your POD**: For reproducibility, set the shell environment variable
-``MPLBACKEND`` to ``Agg`` when testing your POD outside of the framework.
+  ``MPLBACKEND`` to ``Agg`` when testing your POD outside of the framework.
 
   *Why*: Matplotlib can use a variety of `backends <https://matplotlib.org/tutorials/introductory/usage.html#backends>`__\:
   interfaces to low-level graphics libraries. Some of these are platform-dependent, or require additional libraries

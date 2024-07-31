@@ -79,11 +79,11 @@ The `example_multicase driver script
 <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase/example_multirun_demo.ipynb>`__
 provide examples for accessing `environment variables<ref_envvars.html>`__ and reading data from an ESM-intake catalog.
 
-PODs developed with MDTF-diagnostics version 3.5 and earlier
+PODs developed with MDTF-diagnostics version 3.4 and earlier
 ------------------------------------------------------------
 The framework has retained the ability for PODs to reference model data and settings using `os.environ` for
 backwards compatibility. PODs developed following this environment variable reference style that was the standard in
-MDTF-diagnostics version 3.5 and earlier but submitted for review after the release of MDTF-diagnostics version 4 may
+MDTF-diagnostics version 3.4 and earlier but submitted for review after the release of MDTF-diagnostics version 4 may
 retain this style. Please refer to the the full `list <ref_envvars.html>`__  of environment variables
 supplied by the framework and the
 `example POD<https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example/example_diag.py>`__ for more

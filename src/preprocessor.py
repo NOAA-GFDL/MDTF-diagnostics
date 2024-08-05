@@ -787,7 +787,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 var.log.error(err_str)
                 raise IndexError(err_str)
 
-    def check_group_daterange(self, group_df: pd.DataFrame,
+    def check_group_daterange(self, group_df: pd.DataFrame, case_dr,
                               log=_log) -> pd.DataFrame:
         """Sort the files found for each experiment by date, verify that
         the date ranges contained in the files are contiguous in time and that
@@ -850,6 +850,18 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # throws AssertionError if we don't span the query range
             # TODO: define self.attrs.DateRange from runtime config info
             # assert files_date_range.contains(self.attrs.date_range)
+
+            # throw out df entries not in date_range
+            for i in sorted_df.index:
+                cat_row = sorted_df.iloc[i]
+                stin = dl.Date(cat_row['start_time']) in case_dr
+                etin = dl.Date(cat_row['end_time']) in case_dr
+                if (not stin and not etin) or (stin and not etin):
+                    mask = sorted_df == cat_row['start_time']
+                    sorted_df = sorted_df[~mask]
+            mask = np.isnat(sorted_df['start_time']) | np.isnat(sorted_df['end_time'])     
+            sorted_df = sorted_df[~mask]
+
             return sorted_df
         except ValueError:
             log.error("Non-contiguous or malformed date range in files:", group_df["path"].values)
@@ -953,7 +965,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
-                cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df)
+                cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, date_range)
                 if cat_subset.df.empty:
                     raise util.DataRequestError(
                         f"check_group_daterange returned empty data frame for {var.translation.name}"
@@ -965,12 +977,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     progressbar=False,
                     xarray_open_kwargs=self.open_dataset_kwargs
                 )
-                date_range_dict = {f: cat_subset_df[f].attrs['intake_esm_attrs:time_range']
+                # check for time_range or date_range
+                range_attr_string = 'intake_esm_attrs:time_range'
+                if not hasattr(cat_subset_df[list(cat_subset_df)[0]].attrs, range_attr_string):
+                    range_attr_string = 'intake_esm_attrs:date_range'
+                date_range_dict = {f: cat_subset_df[f].attrs[range_attr_string]
                                    for f in list(cat_subset_df)}
                 date_range_dict = dict(sorted(date_range_dict.items(), key=lambda item: item[1]))
                 var_xr = []
                 for k in list(date_range_dict):
-                    date_range_k = dl.DateRange(cat_subset_df[k].attrs['intake_esm_attrs:time_range'])
+                    date_range_k = dl.DateRange(cat_subset_df[k].attrs[range_attr_string])
                     if date_range_k in date_range:
                         if not var_xr:
                             var_xr = cat_subset_df[k]

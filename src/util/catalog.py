@@ -91,8 +91,7 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
             "grid_label",
             "realm",
             "chunk_freq",
-            "variant_label",
-            "time_range"
+            "variant_label"
         ],
         "aggregations": [
             {

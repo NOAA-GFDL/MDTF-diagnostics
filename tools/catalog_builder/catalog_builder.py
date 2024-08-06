@@ -302,8 +302,7 @@ class CatalogBase(object):
             'table_id',
             'grid_label',
             'realm',
-            'variant_label',
-            'time_range'
+            'variant_label'
         ]  # attributes to group by when reading
         # in variables using intake-esm
         self.xarray_aggregations = [

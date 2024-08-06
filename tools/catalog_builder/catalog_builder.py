@@ -307,11 +307,7 @@ class CatalogBase(object):
         ]  # attributes to group by when reading
         # in variables using intake-esm
         self.xarray_aggregations = [
-            {'type': 'union', 'attribute_name': 'variable_id'},
-            {'type': 'join_existing',
-             'attribute_name': 'time_range',
-             'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'}
-            }
+            {'type': 'union', 'attribute_name': 'variable_id'}
         ]
         self.data_format = "netcdf" # netcdf or zarr
         self.variable_col_name = "variable_id"

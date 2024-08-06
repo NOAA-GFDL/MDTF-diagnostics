@@ -99,11 +99,6 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
                 "type": "union",
                 "attribute_name": "variable_id",
                 "options": {}
-            },
-            {
-                "type": "join_existing",
-                "attribute_name": "time_range",
-                "options": {"dim": "time", "coords": "minimal", "compat": "override"}
             }
         ]
     }

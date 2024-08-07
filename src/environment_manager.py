@@ -306,7 +306,7 @@ class SubprocessRuntimePODWrapper:
                 except util.WormKeyError:
                     continue
 
-    def pre_run_setup(self, cases: dict):
+    def pre_run_setup(self, cases: dict, catalog_file: str):
         self.pod.log_file = io.open(
             os.path.join(self.pod.paths.POD_WORK_DIR, self.pod.name+".log"),
             'w', encoding='utf-8'
@@ -327,7 +327,7 @@ class SubprocessRuntimePODWrapper:
 
         self.pod.log.debug("%s", self.pod.format_log(children=False))
     #    self.pod._log_handler.reset_buffer()
-        self.write_case_env_file(cases)
+        self.write_case_env_file(cases, catalog_file)
         self.setup_env_vars()
 
     def setup_env_vars(self):
@@ -345,8 +345,8 @@ class SubprocessRuntimePODWrapper:
                          for k, v in self.pod.pod_env_vars.items() if k not in skip_items}
 
         # append varlist env vars for backwards compatibility with single-run PODs
-        if len(self.pod.multi_case_dict['CASE_LIST']) == 1:
-            for case_name, case_info in self.pod.multi_case_dict['CASE_LIST'].items():
+        if len(self.pod.multicase_dict['CASE_LIST']) == 1:
+            for case_name, case_info in self.pod.multicase_dict['CASE_LIST'].items():
                 for k, v in case_info.items():
                     self.env_vars[k] = v
 
@@ -355,11 +355,11 @@ class SubprocessRuntimePODWrapper:
         self.pod.log_file.write("\n".join(["### Shell env vars: "] + sorted(env_list)))
         self.pod.log_file.write("\n\n")
 
-    def write_case_env_file(self, case_list):
+    def write_case_env_file(self, case_list: dict, catalog_file: str):
         out_file = os.path.join(self.pod.paths.POD_WORK_DIR, 'case_info.yml')
         self.pod.pod_env_vars["case_env_file"] = out_file
         case_info = dict()
-        case_info['CATALOG_FILE'] = os.path.join(self.pod.paths.WORK_DIR, 'MDTF_postprocessed_data.json')
+        case_info['CATALOG_FILE'] = catalog_file
         case_info['CASE_LIST'] = dict()
         assert os.path.isfile(case_info['CATALOG_FILE']), 'CATALOG_FILE json not found in WORK_DIR'
         for case_name, case in case_list.items():
@@ -390,7 +390,7 @@ class SubprocessRuntimePODWrapper:
         f = open(out_file, 'w+')
         assert os.path.isfile(out_file), f"Could not find case env file {out_file}"
         yaml.dump(case_info, f, allow_unicode=True, default_flow_style=False)
-        self.pod.multi_case_dict = case_info
+        self.pod.multicase_dict = case_info
         f.close()
 
     def setup_exception_handler(self, exc):
@@ -458,6 +458,7 @@ class SubprocessRuntimePODWrapper:
                 pass
             self.process = None
 
+        log_str = ""
         if self.pod.status != util.ObjectStatus.INACTIVE:
             if retcode == 0:
                 log_str = f"{self.pod.full_name} exited successfully (code={retcode})."
@@ -496,6 +497,8 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
     _EnvironmentManagerClass = CondaEnvironmentManager
     pods: list = []
     bash_exec: str = ""
+    no_preprocessing: bool = False
+    catalog_file: str = ""
 
     def __init__(self, pod_dict: dict, config: util.NameSpace, _log: logging.log):
         # transfer all pods, even failed ones, because we need to call their
@@ -506,6 +509,12 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         # Need to run bash explicitly because 'conda activate' sources
         # env vars (can't do that in posix sh). tcsh could also work.
         self.bash_exec = find_executable('bash')
+
+        self.no_preprocessing = not(config.get('run_pp', False))
+        if self.no_preprocessing:
+            self.catalog_file = config.get('DATA_CATALOG')
+        else:
+            self.catalog_file = os.path.join(config.get('OUTPUT_DIR'), 'MDTF_postprocessed_data.json')
 
     def iter_active_pods(self):
         """Generator iterating over all wrapped pods which are currently active,
@@ -548,27 +557,27 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         signal.signal(signal.SIGTERM, self.runtime_terminate)
         signal.signal(signal.SIGINT, self.runtime_terminate)
 
-        test_list = [p for p in self.iter_active_pods()]
-        if not test_list:
+        pod_list = [p for p in self.iter_active_pods()]
+        if not pod_list:
             _log.log.error('%s: no PODs met data requirements; returning',
                            self.__class__.__name__)
             return
 
         env_vars_base = os.environ.copy()
-        for p in self.iter_active_pods():
-            p.pod.log.info('%s: run %s.', self.__class__.__name__, p.pod.full_name)
+        for podwrapper in pod_list:
+            podwrapper.pod.log.info('%s: run %s.', self.__class__.__name__, podwrapper.pod.full_name)
             try:
-                p.pre_run_setup(cases)
+                podwrapper.pre_run_setup(cases, self.catalog_file)
             except Exception as exc:
-                p.setup_exception_handler(exc)
+                podwrapper.setup_exception_handler(exc)
                 continue
             try:
-                p.pod.log_file.write(f"### Start execution of {p.pod.full_name}\n")
-                p.pod.log_file.write(80 * '-' + '\n')
-                p.pod.log_file.flush()
-                p.process = self.spawn_subprocess(p, env_vars_base)
+                podwrapper.pod.log_file.write(f"### Start execution of {podwrapper.pod.full_name}\n")
+                podwrapper.pod.log_file.write(80 * '-' + '\n')
+                podwrapper.pod.log_file.flush()
+                podwrapper.process = self.spawn_subprocess(podwrapper, env_vars_base)
             except Exception as exc:
-                p.runtime_exception_handler(exc)
+                podwrapper.runtime_exception_handler(exc)
                 continue
         # should use asyncio, instead wait for each process
         # to terminate and close all log files
@@ -578,7 +587,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             if p.process is not None:
                 p.process.wait()
             p.tear_down()
-        p.pod.log.info('%s: completed all PODs.', self.__class__.__name__)
+        _log.log.info('%s: completed all PODs.', self.__class__.__name__)
         self.tear_down()
 
     def tear_down(self):

@@ -54,8 +54,8 @@ def print_summary(pods, _log: logging.log):
         """create tuple of ([failed cases], [not failed cases], POD_OUTPUT_DIR) for input pod
         """
         return (
-            [p_name for p_name, p in pod.multi_case_dict['CASE_LIST'].items() if pod.failed],
-            [p_name for p_name, p in pod.multi_case_dict['CASE_LIST'].items() if not pod.failed],
+            [p_name for p_name, p in pod.multicase_dict.items() if pod.failed],
+            [p_name for p_name, p in pod.multicase_dict.items() if not pod.failed],
             getattr(pod.paths, 'POD_OUTPUT_DIR', '<ERROR: dir not created.>')
         )
 
@@ -66,7 +66,7 @@ def print_summary(pods, _log: logging.log):
         _log.info(f"Exiting with errors.")
         for case_name, tup in d.items():
             _log.info(f"Summary for {case_name}:")
-            if tup[0][0] == 'dummy sentinel string':
+            if tup[0] == 'dummy sentinel string':
                 _log.info('\tAn error occurred in setup. No PODs were run.')
             else:
                 if tup[1]:
@@ -177,9 +177,12 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     pods = dict.fromkeys(ctx.config.pod_list, [])
     pod_runtime_reqs = dict()
     # configure pod object(s)
-    for pod_name in ctx.config.pod_list:
+    append_vars = False
+    for count, pod_name in enumerate(ctx.config.pod_list):
+        if count > 0:
+            append_vars = True
         pods[pod_name] = pod_setup.PodObject(pod_name, ctx.config)
-        pods[pod_name].setup_pod(ctx.config, model_paths, cases)
+        pods[pod_name].setup_pod(ctx.config, model_paths, cases, append_vars)
         pods[pod_name].log.info(f"Preprocessing data for {pod_name}")
         for k, v in pods[pod_name].runtime_requirements.items():
             if not hasattr(pod_runtime_reqs, k):

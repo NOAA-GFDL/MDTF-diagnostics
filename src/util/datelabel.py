@@ -42,8 +42,12 @@ import copy
 import enum
 import re
 import datetime
+import math
 import operator as op
 import warnings
+
+import cftime
+
 from src import util
 
 import logging
@@ -51,10 +55,54 @@ import logging
 _log = logging.getLogger(__name__)
 
 
+# match-case statement to give date format
+# input can be int or str
+def date_fmt(date):
+    if isinstance(date, str):
+        date = int(date)
+    date_digits = math.floor(math.log10(date)) + 1
+    match date_digits:
+        case 6:
+            fmt = '%Y%m'
+        case 8:
+            fmt = '%Y%m%d'
+        case 10:
+            fmt = '%Y%m%d%H'
+        case 12:
+            fmt = '%Y%m%d%H%M'
+        case 14:
+            fmt = '%Y%m%d-%H%M%S'
+    return fmt
+
+
+# convert a string to a cftime object
+
+def str_to_cftime(time_str: str, fmt=None, calendar=None):
+    if fmt is None:
+        fmt = date_fmt(time_str)
+    if calendar is None:
+        calendar = 'julian'
+    dt = datetime.datetime.strptime(time_str, fmt)
+    cf_date = cftime.datetime(
+        dt.year,
+        dt.month,
+        dt.day,
+        calendar=calendar,
+    )
+    return cf_date
+
+
+# convert cftime.Datetime to a string
+def cftime_to_str(cf_time: cftime.datetime, fmt=None):
+    if fmt is None:
+        fmt = '%Y%m%d-%H:%M:%S'
+    return cf_time.strftime(fmt)
+
+
 # ===============================================================
 # following adapted from Alexandre Decan's python-intervals
 # https://github.com/AlexandreDecan/python-intervals ; LGPLv3
-# We neglect the case of noncontiguous or semi-infinite intervals here
+# We neglect the case of noncontinuous or semi-infinite intervals here
 
 
 class AtomicInterval(object):
@@ -126,7 +174,7 @@ class AtomicInterval(object):
         """
         return (
                 self._lower > self._upper or
-                (self._lower == self._upper \
+                (self._lower == self._upper
                  and (self._left == self.OPEN or self._right == self.OPEN))
         )
 
@@ -419,9 +467,9 @@ class AtomicInterval(object):
 
 class DatePrecision(enum.IntEnum):
     """:py:class:`~enum.IntEnum` to encode the recognized levels of precision
-    for :class:`Date`\s and :class:`DateRange`\s. Example:
+    for :class:`Date`s and :class:`DateRange`s. Example:
 
-    .. code-block:: python
+    . code-block:: python
 
        >>> Date('200012').precision == DatePrecision.MONTH
        True
@@ -705,8 +753,8 @@ class DateRange(AtomicInterval, DateMixin):
 
     @classmethod
     def from_date_span(cls, *args):
-        """Return a DateRange coresponding to the interval containing a set of
-        :class:`Date`\s. Differs from :meth:`from_contiguous_span` in that we
+        """Return a DateRange corresponding to the interval containing a set of
+        :class:`Date`s. Differs from :meth:`from_contiguous_span` in that we
         don't expect intervals to be contiguous.
         """
         dt_args = [Date._coerce_to_self(arg) for arg in args]
@@ -806,7 +854,7 @@ class Date(DateRange):
     the interval (which is why this inherits from :class:`DateRange` and not vice
     versa.)
 
-    Date objects are mapped to :py:class:`~datetime.datetime`\s representing the
+    Date objects are mapped to :py:class:`~datetime.datetime`s representing the
     *start* of the interval implied by their precision, e.g. Date('2000-05') maps
     to 0:00 on 1 May 2000.
 
@@ -1062,8 +1110,8 @@ with no time dependence.
 class DateFrequency(datetime.timedelta):
     """Class representing a frequency or time period.
 
-    .. warning::
-       Period lengths are *not* defined accurately, eg. a year is taken as
+    . warning::
+       Period lengths are *not* defined accurately; e.g., a year is taken as
        365 days and a month is taken as 30 days. For this reason, we do not
        implement addition and subtraction of DateFrequency objects to Dates,
        as is possible for :py:class:`~datetime.timedelta` and

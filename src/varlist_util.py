@@ -404,7 +404,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         return s
 
     def iter_associated_files_keys(self, status=None, status_neq=None):
-        """Yield :class:`~data_manager.DataKeyBase`\s
+        """ Yield file key
         from v's *associated_files* dict, filtering out those DataKeys
         that have beeneliminated via previous failures in fetching or preprocessing.
         """
@@ -416,7 +416,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         yield from list(iter_)
 
     def iter_data_keys(self, status=None, status_neq=None):
-        """Yield :class:`~data_manager.DataKeyBase`\s
+        """Yield data key
         from v's *data* dict, filtering out those DataKeys that have been
         eliminated via previous failures in fetching or preprocessing.
         """
@@ -515,6 +515,8 @@ class Varlist(data_model.DMDataSet):
         single POD for multiple cases/ensemble members
     """
 
+    vlist_vars: dict
+
     def find_var(self, v):
         """If a variable matching *v* is already present in the Varlist, return
         (a reference to) it (so that we don't try to add duplicates), otherwise
@@ -536,10 +538,11 @@ class Varlist(data_model.DMDataSet):
         available after DataManager and Diagnostic have been configured (ie,
         only known at runtime, not from settings.jsonc.)
 
-        Could arguably be moved into VarlistEntry's init, at the cost of
-        dependency inversion.
         """
-        # Note: VariableTranslator object is instantiated in mdtf_framework with runtime information
+        # Note: VariableTranslator object is instantiated in mdtf_framework with runtime information from the POD
+        # settings file
+
+        # instantiate a translation object for the Data convention
         translate = translation.VariableTranslator().get_convention(to_convention)
         if v.T is not None:
             v.change_coord(
@@ -616,7 +619,7 @@ class Varlist(data_model.DMDataSet):
             return os.path.join(model_paths.MODEL_WORK_DIR[case_name], freq, f_name)
 
     @classmethod
-    def from_struct(cls, parent):
+    def from_struct(cls, parent, append_vars: bool=False):
         """Parse the "dimensions", "data" and "varlist" sections of the POD's
         settings.jsonc file when instantiating a new :class:`Diagnostic` object.
 
@@ -650,23 +653,37 @@ class Varlist(data_model.DMDataSet):
         dims_d = {k: _pod_dimension_from_struct(k, v, vlist_settings)
                   for k, v in parent.pod_dims.items()}
 
-        vlist_vars = {
+        verify_axes = True
+        if not append_vars:
+            cls.vlist_vars = dict()
+        else:
+             verify_axes = False
+
+        cls.vlist_vars.update({
             k: VarlistEntry.from_struct(globals_d, dims_d, name=k, parent=parent, **v)
-            for k, v in parent.pod_vars.items()
-        }
-        for v in vlist_vars.values():
+            for k, v in parent.pod_vars.items()}
+        )
+
+        alt_vars = []
+        for k, v in parent.pod_vars.items():
+            for vv in v.values():
+                if vv == 'alternate':
+                    alt_vars.append(k)
+        vvars = tuple(parent.pod_vars.keys())
+        for k, v in parent.pod_vars.items():
             # validate & replace names of alt vars with references to VE objects
-            for altv_name in v.alternates:
-                if altv_name not in vlist_vars:
-                    raise ValueError((f"Unknown variable name {altv_name} listed "
-                                      f"in alternates for varlist entry {v.name}."))
-            linked_alts = [vlist_vars[v_name] for v_name in v.alternates]
-            v.alternates = linked_alts
-        alt_vars = [k for k, v in vlist_vars.items() if v.is_alternate]
+            if v.get('alternates', None) is not None:
+                for altv_name in v.get('alternates'):
+                    if altv_name not in vvars:
+                        raise ValueError((f"Unknown variable name {altv_name} listed "
+                                          f"in alternates for varlist entry {v.name}."))
+                linked_alts = [cls.vlist_vars[v_name] for v_name in alt_vars]
+                cls.vlist_vars[k].alternates = linked_alts
         for a in alt_vars:
-            vlist_vars = util.new_dict_wo_key(vlist_vars, a)
+            cls.vlist_vars = util.new_dict_wo_key(cls.vlist_vars, a)
 
         # remove alternates from VarlistEntries since they are now attributes of variable
         # VarlistEntry objects that they can be substituted for
 
-        return cls(contents=list(vlist_vars.values()))
+        args_list = list(cls.vlist_vars.values())
+        return cls(verify_axes=verify_axes, contents=args_list)

@@ -1,7 +1,7 @@
 .. role:: console(code)
    :language: console
    :class: highlight
-
+.. _ref-data:
 Model data format
 =================
 

@@ -39,7 +39,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     pod_data = dict()
     pod_vars = dict()
     pod_settings = dict()
-    multi_case_dict = dict()  # populated with case_info entries in enviroment_manager
+    multicase_dict = dict()  # populated with case_info entries in enviroment_manager
     overwrite: bool = False
     # explict 'program' attribute in settings
     _interpreters = dict
@@ -51,6 +51,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     nc_largefile: bool = False
     bash_exec: str
     global_env_vars: dict
+    paths: util.PodPathManager
 
     def __init__(self, name: str, runtime_config: util.NameSpace):
         self.name = name
@@ -72,10 +73,11 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         self.bash_exec = find_executable('bash')
         # Initialize the POD path object and define the POD output paths
         # Don't need a new working directory since one is created when the model data directories are initialized
-        self.paths = util.PodPathManager(runtime_config,
+        self.paths = util.PodPathManager(self.name,
+                                         runtime_config,
                                          env=self.pod_env_vars,
+                                         unittest=False,
                                          new_work_dir=False)
-        self.paths.setup_pod_paths(self.name)
         util.MDTFObjectBase.__init__(self, name=self.name, _parent=None)
 
     # Explicitly invoke MDTFObjectBase post_init and init methods so that _id and other inherited
@@ -103,7 +105,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     @property
     def _children(self):
         # property required by MDTFObjectBase
-        return self.multi_case_dict.get('CASELIST', None)
+        pass
 
     @property
     def full_name(self):
@@ -118,7 +120,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
     def iter_case_names(self):
         """Iterator returning :c
         """
-        yield self.multi_case_dict.keys()
+        yield self.multicase_dict.keys()
 
     def parse_pod_settings_file(self, code_root: str) -> util.NameSpace:
         """Parse the POD settings file"""
@@ -261,7 +263,8 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
 
     def setup_pod(self, runtime_config: util.NameSpace,
                   model_paths: util.ModelDataPathManager,
-                  cases: dict):
+                  cases: dict,
+                  append_vars: bool=False):
         """Update POD information from settings and runtime configuration files
         """
         # Parse the POD settings file
@@ -288,20 +291,25 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         pod_convention = self.pod_settings['convention'].lower()
 
         for case_name, case_dict in runtime_config.case_list.items():
-            cases[case_name].read_varlist(self)
-            # Translate the data if desired and the pod convention does not match the case convention
+            cases[case_name].read_varlist(self, append_vars=append_vars)
+            # Translate the varlistEntries from the POD convention to the data convention if desired and the pod
+            # convention does not match the case convention
             data_convention = case_dict.convention.lower()
             if runtime_config.translate_data and pod_convention != data_convention:
                 self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
             else:
                 data_convention = 'no_translation'
-                self.log.info(f'POD convention and data convention are both {data_convention}. '
+                self.log.info(f'POD convention and data convention are both {pod_convention}. '
                               f'No data translation will be performed for case {case_name}.')
             # A 'noTranslationFieldlist' will be defined for the varlistEntry translation attribute
-            cases[case_name].translate_varlist(model_paths,
-                                               case_name,
-                                               pod_convention,
-                                               data_convention)
+            for v in pod_input.varlist.keys():
+                for v_entry in cases[case_name].varlist.iter_vars():
+                    if v_entry.name == v:
+                        cases[case_name].translate_varlist(v_entry,
+                                                           model_paths,
+                                                           case_name,
+                                                           pod_convention,
+                                                           data_convention)
 
         for case_name in cases.keys():
             for v in cases[case_name].iter_children():
@@ -315,5 +323,3 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         if self.status == util.ObjectStatus.NOTSET and \
                 all(case_dict.status == util.ObjectStatus.ACTIVE for case_name, case_dict in cases.items()):
             self.status = util.ObjectStatus.ACTIVE
-
-

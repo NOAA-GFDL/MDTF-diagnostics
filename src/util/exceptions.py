@@ -29,7 +29,7 @@ def exit_on_exception(exc, msg=None):
 
 def exit_handler(code=1, msg=None):
     """Wraps all calls to :py:func:`sys.exit`; could do additional
-    cleanup not handled by atexit() here.
+    cleanup not handled by exit() here.
     """
     if msg:
         print(msg)
@@ -233,7 +233,7 @@ class MDTFEvent(MDTFBaseException):
 
 
 class FatalErrorEvent(MDTFBaseException):
-    """Dummy class used to "convert" :class:`MDTFEvent`\s to fatal errors
+    """Dummy class used to "convert" :class:`MDTFEvent`s to fatal errors
     (resulting in deactivation of a variable, pod or case.) via exception
     chaining.
     """

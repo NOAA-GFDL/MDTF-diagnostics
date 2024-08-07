@@ -68,8 +68,8 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
                  )
         )
 
-    # add columns required for GFDL/CESM institutions
-    append_atts = ['chunk_freq', 'path']
+    # add columns required for GFDL/CESM institutions and MDTF-diagnostics functionality
+    append_atts = ['chunk_freq', 'path', 'standard_name', 'start_time', 'end_time']
     for att in append_atts:
         cat_dict["attributes"].append(
             dict(column_name=att)
@@ -91,19 +91,13 @@ def define_pp_catalog_assets(config, cat_file_name: str) -> dict:
             "grid_label",
             "realm",
             "chunk_freq",
-            "variant_label",
-            "time_range"
+            "variant_label"
         ],
         "aggregations": [
             {
                 "type": "union",
                 "attribute_name": "variable_id",
                 "options": {}
-            },
-            {
-                "type": "join_existing",
-                "attribute_name": "time_range",
-                "options": {"dim": "time", "coords": "minimal", "compat": "override"}
             }
         ]
     }

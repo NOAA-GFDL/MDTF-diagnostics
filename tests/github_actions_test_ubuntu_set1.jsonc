@@ -23,7 +23,7 @@
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
-  "DATA_CATALOG": "./tests/esm_catalog_CESM_ubuntu.json",
+  "DATA_CATALOG": "./tests/esm_catalog_test_ubuntu.json",
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 

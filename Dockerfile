@@ -23,6 +23,7 @@ ENV CONDA_ENV_DIR=/opt/conda/envs
 RUN apt-get -y update
 #dev purpose only - install vim
 RUN apt-get -y install vim
+RUN apt-get -y install git
 
 RUN micromamba create -f /proj/MDTF-diagnostics/src/conda/env_base.yml && \
     micromamba create -f /proj/MDTF-diagnostics/src/conda/env_python3_base.yml && \

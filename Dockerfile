@@ -3,8 +3,9 @@ FROM mambaorg/micromamba:1.5.8 as micromamba
 USER root
 # Container Metadata
 LABEL maintainer="mdtf-framework-team"
-LABEL version="071724"
-LABEL description="This is a docker image for the MDTF-diagnostics package"
+LABEL org.opencontainers.image.source=https://github.com/aradhakrishnanGFDL/MDTF-diagnostics/
+LABEL org.opencontainers.image.description="This is a docker image for the MDTF-diagnostics package"
+LABEL version="20140100.beta"
 
 # Copy the MDTF-diagnostics package contents from local machine to image (or from git)
 ENV CODE_ROOT=/proj/MDTF-diagnostics

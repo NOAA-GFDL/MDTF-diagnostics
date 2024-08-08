@@ -3,11 +3,11 @@
 // as blank lines (JSONC quasi-standard.)
 {
   "pod_list": [
-     "convective_transition_diag",
+     //"convective_transition_diag",
      "Wheeler_Kiladis",
-     "MJO_suite",
-     "MJO_teleconnection",
-     "precip_diurnal_cycle",
+     //"MJO_suite",
+     //"MJO_teleconnection",
+     //"precip_diurnal_cycle",
      "EOF_500hPa"
     ],
    "case_list" : {

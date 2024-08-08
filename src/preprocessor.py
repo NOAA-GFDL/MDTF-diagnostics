@@ -915,7 +915,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # the variable is translated
                 case_d.query['frequency'] = freq
                 case_d.query['path'] = [path_regex]
-                #case_d.query['variable_id'] = var.translation.name
                 case_d.query['realm'] = realm_regex
                 case_d.query['standard_name'] = var.translation.standard_name
 
@@ -936,10 +935,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         for a in var.alternates:
                             if hasattr(a, 'translation'):
                                 if a.translation is not None:
-                                    #case_d.query.update({'variable_id': a.translation.name})
                                     case_d.query.update({'standard_name': a.translation.standard_name})
                             else:
-                                #case_d.query.update({'variable_id': a.name})
                                 case_d.query.update({'standard_name': a.standard_name})
                             if any(var.translation.scalar_coords):
                                 found_z_entry = False

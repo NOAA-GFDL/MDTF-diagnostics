@@ -821,12 +821,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     new_end_time_vals = []
 
                     for s in start_time_vals:
-                        # replace spaces with -
                         new_start_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]",
                                                                                    s)
                                                                if w)))
                     for e in end_time_vals:
-                        # replace spaces with -
                         new_end_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]",
                                                                                  e)
                                                      if w)))

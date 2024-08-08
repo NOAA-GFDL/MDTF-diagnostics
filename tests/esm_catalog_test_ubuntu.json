@@ -66,7 +66,15 @@
       "vocabulary": ""
     },
     {
+      "column_name": "standard_name",
+      "vocabulary": ""
+    },
+    {
       "column_name": "product",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "units",
       "vocabulary": ""
     },
     {
@@ -103,18 +111,6 @@
     },
     {
       "column_name": "member_id",
-      "vocabulary": ""
-    },
-    {
-      "column_name": "standard_name",
-      "vocabulary": ""
-    },
-    {
-      "column_name": "long_name",
-      "vocabulary": ""
-    },
-    {
-      "column_name": "units",
       "vocabulary": ""
     },
     {
@@ -163,29 +159,19 @@
       "table_id",
       "grid_label",
       "realm",
-      "variant_label",
-      "time_range"
+      "variant_label"
     ],
     "aggregations": [
       {
         "type": "union",
         "attribute_name": "variable_id",
         "options": {}
-      },
-      {
-        "type": "join_existing",
-        "attribute_name": "time_range",
-        "options": {
-          "dim": "time",
-          "coords": "minimal",
-          "compat": "override"
-        }
       }
     ]
   },
-  "id": "esm_catalog_CMIP_test_ubuntu.csv",
+  "id": "esm_catalog_test_ubuntu",
   "description": null,
   "title": null,
-  "last_updated": "2024-03-11",
-  "catalog_file": "file:/home/runner/mdtf/MDTF-diagnostics/tests/esm_catalog_CMIP_test_ubuntu.csv"
+  "last_updated": "2024-08-07T16:10:38Z",
+  "catalog_file": "file:/home/runner/work/MDTF-diagnostics/MDTF-diagnostics/tests/esm_catalog_test_ubuntu.csv"
 }

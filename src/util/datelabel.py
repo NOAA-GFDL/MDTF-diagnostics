@@ -71,7 +71,7 @@ def date_fmt(date):
         case 12:
             fmt = '%Y%m%d%H%M'
         case 14:
-            fmt = '%Y%m%d-%H%M%S'
+            fmt = '%Y%m%d%H%M%S'
     return fmt
 
 

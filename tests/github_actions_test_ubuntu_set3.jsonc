@@ -26,12 +26,9 @@
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
   // Full or relative path to model data ESM-intake catalog header file
-  "DATA_CATALOG": "../tests/esm_catalog_CMIP_test_ubuntu.json",
+  "DATA_CATALOG": "./tests/esm_catalog_test_ubuntu.json",
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
-
-  // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "../mdtf_test_data",
 
   // Working directory. Defaults to working directory if blank.
   "WORK_DIR": "../wkdir",

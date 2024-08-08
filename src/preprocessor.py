@@ -798,7 +798,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             log: log file
         """
         date_col = "date_range"
-        delimiters = ",.!?/&-:;@_'"
+        delimiters = ",.!?/&-:;@_'\\s+"
         if not hasattr(group_df, 'start_time') or not hasattr(group_df, 'end_time'):
             if hasattr(group_df, 'time_range'):
                 start_times = []
@@ -821,11 +821,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     new_end_time_vals = []
 
                     for s in start_time_vals:
-                        new_start_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]", s)
+                        new_start_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]",
+                                                                                   s)
                                                                if w)))
                     for e in end_time_vals:
-                        new_end_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]", e)
-                                                             if w)))
+                        new_end_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]",
+                                                                                 e)
+                                                     if w)))
 
                     start_time_vals = new_start_time_vals
                     end_time_vals = new_end_time_vals
@@ -913,7 +915,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # the variable is translated
                 case_d.query['frequency'] = freq
                 case_d.query['path'] = [path_regex]
-                case_d.query['variable_id'] = var.translation.name
                 case_d.query['realm'] = realm_regex
                 case_d.query['standard_name'] = var.translation.standard_name
 
@@ -934,10 +935,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         for a in var.alternates:
                             if hasattr(a, 'translation'):
                                 if a.translation is not None:
-                                    case_d.query.update({'variable_id': a.translation.name})
                                     case_d.query.update({'standard_name': a.translation.standard_name})
                             else:
-                                case_d.query.update({'variable_id': a.name})
                                 case_d.query.update({'standard_name': a.standard_name})
                             if any(var.translation.scalar_coords):
                                 found_z_entry = False
@@ -979,6 +978,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 )
 
                 range_attr_string = 'intake_esm_attrs:time_range'
+                if not hasattr(cat_subset_df[list(cat_subset_df)[0]].attrs, range_attr_string):
+                    range_attr_string = 'intake_esm_attrs:date_range'
+
                 date_range_dict = {f: cat_subset_df[f].attrs[range_attr_string]
                                    for f in list(cat_subset_df)}
                 date_range_dict = dict(sorted(date_range_dict.items(), key=lambda item: item[1]))

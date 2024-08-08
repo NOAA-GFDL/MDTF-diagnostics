@@ -60,6 +60,9 @@ a `discussion<https://github.com/NOAA-GFDL/CatalogBuilder/discussions>`__ if you
 We encourage MDTF-diagnostics users to try running both catalog builders. Feel free to extend either tool to suit your needs, and consider submitting your additions to the appropriate
 repository(ies).
 
+See :doc:`the catalog documentation <ref-catalogs>` for more information on the implementation of
+ESM-intake catalogs in the framework and the required column information for preprocessor functionality.
+
 Adding your observational data files
 ++++++++++++++++++++++++++++++++++++
 

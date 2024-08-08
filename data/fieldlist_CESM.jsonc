@@ -77,7 +77,8 @@
       "ndim": 4
     },
     "Z500": {
-      "standard_name": "geopotential_height_500mb",
+      "standard_name": "geopotential_height",
+      "long_name": "geopotential height at 500 hPa",
       "realm": "atmos",
       "units": "m",
       // note: 4d name is 'Z3' but Z500 = height at 500 mb, etc.
@@ -269,6 +270,19 @@
       "standard_name": "surface_upward_latent_heat_flux",
       "realm": "atmos",
       "units": "W m-2",
+      "ndim": 3
+    },
+    "tave": {
+      "standard_name": "vertically_integrated_temperature",
+      "realm": "atmos",
+      "units": "K",
+      "ndim": 3
+    },
+    "qsat_int": {
+      "standard_name": "specific_humidity",
+      "long_name": "Vertically integrated saturated specific humidity (surface to 200 mb)",
+      "realm": "atmos",
+      "units": "kg m-2",
       "ndim": 3
     },
     "zos": {

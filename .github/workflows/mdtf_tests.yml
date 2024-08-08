@@ -92,6 +92,7 @@ jobs:
     - name: Generate Model Data
       run: |
         cd ../
+        echo "${PWD}"
         micromamba activate _MDTF_synthetic_data
         pip install mdtf-test-data
         mkdir mdtf_test_data ; cd mdtf_test_data

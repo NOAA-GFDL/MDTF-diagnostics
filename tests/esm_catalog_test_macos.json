@@ -173,5 +173,5 @@
   "description": null,
   "title": null,
   "last_updated": "2024-08-07T16:10:38Z",
-  "catalog_file": "file:////Users/runner/work/MDTF-diagnostics/MDTF-diagnostics/tests/esm_catalog_test_macos.csv"
+  "catalog_file": "file:/Users/runner/work/MDTF-diagnostics/MDTF-diagnostics/tests/esm_catalog_test_macos.csv"
 }

@@ -906,7 +906,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                      'lon_bnds',
                      'average_DT',
                      'average_T1',
-                     'height']
+                     'height',
+                     'date']
 
         for case_name, case_d in case_dict.items():
             # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))

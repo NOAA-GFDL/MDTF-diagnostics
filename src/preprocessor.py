@@ -1312,11 +1312,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # get the initial model data subset from the ESM-intake catalog
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
-            # delete height attribute because it
-            # creates issues when merging: xr cannot determine if it is a coordinate
-            # TODO: implement something less kluge-y to remove problem attributes/variables
-            if case_xr_dataset.get('height', None) is not None:
-                del case_xr_dataset['height']
             for v in case_list[case_name].varlist.iter_vars():
                 tv_name = v.translation.name
                 # todo: maybe skip this if no standard_name attribute for v in case_xr_dataset

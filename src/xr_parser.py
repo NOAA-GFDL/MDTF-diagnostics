@@ -900,8 +900,8 @@ class DefaultDatasetParser:
                 overwrite_ours = True
             else:
                 # attempt to match on standard_name attribute if present in data
-                ds_names = [v.name for v in ds.variables
-                            if v.attrs.get('standard_name', "") == our_var.standard_name]
+                ds_names = [ds.variables[v].name for v in ds.variables
+                            if ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name]
                 if len(ds_names) == 1:
                     # success, narrowed down to one guess
                     self.log.info(("Selecting '%s' as the intended name for '%s' "

@@ -900,6 +900,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         if 'date_range' not in [c.lower() for c in cols]:
             cols.append('date_range')
 
+        drop_atts = ['average_T2',
+                     'time_bnds',
+                     'lat_bnds',
+                     'lon_bnds',
+                     'average_DT',
+                     'average_T1',
+                     'height']
+
         for case_name, case_d in case_dict.items():
             # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
             path_regex = re.compile(r'({})'.format(case_name))
@@ -992,10 +1000,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             var_xr = cat_subset_df[k]
                         else:
                             var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+                for att in drop_atts:
+                    if var_xr.get(att, None) is not None:
+                        var_xr = var_xr.drop_vars(att)
                 if case_name not in cat_dict:
                     cat_dict[case_name] = var_xr
                 else:
-                    cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr])
+                    cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr], compat='no_conflicts')
                 # check that start and end times include runtime startdate and enddate
                 try:
                     self.check_time_bounds(cat_dict[case_name], var.translation, freq)
@@ -1301,13 +1312,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # get the initial model data subset from the ESM-intake catalog
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
-            # delete height attribute because it
-            # creates issues when merging: xr cannot determine if it is a coordinate
-            # TODO: implement something less kluge-y to remove problem attributes/variables
-            if case_xr_dataset.get('height', None) is not None:
-                del case_xr_dataset['height']
             for v in case_list[case_name].varlist.iter_vars():
                 tv_name = v.translation.name
+                # todo: maybe skip this if no standard_name attribute for v in case_xr_dataset
                 var_xr_dataset = self.parse_ds(v, case_xr_dataset)
                 varlist_ex = [v_l.translation.name for v_l in case_list[case_name].varlist.iter_vars()]
                 if tv_name in varlist_ex:

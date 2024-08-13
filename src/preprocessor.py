@@ -939,7 +939,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                              var.translation.name,
                              case_name)
                 cat_subset = cat.search(**case_d.query)
-                print(case_d.query)
                 if cat_subset.df.empty:
                     # check whether there is an alternate variable to substitute
                     if any(var.alternates):

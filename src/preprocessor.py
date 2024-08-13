@@ -856,14 +856,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # throw out df entries not in date_range
             for i in sorted_df.index:
                 cat_row = sorted_df.iloc[i]
-                stin = dl.Date(cat_row['start_time']) in case_dr
-                etin = dl.Date(cat_row['end_time']) in case_dr
+                if pd.isnull(cat_row['start_time']):
+                    continue 
+                else:
+                    stin = dl.Date(cat_row['start_time']) in case_dr
+                    etin = dl.Date(cat_row['end_time']) in case_dr
                 if (not stin and not etin) or (stin and not etin):
                     mask = sorted_df == cat_row['start_time']
                     sorted_df = sorted_df[~mask]
             mask = np.isnat(sorted_df['start_time']) | np.isnat(sorted_df['end_time'])     
             sorted_df = sorted_df[~mask]
-
             return sorted_df
         except ValueError:
             log.error("Non-contiguous or malformed date range in files:", group_df["path"].values)

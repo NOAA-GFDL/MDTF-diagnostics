@@ -162,12 +162,14 @@ def verify_runtime_config_options(config: util.NameSpace):
         update_config(config, 'OUTPUT_DIR', new_output_dir)
     verify_case_atts(config.case_list)
 
-def verify_conda_envs(config: util.NameSpace):
+def verify_conda_envs(config: util.NameSpace, filename: str):
     m_exists = os.path.exists(config['micromamba_exe'])
     c_exists = os.path.exists(config['conda_root'])
+    cenv_exists = os.path.exists(config['conda_env_root'])
     if not m_exists and not c_exists:
         raise util.exceptions.MDTFBaseException(
-            f"Could not find conda or micromamba executable; please check the runtime config file"
+            f"Could not find conda or micromamba executable; please check the runtime config file: "
+            f'{filename}'
         ) 
     if c_exists and config['conda_env_root'] == '':
         new_env_root = os.path.join(config['conda_root'], "envs")
@@ -175,7 +177,14 @@ def verify_conda_envs(config: util.NameSpace):
             config.update({'conda_env_root':new_env_root})
         else:
             raise util.exceptions.MDTFBaseException(
-                f"Count not find conda enviroment directory; please check the runtime config file"
+                f"Count not find conda enviroment directory; please check the runtime config file: "
+                f'{filename}'
             )
+    elif not cenv_exists and config['conda_env_root'] != '':
+        raise util.exceptions.MDTFBaseException(
+                f"Count not find conda enviroment directory; please check the runtime config file: "
+                f'{filename}'
+            )
+
     return config
 

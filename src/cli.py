@@ -171,17 +171,12 @@ def verify_conda_envs(config: util.NameSpace, filename: str):
             f"Could not find conda or micromamba executable; please check the runtime config file: "
             f'{filename}'
         ) 
-    if c_exists and config['conda_env_root'] == '':
+    if c_exists and not cenv_exists:
         new_env_root = os.path.join(config['conda_root'], "envs")
         if os.path.exists(new_env_root):
             config.update({'conda_env_root':new_env_root})
         else:
             raise util.exceptions.MDTFBaseException(
-                f"Count not find conda enviroment directory; please check the runtime config file: "
-                f'{filename}'
-            )
-    elif not cenv_exists and config['conda_env_root'] != '':
-        raise util.exceptions.MDTFBaseException(
                 f"Count not find conda enviroment directory; please check the runtime config file: "
                 f'{filename}'
             )

@@ -124,7 +124,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     ctx.config = util.NameSpace()
     # parse the runtime config file
     ctx.config = cli.parse_config_file(configfile)
-    ctx.config = cli.verify_conda_envs(ctx.config)
+    ctx.config = cli.verify_conda_envs(ctx.config, configfile)
     # Test ctx.config
     # print(ctx.config.WORK_DIR)
     ctx.config.CODE_ROOT = os.path.dirname(os.path.realpath(__file__))

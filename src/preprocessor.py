@@ -798,7 +798,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             log: log file
         """
         date_col = "date_range"
-        delimiters = ",.!?/&-:;@_'"
+        delimiters = ",.!?/&-:;@_'\\s+"
         if not hasattr(group_df, 'start_time') or not hasattr(group_df, 'end_time'):
             if hasattr(group_df, 'time_range'):
                 start_times = []
@@ -821,11 +821,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     new_end_time_vals = []
 
                     for s in start_time_vals:
-                        new_start_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]", s)
+                        new_start_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]",
+                                                                                   s)
                                                                if w)))
                     for e in end_time_vals:
-                        new_end_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]", e)
-                                                             if w)))
+                        new_end_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]",
+                                                                                 e)
+                                                     if w)))
 
                     start_time_vals = new_start_time_vals
                     end_time_vals = new_end_time_vals
@@ -854,14 +856,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # throw out df entries not in date_range
             for i in sorted_df.index:
                 cat_row = sorted_df.iloc[i]
-                stin = dl.Date(cat_row['start_time']) in case_dr
-                etin = dl.Date(cat_row['end_time']) in case_dr
+                if pd.isnull(cat_row['start_time']):
+                    continue 
+                else:
+                    stin = dl.Date(cat_row['start_time']) in case_dr
+                    etin = dl.Date(cat_row['end_time']) in case_dr
                 if (not stin and not etin) or (stin and not etin):
                     mask = sorted_df == cat_row['start_time']
                     sorted_df = sorted_df[~mask]
             mask = np.isnat(sorted_df['start_time']) | np.isnat(sorted_df['end_time'])     
             sorted_df = sorted_df[~mask]
-
             return sorted_df
         except ValueError:
             log.error("Non-contiguous or malformed date range in files:", group_df["path"].values)
@@ -898,6 +902,15 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         if 'date_range' not in [c.lower() for c in cols]:
             cols.append('date_range')
 
+        drop_atts = ['average_T2',
+                     'time_bnds',
+                     'lat_bnds',
+                     'lon_bnds',
+                     'average_DT',
+                     'average_T1',
+                     'height',
+                     'date']
+
         for case_name, case_d in case_dict.items():
             # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
             path_regex = re.compile(r'({})'.format(case_name))
@@ -913,7 +926,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # the variable is translated
                 case_d.query['frequency'] = freq
                 case_d.query['path'] = [path_regex]
-                case_d.query['variable_id'] = var.translation.name
                 case_d.query['realm'] = realm_regex
                 case_d.query['standard_name'] = var.translation.standard_name
 
@@ -934,10 +946,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         for a in var.alternates:
                             if hasattr(a, 'translation'):
                                 if a.translation is not None:
-                                    case_d.query.update({'variable_id': a.translation.name})
                                     case_d.query.update({'standard_name': a.translation.standard_name})
                             else:
-                                case_d.query.update({'variable_id': a.name})
                                 case_d.query.update({'standard_name': a.standard_name})
                             if any(var.translation.scalar_coords):
                                 found_z_entry = False
@@ -979,6 +989,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 )
 
                 range_attr_string = 'intake_esm_attrs:time_range'
+                if not hasattr(cat_subset_df[list(cat_subset_df)[0]].attrs, range_attr_string):
+                    range_attr_string = 'intake_esm_attrs:date_range'
+
                 date_range_dict = {f: cat_subset_df[f].attrs[range_attr_string]
                                    for f in list(cat_subset_df)}
                 date_range_dict = dict(sorted(date_range_dict.items(), key=lambda item: item[1]))
@@ -990,10 +1003,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             var_xr = cat_subset_df[k]
                         else:
                             var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+                for att in drop_atts:
+                    if var_xr.get(att, None) is not None:
+                        var_xr = var_xr.drop_vars(att)
                 if case_name not in cat_dict:
                     cat_dict[case_name] = var_xr
                 else:
-                    cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr])
+                    cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr], compat='no_conflicts')
                 # check that start and end times include runtime startdate and enddate
                 try:
                     self.check_time_bounds(cat_dict[case_name], var.translation, freq)
@@ -1299,13 +1315,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # get the initial model data subset from the ESM-intake catalog
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
         for case_name, case_xr_dataset in cat_subset.items():
-            # delete height attribute because it
-            # creates issues when merging: xr cannot determine if it is a coordinate
-            # TODO: implement something less kluge-y to remove problem attributes/variables
-            if case_xr_dataset.get('height', None) is not None:
-                del case_xr_dataset['height']
             for v in case_list[case_name].varlist.iter_vars():
                 tv_name = v.translation.name
+                # todo: maybe skip this if no standard_name attribute for v in case_xr_dataset
                 var_xr_dataset = self.parse_ds(v, case_xr_dataset)
                 varlist_ex = [v_l.translation.name for v_l in case_list[case_name].varlist.iter_vars()]
                 if tv_name in varlist_ex:

@@ -989,9 +989,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 )
 
                 range_attr_string = 'intake_esm_attrs:time_range'
-                if not hasattr(cat_subset_df[list(cat_subset_df)[0]].attrs, range_attr_string):
-                    range_attr_string = 'intake_esm_attrs:date_range'
-
                 date_range_dict = {f: cat_subset_df[f].attrs[range_attr_string]
                                    for f in list(cat_subset_df)}
                 date_range_dict = dict(sorted(date_range_dict.items(), key=lambda item: item[1]))

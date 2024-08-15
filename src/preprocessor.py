@@ -987,22 +987,21 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     progressbar=False,
                     xarray_open_kwargs=self.open_dataset_kwargs
                 )
-
-                range_attr_string = 'intake_esm_attrs:time_range'
-                if not hasattr(cat_subset_df[list(cat_subset_df)[0]].attrs, range_attr_string):
-                    range_attr_string = 'intake_esm_attrs:date_range'
-
-                date_range_dict = {f: cat_subset_df[f].attrs[range_attr_string]
+                # NOTE: The time_range of each file in cat_subset_df must be in a specific
+                # order in order for xr.concat() to work correctly. In the current implementation,
+                # we sort by the first value of the time coordinate of each file.
+                # This assumes the unit of said coordinate is homogeneous for each file, which could 
+                # easily be problematic in the future.
+                # tl;dr hic sunt dracones
+                time_sort_dict = {f: cat_subset_df[f].time.values[0]
                                    for f in list(cat_subset_df)}
-                date_range_dict = dict(sorted(date_range_dict.items(), key=lambda item: item[1]))
+                time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))
                 var_xr = []
-                for k in list(date_range_dict):
-                    date_range_k = dl.DateRange(cat_subset_df[k].attrs[range_attr_string])
-                    if date_range_k in date_range:
-                        if not var_xr:
-                            var_xr = cat_subset_df[k]
-                        else:
-                            var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+                for k in list(time_sort_dict):
+                    if not var_xr:
+                        var_xr = cat_subset_df[k]
+                    else:
+                        var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
                 for att in drop_atts:
                     if var_xr.get(att, None) is not None:
                         var_xr = var_xr.drop_vars(att)

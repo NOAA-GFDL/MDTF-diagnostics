@@ -99,9 +99,9 @@ for, the Windows Subsystem for Linux.
 ### MICROMAMBA on machines that do NOT have Apple M-series chips
 `% ./src/conda/micromamba_env_setup.sh --all --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR`
 ### MICROMAMBA on machines with Apple M-series chips
-`% ./src/conda/micromamba_env_setup.sh --e base --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR`
+`% ./src/conda/micromamba_env_setup.sh -e base --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR`
 
-`% ./src/conda/micromamba_env_setup.sh --e python3_base --micromamba_root $MICROMAMBA_ROOT ---micromamba_exe $MICROMAMBA_EXE -env_dir $CONDA_ENV_DIR`
+`% ./src/conda/micromamba_env_setup.sh -e python3_base --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR`
 
   - Substitute the actual paths for `$CODE_ROOT`, `$CONDA_ROOT`, `$MICROMAMBA_ROOT`, `MICROMAMBA_EXE`, and
     `$CONDA_ENV_DIR`.
@@ -114,6 +114,12 @@ for, the Windows Subsystem for Linux.
   (for space reasons, or if you don’t have write access).
   You can omit this flag, and the environments will be installed within `$CONDA_ROOT/envs/` by default.
 
+  #### NOTE: The micromamba environments may differ from the conda environments because of package compatibility discrepancies between solvers
+  `% ./src/conda/micromamba_env_setup.sh --all --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR` builds
+  the **base** environment, **NCL_base** environment, and a limited version of the **python3_base** enviroment that excludes the following packages
+  and dependencies that may be required by the POD(s) you want to run:
+  - falwa
+  - gridfill
 ## 2. Download the sample data
 
 Supporting observational data and sample model data are available via anonymous FTP at [ftp://ftp.cgd.ucar.edu/archive/mdtf](ftp://ftp.cgd.ucar.edu/archive/mdtf).

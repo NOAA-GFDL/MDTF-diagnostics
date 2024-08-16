@@ -1,6 +1,6 @@
 MDTF-diagnostics Environment variables
 ======================================
-
+.. _ref-envvars:
 This page describes the environment variables that the framework will set for your diagnostic when it's run.
 
 Overview
@@ -78,14 +78,14 @@ Model run information
 Locations of model data files
 -----------------------------
 
-The processed model data files are written to the `$WORK_DIR` and accessed via the esm-intake catalog
+The processed model data files are written to the ``$WORK_DIR`` and accessed via the esm-intake catalog
 output by the framework, or by the original catalog passed to the framework at runtime if no preprocessing
 is performed via the ``CATALOG_FILE`` environment variable in the ``case_env_file``
 
 Names of variables and dimensions
 ---------------------------------
 
-These are set depending on the data your diagnostic requests in its :doc:`settings file <./pod_settings>`. Refer to
+These are set depending on the data your diagnostic requests in its :doc:`settings file <./pod-settings>`. Refer to
 the examples below if you're unfamiliar with how that file is organized.
 
 Simple example

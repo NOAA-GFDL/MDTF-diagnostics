@@ -25,7 +25,7 @@ Rather than tackle the full problem at once, we've implemented the preprocessor 
 functionality incrementally, as it's needed by PODs and data sources supported by the package. We break the general
 "format conversion" problem down into a sequence of individual *transformations* that operate on a single aspect of the
 data, converting that aspect from what's present in the downloaded data to what's requested by the POD
-(as described in its settings file and :class:`~src.diagnostic.VarlistEntry` objects). When called, the preprocessor
+(as described in its settings file and :class:`~src.varlist_util.VarlistEntry` objects). When called, the preprocessor
 simply executes each transformation in order.
 
 
@@ -34,15 +34,15 @@ Implementation
 
 Each preprocessor is a class inheriting from :class:`~src.preprocessor.MDTFPreprocessorBase`; a specific child class
 is associated with each data source via the ``_PreprocessorClass`` attribute on :class:
-`~src.data_manager.DataSourceBase` (and all child classes). This lets us handle the case where a specific source of
+`~src.data_sources.DataSourceBase` (and all child classes). This lets us handle the case where a specific source of
 data might require special preprocessing, even though currently all data sources use the :class:`~src.preprocessor.
 DefaultPreprocessor` class. For example, the methods to open and write the dataset are currently implemented in
-:class:`~src.data_manager.DataSourceBase`; a data source that provided model data in Zarr format instead of
+:class:`~src.data_sources.DataSourceBase`; a data source that provided model data in Zarr format instead of
 netCDF would require a new preprocessor class that overrode those methods.
 
 To accomplish the goals above, the preprocessor is structured as a miniature data pipeline. The inputs to the pipeline
 are the xarray `Dataset <http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html>`__
-containing the downloaded data, and the :class:`~src.diagnostic.VarlistEntry` object from the POD describing the
+containing the downloaded data, and the :class:`~src.varlist_util.VarlistEntry` object from the POD describing the
 requested format for that data.
 
 Methods called
@@ -97,7 +97,7 @@ convention encountered in the wild. Broadly speaking, though, the methods are or
   canonical representation.
 
 - **Reconcile** the metadata with what the POD expects. Recall that each VarlistEntry is converted to a
-  :class:`~src.core.TranslatedVarlistEntry`, expressing the variable in the model's native convention. In this stage,
+  :class:`~src.translation.TranslatedVarlistEntry`, expressing the variable in the model's native convention. In this stage,
   we check that the variable we *expected* to download, as expressed in the TranslatedVarlistEntry, matches what was
   *actually* downloaded. If there are differences, we update either the data's metadata or the TranslatedVarlistEntry,
   or raise an error.

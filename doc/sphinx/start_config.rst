@@ -48,9 +48,20 @@ The MDTF-diagnostics uses `intake-ESM <https://intake-esm.readthedocs.io/en/stab
 model datasets and verify POD data requirements. The MDTF-diagnostics package provides a basic
 `catalog_builder script <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/tools/catalog_builder>`__
 that uses `ecgtools <https://ecgtools.readthedocs.io/en/latest/>`__ APIs to generate data catalogs.
+
 The NOAA-GFDL workflow team also maintains an `intake-ESM catalog builder
-<https://github.com/aradhakrishnanGFDL/CatalogBuilder>`__ that uses the directory structure to generate data catalogs.
+<https://noaa-gfdl.github.io/CatalogBuilder>`__ that uses the directory structure to generate data catalogs.
 It is optimized for the files stored on GFDL systems, but can be configured to generate catalogs on a local file system.
+The GFDL catalog builder has canned cases to embrace interoperability with the MDTF’s preprocessor rewrite and support
+for ongoing GFDL model development. The package has been tested on GFDL AM5 simulations and CMIP directory structures
+at this time. Please open a `GitHub issue <https://github.com/NOAA-GFDL/CatalogBuilder/issues>`__ or start
+a `discussion<https://github.com/NOAA-GFDL/CatalogBuilder/discussions>`__ if you need assistance with the GFDL builder.
+
+We encourage MDTF-diagnostics users to try running both catalog builders. Feel free to extend either tool to suit your needs, and consider submitting your additions to the appropriate
+repository(ies).
+
+See :doc:`the catalog documentation <ref-catalogs>` for more information on the implementation of
+ESM-intake catalogs in the framework and the required column information for preprocessor functionality.
 
 Adding your observational data files
 ++++++++++++++++++++++++++++++++++++

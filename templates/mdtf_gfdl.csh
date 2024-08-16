@@ -39,16 +39,16 @@ set script_path
 set CONDA_ROOT="/home/oar.gfdl.mdtf/miniconda3"
 set REPO_DIR="/home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics"
 
-#YOUR mdtf-frepp template jsonc should be in ${TEMPLATE_DIR}/sites/NOAA_GFDL/mdtf_frepp_template.jsonc
+#YOUR mdtf-frepp template jsonc should be in ${TEMPLATE_DIR}
 
-set TEMPLATE_DIR = $REPO_DIR
-
+set TEMPLATE_DIR = "${REPO_DIR}/templates"
+set CATALOG = "[path to intake-ESM catalog]"
 set OBS_DATA_DIR="/home/oar.gfdl.mdtf/mdtf/inputdata/obs_data"
 # output is always written to $out_dir; set a path below to GCP a copy of output
 # for purposes of serving from a website
 set WEBSITE_OUTPUT_DIR=""
 set INPUT_DIR="${TMPDIR}/inputdata"
-set WK_DIR="${TMPDIR}/wkdir"
+set WORK_DIR="${TMPDIR}/wkdir"
 
 # End of user-configurable paramters
 # ----------------------------------------------------
@@ -163,19 +163,19 @@ conda activate _MDTF_base
 echo "mdtf_gfdl.csh: MDTF start"
 
 ###### workaround to create input json based on a template json and the frepp template variables ####
-set template_jsonc = ${TEMPLATE_DIR}/sites/NOAA_GFDL/mdtf_frepp_template.jsonc
+set template_jsonc = ${TEMPLATE_DIR}/mdtf_frepp_template.jsonc
 
-gcp -cd $template_jsonc $WK_DIR/
+gcp -cd $template_jsonc $WORK_DIR/
 echo "A copy of the input json can be found in outputdir as well ${out_dir}/" #TODO move under corresponding exp directory
 
 
-set input_jsonc = ${WK_DIR}/mdtf_frepp_template.jsonc
+set input_jsonc = ${WORK_DIR}/runtime_config.jsonc
 
 sed -i 's/CASENAME1/'${descriptor}'/g' $input_jsonc
 sed -i 's/MODEL1/'${model}'/g' $input_jsonc
-sed -i 's|PPDIR1|'{$PP_DIR}'|' $input_jsonc
-sed -i 's/FIRSTYR1/'${yr1}'/g' $input_jsonc
-sed -i 's/LASTYR1/'${yr2}'/g' $input_jsonc
+sed -i 's|DATA_CATALOG|'{$catalog}'|' $input_jsonc
+sed -i 's/startdate/'${yr1}'/g' $input_jsonc
+sed -i 's/enddate/'${yr2}'/g' $input_jsonc
 sed -i 's|OUTPUTDIR1|'${out_dir}'|' $input_jsonc
 sed -i 's/CONVENTION1/'${conv}'/g' $input_jsonc
 sed -i 's/POD_LIST/'${pod_list}'/g' $input_jsonc

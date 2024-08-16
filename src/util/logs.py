@@ -325,7 +325,7 @@ class MDTFObjectLogger(logging.Logger):
     - A :py:class:`~logging.Logger` to record events affecting the parent object
       only. This logger does not propagate events up the log hierarchy: the
       module-level logger should be used if that functionality is desired.
-    - A queue (*\_exceptions*) for holding :py:class:`Exception` objects received
+    - A queue (*_exceptions*) for holding :py:class:`Exception` objects received
       by the parent object.
     """
     def __init__(self, name):
@@ -481,9 +481,9 @@ class MDTFObjectLoggerMixin(MDTFObjectLoggerMixinBase):
                         for i, exc in enumerate(exc_strs)]
             str_ += "".join(exc_strs) + '\n'
         # then log contents:
-        #str_ += self._log_handler.buffer_contents().rstrip()
+        # str_ += self._log_handler.buffer_contents().rstrip()
         # then contents of children:
-        if children:
+        if children and self.iter_children() is not None:
             str_ += '\n'
             for child in self.iter_children():
                 str_ += '\n'
@@ -647,8 +647,8 @@ def mdtf_log_header(title):
             f"sys.version: '{sys.version}'\n"
             # f"sys.path: {sys.path}\nsys.argv: {sys.argv}\n"
         )
-    except Exception:
-        err_str = "Couldn't gather log file header information."
+    except Exception as exc:
+        err_str = f"{exc}: Couldn't gather log file header information."
         _log.exception(err_str)
         str_ = f"ERROR: {err_str}\n"
     return str_ + (80 * '-') + '\n\n'
@@ -785,8 +785,8 @@ def initial_log_config():
             "level": {"format": "%(levelname)s: %(message)s"},
             "debug": {
                 "()": HangingIndentFormatter,
-                "format": ("%(levelname)s in %(funcName)s() (%(filename)s line "
-                    "%(lineno)d):\n%(message)s"),
+                "format": ('%(levelname)s in %(funcName)s() (%(filename)s line '
+                           '%(lineno)d):\n%(message)s'),
                 "tabsize": 4,
                 "footer": "\n"
             }
@@ -807,15 +807,15 @@ def transfer_log_cache(target_log=None, close=False):
     (:class:`MultiFlushMemoryHandler`) to logs on newly-configured objects.
     """
     root_logger = logging.getLogger()
-    cache_idx = [i for i,handler in enumerate(root_logger.handlers) \
-        if isinstance(handler, MultiFlushMemoryHandler)]
+    cache_idx = [i for i, handler in enumerate(root_logger.handlers)
+                 if isinstance(handler, MultiFlushMemoryHandler)]
     if len(cache_idx) > 0:
         temp_log_cache = root_logger.handlers[cache_idx[0]]
         if target_log is not None:
             try:
                 temp_log_cache.transfer_to_non_console(target_log)
-            except Exception:
-                root_logger.debug("Couldn't transfer log to '%s'.", target_log.name)
+            except Exception as exc:
+                root_logger.debug(f"{exc} Couldn't transfer log to '%s'.", target_log.name)
         if close:
             # delete it
             temp_log_cache.close()
@@ -826,11 +826,11 @@ def transfer_log_cache(target_log=None, close=False):
 class MDTFObjectBase(metaclass=basic.MDTFABCMeta):
     """Base class providing shared functionality for the case object hierarchy, which is:
 
-    - :class:`~data_manager.DataSourceBase`\s belonging to a run of the package;
-    - :class:`~pod_setup.PODObject`\s POD belonging to a
-      :class:`~data_manager.DataSourceBase`;
-    - :class:`~diagnostic.VarlistEntry`\s (requested model variables) belonging
-      to a :class:`~diagnostic.Diagnostic`.
+    - :class:`~data_sources.DataSourceBase`s belonging to a run of the package;
+    - :class:`~pod_setup.PODObject`s POD belonging to a
+      :class:`~data_sources.DataSourceBase`;
+    - :class:`~varlist_util.VarlistEntry`s (requested model variables) belonging
+      to a :class:`~pod_setup.PodObject`.
     """
     _id: basic.MDTF_ID = None
     name: str = dataclass.MANDATORY
@@ -862,11 +862,11 @@ class MDTFObjectBase(metaclass=basic.MDTFABCMeta):
 
     @property
     def failed(self):
-        return self.status == basic.ObjectStatus.FAILED # abbreviate
+        return self.status == basic.ObjectStatus.FAILED
 
     @property
     def active(self):
-        return self.status == basic.ObjectStatus.ACTIVE # abbreviate
+        return self.status == basic.ObjectStatus.ACTIVE
 
     @property
     @abc.abstractmethod
@@ -902,15 +902,15 @@ class MDTFObjectBase(metaclass=basic.MDTFABCMeta):
         # needs to test for child_type
         pass
 
-    def child_status_update(self, exc=None):
+    def child_status_update(self):
         if next(self.iter_children(), None) is None:
             # should never get here (no children of any status), because this
             # method should only be called by children
             raise ValueError(f"Children misconfigured for {self.full_name}.")
 
         # if all children have failed, deactivate self
-        if not self.failed and \
-            next(self.iter_children(status_neq=basic.ObjectStatus.FAILED), None) is None:
+        if (not self.failed and
+                next(self.iter_children(status_neq=basic.ObjectStatus.FAILED), None) is None):
             self.deactivate(exceptions.ChildFailureEvent(self), level=None)
 
     # level at which to log deactivation events
@@ -932,6 +932,3 @@ class MDTFObjectBase(metaclass=basic.MDTFABCMeta):
                 # call handler on parent, which may change parent and/or siblings
                 self._parent.child_deactivation_handler(self, exc)
                 self._parent.child_status_update()
-            # update children (deactivate all)
-            for obj in self.iter_children(status_neq=basic.ObjectStatus.FAILED):
-                obj.deactivate(exceptions.PropagatedEvent(exc=exc, parent=self), level=None)

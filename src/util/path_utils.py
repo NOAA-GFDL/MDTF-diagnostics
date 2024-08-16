@@ -13,7 +13,7 @@ import logging
 _log = logging.getLogger(__name__)
 
 
-class PathManagerBase(metaclass=Singleton):
+class PathManagerBase:
     """:class:`~util.Singleton` holding the root directories for all paths used
     by the code.
     """
@@ -93,9 +93,13 @@ class PodPathManager(PathManagerBase):
     POD_OBS_DATA: str
     POD_CODE_DIR: str
 
-    def setup_pod_paths(self, pod_name: str):
-        """Check and create directories specific to this POD.
-        """
+    def __init__(self, pod_name: str,
+                 config: NameSpace = None,
+                 env: dict = None,
+                 unittest: bool = False,
+                 new_work_dir: bool = True):
+
+        super().__init__(config, env, unittest, new_work_dir)
 
         self.POD_CODE_DIR = os.path.join(self.CODE_ROOT, 'diagnostics', pod_name)
         self.POD_WORK_DIR = os.path.join(self.WORK_DIR, pod_name)
@@ -105,7 +109,7 @@ class PodPathManager(PathManagerBase):
         filesystem.check_dir(self.POD_WORK_DIR, 'POD_WORK_DIR', create=True)
         filesystem.check_dir(self.POD_OUTPUT_DIR, 'POD_OUTPUT_DIR', create=True)
         # OBS data are unique to POD, so the obs output is copied to the POD subdirectory
-        dirs = ('model/PS', 'obs/PS', 'obs/netCDF')
+        dirs = ('model/PS', 'model/netCDF', 'obs/PS', 'obs/netCDF')
         for d in dirs:
             filesystem.check_dir(os.path.join(self.POD_WORK_DIR, d), create=True)
 

@@ -28,16 +28,17 @@ def html_templating_dict(pod) -> dict:
         d[attr] = str(pod.pod_settings.get(attr, ""))
         if not any(d[attr]):
             d[attr] = str(getattr(pod, attr, ""))
-    if len(pod.multi_case_dict['CASE_LIST']) > 1:  # multi-case PODs
+    d['driver'] = str(getattr(pod, 'driver', "")) # want the full path to the driver script
+    if len(pod.multicase_dict['CASE_LIST']) > 1:  # multi-case PODs
         case_number = 1
-        for case_name, case_dict in pod.multi_case_dict['CASE_LIST'].items():
+        for case_name, case_dict in pod.multicase_dict['CASE_LIST'].items():
             case_str = f'CASE_{case_number}'
             d[case_str] = case_name
             case_number += 1
             for att_name, att in case_dict.items():
                 d[att_name] = att
     else:  # single-case PODs
-        for case_name, case_dict in pod.multi_case_dict['CASE_LIST'].items():
+        for case_name, case_dict in pod.multicase_dict['CASE_LIST'].items():
             for att_name, att in case_dict.items():
                 d[att_name] = att
     return d
@@ -67,11 +68,11 @@ class HTMLSourceFileMixin:
 
 
     def pod_html(self, pod):
-        """Path to *pod*\'s html output file in the working directory."""
+        """Path to *pod*'s html output file in the working directory."""
         return os.path.join(pod.paths.POD_WORK_DIR, self.pod_header_html_template_file_name(pod))
 
     def write_data_log_file(self):
-        """Writes \*.data.log file to output containing info on data files used.
+        """Writes *.data.log file to output containing info on data files used.
         """
         log_file = io.open(
             os.path.join(self.WORK_DIR, self.obj.name+".data.log"),
@@ -81,7 +82,7 @@ class HTMLSourceFileMixin:
             str_1 = f"POD {self.obj.name}"
         elif isinstance(self, HTMLOutputManager):
             str_1 = ""
-            for case_name in self.obj.multi_case_dict['CASE_LIST'].keys():
+            for case_name in self.obj.multicase_dict['CASE_LIST'].keys():
                 str_1 += f"case {case_name} \n"
         else:
             raise AssertionError("self is not an instance of HTMLPodOutputManager or HTMLOutputManager")
@@ -102,7 +103,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
     """Performs cleanup tasks specific to a single POD when that POD has
     finished running.
     """
-    save_ps: bool = False
+    save_ps: bool = True
     save_nc: bool = True
     save_non_nc: bool = False
     CODE_ROOT: str = ""
@@ -120,9 +121,9 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
                 output files from all PODs.
         """
         try:
-            self.save_ps = config['save_ps']
-            self.save_nc = config['save_pp_data']
-            self.save_non_nc = config['save_pp_data']
+            self.save_ps = config.get('save_ps', True)
+            self.save_nc = config.get('save_pp_data', True)
+            self.save_non_nc = config.get('save_pp_data', False)
         except KeyError as exc:
             pod.deactivate(exc)
             raise
@@ -162,15 +163,15 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
         )
 
     def convert_pod_figures(self, src_subdir: str, dest_subdir: str):
-        """Convert all vector graphics in ``$POD_WORK_DIR/`` *src\_subdir* to .png
+        """Convert all vector graphics in ``$POD_WORK_DIR/`` *src_subdir* to .png
         files using `ghostscript <https://www.ghostscript.com/>`__ (included in
-        the \_MDTF\_base conda environment).
+        the _MDTF_base conda environment).
 
         All vector graphics files (identified by extension) in any subdirectory
-        of ``$POD_WORK_DIR/`` *src\_subdir* are converted to .png files by running
-        ghostscript in a subprocess. Afterwards, any bitmap files (identified by
-        extension) in any subdirectory of ``$POD_WORK_DIR/`` *src\_subdir* are
-        moved to ``$POD_WORK_DIR/`` *dest\_subdir*, preserving subdirectories (via
+        of ``$POD_WORK_DIR/`` *src_subdir* are converted to .png files by running
+        ghostscript in a subprocess. Afterward, any bitmap files (identified by
+        extension) in any subdirectory of ``$POD_WORK_DIR/`` *src_subdir* are
+        moved to ``$POD_WORK_DIR/`` *dest_subdir*, preserving subdirectories (via
         :func:`~util.recursive_copy`.)
 
         Args:
@@ -186,6 +187,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
 
         abs_src_subdir = os.path.join(self.WORK_DIR, src_subdir)
         abs_dest_subdir = os.path.join(self.WORK_DIR, dest_subdir)
+
         files = util.find_files(
             abs_src_subdir,
             ['*.ps', '*.PS', '*.eps', '*.EPS', '*.pdf', '*.PDF']
@@ -250,15 +252,16 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
 
         # remove .eps files if requested (actually, contents of any 'PS' subdirs)
         if not self.save_ps:
-            for d in util.find_files(self.WORK_DIR, 'PS'+os.sep):
+            for d in util.find_files(self.WORK_DIR, 'obs/PS'):
                 shutil.rmtree(d)
-
+            for d in util.find_files(self.WORK_DIR, 'model/PS'):
+                shutil.rmtree(d)
         # delete all generated data
         # actually deletes contents of any 'netCDF' subdirs
         elif not self.save_nc:
-            for d in util.find_files(self.WORK_DIR, 'netCDF'+os.sep):
+            for d in util.find_files(self.WORK_DIR, 'model/netCDF'+os.sep):
                 shutil.rmtree(d)
-            for f in util.find_files(self.WORK_DIR, '*.nc'):
+            for f in util.find_files(self.WORK_DIR, 'model/netCDF/*.nc'):
                 os.remove(f)
 
     def make_output(self, config: util.NameSpace):
@@ -309,7 +312,7 @@ class HTMLOutputManager(AbstractOutputManager,
             else:
                 self.overwrite = False
             self.file_overwrite = self.overwrite  # overwrite both config and .tar
-            if hasattr(config, 'make_multicase_figure_html'):
+            if config.get('make_multicase_figure_html', False):
                 self.multi_case_figure = config['make_multicase_figure_html']
             else:
                 self.multi_case_figure = False
@@ -317,8 +320,8 @@ class HTMLOutputManager(AbstractOutputManager,
             self.log.exception("Caught %r", exc)
 
         self.CODE_ROOT = config.CODE_ROOT
-        self.WORK_DIR = pod.paths.POD_WORK_DIR
-        self.OUT_DIR = pod.paths.POD_OUTPUT_DIR
+        self.WORK_DIR = pod.paths.WORK_DIR
+        self.OUT_DIR = pod.paths.OUTPUT_DIR
         self.obj = pod
 
     @property
@@ -332,7 +335,7 @@ class HTMLOutputManager(AbstractOutputManager,
         """Update the top level index.html page with a link to *pod*'s results.
 
         This simply appends one of two html fragments to index.html:
-        ``src/html/pod_result_snippet.html`` if *pod* completed successfully,
+        ``src/html/pod_result_snippet.html`` if the *pod* completed successfully,
         or ``src/html/pod_error_snippet.html`` if an exception was raised during
         *pod*'s setup or execution.
         """
@@ -353,7 +356,7 @@ class HTMLOutputManager(AbstractOutputManager,
             # template_d['error_text'] = pod.format_log(children=True)
         else:
             # normal exit
-            src = self.html_src_file('multirun_pod_result_snippet.html')
+            src = self.html_src_file('pod_result_snippet.html')
         util.append_html_template(src, self.CASE_TEMP_HTML, template_d)
 
     def make_output(self, pod, config: util.NameSpace):
@@ -397,10 +400,11 @@ class HTMLOutputManager(AbstractOutputManager,
 
         """
 
-        case_template = "<TR><TD><TD><TD><TD style='width: 200px' align=center>"\
+        case_template = "<TR><TD><TD><TD><TD style='width:100%' align=left>"\
                         "<A href={{PODNAME}}_model_plot_{{CASENAME}}.png>{{CASENAME}}\n</A>"
         for case_name, case_settings in case_info.items():
             case_settings['PODNAME'] = template_dict['PODNAME']
+            case_settings['CASENAME'] = template_dict['CASENAME']
             output_template = util._DoubleBraceTemplate(case_template).safe_substitute(case_settings)
             dest_file_handle.write(output_template)
 
@@ -411,10 +415,7 @@ class HTMLOutputManager(AbstractOutputManager,
                    dest_file_handle (io.TextIO): output html file io stream
         """
 
-        case_settings_header_html_template = """</TABLE>
-        </p>
-        </p><b> Case Settings</b>
-        <TABLE>
+        case_settings_header_html_template = """<TABLE><TR><TD style='font-weight:bold'>Case Settings
         """
 
         dest_file_handle.write(case_settings_header_html_template)
@@ -422,52 +423,57 @@ class HTMLOutputManager(AbstractOutputManager,
         # write the settings per case. First header.
         # This prints the whole html_template = str(case_dict)
 
-        case_settings_template = """<TR><TD style='width: 100px' align=center><b>{{CASENAME}}\n\
-        <TD style='width: 100px' align=center>Date Range: {{startdate}} - {{enddate}}\n
+        case_settings_template = """
+        <TR><TD align=left>{{CASENAME}}\n
+        <TR><TD align=left>Date Range: {{startdate}} - {{enddate}}\n
+        <TR><TD align=left>Data Convention: {{convention}}\n
         """
 
         for case_name, case_settings in case_info.items():
             output_template = util._DoubleBraceTemplate(case_settings_template).safe_substitute(case_settings)
             dest_file_handle.write(output_template)
 
-        pod_settings_header_html_template = """</TABLE>
-        </p>
-        <TABLE>
-        <TR><TH align=left>POD Settings\n
-        <TR><TD style='width: 100px' align=center><b> Driver script: {{driver}}\n
-        """
-        output_template = (
-            util._DoubleBraceTemplate(pod_settings_header_html_template).safe_substitute(self.obj.pod_settings))
-        dest_file_handle.write(output_template)
 
     def make_html(self, html_file_name: str, cleanup=True):
         """Add header and footer to the temporary output file at CASE_TEMP_HTML.
         """
-        dest = os.path.join(self.WORK_DIR, html_file_name)
+        append_header = True
+        append_footer = True
+        append_case_info = True
+        dest = os.path.join(self.obj.paths.WORK_DIR, html_file_name)
         if os.path.isfile(dest):
-            self.obj.log.warning("%s: '%s' exists, deleting.",
-                                 html_file_name, self.obj.name)
-            os.remove(dest)
+            append_header = False
+            append_footer = False
+            append_case_info = False
+        else:
+            shutil.copy2(self.html_src_file('mdtf_diag_banner.png'), self.obj.paths.WORK_DIR)
 
         template_dict = self.obj.pod_env_vars.copy()
         template_dict['DATE_TIME'] = \
-            datetime.datetime.utcnow().strftime("%A, %d %B %Y %I:%M%p (UTC)")
+            datetime.datetime.now().strftime("%A, %d %B %Y %I:%M%p (UTC)")
         template_dict['PODNAME'] = self.obj.name
-        util.append_html_template(
-            self.html_src_file('mdtf_multirun_header.html'), dest, template_dict
-        )
-        util.append_html_template(self.CASE_TEMP_HTML, dest, {})
+        template_dict['WORK_DIR'] = self.obj.paths.POD_WORK_DIR
+        template_dict['OUTPUT_DIR'] = self.obj.paths.POD_OUTPUT_DIR
+        main_log = util.find_files(self.WORK_DIR, "MDTF_main*log")
+        assert os.path.isfile(main_log[0]), f"Could not find main log file in {self.WORK_DIR}"
+        template_dict['MAIN_LOG'] = main_log[0]
+        if append_header:
+            util.append_html_template(
+                self.html_src_file('mdtf_header.html'), dest, template_dict
+            )
         with io.open(dest, 'a', encoding='utf-8') as f:
             if self.multi_case_figure:
-                self.generate_html_file_case_loop(self.obj.multi_case_dict['CASE_LIST'], template_dict, f)
-            self.append_case_info_html(self.obj.multi_case_dict['CASE_LIST'], f)
+                self.generate_html_file_case_loop(self.obj.multicase_dict['CASE_LIST'], template_dict, f)
+            if append_case_info:
+                self.append_case_info_html(self.obj.multicase_dict['CASE_LIST'], f)
         f.close()
-        util.append_html_template(
-            self.html_src_file('mdtf_footer.html'), dest, template_dict
-        )
+        util.append_html_template(self.CASE_TEMP_HTML, dest, {})
+        if append_footer:
+            util.append_html_template(
+                self.html_src_file('mdtf_footer.html'), dest, template_dict
+            )
         if cleanup:
             os.remove(self.CASE_TEMP_HTML)
-        shutil.copy2(self.html_src_file('mdtf_diag_banner.png'), self.WORK_DIR)
 
     def backup_config_files(self, config):
         """Record user input configuration in a file named ``config_save.json``

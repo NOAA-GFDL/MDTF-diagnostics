@@ -1,7 +1,7 @@
 .. role:: console(code)
    :language: console
    :class: highlight
-
+.. _ref-cli:
 Command-line options
 ====================
 

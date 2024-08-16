@@ -2,7 +2,7 @@ name: _MDTF_R_base
 channels:
 - conda-forge
 dependencies:
-- python=3.11
+- python=3.12
 - r-base
 - r-akima
 - r-colorramps

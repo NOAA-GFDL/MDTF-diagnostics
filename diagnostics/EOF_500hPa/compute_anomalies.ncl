@@ -7,16 +7,25 @@ begin
 
 setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
 
-wk_dir = getenv("WK_DIR")
+wk_dir = getenv("WORK_DIR")
 casename = getenv("CASENAME")
-yr1 = getenv("FIRSTYR")
-yr2 = getenv("LASTYR")
-date_off = getenv("date_int_offset")
+yr1 = getenv("startdate")
+yr2 = getenv("enddate")
+convention = getenv("convention")
+
+; 1 for native CESM, 0 for GFDL & CMIP
+if (str_match_bool_ic(convention, "CMIP") .or. str_match_bool_ic(convention, "CMIP"))
+   date_offset=0
+else
+   date_offset=1
+end if
+
+
 use_hybrid_sigma = (getenv("USE_HYBRID_SIGMA").eq."1")
 
 firstyr = stringtointeger(yr1)
 lastyr = stringtointeger(yr2)
-date_offset = stringtointeger(date_off) ; 1 for native CESM, 0 for GFDL & CMIP
+;;date_offset = stringtointeger(date_off) ; 1 for native CESM, 0 for GFDL & CMIP
 nyrs = lastyr-firstyr+1
 nmons = nyrs*12
 
@@ -29,7 +38,7 @@ file_path = getenv("DATADIR")
 ; Z500 
 if( fileexists(wk_dir+"/model/netCDF/"+casename+".Z500.ANOMS.nc") ) then
 
-print(wk_dir+"/"+casename+".Z500.ANOMS.nc exists!!")
+print(wk_dir+"/model/netCDF/"+casename+".Z500.ANOMS.nc exists!!")
 
 else
 
@@ -68,13 +77,16 @@ do i=0,nlat-1
 end do
 
 time_all = f_zg->$time_coord$
+
 if (date_offset.eq.0) then
+   print("Using CMIP/GFDL date index YYYYMM")
    ; CMIP / GFDL date index, use YYYYMM
    date_all = cd_calendar(time_all,-1)
    year_all = date_all/100
    start_date = firstyr*100+1
    end_date = (lastyr)*100+12
 else if (date_offset.eq.1) then
+     print("Using CESM date index YYYYMMDD")
    ; CESM native date index, use YYYYMMDD
    date_all = cd_calendar(time_all,-2)
    year_all = date_all/10000
@@ -82,6 +94,7 @@ else if (date_offset.eq.1) then
    end_date = (lastyr+1)*10000+101
 end if
 end if
+
 ; in either case, above only used to set following indices
 do i=0,dimsizes(date_all)-1
    if( date_all(i).eq.start_date ) then
@@ -126,7 +139,6 @@ else
     z500 = f_zg->$zg_var$($time_coord$|i1:i2,$lat_coord$|:,$lon_coord$|:)
 end if
 ; end TSJ edit
-
 anom = (/rmMonAnnCycTLL(z500(:,:,:))/)
 delete (z500)
 n = 11
@@ -134,6 +146,7 @@ do yr = firstyr+1,lastyr
   win_anom(yr-firstyr-1,:,:) = (/(anom(n,:,:)+anom(n+1,:,:)+anom(n+2,:,:)+anom(n+3,:,:))/4./)
   n = n + 12
 end do
+
 fo = addfile(wk_dir+"/model/netCDF/"+casename+".Z500.ANOMS.nc","c")
 fo->Z500_ANOM = win_anom
 fo->gw = gw

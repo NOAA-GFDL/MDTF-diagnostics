@@ -34,19 +34,19 @@ lon_obs = nc_obs.lon.values
 llons_obs, llats_obs = np.meshgrid(lon_obs, lat_obs)
 
 # Read in model results
-
-nc_pl = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_Planck.nc")
-nc_lr = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_LapseRate.nc")
-nc_lw_q = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_LW_WaterVapor.nc")
-nc_sw_q = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_SW_WaterVapor.nc")
-nc_alb = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_SfcAlbedo.nc")
-nc_lw_c = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_LW_Cloud.nc")
-nc_sw_c = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_SW_Cloud.nc")
-nc_lw_irf = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_LW_IRF.nc")
-nc_sw_irf = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_SW_IRF.nc")
-nc_lw_netrad = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_LW_Rad.nc")
-nc_sw_netrad = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_SW_Rad.nc")
-nc_strat = xr.open_dataset(os.environ["WORK_DIR"] + "/model/netCDF/fluxanom2D_StratFB.nc")
+path_prefix = "/model/netCDF/"
+nc_pl = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_Planck.nc")
+nc_lr = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_LapseRate.nc")
+nc_lw_q = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_LW_WaterVapor.nc")
+nc_sw_q = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_SW_WaterVapor.nc")
+nc_alb = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_SfcAlbedo.nc")
+nc_lw_c = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_LW_Cloud.nc")
+nc_sw_c = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_SW_Cloud.nc")
+nc_lw_irf = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_LW_IRF.nc")
+nc_sw_irf = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_SW_IRF.nc")
+nc_lw_netrad = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_LW_Rad.nc")
+nc_sw_netrad = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_SW_Rad.nc")
+nc_strat = xr.open_dataset(os.environ["WORK_DIR"] + path_prefix + "fluxanom2D_StratFB.nc")
 
 lat_model = nc_sw_irf.lat.values
 weights_model = np.cos(np.deg2rad(lat_model))

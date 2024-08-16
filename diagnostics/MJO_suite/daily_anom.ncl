@@ -16,7 +16,7 @@ time_coord = getenv("time_coord")
 lat_coord = getenv("lat_coord")
 lon_coord = getenv("lon_coord")
 
-file_dir = getenv("WORK_DIR")+"/model/netCDF/"
+file_dir = getenv("WORK_DIR")+"/model/"
 datadir = getenv("DATADIR")
 yr1 = stringtointeger(getenv("startdate"))
 yr2 = stringtointeger(getenv("enddate"))

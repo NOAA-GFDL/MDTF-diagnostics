@@ -14,7 +14,7 @@ begin
 
   routine_name = "mjo_life_cycle"
    casename = getenv("CASENAME")
-   file_dir = getenv("WORK_DIR")+"/model/netCDF/"
+   file_dir = getenv("WORK_DIR")+"/model/"
 
    latS    = -20
    latN    =  20
@@ -27,7 +27,7 @@ begin
 
    pltSubTitle = "Anomalous: OLR, U850, V850"
 
-   pltDir  = getenv("WK_DIR")+"/model/PS/"                           ; plot directory
+   pltDir  = getenv("WORK_DIR")+"/model/PS/"                           ; plot directory
    pltType = "ps"  
    pltName = casename+".MJO.life.cycle"                      ; yrStrt+"_"+yrLast
   

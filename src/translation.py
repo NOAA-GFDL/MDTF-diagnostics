@@ -41,6 +41,15 @@ class TranslatedVarlistEntry(data_model.DMVariable):
     scalar_coords: list = \
         dc.field(init=False, default_factory=list, metadata={'query': True})
     log: typing.Any = util.MANDATORY  # assigned from parent var
+    _requires_level_extraction = None
+
+    @property
+    def requires_level_extraction(self) -> bool:
+        return self._requires_level_extraction
+
+    @requires_level_extraction.setter
+    def requires_level_extraction(self, value: bool):
+        self._requires_level_extraction = value
 
 
 @util.mdtf_dataclass
@@ -139,17 +148,20 @@ class Fieldlist:
                             realm: str,
                             modifier: str) -> str:
 
+        precip_vars = ['precipitation_rate', 'precipitation_flux']
         # search the lookup table for the variable with the specified standard_name
         # realm, modifier, and long_name attributes
         for var_name, var_dict in self.lut.items():
-            # print(var_name)
             if var_dict['standard_name'] == standard_name\
                     and var_dict['realm'] == realm\
                     and var_dict['modifier'] == modifier:
                 if not var_dict['long_name'] or var_dict['long_name'].lower() == long_name.lower():
                     return var_name
             else:
-                continue
+                if var_dict['standard_name'] in precip_vars and standard_name in precip_vars:
+                    return var_name
+                else:
+                    continue
 
     def from_CF(self,
                 standard_name: str,
@@ -175,6 +187,7 @@ class Fieldlist:
             name_only: boolean indicating to not return a modifier--hacky way to accommodate
             a from_CF_name call that does not provide other metadata
         """
+        # self.lut corresponds to POD convention
         assert standard_name in self.lut_standard_names, f'{standard_name} not found in Fieldlist lut_standard_names'
         lut1 = dict()
         for k, v in self.lut.items():
@@ -284,25 +297,42 @@ class Fieldlist:
                 # value is contained by the CV string value. This is not robust, but sufficient for testing purposes
 
                 if bool(coord.value):
-                    for v in lut1.values():
+                    lut_val = None
+                    for k, v in lut1.items():
+                        # some plev entries have a single value that might match the requested level
+                        # (e.g., plev700, plev850)
                         if v.get('value', None):
-                            if isinstance(coord.value, int) and isinstance(v.get('value'), str):
-                                v_int = int(float(v.get('value')))
+                            lut_val = v.get('value')
+                            if isinstance(coord.value, int) and isinstance(lut_val, str):
+                                v_int = int(float(lut_val))
                                 if v_int > coord.value and v_int/coord.value == 100 \
                                         or v_int < coord.value and coord.value/v_int == 100 or \
                                         v_int == coord.value:
                                     new_coord = v
                                     break
-                            elif isinstance(coord.value, str) and isinstance(v.get('value'), str):
-                                if coord.value in v.get('value'):
+                            elif isinstance(coord.value, str) and isinstance(lut_val, str):
+                                if coord.value in lut_val:
                                     new_coord = v
                                     break
                             else:
                                 raise KeyError(f'coord value and/or Varlist value could not be parsed'
                                                f' by translate_coord')
+                        elif v.get('requested', None):
+                            # if no single-level plev coordinate matches the requested pressure level,
+                            # search plev19 for the correct level, set the coordinate value to the level if found,
+                            # and use the rest of the plev attributes to populate the coordinate information
+                            lut_val = v.get('requested')
+                            if isinstance(lut_val, list) and k == 'plev19':
+                                for val in lut_val:
+                                    if isinstance(coord.value, int) and isinstance(val, str):
+                                        v_int = int(float(val))
+                                        if v_int > coord.value and v_int / coord.value == 100 \
+                                                or v_int < coord.value and coord.value / v_int == 100 or \
+                                                v_int == coord.value:
+                                            new_coord = v
+                                            break
         else:
             new_coord = [lut1.values()][0]
-
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             coord_name = ""
             if new_coord.get('name', None):
@@ -322,6 +352,7 @@ class Fieldlist:
         else:
             new_coord = dc.replace(coord,
                                    **(util.filter_dataclass(new_coord, coord)))
+
         return new_coord
 
     def translate(self, var, from_convention: str):
@@ -345,12 +376,12 @@ class Fieldlist:
             long_name = self.get_variable_long_name(var, has_scalar_coords)
 
             fl_entries = from_convention_tl.from_CF(var.standard_name,
-                                                  var.realm,
-                                                  var.modifier,
-                                                  long_name,
-                                                  var.dims.__len__(),
-                                                  has_scalar_coords
-                                                  )
+                                                    var.realm,
+                                                    var.modifier,
+                                                    long_name,
+                                                    var.dims.__len__(),
+                                                    has_scalar_coords
+                                                    )
 
             # Use the POD variable standard name, realm, and modifier to get the corresponding
             # information from FieldList for the DataSource convention
@@ -371,15 +402,20 @@ class Fieldlist:
 
         new_dims = [self.translate_coord(dim, log=var.log) for dim in var.dims]
         new_scalars = [self.translate_coord(dim, class_dict=class_dict, log=var.log) for dim in var.scalar_coords]
+        new_atts = self.lut[new_name]
         if len(new_scalars) > 1:
             raise NotImplementedError()
         elif len(new_scalars) == 1:
             assert not var.use_exact_name, "assertion error: var.use_exact_name set to true for " + var.full_name
             # change translated name to request the slice instead of the full var
             # keep the scalar_coordinate value attribute on the translated var
-            new_name = self.create_scalar_name(
+            new_scalar_name = self.create_scalar_name(
                 var.scalar_coords[0], new_scalars[0],
                 new_name, log=var.log)
+
+            new_name = new_scalar_name
+            if new_name in self.lut:
+                new_atts = self.lut[new_name]
             # append an is_scalar attribute for the coordinate check in
             # data_model._DMDimensionsMixin.__post_init__() call from
             # TranslatedVarlistEntry
@@ -388,7 +424,7 @@ class Fieldlist:
                     s.is_scalar = True
 
         return util.coerce_to_dataclass(
-            fl_atts, TranslatedVarlistEntry,
+            new_atts, TranslatedVarlistEntry,
             name=new_name,
             coords=(new_dims + new_scalars),
             convention=self.name, log=var.log

@@ -1,5 +1,6 @@
 name: _MDTF_base
 # environment used by the framework itself
+# use this file if building environment with micromamba
 channels:
 - conda-forge
 dependencies:
@@ -18,9 +19,9 @@ dependencies:
 # with the preprocessing procedures
 - cf_xarray=0.8.4
 - matplotlib=3.8.2
-- pandas=2.2.2
+- pandas=2.2.0
 - pint=0.24.3
-- dask=2024.7.1
+- dask=2024.1.1
 - ecgtools=2024.7.31
 - cfunits=3.3.6
 - intake=0.7.0

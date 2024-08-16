@@ -4,17 +4,17 @@ channels:
 - conda-forge
 dependencies:
 # contents of python3_base
-- python=3.11
-- numpy=1.25.2
+- python=3.12
+- numpy=1.26.4
 - scipy=1.11.2
 - netCDF4=1.6.4
 - cftime=1.6.2
-- xarray=2023.8.0
-- matplotlib=3.7.2
+- xarray=2024.1.1
+- matplotlib=3.8.2
 - cartopy=0.22.0
-- pandas=2.1.0
-- pint=0.22
-- dask=2023.9.1
+- pandas=2.2.2
+- pint=0.24.3
+- dask=2024.7.1
 # additional development tools
 - jupyter_core=5.3.1
 - jupyterlab=4.0.5

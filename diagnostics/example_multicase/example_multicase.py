@@ -6,7 +6,7 @@
 #
 # Example Diagnostic POD
 #
-#   Last update: Feb-2022
+#   Last update: Aug 2024
 #
 #   This example builds upon the single case `example` POD
 #   and illustrates how to design and implement a POD that uses multiple
@@ -21,7 +21,7 @@
 #
 #   Open source copyright agreement
 #
-#   The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt).
+#   The MDTF-diagnostics framework is distributed under the LGPLv3 license (see LICENSE.txt).
 #
 #   Functionality
 #
@@ -34,7 +34,7 @@
 #
 #   Required programming language and libraries
 #
-#     * Python >= 3.10
+#     * Python >= 3.12
 #     * xarray
 #     * matplotlib
 #     * intake
@@ -69,7 +69,6 @@ import yaml
 # Part 1: Read in the model data
 # ------------------------------
 # Debugging: remove following line in final PR
-# os.environ["WORK_DIR"] = "/Users/jess/mdtf/wkdir/MDTF_output/example_multicase"
 work_dir = os.environ["WORK_DIR"]
 # Receive a dictionary of case information from the framework
 print("reading case_info")
@@ -85,7 +84,7 @@ with open(case_env_file, 'r') as stream:
 
 cat_def_file = case_info['CATALOG_FILE']
 case_list = case_info['CASE_LIST']
-# all cases share variable names and dimension coords, so just get first result for each
+# all cases share variable names and dimension coords in this example, so just get first result for each
 tas_var = [case['tas_var'] for case in case_list.values()][0]
 time_coord = [case['time_coord'] for case in case_list.values()][0]
 lat_coord = [case['lat_coord'] for case in case_list.values()][0]

@@ -20,17 +20,20 @@ Creating and submitting a POD
    - Modify pod's ``settings.jsonc`` to specify variables that will be passed to the framework
    - Modify your code to use ``ENV_VARS`` provided by the framework (see the *Notes* for descriptions of the available
      environment variables)
+
       - Input files:
          - model input data: specified in an ESM-intake catalog
          - observational input data: ``MDTF-diagnostics/../inputdata/obs_data/[POD name]``
          - You may re-define input data locations in the ``OBS_DATA_ROOT`` setting in your runtime configuration file
            (or whatever the name of your runtime settings jsonc file is).
+
       - Working files: 
          - ``${WORK_DIR}`` is a framework environment variable defining the working directory. It is set to
          ``MDTF-diagnostics/../wkdir`` by default.
          - ``${WORK_DIR}`` contains temporary files and logs.
          - You can modify ``${WORK_DIR}`` by changing "WORK_DIR" to the desired location in
            ``templates/runtime.[jsonc |yml}``
+
       - Output files: 
          - POD output files are written to the following locations by the framework:
             - Postscript files: ``${WORK_DIR}/MDTF_output[.v#]/[POD NAME]/[model,obs]/PS``

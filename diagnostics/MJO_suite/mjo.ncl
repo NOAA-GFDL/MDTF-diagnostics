@@ -16,9 +16,9 @@ begin
 routine_name = "mjo.ncl"
 pod_home = getenv("POD_HOME")
 casename = getenv("CASENAME")
-file_dir = getenv("WK_DIR")+"/model/netCDF/"
-yr1 = getenv("FIRSTYR")
-yr2 = getenv("LASTYR")
+file_dir = getenv("WORK_DIR")+"/model/"
+yr1 = getenv("startdate")
+yr2 = getenv("enddate")
 time_coord = getenv("time_coord")
 
 firstyr = stringtointeger(yr1)
@@ -65,7 +65,7 @@ do n = 50,nfil-51
 end do
 
 ; MAKE PLOTS
-psplot = getenv("WK_DIR")+"/model/PS/"+casename+".MJO"
+psplot = getenv("WORK_DIR")+"/model/PS/"+casename+".MJO"
 wks = gsn_open_wks("ps",psplot)
 plot = new(3,graphic)
 res = True

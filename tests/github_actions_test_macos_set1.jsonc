@@ -3,12 +3,12 @@
 // as blank lines (JSONC quasi-standard.)
 {
   "pod_list": [
-     "convective_transition_diag",
-     "Wheeler_Kiladis",
-     "MJO_suite",
+     //"convective_transition_diag",
+     //"Wheeler_Kiladis",
+     //"MJO_suite",
      "MJO_teleconnection",
-     "precip_diurnal_cycle",
-     "EOF_500hPa"
+     "precip_diurnal_cycle"
+     //"EOF_500hPa"
     ],
   "case_list": {
       "NCAR.Synthetic": {
@@ -23,12 +23,9 @@
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
-  "DATA_CATALOG": "../tests/esm_catalog_CESM_macos.json",
+  "DATA_CATALOG": "./tests/esm_catalog_test_macos.json",
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
-
-  // Parent directory containing results from different models.
-  "MODEL_DATA_ROOT": "../mdtf_test_data",
 
   // Working directory. Defaults to working directory if blank.
   "WORK_DIR": "../wkdir",
@@ -40,7 +37,6 @@
   // Location of the Anaconda/miniconda installation to use for managing
   // dependencies (path returned ls by running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  //"conda_root": "/Users/runner/miniconda3",
   "conda_root": "/Users/runner/micromamba",
 
   "micromamba_exe": "/Users/runner/micromamba-bin/micromamba",

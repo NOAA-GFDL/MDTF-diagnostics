@@ -1,6 +1,8 @@
 Running Submodules
 ===============================
-Functions from external packages can be called by MDTF with their inclusion in the json or yml file supplied to the framework.
+.. _ref-submodules:
+Functions from external packages can be called by MDTF with their inclusion in the json or yml file supplied to the
+framework.
 
 Inclusion in JSON file
 ------------------------------
@@ -60,4 +62,5 @@ Now, in our JSON file we can call the function DetectNodes by including the foll
        }
    },
 
-Multiple packages can be ran if they are nested in "module_list". Multiple functions can be called or even the same one again.
+Multiple packages can be ran if they are nested in "module_list". Multiple functions can be called or even the same one
+again.

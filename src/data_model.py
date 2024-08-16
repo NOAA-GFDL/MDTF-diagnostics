@@ -12,12 +12,14 @@ import collections
 from src import util
 import src.units  # fully qualify name to reduce confusion with "units" attributes
 import logging
+
 _log = logging.getLogger(__name__)
 
 
 class AbstractDMCoordinate(abc.ABC):
     """Defines interface (set of attributes) for :class:`DMCoordinate` objects.
     """
+
     @property
     @abc.abstractmethod
     def name(self):
@@ -80,6 +82,7 @@ class AbstractDMDependentVariable(abc.ABC):
     defined as a function of one or more dimension coordinates), which inherit
     from :class:`DMDimensions` in this implementation.
     """
+
     @property
     @abc.abstractmethod
     def name(self):
@@ -128,11 +131,13 @@ class AbstractDMCoordinateBounds(AbstractDMDependentVariable):
     """Defines interface (set of attributes) for :class:`DMCoordinateBounds`
     objects.
     """
+
     @property
     @abc.abstractmethod
     def coord(self):
         """DMCoordinate object which this object is the bounds of."""
         pass
+
 
 # ------------------------------------------------------------------------------
 
@@ -339,6 +344,8 @@ class DMGenericTimeCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
     axis: str = 'T'
     """Coordinate axis identifier. Always 'T' for this coordinate."""
     calendar: str = ""
+    """Data frequency"""
+    frequency: str = ""
     """CF standard calendar for time data."""
     range: typing.Any = None
 
@@ -405,6 +412,7 @@ class DMGenericCoordinate(_DMCoordinateShared, AbstractDMCoordinate):
     axis: str = "N"
     """Coordinate long name"""
     long_name: str = ""
+
 
 # Use the "register" method, instead of inheritance, to associate these classes
 # with their corresponding abstract interfaces, because Python dataclass fields
@@ -602,7 +610,7 @@ class _DMDimensionsMixin:
     def __init__(self):
         self._dim_axes = None
 
-    def __post_init__(self, coords=None):
+    def __post_init__(self, coords=None, verify_axes: bool = True):
         if coords is None:
             # if we're called to rebuild dicts, rather than after __init__
             assert (self.dims or self.scalar_coords), \
@@ -616,7 +624,7 @@ class _DMDimensionsMixin:
             else:
                 self.dims.append(c)
         # raises exceptions if axes are inconsistent
-        _ = self.build_axes(self.dims, verify=True)
+        _ = self.build_axes(self.dims, verify=verify_axes)
 
     @property
     def dim_axes(self):
@@ -739,7 +747,7 @@ class _DMDimensionsMixin:
                         new_kwargs[k] = cls_(new_kwargs[k])
             new_coord = new_coord_class(**new_kwargs)
         self.dims[self.dims.index(old_coord)] = new_coord
-        self.__post_init__(None) # rebuild axes dicts
+        self.__post_init__(None)  # rebuild axes dicts
 
 
 @util.mdtf_dataclass
@@ -756,6 +764,7 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
     component: str = ""
     associated_files: str = ""
     rename_coords: bool = True
+
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
 
@@ -771,7 +780,7 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
         """Object's full name, to be used in logging and debugging. Preferred
         because it eliminates irrelevant information in repr(), which is lengthy.
         """
-        return '<' + self.name + '>'# synonym here; child classes override
+        return '<' + self.name + '>'  # synonym here; child classes override
 
     def __str__(self):
         """Condensed string representation.
@@ -854,9 +863,6 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
     def realm(self, value: str):
         self._realm = value
 
-
-
-
     def add_scalar(self, ax, ax_value, **kwargs):
         """Metadata operation corresponding to taking a slice of a higher-dimensional
         variable (extracting its values at axis *ax* = *ax_value*). The
@@ -915,6 +921,7 @@ class DMAuxiliaryCoordinate(DMDependentVariable, AbstractDMDependentVariable):
 class DMCoordinateBounds(DMAuxiliaryCoordinate, AbstractDMDependentVariable):
     """Class describing bounds on a dimension coordinate.
     """
+
     def __post_init__(self, coords=None):
         super(DMCoordinateBounds, self).__post_init__(coords)
         # validate dimensions
@@ -939,8 +946,8 @@ class DMCoordinateBounds(DMAuxiliaryCoordinate, AbstractDMDependentVariable):
     def from_coordinate(cls, coord, bounds_dim):
         """Create instance from a coordinate object *coord*.
         """
-        kwargs = {attr: getattr(coord, attr) for attr \
-            in ('name', 'standard_name', 'units')}
+        kwargs = {attr: getattr(coord, attr) for attr
+                  in ('name', 'standard_name', 'units')}
         if not isinstance(bounds_dim, DMBoundsDimension):
             bounds_dim = DMBoundsDimension(name=bounds_dim)
         kwargs['coords'] = [coord, bounds_dim]
@@ -977,7 +984,7 @@ class DMDataSet(_DMDimensionsMixin):
     common dimensions.
     """
     contents: dc.InitVar = util.MANDATORY
-    """All members of the collection (input)."""
+    """switch to use axis verification"""
     vars: list = dc.field(init=False, default_factory=list)
     """List of dependent variables in the collection."""
     coord_bounds: list = dc.field(init=False, default_factory=list)
@@ -987,12 +994,13 @@ class DMDataSet(_DMDimensionsMixin):
     <https://cfconventions.org/cf-conventions/cf-conventions.html#data-model-coordinates>`__
     referenced by variables in the collection.
     """
+    verify_axes: dc.InitVar = bool
 
-    def __post_init__(self, coords=None, contents=None):
+    def __post_init__(self, coords=None, contents=None, verify_axes: bool = True):
         """Populate shared ``vars``, ``coord_bounds``, ``aux_coords`` attributes
         from collection of input variables.
         """
-        assert coords is None # shouldn't be called with bare coordinates
+        assert coords is None  # shouldn't be called with bare coordinates
         if contents is None:
             # if we're called to rebuild dicts, rather than after __init__
             assert (self.vars or self.coord_bounds or self.aux_coords)
@@ -1019,7 +1027,7 @@ class DMDataSet(_DMDimensionsMixin):
             new_t = DMGenericTimeCoordinate.from_instances(*t_axes)
             coords.append(new_t)
         # can't have duplicate dims, but duplicate scalar_coords are OK.
-        super(DMDataSet, self).__post_init__(coords)
+        super(DMDataSet, self).__post_init__(coords, verify_axes)
 
     def iter_contents(self):
         """Generator iterating over the full contents of the DataSet (variables,

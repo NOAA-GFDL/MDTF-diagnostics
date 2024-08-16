@@ -16,4 +16,4 @@ dependencies:
 - bottleneck
 - pip
 - pip:
-   - falwa==1.2.1
+    - git+https://github.com/csyhuang/hn2016_falwa.git

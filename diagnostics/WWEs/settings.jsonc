@@ -1,0 +1,38 @@
+// Basic POD Settings
+{
+  "settings" : {
+    "description" : "Test WWE POD",
+    "driver" : "WWEs.py",
+    "long_name" : "Test WWE POD",
+    "convention": "cmip",
+    "runtime_requirements": {
+        "python3": ["matplotlib", "xarray", "netCDF4", "pandas", "xesmf", "scipy"]
+    }
+  },
+
+// Variable Coordinates
+  "dimensions": {
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
+    "time": {"standard_name": "time"}
+  },
+
+// Variables
+  "varlist" : {
+    "tauu": {
+      "frequency" : "day",
+      "realm": "atmos",
+      "dimensions": ["time", "lat", "lon"],
+      "standard_name" : "surface_downward_eastward_stress",
+      "units": "Pa"
+    }
+  }
+}

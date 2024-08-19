@@ -162,6 +162,7 @@ if sigma_factor == 2:
 
 #Input and output files/directories
 #Open the topography file
+'''
 topo_ds               = xr.open_dataset(topo_file)
 topo_ds.coords['lon'] = (topo_ds.coords['lon'] + 360) % 360
 topo_ds               = topo_ds.sortby(topo_ds.lon)
@@ -172,11 +173,12 @@ topo_latgrid_1D       = trop_topo_latgrid.reshape(trop_topo_ds.lon.size * trop_t
 topo_data1D           = trop_topo_ds['btdata'].values.reshape(trop_topo_ds.lon.size * trop_topo_ds.lat.size)
 
 #Open TropFlux wind speed file, so we have the TropFlux lat-lon information for regridding purposes 
-#obs_grid_ds   = xr.open_dataset(obs_grid_file)
-#obs_grid_ds   = obs_grid_ds.pad(longitude = 5).roll(longitude = 25, roll_coords = True)
-#obs_grid_ds   = obs_grid_ds.assign_coords(longitude = np.arange(0.5, 360.5))
-#obs_grid_ds   = obs_grid_ds.rename({'longitude': 'lon', 'latitude': 'lat'})
-
+obs_grid_ds   = xr.open_dataset(obs_grid_file)
+obs_grid_ds   = obs_grid_ds.pad(longitude = 5).roll(longitude = 25, roll_coords = True)
+obs_grid_ds   = obs_grid_ds.assign_coords(longitude = np.arange(0.5, 360.5))
+obs_grid_ds   = obs_grid_ds.rename({'longitude': 'lon', 'latitude': 'lat'})
+'''
+    
 #Define lats to average tauu over and lon range to analyze
 lat_lim = [min_lat, max_lat]
 lon_lim = [min_lon, max_lon]

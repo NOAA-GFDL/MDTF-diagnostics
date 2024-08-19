@@ -43,6 +43,10 @@ dependencies:
     - falwa==2.0.0
     - cmocean
     - regionmask
+    #- falwa==1.2.1
+    #- cmocean
+    #- regionmask
+    - global_land_mask
     - git+https://github.com/raphaeldussin/static_downsampler
     - git+https://github.com/jkrasting/xcompare
     - git+https://github.com/raphaeldussin/xoverturning

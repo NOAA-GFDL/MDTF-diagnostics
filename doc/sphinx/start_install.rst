@@ -34,30 +34,30 @@ Instructions for end-users and new developers are then as follows:
 
 - For end users:
   
-  1. | :console:`% cd mdtf`, then clone your fork of the MDTF repo on your machine:
+  #. | :console:`% cd mdtf`, then clone your fork of the MDTF repo on your machine:
      | :console:`% git clone https://github.com/<your GitHub account name>/MDTF-diagnostics`.
-  2. Verify that you are on the main branch: :console:`% git branch`.
-  3. | Check out the `latest official release <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v4.0.alpha>`__:
+  #. Verify that you are on the main branch: :console:`% git branch`.
+  #. | Check out the `latest official release <https://github.com/NOAA-GFDL/MDTF-diagnostics/releases/tag/v4.0.alpha>`__:
      | :console:`% git checkout tags/v4.0.alpha`.
-  4. Proceed with the installation process described below.
-  5. | Check out a new branch that will contain your edited config files: 
+  #. Proceed with the installation process described below.
+  #. | Check out a new branch that will contain your edited config files:
      | :console:`% git checkout -b <branch name>`.
-  6. | Update the config files, then commit the changes: 
+  #. | Update the config files, then commit the changes:
      | :console:`% git commit -m \"description of your changes\"`.
-  7. | Push the changes on your branch to your remote fork: 
+  #. | Push the changes on your branch to your remote fork:
      | :console:`% git push -u origin <branch name>`.
    
 - For new POD developers:
   
-  1. | :console:`% cd mdtf`, then clone your fork of the MDTF repo on your machine:
+  #. | :console:`% cd mdtf`, then clone your fork of the MDTF repo on your machine:
      | :console:`% git clone https://github.com/<your GitHub account name>/MDTF-diagnostics`.
-  2. Check out the ``main`` branch: :console:`% git checkout main`.
-  3. Proceed with the installation process described below.
-  4. | Check out a new branch for your POD: 
+  #. Check out the ``main`` branch: :console:`% git checkout main`.
+  #. Proceed with the installation process described below.
+  #. | Check out a new branch for your POD:
      | :console:`% git checkout -b <POD branch name>`.
-  5. | Edit existing files/create new files, then commit the changes:
+  #. | Edit existing files/create new files, then commit the changes:
      | :console:`% git commit -m \"description of your changes\"`.
-  6. | Push the changes on your branch to your remote fork:
+  #. | Push the changes on your branch to your remote fork:
      | :console:`% git push -u origin <POD branch name>`.
 
 The path to the code directory (``.../mdtf/MDTF-diagnostics``) is referred to as <*CODE_ROOT*>.
@@ -134,10 +134,11 @@ In this section, we install the conda package manager if it's not already presen
         the installer will break the existing installation (if it's not managed with, e.g., environment modules.)
 
 - If :console:`% conda info` doesn't return anything, you will need to install conda.
-  We recommend doing so using the Miniconda installer (available `here <https://docs.conda.io/en/latest/miniconda.html>`__)
-  for the most recent version of python 3.
+  We recommend doing so using the Miniconda installer
+  (available `here <https://docs.conda.io/en/latest/miniconda.html>`__) for the most recent version of python 3.
 
-- Follow the conda `installation instructions <https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html>`__
+- Follow the conda
+  `installation instructions <https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html>`__
   appropriate to your system.
 
 - Toward the end of the installation process, enter “yes” at “Do you wish the installer to initialize Miniconda3 by

@@ -6,8 +6,8 @@
 ESM-intake catalogs
 ===================
 
-The MDTF-diagnostics package uses `intake-ESM <https://intake-esm.readthedocs.io/en/stable/>`__ catalogs and APIs to access
-model datasets and verify POD data requirements. Intake-ESM is a software package that uses
+The MDTF-diagnostics package uses `intake-ESM <https://intake-esm.readthedocs.io/en/stable/>`__ catalogs and APIs to
+access model datasets and verify POD data requirements. Intake-ESM is a software package that uses
 `intake <https://intake.readthedocs.io/en/latest/>`__ to load
 catalog *assets*--netCDF or Zarr files and associated metadata--into a Pandas Dataframe or an xarray dataset.
 Users can query catalogs and access data subsets according to desired date ranges, variables, simulations, and
@@ -18,8 +18,21 @@ Intake-ESM catalogs are generated using information from standardized directory 
 file metadata using custom tools and or the ecgtools package following the intake-ESM recommendations. The final
 output from the catalog generator will be a csv file populated with files and metadata, and a json header file that
 points to the location of the csv file and contains information about the column headers. Users pass the json
-header file to the intake-ESM read utility so that it can parse the information in the csv file to perform catalog
-queries.can then
+header file to the intake-ESM `open-esm_datastore` utility so that it can parse the information in the csv file
+to perform catalog queries.
+
+.. code-block:: python
+
+   # define dictionary with catalog query info
+   query_dict = {}
+
+   query_dict['frequency'] = "day"
+   query_dict["realm"] = "atmos"
+   query_dict['standard_name'] = "air_temperature"
+   # open the intake-ESM catalog
+   cat = intake.open_esm_datastore("/path/to/data_catalog.json")
+   # query the catalog for data subset matching query_dict info
+   cat_subset = cat.search(**query_dict)
 
 The MDTF-diagnostics package provides a basic :ref:`catalog builder tool <ref-catalog-builder>` built on top of
 `ecgtools <https://github.com/ncar-xdev/ecgtools>`__ that has been tested with

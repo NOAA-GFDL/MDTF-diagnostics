@@ -799,8 +799,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     time_vals[i] = time_vals[i].replace('-', '')
                 if ':' in time_vals[i]:
                     time_vals[i] = time_vals[i].replace(':', '')
-            elif isinstance(time_vals[i], int):
-                time_vals[i] = str(time_vals[i])
                 while len(time_vals[i]) not in poss_digits:
                     time_vals[i] = '0' + time_vals[i]
         return time_vals
@@ -830,14 +828,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             else:
                 raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time` and can not infer from `time_range`')
         try:
-            start_time_vals = self.normalize_group_time_vals(group_df['start_time'].values)
-            end_time_vals = self.normalize_group_time_vals(group_df['end_time'].values)
+            start_time_vals = self.normalize_group_time_vals(group_df['start_time'].values.astype(str))
+            end_time_vals = self.normalize_group_time_vals(group_df['end_time'].values.astype(str))
             if not isinstance(start_time_vals[0], datetime.date):
                 date_format = dl.date_fmt(start_time_vals[0])
                 # convert start_times to date_format for all files in query
-                group_df['start_time'] = group_df['start_time'].apply(lambda x: datetime.datetime.strptime(str(x), date_format))
+                group_df['start_time'] = start_time_vals
+                group_df['start_time'] = group_df['start_time'].apply(lambda x: datetime.datetime.strptime(x, date_format))
                 # convert end_times to date_format for all files in query
-                group_df['end_time'] = group_df['end_time'].apply(lambda x: datetime.datetime.strptime(str(x), date_format))
+                group_df['end_time'] = end_time_vals
+                group_df['end_time'] = group_df['end_time'].apply(lambda x: datetime.datetime.strptime(x, date_format))
             # method throws ValueError if ranges aren't contiguous
             dates_df = group_df.loc[:, ['start_time', 'end_time']]
             date_range_vals = []

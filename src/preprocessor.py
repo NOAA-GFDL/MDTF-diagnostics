@@ -795,10 +795,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         poss_digits = [6,8,10,12,14]
         for i in range(len(time_vals)):
             if isinstance(time_vals[i], str):
-                if '-' in time_vals[i]:
-                    time_vals[i] = time_vals[i].replace('-', '')
-                if ':' in time_vals[i]:
-                    time_vals[i] = time_vals[i].replace(':', '')
+                time_vals[i] = time_vals[i].replace('-', '').replace(':', '')
                 while len(time_vals[i]) not in poss_digits:
                     time_vals[i] = '0' + time_vals[i]
         return time_vals

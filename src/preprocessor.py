@@ -787,6 +787,19 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 var.log.error(err_str)
                 raise IndexError(err_str)
 
+    def normalize_group_time_vals(self, time_vals: np.ndarray) -> np.ndarray:
+        """Apply logic to fomat time_vals lists found in 
+        check_grouo_daterange and convert them into str type.
+        This function also handles missing leading zeros
+        """
+        poss_digits = [6,8,10,12,14]
+        for i in range(len(time_vals)):
+            if isinstance(time_vals[i], str):
+                time_vals[i] = time_vals[i].replace('-', '').replace(':', '')
+                while len(time_vals[i]) not in poss_digits:
+                    time_vals[i] = '0' + time_vals[i]
+        return time_vals
+            
     def check_group_daterange(self, group_df: pd.DataFrame, case_dr,
                               log=_log) -> pd.DataFrame:
         """Sort the files found for each experiment by date, verify that
@@ -812,30 +825,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             else:
                 raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time` and can not infer from `time_range`')
         try:
-            start_time_vals = group_df['start_time'].values
-            end_time_vals = group_df['end_time'].values
+            start_time_vals = self.normalize_group_time_vals(group_df['start_time'].values.astype(str))
+            end_time_vals = self.normalize_group_time_vals(group_df['end_time'].values.astype(str))
             if not isinstance(start_time_vals[0], datetime.date):
-                # convert string values to ints
-                if isinstance(start_time_vals[0], str):
-                    new_start_time_vals = []
-                    new_end_time_vals = []
-
-                    for s in start_time_vals:
-                        new_start_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]",
-                                                                                   s)
-                                                               if w)))
-                    for e in end_time_vals:
-                        new_end_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]",
-                                                                                 e)
-                                                     if w)))
-
-                    start_time_vals = new_start_time_vals
-                    end_time_vals = new_end_time_vals
                 date_format = dl.date_fmt(start_time_vals[0])
                 # convert start_times to date_format for all files in query
-                group_df['start_time'] = pd.to_datetime(start_time_vals, format=date_format)
+                group_df['start_time'] = start_time_vals
+                group_df['start_time'] = group_df['start_time'].apply(lambda x: datetime.datetime.strptime(x, date_format))
                 # convert end_times to date_format for all files in query
-                group_df['end_time'] = pd.to_datetime(end_time_vals, format=date_format)
+                group_df['end_time'] = end_time_vals
+                group_df['end_time'] = group_df['end_time'].apply(lambda x: datetime.datetime.strptime(x, date_format))
             # method throws ValueError if ranges aren't contiguous
             dates_df = group_df.loc[:, ['start_time', 'end_time']]
             date_range_vals = []
@@ -852,21 +851,21 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # throws AssertionError if we don't span the query range
             # TODO: define self.attrs.DateRange from runtime config info
             # assert files_date_range.contains(self.attrs.date_range)
-
             # throw out df entries not in date_range
+            return_df = []
             for i in sorted_df.index:
                 cat_row = sorted_df.iloc[i]
                 if pd.isnull(cat_row['start_time']):
                     continue 
                 else:
-                    stin = dl.Date(cat_row['start_time']) in case_dr
-                    etin = dl.Date(cat_row['end_time']) in case_dr
-                if (not stin and not etin) or (stin and not etin):
-                    mask = sorted_df == cat_row['start_time']
-                    sorted_df = sorted_df[~mask]
-            mask = np.isnat(sorted_df['start_time']) | np.isnat(sorted_df['end_time'])     
-            sorted_df = sorted_df[~mask]
-            return sorted_df
+                    st = dl.dt_to_str(cat_row['start_time'])
+                    et = dl.dt_to_str(cat_row['end_time'])
+                    stin = dl.Date(st) in case_dr
+                    etin = dl.Date(et) in case_dr
+                if stin and etin:
+                    return_df.append(cat_row.to_dict())
+            
+            return pd.DataFrame.from_dict(return_df)
         except ValueError:
             log.error("Non-contiguous or malformed date range in files:", group_df["path"].values)
         except AssertionError:
@@ -928,7 +927,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 case_d.query['path'] = [path_regex]
                 case_d.query['realm'] = realm_regex
                 case_d.query['standard_name'] = var.translation.standard_name
-
+                
                 # change realm key name if necessary
                 if cat.df.get('modeling_realm', None) is not None:
                     case_d.query['modeling_realm'] = case_d.query.pop('realm')

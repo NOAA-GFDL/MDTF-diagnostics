@@ -64,7 +64,7 @@ class AbstractDMCoordinate(abc.ABC):
     @abc.abstractmethod
     def is_scalar(self):
         """Whether the coordinate is a `scalar coordinate
-        <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#scalar-coordinate-variables>`__
+        <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#scalar-coordinate-variables>`__
         (bool).
         """
         pass

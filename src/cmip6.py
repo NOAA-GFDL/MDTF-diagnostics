@@ -1,7 +1,7 @@
 """Code to parse CMIP6 controlled vocabularies and elements of the CMIP6 DRS.
 
 Specifications for the above were taken from the CMIP6 `planning document
-<http://goo.gl/v1drZl>`__. This was accessed at `<http://goo.gl/v1drZl>`__ -- we
+<https://goo.gl/v1drZl>`__. This was accessed at `<https://goo.gl/v1drZl>`__ -- we
 aren't aware of a permanent URL for this information.
 
 The CMIP6 controlled vocabularies (lists of registered MIPs, modeling centers, etc.)
@@ -9,9 +9,9 @@ are derived from data in the
 `PCMDI/cmip6-cmor-tables <https://github.com/PCMDI/cmip6-cmor-tables>`__
 repo, which is included as a git subtree under ``/data``.
 
-.. warning::
+. warning::
    Functionality here has been added as needed for the project and is incomplete.
-   For example, parsing subexperiments is not supported.
+   For example, parsing sub-experiments is not supported.
 """
 import os
 import re

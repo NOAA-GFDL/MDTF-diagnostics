@@ -589,14 +589,14 @@ def splice_into_list(list_, splice_d, key_fn=None, log=_log):
     """Splice sub-lists (values of *splice_d*) into list *list_* after their
     corresponding entries (keys of *slice_d*). Example:
 
-    .. code-block:: python
+    . code-block:: python
 
        >>> splice_into_list(['a','b','c'], {'b': ['b1', 'b2']})
        ['a', 'b', 'b1', 'b2', 'c']
 
     Args:
         list_ (list): Parent list to splice sub-lists into.
-        splice_d (dict): Sub-lists to splice in. Keys are entries in *list\_*
+        splice_d (dict): Sub-lists to splice in. Keys are entries in *list_*
             and values are the sub-lists to insert after that entry. Duplicate
             or missing entries are handled appropriately.
         key_fn (function): Optional. If supplied, function applied to elements

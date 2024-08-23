@@ -136,12 +136,12 @@ class RegexPattern(collections.UserDict, RegexPatternBase):
             self._update_fields()
 
     def match(self, str_, *args):
-        """Match *str\_* using Python :py:func:`re.fullmatch` with *regex* and
+        """Match *str_* using Python :py:func:`re.fullmatch` with *regex* and
         populate object's fields according to the values captured by the named
         capture groups in *regex*.
 
         Args:
-            str\_ (str): Input string to parse.
+            str_ (str): Input string to parse.
             args: Optional. Flags (as defined in Python :py:mod:`re`) to use in
                 the :py:func:`re.fullmatch` method of the *regex* and *match_error_filter*
                 (if defined.)
@@ -772,7 +772,7 @@ def regex_dataclass(pattern, **deco_kwargs):
         type.__setattr__(cls, '__init__', _new_init)
 
         def _from_string(cls_, str_, *args):
-            """Create an object instance from a string representation *str\_*.
+            """Create an object instance from a string representation *str_*.
             Used by :func:`regex_dataclass` for parsing field values and automatic
             type coercion.
             """

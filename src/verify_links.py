@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Checks html links in the output of the files returned by a run of the MDTF
+Checks html links in the output of the files returned by a run of the MDTF-diagnostics package
 package and verifies that all linked files exist.
 
 This is called by default at the end of each run, to determine if any PODs have
@@ -11,8 +11,8 @@ Based on test_website by Dani Coleman, bundy@ucar.edu.
 import sys
 
 # do version check before importing other stuff
-if sys.version_info[0] != 3 or sys.version_info[1] < 10:
-    sys.exit("ERROR: MDTF currently only supports python >= 3.10.*. Please check "
+if sys.version_info[0] != 3 or sys.version_info[1] < 11:
+    sys.exit("ERROR: MDTF-diagnostics currently only supports python >= 3.12.*. Please check "
              "which version is on your $PATH (e.g. with `which python`.)\n"
              f"Attempted to run with following python version:\n{sys.version}")
 # passed; continue with imports
@@ -91,7 +91,7 @@ class LinkVerifier(object):
             if not path_.endswith('/'):
                 path_ = path_ + '/'
             url_parts = url_parts._replace(path=path_)
-            return (urllib.parse.urlunsplit(url_parts), path_, file_)
+            return urllib.parse.urlunsplit(url_parts), path_, file_
 
         self.verbose = verbose
         self.pod_name = None
@@ -153,7 +153,7 @@ class LinkVerifier(object):
         except urllib.error.URLError as e:
             # print('\nFailed to find file or connect to server.')
             # print('Reason: ', e.reason)
-            tup = re.split(r"\[Errno 2\] No such file or directory: \'(.*)\'",
+            tup = re.split(r"\[Errno 2] No such file or directory: \'(.*)\'",
                            str(e.reason))
             if len(tup) == 3:
                 str_ = util.abbreviate_path(tup[1], self.WORK_DIR, '$WORK_DIR')
@@ -188,7 +188,7 @@ class LinkVerifier(object):
             link.target couldn't be found.
         """
         missing = []
-        known_urls = set([root_url])
+        known_urls = {root_url}
         root_parts = urllib.parse.urlsplit(root_url)
         root_parts = root_parts._replace(path=os.path.dirname(root_parts.path))
         # root_parent = URL to directory containing file referred to in root_url

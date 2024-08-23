@@ -127,7 +127,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
     _flux_d = {tup[1]: tup[0] for tup in _std_name_tuples}
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
-        """Edit *pod*\'s Varlist prior to query. If the
+        """Edit *pod*'s Varlist prior to query. If the
         :class:`~src.diagnostic.VarlistEntry` *v* has a ``standard_name`` in the
         recognized list, insert an alternate VarlistEntry whose translation
         requests the complementary type of variable (i.e., if given rate, add an
@@ -290,7 +290,7 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
 
     def execute(self, var, ds, **kwargs):
         """Change the names of the DataArrays with Dataset *ds* to the names
-        specified by the :class:`~src.diagnostic.VarlistEntry` *var*. Names of
+        specified by the :class:`~src.varlist_util.VarlistEntry` *var*. Names of
         the dependent variable and all dimension coordinates and scalar
         coordinates (vertical levels) are changed in-place.
         """
@@ -401,7 +401,7 @@ class AssociatedVariablesFunction(PreprocessorFunctionBase):
 class ExtractLevelFunction(PreprocessorFunctionBase):
     """Extract a requested pressure level from a Dataset containing a 3D variable.
 
-    .. note::
+    . note::
 
        Unit conversion on the vertical coordinate is implemented, but
        parametric vertical coordinates and coordinate interpolation are not.
@@ -536,19 +536,19 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
     """If the Dataset has ``scale_factor`` and ``add_offset`` attributes set,
     apply the corresponding constant linear transformation to the dependent
     variable's values and unset these attributes. See `CF convention documentation
-    <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#attribute-appendix>`__
+    <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#attribute-appendix>`__
     on the ``scale_factor`` and ``add_offset`` attributes.
 
-    .. note::
+    . note::
 
-       By default this function is not applied. It's only provided to implement
+       By default, this function is not applied. It's only provided to implement
        workarounds for running the package on data with metadata (i.e., units)
        that are known to be incorrect.
     """
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
-        """Edit the *pod*'s :class:`~src.VarlistEntry.Varlist` prior to data query.
-        If given a :class:`~src.VarlistEntry` *v* has a
+        """Edit the *pod*'s :class:`~src.varlist_util.VarlistEntry.Varlist` prior to data query.
+        If given a :class:`~src.varlist_util.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
         pressure level), return a copy of *v* with that ``scalar_coordinate``
         removed (i.e., requesting a full 3D variable) to be used as an alternate
@@ -788,8 +788,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 raise IndexError(err_str)
 
     def normalize_group_time_vals(self, time_vals: np.ndarray) -> np.ndarray:
-        """Apply logic to fomat time_vals lists found in 
-        check_grouo_daterange and convert them into str type.
+        """Apply logic to format time_vals lists found in
+        check_group_daterange and convert them into str type.
         This function also handles missing leading zeros
         """
         poss_digits = [6,8,10,12,14]
@@ -823,7 +823,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 group_df['start_time'] = pd.Series(start_times)
                 group_df['end_time'] = pd.Series(end_times)
             else:
-                raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time` and can not infer from `time_range`')
+                raise AttributeError('Data catalog is missing attributes `start_time` and/or'
+                                     ' `end_time` and can not infer from `time_range`')
         try:
             start_time_vals = self.normalize_group_time_vals(group_df['start_time'].values.astype(str))
             end_time_vals = self.normalize_group_time_vals(group_df['end_time'].values.astype(str))
@@ -831,10 +832,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 date_format = dl.date_fmt(start_time_vals[0])
                 # convert start_times to date_format for all files in query
                 group_df['start_time'] = start_time_vals
-                group_df['start_time'] = group_df['start_time'].apply(lambda x: datetime.datetime.strptime(x, date_format))
+                group_df['start_time'] = group_df['start_time'].apply(lambda x:
+                                                                      datetime.datetime.strptime(x, date_format))
                 # convert end_times to date_format for all files in query
                 group_df['end_time'] = end_time_vals
-                group_df['end_time'] = group_df['end_time'].apply(lambda x: datetime.datetime.strptime(x, date_format))
+                group_df['end_time'] = group_df['end_time'].apply(lambda x:
+                                                                  datetime.datetime.strptime(x, date_format))
             # method throws ValueError if ranges aren't contiguous
             dates_df = group_df.loc[:, ['start_time', 'end_time']]
             date_range_vals = []
@@ -1012,7 +1015,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 try:
                     self.check_time_bounds(cat_dict[case_name], var.translation, freq)
                 except LookupError:
-                    var.log.error(f'Data not found in catalog query for {var.translation.name} for requested date_range.')
+                    var.log.error(f'Data not found in catalog query for {var.translation.name}'
+                                  f' for requested date_range.')
                     raise SystemExit("Terminating program")
         return cat_dict
 
@@ -1449,7 +1453,6 @@ class NullPreprocessor(MDTFPreprocessorBase):
     def rename_dataset_vars(self, ds: dict, case_list: dict) -> dict:
         """Dummy method for NullPreprocessor """
         return ds
-
 
 
 class DaskMultiFilePreprocessor(MDTFPreprocessorBase):

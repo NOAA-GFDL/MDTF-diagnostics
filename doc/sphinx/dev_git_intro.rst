@@ -3,30 +3,30 @@ Git-based development workflow
 ==============================
 Steps for brand new users:
 ------------------------------
-1. Fork the MDTF-diagnostics branch to your GitHub account (:ref:`ref-fork-code`)
-2. Clone (:ref:`ref-clone`) your fork of the MDTF-diagnostics repository (repo) to your local machine
+#. Fork the MDTF-diagnostics branch to your GitHub account (:ref:`ref-fork-code`)
+#. Clone (:ref:`ref-clone`) your fork of the MDTF-diagnostics repository (repo) to your local machine
    (if you are not using the web interface for development)
-3. Check out a new branch from the local main branch (:ref:`ref-new-pod`)
-4. Start coding
-5. Commit the changes in your POD branch (:ref:`ref-new-pod`)
-6. Push the changes to the copy of the POD branch on your remote fork (:ref:`ref-new-pod`)
-7. Repeat steps 4--6 until you are finished working
-8. Submit a pull request to the NOAA-GFDL repo for review (:ref:`ref-pull-request`).
+#. Check out a new branch from the local main branch (:ref:`ref-new-pod`)
+#. Start coding
+#. Commit the changes in your POD branch (:ref:`ref-new-pod`)
+#. Push the changes to the copy of the POD branch on your remote fork (:ref:`ref-new-pod`)
+#. Repeat steps 4--6 until you are finished working
+#. Submit a pull request to the NOAA-GFDL repo for review (:ref:`ref-pull-request`).
 
 Steps for users continuing work on an existing POD branch
 -------------------------------------------------------------
-1. Create a backup copy of the MDTF-Diagnostics repo on your local machine
-2. Pull in updates from the NOAA-GFDL/main branch to the main branch in your remote repo (:ref:`ref-update-main`)
-3. Pull in updates from the main branch in your remote fork into the main branch in your local repo
+#. Create a backup copy of the MDTF-Diagnostics repo on your local machine
+#. Pull in updates from the NOAA-GFDL/main branch to the main branch in your remote repo (:ref:`ref-update-main`)
+#. Pull in updates from the main branch in your remote fork into the main branch in your local repo
    (:ref:`ref-update-main`)
-4. Sync your POD branch in your local repository with the local main branch using an interactive rebase
+#. Sync your POD branch in your local repository with the local main branch using an interactive rebase
    (:ref:`ref-rebase`) or merge (:ref:`ref-merge`). Be sure to make a backup copy of of your local *MDTF-diagnostics*
    repo first, and test your branch after rebasing/merging as described in the linked instructions before proceeding
    to the next step.
-5. Continue working on your POD branch
-6. Commit the changes in your POD branch
-7. Push the changes to the copy of the POD branch in your remote fork (:ref:`ref-push`)
-8. Submit a pull request (PR) to NOAA-GFDL/main branch when your code is ready for review (:ref:`ref-pull-request`)
+#. Continue working on your POD branch
+#. Commit the changes in your POD branch
+#. Push the changes to the copy of the POD branch in your remote fork (:ref:`ref-push`)
+#. Submit a pull request (PR) to NOAA-GFDL/main branch when your code is ready for review (:ref:`ref-pull-request`)
 
 .. _ref-fork-code:
 
@@ -68,11 +68,13 @@ on git for interested developers.
 
 Working on a brand new POD
 ------------------------------
-Developers can either clone the MDTF-diagnostics repo to their computer, or manage the MDTF package using the GitHub webpage interface.
+Developers can either clone the MDTF-diagnostics repo to their computer, or manage the MDTF package using the GitHub
+webpage interface.
 Whichever method you choose, remember to create your [POD branch name] branch from the main branch, not the main branch.
 Since developers commonly work on their own machines, this manual provides command line instructions.
 
 1. Check out a branch for your POD
+
 ::
 
    git checkout -b [POD branch name]
@@ -80,6 +82,7 @@ Since developers commonly work on their own machines, this manual provides comma
 2. Write code, add files, etc...
 
 3. Add the files you created and/or modified to the staging area
+
 ::
 
    git add [file 1]
@@ -87,11 +90,13 @@ Since developers commonly work on their own machines, this manual provides comma
    ...
 
 4. Commit your changes, including a brief description
+
 ::
 
    git commit -m "description of my changes"
 
 5. Push the updates to your remote repository
+
 ::
 
    git push -u origin [POD branch name]
@@ -117,27 +122,28 @@ the missing buttons may magically appear.
 
 To submit a PR :
 
-1. Click the *Contribute* link on the main page of your MDTF-diagnostics fork and click the *Open Pull Request* button
+#. Click the *Contribute* link on the main page of your MDTF-diagnostics fork and click the *Open Pull Request* button
 
-2. Verify that your fork is set as the **base** repository, and *main* is set as the **base branch**,
+#. Verify that your fork is set as the **base** repository, and *main* is set as the **base branch**,
    that *NOAA-GFDL* is set as the **head repository**, and *main* is set as the **head** branch
 
-3. Click the *Create Pull Request* button, add a brief description to the PR header, and go through the checklist to
+#. Click the *Create Pull Request* button, add a brief description to the PR header, and go through the checklist to
    ensure that your code meets that baseline requirements for review
 
-4. Click the *Create Pull Request* button (now in the lower left corner of the message box)
+#. Click the *Create Pull Request* button (now in the lower left corner of the message box)
 
-Note that you can submit a Draft Pull Request if you want to run the code through the CI, but are not ready
-for a full review by the framework team. Starting from step 3. above
+   Note that you can submit a Draft Pull Request if you want to run the code through the CI, but are not ready
+   for a full review by the framework team. Starting from step 3. above
 
-1. Click the arrow on the right edge of the *Create Pull Request* button and select *Create draft pull request* from the dropdown menu.
+#. Click the arrow on the right edge of the *Create Pull Request* button and select *Create draft pull request*
+   from the dropdown menu.
 
-2. Continue pushing changes to your POD branch until you are ready for a review (the PR will update automatically)
+#. Continue pushing changes to your POD branch until you are ready for a review (the PR will update automatically)
 
-3. When you are ready for review, navigate to the NOAA-GFDL/MDTF-Diagnostics
+#. When you are ready for review, navigate to the NOAA-GFDL/MDTF-Diagnostics
    `*Pull requests* <https://github.com/NOAA-GFDL/MDTF-diagnostics/pulls>`__ page, and click on your PR
 
-4. Scroll down to the header that states "this pull request is still a work in progress",
+#. Scroll down to the header that states "this pull request is still a work in progress",
    and click the *ready for review* button to move the PR out of *draft* mode
 
 .. _ref-update-main:
@@ -193,6 +199,7 @@ Updating your POD branch by merging in changes from the main branch
 2. Update the local and remote main branches on your fork as described in :ref:`ref-update-main`.
 
 3. Check out your POD branch, and merge the main branch into your POD branch
+
 ::
 
    git checkout [POD branch name]
@@ -201,6 +208,7 @@ Updating your POD branch by merging in changes from the main branch
 4. Resolve any conflicts that occur from the merge
 
 5. Add the updated files to the staging area
+
 ::
 
    git add file1
@@ -208,6 +216,7 @@ Updating your POD branch by merging in changes from the main branch
    ...
 
 6. Push the branch updates to your remote fork
+
 ::
 
    git push -u origin [POD branch name]
@@ -217,19 +226,22 @@ Reverting commits
 If you want to revert to the commit(s) before you pulled in updates:
 
 1. Find the commit hash(es) with the updates, in your git log
+
 ::
 
    git log
 
-or consult the commit log in the web interface
+   or consult the commit log in the web interface
 
 2. Revert each commit in order from newest to oldest
+
 ::
 
    git revert <newer commit hash>
    git revert <older commit hash>
 
 3. Push the updates to the remote branch
+
 ::
 
    git push origin [POD branch name]

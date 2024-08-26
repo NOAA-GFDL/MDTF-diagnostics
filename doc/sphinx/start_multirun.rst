@@ -20,7 +20,7 @@ The `multirun_config_template.jsonc file
 contains separate ``pod_list`` and ``case_list`` blocks. As with the single-run configuration, the ``pod_list`` may
 contain multiple PODs separated by commas. The ``case_list`` contains multiple blocks of information for each case that
 the POD(s) in the ``pod_list`` will analyze. The ``CASENAME``, ``convention``, ``startdate``, and ``enddate`` attributes
-must bedefined for each case. The ``convention`` must be the same for each case, but ``startdate`` and ``enddate``
+must be defined for each case. The ``convention`` must be the same for each case, but ``startdate`` and ``enddate``
 may differ among cases.
 Directions for generating the synthetic data in the configuration file are provided in the file comments, and in the
 quickstart section of the `README file
@@ -47,7 +47,7 @@ Multirun environment variables
 Multirun PODs obtain information for environment variables for the case and variable attributes
 described in the :doc:`configuration section <./start_config>`
 from a yaml file named *case_info.yaml* that the framework generates at runtime. The *case_info.yaml* file is written
-to ``$WOR_DIR/[POD name]``, and has a corresponding environment variable *case_env_file* that the POD uses to
+to ``$WORK_DIR/[POD name]``, and has a corresponding environment variable *case_env_file* that the POD uses to
 parse the file. The *example_multicase.py* script demonstrates to how to read the environment variables from
 *case_info.yaml* using the *case_env_file* environment variable into a dictionary,
 then loop through the dictionary to obtain the post-processed data for analysis. An example *case_info.yaml* file

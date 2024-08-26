@@ -127,7 +127,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
     _flux_d = {tup[1]: tup[0] for tup in _std_name_tuples}
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
-        """Edit *pod*\'s Varlist prior to query. If the
+        """Edit *pod*'s Varlist prior to query. If the
         :class:`~src.diagnostic.VarlistEntry` *v* has a ``standard_name`` in the
         recognized list, insert an alternate VarlistEntry whose translation
         requests the complementary type of variable (i.e., if given rate, add an
@@ -290,7 +290,7 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
 
     def execute(self, var, ds, **kwargs):
         """Change the names of the DataArrays with Dataset *ds* to the names
-        specified by the :class:`~src.diagnostic.VarlistEntry` *var*. Names of
+        specified by the :class:`~src.varlist_util.VarlistEntry` *var*. Names of
         the dependent variable and all dimension coordinates and scalar
         coordinates (vertical levels) are changed in-place.
         """
@@ -401,7 +401,7 @@ class AssociatedVariablesFunction(PreprocessorFunctionBase):
 class ExtractLevelFunction(PreprocessorFunctionBase):
     """Extract a requested pressure level from a Dataset containing a 3D variable.
 
-    .. note::
+    . note::
 
        Unit conversion on the vertical coordinate is implemented, but
        parametric vertical coordinates and coordinate interpolation are not.
@@ -536,19 +536,19 @@ class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
     """If the Dataset has ``scale_factor`` and ``add_offset`` attributes set,
     apply the corresponding constant linear transformation to the dependent
     variable's values and unset these attributes. See `CF convention documentation
-    <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#attribute-appendix>`__
+    <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#attribute-appendix>`__
     on the ``scale_factor`` and ``add_offset`` attributes.
 
-    .. note::
+    . note::
 
-       By default this function is not applied. It's only provided to implement
+       By default, this function is not applied. It's only provided to implement
        workarounds for running the package on data with metadata (i.e., units)
        that are known to be incorrect.
     """
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
-        """Edit the *pod*'s :class:`~src.VarlistEntry.Varlist` prior to data query.
-        If given a :class:`~src.VarlistEntry` *v* has a
+        """Edit the *pod*'s :class:`~src.varlist_util.VarlistEntry.Varlist` prior to data query.
+        If given a :class:`~src.varlist_util.VarlistEntry` *v* has a
         ``scalar_coordinate`` for the Z axis (i.e., is requesting data on a
         pressure level), return a copy of *v* with that ``scalar_coordinate``
         removed (i.e., requesting a full 3D variable) to be used as an alternate
@@ -787,6 +787,19 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 var.log.error(err_str)
                 raise IndexError(err_str)
 
+    def normalize_group_time_vals(self, time_vals: np.ndarray) -> np.ndarray:
+        """Apply logic to format time_vals lists found in
+        check_group_daterange and convert them into str type.
+        This function also handles missing leading zeros
+        """
+        poss_digits = [6,8,10,12,14]
+        for i in range(len(time_vals)):
+            if isinstance(time_vals[i], str):
+                time_vals[i] = time_vals[i].replace('-', '').replace(':', '')
+                while len(time_vals[i]) not in poss_digits:
+                    time_vals[i] = '0' + time_vals[i]
+        return time_vals
+            
     def check_group_daterange(self, group_df: pd.DataFrame, case_dr,
                               log=_log) -> pd.DataFrame:
         """Sort the files found for each experiment by date, verify that
@@ -810,32 +823,21 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 group_df['start_time'] = pd.Series(start_times)
                 group_df['end_time'] = pd.Series(end_times)
             else:
-                raise AttributeError('Data catalog is missing attributes `start_time` and/or `end_time` and can not infer from `time_range`')
+                raise AttributeError('Data catalog is missing attributes `start_time` and/or'
+                                     ' `end_time` and can not infer from `time_range`')
         try:
-            start_time_vals = group_df['start_time'].values
-            end_time_vals = group_df['end_time'].values
+            start_time_vals = self.normalize_group_time_vals(group_df['start_time'].values.astype(str))
+            end_time_vals = self.normalize_group_time_vals(group_df['end_time'].values.astype(str))
             if not isinstance(start_time_vals[0], datetime.date):
-                # convert string values to ints
-                if isinstance(start_time_vals[0], str):
-                    new_start_time_vals = []
-                    new_end_time_vals = []
-
-                    for s in start_time_vals:
-                        new_start_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]",
-                                                                                   s)
-                                                               if w)))
-                    for e in end_time_vals:
-                        new_end_time_vals.append(int(''.join(w for w in re.split("[" + "\\".join(delimiters) + "]",
-                                                                                 e)
-                                                     if w)))
-
-                    start_time_vals = new_start_time_vals
-                    end_time_vals = new_end_time_vals
                 date_format = dl.date_fmt(start_time_vals[0])
                 # convert start_times to date_format for all files in query
-                group_df['start_time'] = pd.to_datetime(start_time_vals, format=date_format)
+                group_df['start_time'] = start_time_vals
+                group_df['start_time'] = group_df['start_time'].apply(lambda x:
+                                                                      datetime.datetime.strptime(x, date_format))
                 # convert end_times to date_format for all files in query
-                group_df['end_time'] = pd.to_datetime(end_time_vals, format=date_format)
+                group_df['end_time'] = end_time_vals
+                group_df['end_time'] = group_df['end_time'].apply(lambda x:
+                                                                  datetime.datetime.strptime(x, date_format))
             # method throws ValueError if ranges aren't contiguous
             dates_df = group_df.loc[:, ['start_time', 'end_time']]
             date_range_vals = []
@@ -852,21 +854,21 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # throws AssertionError if we don't span the query range
             # TODO: define self.attrs.DateRange from runtime config info
             # assert files_date_range.contains(self.attrs.date_range)
-
             # throw out df entries not in date_range
+            return_df = []
             for i in sorted_df.index:
                 cat_row = sorted_df.iloc[i]
                 if pd.isnull(cat_row['start_time']):
                     continue 
                 else:
-                    stin = dl.Date(cat_row['start_time']) in case_dr
-                    etin = dl.Date(cat_row['end_time']) in case_dr
-                if (not stin and not etin) or (stin and not etin):
-                    mask = sorted_df == cat_row['start_time']
-                    sorted_df = sorted_df[~mask]
-            mask = np.isnat(sorted_df['start_time']) | np.isnat(sorted_df['end_time'])     
-            sorted_df = sorted_df[~mask]
-            return sorted_df
+                    st = dl.dt_to_str(cat_row['start_time'])
+                    et = dl.dt_to_str(cat_row['end_time'])
+                    stin = dl.Date(st) in case_dr
+                    etin = dl.Date(et) in case_dr
+                if stin and etin:
+                    return_df.append(cat_row.to_dict())
+            
+            return pd.DataFrame.from_dict(return_df)
         except ValueError:
             log.error("Non-contiguous or malformed date range in files:", group_df["path"].values)
         except AssertionError:
@@ -928,7 +930,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 case_d.query['path'] = [path_regex]
                 case_d.query['realm'] = realm_regex
                 case_d.query['standard_name'] = var.translation.standard_name
-
+                
                 # change realm key name if necessary
                 if cat.df.get('modeling_realm', None) is not None:
                     case_d.query['modeling_realm'] = case_d.query.pop('realm')
@@ -987,22 +989,21 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     progressbar=False,
                     xarray_open_kwargs=self.open_dataset_kwargs
                 )
-
-                range_attr_string = 'intake_esm_attrs:time_range'
-                if not hasattr(cat_subset_df[list(cat_subset_df)[0]].attrs, range_attr_string):
-                    range_attr_string = 'intake_esm_attrs:date_range'
-
-                date_range_dict = {f: cat_subset_df[f].attrs[range_attr_string]
+                # NOTE: The time_range of each file in cat_subset_df must be in a specific
+                # order in order for xr.concat() to work correctly. In the current implementation,
+                # we sort by the first value of the time coordinate of each file.
+                # This assumes the unit of said coordinate is homogeneous for each file, which could 
+                # easily be problematic in the future.
+                # tl;dr hic sunt dracones
+                time_sort_dict = {f: cat_subset_df[f].time.values[0]
                                    for f in list(cat_subset_df)}
-                date_range_dict = dict(sorted(date_range_dict.items(), key=lambda item: item[1]))
+                time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))
                 var_xr = []
-                for k in list(date_range_dict):
-                    date_range_k = dl.DateRange(cat_subset_df[k].attrs[range_attr_string])
-                    if date_range_k in date_range:
-                        if not var_xr:
-                            var_xr = cat_subset_df[k]
-                        else:
-                            var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+                for k in list(time_sort_dict):
+                    if not var_xr:
+                        var_xr = cat_subset_df[k]
+                    else:
+                        var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
                 for att in drop_atts:
                     if var_xr.get(att, None) is not None:
                         var_xr = var_xr.drop_vars(att)
@@ -1014,7 +1015,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 try:
                     self.check_time_bounds(cat_dict[case_name], var.translation, freq)
                 except LookupError:
-                    var.log.error(f'Data not found in catalog query for {var.translation.name} for requested date_range.')
+                    var.log.error(f'Data not found in catalog query for {var.translation.name}'
+                                  f' for requested date_range.')
                     raise SystemExit("Terminating program")
         return cat_dict
 
@@ -1451,7 +1453,6 @@ class NullPreprocessor(MDTFPreprocessorBase):
     def rename_dataset_vars(self, ds: dict, case_list: dict) -> dict:
         """Dummy method for NullPreprocessor """
         return ds
-
 
 
 class DaskMultiFilePreprocessor(MDTFPreprocessorBase):

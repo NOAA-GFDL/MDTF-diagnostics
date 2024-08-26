@@ -54,13 +54,10 @@ import logging
 
 _log = logging.getLogger(__name__)
 
-
 # match-case statement to give date format
 # input can be int or str
-def date_fmt(date):
-    if isinstance(date, str):
-        date = int(date)
-    date_digits = math.floor(math.log10(date)) + 1
+def date_fmt(date: str):
+    date_digits = len(date)
     match date_digits:
         case 6:
             fmt = '%Y%m'
@@ -74,9 +71,7 @@ def date_fmt(date):
             fmt = '%Y%m%d%H%M%S'
     return fmt
 
-
 # convert a string to a cftime object
-
 def str_to_cftime(time_str: str, fmt=None, calendar=None):
     if fmt is None:
         fmt = date_fmt(time_str)
@@ -91,13 +86,20 @@ def str_to_cftime(time_str: str, fmt=None, calendar=None):
     )
     return cf_date
 
-
 # convert cftime.Datetime to a string
 def cftime_to_str(cf_time: cftime.datetime, fmt=None):
     if fmt is None:
         fmt = '%Y%m%d-%H:%M:%S'
     return cf_time.strftime(fmt)
 
+# convert datetime.datetime to a str for in DateRange operation (year and month only)
+def dt_to_str(dt: datetime.datetime):
+    year = str(dt.year)
+    year = "".join(["0"] * (4 - len(year))) + year
+    month = str(dt.month)
+    month = "".join(["0"] * (2 - len(month))) + month
+    
+    return f'{year}{month}'
 
 # ===============================================================
 # following adapted from Alexandre Decan's python-intervals

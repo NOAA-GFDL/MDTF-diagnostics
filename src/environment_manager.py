@@ -597,13 +597,13 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             self.env_mgr.destroy_environment(env)
         self.env_mgr.tear_down()
 
-    def runtime_terminate(self, signum=None, frame=None):
+    def runtime_terminate(self, signum=None):
         """Handler called in the event that POD execution was halted abnormally,
         by receiving  ``SIGINT`` or ``SIGTERM``.
         """
         # try to clean up everything
         for p in self.pods:
-            util.signal_logger(self.__class__.__name__, signum, frame, log=p.pod.log)
+            util.signal_logger(self.__class__.__name__, signum, log=p.pod.log)
             p.tear_down()
             p.pod.close_log_file(log=True)
 

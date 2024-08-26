@@ -20,8 +20,7 @@ _NO_TRANSLATION_CONVENTION = 'no_translation'  # naming convention for disabling
 @util.mdtf_dataclass
 class TranslatedVarlistEntry(data_model.DMVariable):
     """Class returned by :meth:`VarlistTranslator.translate`. Marks some
-    attributes inherited from :class:`~data_model.DMVariable` as being queryable
-    in :meth:`~data_manager.DataframeQueryDataSourceBase.query_dataset`.
+    attributes inherited from :class:`~data_model.DMVariable`.
     """
     # to be more correct, we should probably have VarlistTranslator return a
     # DMVariable, which is converted to this type on assignment to the

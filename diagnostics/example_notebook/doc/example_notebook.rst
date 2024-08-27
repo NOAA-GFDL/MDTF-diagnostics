@@ -33,7 +33,7 @@ The anomalies are zonally-averaged and the results from all cases are shown on a
 Required programming language and libraries
 -------------------------------------------
 
-* Python >= 3.11
+* Python >= 3.12
 * xarray
 * numpy
 * matplotlib

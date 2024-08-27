@@ -68,7 +68,12 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         # globally enforce non-interactive matplotlib backend
         # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
         self.pod_env_vars['MPLBACKEND'] = "Agg"
-        self._interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
+        self._interpreters = {
+                                '.py': 'python', 
+                                '.ncl': 'ncl', 
+                                '.R': 'Rscript',
+                                '.ipynb': 'jupyter'
+                             }
         self.nc_largefile = runtime_config.large_file
         self.bash_exec = find_executable('bash')
         # Initialize the POD path object and define the POD output paths

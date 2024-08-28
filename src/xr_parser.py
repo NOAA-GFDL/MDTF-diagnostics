@@ -876,13 +876,13 @@ class DefaultDatasetParser:
             **kwargs
         )
 
-    def reconcile_names(self, our_var, ds, ds_var_name: str, overwrite_ours=None):
+    def reconcile_names(self, our_var, ds, ds_var_name: str, overwrite_ours: bool = False):
         """Reconcile the name and standard_name attributes between the
         'ground truth' of the dataset we downloaded (*ds_var_name*) and our
         expectations based on the model's convention (*our_var*).
 
         Args:
-            our_var (:class:`~core.TranslatedVarlistEntry`): Expected attributes
+            our_var (:class:`~translate.TranslatedVarlistEntry`): Expected attributes
                 of the dataset variable, according to the data request.
             ds: xarray Dataset.
             ds_var_name (str): Name of the variable in *ds* we expect to
@@ -890,18 +890,30 @@ class DefaultDatasetParser:
             overwrite_ours (bool, default False): If True, always update the name
                 of *our_var* to what's found in *ds*.
         """
-
-        if ds_var_name not in ds.variables:
+        v_names = [v for v in ds.variables]
+        if ds_var_name not in v_names:
+            # check for case sensitivity
+            if ds_var_name.upper() in v_names:
+                ds_var_name = ds_var_name.upper()
+                overwrite_ours = True
             # try searching for 4-D field instead of variable name for a specific level
             # (e.g., U instead of U500)
-            tv_name = ds_var_name
-            if len(our_var.scalar_coords) > 0:
-                ds_var_name = ''.join(filter(lambda x: not x.isdigit(), tv_name))
-                overwrite_ours = True
             else:
-                # attempt to match on standard_name attribute if present in data
-                ds_names = [ds.variables[v].name for v in ds.variables
-                            if ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name]
+                tv_name = ds_var_name
+                if len(our_var.scalar_coords) > 0:
+                    ds_var_name = ''.join(filter(lambda x: not x.isdigit(), tv_name))
+                else:
+                    # attempt to match on standard_name attribute if present in data
+                    ds_names = []
+                    for v in ds.variables:
+                        if hasattr(v, 'name') and ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
+                            ds_names.append(ds.variables[v].name)
+                            break
+                        elif ds.variables[v].attrs.get('name', "") and \
+                                ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
+                            ds_names.append(ds.variables[v].attrs.get('name'))
+                            break
+
                 if len(ds_names) == 1:
                     # success, narrowed down to one guess
                     self.log.info(("Selecting '%s' as the intended name for '%s' "
@@ -1182,7 +1194,7 @@ class DefaultDatasetParser:
         """
         tv = var.translation
         # check name, std_name, units on variable itself
-        self.reconcile_names(tv, ds, tv.name, overwrite_ours=None)
+        self.reconcile_names(tv, ds, tv.name)
         self.reconcile_units(tv, ds[tv.name])
         # check variable's dimension coordinates: names, std_names, units, bounds
         self.reconcile_dimension_coords(tv, ds)

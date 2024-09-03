@@ -20,15 +20,15 @@
       "standard_name": "latitude",
       "units": "degrees_north"
     },
-    "yh": {
+    "xq": {
       "axis": "Y",
-      "standard_name": "h_point_nominal_longitude",
+      "standard_name": "q_point_nominal_latitude",
       "long_name": "h point nominal latitude",
       "units": "degrees_north"
     },
-    "xq": {
+    "xh": {
       "axis": "X",
-      "standard_name": "x_point_nominal_latitude",
+      "standard_name": "h_point_nominal_latitude",
       "long_name": "x point nominal latitude",
       "units": "degrees_north"
     },
@@ -96,8 +96,8 @@
     }
   },
   "variables" : {
-    "$ref": "./gfdl-cmor-tables/gfdl_to_cmip6_vars.json",
-    "$ref": "./gfdl-cmor-tables/gfdl_to_cmip5_vars.json",
+    //"$ref": "./gfdl-cmor-tables/gfdl_to_cmip6_vars.json",
+    //"$ref": "./gfdl-cmor-tables/gfdl_to_cmip5_vars.json",
 
     "areacello": {
       "standard_name": "cell_area",

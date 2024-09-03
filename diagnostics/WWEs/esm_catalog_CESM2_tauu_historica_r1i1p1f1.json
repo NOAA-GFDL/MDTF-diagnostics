@@ -173,9 +173,9 @@
       }
     ]
   },
-  "id": "esm_catalog_CESM2_tauu_historica_r1i1p1f1",
+  "id": "esm_catalog_CESM2_tauu_historica_r1i1p1f1.csv",
   "description": null,
   "title": null,
   "last_updated": "2024-08-19T20:39:26Z",
-  "catalog_file": "file:///Users/eriley/mdtf/MDTF-diagnostics/diagnostics/taux_diag/esm_catalog_CESM2_tauu_historica_r1i1p1f1.csv"
+  "catalog_file": "file:///Users/eriley/mdtf/MDTF-diagnostics/diagnostics/WWEs/esm_catalog_CESM2_tauu_historica_r1i1p1f1.csv"
 }

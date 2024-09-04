@@ -454,7 +454,8 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
                     new_tv_name = var_dict['name']
         new_tv = tv.remove_scalar(
             'Z',
-            name=new_tv_name
+            name=new_tv_name,
+            long_name=""
         )
 
         # add original 4D var defined in new_tv as an alternate TranslatedVarlistEntry
@@ -718,6 +719,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         <https://unidata.github.io/cftime/api.html#cftime.datetime>`__
         objects so that they can be compared with the model data's time axis.
         """
+        # TODO make time bound checks less restrictive for mon and longer data
         dt_range = var.T.range
         ds_decode = xr.decode_cf(ds, use_cftime=True)
         t_coord = ds_decode[var.T.name]
@@ -930,6 +932,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 case_d.query['path'] = [path_regex]
                 case_d.query['realm'] = realm_regex
                 case_d.query['standard_name'] = var.translation.standard_name
+                case_d.query['variable_id'] = var.translation.name
 
                 # change realm key name if necessary
                 if cat.df.get('modeling_realm', None) is not None:
@@ -948,8 +951,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         for a in var.alternates:
                             if hasattr(a, 'translation'):
                                 if a.translation is not None:
+                                    case_d.query.update({'variable_id': a.translation.name})
                                     case_d.query.update({'standard_name': a.translation.standard_name})
                             else:
+                                case_d.query.update({'variable_id': a.name})
                                 case_d.query.update({'standard_name': a.standard_name})
                             if any(var.translation.scalar_coords):
                                 found_z_entry = False
@@ -969,7 +974,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         if cat_subset.df.empty:
                             raise util.DataRequestError(
                                 f"No assets matching query requirements found for {var.translation.name} for"
-                                f" case {case_name} in {data_catalog}")
+                                f" case {case_name} in {data_catalog}. The input catalog may missing entries for the"
+                                f"following required fields: standard_name, variable_id, units, realm."
+                                f"Check that the target file paths contain the case_name(s) defined in the runtime"
+                                f"configuration file.")
                     else:
                         raise util.DataRequestError(
                             f"Unable to find match or alternate for {var.translation.name}"

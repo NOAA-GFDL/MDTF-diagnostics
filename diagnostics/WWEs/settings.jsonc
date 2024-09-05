@@ -37,6 +37,13 @@
       "dimensions": ["time", "lat", "lon"],
       "standard_name" : "surface_downward_eastward_stress",
       "units": "Pa"
-    }
+    },
+    "sftlf": {
+      "frequency": "fx",
+      "realm": "atmos",
+      "dimensions": ["lat", "lon"],
+      "standard_name": "land_area_fraction",
+      "units": "%"
+      }
   }
 }

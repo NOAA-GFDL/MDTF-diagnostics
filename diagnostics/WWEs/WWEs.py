@@ -11,6 +11,7 @@ import time
 import xesmf as xe
 import scipy
 from scipy import stats
+from functools import partial
 import intake
 import sys
 import yaml
@@ -23,23 +24,55 @@ from WWE_diag_tools import (
     isolate_WWEs,
     WWE_characteristics,
     WWE_statistics, #We don't need to do the statistics to make the likelihood by longitude plot
-    find_WWE_time_lon)
-
+    find_WWE_time_lon,
+    plot_model_Hovmollers_by_year)
 
 print("\n=======================================")
 print("BEGIN WWEs.py ")
 print("=======================================")
 
-work_dir = os.environ["WORK_DIR"]
-casename = os.environ["CASENAME"]
+def _preprocess(x, lon_bnds, lat_bnds):
+    return x.sel(lon=slice(*lon_bnds), lat=slice(*lat_bnds))
 
-# Parse MDTF-set environment variables
+work_dir  = os.environ["WORK_DIR"]
+obs_dir   = os.environ["OBS_DATA"]
+casename  = os.environ["CASENAME"]
+first_year= os.environ["first_yr"]
+last_year = os.environ["last_yr"]
+
+###########################################################################
+##############Part 1: Get, Plot Observations ##############################
+###########################################################################
+print(f'*** Now working on obs data\n------------------------------')
+obs_file_WWEs = obs_dir + '/TropFlux_120-dayHPfiltered_tauu_1980-2014.nc'
+
+print(f'*** Reading obs data from {obs_file_WWEs}')
+obs_WWEs    = xr.open_dataset(obs_file_WWEs)
+print(obs_WWEs, 'obs_WWEs')
+
+# Subset the data for the user defined first and last years #
+obs_WWEs = obs_WWEs.sel(time=slice(first_year, last_year))
+
+obs_lons = obs_WWEs.lon
+obs_lats = obs_WWEs.lat
+obs_time = obs_WWEs.time
+Pac_lons = obs_WWEs.Pac_lon
+obs_WWE_mask        = obs_WWEs.WWE_mask
+TropFlux_filt_tauu  = obs_WWEs.filtered_tauu
+TropFlux_WWEsperlon = obs_WWEs.WWEs_per_lon
+
+plot_model_Hovmollers_by_year(data = TropFlux_filt_tauu, wwe_mask = obs_WWE_mask,
+                                  lon_vals = Pac_lons, tauu_time = obs_time,
+                                  savename = f"{work_dir}/obs/PS/TropFlux_",
+                                  first_year = first_year, last_year = last_year)
+
+###########################################################################
+###########Parse MDTF-set environment variables############################
+###########################################################################
+#These variables come from the case_env_file that the framework creates
+#the case_env_file points to the csv file, which in turn points to the data files.
+#Variables from the data files are then read in. See example_multicase.py
 print("*** Parse MDTF-set environment variables ...")
-#*************************************************************************************
-#***Ι DON'T KNOW WHERE THESE GET SET, A CONFIG FILE? THE CASE_INFO.YML FILE?******
-#**** I think a lot of these variables end up coming from the case_env_file that the framework creates
-#the case_env_file points to the csv file, which in turn points to the data files. Variables from the data files
-#are then read in. See example_multicase.py
 
 case_env_file = os.environ["case_env_file"]
 assert os.path.isfile(case_env_file), f"case environment file not found"
@@ -59,23 +92,32 @@ lon_coord  = [case['lon_coord'] for case in case_list.values()][0]
 
 # open the csv file using information provided by the catalog definition file
 cat = intake.open_esm_datastore(cat_def_file)
+
 # filter catalog by desired variable and output frequency
 tauu_subset = cat.search(variable_id=tauu_var, frequency="day")
+
 # examine assets for a specific file
 #tas_subset['CMIP.synthetic.day.r1i1p1f1.day.gr.atmos.r1i1p1f1.1980-01-01-1984-12-31'].df
+
+#Use partial function to only load part of the data file
+lon_bnds, lat_bnds = (0, 360), (-32.5, 32.5)
+partial_func       = partial(_preprocess, lon_bnds=lon_bnds, lat_bnds=lat_bnds)
+
 # convert tas_subset catalog to an xarray dataset dict
-tauu_dict = tauu_subset.to_dataset_dict(
+tauu_dict = tauu_subset.to_dataset_dict(preprocess = partial_func,
     xarray_open_kwargs={"decode_times": True, "use_cftime": True}
 )
 
 tauu_arrays = {}
 for k, v in tauu_dict.items(): 
     arr = tauu_dict[k][tauu_var]
-    arr = arr.sel(lon = slice(120,280), lat = slice(-2.5, 2.5))
+    arr = arr.sel(lon = slice(120,280), lat = slice(-2.5, 2.5),
+                      time = slice(first_year, last_year))
     arr = arr.mean(dim = (tauu_dict[k][lat_coord].name,tauu_dict[k][time_coord].name))
 
     tauu_arrays[k] = arr
 
+###########################################################################
 # Part 3: Make a plot that contains results from each case
 # --------------------------------------------------------
 

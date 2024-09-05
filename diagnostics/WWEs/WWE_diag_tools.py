@@ -422,48 +422,85 @@ def find_WWE_time_lon(data = None, wwe_labels = None, lon = None, time_array = N
 #####################################################################
 ###PLOTTING CODE
 #####################################################################
-def plot_taux_wwe_hov(data = None, wwe_mask = None, st_year = 0, 
-                      end_year = 0, save_name = '', taux_time = None,
-                      center_lon_vals = None, center_time_vals = None,
-                      do_center_marker = False, source_name = '', shade_choice = 'bwr'):
+def plot_model_Hovmollers_by_year(data = None, wwe_mask = None, lon_vals = None,
+                                  tauu_time = None, savename = '',
+                                  first_year = '', last_year = ''):
     
-    #bp_data_subtime = data.sel(time = (data.time.dt.year == str(st_year)))
-    wiyear          = np.where((np.asarray(taux_time.dt.year) == st_year) | 
-                               (np.asarray(taux_time.dt.year) == end_year))
-    
-    #Plot details
-    levs= np.linspace(-0.1, 0.1, 21)
-    fig = pplt.figure(refwidth = 2.5, aspect = .7)
-    ax  = fig.subplots(xlabel = 'longitude')
+    year_array = np.unique(tauu_time.dt.year)
+    nyears     = np.unique(tauu_time.dt.year).size
 
-    #Make the plot
-    cf = ax.contourf(np.asarray(data.lon), np.asarray(taux_time[wiyear[0]]),
-                     np.asarray(data[wiyear[0], :]), levels = levs, 
-                     cmap = shade_choice, extend = 'both')
+    fig, ax = plt.subplots(ncols=5, nrows=4, figsize = (15, 16), sharex = True, sharey = True) 
+    axlist = ax.flatten()
+    shade_choice     = 'bwr'
+    levs             = np.linspace(-0.1, 0.1, 21)
 
-    cl = ax.contour(np.asarray(data.lon), np.asarray(taux_time[wiyear[0]]),  
-                    wwe_mask[wiyear[0], :], cmap = 'binary', linewidths = 1)
-    
-    if do_center_marker is True:
-        cp = ax.plot(center_lon_vals, center_time_vals, 
-                     marker="o", markersize=5, markeredgecolor="black", 
-                     markerfacecolor="black", linestyle = 'None')
-
-    ax.format(title = source_name, xlabel = 'Longitude', 
-              ylabel = '', grid = True, xlim = [122, 270], xlocator = 'lon', 
-              ylim = [np.asarray(taux_time[wiyear[0]]).min(), np.asarray(taux_time[wiyear[0]]).max()],
-              ylocator = 'month', ytickminor = 0, fontsize = 11, titlesize = 12)
-
-    ylim = [np.asarray(taux_time[wiyear[0]]).min(), np.asarray(taux_time[wiyear[0]]).max()]
-    
-    fig.colorbar(cf, label= 'Taux (N $m^{-2}$)', length=0.5, space = .7, labelsize = 10)
-
-    if do_center_marker is True: 
-        fig.save(save_name + '_CenterLabeled.png')
-    else:
-        fig.save(save_name + '.png')
+    kwargs = {'fontsize':12}
+    ####################################################################################
+    #Loop through each year to make a Hovmoller panel of filtered zonal wind stress
+    #for each year overlapped with WWE blobs
+    ####################################################################################
+    for iyear in range(20):
+        wiyear = np.where((np.asarray(tauu_time.dt.year) == year_array[iyear]))
         
-    pplt.close()
+        ########################################################################           
+        #Plot details
+        ########################################################################=
+        cf = axlist[iyear].contourf(np.asarray(lon_vals), np.arange(0, tauu_time[wiyear[0]].size),
+                                    np.asarray(data[wiyear[0], :]), levels = levs, 
+                                    cmap = shade_choice, extend = 'both')
+
+        cl = axlist[iyear].contour(np.asarray(lon_vals), np.arange(0, tauu_time[wiyear[0]].size),  
+                                   wwe_mask[wiyear[0], :], cmap = 'binary', linewidths = 1)
+
+        axlist[iyear].grid(alpha = 0.5)
+        
+        if iyear >=15 :axlist[iyear].set_xlabel('longitude', **kwargs)
+        if iyear%5 == 0: axlist[iyear].set_ylabel('day of year', **kwargs)
+        axlist[iyear].set_title(str(year_array[iyear]), fontsize=12, loc = 'left')
+        axlist[iyear].tick_params(axis='y', labelsize=12)
+        axlist[iyear].tick_params(axis='x', labelsize=12)
+        plt.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
+
+    cbar_ax = fig.add_axes([0.81, 0.35, 0.015, 0.3])
+    cbar_ax.tick_params(labelsize=12)
+    cb = plt.colorbar(cf, cax=cbar_ax)
+    cb.set_label(label = '$\u03C4_x$ (N $m^{-2}$)', fontsize = 12)
+
+    endof20yrs = str(int(first_year) + 19)
+    plt.savefig(savename + first_year + '-' + endof20yrs + '.YearlyHovmollers.png', bbox_inches='tight')
+    
+    if year_array.size > 20:
+        fig, ax = plt.subplots(ncols=5, nrows=4, figsize = (15, 16), sharex = True, sharey = True) 
+        axlist = ax.flatten()
+
+        for iyear in range(year_array.size - 20):
+            wiyear = np.where((np.asarray(tauu_time.dt.year) == year_array[iyear + 20]))
+                
+            ####################################################################           
+            #Plot details
+            ########################################################################
+            cf = axlist[iyear].contourf(np.asarray(lon_vals), np.arange(0, tauu_time[wiyear[0]].size),
+                                    np.asarray(data[wiyear[0], :]), levels = levs, 
+                                    cmap = shade_choice, extend = 'both')
+            
+            cl = axlist[iyear].contour(np.asarray(lon_vals), np.arange(0, tauu_time[wiyear[0]].size),  
+                                       wwe_mask[wiyear[0], :], cmap = 'binary', linewidths = 1)
+
+            axlist[iyear].grid(alpha = 0.5)
+            
+            if iyear >=15 :axlist[iyear].set_xlabel('longitude', **kwargs)
+            if iyear%5 == 0: axlist[iyear].set_ylabel('day of year', **kwargs)
+            axlist[iyear].set_title(str(year_array[iyear + 20]), fontsize=12, loc = 'left')
+            axlist[iyear].tick_params(axis='y', labelsize=12)
+            axlist[iyear].tick_params(axis='x', labelsize=12)
+            plt.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
+
+        cbar_ax = fig.add_axes([0.81, 0.35, 0.015, 0.3])
+        cbar_ax.tick_params(labelsize=12)
+        cb = plt.colorbar(cf, cax=cbar_ax)
+        cb.set_label(label = '$\u03C4_x$ (N $m^{-2}$)', fontsize = 12)
+        
+        start2ndpage = str(int(first_year) + 20)
+        plt.savefig(savename + start2ndpage + '-' + last_year + '.YearlyHovmollers.png', bbox_inches='tight')
     
     return cf
-

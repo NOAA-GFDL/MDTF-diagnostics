@@ -118,7 +118,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
 
     # Cache log info in memory until log file is set up
     util.logs.initial_log_config()
-
+    assert os.path.isfile(configfile), f'Configuration file {configfile} not found. Check that file path for typos.'
     # print(f"=== Starting {os.path.realpath(__file__)}\n")
     # NameSpace allows dictionary keys to be referenced with dot notation
     ctx.config = util.NameSpace()
@@ -142,7 +142,6 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     ctx.config.update({'OUTPUT_DIR': model_paths.OUTPUT_DIR})
     cat_path = ctx.config.DATA_CATALOG
     ctx.config.update({'DATA_CATALOG': util.filesystem.resolve_path(cat_path)})
-    # TODO: update paths in ctx.config so that POD paths are placed in the correct sub-directories
     backup_config = backup_config(ctx.config)
     ctx.config._configs = dict()
     ctx.config._configs[backup_config.name] = backup_config

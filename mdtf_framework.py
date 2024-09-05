@@ -118,7 +118,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
 
     # Cache log info in memory until log file is set up
     util.logs.initial_log_config()
-    assert os.path.isfile(configfile), f'Configuration file {configfile} not found. Check that file path for typos.'
+    assert os.path.isfile(configfile), f'Configuration file {configfile} not found. Check the file path for typos.'
     # print(f"=== Starting {os.path.realpath(__file__)}\n")
     # NameSpace allows dictionary keys to be referenced with dot notation
     ctx.config = util.NameSpace()

@@ -6,7 +6,11 @@
     "long_name" : "Test WWE POD",
     "convention": "cmip",
     "runtime_requirements": {
-        "python3": ["matplotlib", "xarray", "netCDF4", "pandas", "xesmf", "scipy"]
+      "python3": ["matplotlib", "xarray", "netCDF4", "pandas", "xesmf", "scipy"]
+    },
+    "pod_env_vars": {
+      "first_yr": "1980",
+      "last_yr": "2014"
     }
   },
 

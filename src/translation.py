@@ -334,10 +334,13 @@ class Fieldlist:
             new_coord = [lut1.values()][0]
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             coord_name = ""
-            if new_coord.get('name', None):
+            if hasattr(new_coord, 'name'):
                 coord_name = new_coord['name']
-            elif new_coord.get('out_name', None):
+            elif hasattr(new_coord, 'out_name'):
                 coord_name = new_coord['out_name']
+            else:
+                coord_name = [k for k in lut1.keys()][0]
+
             coord_copy = copy.deepcopy(new_coord)
             coord_copy['value'] = units.convert_scalar_coord(coord,
                                                              coord_copy['units'],

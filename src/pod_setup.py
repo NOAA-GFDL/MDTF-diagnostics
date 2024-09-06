@@ -148,6 +148,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                                       value[0]) from exc
 
         def verify_runtime_reqs(runtime_reqs: dict):
+            pod_env = ""
             for k, v in runtime_reqs.items():
                 if any(v):
                     pod_env = k
@@ -172,6 +173,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 pass
             else:
                 self.log.info(f"Checking {e} for {self.name} package requirements")
+                conda_root = self.pod_env_vars['CONDA_ROOT']
                 if os.path.exists(os.path.join(conda_root, "bin/conda")):
                     args = [os.path.join(conda_root, "bin/conda"),
                             'list',
@@ -303,7 +305,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             if runtime_config.translate_data and pod_convention != data_convention:
                 self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
             else:
-                data_convention = 'no_translation'
+                #data_convention = 'no_translation'
                 self.log.info(f'POD convention and data convention are both {pod_convention}. '
                               f'No data translation will be performed for case {case_name}.')
             # A 'noTranslationFieldlist' will be defined for the varlistEntry translation attribute

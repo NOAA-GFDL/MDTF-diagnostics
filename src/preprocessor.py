@@ -926,13 +926,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 freq = var.T.frequency
                 if not isinstance(freq, str):
                     freq = freq.format_local()
+                var_id = var.translation.name
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
                 case_d.query['frequency'] = freq
                 case_d.query['path'] = [path_regex]
                 case_d.query['realm'] = realm_regex
                 case_d.query['standard_name'] = var.translation.standard_name
-                case_d.query['variable_id'] = var.translation.name
+                case_d.query['variable_id'] = var_id
 
                 # change realm key name if necessary
                 if cat.df.get('modeling_realm', None) is not None:

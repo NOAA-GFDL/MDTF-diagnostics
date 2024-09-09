@@ -899,12 +899,12 @@ class DefaultDatasetParser:
             # try searching for 4-D field instead of variable name for a specific level
             # (e.g., U instead of U500)
             else:
+                ds_names = []
                 tv_name = ds_var_name
                 if len(our_var.scalar_coords) > 0:
-                    ds_var_name = ''.join(filter(lambda x: not x.isdigit(), tv_name))
+                   ds_names.append(''.join(filter(lambda x: not x.isdigit(), tv_name)))
                 else:
                     # attempt to match on standard_name attribute if present in data
-                    ds_names = []
                     for v in ds.variables:
                         if hasattr(v, 'name') and ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
                             ds_names.append(ds.variables[v].name)

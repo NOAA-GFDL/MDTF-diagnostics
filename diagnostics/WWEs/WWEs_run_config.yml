@@ -8,11 +8,11 @@ pod_list:
 
 # Case list entries (must be unique IDs for each simulation)
 case_list:
-  "tauu_Eday_CESM2_historical_r1i1p1f1_gn_19800101-19891231" :
+  "CESM2_historical_r1i1p1f1_gn" :
     model: "CESM2"
     convention: "CMIP"
-    startdate: "19800101000000"
-    enddate: "19891231000000"
+    startdate: "19800101"
+    enddate: "19891231"
 
 #  "tauu_Eday_CESM2_historical_r1i1p1f1_gn_19900101-19991231" :
 #    model: "CESM2"
@@ -22,7 +22,7 @@ case_list:
 
 ### Data location settings ###
 # Required: full or relative path to ESM-intake catalog header file
-DATA_CATALOG: "./diagnostics/WWEs/esm_catalog_CESM2_tauu_historica_r1i1p1f1.json"
+DATA_CATALOG: "./diagnostics/WWEs/esm_catalog_CESM2_tauu_historical_r1i1p1f1.json"
 # Optional: Parent directory containing observational data used by individual PODs.
 # If defined, the framework assumes observational data is in OBS_DATA_ROOT/[POD_NAME]
 OBS_DATA_ROOT: "../inputdata/obs_data"
@@ -61,7 +61,7 @@ overwrite: False
 "make_multicase_figure_html": False
 ### Developer settings ###
 # Set to True to run the preprocessor
-run_pp: False
+run_pp: True
 # Additional custom preprocessing scripts to run on data
 # place these scripts in the MDTF-diagnostics/user_scripts directory
 # The framework will run the specified scripts whether run_pp is set to True or False

@@ -13,6 +13,9 @@
       "last_yr": "2014"
     }
   },
+  "data" : {
+    "realm": "atmos"
+  },
 
 // Variable Coordinates
   "dimensions": {
@@ -33,14 +36,12 @@
   "varlist" : {
     "tauu": {
       "frequency" : "day",
-      "realm": "atmos",
       "dimensions": ["time", "lat", "lon"],
       "standard_name" : "surface_downward_eastward_stress",
       "units": "Pa"
     },
     "sftlf": {
       "frequency": "fx",
-      "realm": "atmos",
       "dimensions": ["lat", "lon"],
       "standard_name": "land_area_fraction",
       "units": "%"

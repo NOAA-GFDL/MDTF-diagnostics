@@ -61,7 +61,7 @@ overwrite: False
 "make_multicase_figure_html": False
 ### Developer settings ###
 # Set to True to run the preprocessor
-run_pp: True
+run_pp: False
 # Additional custom preprocessing scripts to run on data
 # place these scripts in the MDTF-diagnostics/user_scripts directory
 # The framework will run the specified scripts whether run_pp is set to True or False

@@ -923,7 +923,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             for var in case_d.varlist.iter_vars():
                 realm_regex = var.realm + '*'
                 date_range = var.translation.T.range
-                freq = var.T.frequency
+                if hasattr(var.T, 'frequency'):
+                    freq = var.T.frequency
+                else:
+                    freq = "fx"
                 if not isinstance(freq, str):
                     freq = freq.format_local()
                 # define initial query dictionary with variable settings requirements that do not change if

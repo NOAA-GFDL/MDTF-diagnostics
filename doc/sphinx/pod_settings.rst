@@ -264,7 +264,7 @@ variable. Most settings here are optional, but the main ones are:
   The units the diagnostic expects the variable to be in (using the syntax of the
   `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`__).
 
-``frequency`:
+``frequency``:
   Output frequency of data with a time dimension. May be specified for each variable with a time dimension, or in the data section if 
   all variables have the same frequency.
 

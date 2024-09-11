@@ -41,7 +41,7 @@
       "units": "Pa"
     },
     "sftlf": {
-      "frequency": "fx",
+     // "frequency": "fx",
       "dimensions": ["lat", "lon"],
       "standard_name": "land_area_fraction",
       "units": "%"

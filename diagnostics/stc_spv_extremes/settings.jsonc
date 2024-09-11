@@ -19,7 +19,7 @@
     }
   },
   "data": {
-    "realm" : "atmos",
+    "realm" : "atmos"
   },
   "dimensions": {
     "lat": {"standard_name": "latitude"},

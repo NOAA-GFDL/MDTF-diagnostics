@@ -1008,17 +1008,29 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # This assumes the unit of said coordinate is homogeneous for each file, which could 
                 # easily be problematic in the future.
                 # tl;dr hic sunt dracones
+                var_xr = []
                 if not var.is_static:
                     time_sort_dict = {f: cat_subset_df[f].time.values[0]
                                       for f in list(cat_subset_df)}
                     time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))
-                    var_xr = []
 
                     for k in list(time_sort_dict):
                         if not var_xr:
                             var_xr = cat_subset_df[k]
                         else:
                             var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+                else:
+                    # get xarray dataset for static variable
+                    cat_index = [k for k in cat_subset_df.keys()][0]
+                    if not var_xr:
+                        var_xr = cat_subset_df[cat_index]
+                    else:
+                        if var.Y is not None:
+                            var_xr = xr.concat([var_xr, cat_subset_df[cat_index]], var.Y.name)
+                        elif var.X is not None:
+                            var_xr = xr.concat([var_xr, cat_subset_df[cat_index]], var.X.name)
+                        else:
+                            var_xr = xr.concat([var_xr, cat_subset_df.values[cat_index]], var.N.name)
                 for att in drop_atts:
                     if var_xr.get(att, None) is not None:
                         var_xr = var_xr.drop_vars(att)

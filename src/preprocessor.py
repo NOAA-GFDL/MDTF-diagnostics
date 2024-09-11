@@ -1005,7 +1005,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # NOTE: The time_range of each file in cat_subset_df must be in a specific
                 # order in order for xr.concat() to work correctly. In the current implementation,
                 # we sort by the first value of the time coordinate of each file.
-                # This assumes the unit of said coordinate is homogeneous for each file, which could 
+                # This assumes the unit of said coordinate is homogeneous for each file, which could
                 # easily be problematic in the future.
                 # tl;dr hic sunt dracones
                 var_xr = []

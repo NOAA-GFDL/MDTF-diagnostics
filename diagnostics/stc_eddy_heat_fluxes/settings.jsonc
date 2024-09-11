@@ -30,7 +30,6 @@
   "data": {
     "realm" : "atmos"
   },
-
   "dimensions": {
     "lat": {
              "standard_name": "latitude",

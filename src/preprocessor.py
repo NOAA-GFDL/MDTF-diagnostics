@@ -922,8 +922,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
             for var in case_d.varlist.iter_vars():
                 realm_regex = var.realm + '*'
-                date_range = var.translation.T.range
-                freq = var.T.frequency
+                if var.is_static:
+                    date_range = None
+                    freq = "fx"
+                else:
+                    freq = var.T.frequency
+                    date_range = var.translation.T.range
                 if not isinstance(freq, str):
                     freq = freq.format_local()
                 # define initial query dictionary with variable settings requirements that do not change if
@@ -985,7 +989,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
-                cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, date_range)
+                if not var.is_static:
+                    cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, date_range)
                 if cat_subset.df.empty:
                     raise util.DataRequestError(
                         f"check_group_daterange returned empty data frame for {var.translation.name}"
@@ -1000,18 +1005,32 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # NOTE: The time_range of each file in cat_subset_df must be in a specific
                 # order in order for xr.concat() to work correctly. In the current implementation,
                 # we sort by the first value of the time coordinate of each file.
-                # This assumes the unit of said coordinate is homogeneous for each file, which could 
+                # This assumes the unit of said coordinate is homogeneous for each file, which could
                 # easily be problematic in the future.
                 # tl;dr hic sunt dracones
-                time_sort_dict = {f: cat_subset_df[f].time.values[0]
-                                  for f in list(cat_subset_df)}
-                time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))
                 var_xr = []
-                for k in list(time_sort_dict):
+                if not var.is_static:
+                    time_sort_dict = {f: cat_subset_df[f].time.values[0]
+                                      for f in list(cat_subset_df)}
+                    time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))
+
+                    for k in list(time_sort_dict):
+                        if not var_xr:
+                            var_xr = cat_subset_df[k]
+                        else:
+                            var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+                else:
+                    # get xarray dataset for static variable
+                    cat_index = [k for k in cat_subset_df.keys()][0]
                     if not var_xr:
-                        var_xr = cat_subset_df[k]
+                        var_xr = cat_subset_df[cat_index]
                     else:
-                        var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+                        if var.Y is not None:
+                            var_xr = xr.concat([var_xr, cat_subset_df[cat_index]], var.Y.name)
+                        elif var.X is not None:
+                            var_xr = xr.concat([var_xr, cat_subset_df[cat_index]], var.X.name)
+                        else:
+                            var_xr = xr.concat([var_xr, cat_subset_df.values[cat_index]], var.N.name)
                 for att in drop_atts:
                     if var_xr.get(att, None) is not None:
                         var_xr = var_xr.drop_vars(att)
@@ -1026,12 +1045,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 else:
                     cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr], compat='no_conflicts')
                 # check that start and end times include runtime startdate and enddate
-                try:
-                    self.check_time_bounds(cat_dict[case_name], var.translation, freq)
-                except LookupError:
-                    var.log.error(f'Data not found in catalog query for {var.translation.name}'
-                                  f' for requested date_range.')
-                    raise SystemExit("Terminating program")
+                if not var.is_static:
+                    try:
+                        self.check_time_bounds(cat_dict[case_name], var.translation, freq)
+                    except LookupError:
+                        var.log.error(f'Data not found in catalog query for {var.translation.name}'
+                                      f' for requested date_range.')
+                        raise SystemExit("Terminating program")
         return cat_dict
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):

@@ -265,7 +265,8 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         new_kw['convention'] = parent.pod_settings.get('convention', 'cmip')
         # check if realm is set for all variables
         if parent.pod_data.get('realm', None) is not None:
-            new_kw['realm'] = parent.pod_data.get('realm')
+            new_kw['realm'] = parent.pod_data.get('realm')  # populated if realm defined in pod settings data instead
+        #  of an attribute for each POD variable
         if 'dimensions' not in kwargs:
             raise ValueError(f"No dimensions specified for Varlist entry {name}.")
         # validate: check for duplicate coord names

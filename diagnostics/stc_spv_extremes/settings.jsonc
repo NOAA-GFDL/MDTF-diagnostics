@@ -6,7 +6,6 @@
   "settings" : {
     "driver" : "stc_spv_extremes.py",
     "long_name" : "Stratospheric Polar Vortex Extremes",
-    "realm" : "atmos",
     "description" : "Detecting extreme polar vortex events and their surface impacts",
     "pod_env_vars" : {
       // Lower latitude limit for polar cap avg calculations (defaults to 65)
@@ -18,6 +17,9 @@
     "runtime_requirements": {
       "python3": ["matplotlib", "numpy", "pandas", "xarray", "scipy"]
     }
+  },
+  "data": {
+    "realm" : "atmos",
   },
   "dimensions": {
     "lat": {"standard_name": "latitude"},

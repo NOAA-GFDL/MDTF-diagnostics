@@ -106,14 +106,14 @@ This is where you describe your diagnostic and list the programs it needs to run
 Data section
 ------------
 
-This section contains settings that apply to all the data your diagnostic uses. Most of them are optional.
+This section contains settings that apply to all of the data your diagnostic uses. If different variables have different
+settings, define them for each variable in the ``Varlist`` section.
 
 ``frequency``:
   A string specifying a time span, used e.g. to describe how frequently data is sampled.
   It consists of an optional integer (if omitted, the integer is assumed to be 1) and a units string which is one of
-  ``hr``, ``day``, ``mon``, ``yr`` or ``fx``. ``fx`` is used where appropriate to denote time-independent data.
-  Common synonyms for these units are also recognized (e.g. ``monthly``, ``month``, ``months``, ``mo`` for ``mon``,
-  ``static`` for ``fx``, etc.)
+  ``hr``, ``day``, ``mon``, or ``yr``
+  Common synonyms for these units are also recognized (e.g. ``monthly``, ``month``, ``months``, ``mo`` for ``mon``)
 
 ``realm``:
   One or more of the eight CMIP6 modeling realms (aerosol, atmos, atmosChem, land, landIce, ocean, ocnBgchem, seaIce)
@@ -244,6 +244,7 @@ Varlist entry example
   "u500": {
       "standard_name": "eastward_wind",
       "units": "m s-1",
+      "frequency": "day",
       "realm": "atmos",
       "dimensions" : ["time", "lat", "lon"],
       "scalar_coordinates": {"plev": 500},
@@ -262,6 +263,10 @@ variable. Most settings here are optional, but the main ones are:
 ``units``:
   The units the diagnostic expects the variable to be in (using the syntax of the
   `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`__).
+
+``frequency`:
+  Output frequency of data with a time dimension. May be specified for each variable with a time dimension, or in the data section if 
+  all variables have the same frequency.
 
 ``dimensions``:
   List of names of dimensions specified in the "dimensions" section, to specify the coordinate dependence of each

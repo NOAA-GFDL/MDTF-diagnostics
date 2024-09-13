@@ -1,0 +1,85 @@
+.. role:: code-rst(code)
+   :language: reStructuredText
+.. _ref-container:
+Container Reference
+===============================
+This section provides basic directions for downloading,
+installing, and running the example_multicase POD in the
+Model Diagnostics Task Force (MDTF) container.
+
+Getting the Container
+-------------------------------
+The container assumes that the MDTF GitHub repo is located on your local machine.
+If you have not already, please clone the repo to your local machine with:
+
+   .. code-block:: bash
+
+      git clone https://github.com/NOAA-GFDL/MDTF-diagnostics.git
+
+In the new MDTF-Diagnostics directory, you can build the container
+using the Dockerfile. If using podman (as required internally at the GFDL),
+please build with the command:
+
+   .. code-block:: bash
+
+      podman build . --format docker -t mdtf
+
+:code-rst:`--format docker` is essential to have your copy commands work and
+have the expected permissions in your container.
+The container can also just be pulled from the GitHub
+container registry with the command:
+
+   .. code-block:: bash
+
+      docker pull ghcr.io/aradhakrishnangfdl/mdtf-diagnostics:container
+
+or what the equivalent command in your container software happens to be.
+
+Launching the Container
+-------------------------------
+The container it self can be launched with Docker using:
+
+   .. code-block:: bash
+
+      docker run -it -v {DIAG_DIR}:/proj/MDTF-diagnostics/diagnostics/:z -v {WKDIR}:/proj/wkdir:z mdtf
+
+wherein:
+   * :code-rst:`{DIAG_DIR}` is the path to the diagnostics directory on your local machine.
+     This volume is not required, but heavily recommended.
+   * :code-rst:`{WKDIR}` is where you would like to store the output on your local machine.
+     This allows the output HTML to be reachable without having to open a port to the container.
+
+For the case of the example, we can launch with only the wkdir mounted volume.
+
+Generating Synthetic Data
+-------------------------------
+Now that we are in the container, we can get to making some data to run the POD with.
+The MDTF has a synthetic data generator for just this case. First, move into the proj dir:
+
+   .. code-block:: bash
+
+      cd /proj/MDTF-diagnostics/
+
+We can now use the following to generate our synthetic data:
+
+   .. code-block:: bash
+
+      micromamba activate _MDTF_synthetic_data
+      pip install mdtf-test-data
+      mkdir mdtf_test_data && cd mdtf_test_data
+      mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5
+      mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5
+
+Now would be a good time to generate a catalog for the synthetic data, but, in the sake
+of testing, we provide a catalog for the files needed to run the example POD.
+
+Running the POD
+-------------------------------
+The POD can now be ran using:
+
+   .. code-block:: bash
+
+      micromamba activate _MDTF_base
+      mdtf_framework.py -f /proj/MDTF-diagnostics/diagnostics/example_multicase/container_config_demo.jsonc
+
+The results can be found in :code-rst:`/proj/wkdir/`

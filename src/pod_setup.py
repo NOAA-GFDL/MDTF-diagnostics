@@ -302,12 +302,13 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             # Translate the varlistEntries from the POD convention to the data convention if desired and the pod
             # convention does not match the case convention
             data_convention = case_dict.convention.lower()
-            if runtime_config.translate_data and pod_convention != data_convention:
-                self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
-            else:
-                #data_convention = 'no_translation'
-                self.log.info(f'POD convention and data convention are both {pod_convention}. '
+            if not runtime_config.translate_data:
+                data_convention = 'no_translation'
+                self.log.info(f'Runtime option translate_data is set to .false.'
                               f'No data translation will be performed for case {case_name}.')
+            if pod_convention != data_convention:
+                self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
+
             # A 'noTranslationFieldlist' will be defined for the varlistEntry translation attribute
             for v in pod_input.varlist.keys():
                 for v_entry in cases[case_name].varlist.iter_vars():

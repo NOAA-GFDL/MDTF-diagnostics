@@ -82,4 +82,4 @@ The POD can now be ran using:
       micromamba activate _MDTF_base
       mdtf_framework.py -f /proj/MDTF-diagnostics/diagnostics/example_multicase/container_config_demo.jsonc
 
-The results can be found in :code-rst:`/proj/wkdir/`
+The results can be found in :code-rst:`/proj/wkdir/`.

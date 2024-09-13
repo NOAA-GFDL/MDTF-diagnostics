@@ -8,7 +8,6 @@
   "settings" : {
     "driver" : "stc_eddy_heat_fluxes.py",
     "long_name" : "Upward Coupling of Vertically Propagating Planetary Waves",
-    "realm" : "atmos",
     "convention" : "cmip",
     "description" : "Assess the influence of wave driving on the polar stratosphere",
     "pod_env_vars" : {
@@ -28,6 +27,10 @@
       "python3": ["matplotlib", "numpy", "pandas", "xarray", "xesmf"]
     }
   },
+  "data": {
+    "realm" : "atmos"
+  },
+
   "dimensions": {
     "lat": {
              "standard_name": "latitude",

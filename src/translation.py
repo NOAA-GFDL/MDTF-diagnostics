@@ -331,7 +331,7 @@ class Fieldlist:
                                             new_coord = v
                                             break
         else:
-            new_coord = [lut1.values()][0]
+            new_coord = [lut1[k] for k in lut1.keys()][0]  # should return ordered dict
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             coord_name = ""
             if hasattr(new_coord, 'name'):

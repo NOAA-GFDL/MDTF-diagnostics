@@ -37,7 +37,7 @@ or the equivalent command in your container software.
 
 Launching the Container
 -------------------------------
-The container it self can be launched with Docker using:
+The container can be launched with Docker using:
 
    .. code-block:: bash
 

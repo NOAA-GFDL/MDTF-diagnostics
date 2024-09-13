@@ -33,7 +33,7 @@ container registry with the command:
 
       docker pull ghcr.io/aradhakrishnangfdl/mdtf-diagnostics:container
 
-or the equivalent command in your container software happens to be.
+or the equivalent command in your container software.
 
 Launching the Container
 -------------------------------

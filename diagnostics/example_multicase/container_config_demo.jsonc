@@ -53,29 +53,29 @@
   // "$" and will be expended to their current values when the framework runs.
   // Full or relative path to model data ESM-intake catalog header file
 
-  "DATA_CATALOG": "/nbhome/Jacob.Mims/syn_data/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
+  "DATA_CATALOG": "/proj/MDTF-diagnostics/diagnostics/example_multicase/container_cat.json",
 
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Working directory.
-  "WORK_DIR": "../wkdir",
+  "WORK_DIR": "/proj/wkdir",
 
   // Directory to write output. The results of each run of the framework will be
   // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.
-  "OUTPUT_DIR": "../wkdir",
+  "OUTPUT_DIR": "/proj/wkdir",
 
   // Location of the Anaconda/miniconda or micromamba installation to use for managing
   // dependencies (path returned by running `conda info --base` or `micromamba info`.)
-  "conda_root": "/local/home/Jacob.Mims/miniconda3",
+  "conda_root": "/opt/conda",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in conda_root/envs
-  "conda_env_root": "/local/home/Jacob.Mims/miniconda3/envs",
+  "conda_env_root": "/opt/conda/envs",
 
   // Location of the micromamba executable. Required if using micromamba
-  "micromamba_exe": "",
+  "micromamba_exe": "/bin/micromaba",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)

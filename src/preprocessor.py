@@ -719,7 +719,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         <https://unidata.github.io/cftime/api.html#cftime.datetime>`__
         objects so that they can be compared with the model data's time axis.
         """
-        # TODO make time bound checks less restrictive for mon and longer data
+
         dt_range = var.T.range
         ds_decode = xr.decode_cf(ds, use_cftime=True)
         t_coord = ds_decode[var.T.name]

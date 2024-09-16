@@ -56,6 +56,8 @@ _log = logging.getLogger(__name__)
 
 # match-case statement to give date format
 # input can be int or str
+
+
 def date_fmt(date: str):
     date_digits = len(date)
     match date_digits:
@@ -72,6 +74,8 @@ def date_fmt(date: str):
     return fmt
 
 # convert a string to a cftime object
+
+
 def str_to_cftime(time_str: str, fmt=None, calendar=None):
     if fmt is None:
         fmt = date_fmt(time_str)
@@ -1175,8 +1179,8 @@ class DateFrequency(datetime.timedelta):
             s = 'wk'
         elif s in ['daily', 'day', 'days', 'dy', 'd', 'diurnal', 'diurnally']:
             s = 'day'
-        elif s in ['hourly', 'hour', 'hours', 'hr', 'h']:
-            s = 'hr'
+        elif s in ['hourly', 'hour', 'hours', 'hr', 'h', '1hr']:
+            s = '1hr'
         elif s in ['minutes', 'minute', 'min']:
             s = 'min'
         else:
@@ -1201,7 +1205,7 @@ class DateFrequency(datetime.timedelta):
             return {'weeks': q}
         elif s == 'day':
             return {'days': q}
-        elif s == 'hr':
+        elif s == '1hr':
             return {'hours': q}
         elif s == 'min':
             return {'minutes': q}

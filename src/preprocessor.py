@@ -922,21 +922,26 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
             for var in case_d.varlist.iter_vars():
                 realm_regex = var.realm + '*'
+                var_id = var.translation.name
+                standard_name = var.translation.standard_name
+                date_range = var.translation.T.range
+                if var.translation.convention == 'no_translation':
+                    date_range = var.T.range
+                    var_id = var.name
+                    standard_name = var.standard_name
                 if var.is_static:
                     date_range = None
                     freq = "fx"
                 else:
                     freq = var.T.frequency
-                    date_range = var.translation.T.range
                 if not isinstance(freq, str):
                     freq = freq.format_local()
-                var_id = var.translation.name
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
                 case_d.query['frequency'] = freq
                 case_d.query['path'] = [path_regex]
                 case_d.query['realm'] = realm_regex
-                case_d.query['standard_name'] = var.translation.standard_name
+                case_d.query['standard_name'] = standard_name
                 case_d.query['variable_id'] = var_id
 
                 # change realm key name if necessary
@@ -946,7 +951,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # search catalog for convention specific query object
                 var.log.info("Querying %s for variable %s for case %s.",
                              data_catalog,
-                             var.translation.name,
+                             var_id,
                              case_name)
                 cat_subset = cat.search(**case_d.query)
                 if cat_subset.df.empty:
@@ -985,7 +990,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                 f"configuration file.")
                     else:
                         raise util.DataRequestError(
-                            f"Unable to find match or alternate for {var.translation.name}"
+                            f"Unable to find match or alternate for {var_id}"
                             f" for case {case_name} in {data_catalog}")
 
                 # Get files in specified date range
@@ -994,7 +999,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, date_range)
                 if cat_subset.df.empty:
                     raise util.DataRequestError(
-                        f"check_group_daterange returned empty data frame for {var.translation.name}"
+                        f"check_group_daterange returned empty data frame for {var_id}"
                         f" case {case_name} in {data_catalog}, indicating issues with data continuity")
                 # v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
                 # convert subset catalog to an xarray dataset dict
@@ -1047,10 +1052,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr], compat='no_conflicts')
                 # check that start and end times include runtime startdate and enddate
                 if not var.is_static:
+                    var_obj = var.translation
+                    if var.translation.convention == 'no_translation':
+                        var_obj = var
                     try:
-                        self.check_time_bounds(cat_dict[case_name], var.translation, freq)
+                        self.check_time_bounds(cat_dict[case_name], var_obj, freq)
                     except LookupError:
-                        var.log.error(f'Data not found in catalog query for {var.translation.name}'
+                        var.log.error(f'Data not found in catalog query for {var_id}'
                                       f' for requested date_range.')
                         raise SystemExit("Terminating program")
         return cat_dict
@@ -1388,9 +1396,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         for case_name, case_dict in cases.items():
             ds_match = input_catalog_ds[case_name]
             for var in case_dict.varlist.iter_vars():
-                ds_var = ds_match.data_vars.get(var.translation.name, None)
+                var_name = var.translation.name
+                if var.translation.convention == 'no_translation':
+                    var_name = var.name
+                ds_var = ds_match.data_vars.get(var_name, None)
                 if ds_var is None:
-                    log.error(f'No var {var.translation.name}')
+                    log.error(f'No var {var_name}')
                 d = dict.fromkeys(columns, "")
                 for key, val in ds_match.attrs.items():
                     if 'intake_esm_attrs' in key:
@@ -1406,7 +1417,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 d.update({'end_time': util.cftime_to_str(input_catalog_ds[case_name].time.values[-1])})
                 cat_entries.append(d)
 
-        # create a Pandas dataframe romthe catalog entries
+        # create a Pandas dataframe from the catalog entries
 
         cat_df = pd.DataFrame(cat_entries)
         cat_df.head()

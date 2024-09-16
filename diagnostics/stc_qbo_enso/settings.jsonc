@@ -8,7 +8,6 @@
   "settings" : {
     "driver" : "stc_qbo_enso.py",
     "long_name" : "Metrics of QBO and extratropical circulation impact of QBO and ENSO",
-    "realm" : ["atmos", "ocean"],
     "description" : "Assess the representation of the QBO",
     "pod_env_vars" : {
       // Isobar (hPa) used to define the QBO in the tropical stratosphere
@@ -37,6 +36,7 @@
     "tos": {
       "standard_name" : "sea_surface_temperature",
       "units" : "degC",
+      "realm": "ocean",
       "frequency": "mon",
       "dimensions": ["time", "lat", "lon"],
       "requirement": "required"
@@ -45,6 +45,7 @@
       "standard_name" : "eastward_wind",
       "units" : "m s-1",
       "frequency": "mon",
+      "realm": "atmos",
       "dimensions": ["time", "lev", "lat", "lon"],
       "requirement": "required"
     },
@@ -52,12 +53,14 @@
       "standard_name" : "northward_wind",
       "units" : "m s-1",
       "frequency": "mon",
+      "realm": "atmos",
       "dimensions": ["time", "lev", "lat", "lon"],
       "requirement": "required"
     },
     "ta": {
       "standard_name" : "air_temperature",
       "units" : "K",
+      "realm": "atmos",
       "frequency": "mon",
       "dimensions": ["time", "lev", "lat", "lon"],
       "requirement": "required"
@@ -66,6 +69,7 @@
       "standard_name" : "air_pressure_at_mean_sea_level",
       "units" : "Pa",
       "frequency": "mon",
+       "realm": "atmos",
       "dimensions": ["time", "lat", "lon"],
       "requirement": "required"
     }

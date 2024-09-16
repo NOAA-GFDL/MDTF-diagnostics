@@ -33,13 +33,13 @@ Example
     "settings" : {
       "long_name": "My example diagnostic",
       "driver": "example_diagnostic.py",
-      "realm": "atmos",
       "runtime_requirements": {
         "python": ["numpy", "matplotlib", "netCDF4"]
       }
     },
     "data" : {
-      "frequency": "day"
+      "frequency": "day",
+      "realm": "atmos"
     },
     "dimensions": {
       "lat": {
@@ -84,12 +84,6 @@ This is where you describe your diagnostic and list the programs it needs to run
 ``driver``: 
   Filename of the driver script the framework should call to run your diagnostic.
 
-``realm``: 
-  One or more of the eight CMIP6 modeling realms (aerosol, atmos, atmosChem, land, landIce, ocean, ocnBgchem, seaIce)
-  describing what data your diagnostic uses. This is give the user an easy way to, eg, run only ocean diagnostics on
-  data from an ocean model. Realm can be specified in the `settings`` section, or specified separately for each variable
-  in the `varlist` section.
-
 ``runtime_requirements``: 
   This is a list of key-value pairs describing the programs your diagnostic needs to run, and any third-party libraries
   used by those programs.
@@ -112,14 +106,20 @@ This is where you describe your diagnostic and list the programs it needs to run
 Data section
 ------------
 
-This section contains settings that apply to all the data your diagnostic uses. Most of them are optional.
+This section contains settings that apply to all of the data your diagnostic uses. If different variables have different
+settings, define them for each variable in the ``Varlist`` section.
 
 ``frequency``:
   A string specifying a time span, used e.g. to describe how frequently data is sampled.
   It consists of an optional integer (if omitted, the integer is assumed to be 1) and a units string which is one of
-  ``hr``, ``day``, ``mon``, ``yr`` or ``fx``. ``fx`` is used where appropriate to denote time-independent data.
-  Common synonyms for these units are also recognized (e.g. ``monthly``, ``month``, ``months``, ``mo`` for ``mon``,
-  ``static`` for ``fx``, etc.)
+  ``hr``, ``day``, ``mon``, or ``yr``
+  Common synonyms for these units are also recognized (e.g. ``monthly``, ``month``, ``months``, ``mo`` for ``mon``)
+
+``realm``:
+  One or more of the eight CMIP6 modeling realms (aerosol, atmos, atmosChem, land, landIce, ocean, ocnBgchem, seaIce)
+  describing what data your diagnostic uses. This is give the user an easy way to, eg, run only ocean diagnostics on
+  data from an ocean model. Realm can be specified in the `data` section, or specified separately for each variable
+  in the `varlist` section.
 
 .. _sec_dimensions:
 
@@ -163,7 +163,7 @@ Time
   **Required**. Must be ``"time"``.
 
 ``units``:
-  String. Optional, defaults to "day". Units the diagnostic expects the dimension to be in. Currently the diagnostic
+  String, Optional, defaults to "day". Units the diagnostic expects the dimension to be in. Currently the diagnostic
   only supports time axes of the form "<units> since <reference data>", and the value given here is interpreted in this
   sense (e.g. settings this to "day" would accommodate a dimension of the form "[decimal] days since 1850-01-01".)
 
@@ -220,7 +220,8 @@ Other dimensions (wavelength, ...)
   employed in the CMIP6 MIP tables.
 
 ``units``:
-  Optional, a :ref:`CFunit<cfunit>`. Units the diagnostic expects the dimension to be in. **If not provided, the framework will assume CF convention** `canonical units <http://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`__.
+  **Required** :ref:`CFunit<cfunit>`, string. Units the diagnostic expects the dimension to be in. Use `1` if the
+  dimension has no units
 
 ``need_bounds``:
   Boolean, optional. Assumed ``false`` if not specified. If ``true``, the framework will ensure that bounds are supplied
@@ -243,6 +244,7 @@ Varlist entry example
   "u500": {
       "standard_name": "eastward_wind",
       "units": "m s-1",
+      "frequency": "day",
       "realm": "atmos",
       "dimensions" : ["time", "lat", "lon"],
       "scalar_coordinates": {"plev": 500},
@@ -262,18 +264,22 @@ variable. Most settings here are optional, but the main ones are:
   The units the diagnostic expects the variable to be in (using the syntax of the
   `UDUnits library <https://www.unidata.ucar.edu/software/udunits/udunits-2.0.4/udunits2lib.html#Syntax>`__).
 
+``frequency``:
+  Output frequency of data with a time dimension. May be specified for each variable with a time dimension, or in the data section if 
+  all variables have the same frequency.
+
 ``dimensions``:
   List of names of dimensions specified in the "dimensions" section, to specify the coordinate dependence of each
   variable.
 
-``realm`` (if not specified in the `settings` section):
+``realm`` (if not specified in the `data` section):
   string or list of CMIP modeling realm(s) that the variable belongs to
 
 ``modifier``:
- String, optional; Descriptor to distinguish variables with identical standard names and different dimensionalities or
- realms. See `modifiers.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/data/modifiers.jsonc>`__ for
- supported modfiers. Open an issue to request the addition of a new modifier to the modifiers.jsonc file, or submit a
- pull request that includes the new modifier in the modifiers.jsonc file and the necessary POD settings.jsonc file(s).
+  String, optional; Descriptor to distinguish variables with identical standard names and different dimensionalities or
+  realms. See `modifiers.jsonc <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/data/modifiers.jsonc>`__ for
+  supported modifiers. Open an issue to request the addition of a new modifier to the modifiers.jsonc file, or submit a
+  pull request that includes the new modifier in the modifiers.jsonc file and the necessary POD settings.jsonc file(s).
 
 ``requirement``:
   String. Optional; assumed ``"required"`` if not specified. One of three values:
@@ -309,6 +315,7 @@ variable. Most settings here are optional, but the main ones are:
 
   - *keys* are the key (name) of an entry in the :ref:`dimensions<sec_dimensions>` section.
   - *values* are a single number (integer or floating-point) corresponding to the value of the slice to extract.
+
   **Units** of this number are taken to be the ``units`` property of the dimension named as the key.
 
   In order to request multiple slices (e.g. wind velocity on multiple pressure levels, with each level saved to a

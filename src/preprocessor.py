@@ -338,7 +338,7 @@ class RenameVariablesFunction(PreprocessorFunctionBase):
             except:
                 pass
         [rename_d.pop(t) for t in translated]
-    
+
         return ds.rename(rename_d)
 
 
@@ -454,7 +454,8 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
                     new_tv_name = var_dict['name']
         new_tv = tv.remove_scalar(
             'Z',
-            name=new_tv_name
+            name=new_tv_name,
+            long_name=""
         )
 
         # add original 4D var defined in new_tv as an alternate TranslatedVarlistEntry
@@ -718,6 +719,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         <https://unidata.github.io/cftime/api.html#cftime.datetime>`__
         objects so that they can be compared with the model data's time axis.
         """
+        # TODO make time bound checks less restrictive for mon and longer data
         dt_range = var.T.range
         ds_decode = xr.decode_cf(ds, use_cftime=True)
         t_coord = ds_decode[var.T.name]
@@ -763,13 +765,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         # only check that up to monthly precision for monthly or longer data
         if freq in ['mon', 'year']:
-            if t_start.year > dt_start_upper.year or\
+            if t_start.year > dt_start_upper.year or \
                     t_start.year == dt_start_upper.year and t_start.month > dt_start_upper.month:
                 err_str = (f"Error: dataset start ({t_start}) is after "
                            f"requested date range start ({dt_start_upper}).")
                 var.log.error(err_str)
                 raise IndexError(err_str)
-            if t_end.year < dt_end_lower.year or\
+            if t_end.year < dt_end_lower.year or \
                     t_end.year == dt_end_lower.year and t_end.month < dt_end_lower.month:
                 err_str = (f"Error: dataset end ({t_end}) is before "
                            f"requested date range end ({dt_end_lower}).")
@@ -792,14 +794,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         check_group_daterange and convert them into str type.
         This function also handles missing leading zeros
         """
-        poss_digits = [6,8,10,12,14]
+        poss_digits = list(range(4, 15, 2))
         for i in range(len(time_vals)):
             if isinstance(time_vals[i], str):
-                time_vals[i] = time_vals[i].replace('-', '').replace(':', '')
+                time_vals[i] = time_vals[i].replace(' ', '').replace('-', '').replace(':', '')
                 while len(time_vals[i]) not in poss_digits:
                     time_vals[i] = '0' + time_vals[i]
         return time_vals
-            
+
     def check_group_daterange(self, group_df: pd.DataFrame, case_dr,
                               log=_log) -> pd.DataFrame:
         """Sort the files found for each experiment by date, verify that
@@ -859,7 +861,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             for i in sorted_df.index:
                 cat_row = sorted_df.iloc[i]
                 if pd.isnull(cat_row['start_time']):
-                    continue 
+                    continue
                 else:
                     st = dl.dt_to_str(cat_row['start_time'])
                     et = dl.dt_to_str(cat_row['end_time'])
@@ -867,7 +869,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     etin = dl.Date(et) in case_dr
                 if stin and etin:
                     return_df.append(cat_row.to_dict())
-            
+
             return pd.DataFrame.from_dict(return_df)
         except ValueError:
             log.error("Non-contiguous or malformed date range in files:", group_df["path"].values)
@@ -917,11 +919,15 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
             path_regex = re.compile(r'({})'.format(case_name))
             # path_regex = '*' + case_name + '*'
-            
+
             for var in case_d.varlist.iter_vars():
                 realm_regex = var.realm + '*'
-                date_range = var.translation.T.range
-                freq = var.T.frequency
+                if var.is_static:
+                    date_range = None
+                    freq = "fx"
+                else:
+                    freq = var.T.frequency
+                    date_range = var.translation.T.range
                 if not isinstance(freq, str):
                     freq = freq.format_local()
                 # define initial query dictionary with variable settings requirements that do not change if
@@ -930,11 +936,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 case_d.query['path'] = [path_regex]
                 case_d.query['realm'] = realm_regex
                 case_d.query['standard_name'] = var.translation.standard_name
-                
+                case_d.query['variable_id'] = var.translation.name
+
                 # change realm key name if necessary
                 if cat.df.get('modeling_realm', None) is not None:
                     case_d.query['modeling_realm'] = case_d.query.pop('realm')
-               
+
                 # search catalog for convention specific query object
                 var.log.info("Querying %s for variable %s for case %s.",
                              data_catalog,
@@ -948,8 +955,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         for a in var.alternates:
                             if hasattr(a, 'translation'):
                                 if a.translation is not None:
+                                    case_d.query.update({'variable_id': a.translation.name})
                                     case_d.query.update({'standard_name': a.translation.standard_name})
                             else:
+                                case_d.query.update({'variable_id': a.name})
                                 case_d.query.update({'standard_name': a.standard_name})
                             if any(var.translation.scalar_coords):
                                 found_z_entry = False
@@ -969,7 +978,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         if cat_subset.df.empty:
                             raise util.DataRequestError(
                                 f"No assets matching query requirements found for {var.translation.name} for"
-                                f" case {case_name} in {data_catalog}")
+                                f" case {case_name} in {data_catalog}. The input catalog may missing entries for the"
+                                f"following required fields: standard_name, variable_id, units, realm."
+                                f"Check that the target file paths contain the case_name(s) defined in the runtime"
+                                f"configuration file.")
                     else:
                         raise util.DataRequestError(
                             f"Unable to find match or alternate for {var.translation.name}"
@@ -977,7 +989,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
-                cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, date_range)
+                if not var.is_static:
+                    cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, date_range)
                 if cat_subset.df.empty:
                     raise util.DataRequestError(
                         f"check_group_daterange returned empty data frame for {var.translation.name}"
@@ -992,32 +1005,53 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # NOTE: The time_range of each file in cat_subset_df must be in a specific
                 # order in order for xr.concat() to work correctly. In the current implementation,
                 # we sort by the first value of the time coordinate of each file.
-                # This assumes the unit of said coordinate is homogeneous for each file, which could 
+                # This assumes the unit of said coordinate is homogeneous for each file, which could
                 # easily be problematic in the future.
                 # tl;dr hic sunt dracones
-                time_sort_dict = {f: cat_subset_df[f].time.values[0]
-                                   for f in list(cat_subset_df)}
-                time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))
                 var_xr = []
-                for k in list(time_sort_dict):
+                if not var.is_static:
+                    time_sort_dict = {f: cat_subset_df[f].time.values[0]
+                                      for f in list(cat_subset_df)}
+                    time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))
+
+                    for k in list(time_sort_dict):
+                        if not var_xr:
+                            var_xr = cat_subset_df[k]
+                        else:
+                            var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+                else:
+                    # get xarray dataset for static variable
+                    cat_index = [k for k in cat_subset_df.keys()][0]
                     if not var_xr:
-                        var_xr = cat_subset_df[k]
+                        var_xr = cat_subset_df[cat_index]
                     else:
-                        var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+                        if var.Y is not None:
+                            var_xr = xr.concat([var_xr, cat_subset_df[cat_index]], var.Y.name)
+                        elif var.X is not None:
+                            var_xr = xr.concat([var_xr, cat_subset_df[cat_index]], var.X.name)
+                        else:
+                            var_xr = xr.concat([var_xr, cat_subset_df.values[cat_index]], var.N.name)
                 for att in drop_atts:
                     if var_xr.get(att, None) is not None:
                         var_xr = var_xr.drop_vars(att)
+                # add standard_name to the variable xarray dataset if it is not defined
+                for vname in var_xr.variables:
+                    if (not isinstance(var_xr.variables[vname], xr.IndexVariable)
+                            and var_xr[vname].attrs.get('standard_name', None) is None):
+                        var_xr[vname].attrs['standard_name'] = case_d.query.get('standard_name')
+                        var_xr[vname].attrs['name'] = vname
                 if case_name not in cat_dict:
                     cat_dict[case_name] = var_xr
                 else:
                     cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr], compat='no_conflicts')
                 # check that start and end times include runtime startdate and enddate
-                try:
-                    self.check_time_bounds(cat_dict[case_name], var.translation, freq)
-                except LookupError:
-                    var.log.error(f'Data not found in catalog query for {var.translation.name}'
-                                  f' for requested date_range.')
-                    raise SystemExit("Terminating program")
+                if not var.is_static:
+                    try:
+                        self.check_time_bounds(cat_dict[case_name], var.translation, freq)
+                    except LookupError:
+                        var.log.error(f'Data not found in catalog query for {var.translation.name}'
+                                      f' for requested date_range.')
+                        raise SystemExit("Terminating program")
         return cat_dict
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
@@ -1045,7 +1079,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # Call function with the arguments
                 # user_scripts.example_pp_script.main(xarray_ds, v)
                 xarray_ds = user_module.main(xarray_ds, v.name)
-        
+
         return xarray_ds
 
     def setup(self, pod):
@@ -1095,7 +1129,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             (path, filename) = os.path.split(case_d.attrs['intake_esm_attrs:path'])
             rename_key(ds, new_dict, old_key, [c for c in case_names if c in filename][0])
         return new_dict
-    
+
     def rename_dataset_vars(self, ds: dict, case_list: dict) -> collections.OrderedDict:
         """Rename variables in dataset to conform with variable names requested by the POD"""
         case_names = [c for c in case_list.keys()]
@@ -1105,7 +1139,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 name_dict[var.translation.name] = var.name
             ds[c] = ds[c].rename_vars(name_dict=name_dict)
         return ds
-    
+
     def clean_nc_var_encoding(self, var, name, ds_obj):
         """Clean up the ``attrs`` and ``encoding`` dicts of *ds_obj*
         prior to writing to a netCDF file, as a workaround for the following

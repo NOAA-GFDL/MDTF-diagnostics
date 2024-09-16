@@ -8,7 +8,6 @@
   "settings" : {
     "driver" : "SM_ET_coupling.py",
     "long_name" : "Coupling between Soil Moisture and EvapoTranspiration",
-    "realm" : ["atmos", "land"],
     "convention" : "cmip",
     "description" : "Coupling of Soil Moisture with Evapotranspiration",
     "runtime_requirements": {

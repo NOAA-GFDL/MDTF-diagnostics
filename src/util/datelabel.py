@@ -993,7 +993,7 @@ class Date(DateRange):
 
     def __eq__(self, other):
         """Overload datetime.datetime's __eq__. Require precision to match as
-        well as date, but *only up to stated precision*, eg Date(2019,5) will ==
+        well as date, but *only up to stated precision*, e.g., Date(2019,5) will ==
         datetime.datetime(2019,05,18).
         """
         try:
@@ -1015,7 +1015,7 @@ class _StaticTimeDependenceBase(object):
 
     @property
     def is_static(self):
-        """Property indicating time-independent data (eg, 'fx' in CMIP6 DRS.)
+        """Property indicating time-independent data (e.g., 'fx' in CMIP6 DRS.)
         """
         return True
 

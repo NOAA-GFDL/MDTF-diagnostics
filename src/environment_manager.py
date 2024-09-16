@@ -403,7 +403,12 @@ class SubprocessRuntimePODWrapper:
     def run_commands(self):
         """Produces the shell command(s) to run the POD.
         """
-        return [f"/usr/bin/env {self.pod.program} {self.pod.driver}"]
+        output_name = self.pod.driver.rstrip(".ipynb") + "_ipynb"
+        if self.pod.program == 'jupyter':
+            return [f"/usr/bin/env {self.pod.program} nbconvert --to html" +\
+                    f" --output-dir='{self.pod.pod_env_vars['WORK_DIR']}' --output {output_name} --execute {self.pod.driver}"]
+        else:
+            return [f"/usr/bin/env {self.pod.program} {self.pod.driver}"]
 
     def run_msg(self):
         """Log message when execution starts.

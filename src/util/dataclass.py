@@ -297,7 +297,7 @@ class RegexPatternWithTemplate(RegexPattern):
 
 
 class ChainedRegexPattern(RegexPatternBase):
-    """Class which takes an 'or' of multiple :class:`RegexPattern`\s, to parse
+    """Class which takes an 'or' of multiple :class:`RegexPatterns to parse
     data that may be represented as a string in one of multiple formats.
 
     Matches are attempted on the supplied RegexPatterns in order, with the first
@@ -804,14 +804,14 @@ def filter_dataclass(d, dc, init=False):
 
             - If False: Include only the fields of *dc* as returned by
               :py:func:`dataclasses.fields`.
-            - If True: Include only the arguments to *dc*\'s constructor (i.e.,
-              include any init-only fields and exclude any of *dc*\'s fields
-              with *init*\=False.)
+            - If True: Include only the arguments to *dc*'s constructor (i.e.,
+              include any init-only fields and exclude any of *dc*'s fields
+              with *init*=False.)
             - If 'all': Include the union of the above two options.
 
     Returns:
         dict: The subset of key:value pairs from *d* such that the keys are
-        included in the set of *dc*\'s fields specified by the value of *init*.
+        included in the set of *dc*'s fields specified by the value of *init*.
     """
     assert dataclasses.is_dataclass(dc)
     if dataclasses.is_dataclass(d):
@@ -834,12 +834,12 @@ def filter_dataclass(d, dc, init=False):
 
 def coerce_to_dataclass(d, dc, **kwargs):
     """Given a dataclass *dc* (may be the class or an instance of it), and a dict,
-    dataclass or dataclass instance *d*, return an instance of *dc*\'s class with
+    dataclass or dataclass instance *d*, return an instance of *dc*'s class with
     field values initialized from those in *d*, along with any extra values
     passed in *kwargs*.
 
     Because this constructs a new dataclass instance, it copies field values
-    according to the *init*\=True logic in :func:`filter_dataclass`.
+    according to the *init*=True logic in :func:`filter_dataclass`.
 
     Args:
         d (dict, dataclass or dataclass instance): Object to take field values from.

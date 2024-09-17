@@ -154,7 +154,7 @@ class Fieldlist:
             if var_dict['standard_name'] == standard_name\
                     and var_dict['realm'] == realm\
                     and var_dict['modifier'] == modifier:
-                if not var_dict['long_name'] or var_dict['long_name'].lower() == long_name.lower():
+                # if not var_dict['long_name'] or var_dict['long_name'].lower() == long_name.lower():
                     return var_name
             else:
                 if var_dict['standard_name'] in precip_vars and standard_name in precip_vars:

@@ -130,7 +130,7 @@ jobs:
         # trivial check that install script worked
         ./mdtf_framework.py --help
         # run the test PODs
-        timeout 5m./mdtf -f ${{matrix.json-file-1a}}
+        timeout 5m ./mdtf -f ${{matrix.json-file-1a}}
         # Debug POD log(s)
         # cat ${POD_OUTPUT}/MDTF_NCAR.Synthetic_1975_1981/Wheeler_Kiladis/Wheeler_Kiladis.log
     - name: Run diagnostic tests set 1b

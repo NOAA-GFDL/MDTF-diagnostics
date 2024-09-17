@@ -26,23 +26,21 @@ jobs:
         experimental: [false]
         exclude:
           - os: ubuntu-latest
-            json-file: "tests/github_actions_test_macos_set1.jsonc"
+            json-file: "tests/github_actions_test_macos_1a.jsonc"
           - os: ubuntu-latest
-            json-file-set2: "tests/github_actions_test_macos_set2.jsonc"
+            json-file: "tests/github_actions_test_macos_1b.jsonc"
           - os: ubuntu-latest
-            json-file-set3: "tests/github_actions_test_macos_set3.jsonc"
-          - os: macos-12
-            json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
-          - os: macos-12
-            json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
-          - os: macos-12
-            json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
+            json-file-set2: "tests/github_actions_test_macos_2.jsonc"
+          - os: ubuntu-latest
+            json-file-set3: "tests/github_actions_test_macos_3.jsonc"
           - os: macos-13
-            json-file: "tests/github_actions_test_ubuntu_set1.jsonc"
+            json-file: "tests/github_actions_test_ubuntu_1a.jsonc"
           - os: macos-13
-            json-file-set2: "tests/github_actions_test_ubuntu_set2.jsonc"
+            json-file: "tests/github_actions_test_ubuntu_1b.jsonc"
           - os: macos-13
-            json-file-set3: "tests/github_actions_test_ubuntu_set3.jsonc"
+            json-file-set2: "tests/github_actions_test_ubuntu_2.jsonc"
+          - os: macos-13
+            json-file-set3: "tests/github_actions_test_ubuntu_3.jsonc"
       max-parallel: 3
     steps:
     - uses: actions/checkout@v3
@@ -62,19 +60,18 @@ jobs:
         condarc: |
           channels:
             - conda-forge
-
-    - name: Install XQuartz if macOS
-      if: ${{ matrix.os == 'macos-12' || matrix.os == 'macos-13'}}
-      run: |
-        echo "Installing XQuartz"
-        brew install --cask xquartz
-        echo "CONDA_ROOT=$(echo /Users/runner/micromamba)" >> $GITHUB_ENV
-        echo "MICROMAMBA_EXE=$(echo /Users/runner/micromamba-bin/micromamba)" >> $GITHUB_ENV
-        echo "CONDA_ENV_DIR=$(echo /Users/runner/micromamba/envs)" >> $GITHUB_ENV
     - name: Set environment variables
       run: |
         echo "POD_OUTPUT=$(echo $PWD/../wkdir)" >> $GITHUB_ENV
-    - name: Set conda vars
+    - name: Set conda environment variables for macOS
+      if: ${{ matrix.os == 'macos-13' }}
+      run: |
+    #    echo "Installing XQuartz"
+    #    brew install --cask xquartz
+        echo "CONDA_ROOT=$(echo /Users/runner/micromamba)" >> $GITHUB_ENV
+        echo "MICROMAMBA_EXE=$(echo /Users/runner/micromamba-bin/micromamba)" >> $GITHUB_ENV
+        echo "CONDA_ENV_DIR=$(echo /Users/runner/micromamba/envs)" >> $GITHUB_ENV
+    - name: Set conda environment variables for ubuntu
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
         echo "MICROMAMBA_EXE=$(echo /home/runner/micromamba-bin/micromamba)" >> $GITHUB_ENV
@@ -128,7 +125,7 @@ jobs:
         tar -xvf Wheeler_Kiladis_obs_data.tar
         # clean up tarballs
         rm -f *.tar
-    - name: Run diagnostic tests set 1
+    - name: Run diagnostic tests set 1a
       run: |
         echo "POD_OUTPUT is: "
         echo "${POD_OUTPUT}"
@@ -139,6 +136,9 @@ jobs:
         ./mdtf -f ${{matrix.json-file}}
         # Debug POD log(s)
         # cat ${POD_OUTPUT}/MDTF_NCAR.Synthetic_1975_1981/Wheeler_Kiladis/Wheeler_Kiladis.log
+    - name: Run diagnostic tests set 1b
+      run: |
+        ./mdtf -f ${{matrix.json-file}}
     - name: Get observational data for set 2
       run: |
         echo "${PWD}"

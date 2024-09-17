@@ -4,8 +4,8 @@
 {
   "pod_list": [
      //"convective_transition_diag",
-     "Wheeler_Kiladis",
-     "precip_diurnal_cycle"
+     "Wheeler_Kiladis"
+    // "precip_diurnal_cycle"
     ],
   "case_list" : {
       "NCAR.Synthetic": {

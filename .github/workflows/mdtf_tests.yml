@@ -130,7 +130,7 @@ jobs:
         # trivial check that install script worked
         ./mdtf_framework.py --help
         # run the test PODs
-        ./mdtf -f ${{matrix.json-file-1a}}
+        timeout 5m./mdtf -f ${{matrix.json-file-1a}}
         # Debug POD log(s)
         # cat ${POD_OUTPUT}/MDTF_NCAR.Synthetic_1975_1981/Wheeler_Kiladis/Wheeler_Kiladis.log
     - name: Run diagnostic tests set 1b
@@ -159,7 +159,7 @@ jobs:
       run: |
         micromamba activate _MDTF_base
         # run the test PODs
-        ./mdtf -f ${{matrix.json-file-2}}
+        timeout 5m ./mdtf -f ${{matrix.json-file-2}}
         # Uncomment the following line for debugging
         #cat ../wkdir/MDTF_GFDL.Synthetic_1_10/MJO_prop_amp/MJO_prop_amp.log
     - name: Get observational data for set 3
@@ -198,7 +198,7 @@ jobs:
       run: |
         micromamba activate _MDTF_base
         # run the test PODs
-        ./mdtf -f ${{matrix.json-file-3}}
+        timeout 5m ./mdtf -f ${{matrix.json-file-3}}
     #- name: Run unit tests
     #  run: |
     #   micromamba activate _MDTF_base

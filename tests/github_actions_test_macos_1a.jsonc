@@ -4,7 +4,7 @@
 {
   "pod_list": [
      //"convective_transition_diag",
-     "Wheeler_Kiladis",
+     //"Wheeler_Kiladis",
      "precip_diurnal_cycle"
     ],
   "case_list": {

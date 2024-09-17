@@ -60,14 +60,9 @@ jobs:
         condarc: |
           channels:
             - conda-forge
-    - name: Set environment variables
-      run: |
-        echo "POD_OUTPUT=$(echo $PWD/../wkdir)" >> $GITHUB_ENV
     - name: Set conda environment variables for macOS
       if: ${{ matrix.os == 'macos-13' }}
       run: |
-    #    echo "Installing XQuartz"
-    #    brew install --cask xquartz
         echo "CONDA_ROOT=$(echo /Users/runner/micromamba)" >> $GITHUB_ENV
         echo "MICROMAMBA_EXE=$(echo /Users/runner/micromamba-bin/micromamba)" >> $GITHUB_ENV
         echo "CONDA_ENV_DIR=$(echo /Users/runner/micromamba/envs)" >> $GITHUB_ENV
@@ -81,7 +76,7 @@ jobs:
       run: |
         echo "Installing Conda Environments"
         echo "conda root ${CONDA_ROOT}"
-        echo "env dir  ${CONDA_ENV_DIR}"
+        echo "env dir ${CONDA_ENV_DIR}"
         # MDTF-specific setup: install all conda envs
         ./src/conda/micromamba_env_setup.sh --all --micromamba_root ${CONDA_ROOT} --micromamba_exe ${MICROMAMBA_EXE} --env_dir ${CONDA_ENV_DIR}
         echo "Creating the _MDTF_synthetic_data environment"
@@ -127,6 +122,7 @@ jobs:
         rm -f *.tar
     - name: Run diagnostic tests set 1a
       run: |
+        echo "POD_OUTPUT=$(echo $PWD/../wkdir)" >> $GITHUB_ENV
         echo "POD_OUTPUT is: "
         echo "${POD_OUTPUT}"
         micromamba activate _MDTF_base

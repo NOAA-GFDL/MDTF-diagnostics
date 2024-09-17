@@ -20,12 +20,12 @@ Warning:
 Properties and use of :class:`DateRange`, :class:`Date` and :class:`DateFrequency`
 objects are best illustrated by examples:
 
-.. code-block:: python
+. code-block:: python
 
     >>> Date('20001215').month
     12
 
-    >>> Date('200012') == datetime(2000, 12, 1)
+    >>> Date('200012') == datetime.datetime(2000, 12, 1)
     True
 
     >>> DateRange('2010-2020') in DateRange('2008-2019')
@@ -1180,7 +1180,7 @@ class DateFrequency(datetime.timedelta):
         elif s in ['daily', 'day', 'days', 'dy', 'd', 'diurnal', 'diurnally']:
             s = 'day'
         elif s in ['hourly', 'hour', 'hours', 'hr', 'h', '1hr']:
-            s = '1hr'
+            s = 'hr'
         elif s in ['minutes', 'minute', 'min']:
             s = 'min'
         else:
@@ -1205,7 +1205,7 @@ class DateFrequency(datetime.timedelta):
             return {'weeks': q}
         elif s == 'day':
             return {'days': q}
-        elif s == '1hr':
+        elif s == 'hr':
             return {'hours': q}
         elif s == 'min':
             return {'minutes': q}

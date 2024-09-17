@@ -934,6 +934,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     freq = "fx"
                 else:
                     freq = var.T.frequency
+                    if freq == 'hr':
+                        freq = '1hr'
                 if not isinstance(freq, str):
                     freq = freq.format_local()
                 # define initial query dictionary with variable settings requirements that do not change if

@@ -19,28 +19,29 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-13]
-        json-file: ["tests/github_actions_test_ubuntu_set1.jsonc","tests/github_actions_test_macos_set1.jsonc"]
-        json-file-set2: ["tests/github_actions_test_ubuntu_set2.jsonc", "tests/github_actions_test_macos_set2.jsonc"]
-        json-file-set3: ["tests/github_actions_test_ubuntu_set3.jsonc", "tests/github_actions_test_macos_set3.jsonc"]
+        json-file-1a: ["tests/github_actions_test_ubuntu_1a.jsonc","tests/github_actions_test_macos_1a.jsonc"]
+        json-file-1b: ["tests/github_actions_test_ubuntu_1b.jsonc","tests/github_actions_test_macos_1b.jsonc"]
+        json-file-2: ["tests/github_actions_test_ubuntu_2.jsonc", "tests/github_actions_test_macos_2.jsonc"]
+        json-file-3: ["tests/github_actions_test_ubuntu_3.jsonc", "tests/github_actions_test_macos_3.jsonc"]
         # if experimental is true, other jobs to run if one fails
         experimental: [false]
         exclude:
           - os: ubuntu-latest
-            json-file: "tests/github_actions_test_macos_1a.jsonc"
+            json-file-1a: "tests/github_actions_test_macos_1a.jsonc"
           - os: ubuntu-latest
-            json-file: "tests/github_actions_test_macos_1b.jsonc"
+            json-file-1b: "tests/github_actions_test_macos_1b.jsonc"
           - os: ubuntu-latest
-            json-file-set2: "tests/github_actions_test_macos_2.jsonc"
+            json-file-2: "tests/github_actions_test_macos_2.jsonc"
           - os: ubuntu-latest
-            json-file-set3: "tests/github_actions_test_macos_3.jsonc"
+            json-file-3: "tests/github_actions_test_macos_3.jsonc"
           - os: macos-13
-            json-file: "tests/github_actions_test_ubuntu_1a.jsonc"
+            json-file-1a: "tests/github_actions_test_ubuntu_1a.jsonc"
           - os: macos-13
-            json-file: "tests/github_actions_test_ubuntu_1b.jsonc"
+            json-file-1b: "tests/github_actions_test_ubuntu_1b.jsonc"
           - os: macos-13
-            json-file-set2: "tests/github_actions_test_ubuntu_2.jsonc"
+            json-file-2: "tests/github_actions_test_ubuntu_2.jsonc"
           - os: macos-13
-            json-file-set3: "tests/github_actions_test_ubuntu_3.jsonc"
+            json-file-3: "tests/github_actions_test_ubuntu_3.jsonc"
       max-parallel: 3
     steps:
     - uses: actions/checkout@v3
@@ -123,18 +124,18 @@ jobs:
     - name: Run diagnostic tests set 1a
       run: |
         echo "POD_OUTPUT=$(echo $PWD/../wkdir)" >> $GITHUB_ENV
-        echo "POD_OUTPUT is: "
+        echo "POD_OUTPUT is "
         echo "${POD_OUTPUT}"
         micromamba activate _MDTF_base
         # trivial check that install script worked
         ./mdtf_framework.py --help
         # run the test PODs
-        ./mdtf -f ${{matrix.json-file}}
+        ./mdtf -f ${{matrix.json-file-1a}}
         # Debug POD log(s)
         # cat ${POD_OUTPUT}/MDTF_NCAR.Synthetic_1975_1981/Wheeler_Kiladis/Wheeler_Kiladis.log
     - name: Run diagnostic tests set 1b
       run: |
-        ./mdtf -f ${{matrix.json-file}}
+        ./mdtf -f ${{matrix.json-file-1b}}
     - name: Get observational data for set 2
       run: |
         echo "${PWD}"
@@ -158,7 +159,7 @@ jobs:
       run: |
         micromamba activate _MDTF_base
         # run the test PODs
-        ./mdtf -f ${{matrix.json-file-set2}}
+        ./mdtf -f ${{matrix.json-file-2}}
         # Uncomment the following line for debugging
         #cat ../wkdir/MDTF_GFDL.Synthetic_1_10/MJO_prop_amp/MJO_prop_amp.log
     - name: Get observational data for set 3
@@ -197,7 +198,7 @@ jobs:
       run: |
         micromamba activate _MDTF_base
         # run the test PODs
-        ./mdtf -f ${{matrix.json-file-set3}}
+        ./mdtf -f ${{matrix.json-file-3}}
     #- name: Run unit tests
     #  run: |
     #   micromamba activate _MDTF_base

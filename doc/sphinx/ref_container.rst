@@ -16,32 +16,22 @@ If you have not already, please clone the repo to your local machine with:
 
       git clone https://github.com/NOAA-GFDL/MDTF-diagnostics.git
 
-In the new MDTF-Diagnostics directory, you can build the container
-using the Dockerfile. If using podman (as required internally at the GFDL),
-please build with the command:
-
-   .. code-block:: bash
-
-      podman build . --format docker -t mdtf
-
-:code-rst:`--format docker` is essential to have your copy commands work and
-have the expected permissions in your container.
-The container can also just be pulled from the GitHub
+The container can then be pulled from the GitHub
 container registry with the command:
 
    .. code-block:: bash
 
-      docker pull ghcr.io/aradhakrishnangfdl/mdtf-diagnostics:container
+      docker pull ghcr.io/noaa-gfdl/mdtf-diagnostics:container
 
-or the equivalent command in your container software.
+or with the equivalent command in your container software.
 
 Launching the Container
 -------------------------------
-The container can be launched with Docker using:
+The container itself can be launched with Docker using:
 
    .. code-block:: bash
 
-      docker run -it -v {DIAG_DIR}:/proj/MDTF-diagnostics/diagnostics/:z -v {WKDIR}:/proj/wkdir:z mdtf
+      docker run -it -v {DIAG_DIR}:/proj/MDTF-diagnostics/diagnostics/ -v {WKDIR}:/proj/wkdir mdtf
 
 wherein:
    * :code-rst:`{DIAG_DIR}` is the path to the diagnostics directory on your local machine.
@@ -82,4 +72,17 @@ The POD can now be ran using:
       micromamba activate _MDTF_base
       mdtf_framework.py -f /proj/MDTF-diagnostics/diagnostics/example_multicase/container_config_demo.jsonc
 
-The results can be found in :code-rst:`/proj/wkdir/`.
+The results can be found in :code-rst:`/proj/wkdir/`
+
+Building the Container
+--------------------------------
+If you would like, you can build the container using the Dockerfile found in the GitHub repo.
+If using podman (as required internally at the GFDL),
+please build with the command:
+
+   .. code-block:: bash
+
+      podman build . --format docker -t mdtf
+
+:code-rst:`--format docker` is essential to have your copy commands work and
+have the expected permissions in your container.

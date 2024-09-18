@@ -51,7 +51,7 @@ The MDTF has a synthetic data generator for just this case. First, move into the
 
       cd /proj/MDTF-diagnostics/
 
-We can now use the following to generate our synthetic data:
+We generate our synthetic data by running:
 
    .. code-block:: bash
 

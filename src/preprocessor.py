@@ -241,8 +241,9 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
         """
         tv = var.translation  # abbreviate
         # convert dependent variable
+        # Note: may need to define src_unit = ds[tv.name].units or similar
         ds = units.convert_dataarray(
-            ds, tv.name, src_unit=None, dest_unit=var.units, log=var.log
+            ds, tv.name, src_unit=None, dest_unit=var.units.units, log=var.log
         )
         tv.units = var.units
 
@@ -251,8 +252,13 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
             if c.axis == 'T':
                 continue  # TODO: separate function to handle calendar conversion
             dest_c = var.axes[c.axis]
+            src_units = None
+            for v in ds.variables:
+                if hasattr(ds[v], 'standard_name'):
+                    if ds[v].standard_name == dest_c.standard_name:
+                        src_units = ds[v].units
             ds = units.convert_dataarray(
-                ds, c.standard_name, src_unit=None, dest_unit=dest_c.units, log=var.log
+                ds, c.standard_name, src_unit=src_units, dest_unit=dest_c.units, log=var.log
             )
             if c.has_bounds and c.bounds_var.name in ds:
                 ds = units.convert_dataarray(

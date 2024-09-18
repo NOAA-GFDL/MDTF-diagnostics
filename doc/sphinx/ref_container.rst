@@ -24,6 +24,7 @@ container registry with the command:
       docker pull ghcr.io/noaa-gfdl/mdtf-diagnostics:container
 
 or with the equivalent command in your container software.
+If you do not have a container software, Docker can be downloaded from `here <https://docs.docker.com/desktop/>`_.
 
 Launching the Container
 -------------------------------

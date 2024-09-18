@@ -27,7 +27,7 @@ clone the repo in order to keep up with changes in the main branch, and to simpl
 POD's code. Instructions for how to do this are given in :doc:`dev_git_intro`.
 
 It is also possible to download the MDTF container to bypass worrying about dependencies.
-the details can be found in :doc:`ref_container`. The container is a new addition.
+Further details can be found in :doc:`ref_container`. The container is a new addition.
 So, Beta Testers are very much welcome!
 
 Installing dependencies with Conda

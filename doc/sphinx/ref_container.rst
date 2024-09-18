@@ -9,7 +9,7 @@ Model Diagnostics Task Force (MDTF) container.
 
 Getting the Container
 -------------------------------
-The container assumes that the MDTF GitHub repo is located on your local machine.
+The container assumes that the MDTF-diangnostics GitHub repo is located on your local machine.
 If you have not already, please clone the repo to your local machine with:
 
    .. code-block:: bash

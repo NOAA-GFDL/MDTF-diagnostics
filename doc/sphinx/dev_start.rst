@@ -26,7 +26,7 @@ Developers may download the code from GitHub as described in :ref:`ref-download`
 clone the repo in order to keep up with changes in the main branch, and to simplify submitting pull requests with your
 POD's code. Instructions for how to do this are given in :doc:`dev_git_intro`.
 
-It is also possible to download the MDTF container to bypass worrying about dependencies.
+Users may also install and run the MDTF-diagnostics Docker container that includes pre-built base, python3_base, and synthetic_data Conda environments (NCL is not compatible with Docker).
 Further details can be found in :doc:`ref_container`. The container is a new addition.
 Beta Testers are very much welcome!
 

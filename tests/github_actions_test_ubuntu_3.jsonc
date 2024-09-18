@@ -5,10 +5,10 @@
   "pod_list": [
     //"temp_extremes_distshape",// needs matplotlib 3.7.3, but not avail on conda yet
     //"tropical_pacific_sea_level",
-    "ocn_surf_flux_diag",
-    "mixed_layer_depth",
-    "seaice_suite",
-    "stc_eddy_heat_fluxes"
+    "ocn_surf_flux_diag"
+    //"mixed_layer_depth",
+    //"seaice_suite",
+    //"stc_eddy_heat_fluxes"
      // "albedofb"
   ],
   "case_list" : {

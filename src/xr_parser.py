@@ -1271,6 +1271,9 @@ class DefaultDatasetParser:
         """Wrapper for :meth:`~DefaultDatasetParser.normalize_attr`, specialized
         to the case of getting a variable's standard_name.
         """
+        delete_chars = re.compile(r"[\".,'*]")
+        ds_var.attrs = {delete_chars.sub('', k): v for k, v in ds_var.attrs.items()}
+        ds_var.encoding = {delete_chars.sub('', k): v for k, v in ds_var.encoding.items()}
         for attr in attr_names:
             if attr not in ds_var.attrs:
                 if attr in ds_var.encoding:

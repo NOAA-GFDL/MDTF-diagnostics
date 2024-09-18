@@ -40,12 +40,12 @@ wherein:
    * :code-rst:`{WKDIR}` is where you would like to store the output on your local machine.
      This allows the output HTML to be reachable without having to open a port to the container.
 
-For the case of the example, we can launch with only the wkdir mounted volume.
+These happen to be the only required volumes. Further volumes may need to be mounted including volumes such as data storage.
 
 Generating Synthetic Data
 -------------------------------
 Now that we are in the container, we can get to making some data to run the POD with.
-The MDTF has a synthetic data generator for just this case. First, move into the proj dir:
+The MDTF has a synthetic data generator for just this case. First, move into the MDTF-diagnostics dir:
 
    .. code-block:: bash
 

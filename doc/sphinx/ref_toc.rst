@@ -11,3 +11,4 @@ Framework reference
    ref_envvars
    ref_output
    ref_submodules
+   ref_container

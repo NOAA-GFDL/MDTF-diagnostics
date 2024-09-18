@@ -757,8 +757,10 @@ class DefaultDatasetParser:
                 - False: Change *ds* to match *our_var*.
         """
         # unpack tuples
+
         our_var, our_attr_name, our_attr = our_attr_tuple
         ds_var, ds_attr_name, ds_attr = ds_attr_tuple
+
         if comparison_func is None:
             comparison_func = (lambda x, y: x == y)
 
@@ -821,8 +823,8 @@ class DefaultDatasetParser:
                 else:
                     comparison_func = self.approximate_attribute_value(our_attr, ds_attr)
                 if not comparison_func:
-                    raise util.MetadataEvent((f"Unexpected {our_attr_name} for variable "
-                                              f"'{our_var.name}': '{ds_attr}' (expected '{our_attr}')."))
+                    self.log.warning(f"Unexpected {our_attr_name} for variable "
+                                     f"'{our_var.name}': '{ds_attr}' (expected '{our_attr}').")
                 else:
                     self.log.warning(f"Could not find exact match for {our_var.name} attribute {our_attr_name}"
                                      f"{our_attr}; data processing will proceed with approximate match {ds_attr}")
@@ -946,6 +948,7 @@ class DefaultDatasetParser:
         # will raise UnitsUndefinedError or log warning if unit attribute missing
         self.check_metadata(ds_var, 'units')
         # Check equivalence of units: if units are not equivalent, raise MetadataEvent
+
         self.reconcile_attr(our_var, ds_var, 'units',
                             comparison_func=units.units_equivalent,
                             fill_ours=True, fill_ds=True
@@ -1268,6 +1271,9 @@ class DefaultDatasetParser:
         """Wrapper for :meth:`~DefaultDatasetParser.normalize_attr`, specialized
         to the case of getting a variable's standard_name.
         """
+        delete_chars = re.compile(r"[\".,'*]")
+        ds_var.attrs = {delete_chars.sub('', k): v for k, v in ds_var.attrs.items()}
+        ds_var.encoding = {delete_chars.sub('', k): v for k, v in ds_var.encoding.items()}
         for attr in attr_names:
             if attr not in ds_var.attrs:
                 if attr in ds_var.encoding:

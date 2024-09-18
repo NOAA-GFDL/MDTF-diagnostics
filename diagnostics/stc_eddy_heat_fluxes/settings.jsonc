@@ -27,9 +27,6 @@
       "python3": ["matplotlib", "numpy", "pandas", "xarray", "xesmf"]
     }
   },
-  "data": {
-    "realm" : "atmos"
-  },
 
   "dimensions": {
     "lat": {

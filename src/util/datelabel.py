@@ -20,12 +20,12 @@ Warning:
 Properties and use of :class:`DateRange`, :class:`Date` and :class:`DateFrequency`
 objects are best illustrated by examples:
 
-.. code-block:: python
+. code-block:: python
 
     >>> Date('20001215').month
     12
 
-    >>> Date('200012') == datetime(2000, 12, 1)
+    >>> Date('200012') == datetime.datetime(2000, 12, 1)
     True
 
     >>> DateRange('2010-2020') in DateRange('2008-2019')
@@ -56,6 +56,8 @@ _log = logging.getLogger(__name__)
 
 # match-case statement to give date format
 # input can be int or str
+
+
 def date_fmt(date: str):
     date_digits = len(date)
     match date_digits:
@@ -72,6 +74,8 @@ def date_fmt(date: str):
     return fmt
 
 # convert a string to a cftime object
+
+
 def str_to_cftime(time_str: str, fmt=None, calendar=None):
     if fmt is None:
         fmt = date_fmt(time_str)
@@ -1175,7 +1179,7 @@ class DateFrequency(datetime.timedelta):
             s = 'wk'
         elif s in ['daily', 'day', 'days', 'dy', 'd', 'diurnal', 'diurnally']:
             s = 'day'
-        elif s in ['hourly', 'hour', 'hours', 'hr', 'h']:
+        elif s in ['hourly', 'hour', 'hours', 'hr', 'h', '1hr']:
             s = 'hr'
         elif s in ['minutes', 'minute', 'min']:
             s = 'min'

@@ -214,7 +214,7 @@
       "units": "kg m-2 s-1",
       "ndim": 3
     },
-    "prw": {
+    "wvp": {
       "standard_name": "atmosphere_mass_content_of_water_vapor",
       "long_name": "Water Vapor Path",
       "realm": "atmos",

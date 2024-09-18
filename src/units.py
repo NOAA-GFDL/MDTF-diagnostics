@@ -106,7 +106,7 @@ def units_equal(*args, rtol=None):
     """Returns True if and only if all unit-ful quantities in *args* are strictly
     equal (:func:`units_equivalent` is True and :func:`conversion_factor` = 1).
 
-    .. note::
+    . note::
        rtol, atol tolerances on floating-point equality are not currently
        implemented in cfunits, so we use :func:`relative_tol`.
 
@@ -186,7 +186,8 @@ def convert_dataarray(ds, da_name: str, src_unit=None, dest_unit=None, log=_log)
         Dataset *ds*, with *da_name* modified in-place.
     """
     da = ds.get(da_name, None)
-    var_name = da_name
+
+
     search_attrs = ['standard_name', 'long_name']
     if da is None:
         # search attributes for standard_name or long_name that matches input name
@@ -200,7 +201,7 @@ def convert_dataarray(ds, da_name: str, src_unit=None, dest_unit=None, log=_log)
                 if isinstance(att, str):
                     if att == da_name:
                         da = dset
-                        var_name = var
+                        da_name = var
                         break
     # try to find approximate matches to input name in standard_name and long_name attributes
     if da is None:
@@ -216,7 +217,7 @@ def convert_dataarray(ds, da_name: str, src_unit=None, dest_unit=None, log=_log)
                         log.info("Found approximate match for %s in dataset %s attribute %s",
                                  da_name, attr, att_value)
                         da = dset
-                        var_name = var
+                        da_name = var
                         break
     if da is None:
         raise ValueError(f"convert_dataarray: '{da_name}' not found in dataset.")
@@ -236,8 +237,14 @@ def convert_dataarray(ds, da_name: str, src_unit=None, dest_unit=None, log=_log)
             std_name = f"{da.attrs['standard_name']}"
         elif 'long_name' in da.attrs:
             std_name = f"{da.attrs['long_name']}"
-            ds[var_name].attrs['standard_name'] = std_name.replace(' ', '_')
+            ds[da_name].attrs['standard_name'] = std_name.replace(' ', '_')
 
+    # udunits does not recognize mb == hPa, so hardcode correction
+    if src_unit == 'mb':
+        ds[da_name].attrs['units'] = 'hPa'
+        src_unit = 'hPa'
+    if dest_unit == 'mb':
+        dest_unit = 'hPa'
     if units_equal(src_unit, dest_unit):
         log.debug(("Source, dest units of '%s'%s identical (%s); no conversion "
                    "done."), da.name, std_name, dest_unit)

@@ -44,7 +44,7 @@ These happen to be the only required volumes. Further volumes may need to be mou
 
 Generating Synthetic Data
 -------------------------------
-Now that we are in the container, we can get to making some data to run the POD with.
+Now that we are in the container, we can create some data to run the POD with.
 The MDTF has a synthetic data generator for just this case. First, move into the MDTF-diagnostics dir:
 
    .. code-block:: bash

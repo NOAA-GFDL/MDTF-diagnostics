@@ -829,6 +829,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 end_times.append(tr[1])
             group_df['start_time'] = pd.Series(start_times)
             group_df['end_time'] = pd.Series(end_times)
+        else:
+            raise AttributeError('Data catalog is missing the attribute `time_range`;'
+                                 ' this is a required entry.')
         try:
             start_time_vals = self.normalize_group_time_vals(group_df['start_time'].values.astype(str))
             end_time_vals = self.normalize_group_time_vals(group_df['end_time'].values.astype(str))

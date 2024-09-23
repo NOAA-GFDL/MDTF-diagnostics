@@ -824,9 +824,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             start_times = []
             end_times = []
             for tr in group_df['time_range'].values:
-                tr = tr.split('-')
-                start_times.append(tr[0])
-                end_times.append(tr[1])
+                tr = tr.replace(' ', '').replace('-', '').replace(':', '')
+                start_times.append(tr[0:len(tr)//2])
+                end_times.append(tr[len(tr)//2:])
             group_df['start_time'] = pd.Series(start_times)
             group_df['end_time'] = pd.Series(end_times)
         else:

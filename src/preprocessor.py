@@ -820,19 +820,18 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """
         date_col = "date_range"
         delimiters = ",.!?/&-:;@_'\\s+"
-        if not hasattr(group_df, 'start_time') or not hasattr(group_df, 'end_time'):
-            if hasattr(group_df, 'time_range'):
-                start_times = []
-                end_times = []
-                for tr in group_df['time_range'].values:
-                    tr = tr.split('-')
-                    start_times.append(tr[0])
-                    end_times.append(tr[1])
-                group_df['start_time'] = pd.Series(start_times)
-                group_df['end_time'] = pd.Series(end_times)
-            else:
-                raise AttributeError('Data catalog is missing attributes `start_time` and/or'
-                                     ' `end_time` and can not infer from `time_range`')
+        if hasattr(group_df, 'time_range'):
+            start_times = []
+            end_times = []
+            for tr in group_df['time_range'].values:
+                tr = tr.replace(' ', '').replace('-', '').replace(':', '')
+                start_times.append(tr[0:len(tr)//2])
+                end_times.append(tr[len(tr)//2:])
+            group_df['start_time'] = pd.Series(start_times)
+            group_df['end_time'] = pd.Series(end_times)
+        else:
+            raise AttributeError('Data catalog is missing the attribute `time_range`;'
+                                 ' this is a required entry.')
         try:
             start_time_vals = self.normalize_group_time_vals(group_df['start_time'].values.astype(str))
             end_time_vals = self.normalize_group_time_vals(group_df['end_time'].values.astype(str))

@@ -722,7 +722,13 @@ class DefaultDatasetParser:
         """Determine if the dataset attribute value is an approximate match to the expected attribute value"""
         exclude = ["with", "on", "in", "of", "at", "near"]
         our_name_split = [i for i in our_name.split('_') if i not in exclude]
-        ds_name_split = [i for i in ds_name.split('_') if i not in exclude]
+        if isinstance(ds_name, str):
+            ds_name_split = [i for i in ds_name.split('_') if i not in exclude]
+        elif isinstance(ds_name, list):
+            for n in ds_name:
+                print(n)
+            ds_name_split = [i for i in ds_name[0].split('_')]
+
         isect = set(our_name_split).intersection(ds_name_split)
 
         if len(isect) >= len(our_name_split) - 2 and len(isect) > 0:

@@ -927,7 +927,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
             for var in case_d.varlist.iter_vars():
                 realm_regex = var.realm + '*'
-                print(var.translation.T)
                 var_id = var.translation.name
                 standard_name = var.translation.standard_name
                 if var.translation.convention == 'no_translation':

@@ -929,7 +929,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 realm_regex = var.realm + '*'
                 var_id = var.translation.name
                 standard_name = var.translation.standard_name
-                date_range = var.translation.T.range
                 if var.translation.convention == 'no_translation':
                     date_range = var.T.range
                     var_id = var.name
@@ -938,6 +937,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     date_range = None
                     freq = "fx"
                 else:
+                    date_range = var.translation.T.range
                     freq = var.T.frequency
                     if freq == 'hr':
                         freq = '1hr'

@@ -874,6 +874,8 @@ class DefaultDatasetParser:
         """Compare attribute of a :class:`~src.data_model.DMVariable` (*our_var*)
         with what's set in the xarray.Dataset (*ds_var*).
         """
+        if ds_var is None:
+            return
         if ds_attr_name is None:
             ds_attr_name = our_attr_name
         our_attr = getattr(our_var, our_attr_name)
@@ -1069,28 +1071,38 @@ class DefaultDatasetParser:
         expectations based on the model's convention (*our_var*), for the bounds
         on the dimension coordinate *our_coord*.
         """
-        try:
+        if len(ds.cf.bounds) > 0:
             bounds = ds.cf.get_bounds(ds_coord_name)
-        except KeyError:
-            # cf accessor could't find associated bounds variable
+        elif hasattr(ds[ds_coord_name], 'attrs'):
+            if ds[ds_coord_name].attrs.get('bounds', None):
+                bounds = ds[ds_coord_name].bounds
+                if isinstance(bounds, str):
+                    our_coord.bounds_var = None
+                    return
+            else:
+                our_coord.bounds_var = None
+                return
+        else:
+            # cf accessor couldn't find associated bounds variable
+            bounds = None
             our_coord.bounds_var = None
             return
-
         # Inherit standard_name from our_coord if not present (regardless of
         # skip_std_name), overwriting metadata on bounds if different
-        self.reconcile_attr(our_coord, bounds, 'standard_name',
-                            fill_ours=False, fill_ds=True, overwrite_ours=False
-                            )
-        # Inherit units from our_coord if not present (regardless of skip_units),
-        # overwriting metadata on bounds if different
-        self.reconcile_attr(our_coord, bounds, 'units',
-                            comparison_func=units.units_equal,
-                            fill_ours=False, fill_ds=True, overwrite_ours=False
-                            )
-        if our_coord.name != bounds.name:
-            self.log.debug("Updating %s for '%s' to value '%s' from dataset.",
-                           'bounds', our_coord.name, bounds.name)
-        our_coord.bounds_var = bounds
+        if bounds is not None:
+            self.reconcile_attr(our_coord, bounds, 'standard_name',
+                                fill_ours=False, fill_ds=True, overwrite_ours=False
+                                )
+            # Inherit units from our_coord if not present (regardless of skip_units),
+            # overwriting metadata on bounds if different
+            self.reconcile_attr(our_coord, bounds, 'units',
+                                comparison_func=units.units_equal,
+                                fill_ours=False, fill_ds=True, overwrite_ours=False
+                                )
+            if our_coord.name != bounds.name:
+                self.log.debug("Updating %s for '%s' to value '%s' from dataset.",
+                               'bounds', our_coord.name, bounds.name)
+                our_coord.bounds_var = bounds
 
     def reconcile_dimension_coords(self, our_var, ds):
         """Reconcile name, standard_name and units attributes between the

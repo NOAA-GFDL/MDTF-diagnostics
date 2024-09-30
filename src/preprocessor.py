@@ -922,17 +922,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         for case_name, case_d in case_dict.items():
             # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
             path_regex = [re.compile(r'({})'.format(case_name))]
-            # path_regex = '*' + case_name + '*'
 
             for var in case_d.varlist.iter_vars():
                 realm_regex = var.realm + '*'
-                var_id = var.translation.name
-                standard_name = [re.compile(r'({})'.format(var.translation.standard_name))]
-                date_range = var.translation.T.range
-                if var.translation.convention == 'no_translation':
-                    date_range = var.T.range
-                    var_id = var.name
-                    standard_name = var.standard_name
+                date_range = var.T.range
+                var_id = var.name
+                standard_name = var.standard_name
+                if var.translation.convention is not None:
+                    var_id = var.translation.name
+                    standard_name = var.translation.standard_name
+                    date_range = var.translation.T.range
                 if var.is_static:
                     date_range = None
                     freq = "fx"

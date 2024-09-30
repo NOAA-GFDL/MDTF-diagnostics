@@ -12,7 +12,6 @@ from src import util, varlist_util, translation, xr_parser, units
 from src.util import datelabel as dl
 import cftime
 import intake
-import math
 import numpy as np
 import xarray as xr
 import collections
@@ -922,31 +921,31 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         for case_name, case_d in case_dict.items():
             # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
-            path_regex = re.compile(r'({})'.format(case_name))
-            # path_regex = '*' + case_name + '*'
+            path_regex = [re.compile(r'({})'.format(case_name))]
 
             for var in case_d.varlist.iter_vars():
                 realm_regex = var.realm + '*'
-                var_id = var.translation.name
-                standard_name = var.translation.standard_name
-                if var.translation.convention == 'no_translation':
-                    date_range = var.T.range
-                    var_id = var.name
-                    standard_name = var.standard_name
+                date_range = var.T.range
+                var_id = var.name
+                standard_name = var.standard_name
+                if var.translation.convention is not None:
+                    var_id = var.translation.name
+                    standard_name = var.translation.standard_name
+                    date_range = var.translation.T.range
                 if var.is_static:
                     date_range = None
                     freq = "fx"
                 else:
-                    date_range = var.translation.T.range
                     freq = var.T.frequency
-                    if freq == 'hr':
-                        freq = '1hr'
                 if not isinstance(freq, str):
                     freq = freq.format_local()
+                if freq == 'hr':
+                    freq = '1hr'
+
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
                 case_d.query['frequency'] = freq
-                case_d.query['path'] = [path_regex]
+                case_d.query['path'] = path_regex
                 case_d.query['realm'] = realm_regex
                 case_d.query['standard_name'] = standard_name
                 case_d.query['variable_id'] = var_id

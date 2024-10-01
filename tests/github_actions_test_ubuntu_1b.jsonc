@@ -4,8 +4,8 @@
 {
   "pod_list": [
      "MJO_suite",
-     "MJO_teleconnection"
-     //"EOF_500hPa"
+     "MJO_teleconnection",
+     "convective_transition_diag"
     ],
   "case_list" : {
       "NCAR.Synthetic": {

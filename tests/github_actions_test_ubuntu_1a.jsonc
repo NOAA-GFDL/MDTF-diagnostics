@@ -3,7 +3,7 @@
 // as blank lines (JSONC quasi-standard.)
 {
   "pod_list": [
-     "convective_transition_diag",
+     //"convective_transition_diag",
      "Wheeler_Kiladis"
     // "precip_diurnal_cycle"
     ],

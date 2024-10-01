@@ -14,7 +14,7 @@ import os
 import glob
 
 with open(os.environ["WORK_DIR"] + "/" + "convecTransBasic_calc_parameters.json") as outfile:
-    bin_data=json.load(outfile)
+    bin_data = json.load(outfile)
     
 # ======================================================================
 # START USER SPECIFIED SECTION

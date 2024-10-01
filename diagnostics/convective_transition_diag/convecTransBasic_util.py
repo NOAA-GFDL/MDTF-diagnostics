@@ -530,7 +530,7 @@ def convecTransBasic_calc_model(REGION, *argsv):
     print("   Total binning complete!")
 
     # Save Binning Results
-    bin_output_netcdf = Dataset(BIN_OUTPUT_DIR + " /" + BIN_OUTPUT_FILENAME + ".nc", "w", format="NETCDF4")
+    bin_output_netcdf = Dataset(BIN_OUTPUT_DIR + "/" + BIN_OUTPUT_FILENAME + ".nc", "w", format="NETCDF4")
 
     bin_output_netcdf.description = "Convective Onset Statistics for " + MODEL
     bin_output_netcdf.source = "Convective Onset Statistics Diagnostic Package \

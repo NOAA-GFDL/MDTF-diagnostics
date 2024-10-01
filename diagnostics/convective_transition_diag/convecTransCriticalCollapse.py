@@ -12,7 +12,7 @@
 #    C. Martinez (UCLA), C.-C. (Jack) Chen (NCAR)
 #   PI: J. David Neelin (UCLA)
 #
-#   Computes Citical CWV for Convective Transition Statistics following 
+#   Computes Critical CWV for Convective Transition Statistics following
 #    Kuo et al. (2017a, 2017b), similar to Sahany et al. (2012)
 #  
 #   Generates plots of:

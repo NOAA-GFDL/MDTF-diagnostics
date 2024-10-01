@@ -174,7 +174,7 @@ data["args3"] = [bin_obs_list,
                  bin_data["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"]
                  ]
 
-data["args4"] = [ bin_data["CWV_BIN_WIDTH"], PDF_THRESHOLD, CWV_RANGE_THRESHOLD,
+data["args4"] = [bin_data["CWV_BIN_WIDTH"], PDF_THRESHOLD, CWV_RANGE_THRESHOLD,
                   CP_THRESHOLD, bin_data["MODEL"], bin_data["REGION_STR"], bin_data["NUMBER_OF_REGIONS"],
                   bin_data["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"], bin_data["PRECIP_THRESHOLD"],
                   FIG_OUTPUT_DIR, FIG_OUTPUT_FILENAME,

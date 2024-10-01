@@ -646,7 +646,7 @@ def convecTransCriticalCollapse_plot(argsv1, argsv2, argsv3, argsv4, argsv5, arg
         # ======================================================================    
 
     # Use OBS to set colormap (but if they don't exist or users don't want to...)
-    if p1_obs.siz == 0 or not USE_SAME_COLOR_MAP:
+    if p1_obs.size == 0 or not USE_SAME_COLOR_MAP:
         TEMP_MIN_obs = TEMP_MIN
         TEMP_MAX_obs = TEMP_MAX
 

@@ -42,11 +42,11 @@ BIN_OUTPUT_FILENAME = os.environ["CASENAME"] + ".convecTransBasic"
 
 if BULK_TROPOSPHERIC_TEMPERATURE_MEASURE == 1:
     TEMP_VAR = TAVE_VAR
-    TEMP_VAR_STR = "$\widehat{T}$"
+    TEMP_VAR_STR = "${T}$"
     TEMP_UNITS = "(K)"
 elif BULK_TROPOSPHERIC_TEMPERATURE_MEASURE == 2:
     TEMP_VAR = QSAT_INT_VAR
-    TEMP_VAR_STR = "$\widehat{q_{sat}}$"
+    TEMP_VAR_STR = "${q_{sat}}$"
     TEMP_UNITS = "(mm)"
 BIN_OUTPUT_FILENAME += "_" + TEMP_VAR
 

@@ -3,7 +3,7 @@
 // as blank lines (JSONC quasi-standard.)
 {
   "pod_list": [
-     "MJO_suite",
+     //"MJO_suite",
      //"MJO_teleconnection",
      "convective_transition_diag"
     ],

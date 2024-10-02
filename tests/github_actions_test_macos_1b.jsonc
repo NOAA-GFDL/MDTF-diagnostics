@@ -4,15 +4,15 @@
 {
   "pod_list": [
      "MJO_suite",
-     "MJO_teleconnection"
-     //"EOF_500hPa"
+     "MJO_teleconnection",
+     "convective_transition_diag"
     ],
-  "case_list": {
-      "NCAR.Synthetic": {
+  "case_list" : {
+      "NCAR.Synthetic" : {
       "convention" : "CESM",
       "startdate" : "19750101",
       "enddate" : "19811231"
-      }
+    }
   },
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.

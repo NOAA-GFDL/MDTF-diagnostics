@@ -4,7 +4,7 @@
 {
   "pod_list": [
      "MJO_suite",
-     "MJO_teleconnection",
+     //"MJO_teleconnection",
      "convective_transition_diag"
     ],
   "case_list" : {

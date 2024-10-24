@@ -931,6 +931,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 if var.translation.convention is not None:
                     var_id = var.translation.name
                     standard_name = var.translation.standard_name
+                    if any(var.translation.alternate_standard_names):
+                        standard_name = [var.translation.standard_name] + var.translation.alternate_standard_names
                     date_range = var.translation.T.range
                 if var.is_static:
                     date_range = None

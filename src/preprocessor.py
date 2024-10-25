@@ -931,6 +931,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 if var.translation.convention is not None:
                     var_id = var.translation.name
                     standard_name = var.translation.standard_name
+                    if any(var.translation.alternate_standard_names):
+                        standard_name = [var.translation.standard_name] + var.translation.alternate_standard_names
                     date_range = var.translation.T.range
                 if var.is_static:
                     date_range = None
@@ -1050,7 +1052,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 for vname in var_xr.variables:
                     if (not isinstance(var_xr.variables[vname], xr.IndexVariable)
                             and var_xr[vname].attrs.get('standard_name', None) is None):
-                        var_xr[vname].attrs['standard_name'] = case_d.query.get('standard_name')
+                        case_query_standard_name = case_d.query.get('standard_name')
+                        if isinstance(case_query_standard_name, list):
+                            new_standard_name = [name for name in case_query_standard_name if name == var.translation.standard_name][0]
+                        else:
+                            new_standard_name = case_query_standard_name
+                        var_xr[vname].attrs['standard_name'] = new_standard_name
                         var_xr[vname].attrs['name'] = vname
                 if case_name not in cat_dict:
                     cat_dict[case_name] = var_xr

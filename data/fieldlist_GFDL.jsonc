@@ -186,28 +186,19 @@
       "scalar_coord_templates": {"plev": "omega{value}"},
       "ndim": 4
     },
-    // NOTE: pr is the same for sea Ice and ocean realms, and there are duplicate entries;
-    // TODO: refine realm entry parsing in framework to allow lists and strings
-    "pr": {
-      "standard_name": "rainfall_flux",
-      "long_name": "Surface Rainfall Rate into the Sea Ice Portion of the Grid Cell",
-      "realm": "seaIce",
-      "units": "kg m-2 s-1",
-      "ndim": 3
-    },
-    "pr": {
-      "standard_name": "rainfall_flux",
-      "long_name": "Surface Rainfall Rate into the Sea Ice Portion of the Grid Cell",
-      "realm": "ocean",
-      "units": "kg m-2 s-1",
-      "ndim": 3
-    },
-   
     "precip": {
       "standard_name": "precipitation_flux",
       "long_name":"",
       "realm": "atmos",
       "units": "kg m-2 s-1",
+      "alternate_standard_names": ["rainfall_flux"],
+      "ndim": 3
+    },
+    "rainfall_flux": {
+      "standard_name": "rainfall_flux",
+      "realm": "seaIce",
+      "units": "kg m-2 s-1",
+      "alternate_standard_names": ["precipitation_flux"],
       "ndim": 3
     },
     "prec_conv": {

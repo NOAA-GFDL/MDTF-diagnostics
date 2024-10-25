@@ -179,9 +179,16 @@
     },
     "pr": {
       "standard_name": "precipitation_flux",
-      "realm": ["atmos", "ocean", "seaIce"],
+      "realm": "atmos",
       "units": "kg m-2 s-1",
       "alternate_standard_names": ["rainfall_flux"],
+      "ndim": 3
+    },
+    "rainfall_flux": {
+      "standard_name": "rainfall_flux",
+      "realm": "seaIce",
+      "units": "kg m-2 s-1",
+      "alternate_standard_names": ["precipitation_flux"],
       "ndim": 3
     },
     "prc": {

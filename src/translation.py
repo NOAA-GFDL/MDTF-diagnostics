@@ -146,22 +146,19 @@ class Fieldlist:
 
     def to_CF_standard_name(self, standard_name: str,
                             long_name: str,
-                            realm: str | list,
+                            realm: str,
                             modifier: str) -> str:
 
         precip_vars = ['precipitation_rate', 'precipitation_flux']
         # search the lookup table for the variable with the specified standard_name
         # realm, modifier, and long_name attributes
-        if isinstance(realm, str):
-            realm_list = [realm]
-        else:
-            realm_list = realm
+
         for var_name, var_dict in self.lut.items():
             if var_dict['standard_name'] == standard_name \
-                    and var_dict['realm'] in realm_list\
+                    and var_dict['realm'] == realm\
                     and var_dict['modifier'] == modifier:
                 # if not var_dict['long_name'] or var_dict['long_name'].lower() == long_name.lower():
-                    return var_name
+                return var_name
             else:
                 if var_dict['standard_name'] in precip_vars and standard_name in precip_vars:
                     return var_name
@@ -170,7 +167,7 @@ class Fieldlist:
 
     def from_CF(self,
                 standard_name: str,
-                realm: str | list,
+                realm: str,
                 modifier: str = "",
                 long_name: str = "",
                 num_dims: int = 0,
@@ -182,7 +179,7 @@ class Fieldlist:
         TODO: expand with more ways to uniquely identify variable (eg cell methods).
         Args:
             standard_name: variable or name of the variable
-            realm: str or list of strings, variable realm (atmos, ocean, land, ice, etc...)
+            realm: str variable realm (atmos, ocean, land, seaIce, etc...)
             modifier:optional string to distinguish a 3-D field from a 4-D field with
             the same var_or_name value
             long_name: str (optional) long name attribute of the variable
@@ -195,12 +192,8 @@ class Fieldlist:
         # self.lut corresponds to POD convention
         assert standard_name in self.lut_standard_names, f'{standard_name} not found in Fieldlist lut_standard_names'
         lut1 = dict()
-        if isinstance(realm, str):
-           realm_list = [realm]
-        else:
-            realm_list = realm
         for k, v in self.lut.items():
-            if v['standard_name'] == standard_name and v['realm'] in realm_list and v['modifier'] == modifier:
+            if v['standard_name'] == standard_name and v['realm'] == realm and v['modifier'] == modifier:
                 if 'long_name' not in v or v['long_name'].strip('') == '':
                     v['long_name'] = long_name
                 v['name'] = k
@@ -216,7 +209,7 @@ class Fieldlist:
 
     def from_CF_name(self,
                      var_or_name: str,
-                     realm: str | list ,
+                     realm: str,
                      long_name: str = "",
                      modifier: str = "") -> dict:
         """Like :meth:`from_CF`, but only return the variable's name in this
@@ -224,7 +217,7 @@ class Fieldlist:
 
         Args:
             var_or_name: str, variable or name of the variable
-            realm str or list of strings : model realm of variable
+            realm: str model realm of variable
             long_name: str (optional): long_name attribute of the variable
             modifier:optional string to distinguish a 3-D field from a 4-D field with
             the same var_or_name value
@@ -263,7 +256,7 @@ class Fieldlist:
         # construct convention's name for this variable on a level
         name_template = self.scalar_coord_templates[var_id][key]
         if new_coord.units.strip('').lower() == 'pa':
-            val = int(new_coord.value/100)
+            val = int(new_coord.value / 100)
         else:
             val = int(new_coord.value)
 
@@ -314,8 +307,8 @@ class Fieldlist:
                             lut_val = v.get('value')
                             if isinstance(coord.value, int) and isinstance(lut_val, str):
                                 v_int = int(float(lut_val))
-                                if v_int > coord.value and v_int/coord.value == 100 \
-                                        or v_int < coord.value and coord.value/v_int == 100 or \
+                                if v_int > coord.value and v_int / coord.value == 100 \
+                                        or v_int < coord.value and coord.value / v_int == 100 or \
                                         v_int == coord.value:
                                     new_coord = v
                                     break
@@ -386,7 +379,6 @@ class Fieldlist:
             from_convention_tl = VariableTranslator().get_convention(from_convention)
             # Fieldlist entry for POD variable
             long_name = self.get_variable_long_name(var, has_scalar_coords)
-
             fl_entries = from_convention_tl.from_CF(var.standard_name,
                                                     var.realm,
                                                     var.modifier,
@@ -465,7 +457,7 @@ class NoTranslationFieldlist(metaclass=util.Singleton):
 
     def from_CF(self,
                 var_or_name: str,
-                realm: str | list,
+                realm: str,
                 modifier=None,
                 long_name=None,
                 num_dims: int = 0,
@@ -609,11 +601,11 @@ class VariableTranslator(metaclass=util.Singleton):
                                       name_only,
                                       modifier=modifier)
 
-    def from_CF_name(self, conv_name: str, standard_name: str, realm: str | list, modifier=None):
+    def from_CF_name(self, conv_name: str, standard_name: str, realm: str, modifier=None):
         return self._fieldlist_method(conv_name, 'from_CF_name',
                                       standard_name, realm, modifier=modifier)
 
-    def to_CF_standard_name(self, conv_name: str, standard_name: str, realm: str | list, modifier=None):
+    def to_CF_standard_name(self, conv_name: str, standard_name: str, realm: str, modifier=None):
         return self._fieldlist_method(conv_name, 'to_CF_standard_name',
                                       standard_name, realm, modifier=modifier)
 

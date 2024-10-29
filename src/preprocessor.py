@@ -808,8 +808,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         return time_vals
 
     def check_multichunk(self, group_df: pd.DataFrame, case_dr, log) -> pd.DataFrame:
-        """Sort the files found by date, grabs the files thats chunk-freq is the
-        largest number where endyr-startyr modulo chunk-freq is zero and throw out
+        """Sort the files found by date, grabs the files whose 'chunk_freq' is the
+        largest number where endyr-startyr modulo 'chunk_freq' is zero and throws out
         the rest.
 
         Args:

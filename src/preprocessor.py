@@ -827,9 +827,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 for c in chunks:
                     if case_dt % c == 0:
                         grabbed_chunk = str(c) + 'yr'
+                        log.warning("Multiple values for 'chunk_freq' found in dataset "
+                                    "only grabbing data with 'chunk_freq': %s", grabbed_chunk)
                         break
-                log.warning("Multiple values for 'chunk_freq' found in dataset "
-                         "only grabbing data with 'chunk_freq': %s", grabbed_chunk)
                 group_df = group_df[group_df['chunk_freq'] == grabbed_chunk]
         return pd.DataFrame.from_dict(group_df).reset_index()
 

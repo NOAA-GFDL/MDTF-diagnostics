@@ -807,6 +807,32 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     time_vals[i] = '0' + time_vals[i]
         return time_vals
 
+    def check_multichunk(self, group_df: pd.DataFrame, case_dr, log) -> pd.DataFrame:
+        """Sort the files found by date, grabs the files whose 'chunk_freq' is the
+        largest number where endyr-startyr modulo 'chunk_freq' is zero and throws out
+        the rest.
+
+        Args:
+            group_df (Pandas Dataframe):
+            case_dr: requested daterange of POD
+            log: log file
+        """
+        if 'chunk_freq' in group_df:
+            chunks = group_df['chunk_freq'].unique()
+            if len(chunks) > 1:
+                for i, c in enumerate(chunks):
+                    chunks[i] = int(c.replace('yr', ''))
+                chunks = -np.sort(-chunks)
+                case_dt = int(str(case_dr.end)[:4]) - int(str(case_dr.start)[:4]) + 1
+                for c in chunks:
+                    if case_dt % c == 0:
+                        grabbed_chunk = str(c) + 'yr'
+                        log.warning("Multiple values for 'chunk_freq' found in dataset "
+                                    "only grabbing data with 'chunk_freq': %s", grabbed_chunk)
+                        break
+                group_df = group_df[group_df['chunk_freq'] == grabbed_chunk]
+        return pd.DataFrame.from_dict(group_df).reset_index()
+
     def check_group_daterange(self, group_df: pd.DataFrame, case_dr,
                               log=_log) -> pd.DataFrame:
         """Sort the files found for each experiment by date, verify that
@@ -815,6 +841,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         Args:
             group_df (Pandas Dataframe):
+            case_dr: requested daterange of POD
             log: log file
         """
         date_col = "date_range"
@@ -951,7 +978,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 case_d.query['realm'] = realm_regex
                 case_d.query['standard_name'] = standard_name
                 case_d.query['variable_id'] = var_id
-
+                
                 # change realm key name if necessary
                 if cat.df.get('modeling_realm', None) is not None:
                     case_d.query['modeling_realm'] = case_d.query.pop('realm')
@@ -1004,6 +1031,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
                 if not var.is_static:
+                    cat_subset.esmcat._df = self.check_multichunk(cat_subset.df, date_range, var.log)
                     cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, date_range)
                 if cat_subset.df.empty:
                     raise util.DataRequestError(

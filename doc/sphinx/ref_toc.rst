@@ -12,3 +12,4 @@ Framework reference
    ref_output
    ref_submodules
    ref_container
+   ref_vartable

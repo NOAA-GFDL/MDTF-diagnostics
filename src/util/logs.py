@@ -654,14 +654,13 @@ def mdtf_log_header(title):
     return str_ + (80 * '-') + '\n\n'
 
 
-def signal_logger(caller_name: str, signum=None, frame=None, log=_log):
+def signal_logger(caller_name: str, signum=None, log=_log):
     """Lookup signal name from number and write to log. Taken from
     `<https://stackoverflow.com/a/2549950>`__.
 
     Args:
         caller_name (str): Calling function name, only used in log message.
         signum: Signal number of the signal we received.
-        frame: parameters of received signal
         log: log file
     """
     if signum:

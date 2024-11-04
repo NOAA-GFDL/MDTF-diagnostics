@@ -263,8 +263,9 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
         new_kw = global_settings_d.copy()
         new_kw['coords'] = []
         new_kw['convention'] = parent.pod_settings.get('convention', 'cmip')
-        if parent.pod_settings.get('realm', None) is not None:
-            new_kw['realm'] = parent.pod_settings.get('realm')  # populated if realm defined in pod_env_vars instead
+        # check if realm is set for all variables
+        if parent.pod_data.get('realm', None) is not None:
+            new_kw['realm'] = parent.pod_data.get('realm')  # populated if realm defined in pod settings data instead
         #  of an attribute for each POD variable
         if 'dimensions' not in kwargs:
             raise ValueError(f"No dimensions specified for Varlist entry {name}.")
@@ -559,7 +560,8 @@ class Varlist(data_model.DMDataSet):
         v.dest_path = self.variable_dest_path(model_paths, case_name, v)
         try:
             trans_v = translate.translate(v, from_convention)
-            assert trans_v is not None, f'translation for varlistentry {v.name} failed'
+            if trans_v is None:
+                v.log.error(f'translation for varlistEntry {v.name} failed')
             v.translation = trans_v
             # copy preferred gfdl post-processing component during translation
             if hasattr(trans_v, "component"):

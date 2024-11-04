@@ -68,7 +68,12 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
         # globally enforce non-interactive matplotlib backend
         # see https://matplotlib.org/3.2.2/tutorials/introductory/usage.html#what-is-a-backend
         self.pod_env_vars['MPLBACKEND'] = "Agg"
-        self._interpreters = {'.py': 'python', '.ncl': 'ncl', '.R': 'Rscript'}
+        self._interpreters = {
+                                '.py': 'python', 
+                                '.ncl': 'ncl', 
+                                '.R': 'Rscript',
+                                '.ipynb': 'jupyter'
+                             }
         self.nc_largefile = runtime_config.large_file
         self.bash_exec = find_executable('bash')
         # Initialize the POD path object and define the POD output paths
@@ -143,6 +148,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                                       value[0]) from exc
 
         def verify_runtime_reqs(runtime_reqs: dict):
+            pod_env = ""
             for k, v in runtime_reqs.items():
                 if any(v):
                     pod_env = k
@@ -167,6 +173,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 pass
             else:
                 self.log.info(f"Checking {e} for {self.name} package requirements")
+                conda_root = self.pod_env_vars['CONDA_ROOT']
                 if os.path.exists(os.path.join(conda_root, "bin/conda")):
                     args = [os.path.join(conda_root, "bin/conda"),
                             'list',
@@ -295,12 +302,13 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
             # Translate the varlistEntries from the POD convention to the data convention if desired and the pod
             # convention does not match the case convention
             data_convention = case_dict.convention.lower()
-            if runtime_config.translate_data and pod_convention != data_convention:
-                self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
-            else:
+            if not runtime_config.translate_data:
                 data_convention = 'no_translation'
-                self.log.info(f'POD convention and data convention are both {pod_convention}. '
+                self.log.info(f'Runtime option translate_data is set to .false.'
                               f'No data translation will be performed for case {case_name}.')
+            if pod_convention != data_convention:
+                self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
+
             # A 'noTranslationFieldlist' will be defined for the varlistEntry translation attribute
             for v in pod_input.varlist.keys():
                 for v_entry in cases[case_name].varlist.iter_vars():

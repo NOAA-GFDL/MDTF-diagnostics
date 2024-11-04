@@ -403,7 +403,12 @@ class SubprocessRuntimePODWrapper:
     def run_commands(self):
         """Produces the shell command(s) to run the POD.
         """
-        return [f"/usr/bin/env {self.pod.program} {self.pod.driver}"]
+        output_name = self.pod.driver.rstrip(".ipynb") + "_ipynb"
+        if self.pod.program == 'jupyter':
+            return [f"/usr/bin/env {self.pod.program} nbconvert --to html" +\
+                    f" --output-dir='{self.pod.pod_env_vars['WORK_DIR']}' --output {output_name} --execute {self.pod.driver}"]
+        else:
+            return [f"/usr/bin/env {self.pod.program} {self.pod.driver}"]
 
     def run_msg(self):
         """Log message when execution starts.
@@ -435,7 +440,7 @@ class SubprocessRuntimePODWrapper:
             ' -b '.join([''] + reqs.get('ncl', [])),
             ' -c '.join([''] + reqs.get('Rscript', []))
         ]
-        return [''.join(command)]
+        return [''.join(command).replace('(','\(').replace(')','\)')]
 
     def runtime_exception_handler(self, exc):
         """Handler which is called if an exception is raised during the POD's
@@ -597,13 +602,13 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
             self.env_mgr.destroy_environment(env)
         self.env_mgr.tear_down()
 
-    def runtime_terminate(self, signum=None, frame=None):
+    def runtime_terminate(self, signum=None):
         """Handler called in the event that POD execution was halted abnormally,
         by receiving  ``SIGINT`` or ``SIGTERM``.
         """
         # try to clean up everything
         for p in self.pods:
-            util.signal_logger(self.__class__.__name__, signum, frame, log=p.pod.log)
+            util.signal_logger(self.__class__.__name__, signum, log=p.pod.log)
             p.tear_down()
             p.pod.close_log_file(log=True)
 

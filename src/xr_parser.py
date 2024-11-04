@@ -722,7 +722,13 @@ class DefaultDatasetParser:
         """Determine if the dataset attribute value is an approximate match to the expected attribute value"""
         exclude = ["with", "on", "in", "of", "at", "near"]
         our_name_split = [i for i in our_name.split('_') if i not in exclude]
-        ds_name_split = [i for i in ds_name.split('_') if i not in exclude]
+        if isinstance(ds_name, str):
+            ds_name_split = [i for i in ds_name.split('_') if i not in exclude]
+        elif isinstance(ds_name, list):
+            for n in ds_name:
+                print(n)
+            ds_name_split = [i for i in ds_name[0].split('_')]
+
         isect = set(our_name_split).intersection(ds_name_split)
 
         if len(isect) >= len(our_name_split) - 2 and len(isect) > 0:
@@ -757,8 +763,10 @@ class DefaultDatasetParser:
                 - False: Change *ds* to match *our_var*.
         """
         # unpack tuples
+
         our_var, our_attr_name, our_attr = our_attr_tuple
         ds_var, ds_attr_name, ds_attr = ds_attr_tuple
+
         if comparison_func is None:
             comparison_func = (lambda x, y: x == y)
 
@@ -821,8 +829,8 @@ class DefaultDatasetParser:
                 else:
                     comparison_func = self.approximate_attribute_value(our_attr, ds_attr)
                 if not comparison_func:
-                    raise util.MetadataEvent((f"Unexpected {our_attr_name} for variable "
-                                              f"'{our_var.name}': '{ds_attr}' (expected '{our_attr}')."))
+                    self.log.warning(f"Unexpected {our_attr_name} for variable "
+                                     f"'{our_var.name}': '{ds_attr}' (expected '{our_attr}').")
                 else:
                     self.log.warning(f"Could not find exact match for {our_var.name} attribute {our_attr_name}"
                                      f"{our_attr}; data processing will proceed with approximate match {ds_attr}")
@@ -866,6 +874,8 @@ class DefaultDatasetParser:
         """Compare attribute of a :class:`~src.data_model.DMVariable` (*our_var*)
         with what's set in the xarray.Dataset (*ds_var*).
         """
+        if ds_var is None:
+            return
         if ds_attr_name is None:
             ds_attr_name = our_attr_name
         our_attr = getattr(our_var, our_attr_name)
@@ -876,13 +886,13 @@ class DefaultDatasetParser:
             **kwargs
         )
 
-    def reconcile_names(self, our_var, ds, ds_var_name: str, overwrite_ours=None):
+    def reconcile_names(self, our_var, ds, ds_var_name: str, overwrite_ours: bool = False):
         """Reconcile the name and standard_name attributes between the
         'ground truth' of the dataset we downloaded (*ds_var_name*) and our
         expectations based on the model's convention (*our_var*).
 
         Args:
-            our_var (:class:`~core.TranslatedVarlistEntry`): Expected attributes
+            our_var (:class:`~translate.TranslatedVarlistEntry`): Expected attributes
                 of the dataset variable, according to the data request.
             ds: xarray Dataset.
             ds_var_name (str): Name of the variable in *ds* we expect to
@@ -890,18 +900,30 @@ class DefaultDatasetParser:
             overwrite_ours (bool, default False): If True, always update the name
                 of *our_var* to what's found in *ds*.
         """
-
-        if ds_var_name not in ds.variables:
+        v_names = [v for v in ds.variables]
+        if ds_var_name not in v_names:
+            # check for case sensitivity
+            if ds_var_name.upper() in v_names:
+                ds_var_name = ds_var_name.upper()
+                overwrite_ours = True
             # try searching for 4-D field instead of variable name for a specific level
             # (e.g., U instead of U500)
-            tv_name = ds_var_name
-            if len(our_var.scalar_coords) > 0:
-                ds_var_name = ''.join(filter(lambda x: not x.isdigit(), tv_name))
-                overwrite_ours = True
             else:
-                # attempt to match on standard_name attribute if present in data
-                ds_names = [ds.variables[v].name for v in ds.variables
-                            if ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name]
+                ds_names = []
+                tv_name = ds_var_name
+                if len(our_var.scalar_coords) > 0:
+                   ds_names.append(''.join(filter(lambda x: not x.isdigit(), tv_name)))
+                else:
+                    # attempt to match on standard_name attribute if present in data
+                    for v in ds.variables:
+                        if hasattr(v, 'name') and ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
+                            ds_names.append(ds.variables[v].name)
+                            break
+                        elif ds.variables[v].attrs.get('name', "") and \
+                                ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
+                            ds_names.append(ds.variables[v].attrs.get('name'))
+                            break
+
                 if len(ds_names) == 1:
                     # success, narrowed down to one guess
                     self.log.info(("Selecting '%s' as the intended name for '%s' "
@@ -934,6 +956,7 @@ class DefaultDatasetParser:
         # will raise UnitsUndefinedError or log warning if unit attribute missing
         self.check_metadata(ds_var, 'units')
         # Check equivalence of units: if units are not equivalent, raise MetadataEvent
+
         self.reconcile_attr(our_var, ds_var, 'units',
                             comparison_func=units.units_equivalent,
                             fill_ours=True, fill_ds=True
@@ -1048,28 +1071,38 @@ class DefaultDatasetParser:
         expectations based on the model's convention (*our_var*), for the bounds
         on the dimension coordinate *our_coord*.
         """
-        try:
+        if len(ds.cf.bounds) > 0:
             bounds = ds.cf.get_bounds(ds_coord_name)
-        except KeyError:
-            # cf accessor could't find associated bounds variable
+        elif hasattr(ds[ds_coord_name], 'attrs'):
+            if ds[ds_coord_name].attrs.get('bounds', None):
+                bounds = ds[ds_coord_name].bounds
+                if isinstance(bounds, str):
+                    our_coord.bounds_var = None
+                    return
+            else:
+                our_coord.bounds_var = None
+                return
+        else:
+            # cf accessor couldn't find associated bounds variable
+            bounds = None
             our_coord.bounds_var = None
             return
-
         # Inherit standard_name from our_coord if not present (regardless of
         # skip_std_name), overwriting metadata on bounds if different
-        self.reconcile_attr(our_coord, bounds, 'standard_name',
-                            fill_ours=False, fill_ds=True, overwrite_ours=False
-                            )
-        # Inherit units from our_coord if not present (regardless of skip_units),
-        # overwriting metadata on bounds if different
-        self.reconcile_attr(our_coord, bounds, 'units',
-                            comparison_func=units.units_equal,
-                            fill_ours=False, fill_ds=True, overwrite_ours=False
-                            )
-        if our_coord.name != bounds.name:
-            self.log.debug("Updating %s for '%s' to value '%s' from dataset.",
-                           'bounds', our_coord.name, bounds.name)
-        our_coord.bounds_var = bounds
+        if bounds is not None:
+            self.reconcile_attr(our_coord, bounds, 'standard_name',
+                                fill_ours=False, fill_ds=True, overwrite_ours=False
+                                )
+            # Inherit units from our_coord if not present (regardless of skip_units),
+            # overwriting metadata on bounds if different
+            self.reconcile_attr(our_coord, bounds, 'units',
+                                comparison_func=units.units_equal,
+                                fill_ours=False, fill_ds=True, overwrite_ours=False
+                                )
+            if our_coord.name != bounds.name:
+                self.log.debug("Updating %s for '%s' to value '%s' from dataset.",
+                               'bounds', our_coord.name, bounds.name)
+                our_coord.bounds_var = bounds
 
     def reconcile_dimension_coords(self, our_var, ds):
         """Reconcile name, standard_name and units attributes between the
@@ -1182,7 +1215,7 @@ class DefaultDatasetParser:
         """
         tv = var.translation
         # check name, std_name, units on variable itself
-        self.reconcile_names(tv, ds, tv.name, overwrite_ours=None)
+        self.reconcile_names(tv, ds, tv.name)
         self.reconcile_units(tv, ds[tv.name])
         # check variable's dimension coordinates: names, std_names, units, bounds
         self.reconcile_dimension_coords(tv, ds)
@@ -1256,6 +1289,9 @@ class DefaultDatasetParser:
         """Wrapper for :meth:`~DefaultDatasetParser.normalize_attr`, specialized
         to the case of getting a variable's standard_name.
         """
+        delete_chars = re.compile(r"[\".,'*]")
+        ds_var.attrs = {delete_chars.sub('', k): v for k, v in ds_var.attrs.items()}
+        ds_var.encoding = {delete_chars.sub('', k): v for k, v in ds_var.encoding.items()}
         for attr in attr_names:
             if attr not in ds_var.attrs:
                 if attr in ds_var.encoding:

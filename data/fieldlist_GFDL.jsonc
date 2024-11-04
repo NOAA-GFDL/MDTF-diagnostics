@@ -20,15 +20,15 @@
       "standard_name": "latitude",
       "units": "degrees_north"
     },
-    "yh": {
+    "xq": {
       "axis": "Y",
-      "standard_name": "h_point_nominal_longitude",
+      "standard_name": "q_point_nominal_latitude",
       "long_name": "h point nominal latitude",
       "units": "degrees_north"
     },
-    "xq": {
+    "xh": {
       "axis": "X",
-      "standard_name": "x_point_nominal_latitude",
+      "standard_name": "h_point_nominal_latitude",
       "long_name": "x point nominal latitude",
       "units": "degrees_north"
     },
@@ -96,8 +96,8 @@
     }
   },
   "variables" : {
-    "$ref": "./gfdl-cmor-tables/gfdl_to_cmip6_vars.json",
-    "$ref": "./gfdl-cmor-tables/gfdl_to_cmip5_vars.json",
+    //"$ref": "./gfdl-cmor-tables/gfdl_to_cmip6_vars.json",
+    //"$ref": "./gfdl-cmor-tables/gfdl_to_cmip5_vars.json",
 
     "areacello": {
       "standard_name": "cell_area",
@@ -191,6 +191,14 @@
       "long_name":"",
       "realm": "atmos",
       "units": "kg m-2 s-1",
+      "alternate_standard_names": ["rainfall_flux"],
+      "ndim": 3
+    },
+    "rainfall_flux": {
+      "standard_name": "rainfall_flux",
+      "realm": "seaIce",
+      "units": "kg m-2 s-1",
+      "alternate_standard_names": ["precipitation_flux"],
       "ndim": 3
     },
     "prec_conv": {
@@ -214,7 +222,7 @@
       "units": "kg m-2 s-1",
       "ndim": 3
     },
-    "prw": {
+    "wvp": {
       "standard_name": "atmosphere_mass_content_of_water_vapor",
       "long_name": "Water Vapor Path",
       "realm": "atmos",

@@ -26,6 +26,10 @@ Developers may download the code from GitHub as described in :ref:`ref-download`
 clone the repo in order to keep up with changes in the main branch, and to simplify submitting pull requests with your
 POD's code. Instructions for how to do this are given in :doc:`dev_git_intro`.
 
+Users may also install and run the MDTF-diagnostics Docker container that includes pre-built base, python3_base, and synthetic_data Conda environments (NCL is not compatible with Docker).
+Further details can be found in :doc:`ref_container`. The container is a new addition.
+Beta Testers are very much welcome!
+
 Installing dependencies with Conda
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -35,7 +39,9 @@ scripting languages, including, `R <https://anaconda.org/conda-forge/r-base>`__,
 `NCL <https://anaconda.org/conda-forge/ncl>`__, `Ruby <https://anaconda.org/conda-forge/ruby>`__, etc...
 
 
-Python-based PODs should be written in Python 3.12 or newer. We provide a developer version of the python3_base environment (described below) that includes Jupyter and other developer-specific tools. This is not installed by default, and must be requested by passing the ``--all`` flag to the conda setup script:
+Python-based PODs should be written in Python 3.12 or newer. We provide a developer version of the
+python3_base environment (described below) that includes Jupyter and other developer-specific tools.
+This is not installed by default, and must be requested by passing the ``--all`` flag to the conda setup script:
 
 If you are using Anaconda or miniconda to manage the conda environments, run:
 

@@ -64,7 +64,7 @@ class AbstractDMCoordinate(abc.ABC):
     @abc.abstractmethod
     def is_scalar(self):
         """Whether the coordinate is a `scalar coordinate
-        <http://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#scalar-coordinate-variables>`__
+        <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.8/cf-conventions.html#scalar-coordinate-variables>`__
         (bool).
         """
         pass
@@ -124,6 +124,12 @@ class AbstractDMDependentVariable(abc.ABC):
     def long_name(self):
         """Optional variable long_name used if standard_name attribute is not defined (str).
         """
+        pass
+
+    @property
+    @abc.abstractmethod
+    def alternate_standard_names(self):
+        """Optional list of alternate variable standard_names to query"""
         pass
 
 
@@ -764,6 +770,7 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
     component: str = ""
     associated_files: str = ""
     rename_coords: bool = True
+    alternate_standard_names: list
 
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
@@ -860,8 +867,16 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
         return self._realm
 
     @realm.setter
-    def realm(self, value: str):
+    def realm(self, value: str | list):
         self._realm = value
+
+    @property
+    def alternate_standard_names(self):
+        return self._alternate_standard_names
+
+    @alternate_standard_names.setter
+    def alternate_standard_names(self, value: list):
+        self._alternate_standard_names = value
 
     def add_scalar(self, ax, ax_value, **kwargs):
         """Metadata operation corresponding to taking a slice of a higher-dimensional

@@ -29,7 +29,7 @@
 	"varlist": {
 		"omega": {
 			"standard_name": "lagrangian_tendency_of_air_pressure",
-                        "frequency": "mon",
+            "frequency": "mon",
 			"realm": "atmos",
 			"units": "Pa s-1",
 			"dimensions": ["lev", "lat", "lon"]

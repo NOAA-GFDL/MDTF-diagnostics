@@ -202,6 +202,8 @@ dfe,dfe,mole_concentration_of_dissolved_iron_in_sea_water,Dissolved Iron Concent
 cfadDbze94,cfadDbze94,histogram_of_equivalent_reflectivity_factor_over_height_above_reference_ellipsoid,CloudSat Radar Reflectivity CFAD,atmos,1
 dissic,dissic,mole_concentration_of_dissolved_inorganic_carbon_in_sea_water,Dissolved Inorganic Carbon Concentration,ocean_biochem,mol m-3
 ua,ua,eastward_wind,Eastward Wind,atmos,m s-1
+ua200,ua200,eastward_wind,Eastward Wind,atmos,m s-1
+ua850,ua850,eastward_wind,Eastward Wind,atmos,m s-1
 clhcalipso_sat,clhcalipso,cloud_area_fraction_in_atmosphere_layer,CALIPSO High Level Cloud Fraction,atmos,%
 qo3v,tro3,mole_fraction_of_ozone_in_air,Mole Fraction of O3,atmos,1e-9
 om_emis_col,emibb,tendency_of_atmosphere_mass_content_of_primary_particulate_organic_matter_dry_aerosol_due_to_emission,Total Emission of Primary Aerosol from Biomass Burning,aerosol,kg m-2 s-1
@@ -462,6 +464,8 @@ bddtdip,bddtdip,tendency_of_mole_concentration_of_dissolved_inorganic_phosphate_
 hus,hus,specific_humidity,Specific Humidity,atmos,1
 parasol_refl_sat,parasolRefl,toa_bidirectional_reflectance,PARASOL Reflectance,atmos,1
 va,va,northward_wind,Northward Wind,atmos,m s-1
+va200,va200,northward_wind,Northward Wind,atmos,m s-1
+va850,va850,northward_wind,Northward Wind,atmos,m s-1
 fl_ccsnow,prsnc,convective_snowfall_flux,Convective Snowfall Flux,atmos,kg m-2 s-1
 zostoga,zostoga,global_average_thermosteric_sea_level_change,Global Average Thermosteric Sea Level Change,ocean,m
 evap,evs,water_evaporation_flux,Water Evaporation Flux Where Ice Free Ocean over Sea,ocean,kg m-2 s-1

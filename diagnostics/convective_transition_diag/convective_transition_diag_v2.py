@@ -76,7 +76,7 @@ elif os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR', '').lower() == 'qsat_in
 else:
     raise KeyError(
         'Unrecognized BULK_TROPOSPHERIC_TEMPERATURE_VAR = {}'.format(
-        os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR', ''))
+            os.environ.get('BULK_TROPOSPHERIC_TEMPERATURE_VAR', ''))
     )
 
 os.environ["lev_coord"] = 'lev'
@@ -89,7 +89,7 @@ os.environ["tave_file"] = os.environ["TAVE_FILE"]
 os.environ["qsat_int_file"] = os.environ["QSAT_INT_FILE"]
 
 # Model output filename convention
-os.environ["MODEL_OUTPUT_DIR"] = os.environ["DATADIR"]+"/1hr"
+os.environ["MODEL_OUTPUT_DIR"] = os.environ["DATADIR"] + "/1hr"
 if not os.path.exists(os.environ["MODEL_OUTPUT_DIR"]):
     os.makedirs(os.environ["MODEL_OUTPUT_DIR"])
 
@@ -101,15 +101,15 @@ if len(glob.glob(os.environ["pr_file"])) == 0:
 if len(glob.glob(os.environ["prw_file"])) == 0:
     print("Required Precipitable Water Vapor (CWV) data missing!")
     missing_file = 1
-if len(glob.glob(os.environ["ta_file"]))==0:
+if len(glob.glob(os.environ["ta_file"])) == 0:
     if ((os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "2" and
-            len(glob.glob(os.environ["qsat_int_file"])) == 0)
+         len(glob.glob(os.environ["qsat_int_file"])) == 0)
             or (os.environ["BULK_TROPOSPHERIC_TEMPERATURE_MEASURE"] == "1" and
-       (len(glob.glob(os.environ["qsat_int_file"])) == 0 or len(glob.glob(os.environ["tave_file"])) == 0))):
+                (len(glob.glob(os.environ["qsat_int_file"])) == 0 or len(glob.glob(os.environ["tave_file"])) == 0))):
         print("Required Temperature data missing!")
-        missing_file=1
+        missing_file = 1
 
-if missing_file==1:
+if missing_file == 1:
     print("Convective Transition Diagnostic Package will NOT be executed!")
 else:
 
@@ -118,11 +118,11 @@ else:
     # Convective Transition Basic Statistics
     #  See convecTransBasic.py for detailed info
     try:
-        os.system("python " + os.environ["POD_HOME"]+"/" + "convecTransBasic.py")
+        os.system("python " + os.environ["POD_HOME"] + "/" + "convecTransBasic.py")
     except OSError as e:
         print('WARNING', e.errno, e.strerror)
         print("**************************************************")
-        print("Convective Transition Basic Statistics (convecTransBasic.py) is NOT Executed as Expected!")		
+        print("Convective Transition Basic Statistics (convecTransBasic.py) is NOT Executed as Expected!")
         print("**************************************************")
 
     # ======================================================================

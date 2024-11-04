@@ -22,7 +22,6 @@ with the run in our :code-rst:`wkdir`. The resulting tree should look like this:
           ├── CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231.log
           ├── config_save.json
           ├── example_multicase/
-          ├── example_multicase.data.log
           ├── index.html
           ├── MDTF_CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231/
           ├── MDTF_CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231/
@@ -32,14 +31,18 @@ with the run in our :code-rst:`wkdir`. The resulting tree should look like this:
           └── MDTF_postprocessed_data.json
 
 To explain the contents within:
-   * :code-rst:`index.html` is the html page used to consolidate the MDTF run for the end-user. 
-     This serves as the main way to view all related plots and information for all PODs ran in a nice, condensed manner.
+   * :code-rst:`config_save.json` contains a copy of the runtime configuraton
+   * :code-rst:`index.html` is the html page used to consolidate the MDTF run results for the end-user.
+     Open this file in a web browser (e.g., :console:`% firefox index.html`) to view the figures and logs for each
+     POD.
    * :code-rst:`MDTF_postprocessed_data.csv` and :code-rst:`MDTF_postprocessed_data.json` are the ESM-intake catalog 
      csv and json header files with information about the processed model data.
-   * The catalog points towards data that can be found in the folders :code-rst:`MDTF_CMIP_Synthetic_*`
-   * The rest of the files serve as a method of logging information about what the framework did and various issues that
-     might have occured. Information inside these files could greatly help both POD developers and the framework 
-     development team!
+   * The catalog points towards data that can be found in the folders :code-rst:`MDTF_CMIP_Synthetic_*`.
+     To re-run the framework using the same processed dataset, set `DATA_CATALOG`
+     to the path to the :code-rst:`MDTF_processed_data.json` header file and set `run_pp` to `false` in the
+     runtime configuration file.
+   * The `.log` files contain framework and case-specific logging information. Please include information from these
+     logs in any issues related to running the framework that you submit to the MDTF-diagnostics team.
 
 POD Output Directory
 -------------------------------
@@ -53,14 +56,25 @@ This directory, :code-rst:`example_multicase`, contains all of the output for th
           ├── example_multicase.data.log
           ├── example_multicase.html
           ├── example_multicase.log
-          ├── index.html
           ├── model/
           └── obs/
 
-These files and folders being:
-   * :code-rst:`example_multicase.html` serves as the landing page for the POD and can be easily reached from :code-rst:`index.html`.
-   * :code-rst:`case_info.yml` provides information about the cases ran for the POD.
-   * :code-rst:`model/` and :code-rst:`obs/` contain both plots and data for both the model data and observation data respectively.
-   * There also exists various log files which function the same as mentioned previously.
+These files and folders are:
+   * :code-rst:`example_multicase.html` serves as the landing page for the POD and can be easily reached from
+     :code-rst:`index.html`.
+   * :code-rst:`case_info.yml` provides environment variables for each case. Multirun PODs can read and set the
+     environment variables from this file following the
+     `example_multicase.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase/example_multicase.py>`__
+      template
+   * :code-rst:`model/` and :code-rst:`obs/` contain both plots and data for both the model data and observation data
+     respectively. The framework appends a temporary :code-rst:`PS` subdirectory to the :code-rst:`model` and
+     :code-rst:`obs`directories where PODs can write postscript files instead of png files. The framework will convert
+     any .(e)ps files in the :code-rst:`PS`
+     subdirectories to .png files and move them to the :code-rst:`model` and/or :code-rst:`obs` subdirectories, then
+     delete the :code-rst:`PS` subdirectories during the output generation stage. Users can retain the :code-rst:`PS`
+     directories and files by setting `save_ps` to `true` in the runtime configuration file.
+   * :code-rst:`example_multicase.log` contains POD-specific logging information in addition to some main logging messages
+     that is helpful when diagnosing issues.
+   * :code-rst:`example_multicase.data.log` has a list of processed data files that the POD read.
 
-If multiple PODs were run, you would find such a directory for each POD in the :code-rst:`MDTF_output` directory.
+If multiple PODs are run, you will find a directory for each POD in the :code-rst:`MDTF_output` directory.

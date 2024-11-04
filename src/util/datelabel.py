@@ -20,12 +20,12 @@ Warning:
 Properties and use of :class:`DateRange`, :class:`Date` and :class:`DateFrequency`
 objects are best illustrated by examples:
 
-.. code-block:: python
+. code-block:: python
 
     >>> Date('20001215').month
     12
 
-    >>> Date('200012') == datetime(2000, 12, 1)
+    >>> Date('200012') == datetime.datetime(2000, 12, 1)
     True
 
     >>> DateRange('2010-2020') in DateRange('2008-2019')
@@ -54,13 +54,12 @@ import logging
 
 _log = logging.getLogger(__name__)
 
-
 # match-case statement to give date format
 # input can be int or str
-def date_fmt(date):
-    if isinstance(date, str):
-        date = int(date)
-    date_digits = math.floor(math.log10(date)) + 1
+
+
+def date_fmt(date: str):
+    date_digits = len(date)
     match date_digits:
         case 6:
             fmt = '%Y%m'
@@ -74,8 +73,8 @@ def date_fmt(date):
             fmt = '%Y%m%d%H%M%S'
     return fmt
 
-
 # convert a string to a cftime object
+
 
 def str_to_cftime(time_str: str, fmt=None, calendar=None):
     if fmt is None:
@@ -91,13 +90,20 @@ def str_to_cftime(time_str: str, fmt=None, calendar=None):
     )
     return cf_date
 
-
 # convert cftime.Datetime to a string
 def cftime_to_str(cf_time: cftime.datetime, fmt=None):
     if fmt is None:
         fmt = '%Y%m%d-%H:%M:%S'
     return cf_time.strftime(fmt)
 
+# convert datetime.datetime to a str for in DateRange operation (year and month only)
+def dt_to_str(dt: datetime.datetime):
+    year = str(dt.year)
+    year = "".join(["0"] * (4 - len(year))) + year
+    month = str(dt.month)
+    month = "".join(["0"] * (2 - len(month))) + month
+    
+    return f'{year}{month}'
 
 # ===============================================================
 # following adapted from Alexandre Decan's python-intervals
@@ -991,7 +997,7 @@ class Date(DateRange):
 
     def __eq__(self, other):
         """Overload datetime.datetime's __eq__. Require precision to match as
-        well as date, but *only up to stated precision*, eg Date(2019,5) will ==
+        well as date, but *only up to stated precision*, e.g., Date(2019,5) will ==
         datetime.datetime(2019,05,18).
         """
         try:
@@ -1013,7 +1019,7 @@ class _StaticTimeDependenceBase(object):
 
     @property
     def is_static(self):
-        """Property indicating time-independent data (eg, 'fx' in CMIP6 DRS.)
+        """Property indicating time-independent data (e.g., 'fx' in CMIP6 DRS.)
         """
         return True
 
@@ -1173,7 +1179,7 @@ class DateFrequency(datetime.timedelta):
             s = 'wk'
         elif s in ['daily', 'day', 'days', 'dy', 'd', 'diurnal', 'diurnally']:
             s = 'day'
-        elif s in ['hourly', 'hour', 'hours', 'hr', 'h']:
+        elif s in ['hourly', 'hour', 'hours', 'hr', 'h', '1hr']:
             s = 'hr'
         elif s in ['minutes', 'minute', 'min']:
             s = 'min'

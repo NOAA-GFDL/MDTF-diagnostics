@@ -3,7 +3,6 @@
     "driver" : "forcing_feedback.py",
     "long_name" : "Radiative Forcing and Feedback Diagnostics",
     "convention" : "cmip",
-    "realm" : "atmos",
     "runtime_requirements": {
       "python3": ["os", "numpy", "xarray", "pandas", "netCDF4", "scipy", "matplotlib", "cartopy"]
     },
@@ -21,7 +20,8 @@
     "min_frequency": "mon",
     "max_frequency": "mon",
     "min_duration": "5yr",
-    "max_duration": "any"
+    "max_duration": "any",
+    "realm" : "atmos",
   },
    "dimensions": {
     "lat": {

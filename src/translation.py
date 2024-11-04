@@ -20,8 +20,7 @@ _NO_TRANSLATION_CONVENTION = 'no_translation'  # naming convention for disabling
 @util.mdtf_dataclass
 class TranslatedVarlistEntry(data_model.DMVariable):
     """Class returned by :meth:`VarlistTranslator.translate`. Marks some
-    attributes inherited from :class:`~data_model.DMVariable` as being queryable
-    in :meth:`~data_manager.DataframeQueryDataSourceBase.query_dataset`.
+    attributes inherited from :class:`~data_model.DMVariable`.
     """
     # to be more correct, we should probably have VarlistTranslator return a
     # DMVariable, which is converted to this type on assignment to the
@@ -107,6 +106,8 @@ class Fieldlist:
                     lut_dict['entries'][k].update({'long_name': ""})
                 if 'scalar_coord_templates' in v:
                     sct_dict.update({k: v['scalar_coord_templates']})
+                if 'alternate_standard_names' not in v:
+                    lut_dict['entries'][k].update({'alternate_standard_names': list()})
             return lut_dict, sct_dict
 
         d['axes_lut'] = util.WormDict()
@@ -151,12 +152,13 @@ class Fieldlist:
         precip_vars = ['precipitation_rate', 'precipitation_flux']
         # search the lookup table for the variable with the specified standard_name
         # realm, modifier, and long_name attributes
+
         for var_name, var_dict in self.lut.items():
-            if var_dict['standard_name'] == standard_name\
+            if var_dict['standard_name'] == standard_name \
                     and var_dict['realm'] == realm\
                     and var_dict['modifier'] == modifier:
-                if not var_dict['long_name'] or var_dict['long_name'].lower() == long_name.lower():
-                    return var_name
+                # if not var_dict['long_name'] or var_dict['long_name'].lower() == long_name.lower():
+                return var_name
             else:
                 if var_dict['standard_name'] in precip_vars and standard_name in precip_vars:
                     return var_name
@@ -177,7 +179,7 @@ class Fieldlist:
         TODO: expand with more ways to uniquely identify variable (eg cell methods).
         Args:
             standard_name: variable or name of the variable
-            realm: variable realm (atmos, ocean, land, ice, etc...)
+            realm: str variable realm (atmos, ocean, land, seaIce, etc...)
             modifier:optional string to distinguish a 3-D field from a 4-D field with
             the same var_or_name value
             long_name: str (optional) long name attribute of the variable
@@ -214,8 +216,8 @@ class Fieldlist:
         convention.
 
         Args:
-            var_or_name: variable or name of the variable
-            realm: model realm of variable
+            var_or_name: str, variable or name of the variable
+            realm: str model realm of variable
             long_name: str (optional): long_name attribute of the variable
             modifier:optional string to distinguish a 3-D field from a 4-D field with
             the same var_or_name value
@@ -254,7 +256,7 @@ class Fieldlist:
         # construct convention's name for this variable on a level
         name_template = self.scalar_coord_templates[var_id][key]
         if new_coord.units.strip('').lower() == 'pa':
-            val = int(new_coord.value/100)
+            val = int(new_coord.value / 100)
         else:
             val = int(new_coord.value)
 
@@ -305,8 +307,8 @@ class Fieldlist:
                             lut_val = v.get('value')
                             if isinstance(coord.value, int) and isinstance(lut_val, str):
                                 v_int = int(float(lut_val))
-                                if v_int > coord.value and v_int/coord.value == 100 \
-                                        or v_int < coord.value and coord.value/v_int == 100 or \
+                                if v_int > coord.value and v_int / coord.value == 100 \
+                                        or v_int < coord.value and coord.value / v_int == 100 or \
                                         v_int == coord.value:
                                     new_coord = v
                                     break
@@ -332,13 +334,16 @@ class Fieldlist:
                                             new_coord = v
                                             break
         else:
-            new_coord = [lut1.values()][0]
+            new_coord = [lut1[k] for k in lut1.keys()][0]  # should return ordered dict
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             coord_name = ""
-            if new_coord.get('name', None):
+            if hasattr(new_coord, 'name'):
                 coord_name = new_coord['name']
-            elif new_coord.get('out_name', None):
+            elif hasattr(new_coord, 'out_name'):
                 coord_name = new_coord['out_name']
+            else:
+                coord_name = [k for k in lut1.keys()][0]
+
             coord_copy = copy.deepcopy(new_coord)
             coord_copy['value'] = units.convert_scalar_coord(coord,
                                                              coord_copy['units'],
@@ -374,7 +379,6 @@ class Fieldlist:
             from_convention_tl = VariableTranslator().get_convention(from_convention)
             # Fieldlist entry for POD variable
             long_name = self.get_variable_long_name(var, has_scalar_coords)
-
             fl_entries = from_convention_tl.from_CF(var.standard_name,
                                                     var.realm,
                                                     var.modifier,

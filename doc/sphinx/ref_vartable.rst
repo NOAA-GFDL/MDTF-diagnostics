@@ -2,6 +2,4 @@
 
 List of Variables for each POD
 ==============================
-
-.. raw:: html
-   :file: MDTF_Variable_Lists.html
+The latest list of variables can be found `here <../_static/MDTF_Variable_Lists.html>`_.

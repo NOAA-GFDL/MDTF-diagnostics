@@ -110,5 +110,5 @@
   "overwrite": false,
   // List with custom preprocessing script(s) to run on data
   // Place these scripts in the user_scripts directory of your copy of the MDTF-diagnostics repository
-  "user_pp_scripts" : ["example_pp_script.py"]
+  "user_pp_scripts" : []
 }

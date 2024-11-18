@@ -21,7 +21,7 @@
     "max_frequency": "mon",
     "min_duration": "5yr",
     "max_duration": "any",
-    "realm" : "atmos",
+    "realm" : "atmos"
   },
    "dimensions": {
     "lat": {
@@ -46,75 +46,63 @@
     "ts": {
       "standard_name": "surface_temperature",
       "units": "K",
-      "dimensions" : ["time", "lat", "lon"],
-         "freq": "mon"
+      "dimensions" : ["time", "lat", "lon"]
 
     },
     "ta": {
       "standard_name": "air_temperature",
       "units": "K",
-      "dimensions" : ["time", "plev", "lat", "lon"],
-         "freq": "mon"
+      "dimensions" : ["time", "plev", "lat", "lon"]
     },
     "hus": {
       "standard_name": "specific_humidity",
       "units": "1",
-      "dimensions" : ["time", "plev", "lat", "lon"],
-         "freq": "mon"
+      "dimensions" : ["time", "plev", "lat", "lon"]
     },
     "rsus": {
       "standard_name": "surface_upwelling_shortwave_flux_in_air",
       "units": "W m-2",
-     "dimensions" : ["time", "lat", "lon"],
-         "freq": "mon"
+     "dimensions" : ["time", "lat", "lon"]
     },
     "rsuscs": {
       "standard_name": "surface_upwelling_shortwave_flux_in_air_assuming_clear_sky",
       "units": "W m-2",
-      "dimensions" : ["time", "lat", "lon"],
-         "freq": "mon"
+      "dimensions" : ["time", "lat", "lon"]
     },
     "rsds": {
       "standard_name": "surface_downwelling_shortwave_flux_in_air",
       "units": "W m-2",
-      "dimensions" : ["time", "lat", "lon"],
-         "freq": "mon"
+      "dimensions" : ["time", "lat", "lon"]
     },
     "rsdscs": {
       "standard_name": "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky",
       "units": "W m-2",
-      "dimensions" : ["time", "lat", "lon"],
-         "freq": "mon"
+      "dimensions" : ["time", "lat", "lon"]
     },
     "rsdt": {
       "standard_name": "toa_incoming_shortwave_flux",
       "units": "W m-2",
-      "dimensions" : ["time", "lat", "lon"],
-         "freq": "mon"
+      "dimensions" : ["time", "lat", "lon"]
     },
     "rsut": {
       "standard_name": "toa_outgoing_shortwave_flux",
       "units": "W m-2",
-      "dimensions" : ["time", "lat", "lon"],
-         "freq": "mon"
+      "dimensions" : ["time", "lat", "lon"]
     },
     "rsutcs": {
       "standard_name": "toa_outgoing_shortwave_flux_assuming_clear_sky",
       "units": "W m-2",
-      "dimensions" : ["time", "lat", "lon"],
-         "freq": "mon"
+      "dimensions" : ["time", "lat", "lon"]
     },
     "rlut": {
       "standard_name": "toa_outgoing_longwave_flux",
       "units": "W m-2",
-      "dimensions" : ["time", "lat", "lon"],
-         "freq": "mon"
+      "dimensions" : ["time", "lat", "lon"]
     },
     "rlutcs": {
       "standard_name": "toa_outgoing_longwave_flux_assuming_clear_sky",
       "units": "W m-2",
-      "dimensions" : ["time", "lat", "lon"],
-         "freq": "mon"
+      "dimensions" : ["time", "lat", "lon"]
     }
   }
 }

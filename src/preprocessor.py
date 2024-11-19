@@ -1120,14 +1120,18 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             xarray_ds = func.execute(func, v, xarray_ds, **kwargs)
             # append custom preprocessing scripts
 
-        if self.user_pp_scripts and len(self.user_pp_scripts) > 0:
-            for s in self.user_pp_scripts:
-                script_name, script_ext = os.path.splitext(s)
-                full_module_name = "user_scripts." + script_name
-                user_module = importlib.import_module(full_module_name, package=None)
-                # Call function with the arguments
-                # user_scripts.example_pp_script.main(xarray_ds, v)
-                xarray_ds = user_module.main(xarray_ds, v.name)
+            if hasattr(self, 'user_pp_scripts'):
+                if self.user_pp_scripts and len(self.user_pp_scripts) > 0:
+                    for s in self.user_pp_scripts:
+                        script_name, script_ext = os.path.splitext(s)
+                        full_module_name = "user_scripts." + script_name
+                        user_module = importlib.import_module(full_module_name, package=None)
+                        # Call function with the arguments
+                        # user_scripts.example_pp_script.main(xarray_ds, v)
+                        xarray_ds = user_module.main(xarray_ds, v.name)
+
+        return xarray_ds
+
 
         return xarray_ds
 

@@ -1457,8 +1457,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 else:
                     d.update({'project_id': var.translation.convention})
                 d.update({'path': var.dest_path})
-                d.update({'start_time': util.cftime_to_str(input_catalog_ds[case_name].time.values[0])})
-                d.update({'end_time': util.cftime_to_str(input_catalog_ds[case_name].time.values[-1])})
+                d.update({'start_time': util.cftime_to_str(ds_match.time.values[0])})
+                d.update({'end_time': util.cftime_to_str(ds_match.time.values[-1])})
+                d.update({'standard_name': ds_match[var.name].attrs['standard_name']})
                 cat_entries.append(d)
 
         # create a Pandas dataframe from the catalog entries

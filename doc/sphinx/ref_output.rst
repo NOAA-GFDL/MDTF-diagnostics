@@ -64,11 +64,10 @@ These files and folders are:
      :code-rst:`index.html`.
    * :code-rst:`case_info.yml` provides environment variables for each case. Multirun PODs can read and set the
      environment variables from this file following the
-     `example_multicase.py <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase/example_multicase.py>`__
-      template
+     `example_multicase.py template <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase/example_multicase.py>`__
    * :code-rst:`model/` and :code-rst:`obs/` contain both plots and data for both the model data and observation data
      respectively. The framework appends a temporary :code-rst:`PS` subdirectory to the :code-rst:`model` and
-     :code-rst:`obs`directories where PODs can write postscript files instead of png files. The framework will convert
+     :code-rst:`obs` directories where PODs can write postscript files instead of png files. The framework will convert
      any .(e)ps files in the :code-rst:`PS`
      subdirectories to .png files and move them to the :code-rst:`model` and/or :code-rst:`obs` subdirectories, then
      delete the :code-rst:`PS` subdirectories during the output generation stage. Users can retain the :code-rst:`PS`

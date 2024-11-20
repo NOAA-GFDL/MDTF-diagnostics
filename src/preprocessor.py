@@ -66,7 +66,6 @@ class PreprocessorFunctionBase(abc.ABC):
       function is capable of converting into the format requested by the POD.
     - :meth:`process`, which actually implements the data format conversion.
     """
-
     def __init__(self, *args):
         """Called during Preprocessor's init."""
         pass
@@ -1121,14 +1120,18 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             xarray_ds = func.execute(func, v, xarray_ds, **kwargs)
             # append custom preprocessing scripts
 
-        if self.user_pp_scripts and len(self.user_pp_scripts) > 0:
-            for s in self.user_pp_scripts:
-                script_name, script_ext = os.path.splitext(s)
-                full_module_name = "user_scripts." + script_name
-                user_module = importlib.import_module(full_module_name, package=None)
-                # Call function with the arguments
-                # user_scripts.example_pp_script.main(xarray_ds, v)
-                xarray_ds = user_module.main(xarray_ds, v.name)
+            if hasattr(self, 'user_pp_scripts'):
+                if self.user_pp_scripts and len(self.user_pp_scripts) > 0:
+                    for s in self.user_pp_scripts:
+                        script_name, script_ext = os.path.splitext(s)
+                        full_module_name = "user_scripts." + script_name
+                        user_module = importlib.import_module(full_module_name, package=None)
+                        # Call function with the arguments
+                        # user_scripts.example_pp_script.main(xarray_ds, v)
+                        xarray_ds = user_module.main(xarray_ds, v.name)
+
+        return xarray_ds
+
 
         return xarray_ds
 
@@ -1454,8 +1457,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 else:
                     d.update({'project_id': var.translation.convention})
                 d.update({'path': var.dest_path})
-                d.update({'start_time': util.cftime_to_str(input_catalog_ds[case_name].time.values[0])})
-                d.update({'end_time': util.cftime_to_str(input_catalog_ds[case_name].time.values[-1])})
+                d.update({'start_time': util.cftime_to_str(ds_match.time.values[0])})
+                d.update({'end_time': util.cftime_to_str(ds_match.time.values[-1])})
+                d.update({'standard_name': ds_match[var.name].attrs['standard_name']})
                 cat_entries.append(d)
 
         # create a Pandas dataframe from the catalog entries
@@ -1557,11 +1561,12 @@ class DaskMultiFilePreprocessor(MDTFPreprocessorBase):
         # initialize PreprocessorFunctionBase objects
         super().__init__(model_paths, config)
         self.file_preproc_functions = [f for f in self._functions]
-        if any([s for s in config.user_pp_scripts]):
-            self.add_user_pp_scripts(config)
-            self.module_root = os.path.join(config.CODE_ROOT, "user_scripts")
-        else:
-            self.user_pp_scripts = None
+        if hasattr(config, 'user_pp_scripts'):
+            if any([s for s in config.user_pp_scripts]):
+                self.add_user_pp_scripts(config)
+                self.module_root = os.path.join(config.CODE_ROOT, "user_scripts")
+            else:
+                self.user_pp_scripts = None
 
     def add_user_pp_scripts(self, runtime_config: util.NameSpace):
         self.user_pp_scripts = [s for s in runtime_config.user_pp_scripts]

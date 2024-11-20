@@ -1,0 +1,29 @@
+{
+  "pod_list": [
+    "sl_regional"
+  ],
+  "case_list": {
+    "zos_Omon_CAMS-CSM1-0_historical_r1i1p1f1_gn_185001-201412": {
+      "model": "CAMS",
+      "convention": "CMIP",
+      "startdate": "1995-01-16",
+      "enddate": "1995-12-16"
+    }
+  },
+  "DATA_CATALOG": "/glade/work/netige/mdtf_Nov24/data_catalogs/zos_Omon_CAMS-CSM1-0_historical_r1i1p1f1_gn_185001-201412.json",
+  "OBS_DATA_ROOT": "../inputdata/obs_data",
+  "WORK_DIR": "../wkdir",
+  "OUTPUT_DIR": "../wkdir",
+  "conda_root": "/glade/u/home/netige/miniconda3",
+  "conda_env_root": "/glade/u/home/netige/miniconda3/envs",
+  "micromamba_exe": "",
+  "run_pp": true,
+  "translate_data": true,
+  "save_ps": false,
+  "large_file": false,
+  "save_pp_data": true,
+  "make_variab_tar": false,
+  "make_multicase_figure_html": false,
+  "overwrite": false,
+  "user_pp_scripts": []
+}

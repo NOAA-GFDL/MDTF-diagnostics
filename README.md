@@ -107,9 +107,7 @@ for, the Windows Subsystem for Linux.
      when micromamba is installed
   - `$MICROMAMBA_EXE` is full path to the micromamba executable on your system
      (e.g., /home/${USER}/.local/bin/micromamba). This is defined by the `MAMBA_EXE` environment variable on your system
-  - The `--env_dir` flag allows you to put the program files in a designated location `$CONDA_ENV_DIR` 
-  (for space reasons, or if you don’t have write access).
-  You can omit this flag, and the environments will be installed within `$CONDA_ROOT/envs/` by default.
+  - All flags noted for your system above must be supplied for the script to work.
 
   #### NOTE: The micromamba environments may differ from the conda environments because of package compatibility discrepancies between solvers
   `% ./src/conda/micromamba_env_setup.sh --all --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR` builds

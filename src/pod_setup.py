@@ -306,8 +306,9 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 data_convention = 'no_translation'
                 self.log.info(f'Runtime option translate_data is set to .false.'
                               f'No data translation will be performed for case {case_name}.')
-            if pod_convention != data_convention:
-                self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
+            else:
+                if pod_convention != data_convention:
+                    self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
 
             # A 'noTranslationFieldlist' will be defined for the varlistEntry translation attribute
             for v in pod_input.varlist.keys():

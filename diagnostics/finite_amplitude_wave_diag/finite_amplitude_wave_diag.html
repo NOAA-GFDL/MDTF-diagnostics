@@ -1,0 +1,120 @@
+<!-- This file is part of the EOF_500hPa module of the MDTF code package (see LICENSE.txt) -->
+
+<TITLE> Finite-amplitude Rossby wave diagnostics</TITLE>
+<img src="../mdtf_diag_banner.png">
+<h3>Finite-amplitude Rossby wave diagnostics</h3>
+
+<td class="d-block comment-body markdown-body  js-comment-body">
+          <p dir="auto">The goal to incorporate Finite-amplitude wave activity (FAWA) formalism into MDTF repo is to provide diagnostic tools for model comparison. Each diagnostic shall associate with an interpretation related to the physical process.</p>
+<p dir="auto">Below are some proposed candidates and associated physical interpretations:</p>
+<table role="table">
+<thead>
+<tr>
+<th>Diagnostic</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Seasonal climatology of zonal mean FAWA</td>
+<td>It quantifies the strength of vertically propagating planetary waves, and also relative strength of synoptic eddies in troposphere</td>
+</tr>
+<tr>
+<td>Seasonal climatology of Uref</td>
+<td>To quantify strength of mean-flow interaction, i.e., adiabatic adjustment of flow from an eddy-free reference state is given by Uref-Ubar(zonal mean wind)</td>
+</tr>
+<tr>
+<td>Seasonal climatology of &lt;LWA&gt; (&lt;...&gt; = vertically averaged)</td>
+<td>To quantify geographical distribution (and amplitude) of eddies</td>
+</tr>
+<tr>
+<td>Seasonal climatology of temporal Covariance of &lt;LWA&gt; and &lt;U&gt; (as in NH18 Fig. 2A)</td>
+<td>A measure of strength of nonlinear wave-mean flow interaction (via nonlinear zonal wave activity flux)</td>
+</tr>
+</tbody>
+</table>
+</td>
+
+<a href="https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx_pods/finite_amplitude_wave_diag_zonal_mean.html">Full Documentation and Contact Information</a>
+
+<h4>Zonal-mean finite-amplitude wave diagnostics for {{CASENAME}} (Climatologies)</h4>
+
+<table class="tg">
+<thead>
+  <tr>
+    <th>Name of Diagnostic</th>
+    <th>DJF</th>
+    <th>MAM</th>
+    <th>JJA</th>
+    <th>SON</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>zonal mean zonal wind</td>
+    <td><a href=model/DJF_zonal_mean_u.png>plot</a></td>
+    <td><a href=model/MAM_zonal_mean_u.png>plot</a></td>
+    <td><a href=model/JJA_zonal_mean_u.png>plot</a></td>
+    <td><a href=model/SON_zonal_mean_u.png>plot</a></td>
+  </tr>
+  <tr>
+    <td>zonal mean wave activity (FAWA)</td>
+    <td><a href=model/DJF_zonal_mean_lwa.png>plot</a></td>
+    <td><a href=model/MAM_zonal_mean_lwa.png>plot</a></td>
+    <td><a href=model/JJA_zonal_mean_lwa.png>plot</a></td>
+    <td><a href=model/SON_zonal_mean_lwa.png>plot</a></td>
+  </tr>
+  <tr>
+    <td>zonal mean reference states (Uref)</td>
+    <td><a href=model/DJF_zonal_mean_uref.png>plot</a></td>
+    <td><a href=model/MAM_zonal_mean_uref.png>plot</a></td>
+    <td><a href=model/JJA_zonal_mean_uref.png>plot</a></td>
+    <td><a href=model/SON_zonal_mean_uref.png>plot</a></td>
+  </tr>
+  <tr>
+    <td>zonal mean wind adjustment (\Delta U)</td>
+    <td><a href=model/DJF_zonal_mean_delta_u.png>plot</a></td>
+    <td><a href=model/MAM_zonal_mean_delta_u.png>plot</a></td>
+    <td><a href=model/JJA_zonal_mean_delta_u.png>plot</a></td>
+    <td><a href=model/SON_zonal_mean_delta_u.png>plot</a></td>
+  </tr>
+</tbody>
+</table>
+
+
+<h4>Vertically-averaged finite-amplitude wave diagnostics for {{CASENAME}} (Climatologies)</h4>
+
+<table class="tg">
+<thead>
+  <tr>
+    <th>Name of Diagnostic</th>
+    <th>DJF</th>
+    <th>MAM</th>
+    <th>JJA</th>
+    <th>SON</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>Barotropic zonal mean zonal wind</td>
+    <td><a href=model/DJF_u_baro.png>plot</a></td>
+    <td><a href=model/MAM_u_baro.png>plot</a></td>
+    <td><a href=model/JJA_u_baro.png>plot</a></td>
+    <td><a href=model/SON_u_baro.png>plot</a></td>
+  </tr>
+  <tr>
+    <td>Barotropic local wave activity</td>
+    <td><a href=model/DJF_lwa_baro.png>plot</a></td>
+    <td><a href=model/MAM_lwa_baro.png>plot</a></td>
+    <td><a href=model/JJA_lwa_baro.png>plot</a></td>
+    <td><a href=model/SON_lwa_baro.png>plot</a></td>
+  </tr>
+  <tr>
+    <td>Covariance between barotropic zonal wind and LWA</td>
+    <td><a href=model/DJF_u_lwa_covariance.png>plot</a></td>
+    <td><a href=model/MAM_u_lwa_covariance.png>plot</a></td>
+    <td><a href=model/JJA_u_lwa_covariance.png>plot</a></td>
+    <td><a href=model/SON_u_lwa_covariance.png>plot</a></td>
+  </tr>
+</tbody>
+</table>

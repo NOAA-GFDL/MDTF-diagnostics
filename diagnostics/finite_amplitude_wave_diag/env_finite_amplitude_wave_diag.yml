@@ -1,0 +1,18 @@
+name: _MDTF_finite_amplitude_wave_diag
+channels:
+- conda-forge
+dependencies:
+- python=3.12
+- numpy=1.26.4
+- scipy=1.14.0
+- netCDF4=1.6.5
+- xarray=2024.1.1
+- cartopy=0.22.0
+- matplotlib=3.8.2
+- pytest==7.4.0
+- dask
+- gridfill
+- bottleneck
+- pip=23.3.1
+- pip:
+    - falwa==2.0.0

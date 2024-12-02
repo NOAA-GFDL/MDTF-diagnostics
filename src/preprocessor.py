@@ -1093,8 +1093,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # check that start and end times include runtime startdate and enddate
                 if not var.is_static:
                     var_obj = var.translation
-                    if var.translation.convention == 'no_translation':
-                        var_obj = var
                     try:
                         self.check_time_bounds(cat_dict[case_name], var_obj, freq)
                     except LookupError:
@@ -1132,8 +1130,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         return xarray_ds
 
-
-        return xarray_ds
 
     def setup(self, pod):
         """Method to do additional configuration immediately before :meth:`process`
@@ -1441,8 +1437,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             ds_match = input_catalog_ds[case_name]
             for var in case_dict.varlist.iter_vars():
                 var_name = var.translation.name
-                if var.translation.convention == 'no_translation':
-                    var_name = var.name
                 ds_var = ds_match.data_vars.get(var_name, None)
                 if ds_var is None:
                     log.error(f'No var {var_name}')

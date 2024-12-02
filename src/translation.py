@@ -488,19 +488,21 @@ class NoTranslationFieldlist:
         coords_copy = copy.deepcopy(var.dims) + copy.deepcopy(var.scalar_coords)
         fieldlist_obj = VariableTranslator().get_convention(data_convention)
         fieldlist_entry = dict()
-        for variable_id_dict in fieldlist_obj.lut.values():
+        variable_id = ""
+        for variable_id, variable_id_dict in fieldlist_obj.lut.items():
             if variable_id_dict.get('standard_name', None) == var.standard_name \
                 or var.standard_name in variable_id_dict.get('alternate_standard_names'):
                     if variable_id_dict.get('realm', None) == var.realm \
                         and variable_id_dict.get('units', None) == var.units.units:
                             fieldlist_entry = variable_id_dict
+                            var_id = variable_id
                     break
         if len(fieldlist_entry.keys()) < 1:
             var.log.error(f'No {data_convention} fieldlist entry found for variable {var.name}')
             return None
         alt_standard_names = fieldlist_entry.get('alternate_standard_names')
         return TranslatedVarlistEntry(
-            name=var.name,
+            name=variable_id,
             standard_name=var.standard_name,
             units=var.units,
             convention=var.convention,

@@ -53,7 +53,7 @@
   "run_pp": true,
 
   // Set to true to perform data translation; default false:
-  "translate_data": false,
+  "translate_data": true,
 
   // Set to true to have PODs save postscript figures in addition to bitmaps.
   "save_ps": false,

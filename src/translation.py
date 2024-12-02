@@ -341,7 +341,7 @@ class Fieldlist:
                 coord_name = new_coord['name']
             elif hasattr(new_coord, 'out_name'):
                 coord_name = new_coord['out_name']
-            else:
+            else: # TODO add more robust check for key name == 'plev' (or whatever the coordinate name in the lut should be based on fieldlist)
                 coord_name = [k for k in lut1.keys()][0]
 
             coord_copy = copy.deepcopy(new_coord)
@@ -480,7 +480,7 @@ class NoTranslationFieldlist:
         """Returns :class:`TranslatedVarlistEntry` instance, populated with
         contents of input :class:`~diagnostic.VarlistEntry` instance.
 
-        .. note::
+         note::
            We return a copy of the :class:`~diagnostic.VarlistEntry` because
            logic in :class:`~xr_parser.DefaultDatasetParser` alters the translation
            based on the file's actual contents.

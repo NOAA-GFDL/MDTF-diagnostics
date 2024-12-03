@@ -832,6 +832,32 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 group_df = group_df[group_df['chunk_freq'] == grabbed_chunk]
         return pd.DataFrame.from_dict(group_df).reset_index()
 
+    def crop_date_range_upper_bound(self, catalog_row: pd.Series) -> pd.Series:
+        pass
+        return new_catalog_row
+
+    def crop_date_range_lower_bound(self,
+                                    catalog_row: pd.Series,
+                                    case_date_range: util.DateRange
+                                    log:) -> pd.Series:
+        if catalog_row.date_range.start.lower.hour != case_date_range.hour:
+            self.log.info("Variable %s data starts at hour %s", var.full_name, t_start.hour)
+            dt_start_upper_new = datetime.datetime(dt_range.start.upper.year,
+                                                   dt_range.start.upper.month,
+                                                   dt_range.start.upper.day,
+                                                   t_start.hour,
+                                                   t_start.minute,
+                                                   t_start.second)
+            dt_start_lower_new = datetime.datetime(dt_range.start.lower.year,
+                                                   dt_range.start.lower.month,
+                                                   dt_range.start.lower.day,
+                                                   t_start.hour,
+                                                   t_start.minute,
+                                                   t_start.second)
+            dt_start_lower = self.cast_to_cftime(dt_start_lower_new, cal)
+            dt_start_upper = self.cast_to_cftime(dt_start_upper_new, cal)
+        return cropped_df
+
     def check_group_daterange(self, group_df: pd.DataFrame, case_dr,
                               log=_log) -> pd.DataFrame:
         """Sort the files found for each experiment by date, verify that
@@ -897,8 +923,17 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     et = dl.dt_to_str(cat_row['end_time'])
                     stin = dl.Date(st) in case_dr
                     etin = dl.Date(et) in case_dr
+                # dataset start time and end time fall in case date range
                 if stin and etin:
                     return_df.append(cat_row.to_dict())
+                # dataset start time falls in case date range
+                elif stin and not etin:
+                    new_cat_row = crop_date_range_upper
+                    pass
+                # dataset end time falls in case date range
+                elif etin and not stin:
+                    pass
+
 
             return pd.DataFrame.from_dict(return_df)
         except ValueError:

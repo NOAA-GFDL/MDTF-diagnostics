@@ -832,33 +832,57 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 group_df = group_df[group_df['chunk_freq'] == grabbed_chunk]
         return pd.DataFrame.from_dict(group_df).reset_index()
 
-    def crop_date_range_upper_bound(self, catalog_row: pd.Series) -> pd.Series:
-        pass
-        return new_catalog_row
-
-    def crop_date_range_lower_bound(self,
-                                    catalog_row: pd.Series,
-                                    case_date_range: util.DateRange
-                                    log:) -> pd.Series:
-        if catalog_row.date_range.start.lower.hour != case_date_range.hour:
-            self.log.info("Variable %s data starts at hour %s", var.full_name, t_start.hour)
-            dt_start_upper_new = datetime.datetime(dt_range.start.upper.year,
-                                                   dt_range.start.upper.month,
-                                                   dt_range.start.upper.day,
-                                                   t_start.hour,
-                                                   t_start.minute,
-                                                   t_start.second)
-            dt_start_lower_new = datetime.datetime(dt_range.start.lower.year,
-                                                   dt_range.start.lower.month,
-                                                   dt_range.start.lower.day,
-                                                   t_start.hour,
-                                                   t_start.minute,
-                                                   t_start.second)
+    def crop_date_range(self, time_coord, catalog_row: pd.Series, case_date_range: util.DateRange) -> pd.Series:
+        cal = t_coord.attrs['calendar']
+        if catalog_row.start.lower.hour != case_date_range.hour:
+            dt_start_upper_new = datetime.datetime(catalog_row.start.upper.year,
+                                                   catalog_row.start.upper.month,
+                                                   catalog_row.start.upper.day,
+                                                   case_date_range.hour,
+                                                   case_date_range.minute,
+                                                   case_date_range.second)
+            dt_start_lower_new = datetime.datetime(catalog_row.start.lower.year,
+                                                   catalog_row.start.lower.month,
+                                                   catalog_row.start.lower.day,
+                                                   case_date_range.hour,
+                                                   case_date_range.minute,
+                                                   case_date_range.second)
             dt_start_lower = self.cast_to_cftime(dt_start_lower_new, cal)
             dt_start_upper = self.cast_to_cftime(dt_start_upper_new, cal)
-        return cropped_df
+        else:
+            dt_start_lower = self.cast_to_cftime(catalog_row.start.lower, cal)
+            dt_start_upper = self.cast_to_cftime(catalog_row.start.upper, cal)
+        if catalog_row.end.lower.hour != case_date_range.hour:
+            dt_end_lower_new = datetime.datetime(catalog_row.end.lower.year,
+                                                 catalog_row.end.lower.month,
+                                                 catalog_row.end.lower.day,
+                                                 case_date_range.hour,
+                                                 case_date_range.minute,
+                                                 case_date_range.second)
+            dt_end_upper_new = datetime.datetime(catalog_row.end.upper.year,
+                                                 catalog_row.end.upper.month,
+                                                 catalog_row.end.upper.day,
+                                                 case_date_range.hour,
+                                                 case_date_range.minute,
+                                                 case_date_range.second)
+            dt_end_lower = self.cast_to_cftime(dt_end_lower_new, cal)
+            dt_end_upper = self.cast_to_cftime(dt_end_upper_new, cal)
+        else:
+            dt_end_lower = self.cast_to_cftime(catalog_row.end.lower, cal)
+            dt_end_upper = self.cast_to_cftime(catalog_row.end.upper, cal)
+        if catalog_row.start > dt_start_upper:
+            err_str = (f"Error: dataset start ({catalog_row.start}) is after "
+                       f"requested date range start ({dt_start_upper}).")
+            raise IndexError(err_str)
+        if catalog_row.end < dt_end_lower:
+            err_str = (f"Error: dataset end ({catalog_row.end} is before "
+                       f"requested date range end ({dt_end_lower}).")
+            raise IndexError(err_str)
 
-    def check_group_daterange(self, group_df: pd.DataFrame, case_dr,
+        new_catalog_row = catalog_row.sel({time_coord.name: slice(dt_start_lower, dt_end_upper)})
+        return new_catalog_row
+
+    def check_group_daterange(self, t_coord, group_df: pd.DataFrame, case_dr,
                               log=_log) -> pd.DataFrame:
         """Sort the files found for each experiment by date, verify that
         the date ranges contained in the files are contiguous in time and that
@@ -927,12 +951,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 if stin and etin:
                     return_df.append(cat_row.to_dict())
                 # dataset start time falls in case date range
-                elif stin and not etin:
-                    new_cat_row = crop_date_range_upper
-                    pass
-                # dataset end time falls in case date range
-                elif etin and not stin:
-                    pass
+                elif stin and not etin or etin and not stin:
+                    new_cat_row = self.crop_date_range(group_df[t_coord],cat_row, case_dr)
 
 
             return pd.DataFrame.from_dict(return_df)
@@ -1066,7 +1086,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
                 if not var.is_static:
                     cat_subset.esmcat._df = self.check_multichunk(cat_subset.df, date_range, var.log)
-                    cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, date_range)
+                    cat_subset.esmcat._df = self.check_group_daterange(cat_subset.dfvar.T.name, cat_subset.df, date_range)
                 if cat_subset.df.empty:
                     raise util.DataRequestError(
                         f"check_group_daterange returned empty data frame for {var_id}"

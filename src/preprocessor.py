@@ -8,6 +8,8 @@ import dataclasses
 import datetime
 import importlib
 import pandas as pd
+import xarray
+
 from src import util, varlist_util, translation, xr_parser, units
 from src.util import datelabel as dl
 import cftime
@@ -816,25 +818,24 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             case_dr: requested daterange of POD
             log: log file
         """
-        if 'chunk_freq' in group_df:
-            chunks = group_df['chunk_freq'].unique()
-            if len(chunks) > 1:
-                for i, c in enumerate(chunks):
-                    chunks[i] = int(c.replace('yr', ''))
-                chunks = -np.sort(-chunks)
-                case_dt = int(str(case_dr.end)[:4]) - int(str(case_dr.start)[:4]) + 1
-                for c in chunks:
-                    if case_dt % c == 0:
-                        grabbed_chunk = str(c) + 'yr'
-                        log.warning("Multiple values for 'chunk_freq' found in dataset "
-                                    "only grabbing data with 'chunk_freq': %s", grabbed_chunk)
-                        break
-                group_df = group_df[group_df['chunk_freq'] == grabbed_chunk]
+        chunks = group_df['chunk_freq'].unique()
+        if len(chunks) > 1:
+            for i, c in enumerate(chunks):
+                chunks[i] = int(c.replace('yr', ''))
+            chunks = -np.sort(-chunks)
+            case_dt = int(str(case_dr.end)[:4]) - int(str(case_dr.start)[:4]) + 1
+            for c in chunks:
+                if case_dt % c == 0:
+                    grabbed_chunk = str(c) + 'yr'
+                    log.warning("Multiple values for 'chunk_freq' found in dataset "
+                                "only grabbing data with 'chunk_freq': %s", grabbed_chunk)
+                    break
+            group_df = group_df[group_df['chunk_freq'] == grabbed_chunk]
         return pd.DataFrame.from_dict(group_df).reset_index()
 
-    def crop_date_range(self, time_coord, catalog_row: pd.Series, case_date_range: util.DateRange) -> pd.Series:
-        cal = t_coord.attrs['calendar']
-        if catalog_row.start.lower.hour != case_date_range.hour:
+    def crop_date_range(self, st, en, case_date_range: util.DateRange, xr_ds) -> xarray.Dataset:
+        cal = xr_ds['time'].getattr('calendar', 'noleap')
+        if st.hour != case_date_range.hour:
             dt_start_upper_new = datetime.datetime(catalog_row.start.upper.year,
                                                    catalog_row.start.upper.month,
                                                    catalog_row.start.upper.day,
@@ -882,7 +883,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         new_catalog_row = catalog_row.sel({time_coord.name: slice(dt_start_lower, dt_end_upper)})
         return new_catalog_row
 
-    def check_group_daterange(self, t_coord, group_df: pd.DataFrame, case_dr,
+    def check_group_daterange(self, xr_ds: xarray.Dataset, case_dr: pd.DataFrame, date_range: util.DateRange,
                               log=_log) -> pd.DataFrame:
         """Sort the files found for each experiment by date, verify that
         the date ranges contained in the files are contiguous in time and that
@@ -895,39 +896,39 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """
         date_col = "date_range"
         delimiters = ",.!?/&-:;@_'\\s+"
-        if hasattr(group_df, 'time_range'):
+        if hasattr(case_dr, 'time_range'):
             start_times = []
             end_times = []
-            for tr in group_df['time_range'].values:
+            for tr in case_dr['time_range'].values:
                 tr = tr.replace(' ', '').replace('-', '').replace(':', '')
                 start_times.append(tr[0:len(tr)//2])
                 end_times.append(tr[len(tr)//2:])
-            group_df['start_time'] = pd.Series(start_times)
-            group_df['end_time'] = pd.Series(end_times)
+            case_dr['start_time'] = pd.Series(start_times)
+            case_dr['end_time'] = pd.Series(end_times)
         else:
             raise AttributeError('Data catalog is missing the attribute `time_range`;'
                                  ' this is a required entry.')
         try:
-            start_time_vals = self.normalize_group_time_vals(group_df['start_time'].values.astype(str))
-            end_time_vals = self.normalize_group_time_vals(group_df['end_time'].values.astype(str))
+            start_time_vals = self.normalize_group_time_vals(case_dr['start_time'].values.astype(str))
+            end_time_vals = self.normalize_group_time_vals(case_dr['end_time'].values.astype(str))
             if not isinstance(start_time_vals[0], datetime.date):
                 date_format = dl.date_fmt(start_time_vals[0])
                 # convert start_times to date_format for all files in query
-                group_df['start_time'] = start_time_vals
-                group_df['start_time'] = group_df['start_time'].apply(lambda x:
+                case_dr['start_time'] = start_time_vals
+                case_dr['start_time'] = case_dr['start_time'].apply(lambda x:
                                                                       datetime.datetime.strptime(x, date_format))
                 # convert end_times to date_format for all files in query
-                group_df['end_time'] = end_time_vals
-                group_df['end_time'] = group_df['end_time'].apply(lambda x:
-                                                                  datetime.datetime.strptime(x, date_format))
+                case_dr['end_time'] = end_time_vals
+                case_dr['end_time'] = case_dr['end_time'].apply(lambda x:
+                                                                datetime.datetime.strptime(x, date_format))
             # method throws ValueError if ranges aren't contiguous
-            dates_df = group_df.loc[:, ['start_time', 'end_time']]
+            dates_df = case_dr.loc[:, ['start_time', 'end_time']]
             date_range_vals = []
-            for idx, x in enumerate(group_df.values):
+            for idx, x in enumerate(case_dr.values):
                 st = dates_df.at[idx, 'start_time']
                 en = dates_df.at[idx, 'end_time']
                 date_range_vals.append(util.DateRange(st, en))
-            group_df = group_df.assign(date_range=date_range_vals)
+            group_df = case_dr.assign(date_range=date_range_vals)
             sorted_df = group_df.sort_values(by=date_col)
 
             files_date_range = util.DateRange.from_contiguous_span(
@@ -943,16 +944,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 if pd.isnull(cat_row['start_time']):
                     continue
                 else:
-                    st = dl.dt_to_str(cat_row['start_time'])
-                    et = dl.dt_to_str(cat_row['end_time'])
-                    stin = dl.Date(st) in case_dr
-                    etin = dl.Date(et) in case_dr
-                # dataset start time and end time fall in case date range
-                if stin and etin:
-                    return_df.append(cat_row.to_dict())
-                # dataset start time falls in case date range
-                elif stin and not etin or etin and not stin:
-                    new_cat_row = self.crop_date_range(group_df[t_coord],cat_row, case_dr)
+                    st = cat_row['start_time']
+                    et = cat_row['end_time']
+                # dataset start time or end time fall in case date range
+                if st>=date_range.start.lower and et<=date_range.end.upper or \
+                    et>=date_range.start.upper or st>=date_range.end.lower:
+                    xr_ds_cropped = self.crop_date_range(st, et, date_range, xr_ds)
+                    return_df.append(xr_ds_cropped.to_dict())
 
 
             return pd.DataFrame.from_dict(return_df)
@@ -1082,11 +1080,18 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             f"Unable to find match or alternate for {var_id}"
                             f" for case {case_name} in {data_catalog}")
 
+                if not var.is_static and 'chunk_freq' in cat_subset.df:
+                    cat_subset.esmcat._df = self.check_multichunk(cat_subset.df, date_range, var.log)
+
+                cat_subset_dict = cat_subset.to_dataset_dict(
+                    progressbar=False,
+                    xarray_open_kwargs=self.open_dataset_kwargs
+                )
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
                 if not var.is_static:
-                    cat_subset.esmcat._df = self.check_multichunk(cat_subset.df, date_range, var.log)
-                    cat_subset.esmcat._df = self.check_group_daterange(cat_subset.dfvar.T.name, cat_subset.df, date_range)
+                    cat_key = [k for k in cat_subset_dict.keys()][0]
+                    cat_subset_dict[cat_key] = self.check_group_daterange(cat_subset_dict[cat_key], cat_subset.df, date_range)
                 if cat_subset.df.empty:
                     raise util.DataRequestError(
                         f"check_group_daterange returned empty data frame for {var_id}"
@@ -1094,10 +1099,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict
-                cat_subset_df = cat_subset.to_dataset_dict(
-                    progressbar=False,
-                    xarray_open_kwargs=self.open_dataset_kwargs
-                )
+
                 # NOTE: The time_range of each file in cat_subset_df must be in a specific
                 # order in order for xr.concat() to work correctly. In the current implementation,
                 # we sort by the first value of the time coordinate of each file.
@@ -1106,27 +1108,27 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # tl;dr hic sunt dracones
                 var_xr = []
                 if not var.is_static:
-                    time_sort_dict = {f: cat_subset_df[f].time.values[0]
-                                      for f in list(cat_subset_df)}
+                    time_sort_dict = {f: cat_subset_dict[f].time.values[0]
+                                      for f in list(cat_subset_dict)}
                     time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))
 
                     for k in list(time_sort_dict):
                         if not var_xr:
-                            var_xr = cat_subset_df[k]
+                            var_xr = cat_subset_dict[k]
                         else:
-                            var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+                            var_xr = xr.concat([var_xr, cat_subset_dict[k]], "time")
                 else:
                     # get xarray dataset for static variable
-                    cat_index = [k for k in cat_subset_df.keys()][0]
+                    cat_index = [k for k in cat_subset_dict.keys()][0]
                     if not var_xr:
-                        var_xr = cat_subset_df[cat_index]
+                        var_xr = cat_subset_dict[cat_index]
                     else:
                         if var.Y is not None:
-                            var_xr = xr.concat([var_xr, cat_subset_df[cat_index]], var.Y.name)
+                            var_xr = xr.concat([var_xr, cat_subset_dict[cat_index]], var.Y.name)
                         elif var.X is not None:
-                            var_xr = xr.concat([var_xr, cat_subset_df[cat_index]], var.X.name)
+                            var_xr = xr.concat([var_xr, cat_subset_dict[cat_index]], var.X.name)
                         else:
-                            var_xr = xr.concat([var_xr, cat_subset_df.values[cat_index]], var.N.name)
+                            var_xr = xr.concat([var_xr, cat_subset_dict.values[cat_index]], var.N.name)
                 for att in drop_atts:
                     if var_xr.get(att, None) is not None:
                         var_xr = var_xr.drop_vars(att)

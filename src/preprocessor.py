@@ -2,14 +2,13 @@
 once it's been downloaded`.
 """
 import os
+import dask
 import shutil
 import abc
 import dataclasses
 import datetime
 import importlib
 import pandas as pd
-import xarray
-
 from src import util, varlist_util, translation, xr_parser, units
 from src.util import datelabel as dl
 import cftime
@@ -833,7 +832,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             group_df = group_df[group_df['chunk_freq'] == grabbed_chunk]
         return pd.DataFrame.from_dict(group_df).reset_index()
 
-    def crop_date_range(self, st, en, case_date_range: util.DateRange, xr_ds) -> xarray.Dataset:
+    def crop_date_range(self, st, en, case_date_range: util.DateRange, xr_ds) -> xr.Dataset:
         cal = xr_ds['time'].getattr('calendar', 'noleap')
         if st.hour != case_date_range.hour:
             dt_start_upper_new = datetime.datetime(catalog_row.start.upper.year,
@@ -883,52 +882,51 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         new_catalog_row = catalog_row.sel({time_coord.name: slice(dt_start_lower, dt_end_upper)})
         return new_catalog_row
 
-    def check_group_daterange(self, xr_ds: xarray.Dataset, case_dr: pd.DataFrame, date_range: util.DateRange,
+    def check_group_daterange(self, df: pd.DataFrame, case_dr: pd.DataFrame, date_range: util.DateRange,
                               log=_log) -> pd.DataFrame:
         """Sort the files found for each experiment by date, verify that
         the date ranges contained in the files are contiguous in time and that
         the date range of the files spans the query date range.
 
         Args:
-            group_df (Pandas Dataframe):
-            case_dr: requested daterange of POD
+            df (Pandas Dataframe):
+            date_range: requested daterange of POD
             log: log file
         """
         date_col = "date_range"
-        delimiters = ",.!?/&-:;@_'\\s+"
-        if hasattr(case_dr, 'time_range'):
+        if hasattr(df, 'time_range'):
             start_times = []
             end_times = []
-            for tr in case_dr['time_range'].values:
+            for tr in df['time_range'].values:
                 tr = tr.replace(' ', '').replace('-', '').replace(':', '')
                 start_times.append(tr[0:len(tr)//2])
                 end_times.append(tr[len(tr)//2:])
-            case_dr['start_time'] = pd.Series(start_times)
-            case_dr['end_time'] = pd.Series(end_times)
+            df['start_time'] = pd.Series(start_times)
+            df['end_time'] = pd.Series(end_times)
         else:
             raise AttributeError('Data catalog is missing the attribute `time_range`;'
                                  ' this is a required entry.')
         try:
-            start_time_vals = self.normalize_group_time_vals(case_dr['start_time'].values.astype(str))
-            end_time_vals = self.normalize_group_time_vals(case_dr['end_time'].values.astype(str))
+            start_time_vals = self.normalize_group_time_vals(df['start_time'].values.astype(str))
+            end_time_vals = self.normalize_group_time_vals(df['end_time'].values.astype(str))
             if not isinstance(start_time_vals[0], datetime.date):
                 date_format = dl.date_fmt(start_time_vals[0])
                 # convert start_times to date_format for all files in query
-                case_dr['start_time'] = start_time_vals
-                case_dr['start_time'] = case_dr['start_time'].apply(lambda x:
+                df['start_time'] = start_time_vals
+                df['start_time'] = df['start_time'].apply(lambda x:
                                                                       datetime.datetime.strptime(x, date_format))
                 # convert end_times to date_format for all files in query
-                case_dr['end_time'] = end_time_vals
-                case_dr['end_time'] = case_dr['end_time'].apply(lambda x:
+                df['end_time'] = end_time_vals
+                df['end_time'] = df['end_time'].apply(lambda x:
                                                                 datetime.datetime.strptime(x, date_format))
             # method throws ValueError if ranges aren't contiguous
-            dates_df = case_dr.loc[:, ['start_time', 'end_time']]
+            dates_df = df.loc[:, ['start_time', 'end_time']]
             date_range_vals = []
-            for idx, x in enumerate(case_dr.values):
+            for idx, x in enumerate(df.values):
                 st = dates_df.at[idx, 'start_time']
                 en = dates_df.at[idx, 'end_time']
                 date_range_vals.append(util.DateRange(st, en))
-            group_df = case_dr.assign(date_range=date_range_vals)
+            group_df = df.assign(date_range=date_range_vals)
             sorted_df = group_df.sort_values(by=date_col)
 
             files_date_range = util.DateRange.from_contiguous_span(
@@ -944,14 +942,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 if pd.isnull(cat_row['start_time']):
                     continue
                 else:
-                    st = cat_row['start_time']
-                    et = cat_row['end_time']
-                # dataset start time or end time fall in case date range
-                if st>=date_range.start.lower and et<=date_range.end.upper or \
-                    et>=date_range.start.upper or st>=date_range.end.lower:
-                    xr_ds_cropped = self.crop_date_range(st, et, date_range, xr_ds)
-                    return_df.append(xr_ds_cropped.to_dict())
-
+                    ds_st = cat_row['start_time']
+                    ds_et = cat_row['end_time']
+                # date range includes entire or part of dataset
+                if ds_st>=date_range.start.lower and ds_et<date_range.end.upper or \
+                        ds_st<date_range.end.lower and ds_et>=date_range.start.lower or \
+                        ds_st <= date_range.end.lower < ds_et:
+                        return_df.append(cat_row)
 
             return pd.DataFrame.from_dict(return_df)
         except ValueError:
@@ -963,6 +960,27 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             log.warning(f"Caught exception {repr(exc)}")
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
+
+    def correct_coordinates(self, ds):
+        """converts wrongly assigned data_vars to coordinates"""
+        ds = ds.copy()
+        for co in [
+            "x",
+            "y",
+            "lon",
+            "lat",
+            "lev",
+            "bnds",
+            "lev_bounds",
+            "lon_bounds",
+            "lat_bounds",
+            "time_bounds",
+            "lat_verticies",
+            "lon_verticies",
+        ]:
+            if co in ds.variables:
+                ds = ds.set_coords(co)
+        return ds
 
     def query_catalog(self,
                       case_dict: dict,
@@ -1080,18 +1098,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             f"Unable to find match or alternate for {var_id}"
                             f" for case {case_name} in {data_catalog}")
 
-                if not var.is_static and 'chunk_freq' in cat_subset.df:
-                    cat_subset.esmcat._df = self.check_multichunk(cat_subset.df, date_range, var.log)
-
-                cat_subset_dict = cat_subset.to_dataset_dict(
-                    progressbar=False,
-                    xarray_open_kwargs=self.open_dataset_kwargs
-                )
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
                 if not var.is_static:
-                    cat_key = [k for k in cat_subset_dict.keys()][0]
-                    cat_subset_dict[cat_key] = self.check_group_daterange(cat_subset_dict[cat_key], cat_subset.df, date_range)
+                    if "chunk_freq" in cat_subset.df:
+                        cat_subset.esmcat._df = self.check_multichunk(cat_subset.df, date_range, var.log)
+                    cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, case_d, date_range, var.log)
                 if cat_subset.df.empty:
                     raise util.DataRequestError(
                         f"check_group_daterange returned empty data frame for {var_id}"
@@ -1099,7 +1111,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
                 # convert subset catalog to an xarray dataset dict
                 # and concatenate the result with the final dict
-
+                key_name = [k for k in cat_subset.keys()][0]
+                cat_subset_dict = cat_subset.to_dataset_dict(
+                    progressbar=False,
+                    xarray_open_kwargs=self.open_dataset_kwargs,
+                    aggregate=False
+                    #xarray_combine_by_coords_kwargs = {"combine_attrs": "drop_conflicts"},
+                )
                 # NOTE: The time_range of each file in cat_subset_df must be in a specific
                 # order in order for xr.concat() to work correctly. In the current implementation,
                 # we sort by the first value of the time coordinate of each file.
@@ -1206,10 +1224,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         return {
             "engine": "netcdf4",
             "decode_cf": False,  # all decoding done by DefaultDatasetParser
-            "decode_coords": False,  # so disable it here
+            "decode_coords": True,  # so disable it here
             "decode_times": False,
             "use_cftime": False,
             "chunks": "auto"
+
         }
 
     @property

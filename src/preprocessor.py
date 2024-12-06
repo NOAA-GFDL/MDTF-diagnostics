@@ -843,53 +843,43 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         ds_date_time = xr_ds[time_coord.name].values
         ds_start_time = ds_date_time[0]
         ds_end_time = ds_date_time[-1]
-        if ds_start_time.hour != case_date_range.start.lower.hour:
-            dt_start_upper_new = datetime.datetime(case_date_range.start.upper.year,
-                                                   case_date_range.start.upper.month,
-                                                   case_date_range.start.upper.day,
-                                                   case_date_range.hour,
-                                                   case_date_range.minute,
-                                                   case_date_range.second)
-            dt_start_lower_new = datetime.datetime(case_date_range.start.lower.year,
-                                                   case_date_range.start.lower.month,
-                                                   case_date_range.start.lower.day,
-                                                   case_date_range.hour,
-                                                   case_date_range.minute,
-                                                   case_date_range.second)
-            dt_start_lower = self.cast_to_cftime(dt_start_lower_new, cal)
-            dt_start_upper = self.cast_to_cftime(dt_start_upper_new, cal)
+        # force hours in dataset to match date range if frequency is daily, monthly, annual
+        if ds_start_time.hour != case_date_range.start_datetime.hour and case_date_range.precision < 4:
+            dt_start_new = datetime.datetime(ds_start_time.year,
+                                             ds_start_time.month,
+                                             ds_start_time.day,
+                                             case_date_range.start_datetime.hour,
+                                             case_date_range.start_datetime.minute,
+                                             case_date_range.start_datetime.second)
+            ds_start = self.cast_to_cftime(dt_start_new, cal)
         else:
-            dt_start_lower = self.cast_to_cftime(ds_end_time.start.lower, cal)
-            dt_start_upper = self.cast_to_cftime(ds_end_time.start.upper, cal)
-        if  ds_end_time.end.lower.hour != case_date_range.end.upper.hour:
-            dt_end_lower_new = datetime.datetime(ds_end_time.end.lower.year,
-                                                 ds_end_time.end.lower.month,
-                                                 ds_end_time.end.lower.day,
-                                                 case_date_range.hour,
-                                                 case_date_range.minute,
-                                                 case_date_range.second)
-            dt_end_upper_new = datetime.datetime(ds_end_time.end.upper.year,
-                                                 ds_end_time.end.upper.month,
-                                                 ds_end_time.end.upper.day,
-                                                 case_date_range.hour,
-                                                 case_date_range.minute,
-                                                 case_date_range.second)
-            dt_end_lower = self.cast_to_cftime(dt_end_lower_new, cal)
-            dt_end_upper = self.cast_to_cftime(dt_end_upper_new, cal)
+            ds_start = self.cast_to_cftime(ds_start_time, cal)
+        if ds_end_time.hour != case_date_range.end_datetime.hour and case_date_range.precision < 4:
+            dt_end_new = datetime.datetime(ds_end_time.year,
+                                           ds_end_time.month,
+                                           ds_end_time.day,
+                                           case_date_range.end_datetime.hour,
+                                           case_date_range.end_datetime.minute,
+                                           case_date_range.end_datetime.second)
+            ds_end = self.cast_to_cftime(dt_end_new, cal)
         else:
-            dt_end_lower = self.cast_to_cftime(ds_end_time.end.lower, cal)
-            dt_end_upper = self.cast_to_cftime(ds_end_time.end.upper, cal)
-        if ds_start_time > dt_start_upper:
-            err_str = (f"Error: dataset start ({ds_end_time.start}) is after "
-                       f"requested date range start ({dt_start_upper}).")
-            raise IndexError(err_str)
-        if ds_end_time < dt_end_lower:
-            err_str = (f"Error: dataset end ({ds_end_time.end} is before "
-                       f"requested date range end ({dt_end_lower}).")
-            raise IndexError(err_str)
+            ds_end = self.cast_to_cftime(ds_end_time, cal)
+        date_range_cf_start = self.cast_to_cftime(case_date_range.start.lower, cal)
+        date_range_cf_end = self.cast_to_cftime(case_date_range.end.lower, cal)
 
-
-        new_xr_ds = xr_ds.sel({time_coord.name: slice(dt_start_lower, dt_end_upper)})
+        if ds_start < date_range_cf_start and ds_end < date_range_cf_start or \
+           ds_end > date_range_cf_end and ds_start > date_range_cf_end:
+            new_xr_ds = None
+        # dataset falls entirely within user-specified date range
+        elif ds_start >= date_range_cf_start and ds_end <= date_range_cf_end:
+            new_xr_ds = xr_ds.sel({time_coord.name: slice(ds_start, ds_end)})
+        # dataset overlaps user-specified date range start
+        elif date_range_cf_start < ds_start and \
+                date_range_cf_start <= ds_end <= date_range_cf_end:
+            new_xr_ds = xr_ds.sel({time_coord.name: slice(date_range_cf_start, ds_end)})
+        # dataset overlaps user-specified date range end
+        elif date_range_cf_start < ds_start <= date_range_cf_end <= ds_end:
+            new_xr_ds = xr_ds.sel({time_coord.name: slice(ds_start, date_range_cf_end)})
         return new_xr_ds
 
     def check_group_daterange(self, df: pd.DataFrame, date_range: util.DateRange,
@@ -970,27 +960,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             log.warning(f"Caught exception {repr(exc)}")
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
-
-    def correct_coordinates(self, ds):
-        """converts wrongly assigned data_vars to coordinates"""
-        ds = ds.copy()
-        for co in [
-            "x",
-            "y",
-            "lon",
-            "lat",
-            "lev",
-            "bnds",
-            "lev_bounds",
-            "lon_bounds",
-            "lat_bounds",
-            "time_bounds",
-            "lat_verticies",
-            "lon_verticies",
-        ]:
-            if co in ds.variables:
-                ds = ds.set_coords(co)
-        return ds
 
     def query_catalog(self,
                       case_dict: dict,
@@ -1140,13 +1109,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))
 
                     for k in list(time_sort_dict):
-                        self.crop_date_range(date_range,
+                        cat_subset_dict[k] = self.crop_date_range(date_range,
                                              cat_subset_dict[k],
                                              var.T)
-                        if not var_xr:
-                            var_xr = cat_subset_dict[k]
+                        if cat_subset_dict[k] is None:
+                            continue
                         else:
-                            var_xr = xr.concat([var_xr, cat_subset_dict[k]], "time")
+                            if not var_xr:
+                                var_xr = cat_subset_dict[k]
+                            else:
+                                var_xr = xr.concat([var_xr, cat_subset_dict[k]], "time")
                 else:
                     # get xarray dataset for static variable
                     cat_index = [k for k in cat_subset_dict.keys()][0]

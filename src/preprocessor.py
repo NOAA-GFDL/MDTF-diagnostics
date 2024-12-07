@@ -1116,7 +1116,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             if not var_xr:
                                 var_xr = cat_subset_dict[k]
                             else:
-                                var_xr = xr.concat([var_xr, cat_subset_dict[k]], "time")
+                                var_xr = xr.concat([var_xr, cat_subset_dict[k]], var.T.name)
                 else:
                     # get xarray dataset for static variable
                     cat_index = [k for k in cat_subset_dict.keys()][0]

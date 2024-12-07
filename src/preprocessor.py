@@ -713,7 +713,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
               ('tm_year', 'tm_mon', 'tm_mday', 'tm_hour', 'tm_min', 'tm_sec'))
         return cftime.datetime(*tt, calendar=calendar)
 
-    def check_time_bounds(self, ds, var: translation.TranslatedVarlistEntry, freq: str):
+    def check_time_bounds(self, ds: xr.Dataset,
+                          var: translation.TranslatedVarlistEntry,
+                          freq: str):
         """Parse quantities related to the calendar for time-dependent data and
         truncate the date range of model dataset *ds*.
 
@@ -746,20 +748,20 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # do not begin at hour zero
         if dt_range.start.lower.hour != t_start.hour:
             var.log.info("Variable %s data starts at hour %s", var.full_name, t_start.hour)
-            dt_start_upper_new = datetime.datetime(dt_range.start.upper.year,
-                                                   dt_range.start.upper.month,
-                                                   dt_range.start.upper.day,
+            dt_start_lower_new = datetime.datetime(t_start.year,
+                                                   t_start.month,
+                                                   t_start.day,
                                                    t_start.hour,
                                                    t_start.minute,
                                                    t_start.second)
-            dt_start_upper = self.cast_to_cftime(dt_start_upper_new, cal)
+            dt_start_lower = self.cast_to_cftime(dt_start_lower_new, cal)
         else:
-            dt_start_upper = self.cast_to_cftime(dt_range.start.upper, cal)
+            dt_start_lower = self.cast_to_cftime(dt_range.start.lower, cal)
         if dt_range.end.lower.hour != t_end.hour:
             var.log.info("Variable %s data ends at hour %s", var.full_name, t_end.hour)
-            dt_end_lower_new = datetime.datetime(dt_range.end.lower.year,
-                                                 dt_range.end.lower.month,
-                                                 dt_range.end.lower.day,
+            dt_end_lower_new = datetime.datetime(t_end.year,
+                                                 t_end.month,
+                                                 t_end.day,
                                                  t_end.hour,
                                                  t_end.minute,
                                                  t_end.second)
@@ -769,10 +771,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         # only check that up to monthly precision for monthly or longer data
         if freq in ['mon', 'year']:
-            if t_start.year > dt_start_upper.year or \
-                    t_start.year == dt_start_upper.year and t_start.month > dt_start_upper.month:
+            if t_start.year > dt_start_lower.year or \
+                    t_start.year == dt_start_lower.year and t_start.month > dt_start_lower.month:
                 err_str = (f"Error: dataset start ({t_start}) is after "
-                           f"requested date range start ({dt_start_upper}).")
+                           f"requested date range start ({dt_start_lower}).")
                 var.log.error(err_str)
                 raise IndexError(err_str)
             if t_end.year < dt_end_lower.year or \
@@ -782,9 +784,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 var.log.error(err_str)
                 raise IndexError(err_str)
         else:
-            if t_start > dt_start_upper:
+            if t_start > dt_start_lower:
                 err_str = (f"Error: dataset start ({t_start}) is after "
-                           f"requested date range start ({dt_start_upper}).")
+                           f"requested date range start ({dt_start_lower}).")
                 var.log.error(err_str)
                 raise IndexError(err_str)
             if t_end < dt_end_lower:
@@ -1148,6 +1150,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 else:
                     cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr], compat='no_conflicts')
 
+                # check that the trimmed variable data in the merged dataset matches the desired date range
+                if not var.is_static:
+                    try:
+                        self.check_time_bounds(cat_dict[case_name], var.translation, freq)
+                    except LookupError:
+                        var.log.error(f'Time bounds in trimmed dataset for {var_id} in case {case_name} do not match'
+                                      f'requested date_range.')
+                        raise SystemExit("Terminating program")
         return cat_dict
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):

@@ -2,7 +2,6 @@
 once it's been downloaded`.
 """
 import os
-import dask
 import shutil
 import abc
 import dataclasses

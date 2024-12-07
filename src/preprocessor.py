@@ -933,7 +933,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 *(sorted_df[date_col].to_list())
             )
             # throws AssertionError if we don't span the query range
-            # TODO: define self.attrs.DateRange from runtime config info
             # assert files_date_range.contains(self.attrs.date_range)
             # throw out df entries not in date_range
             return_df = []
@@ -1149,16 +1148,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     cat_dict[case_name] = var_xr
                 else:
                     cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr], compat='no_conflicts')
-                # check that start and end times include runtime startdate and enddate
-                if not var.is_static:
-                    var_obj = var.translation
-                    try:
-                        pass
-                        #self.check_time_bounds(cat_dict[case_name], var_obj, freq)
-                    except LookupError:
-                        var.log.error(f'Data not found in catalog query for {var_id}'
-                                      f' for requested date_range.')
-                        raise SystemExit("Terminating program")
+
         return cat_dict
 
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
@@ -1496,6 +1486,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # each key is a case
         for case_name, case_dict in cases.items():
             ds_match = input_catalog_ds[case_name]
+            ds_match.time.values.sort()
             for var in case_dict.varlist.iter_vars():
                 var_name = var.translation.name
                 ds_var = ds_match.data_vars.get(var_name, None)
@@ -1507,13 +1498,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         for c in columns:
                             if key.split('intake_esm_attrs:')[1] == c:
                                 d[c] = val
-                if var.translation.convention == 'no_translation':
-                    d.update({'project_id': var.convention})
-                else:
-                    d.update({'project_id': var.translation.convention})
+
+                d.update({'project_id': var.translation.convention})
                 d.update({'path': var.dest_path})
-                d.update({'start_time': util.cftime_to_str(ds_match.time.values[0])})
-                d.update({'end_time': util.cftime_to_str(ds_match.time.values[-1])})
+                d.update({'time_range': f'{util.cftime_to_str(ds_match.time.values[0]).replace('-',':')}-'
+                                        f'{util.cftime_to_str(ds_match.time.values[-1]).replace('-',':')}'})
                 d.update({'standard_name': ds_match[var.name].attrs['standard_name']})
                 cat_entries.append(d)
 

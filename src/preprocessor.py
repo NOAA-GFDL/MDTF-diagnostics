@@ -881,6 +881,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # dataset overlaps user-specified date range end
         elif date_range_cf_start < ds_start <= date_range_cf_end <= ds_end:
             new_xr_ds = xr_ds.sel({time_coord.name: slice(ds_start, date_range_cf_end)})
+        # dataset contains all of requested date range
+        elif date_range_cf_start>=ds_start and date_range_cf_end<=ds_end:
+            new_xr_ds = xr_ds.sel({time_coord.name: slice(date_range_cf_start, date_range_cf_end)})
+
         return new_xr_ds
 
     def check_group_daterange(self, df: pd.DataFrame, date_range: util.DateRange,

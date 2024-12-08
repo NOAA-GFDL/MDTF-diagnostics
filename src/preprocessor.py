@@ -849,9 +849,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             dt_start_new = datetime.datetime(ds_start_time.year,
                                              ds_start_time.month,
                                              ds_start_time.day,
-                                             case_date_range.start_datetime.hour,
-                                             case_date_range.start_datetime.minute,
-                                             case_date_range.start_datetime.second)
+                                             ds_start_time.hour,
+                                             ds_start_time.minute,
+                                             ds_start_time.second)
             ds_start = self.cast_to_cftime(dt_start_new, cal)
         else:
             ds_start = self.cast_to_cftime(ds_start_time, cal)
@@ -859,9 +859,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             dt_end_new = datetime.datetime(ds_end_time.year,
                                            ds_end_time.month,
                                            ds_end_time.day,
-                                           case_date_range.end_datetime.hour,
-                                           case_date_range.end_datetime.minute,
-                                           case_date_range.end_datetime.second)
+                                           ds_end_time.hour,
+                                           ds_end_time.minute,
+                                           ds_end_time.second)
             ds_end = self.cast_to_cftime(dt_end_new, cal)
         else:
             ds_end = self.cast_to_cftime(ds_end_time, cal)
@@ -1094,7 +1094,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     progressbar=False,
                     xarray_open_kwargs=self.open_dataset_kwargs,
                     aggregate=False
-                    #xarray_combine_by_coords_kwargs = {"combine_attrs": "drop_conflicts"},
                 )
                 # NOTE: The time_range of each file in cat_subset_df must be in a specific
                 # order in order for xr.concat() to work correctly. In the current implementation,

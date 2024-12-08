@@ -625,11 +625,15 @@ class DateRange(AtomicInterval, DateMixin):
                     # start: split_str[start index of 0: nelem_half elements total], end[start index at nelem_half,
                     (start, end) = ''.join(split_str[:nelem_half]), ''.join(split_str[nelem_half:])
 
+
             elif len(start) == 2:
                 (start, end) = start
             else:
                 raise ValueError('Bad input ({},{})'.format(start, end))
-
+        if isinstance(start, str):
+            start = start.replace(':','')
+        if isinstance(end, str):
+            end = end.replace(':','')
         dt0, prec0 = self._coerce_to_datetime(start, is_lower=True)
         dt1, prec1 = self._coerce_to_datetime(end, is_lower=False)
         if not (dt0 < dt1):

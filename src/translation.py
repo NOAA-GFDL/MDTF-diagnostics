@@ -341,7 +341,7 @@ class Fieldlist:
                 coord_name = new_coord['name']
             elif hasattr(new_coord, 'out_name'):
                 coord_name = new_coord['out_name']
-            else:
+            else: # TODO add more robust check for key name == 'plev' (or whatever the coordinate name in the lut should be based on fieldlist)
                 coord_name = [k for k in lut1.keys()][0]
 
             coord_copy = copy.deepcopy(new_coord)
@@ -435,7 +435,7 @@ class Fieldlist:
         )
 
 
-class NoTranslationFieldlist(metaclass=util.Singleton):
+class NoTranslationFieldlist:
     """Class which partially implements the :class:`Fieldlist` interface but
     does no variable translation. :class:`~diagnostic.VarlistEntry` objects from
     the POD are passed through to create :class:`TranslatedVarlistEntry` objects.
@@ -476,30 +476,49 @@ class NoTranslationFieldlist(metaclass=util.Singleton):
         # should never get here - not called externally
         raise NotImplementedError
 
-    def translate(self, var, from_convention: str):
+    def translate(self, var, data_convention: str):
         """Returns :class:`TranslatedVarlistEntry` instance, populated with
         contents of input :class:`~diagnostic.VarlistEntry` instance.
 
-        .. note::
+         note::
            We return a copy of the :class:`~diagnostic.VarlistEntry` because
            logic in :class:`~xr_parser.DefaultDatasetParser` alters the translation
            based on the file's actual contents.
         """
         coords_copy = copy.deepcopy(var.dims) + copy.deepcopy(var.scalar_coords)
-        # TODO: coerce_to_dataclass runs into recursion limit on var; fix that
+        fieldlist_obj = VariableTranslator().get_convention(data_convention)
+        fieldlist_entry = dict()
+        var_id = ""
+        for variable_id, variable_id_dict in fieldlist_obj.lut.items():
+            if variable_id_dict.get('standard_name', None) == var.standard_name \
+                or var.standard_name in variable_id_dict.get('alternate_standard_names'):
+                    if variable_id_dict.get('realm', None) == var.realm \
+                        and variable_id_dict.get('units', None) == var.units.units:
+                            fieldlist_entry = variable_id_dict
+                            var_id = variable_id
+                    break
+        if len(fieldlist_entry.keys()) < 1:
+            var.log.error(f'No {data_convention} fieldlist entry found for variable {var.name}')
+            return None
+        alt_standard_names = fieldlist_entry.get('alternate_standard_names')
         return TranslatedVarlistEntry(
-            name=var.name,
+            name=var_id,
             standard_name=var.standard_name,
             units=var.units,
-            convention=_NO_TRANSLATION_CONVENTION,
+            convention=var.convention,
             coords=coords_copy,
             modifier=var.modifier,
+            alternate_standard_names=alt_standard_names,
+            realm=var.realm,
             log=var.log
         )
 
 
 class VariableTranslator(metaclass=util.Singleton):
-    """:class:`~util.Singleton` containing information for different variable
+    """The use of class:`~util.Singleton` means that the VariableTranslator is not a
+    base class. Instead, it is a metaclass that needs to be created only once (done
+    in the mdtf_framework.py driver script to hold all the information from the fieldlist
+    tables that are later shared. Instead, the SUBCLASSES of the VariableTranslator are customized information for different variable
     naming conventions. These are defined in the ``data/fieldlist_*.jsonc``
     files.
     """

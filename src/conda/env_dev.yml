@@ -43,3 +43,4 @@ dependencies:
 - pip=24.3.1
 - pip:
   - gprof2dot==2024.6.6
+  - viztracer==1.0.0

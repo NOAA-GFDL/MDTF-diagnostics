@@ -126,7 +126,7 @@ class CMIPDataSource(DataSourceBase):
     convention: str = "CMIP"
     
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
-        self.set_query_base(self, var, path_regex)
+        self.set_query_base(var, path_regex)
 
 @data_source.maker
 class CESMDataSource(DataSourceBase):
@@ -139,7 +139,7 @@ class CESMDataSource(DataSourceBase):
     convention: str = "CESM"
     
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
-        self.set_query_base(self, var, path_regex)
+        self.set_query_base(var, path_regex)
 
 @data_source.maker
 class GFDLDataSource(DataSourceBase):

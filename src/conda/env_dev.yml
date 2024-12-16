@@ -29,3 +29,4 @@ dependencies:
 - intake-esm=2024.2.6
 - cf_xarray=0.8.4
 - cloud_sptheme
+- snakeviz=2.2.0

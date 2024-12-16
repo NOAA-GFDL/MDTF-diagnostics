@@ -838,6 +838,21 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     time_vals[i] = '0' + time_vals[i]
         return time_vals
 
+    def drop_attributes(self, xr_ds: xr.Dataset) -> xr.Dataset:
+        """ Drop attributes that cause conflicts with xarray dataset merge"""
+        drop_atts = ['average_T2',
+                     'time_bnds',
+                     'lat_bnds',
+                     'lon_bnds',
+                     'average_DT',
+                     'average_T1',
+                     'height',
+                     'date']
+        for att in drop_atts:
+            if xr_ds.get(att, None) is not None:
+                xr_ds = xr_ds.drop_vars(att)
+        return xr_ds
+
     def check_multichunk(self, group_df: pd.DataFrame, case_dr, log) -> pd.DataFrame:
         """Sort the files found by date, grabs the files whose 'chunk_freq' is the
         largest number where endyr-startyr modulo 'chunk_freq' is zero and throws out
@@ -864,6 +879,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         return pd.DataFrame.from_dict(group_df).reset_index()
 
     def crop_date_range(self, case_date_range: util.DateRange, xr_ds, time_coord) -> xr.Dataset:
+        xr_ds = self.drop_attributes(xr_ds)
         xr_ds = xr.decode_cf(xr_ds,
                              decode_coords=True,  # parse coords attr
                              decode_times=True,
@@ -995,6 +1011,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
 
+
     def query_catalog(self,
                       case_dict: dict,
                       data_catalog: str,
@@ -1019,15 +1036,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         cols = list(cat.df.columns.values)
         if 'date_range' not in [c.lower() for c in cols]:
             cols.append('date_range')
-
-        drop_atts = ['average_T2',
-                     'time_bnds',
-                     'lat_bnds',
-                     'lon_bnds',
-                     'average_DT',
-                     'average_T1',
-                     'height',
-                     'date']
 
         for case_name, case_d in case_dict.items():
             # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
@@ -1142,9 +1150,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             var_xr = xr.concat([var_xr, cat_subset_dict[cat_index]], var.X.name)
                         else:
                             var_xr = xr.concat([var_xr, cat_subset_dict.values[cat_index]], var.N.name)
-                for att in drop_atts:
-                    if var_xr.get(att, None) is not None:
-                        var_xr = var_xr.drop_vars(att)
+                var_xr = self.drop_attributes(var_xr)
                 # add standard_name to the variable xarray dataset if it is not defined
                 for vname in var_xr.variables:
                     if (not isinstance(var_xr.variables[vname], xr.IndexVariable)

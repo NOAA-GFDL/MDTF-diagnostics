@@ -135,6 +135,8 @@ def conversion_factor(source_unit, dest_unit):
     *source_unit*, *dest_unit* are coerced to :class:`Units` objects via
     :func:`to_cfunits`.
     """
+    if str(source_unit) == str(dest_unit):
+        return 1.0 # bypass function if the units have the same string allowing units like '0-1' to be used
     source_unit, dest_unit = to_equivalent_units(source_unit, dest_unit)
     return Units.conform(1.0, source_unit, dest_unit)
 

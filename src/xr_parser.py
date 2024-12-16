@@ -194,7 +194,7 @@ class MDTFCFAccessorMixin(object):
             if len(v) > 1 and var_name is not None:
                 ax = [c for c in v if c in itertools.chain.from_iterable(axes_obj.cf.coordinates.values())]
                 del_ax = [d for d in v if d not in itertools.chain.from_iterable(axes_obj.cf.coordinates.values())]
-                if del_ax is not None:  # remove the entries that are not in the cf.coordinates.values dict
+                if del_ax is not None and len(del_ax) > 0:  # remove the entries that are not in the cf.coordinates.values dict
                     # append entries that are in the cf.coordinates.values dict if they are missing in coords_list
                     # and dims_list
                     if del_ax[0] in coords_list:
@@ -208,14 +208,15 @@ class MDTFCFAccessorMixin(object):
 
                 if ax is not None:
                     vardict[k] = ax
-                    if ax[0] not in coords_list:
-                        _log.warning(("cf_xarray fix: %s axis %s not in dimensions "
-                                      "for %s; dropping."), k, ax[0], var_name)
-                        delete_keys.append(k)
-                    else:
-                        coords_list.remove(ax[0])
-                        if ax[0] in dims_list:
-                            dims_list.remove(ax[0])
+                    for a in ax:
+                        if a not in coords_list:
+                            _log.warning(("cf_xarray fix: %s axis %s not in dimensions "
+                                          "for %s; dropping."), k, a, var_name)
+                            delete_keys.append(k)
+                        else:
+                            coords_list.remove(a)
+                            if a in dims_list:
+                                dims_list.remove(a)
             elif len(v) == 1:
                 if v[0] not in coords_list:
                     _log.warning(("cf_xarray fix: %s axis %s not in dimensions "

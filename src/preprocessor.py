@@ -97,6 +97,36 @@ class PreprocessorFunctionBase(abc.ABC):
         pass
 
 
+class PercentTo01Function(PreprocessorFunctionBase):
+    """A PreprocessorFunction which convers the dependent variable's units and values,
+    for the specific case of percentages. ``0-1`` are not defined in the UDUNITS-2
+    library. So, this function handles the case where we have to convert from 
+    ``0-1`` to ``%``.
+    """
+    
+    _std_name_tuple = ('0-1', '%')
+    
+    def execute(self, var, ds, **kwargs):
+        var_unit = getattr(var, "units", "")
+        tv = var.translation #abbreviate
+        tv_unit = getattr(tv, "units", "")
+        if str(tv_unit) == str(var_unit):
+            return ds
+        # 0-1 to %
+        if str(tv_unit) == self._std_name_tuple[0] and str(var_unit) == self._std_name_tuple[1]:
+            ds[tv.name].attrs['units'] = '%'
+            ds[tv.name].values = ds[tv.name].values*100
+            return ds
+        # % to 0-1
+        if str(tv_unit) == self._std_name_tuple[1] and str(var_unit) == self._std_name_tuple[0]:
+            ds[tv.name].attrs['units'] = '0-1'
+            # sometimes % is [0,1] already
+            if ds[tv.name].values[:, :, 3].max() < 1.5:
+                return ds
+            else:
+                ds[tv.name].values = ds[tv.name].values/100
+                return ds
+
 class PrecipRateToFluxFunction(PreprocessorFunctionBase):
     """A PreprocessorFunction which converts the dependent variable's units, for
     the specific case of precipitation. Flux and precip rate differ by a factor
@@ -694,7 +724,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """
         # normal operation: run all functions
         return [
-            AssociatedVariablesFunction,
+            AssociatedVariablesFunction, PercentTo01Function,
             PrecipRateToFluxFunction, ConvertUnitsFunction,
             ExtractLevelFunction, RenameVariablesFunction
         ]
@@ -1004,33 +1034,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             path_regex = [re.compile(r'({})'.format(case_name))]
 
             for var in case_d.varlist.iter_vars():
-                realm_regex = var.realm + '*'
                 date_range = var.T.range
-                var_id = var.name
-                standard_name = var.standard_name
-                if var.translation.convention is not None:
-                    var_id = var.translation.name
-                    standard_name = var.translation.standard_name
-                    if any(var.translation.alternate_standard_names):
-                        standard_name = [var.translation.standard_name] + var.translation.alternate_standard_names
-                    date_range = var.translation.T.range
-                if var.is_static:
-                    date_range = None
-                    freq = "fx"
-                else:
-                    freq = var.T.frequency
-                if not isinstance(freq, str):
-                    freq = freq.format_local()
-                if freq == 'hr':
-                    freq = '1hr'
-
+                
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
-                case_d.query['frequency'] = freq
-                case_d.query['path'] = path_regex
-                case_d.query['realm'] = realm_regex
-                case_d.query['standard_name'] = standard_name
-                case_d.query['variable_id'] = var_id
+                case_d.set_query(var, path_regex) 
                 
                 # change realm key name if necessary
                 if cat.df.get('modeling_realm', None) is not None:
@@ -1039,7 +1047,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # search catalog for convention specific query object
                 var.log.info("Querying %s for variable %s for case %s.",
                              data_catalog,
-                             var_id,
+                             case_d.query['variable_id'],
                              case_name)
                 cat_subset = cat.search(**case_d.query)
                 if cat_subset.df.empty:
@@ -1078,7 +1086,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                 f"configuration file.")
                     else:
                         raise util.DataRequestError(
-                            f"Unable to find match or alternate for {var_id}"
+                            f"Unable to find match or alternate for {case_d.query['variable_id']}"
                             f" for case {case_name} in {data_catalog}")
 
                 # Get files in specified date range
@@ -1156,7 +1164,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # check that the trimmed variable data in the merged dataset matches the desired date range
                 if not var.is_static:
                     try:
-                        self.check_time_bounds(cat_dict[case_name], var.translation, freq)
+                        self.check_time_bounds(cat_dict[case_name], var.translation, var.T.frequency)
                     except LookupError:
                         var.log.error(f'Time bounds in trimmed dataset for {var_id} in case {case_name} do not match'
                                       f'requested date_range.')

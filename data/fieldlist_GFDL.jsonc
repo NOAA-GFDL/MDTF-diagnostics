@@ -163,7 +163,13 @@
       "realm": "atmos",
       "units": "1",
       "ndim": 3
-     },
+    },
+    "siconc": {
+      "standard_name": "sea_ice_area_fraction",
+      "realm": "seaIce",
+      "units": "0-1",
+      "ndim": 3
+    },
     "IWP": {
       "standard_name": "atmosphere_mass_content_of_cloud_ice",
       "long_name": "Ice water path",

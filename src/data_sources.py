@@ -64,6 +64,36 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
 
     def set_date_range(self, startdate: str, enddate: str):
         self.date_range = util.DateRange(start=startdate, end=enddate)
+    
+    def set_query_base(self, var: varlist_util.VarlistEntry, path_regex: str):
+        realm_regex = var.realm + '*'
+        date_range = var.T.range
+        var_id = var.name
+        standard_name = var.standard_name
+        if var.translation.convention is not None:
+            var_id = var.translation.name
+            standard_name = var.translation.standard_name
+            if any(var.translation.alternate_standard_names):
+                standard_name = [var.translation.standard_name] + var.translation.alternate_standard_names
+                date_range = var.translation.T.range
+        if var.is_static:
+            date_range = None
+            freq = "fx"
+        else:
+            freq = var.T.frequency
+        if not isinstance(freq, str):
+            freq = freq.format_local()
+        if freq == 'hr':
+            freq = '1hr'
+
+        # define initial query dictionary with variable settings requirements that do not change if
+        # the variable is translated
+        self.query['frequency'] = freq
+        self.query['path'] = path_regex
+        self.query['realm'] = realm_regex
+        self.query['standard_name'] = standard_name
+        self.query['variable_id'] = var_id
+
 
     def translate_varlist(self,
                           var: varlist_util.VarlistEntry,
@@ -94,7 +124,9 @@ class CMIPDataSource(DataSourceBase):
     # col_spec = sampleLocalFileDataSource_col_spec
     # varlist = diagnostic.varlist
     convention: str = "CMIP"
-
+    
+    def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
+        self.set_query_base(self, var, path_regex)
 
 @data_source.maker
 class CESMDataSource(DataSourceBase):
@@ -105,7 +137,9 @@ class CESMDataSource(DataSourceBase):
     # col_spec = sampleLocalFileDataSource_col_spec
     # varlist = diagnostic.varlist
     convention: str = "CESM"
-
+    
+    def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
+        self.set_query_base(self, var, path_regex)
 
 @data_source.maker
 class GFDLDataSource(DataSourceBase):
@@ -116,3 +150,9 @@ class GFDLDataSource(DataSourceBase):
     # col_spec = sampleLocalFileDataSource_col_spec
     # varlist = diagnostic.varlist
     convention: str = "GFDL"
+
+    def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
+        self.set_query_base(var, path_regex)
+        # this is hacky, but prevents the framework from grabbing from ice_1x1deg
+        if self.query['realm'] == 'seaIce*':
+            self.query['realm'] = 'ice'

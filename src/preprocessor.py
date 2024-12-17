@@ -110,8 +110,6 @@ class PercentConversionFunction(PreprocessorFunctionBase):
         var_unit = getattr(var, "units", "")
         tv = var.translation #abbreviate
         tv_unit = getattr(tv, "units", "")
-        if str(tv_unit) == str(var_unit):
-            return ds
         # 0-1 to %
         if str(tv_unit) == self._std_name_tuple[0] and str(var_unit) == self._std_name_tuple[1]:
             ds[tv.name].attrs['units'] = '%'
@@ -126,6 +124,8 @@ class PercentConversionFunction(PreprocessorFunctionBase):
             else:
                 ds[tv.name].values = ds[tv.name].values/100
                 return ds
+
+        return ds
 
 class PrecipRateToFluxFunction(PreprocessorFunctionBase):
     """A PreprocessorFunction which converts the dependent variable's units, for

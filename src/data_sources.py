@@ -65,7 +65,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     def set_date_range(self, startdate: str, enddate: str):
         self.date_range = util.DateRange(start=startdate, end=enddate)
     
-    def set_query_base(self, var: varlist_util.VarlistEntry, path_regex: str):
+    def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
         realm_regex = var.realm + '*'
         date_range = var.T.range
         var_id = var.name
@@ -126,7 +126,8 @@ class CMIPDataSource(DataSourceBase):
     convention: str = "CMIP"
     
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
-        self.set_query_base(var, path_regex)
+        super().set_query(var, path_regex)
+        return
 
 @data_source.maker
 class CESMDataSource(DataSourceBase):
@@ -139,7 +140,8 @@ class CESMDataSource(DataSourceBase):
     convention: str = "CESM"
     
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
-        self.set_query_base(var, path_regex)
+        super().set_query(var, path_regex)
+        return
 
 @data_source.maker
 class GFDLDataSource(DataSourceBase):
@@ -152,7 +154,8 @@ class GFDLDataSource(DataSourceBase):
     convention: str = "GFDL"
 
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
-        self.set_query_base(var, path_regex)
+        super().set_query(var, path_regex)
         # this is hacky, but prevents the framework from grabbing from ice_1x1deg
         if self.query['realm'] == 'seaIce*':
             self.query['realm'] = 'ice'
+        return

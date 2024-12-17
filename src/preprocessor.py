@@ -97,7 +97,7 @@ class PreprocessorFunctionBase(abc.ABC):
         pass
 
 
-class PercentTo01Function(PreprocessorFunctionBase):
+class PercentConversionFunction(PreprocessorFunctionBase):
     """A PreprocessorFunction which convers the dependent variable's units and values,
     for the specific case of percentages. ``0-1`` are not defined in the UDUNITS-2
     library. So, this function handles the case where we have to convert from 
@@ -724,7 +724,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """
         # normal operation: run all functions
         return [
-            AssociatedVariablesFunction, PercentTo01Function,
+            AssociatedVariablesFunction, PercentConversionFunction,
             PrecipRateToFluxFunction, ConvertUnitsFunction,
             ExtractLevelFunction, RenameVariablesFunction
         ]

@@ -27,6 +27,8 @@ dependencies:
 - cfunits=3.3.6
 - intake=0.7.0
 - intake-esm=2024.2.6
+- kerchunk=0.2.7
+- intake-esgf=2024.12.7
 - cf_xarray=0.8.4
 # additional development tools
 - jupyter_core=5.3.1
@@ -36,7 +38,6 @@ dependencies:
 - pylint=2.17.5
 - doc8=1.1.1
 - jinja2=3.1.2
-- intake-esgf=2024.12.7
 - cloud_sptheme
 - snakeviz=2.2.0
 - graphviz=2.50.0

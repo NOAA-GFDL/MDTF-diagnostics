@@ -126,6 +126,12 @@ class AbstractDMDependentVariable(abc.ABC):
         """
         pass
 
+    @property
+    @abc.abstractmethod
+    def alternate_standard_names(self):
+        """Optional list of alternate variable standard_names to query"""
+        pass
+
 
 class AbstractDMCoordinateBounds(AbstractDMDependentVariable):
     """Defines interface (set of attributes) for :class:`DMCoordinateBounds`
@@ -764,6 +770,7 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
     component: str = ""
     associated_files: str = ""
     rename_coords: bool = True
+    alternate_standard_names: list
 
     # dims: from _DMDimensionsMixin
     # scalar_coords: from _DMDimensionsMixin
@@ -860,8 +867,16 @@ class DMDependentVariable(_DMDimensionsMixin, AbstractDMDependentVariable):
         return self._realm
 
     @realm.setter
-    def realm(self, value: str):
+    def realm(self, value: str | list):
         self._realm = value
+
+    @property
+    def alternate_standard_names(self):
+        return self._alternate_standard_names
+
+    @alternate_standard_names.setter
+    def alternate_standard_names(self, value: list):
+        self._alternate_standard_names = value
 
     def add_scalar(self, ax, ax_value, **kwargs):
         """Metadata operation corresponding to taking a slice of a higher-dimensional

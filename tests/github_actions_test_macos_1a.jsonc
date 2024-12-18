@@ -1,32 +1,26 @@
 // Configuration for MDTF-diagnostics driver script self-test using the macOS github action.
-//
 // All text to the right of an unquoted "//" is a comment and ignored, as well
 // as blank lines (JSONC quasi-standard.)
 {
   "pod_list": [
-    //"temp_extremes_distshape",// needs matplotlib 3.7.3, but not avail on conda yet
-    //"tropical_pacific_sea_level",
-    "ocn_surf_flux_diag",
-    "mixed_layer_depth",
-    "seaice_suite",
-    "stc_eddy_heat_fluxes"
-     // "albedofb"
-  ],
+     //"Wheeler_Kiladis",
+     "precip_diurnal_cycle"
+     //"EOF_500hPa"
+    ],
   "case_list" : {
-    "CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231" : {
-      "model" : "synthetic",
-      "convention" : "CMIP",
-      "startdate" : "19900101",
-      "enddate" : "20091231"
+      "NCAR.Synthetic": {
+      "convention" : "CESM",
+      "startdate" : "19750101",
+      "enddate" : "19811231"
     }
   },
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
-  "DATA_CATALOG": "./tests/esm_catalog_test_macos.json",
+
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
-
+  "DATA_CATALOG": "./tests/esm_catalog_test_macos.json",
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
@@ -38,12 +32,12 @@
   "OUTPUT_DIR": "../wkdir",
 
   // Location of the Anaconda/miniconda installation to use for managing
-  // dependencies (path returned lsby running `conda info --base`.) If empty,
+  // dependencies (path returned ls by running `conda info --base`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-   //"conda_root": "/Users/runner/miniconda3",
   "conda_root": "/Users/runner/micromamba",
 
   "micromamba_exe": "/Users/runner/micromamba-bin/micromamba",
+
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left

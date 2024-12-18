@@ -7,6 +7,7 @@ import datetime
 import glob
 import io
 import shutil
+import yaml
 from src import util, verify_links
 
 import logging
@@ -264,6 +265,23 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             for f in util.find_files(self.WORK_DIR, 'model/netCDF/*.nc'):
                 os.remove(f)
 
+    def cleanup_pp_data(self):
+        """Removes nc files found in catalog if the ``save_pp_data`` data 
+        is set to false.
+
+        This is done by looping through the ``case_info.yml`` file found in each 
+        POD. If the .nc file exists, it is then deleted.
+        """
+        if not self.save_nc:
+            for f in util.find_files(self.WORK_DIR, 'case_info.yml'):
+                case_info_yml = yaml.safe_load(open(f))
+                for case in case_info_yml['CASE_LIST']:
+                    for k in case_info_yml['CASE_LIST'][case]:
+                        if k.endswith('FILE') or k.endswith('FILES'):
+                            v = case_info_yml['CASE_LIST'][case][k]
+                            if v != '' and os.path.exists(v) and v.endswith('.nc'):
+                                os.remove(v)
+
     def make_output(self, config: util.NameSpace):
         """Top-level method to make POD-specific output, post-init. Split off
         into its own method to make subclassing easier.
@@ -281,6 +299,7 @@ class HTMLPodOutputManager(HTMLSourceFileMixin):
             self.convert_pod_figures(os.path.join('model', 'PS'), 'model')
             self.convert_pod_figures(os.path.join('obs', 'PS'), 'obs')
             self.cleanup_pod_files()
+            self.cleanup_pp_data()
 
 
 class HTMLOutputManager(AbstractOutputManager,

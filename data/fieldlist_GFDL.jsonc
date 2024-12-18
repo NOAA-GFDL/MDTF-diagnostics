@@ -163,7 +163,13 @@
       "realm": "atmos",
       "units": "1",
       "ndim": 3
-     },
+    },
+    "siconc": {
+      "standard_name": "sea_ice_area_fraction",
+      "realm": "seaIce",
+      "units": "0-1",
+      "ndim": 3
+    },
     "IWP": {
       "standard_name": "atmosphere_mass_content_of_cloud_ice",
       "long_name": "Ice water path",
@@ -191,6 +197,14 @@
       "long_name":"",
       "realm": "atmos",
       "units": "kg m-2 s-1",
+      "alternate_standard_names": ["rainfall_flux"],
+      "ndim": 3
+    },
+    "rainfall_flux": {
+      "standard_name": "rainfall_flux",
+      "realm": "seaIce",
+      "units": "kg m-2 s-1",
+      "alternate_standard_names": ["precipitation_flux"],
       "ndim": 3
     },
     "prec_conv": {
@@ -214,7 +228,7 @@
       "units": "kg m-2 s-1",
       "ndim": 3
     },
-    "prw": {
+    "wvp": {
       "standard_name": "atmosphere_mass_content_of_water_vapor",
       "long_name": "Water Vapor Path",
       "realm": "atmos",

@@ -147,7 +147,11 @@ Options for workflow control
 
 * **run_pp**: (boolean) Set to *true* to run the preprocessor; default *true*
 
-* **translate_data**: (boolean) Set to *true* to perform data translation; default *true*
+* **translate_data**: (boolean) Set to *true* to perform data translation. If *false*, the preprocessor query
+  automatically uses the convention for each case in the input dataset for the query, and skips translating the
+  variable names and attributes to the POD convention. Note that this means that the precipRateToFluxConversion is not
+  applied. This option is best if you know that the input dataset has variable attributes that exactly match the
+  the POD variable attributes; default *true*
 
 * **save_ps**: (boolean) Set to *true* to have PODs save postscript figures in addition to bitmaps; default *false*
 

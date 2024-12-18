@@ -64,6 +64,7 @@ from convecTransBasic_util import generate_region_mask
 from convecTransBasic_util import convecTransBasic_calc_model
 from convecTransBasic_util import convecTransBasic_loadAnalyzedData
 from convecTransBasic_util import convecTransBasic_plot
+
 print("**************************************************")
 print("Excuting Convective Transition Basic Statistics (convecTransBasic.py)......")
 print("**************************************************")
@@ -77,8 +78,8 @@ print("**************************************************")
 print("Load user-specified binning parameters..."),
 
 # Create and read user-specified parameters
-os.system("python "+ os.environ["POD_HOME"]+ "/" + "convecTransBasic_usp_calc.py")
-with open(os.environ["WORK_DIR"]+"/" + "convecTransBasic_calc_parameters.json") as outfile:
+os.system("python " + os.environ["POD_HOME"] + "/" + "convecTransBasic_usp_calc.py")
+with open(os.environ["WORK_DIR"] + "/" + "convecTransBasic_calc_parameters.json") as outfile:
     bin_data = json.load(outfile)
 print("...Loaded!")
 
@@ -108,15 +109,15 @@ if len(bin_data["bin_output_list"]) == 0 or bin_data["BIN_ANYWAY"]:
               + ") will be saved to " + bin_data["PREPROCESSING_OUTPUT_DIR"] + "/")
 
     # Load & pre-process region mask
-    REGION=generate_region_mask(bin_data["REGION_MASK_DIR"] + "/" + bin_data["REGION_MASK_FILENAME"],
-                                bin_data["pr_list"][0], bin_data["LAT_VAR"], bin_data["LON_VAR"])
+    REGION = generate_region_mask(bin_data["REGION_MASK_DIR"] + "/" + bin_data["REGION_MASK_FILENAME"],
+                                  bin_data["pr_list"][0], bin_data["LAT_VAR"], bin_data["LON_VAR"])
 
     # Pre-process temperature (if necessary) & bin & save binned results
-    binned_output=convecTransBasic_calc_model(REGION, bin_data["args1"])
+    binned_output = convecTransBasic_calc_model(REGION, bin_data["args1"])
 
 else:  # Binned data file exists & BIN_ANYWAY=False
     print("Binned output detected..."),
-    binned_output=convecTransBasic_loadAnalyzedData(bin_data["args2"])
+    binned_output = convecTransBasic_loadAnalyzedData(bin_data["args2"])
     print("...Loaded!")
 
 # ======================================================================

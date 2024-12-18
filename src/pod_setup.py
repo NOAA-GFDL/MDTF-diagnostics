@@ -148,6 +148,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                                       value[0]) from exc
 
         def verify_runtime_reqs(runtime_reqs: dict):
+            pod_env = ""
             for k, v in runtime_reqs.items():
                 if any(v):
                     pod_env = k
@@ -172,6 +173,7 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                 pass
             else:
                 self.log.info(f"Checking {e} for {self.name} package requirements")
+                conda_root = self.pod_env_vars['CONDA_ROOT']
                 if os.path.exists(os.path.join(conda_root, "bin/conda")):
                     args = [os.path.join(conda_root, "bin/conda"),
                             'list',
@@ -297,15 +299,16 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
 
         for case_name, case_dict in runtime_config.case_list.items():
             cases[case_name].read_varlist(self, append_vars=append_vars)
-            # Translate the varlistEntries from the POD convention to the data convention if desired and the pod
-            # convention does not match the case convention
+            # Translate the varlistEntries from the POD convention to the data convention for the query if desired
             data_convention = case_dict.convention.lower()
-            if runtime_config.translate_data and pod_convention != data_convention:
-                self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
-            else:
-                data_convention = 'no_translation'
-                self.log.info(f'POD convention and data convention are both {pod_convention}. '
+            if not runtime_config.translate_data:
+                self.log.info(f'Runtime option translate_data is set to .false. '
                               f'No data translation will be performed for case {case_name}.')
+                data_convention = 'no_translation'
+            else:
+                if pod_convention != data_convention:
+                    self.log.info(f'Translating POD variables from {pod_convention} to {data_convention}')
+
             # A 'noTranslationFieldlist' will be defined for the varlistEntry translation attribute
             for v in pod_input.varlist.keys():
                 for v_entry in cases[case_name].varlist.iter_vars():

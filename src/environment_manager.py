@@ -440,7 +440,7 @@ class SubprocessRuntimePODWrapper:
             ' -b '.join([''] + reqs.get('ncl', [])),
             ' -c '.join([''] + reqs.get('Rscript', []))
         ]
-        return [''.join(command)]
+        return [''.join(command).replace('(','\(').replace(')','\)')]
 
     def runtime_exception_handler(self, exc):
         """Handler which is called if an exception is raised during the POD's

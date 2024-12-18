@@ -106,6 +106,8 @@ class Fieldlist:
                     lut_dict['entries'][k].update({'long_name': ""})
                 if 'scalar_coord_templates' in v:
                     sct_dict.update({k: v['scalar_coord_templates']})
+                if 'alternate_standard_names' not in v:
+                    lut_dict['entries'][k].update({'alternate_standard_names': list()})
             return lut_dict, sct_dict
 
         d['axes_lut'] = util.WormDict()
@@ -150,12 +152,13 @@ class Fieldlist:
         precip_vars = ['precipitation_rate', 'precipitation_flux']
         # search the lookup table for the variable with the specified standard_name
         # realm, modifier, and long_name attributes
+
         for var_name, var_dict in self.lut.items():
-            if var_dict['standard_name'] == standard_name\
+            if var_dict['standard_name'] == standard_name \
                     and var_dict['realm'] == realm\
                     and var_dict['modifier'] == modifier:
-                if not var_dict['long_name'] or var_dict['long_name'].lower() == long_name.lower():
-                    return var_name
+                # if not var_dict['long_name'] or var_dict['long_name'].lower() == long_name.lower():
+                return var_name
             else:
                 if var_dict['standard_name'] in precip_vars and standard_name in precip_vars:
                     return var_name
@@ -176,7 +179,7 @@ class Fieldlist:
         TODO: expand with more ways to uniquely identify variable (eg cell methods).
         Args:
             standard_name: variable or name of the variable
-            realm: variable realm (atmos, ocean, land, ice, etc...)
+            realm: str variable realm (atmos, ocean, land, seaIce, etc...)
             modifier:optional string to distinguish a 3-D field from a 4-D field with
             the same var_or_name value
             long_name: str (optional) long name attribute of the variable
@@ -213,8 +216,8 @@ class Fieldlist:
         convention.
 
         Args:
-            var_or_name: variable or name of the variable
-            realm: model realm of variable
+            var_or_name: str, variable or name of the variable
+            realm: str model realm of variable
             long_name: str (optional): long_name attribute of the variable
             modifier:optional string to distinguish a 3-D field from a 4-D field with
             the same var_or_name value
@@ -253,7 +256,7 @@ class Fieldlist:
         # construct convention's name for this variable on a level
         name_template = self.scalar_coord_templates[var_id][key]
         if new_coord.units.strip('').lower() == 'pa':
-            val = int(new_coord.value/100)
+            val = int(new_coord.value / 100)
         else:
             val = int(new_coord.value)
 
@@ -304,8 +307,8 @@ class Fieldlist:
                             lut_val = v.get('value')
                             if isinstance(coord.value, int) and isinstance(lut_val, str):
                                 v_int = int(float(lut_val))
-                                if v_int > coord.value and v_int/coord.value == 100 \
-                                        or v_int < coord.value and coord.value/v_int == 100 or \
+                                if v_int > coord.value and v_int / coord.value == 100 \
+                                        or v_int < coord.value and coord.value / v_int == 100 or \
                                         v_int == coord.value:
                                     new_coord = v
                                     break
@@ -331,13 +334,16 @@ class Fieldlist:
                                             new_coord = v
                                             break
         else:
-            new_coord = [lut1.values()][0]
+            new_coord = [lut1[k] for k in lut1.keys()][0]  # should return ordered dict
         if hasattr(coord, 'is_scalar') and coord.is_scalar:
             coord_name = ""
-            if new_coord.get('name', None):
+            if hasattr(new_coord, 'name'):
                 coord_name = new_coord['name']
-            elif new_coord.get('out_name', None):
+            elif hasattr(new_coord, 'out_name'):
                 coord_name = new_coord['out_name']
+            else: # TODO add more robust check for key name == 'plev' (or whatever the coordinate name in the lut should be based on fieldlist)
+                coord_name = [k for k in lut1.keys()][0]
+
             coord_copy = copy.deepcopy(new_coord)
             coord_copy['value'] = units.convert_scalar_coord(coord,
                                                              coord_copy['units'],
@@ -373,7 +379,6 @@ class Fieldlist:
             from_convention_tl = VariableTranslator().get_convention(from_convention)
             # Fieldlist entry for POD variable
             long_name = self.get_variable_long_name(var, has_scalar_coords)
-
             fl_entries = from_convention_tl.from_CF(var.standard_name,
                                                     var.realm,
                                                     var.modifier,
@@ -430,7 +435,7 @@ class Fieldlist:
         )
 
 
-class NoTranslationFieldlist(metaclass=util.Singleton):
+class NoTranslationFieldlist:
     """Class which partially implements the :class:`Fieldlist` interface but
     does no variable translation. :class:`~diagnostic.VarlistEntry` objects from
     the POD are passed through to create :class:`TranslatedVarlistEntry` objects.
@@ -471,30 +476,49 @@ class NoTranslationFieldlist(metaclass=util.Singleton):
         # should never get here - not called externally
         raise NotImplementedError
 
-    def translate(self, var, from_convention: str):
+    def translate(self, var, data_convention: str):
         """Returns :class:`TranslatedVarlistEntry` instance, populated with
         contents of input :class:`~diagnostic.VarlistEntry` instance.
 
-        .. note::
+         note::
            We return a copy of the :class:`~diagnostic.VarlistEntry` because
            logic in :class:`~xr_parser.DefaultDatasetParser` alters the translation
            based on the file's actual contents.
         """
         coords_copy = copy.deepcopy(var.dims) + copy.deepcopy(var.scalar_coords)
-        # TODO: coerce_to_dataclass runs into recursion limit on var; fix that
+        fieldlist_obj = VariableTranslator().get_convention(data_convention)
+        fieldlist_entry = dict()
+        var_id = ""
+        for variable_id, variable_id_dict in fieldlist_obj.lut.items():
+            if variable_id_dict.get('standard_name', None) == var.standard_name \
+                or var.standard_name in variable_id_dict.get('alternate_standard_names'):
+                    if variable_id_dict.get('realm', None) == var.realm \
+                        and variable_id_dict.get('units', None) == var.units.units:
+                            fieldlist_entry = variable_id_dict
+                            var_id = variable_id
+                    break
+        if len(fieldlist_entry.keys()) < 1:
+            var.log.error(f'No {data_convention} fieldlist entry found for variable {var.name}')
+            return None
+        alt_standard_names = fieldlist_entry.get('alternate_standard_names')
         return TranslatedVarlistEntry(
-            name=var.name,
+            name=var_id,
             standard_name=var.standard_name,
             units=var.units,
-            convention=_NO_TRANSLATION_CONVENTION,
+            convention=var.convention,
             coords=coords_copy,
             modifier=var.modifier,
+            alternate_standard_names=alt_standard_names,
+            realm=var.realm,
             log=var.log
         )
 
 
 class VariableTranslator(metaclass=util.Singleton):
-    """:class:`~util.Singleton` containing information for different variable
+    """The use of class:`~util.Singleton` means that the VariableTranslator is not a
+    base class. Instead, it is a metaclass that needs to be created only once (done
+    in the mdtf_framework.py driver script to hold all the information from the fieldlist
+    tables that are later shared. Instead, the SUBCLASSES of the VariableTranslator are customized information for different variable
     naming conventions. These are defined in the ``data/fieldlist_*.jsonc``
     files.
     """

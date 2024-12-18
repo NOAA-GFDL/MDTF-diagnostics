@@ -192,9 +192,6 @@ environments in your conda installation. The installation process should finish 
 
 Substitute the paths identified above for <*CONDA_ROOT*> and <*CONDA_ENV_DIR*>.
 
-If the ``--env_dir`` flag is omitted, the environment files will be installed in your system's conda's default
-location (usually <*CONDA_ROOT*>/envs).
-
 Install all the package's conda environments with micromamba by running
 
     .. code-block:: console

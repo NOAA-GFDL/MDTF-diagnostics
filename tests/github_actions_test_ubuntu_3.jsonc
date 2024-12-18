@@ -3,19 +3,21 @@
 // as blank lines (JSONC quasi-standard.)
 {
   "pod_list": [
-     //"convective_transition_diag",
-     //"Wheeler_Kiladis",
-     //"MJO_suite",
-     "MJO_teleconnection",
-     "precip_diurnal_cycle"
-     //"EOF_500hPa"
-    ],
-   "case_list" : {
-      "NCAR.Synthetic": {
-      "convention" : "CESM",
-      "startdate" : "19750101",
-      "enddate" : "19811231"
-     }
+    //"temp_extremes_distshape",// needs matplotlib 3.7.3, but not avail on conda yet
+    //"tropical_pacific_sea_level",
+    "ocn_surf_flux_diag"
+    //"mixed_layer_depth",
+    //"seaice_suite",
+    //"stc_eddy_heat_fluxes"
+     // "albedofb"
+  ],
+  "case_list" : {
+    "CMIP_Synthetic_r1i1p1f1_gr1_19900101-20091231" : {
+      "model" : "synthetic",
+      "convention" : "CMIP",
+      "startdate" : "19900101",
+      "enddate" : "20091231"
+      }
   },
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
@@ -23,6 +25,7 @@
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
+  // Full or relative path to model data ESM-intake catalog header file
   "DATA_CATALOG": "./tests/esm_catalog_test_ubuntu.json",
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
@@ -46,8 +49,7 @@
   // blank, the framework will look for its environments in the system default
   // location.
   "conda_env_root": "/home/runner/micromamba/envs",
-
-    // SETTINGS ------------------------------------------------------------------
+  // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script
   // can be set here, in the form "flag name": "desired setting".
 

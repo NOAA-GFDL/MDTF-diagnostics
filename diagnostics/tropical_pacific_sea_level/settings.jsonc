@@ -68,7 +68,6 @@
         "standard_name": "cell_area",
         "realm": "ocean",
         "units": "m2",
-        "modifier" : "ocean_realm",
         "dimensions" : ["lat", "lon"]
         }
   }

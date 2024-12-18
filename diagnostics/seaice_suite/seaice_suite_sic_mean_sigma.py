@@ -91,7 +91,7 @@ def readindata(file, varname='siconc', firstyr='1979', lastyr='2014'):
 
 
 # 1) Loading model data files:
-input_file = "{DATADIR}/mon/{CASENAME}.{siconc_var}.mon.nc".format(**os.environ)
+input_file = os.environ['SICONC_FILE']
 obsoutput_dir = "{WORK_DIR}/obs/".format(**os.environ)
 modoutput_dir = "{WORK_DIR}/model/".format(**os.environ)
 figures_dir = "{WORK_DIR}/model/".format(**os.environ)

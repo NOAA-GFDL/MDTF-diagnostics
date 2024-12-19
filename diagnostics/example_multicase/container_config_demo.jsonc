@@ -75,7 +75,7 @@
   "conda_env_root": "/opt/conda/envs",
 
   // Location of the micromamba executable. Required if using micromamba
-  "micromamba_exe": "/bin/micromaba",
+  "micromamba_exe": "/bin/micromamba",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)

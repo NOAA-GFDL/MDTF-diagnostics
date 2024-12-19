@@ -23,9 +23,11 @@
   // Run each ensemble on the example POD.
   // Add other PODs that work on ensemble datasets to the pod_list as needed
   "pod_list" : [
+      //"example"
      "example_multicase"
    ],
    // Each case corresponds to a different simulation/output dataset
+   // startdate, enddate: either YYYY-MM-DD, YYYYMMDD:HHMMSS, or YYYY-MM-DD:HHMMSS
    "case_list":
     {
       "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231":
@@ -34,7 +36,8 @@
           "convention": "CMIP",
           "startdate": "19800101",
           "enddate": "19841231"
-        },
+        }
+      ,
       "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231":
         {
           "model": "test",
@@ -43,40 +46,36 @@
           "enddate": "19891231"
         }
     },
-
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
   // Full or relative path to model data ESM-intake catalog header file
-  "DATA_CATALOG": "../diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
 
-  // Backwards compatibility
-  "MODEL_DATA_ROOT": "../inputdata/mdtf_test_data",
+  "DATA_CATALOG": "/proj/MDTF-diagnostics/diagnostics/example_multicase/container_cat.json",
 
   // Parent directory containing observational data used by individual PODs.
   "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Working directory.
-  "WORK_DIR": "../wkdir",
+  "WORK_DIR": "/proj/wkdir",
 
   // Directory to write output. The results of each run of the framework will be
   // put in a subdirectory of this directory. Defaults to WORKING_DIR if blank.
-  "OUTPUT_DIR": "../wkdir",
+  "OUTPUT_DIR": "/proj/wkdir",
 
   // Location of the Anaconda/miniconda or micromamba installation to use for managing
-  // dependencies (path returned by running `[conda | micromamba] info`.) If empty,
-  // framework will attempt to determine location of system's conda installation.
-  "conda_root": "/net/jml/miniconda3",
+  // dependencies (path returned by running `conda info --base` or `micromamba info`.)
+  "conda_root": "/opt/conda",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in conda_root/envs
-  "conda_env_root": "/net/jml/miniconda3/envs",
+  "conda_env_root": "/opt/conda/envs",
 
-  // Path to micromamba executable if using micromamba
-  "micromamba_exe": "",
+  // Location of the micromamba executable. Required if using micromamba
+  "micromamba_exe": "/bin/micromaba",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)
@@ -85,10 +84,8 @@
   // Settings affecting what output is generated:
   // Set to true to run the preprocessor; default true:
   "run_pp": true,
-
   // Set to true to perform data translation; default false:
   "translate_data": true,
-
   // Set to true to have PODs save postscript figures in addition to bitmaps.
   "save_ps": false,
 
@@ -108,7 +105,13 @@
   // Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
   // under a unique name.
   "overwrite": false,
+
   // List with custom preprocessing script(s) to run on data
   // Place these scripts in the user_scripts directory of your copy of the MDTF-diagnostics repository
-  "user_pp_scripts" : []
+  "user_pp_scripts" : [],
+
+  // Settings used in debugging:
+
+  // Log verbosity level.
+  "verbose": 1
 }

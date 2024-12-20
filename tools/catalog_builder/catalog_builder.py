@@ -386,6 +386,7 @@ class CatalogBase(object):
         self.variable_col_name = "variable_id"
         self.path_col_name = "path"
         self.cb = None
+        self.file_parse_method = ""
 
     def cat_builder(self, data_paths: list,
                     exclude_patterns=None,
@@ -405,6 +406,14 @@ class CatalogBase(object):
                           # should be equal to # threads you are using
                           extension='.nc' # extension of target file
                           )
+
+    def call_build(self, file_parse_method=None):
+        if file_parse_method is None:
+            file_parse_method = self.file_parse_method
+        # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cmip6.py
+        # for more parsing methods
+        self.cb = self.cb.build(parsing_func=file_parse_method)
+        print('Build complete')
 
     def call_save(self, output_dir: str,
                   output_filename: str
@@ -434,14 +443,7 @@ class CatalogCMIP(CatalogBase):
 
     def __init__(self):
         super().__init__()
-
-    def call_build(self, file_parse_method=None):
-        if file_parse_method is None:
-            file_parse_method = parse_cmip6
-        # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cmip6.py
-        # for more parsing methods
-        self.cb = self.cb.build(parsing_func=file_parse_method)
-        print('Build complete')
+        self.file_parse_method = parse_cmip6
 
 
 @catalog_class.maker
@@ -458,15 +460,7 @@ class CatalogGFDL(CatalogBase):
             'member_id',
             'realm'
         ]
-    def call_build(self,
-                   file_parse_method=None):
-
-        if file_parse_method is None:
-            file_parse_method = parse_gfdl_pp_ts
-        # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cmip6.py
-        # for more parsing methods
-        self.cb = self.cb.build(parsing_func=file_parse_method)
-        print('Build complete')
+        self.file_parse_method = parse_gfdl_pp_ts
 
 
 @catalog_class.maker
@@ -477,28 +471,7 @@ class CatalogCESM(CatalogBase):
     """
     def __init__(self):
         super().__init__()
-        self.groupby_attrs = [
-            'component',
-            'stream',
-            'case',
-            'frequency'
-        ]
-
-        self.xarray_aggregations = [
-            {'type': 'union', 'attribute_name': 'variable_id'},
-            {
-                'type': 'join_existing',
-                'attribute_name': 'date',
-                'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'}
-            }
-        ]
-
-    def call_build(self, file_parse_method=None):
-        if file_parse_method is None:
-            file_parse_method = parse_cesm_timeseries
-        # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cesm.py
-        # for more parsing methods
-        self.cb = self.cb.build(parsing_func=file_parse_method)
+        self.file_parse_method = parse_cesm_timeseries
 
 
 def load_config(config):

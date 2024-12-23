@@ -140,6 +140,22 @@ catalog_info = dict()
 for k in catalog_keys:
     catalog_info[k] = ""
 
+
+def parse_nc_file(file_path: pathlib.Path, catalog_dict: dict) -> dict:
+    # call to xr.open_dataset required by ecgtools.builder.Builder
+    with xr.open_dataset(file_path, chunks={}, decode_times=False) as ds:
+        variable_list = [var for var in ds if 'standard_name' in ds[var].attrs or 'long_name' in ds[var].attrs]
+        for var in variable_list:
+            for attr in catalog_keys:
+                if attr in ds[var].attrs:
+                    catalog_info.update({attr: ds[var].attrs[attr]})
+        if len(ds[var].attrs['long_name']) == 0 and len(ds[var].attrs['long_name']) == 0:
+            print('Asset variable does not contain a standard_name or long_name attribute')
+            exit(1)
+
+        return catalog_info
+
+
 # custom parser for GFDL am5 data that uses fieldlist metadata and the DRS to populate
 # required catalog fields
 def parse_gfdl_am5_data(file_name: str):
@@ -228,31 +244,64 @@ def parse_gfdl_pp_ts(file_name: str):
     elif 'monthly' in file_freq:
         catalog_info.update({"frequency": "mon"})
     try:
-        # call to xr.open_dataset required by ecgtoos.builder.Builder
-        with xr.open_dataset(file, chunks={}, decode_times=False) as ds:
-            variable_list = [var for var in ds if 'standard_name' in ds[var].attrs or 'long_name' in ds[var].attrs]
-            if variable_id not in variable_list:
-                print(f'Asset variable {variable_id} not found in {file}')
-                exit(1)
-            if 'standard_name' in ds[variable_id].attrs:
-                standard_name = ds[variable_id].attrs['standard_name']
-                standard_name.replace("", "_")
-                catalog_info.update({"standard_name": ds[variable_id].attrs['standard_name']})
-            if 'long_name' in ds[variable_id].attrs:
-                catalog_info.update({"long_name": ds[variable_id].attrs['long_name']})
-            if len(ds[variable_id].attrs['long_name']) == 0 and len(standard_name) == 0:
-                print('Asset variable does not contain a standard_name or long_name attribute')
-                exit(1)
+       # populate information from file metadata
+       parse_nc_file(file, catalog_info)
+    except Exception as exc:
+        print(exc)
+        return {INVALID_ASSET: file, TRACEBACK: traceback.format_exc()}
 
-            if 'cell_methods' in ds[variable_id].attrs:
-                catalog_info.update({"cell_methods": ds[variable_id].attrs['cell_methods']})
-            if 'cell_measures' in ds[variable_id].attrs:
-                catalog_info.update({"cell_measures": ds[variable_id].attrs['cell_measures']})
+# custom parser for GFDL am5 data that uses fieldlist metadata and the DRS to populate
+# required catalog fields
 
-            catalog_info.update({"units": [variable_id].attrs['units']})
+def parse_cesm(file_name: str):
+    file = pathlib.Path(file_name)
 
-            return catalog_info
+    num_dir_parts = len(file.parts)  # file name index = num_parts 1
+    # isolate file from rest of path
+    stem = file.stem
+    # split the file name into components based on
+    # assume am5 file name format is {realm}.{time_range}.[variable_id}.nc
+    split = stem.split('.')
+    num_file_parts = len(split)
+    catalog_info.update({"realm": split[0]})
+    catalog_info.update({"time_range": split[1]})
+    catalog_info.update({"variable_id": split[2]})
+    catalog_info.update({"activity_id": "CESM"})
+    catalog_info.update({"institution_id": "NCAR"})
+    file_freq = file.parts[num_dir_parts - 3]
 
+    for f in freq_opts:
+        if f in file_freq:
+            catalog_info.update({"frequency": f})
+            break
+    if 'daily' in file_freq:
+        catalog_info.update({"frequency": "day"})
+    elif 'monthly' in file_freq:
+        catalog_info.update({"frequency": "mon"})
+
+    # read metadata from the appropriate fieldlist
+    cesm_fieldlist = os.path.join(ROOT_DIR, 'data/fieldlist_CESM.jsonc')
+    try:
+        cesm_info = read_json(cesm_fieldlist, log=_log)
+    except IOError:
+        print("Unable to open file", cesm_fieldlist)
+        sys.exit(1)
+
+    if hasattr(cesm_info['variables'], catalog_info['variable_id']):
+        var_metadata = cesm_info['variables'].get(catalog_info['variable_id'])
+    else:
+        raise KeyError(f'{catalog_info['variable_id']} not found in {cesm_fieldlist}')
+
+    if hasattr(var_metadata, 'standard_name'):
+        catalog_info.update({'standard_name': var_metadata.standard_name})
+    if hasattr(var_metadata, 'long_name'):
+        catalog_info.update({'long_name': var_metadata.long_name})
+    if hasattr(var_metadata, 'units'):
+        catalog_info.update({'units': var_metadata.units})
+
+    try:
+        # populate information from file metadata
+        parse_nc_file(file, catalog_info)
     except Exception as exc:
         print(exc)
         return {INVALID_ASSET: file, TRACEBACK: traceback.format_exc()}

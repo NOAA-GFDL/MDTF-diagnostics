@@ -7,8 +7,11 @@ import sys
 import json
 import logging
 import collections
+
+from dask.array.core import chunks_from_arrays
 from ecgtools.builder import INVALID_ASSET, TRACEBACK
 
+from src.cmip6 import variant_label_regex
 
 # Define a log object for debugging
 _log = logging.getLogger(__name__)
@@ -25,6 +28,30 @@ freq_opts = ['mon',
              'annual',
              'year']
 
+catalog_keys = [
+                'activity_id',
+                'assoc_files',
+                'institution_id',
+                'member_id',
+                'realm',
+                'variable_id',
+                'table_id',
+                'source_id',
+                'source_type',
+                'cell_methods',
+                'cell_measures',
+                'experiment_id',
+                'variant_label',
+                'grid_label',
+                'units',
+                'time_range',
+                'chunk_freq',
+                'standard_name',
+                'long_name',
+                'frequency',
+                'file_name',
+                'path'
+            ]
 
 def strip_comments(str_: str, delimiter=None):
     """ Remove comments from *str_*. Comments are taken to start with an
@@ -109,6 +136,10 @@ def read_json(file_path: str, log=_log) -> dict:
     return parse_json(str_)
 
 
+catalog_info = dict()
+for k in catalog_keys:
+    catalog_info[k] = ""
+
 # custom parser for GFDL am5 data that uses fieldlist metadata and the DRS to populate
 # required catalog fields
 def parse_gfdl_am5_data(file_name: str):
@@ -122,41 +153,25 @@ def parse_gfdl_am5_data(file_name: str):
     # assume am5 file name format is {realm}.{time_range}.[variable_id}.nc
     split = stem.split('.')
     num_file_parts = len(split)
-    realm = split[0]
-    cell_methods = ""
-    cell_measures = ""
-    time_range = split[1]
-    start_time = time_range.split('-')[0]
-    end_time = time_range.split('-')[1]
-    variable_id = split[2]
-    source_type = ""
-    member_id = ""
-    experiment_id = ""
-    source_id = ""
-    chunk_freq = file.parts[num_dir_parts - 2]  # e.g, 1yr, 5yr
-    variant_label = ""
-    grid_label = ""
-    table_id = ""
-    assoc_files = ""
-    activity_id = "GFDL"
-    institution_id = ""
-    long_name = ""
-    standard_name = ""
-    units = ""
-    output_frequency = ""
+    catalog_info.update({"realm": split[0]})
+    catalog_info.update({"time_range": split[1]})
+    catalog_info.update({"variable_id": split[2]})
+    catalog_info.update({"chunk_freq": file.parts[num_dir_parts - 2]})
+    catalog_info.update({"activity_id": "GFDL"})
+    catalog_info.update({"institution_id": "GFDL"})
     file_freq = file.parts[num_dir_parts - 3]
 
     for f in freq_opts:
         if f in file_freq:
-            output_frequency = f
+            catalog_info.update({"frequency": f})
             break
-    if 'daily' in output_frequency:
-        output_frequency = 'day'
-    elif 'monthly' in output_frequency:
-        output_frequency = 'mon'
+    if 'daily' in file_freq:
+        catalog_info.update({"frequency": "day"})
+    elif 'monthly' in file_freq:
+        catalog_info.update({"frequency": "mon"})
 
         # read metadata from the appropriate fieldlist
-    if 'cmip' in realm.lower():
+    if 'cmip' in catalog_info['realm'].lower():
         gfdl_fieldlist = os.path.join(ROOT_DIR, 'data/fieldlist_CMIP.jsonc')
     else:
         gfdl_fieldlist = os.path.join(ROOT_DIR, 'data/fieldlist_GFDL.jsonc')
@@ -166,51 +181,19 @@ def parse_gfdl_am5_data(file_name: str):
         print("Unable to open file", gfdl_fieldlist)
         sys.exit(1)
 
-    if hasattr(gfdl_info['variables'], variable_id):
-        var_metadata = gfdl_info['variables'].get(variable_id)
+    if hasattr(gfdl_info['variables'], catalog_info['variable_id']):
+        var_metadata = gfdl_info['variables'].get(catalog_info['variable_id'])
     else:
-        raise KeyError(f'{variable_id} not found in {gfdl_fieldlist}')
+        raise KeyError(f'{catalog_info['variable_id']} not found in {gfdl_fieldlist}')
 
     if hasattr(var_metadata, 'standard_name'):
-        standard_name = var_metadata.standard_name
+        catalog_info.update({'standard_name': var_metadata.standard_name})
     if hasattr(var_metadata, 'long_name'):
-        long_name = var_metadata.long_name
+        catalog_info.update({'long_name': var_metadata.long_name})
     if hasattr(var_metadata, 'units'):
-        units = var_metadata.units
+        catalog_info.update({'units': var_metadata.units})
 
-    try:
-        info = {
-            'activity_id': activity_id,
-            'assoc_files': assoc_files,
-            'institution_id': institution_id,
-            'member_id': member_id,
-            'realm': realm,
-            'variable_id': variable_id,
-            'table_id': table_id,
-            'source_id': source_id,
-            'source_type': source_type,
-            'cell_methods': cell_methods,
-            'cell_measures': cell_measures,
-            'experiment_id': experiment_id,
-            'variant_label': variant_label,
-            'grid_label': grid_label,
-            'units': units,
-            'time_range': time_range,
-            'start_time': start_time,
-            'end_time': end_time,
-            'chunk_freq': chunk_freq,
-            'standard_name': standard_name,
-            'long_name': long_name,
-            'frequency': output_frequency,
-            'file_name': stem,
-            'path': str(file)
-        }
-
-        return info
-
-    except Exception as exc:
-        print(exc)
-        return {INVALID_ASSET: file, TRACEBACK: traceback.format_exc()}
+    return catalog_info
 
 
 # custom parser for pp data stored on GFDL archive filesystem
@@ -226,35 +209,24 @@ def parse_gfdl_pp_ts(file_name: str):
     # split the file name into components based on _
     split = stem.split('.')
     realm = split[0]
-    cell_methods = ""
-    cell_measures = ""
     time_range = split[1]
-    start_time = time_range.split('-')[0]
-    end_time = time_range.split('-')[1]
     variable_id = split[2]
-    source_type = ""
-    member_id = ""
-    experiment_id = ""
-    source_id = ""
     chunk_freq = file.parts[num_parts - 2]  # e.g, 1yr, 5yr
-    variant_label = ""
-    grid_label = ""
-    table_id = ""
-    assoc_files = ""
-    activity_id = "GFDL"
-    institution_id = ""
 
-    output_frequency = ""
+    catalog_info.update({"variable_id": variable_id})
+    catalog_info.update({"chunk_freq": chunk_freq})
+    catalog_info.update({"realm": realm})
+    catalog_info.update({"time_range": time_range})
+
     file_freq = file.parts[num_parts - 3]
     for f in freq_opts:
         if f in file_freq:
-            output_frequency = f
+            catalog_info.update({"frequency": f})
             break
-    if 'daily' in output_frequency:
-        output_frequency = 'day'
-    elif 'monthly' in output_frequency:
-        output_frequency = 'mon'
-
+    if 'daily' in file_freq:
+        catalog_info.update({"frequency": "day"})
+    elif 'monthly' in file_freq:
+        catalog_info.update({"frequency": "mon"})
     try:
         # call to xr.open_dataset required by ecgtoos.builder.Builder
         with xr.open_dataset(file, chunks={}, decode_times=False) as ds:
@@ -262,51 +234,24 @@ def parse_gfdl_pp_ts(file_name: str):
             if variable_id not in variable_list:
                 print(f'Asset variable {variable_id} not found in {file}')
                 exit(1)
-            standard_name = ""
-            long_name = ""
             if 'standard_name' in ds[variable_id].attrs:
                 standard_name = ds[variable_id].attrs['standard_name']
                 standard_name.replace("", "_")
+                catalog_info.update({"standard_name": ds[variable_id].attrs['standard_name']})
             if 'long_name' in ds[variable_id].attrs:
-                long_name = ds[variable_id].attrs['long_name']
-            if len(long_name) == 0 and len(standard_name) == 0:
+                catalog_info.update({"long_name": ds[variable_id].attrs['long_name']})
+            if len(ds[variable_id].attrs['long_name']) == 0 and len(standard_name) == 0:
                 print('Asset variable does not contain a standard_name or long_name attribute')
                 exit(1)
 
             if 'cell_methods' in ds[variable_id].attrs:
-                cell_methods = ds[variable_id].attrs['cell_methods']
+                catalog_info.update({"cell_methods": ds[variable_id].attrs['cell_methods']})
             if 'cell_measures' in ds[variable_id].attrs:
-                cell_measures = ds[variable_id].attrs['cell_measures']
+                catalog_info.update({"cell_measures": ds[variable_id].attrs['cell_measures']})
 
-            units = ds[variable_id].attrs['units']
-            info = {
-                'activity_id': activity_id,
-                'assoc_files': assoc_files,
-                'institution_id': institution_id,
-                'member_id': member_id,
-                'realm': realm,
-                'variable_id': variable_id,
-                'table_id': table_id,
-                'source_id': source_id,
-                'source_type': source_type,
-                'cell_methods': cell_methods,
-                'cell_measures': cell_measures,
-                'experiment_id': experiment_id,
-                'variant_label': variant_label,
-                'grid_label': grid_label,
-                'units': units,
-                'time_range': time_range,
-                'start_time': start_time,
-                'end_time': end_time,
-                'chunk_freq': chunk_freq,
-                'standard_name': standard_name,
-                'long_name': long_name,
-                'frequency': output_frequency,
-                'file_name': stem,
-                'path': str(file)
-            }
+            catalog_info.update({"units": [variable_id].attrs['units']})
 
-            return info
+            return catalog_info
 
     except Exception as exc:
         print(exc)

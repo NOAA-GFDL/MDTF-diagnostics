@@ -108,6 +108,7 @@ class CatalogBase(object):
     def call_build(self, file_parse_method=None):
         if file_parse_method is None:
             file_parse_method = self.file_parse_method
+        print(file_parse_method)
         # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cmip6.py
         # for more parsing methods
         self.cb = self.cb.build(parsing_func=file_parse_method)
@@ -169,7 +170,15 @@ class CatalogCESM(CatalogBase):
     """
     def __init__(self):
         super().__init__()
-        self.file_parse_method = parse_cesm_timeseries
+        self.groupby_attrs = [
+            'activity_id',
+            'institution_id',
+            'experiment_id',
+            'frequency',
+            'member_id',
+            'realm'
+        ]
+        self.file_parse_method = parsers.parse_cesm
 
 
 def load_config(config):
@@ -188,6 +197,7 @@ def main(config: str):
     conf = load_config(config)
     for p in conf['data_root_dirs']:
         try:
+            print(p)
             os.path.isdir(p)
         except FileNotFoundError:
             print("{p} not found. Check data_root_dirs for typos.")
@@ -225,7 +235,7 @@ def main(config: str):
 
     print("Time to build catalog:", timedelta(seconds=end_time - start_time))
     # save the catalog
-    print('Saving catalog to', conf['output_dir'],'/',conf['output_filename'] + ".csv")
+    print('Saving catalog to',conf['output_dir'],'/',conf['output_filename'] + ".csv")
 
     cat_obj.call_save(output_dir=conf['output_dir'],
                       output_filename=conf['output_filename']

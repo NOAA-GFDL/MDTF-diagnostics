@@ -7,6 +7,8 @@ import sys
 import json
 import logging
 import collections
+import netCDF4 as nc
+import cftime
 
 from dask.array.core import chunks_from_arrays
 from ecgtools.builder import INVALID_ASSET, TRACEBACK
@@ -71,7 +73,7 @@ def strip_comments(str_: str, delimiter=None):
         # handle delimiters midway through a line:
         # If delimiter appears quoted in a string, don't want to treat it as
         # a comment. So for each occurrence of delimiter, count number of
-        # "s to its left and only truncate when that's an even number.
+        # 's to its left and only truncate when that's an even number.
         # First we get rid of -escaped single "s.
         replaced_line = lines[i].replace('\\\"', escaped_quote_placeholder)
         line_parts = replaced_line.split(delimiter)
@@ -137,12 +139,25 @@ def read_json(file_path: str, log=_log) -> dict:
 
 def parse_nc_file(file_path: pathlib.Path, catalog_info: dict) -> dict:
     # call to xr.open_dataset required by ecgtools.builder.Builder
-    exclude_vars = ('time', 'time_bnds', 'date')
+    exclude_vars = ('time', 'time_bnds', 'date', 'hyam', 'hybm')
     with xr.open_dataset(file_path, chunks={}, decode_times=False, engine="netcdf4") as ds:
         variable_list = [var for var in ds if 'standard_name' in ds[var].attrs
                          or 'long_name' in ds[var].attrs and
                          var not in ds.coords and
-                         var.lower() not in exclude_vars]
+                         var not in exclude_vars]
+        # append time range
+        if 'time' in ds.coords:
+            time_var = ds.coords['time']
+            calendar = None
+            if 'calendar' in time_var.attrs:
+                calendar = time_var.attrs['calendar']
+                if calendar == 'no_leap':
+                    calendar = 'noleap'
+            start_time = cftime.num2date(time_var.values[0], time_var.attrs['units'], calendar=calendar)
+            end_time = cftime.num2date(time_var.values[-1], time_var.attrs['units'])
+            time_range = start_time.strftime("%Y%m%d:%H%M%S") + '-' + end_time.strftime("%Y%m%d:%H%M%S")
+            catalog_info.update({'time_range': time_range})
+
         for var in variable_list:
             if len(ds[var].attrs['long_name']) == 0 and len(ds[var].attrs['long_name']) == 0:
                 print('Asset variable does not contain a standard_name or long_name attribute')
@@ -155,7 +170,7 @@ def parse_nc_file(file_path: pathlib.Path, catalog_info: dict) -> dict:
 
         return catalog_info
 
-def setup_catalog() -> dict():
+def setup_catalog() -> dict:
     catalog_info = dict()
     for k in catalog_keys:
         catalog_info[k] = ""
@@ -270,13 +285,7 @@ def parse_cesm(file_name: str):
     num_dir_parts = len(file.parts)  # file name index = num_parts 1
     # isolate file from rest of path
     stem = file.stem
-    # split the file name into components based on
-    # assume am5 file name format is {realm}.{time_range}.[variable_id}.nc
-    split = stem.split('.')
-    for s in split:
-        if any(freq_opts) == s:
-            catalog_info.update({"frequency": s})
-            break
+    # split the file name into components
     catalog_info.update({"activity_id": "CESM"})
     catalog_info.update({"institution_id": "NCAR"})
     try:
@@ -293,9 +302,16 @@ def parse_cesm(file_name: str):
         print("Unable to open file", cesm_fieldlist)
         sys.exit(1)
 
-    if new_catalog['standard_name'] == "" and hasattr(cesm_info['variables'], new_catalog['variable_id']):
-        var_metadata = cesm_info['variables'].get(new_catalog['variable_id'])
-        if hasattr(var_metadata, 'standard_name') :
-            new_catalog.update({'standard_name': var_metadata.standard_name})
-
+    units = new_catalog.get('units')
+    new_catalog.update({'units': units.replace('/s',' s-1').replace('/m2', ' m-2')})
+    var_metadata = cesm_info['variables'].get(new_catalog['variable_id'], None)
+    if var_metadata is not None:
+        if var_metadata.get('standard_name', None) is not None:
+            new_catalog.update({'standard_name': var_metadata['standard_name']})
+        if var_metadata.get('realm', None) is not None :
+            new_catalog.update({'realm': var_metadata['realm']})
+    for p in file.parts:
+        if p in freq_opts:
+            new_catalog.update({"frequency": p})
+            break
     return new_catalog

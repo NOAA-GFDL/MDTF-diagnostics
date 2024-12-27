@@ -100,9 +100,8 @@ class CatalogBase(object):
                           depth=dir_depth,
                           exclude_patterns=exclude_patterns,  # Exclude the following directories
                           include_patterns=include_patterns,
-                          joblib_parallel_kwargs={'n_jobs': nthreads},  # Number of jobs to execute -
+                          joblib_parallel_kwargs={'n_jobs': nthreads}  # Number of jobs to execute -
                           # should be equal to # threads you are using
-                          extension='.nc' # extension of target file
                           )
 
     def call_build(self, file_parse_method=None):

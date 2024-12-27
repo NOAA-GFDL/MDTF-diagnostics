@@ -625,14 +625,14 @@
       "ndim": 3
     },
     "zg500": {
-      "standard_name": "",
+      "standard_name": "geopotential_height",
       "long_name": "Geopotential Height at 500 hPa",
       "realm": "atmos",
       "units": "m",
       "ndim": 3
     },
     "zg": {
-      "standard_name": "",
+      "standard_name": "geopotential_heihgt",
       "long_name": "Geopotential Height",
       "realm": "atmos",
       "units": "m",

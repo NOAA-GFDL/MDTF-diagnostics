@@ -107,7 +107,6 @@ class CatalogBase(object):
     def call_build(self, file_parse_method=None):
         if file_parse_method is None:
             file_parse_method = self.file_parse_method
-        print(file_parse_method)
         # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cmip6.py
         # for more parsing methods
         self.cb = self.cb.build(parsing_func=file_parse_method)
@@ -196,7 +195,6 @@ def main(config: str):
     conf = load_config(config)
     for p in conf['data_root_dirs']:
         try:
-            print(p)
             os.path.isdir(p)
         except FileNotFoundError:
             print("{p} not found. Check data_root_dirs for typos.")

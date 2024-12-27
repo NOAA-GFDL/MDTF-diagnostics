@@ -7,10 +7,7 @@ import sys
 import json
 import logging
 import collections
-import netCDF4 as nc
 import cftime
-
-from dask.array.core import chunks_from_arrays
 from ecgtools.builder import INVALID_ASSET, TRACEBACK
 
 
@@ -238,7 +235,6 @@ def parse_gfdl_am5_data(file_name: str):
 
 # custom parser for pp data stored on GFDL archive filesystem
 # assumed DRS of [root_dir]/pp/[realm]/[analysis type (e.g, 'ts')]/[frequency]/[chunk size (e.g., 1yr, 5yr)]
-
 def parse_gfdl_pp_ts(file_name: str):
     catalog_info = setup_catalog()
     # files = sorted(glob.glob(os.path.join(file_name,'*.nc')))  # debug comment when ready to run
@@ -275,19 +271,21 @@ def parse_gfdl_pp_ts(file_name: str):
         print(exc)
         return {INVALID_ASSET: file, TRACEBACK: traceback.format_exc()}
 
-# custom parser for GFDL am5 data that uses fieldlist metadata and the DRS to populate
-# required catalog fields
-
+# custom parser for CESM data that uses fieldlist metadata and the DRS to populate
+# required catalog fields. Bas
 def parse_cesm(file_name: str):
     catalog_info = setup_catalog()
-    file = pathlib.Path(file_name)
     catalog_info.update({"path": file_name})
-    num_dir_parts = len(file.parts)  # file name index = num_parts 1
-    # isolate file from rest of path
-    stem = file.stem
-    # split the file name into components
     catalog_info.update({"activity_id": "CESM"})
     catalog_info.update({"institution_id": "NCAR"})
+    # split the file path and name into parts
+    file = pathlib.Path(file_name)
+    stem_parts = file.stem.split('.')
+    # search file and path for output frequency
+    for p in list(file.parts) + stem_parts:
+        if p in freq_opts:
+            catalog_info.update({"frequency": p})
+            break
     try:
         # populate information from file metadata
         new_catalog = parse_nc_file(file, catalog_info)
@@ -310,8 +308,5 @@ def parse_cesm(file_name: str):
             new_catalog.update({'standard_name': var_metadata['standard_name']})
         if var_metadata.get('realm', None) is not None :
             new_catalog.update({'realm': var_metadata['realm']})
-    for p in file.parts:
-        if p in freq_opts:
-            new_catalog.update({"frequency": p})
-            break
+
     return new_catalog

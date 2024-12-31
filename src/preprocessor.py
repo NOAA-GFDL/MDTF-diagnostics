@@ -1412,7 +1412,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         )
         delayed_write.compute()
         delayed_write.close()
-        #ds.close()
 
     def write_ds(self, case_list: dict,
                  catalog_subset: collections.OrderedDict,

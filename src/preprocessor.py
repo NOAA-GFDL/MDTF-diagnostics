@@ -16,7 +16,7 @@ import numpy as np
 import xarray as xr
 import collections
 import re
-import dask
+import time
 
 # TODO: Make the following lines a unit test
 # import sys
@@ -29,7 +29,7 @@ import dask
 import logging
 
 _log = logging.getLogger(__name__)
-
+write_times = []
 
 def copy_as_alternate(old_v, **kwargs):
     """Wrapper for :py:func:`dataclasses.replace` that creates a copy of an
@@ -1047,8 +1047,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
-                case_d.set_query(var, path_regex) 
-                
+                case_d.set_query(var, path_regex)
+
                 # change realm key name if necessary
                 if cat.df.get('modeling_realm', None) is not None:
                     case_d.query['modeling_realm'] = case_d.query.pop('realm')
@@ -1403,6 +1403,18 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             unlimited_dims = []
         else:
             unlimited_dims = [var.T.name]
+
+        # The following block is retained for time comparison with dask delayed write procedure
+        #var_ds.to_netcdf(
+        #    path=var.dest_path,
+        #    mode='w',
+        #    **self.save_dataset_kwargs,
+        #    unlimited_dims=unlimited_dims
+        #)
+        #ds.close()
+
+        # Uncomment the timing lines and log calls if desired
+        #start_time = time.monotonic()
         delayed_write = var_ds.to_netcdf(
             path=var.dest_path,
             mode='w',
@@ -1412,6 +1424,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         )
         delayed_write.compute()
         delayed_write.close()
+        #end_time = time.monotonic()
+        #var.log.info(f'Time to write file {var.dest_path}: {str(datetime.timedelta(seconds=end_time - start_time))}')
+        #dt = datetime.timedelta(seconds=end_time - start_time)
+        #write_times.append(dt.total_seconds())
+        #var.log.info(f'Total write time: {str(sum(write_times))} s')
 
     def write_ds(self, case_list: dict,
                  catalog_subset: collections.OrderedDict,

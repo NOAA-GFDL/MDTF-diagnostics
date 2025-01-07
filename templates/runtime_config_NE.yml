@@ -4,27 +4,27 @@
 
 # List of POD(s) to run
 pod_list:
-  - "sl_regional"
+  - "example_multicase"
 
 # Case list entries (must be unique IDs for each simulation)
 case_list:
-#  "cm4" :
-#    model: "cm4"
-#    convention: "CMIP"
-#    startdate: "19800101120000"
-#    enddate: "19841231000000"
-
-  "CM4_zos" :
-    model: "CM4"
+  "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231" :
+    model: "test"
     convention: "CMIP"
-    startdate: "19900116120000"
-    enddate: "20091216120000"
+    startdate: "19800101120000"
+    enddate: "19841231000000"
+
+  "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231" :
+    model: "test"
+    convention: "CMIP"
+    startdate: "19850101000000"
+    enddate: "19891231000000"
+
+    
 
 ### Data location settings ###
 # Required: full or relative path to ESM-intake catalog header file
-DATA_CATALOG: "/glade/work/netige/mdtf_Nov24/data_catalogs/CM4_zos.json"
-#Parent directory containing results from different models.
-#MODEL_DATA_ROOT: "../inputdata/mdtf_test_data"
+DATA_CATALOG: "./diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json"
 # Optional: Parent directory containing observational data used by individual PODs.
 # If defined, the framework assumes observational data is in OBS_DATA_ROOT/[POD_NAME]
 OBS_DATA_ROOT: "../inputdata/obs_data"
@@ -58,12 +58,12 @@ translate_data: True
 make_variab_tar: False
 # Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
 # under a unique name.
-overwrite: True
+overwrite: False
 # Generate html output for multiple figures per case
 "make_multicase_figure_html": False
 ### Developer settings ###
 # Set to True to run the preprocessor
-run_pp: False
+run_pp: True
 # Additional custom preprocessing scripts to run on data
 # place these scripts in the MDTF-diagnostics/user_scripts directory
 # The framework will run the specified scripts whether run_pp is set to True or False

@@ -15,7 +15,7 @@ from nch import compute_error
 import os
 #import matplotlib
 
-# matplotlib.use("Agg")  # non-X windows backend
+#matplotlib.use("Agg")  # non-X windows backend
 
 #import matplotlib.pyplot as plt
 #import numpy as np
@@ -25,7 +25,7 @@ import yaml
 
 print("Libs imported!")
 
-# should be setttings file & runtime config file information
+#should be setttings file & runtime config file information
 
 # User-set parameters
 tch_size = 3.0     # Size of TCH box in degrees #jason file
@@ -78,27 +78,27 @@ zos_dict = zos_subset.to_dataset_dict(
 )
 
 # Extract the dataset from the dictionary
-key = 'HighResMIP.ECMWF.ECMWF-IFS-HR.hist-1950.mon.r1i1p1f1.Omon.gn.ocean.r1i1p1f1'
+key = 'CMIP.NOAA-GFDL.GFDL-CM4.historical.mon.r1i1p1f1.Omon.gn.ocean.r1i1p1f1'
 dataset = zos_dict[key]
 
 ds_model = dataset.rename_dims({'y':'yh','x':'xh'})
 da_model = ds_model.zos.reset_coords(drop=True).drop_vars(['x','y'])
 
-# subset to obs time period
+#subset to obs time period
 
 
 # Compute the time mean
 da_model = da_model.mean(dim="time")
 
-print("Model Imported Successfully")
-# da_model = ds_model
+
+#da_model = ds_model
 
 print(ds_model)
 print(da_model)
 
-# Read in OBS data
-# obs_dir = os.environ["OBS_DATA_ROOT"] #this line does not work 
-# reading in the OBS data manually
+#Read in OBS data
+#obs_dir = os.environ["OBS_DATA_ROOT"] #this line does not work 
+#reading in the OBS data manually
 
 obs_dir = "/glade/work/netige/mdtf_Nov24/mdtf/inputdata/obs_data/"
 
@@ -146,7 +146,7 @@ if reg_choice == "gs":
 else:    
     reginfo=reginfo
 
-# Regridding
+#Regridding
 # import warnings
 # warnings.filterwarnings( "ignore")#|lat|>90
 

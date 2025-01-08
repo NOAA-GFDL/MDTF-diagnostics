@@ -14,15 +14,15 @@ case_list:
 #    startdate: "19800101120000"
 #    enddate: "19841231000000"
 
-  "CM4_zos" :
-    model: "CM4"
+  "s_ECMWF-IFS-HR_e_hist-1950_vl_r1i1p1f1_f_mon_v_zos" :
+    model: "ECMWF"
     convention: "CMIP"
-    startdate: "19900116120000"
-    enddate: "20071216120000"
+    startdate: "19500116120000"
+    enddate: "20141216120000"
 
 ### Data location settings ###
 # Required: full or relative path to ESM-intake catalog header file
-DATA_CATALOG: "/glade/work/netige/mdtf_Nov24/data_catalogs/CM4_zos.json"
+DATA_CATALOG: "/glade/work/netige/mdtf_Nov24/data_catalogs/s_ECMWF-IFS-HR_e_hist-1950_vl_r1i1p1f1_f_mon_v_zos.json"
 #Parent directory containing results from different models.
 #MODEL_DATA_ROOT: "../inputdata/mdtf_test_data"
 # Optional: Parent directory containing observational data used by individual PODs.

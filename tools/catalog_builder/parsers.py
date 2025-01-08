@@ -217,7 +217,7 @@ def parse_gfdl_am5_data(file_name: str):
     if hasattr(gfdl_info['variables'], catalog_info['variable_id']):
         var_metadata = gfdl_info['variables'].get(catalog_info['variable_id'])
     else:
-        raise KeyError(f'{catalog_info['variable_id']} not found in {gfdl_fieldlist}')
+        raise KeyError(f"{catalog_info['variable_id']} not found in {gfdl_fieldlist}")
     if hasattr(var_metadata, 'standard_name'):
         catalog_info.update({'standard_name': var_metadata.standard_name})
     if hasattr(var_metadata, 'long_name'):

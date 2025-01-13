@@ -886,7 +886,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                              decode_times=True,
                              use_cftime=True  # use cftime instead of np.datetime6
         )
-        cal = xr_ds[time_coord.name].attrs.get('calendar', 'noleap')
+        cal = 'noleap'
+        if 'calendar' in xr_ds[time_coord.name].attrs:
+            cal = xr_ds[time_coord.name].attrs['calendar']
+        elif 'calendar' in xr_ds[time_coord.name].encoding:
+            cal = xr_ds[time_coord.name].encoding['calendar']
 
         ds_date_time = xr_ds[time_coord.name].values
         ds_start_time = ds_date_time[0]
@@ -914,7 +918,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             ds_end = self.cast_to_cftime(ds_end_time, cal)
         date_range_cf_start = self.cast_to_cftime(case_date_range.start.lower, cal)
         date_range_cf_end = self.cast_to_cftime(case_date_range.end.lower, cal)
-
         if ds_start < date_range_cf_start and ds_end < date_range_cf_start or \
            ds_end > date_range_cf_end and ds_start > date_range_cf_end:
             new_xr_ds = None
@@ -931,7 +934,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # dataset contains all of requested date range
         elif date_range_cf_start>=ds_start and date_range_cf_end<=ds_end:
             new_xr_ds = xr_ds.sel({time_coord.name: slice(date_range_cf_start, date_range_cf_end)})
-
         return new_xr_ds
 
     def check_group_daterange(self, df: pd.DataFrame, date_range: util.DateRange,
@@ -1012,6 +1014,31 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
 
+    def normalize_time_units(self, subset_dict: dict, log=_log) -> dict:
+        """ 
+        Some datasets will have the time units defined based on each individual file.
+        This function updates each time unit to rely on the earliest year grabbed
+        in the query stage.
+        """
+        time_units = [subset_dict[f].time.units for f in list(subset_dict)]
+        
+        if len(set(time_units)) > 1:
+            if all(["days since " in u for u in time_units]):
+                #assumes "days since ????" unit format
+                start = np.sort([int(u.replace("days since ", "")[:4]) for u in time_units])[0]
+                new_unit = f"days since {start}-01-01 00:00:00"
+                for f in list(subset_dict):
+                    current = int(subset_dict[f].time.units.replace("days since ", "")[:4])
+                    if current > start:
+                        subset_dict[f].coords['time'] = subset_dict[f].time.assign_attrs(
+                        units=new_unit
+                        )
+                        for i, v in enumerate(subset_dict[f].time.values):
+                            subset_dict[f].coords['time'].values[i] = v + 365*(current-start) + 1
+            else:
+                raise AttributeError("Different units were found for time coord in each file. "
+                      "We were unable to normalize due to the units not being in 'days since ' format")
+        return subset_dict
 
     def query_catalog(self,
                       case_dict: dict,
@@ -1124,6 +1151,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # tl;dr hic sunt dracones
                 var_xr = []
                 if not var.is_static:
+                    cat_subset_dict = self.normalize_time_units(cat_subset_dict)
                     time_sort_dict = {f: cat_subset_dict[f].time.values[0]
                                       for f in list(cat_subset_dict)}
                     time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))

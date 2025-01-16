@@ -31,7 +31,7 @@ print("Libs imported!")
 tch_size = 3.0     # Size of TCH box in degrees #jason file
 cost_threshold = 5.0 # cost --> higher means larger model error relative to data
 threshold = 10.0    # Threshold for number of non-nan grid points to perform TCH on that cell
-modname = "esm4"    # cm4 or esm4
+modname = "cm4"    # cm4 or esm4
 reg_choice = "all"    # gs or all
 #inputdir='/glade/work/clittle/p2521/input/'
 #outputdir='/glade/work/clittle/p2521/output/'

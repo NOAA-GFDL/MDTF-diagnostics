@@ -4,7 +4,7 @@
 
 # List of POD(s) to run
 pod_list:
-  - "sl_regional"
+  - "MDSL"
 
 # Case list entries (must be unique IDs for each simulation)
 case_list:

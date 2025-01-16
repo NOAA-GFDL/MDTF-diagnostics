@@ -4,7 +4,7 @@
 
 # List of POD(s) to run
 pod_list:
-  - "sl_regional"
+  - "MDSL"
 
 # Case list entries (must be unique IDs for each simulation)
 case_list:
@@ -14,17 +14,15 @@ case_list:
 #    startdate: "19800101120000"
 #    enddate: "19841231000000"
 
-  "CM4_zos" :
-    model: "CM4"
+  "ESM4_zos" :
+    model: "ESM4"
     convention: "CMIP"
     startdate: "19900116120000"
-    #startdate: "19900116:120000"
     enddate: "20141216120000"
-    #enddate: "20141216:120000"
 
 ### Data location settings ###
 # Required: full or relative path to ESM-intake catalog header file
-DATA_CATALOG: "/glade/work/netige/mdtf_Nov24/data_catalogs/CM4_zos.json"
+DATA_CATALOG: "/glade/work/netige/mdtf_Nov24/data_catalogs/ESM4_zos.json"
 #Parent directory containing results from different models.
 #MODEL_DATA_ROOT: "../inputdata/mdtf_test_data"
 # Optional: Parent directory containing observational data used by individual PODs.
@@ -53,7 +51,7 @@ large_file: False
 save_ps: False
 # If true, leave pp data in OUTPUT_DIR after preprocessing; if false, delete pp data after PODs
 # run to completion
-save_pp_data: True
+save_pp_data: False
 # Set to true to perform data translation; default is True:
 translate_data: True
 # Set to true to save HTML and bitmap plots in a .tar file.

@@ -15,7 +15,7 @@ from nch import compute_error
 import os
 #import matplotlib
 
-#matplotlib.use("Agg")  # non-X windows backend
+# matplotlib.use("Agg")  # non-X windows backend
 
 #import matplotlib.pyplot as plt
 #import numpy as np
@@ -25,13 +25,13 @@ import yaml
 
 print("Libs imported!")
 
-#should be setttings file & runtime config file information
+# should be setttings file & runtime config file information
 
 # User-set parameters
 tch_size = 3.0     # Size of TCH box in degrees #jason file
 cost_threshold = 5.0 # cost --> higher means larger model error relative to data
 threshold = 10.0    # Threshold for number of non-nan grid points to perform TCH on that cell
-modname = "esm4"    # cm4 or esm4
+modname = "cm4"    # cm4 or esm4
 reg_choice = "all"    # gs or all
 #inputdir='/glade/work/clittle/p2521/input/'
 #outputdir='/glade/work/clittle/p2521/output/'
@@ -78,16 +78,8 @@ zos_dict = zos_subset.to_dataset_dict(
 )
 
 # Extract the dataset from the dictionary
-#key = 'CMIP.NOAA-GFDL.GFDL-CM4.historical.mon.r1i1p1f1.Omon.gn.ocean.r1i1p1f1'
-key = 'CMIP.NOAA-GFDL.GFDL-ESM4.historical.mon.r1i1p1f1.Omon.gn.ocean.r1i1p1f1'
-
-dataset = zos_dict.get(key, None)
-if dataset is None:
-    print("Dataset key not found. Available keys:", list(zos_dict.keys()))
-
-print(dataset)
-
-#dataset = zos_dict[key]
+key = 'CMIP.NOAA-GFDL.GFDL-CM4.historical.mon.r1i1p1f1.Omon.gn.ocean.r1i1p1f1'
+dataset = zos_dict[key]
 
 ds_model = dataset.rename_dims({'y':'yh','x':'xh'})
 da_model = ds_model.zos.reset_coords(drop=True).drop_vars(['x','y'])
@@ -102,14 +94,14 @@ print(da_model)
 da_model = da_model.mean(dim="time")
 print("mean computed!")
 
-#da_model = ds_model
+# da_model = ds_model
 
 print(ds_model)
 print(da_model)
 
-#Read in OBS data
-#obs_dir = os.environ["OBS_DATA_ROOT"] #this line does not work 
-#reading in the OBS data manually
+# Read in OBS data
+# obs_dir = os.environ["OBS_DATA_ROOT"] #this line does not work 
+# reading in the OBS data manually
 
 obs_dir = "/glade/work/netige/mdtf_Nov24/mdtf/inputdata/obs_data/"
 
@@ -157,7 +149,7 @@ if reg_choice == "gs":
 else:    
     reginfo=reginfo
 
-#Regridding
+# Regridding
 # import warnings
 # warnings.filterwarnings( "ignore")#|lat|>90
 

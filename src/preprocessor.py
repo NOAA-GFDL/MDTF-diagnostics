@@ -886,7 +886,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                              decode_times=True,
                              use_cftime=True  # use cftime instead of np.datetime6
         )
-        cal = xr_ds[time_coord.name].attrs.get('calendar', 'noleap')
+        cal = 'noleap'
+        if 'calendar' in xr_ds[time_coord.name].attrs:
+            cal = xr_ds[time_coord.name].attrs['calendar']
+        elif 'calendar' in xr_ds[time_coord.name].encoding:
+            cal = xr_ds[time_coord.name].encoding['calendar']
 
         ds_date_time = xr_ds[time_coord.name].values
         ds_start_time = ds_date_time[0]
@@ -1012,6 +1016,81 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
 
+    def normalize_time_units(self, subset_dict: dict, time_coord, log=_log) -> dict:
+        """ 
+        Some datasets will have the time units that are different in each individual file.
+        This function updates each time unit to rely on the earliest year grabbed in the
+        query stage.
+
+        This function assumes the time coord units attr will be of the form "{unit} since ????".
+        """
+
+        time_units = np.sort([subset_dict[f].time.units for f in list(subset_dict)])
+        tn = time_coord.name #abbreviate        
+
+        # assumes each dataset has the same calendar
+        cal = 'noleap'
+        if 'calendar' in subset_dict[list(subset_dict)[0]][tn].attrs:
+            cal = subset_dict[list(subset_dict)[0]][tn].attrs['calendar']
+        elif 'calendar' in subset_dict[list(subset_dict)[0]][tn].encoding:
+            cal = subset_dict[list(subset_dict)[0]][tn].encoding['calendar'] 
+ 
+        if len(set(time_units)) > 1: # check if each dataset has the different time coord units
+            # check if time coord units are in the form "{unit} since {date}"
+            # they can be different units as this function converts to the earliest case
+            if all(["since" in u for u in time_units]):
+                start_unit = time_units[0].split(" ")[0] 
+                start_str = " ".join(time_units[0].split(" ")[2:])
+                start_cft = dl.str_to_cftime(
+                                start_str.replace(" ","").replace(":", "").replace("-", ""),
+                                calendar=cal
+                            )
+                new_unit_str = f"{start_unit} since {start_str}"
+
+                # dictionary of how many seconds are in each time unit
+                seconds_in = {
+                    "seconds": 1.0,
+                    "minutes": 60.0,
+                    "hours": 3600.0,
+                    "days": 86400.0,
+                    "weeks": 604800.0, # these are rarer and vague cases (they could be problematic)
+                    "months": 2628000.0, # seconds in common year (365 days) / 12
+                    "years": 31536000.0 # common year (365 days)
+                }
+
+
+                for f in list(subset_dict):
+                    current_unit = subset_dict[f][time_coord.name].units.split(" ")[0].lower()
+                    current_str = " ".join(subset_dict[f][tn].units.split(" ")[2:])
+                    current_cft = dl.str_to_cftime(
+                                  current_str.replace(" ","").replace(":", "").replace("-", ""),
+                                  calendar=cal
+                                  )
+
+                    #TODO: add logic to add year values for different calendars
+        
+                    if current_cft > start_cft:
+                        # get difference between current files unit reference point and earliest found
+                        diff = ((current_cft-start_cft).total_seconds())/seconds_in[start_unit] 
+
+                        subset_dict[f].coords['time'] = subset_dict[f][tn].assign_attrs(
+                            units=new_unit_str
+                        )
+                        
+                        # convert current unit if it is not the same as the earliest reference
+                        if current_unit != start_unit:
+                             factor = seconds_in[current_unit]/seconds_in[start_unit]
+                        else:
+                            factor = 1.0
+                        
+                        # change the values in the dataset
+                        for i, v in enumerate(subset_dict[f][tn].values):
+                            subset_dict[f].coords[tn].values[i] = factor*v + diff
+            else:
+                raise AttributeError("Different units were found for time coord in each file. "
+                      "We were unable to normalize due to the units not being in '{unit} since ' format")
+        
+        return subset_dict
 
     def query_catalog(self,
                       case_dict: dict,
@@ -1124,6 +1203,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # tl;dr hic sunt dracones
                 var_xr = []
                 if not var.is_static:
+                    cat_subset_dict = self.normalize_time_units(cat_subset_dict, var.T)
                     time_sort_dict = {f: cat_subset_dict[f].time.values[0]
                                       for f in list(cat_subset_dict)}
                     time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))

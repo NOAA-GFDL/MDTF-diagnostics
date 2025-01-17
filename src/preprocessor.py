@@ -852,6 +852,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         for att in drop_atts:
             if xr_ds.get(att, None) is not None:
                 xr_ds = xr_ds.drop_vars(att)
+                for coord in xr_ds.coords:
+                    if 'bounds' in xr_ds[coord].attrs:
+                        if xr_ds[coord].attrs['bounds'] == att:
+                            del xr_ds[coord].attrs['bounds']
         return xr_ds
 
     def check_multichunk(self, group_df: pd.DataFrame, case_dr, log) -> pd.DataFrame:

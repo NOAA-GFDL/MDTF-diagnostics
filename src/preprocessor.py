@@ -849,6 +849,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                      'average_T1',
                      'height',
                      'date']
+        # TODO: find a suitable answer to conflicts in xarray merging (i.e. nctoolkit)
         for att in drop_atts:
             if xr_ds.get(att, None) is not None:
                 xr_ds = xr_ds.drop_vars(att)

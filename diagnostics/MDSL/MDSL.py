@@ -26,12 +26,25 @@ print("Libs imported!")
 ################ Functions for the POD ########################
 ###############################################################
 
+def chunk_data_grid(data_grid):
+    chunk_dict = {"i": -1, "j": -1}
+
+    # Check if the dataset has 'vertex' or 'vertices'
+    if "vertex" in data_grid.dims:
+        chunk_dict["vertex"] = -1
+    elif "vertices" in data_grid.dims:
+        chunk_dict["vertices"] = -1
+
+    return data_grid.chunk(chunk_dict)
+
+
 def regional_tch(data_grid, model_mask, ds1_mask, ds2_mask, min_lat, max_lat, min_lon, max_lon, tch_size, depth_threshold=None):
 
     destgrid = generate_reg_grid(min_lat, max_lat, min_lon, max_lon, tch_size)
 
-    data_grid = data_grid.chunk({"i": -1, "j": -1, "vertex": -1})
-    
+    #data_grid = data_grid.chunk({"i": -1, "j": -1, "vertex": -1})
+    #data_grid = chunk_data_grid(data_grid)
+ 
     # Find weights to position of gridpoints in TCH grid
     regrid_to_tch = xe.Regridder(data_grid, destgrid, 'conservative_normed', extrap_method=None, periodic=True, ignore_degenerate=True)
     wts=regrid_to_tch.weights
@@ -272,9 +285,9 @@ print("Functions Defined!")
 ########################
 
 reg_choice = "all"       # gs or all
-modname="esm4"            # cm4 or esm4
+modname="cm4"       # cm4 or esm4 or ECMWF-HR
 threshold = 25.0         # Threshold for number of non-nan grid points to perform TCH on that cell
-tch_size = 3.0           # Size of TCH box in degrees for regional POD (recommend ~5+ time model horiz resolution); set automatically for global
+tch_size = 2.0           # Size of TCH box in degrees for regional POD (recommend ~5+ time model horiz resolution); set automatically for global
 rez = 1.0                # Resolution for global regridding. Options are 0.5 or 1.0 (degrees)
 cost_threshold = 5.0     # cost --> higher means larger model error relative to data
 
@@ -283,6 +296,9 @@ if modname == "cm4":
 
 if modname == "esm4":
     key = 'CMIP.NOAA-GFDL.GFDL-ESM4.historical.mon.r1i1p1f1.Omon.gn.ocean.r1i1p1f1'
+
+if modname == "ECMWF-HR":
+    key = 'HighResMIP.ECMWF.ECMWF-IFS-HR.hist-1950.mon.r1i1p1f1.Omon.gn.ocean.r1i1p1f1'
 
 print("Parameters Set!")
 
@@ -332,14 +348,18 @@ dataset    = zos_dict[key]
 
 print(dataset)
 
-ds_model = dataset.rename({'y':'j', 'x':'i','lat':'latitude', 'lon':'longitude'}).drop('bnds')
+if modname == "cm4" or modname == "esm4":
+    ds_model = dataset.rename({'y':'j', 'x':'i','lat':'latitude', 'lon':'longitude'}).drop('bnds')
+else:
+    ds_model = dataset
+
 da_model = ds_model
 
 #subset to obs time period
 da_model   = da_model.sel(time=slice("1993-01-16", 
                                      "2012-12-16"))
 # Compute the time mean
-da_model   = da_model.mean(dim="time")
+da_model   = da_model.mean(dim="time").load()
 
 print("Model data imported")
 
@@ -561,7 +581,9 @@ def horizontal_mean_no_wet(da, metrics, lsm):
     
     return num / denom
 
-da_model = da_model.chunk({"i": -1, "j": -1, "vertex": -1})
+#da_model = da_model.chunk({"i": -1, "j": -1, "vertex": -1})
+#da_model = chunk_data_grid(da_model)
+
 
 # Get conversion between model grid (ds_grid) and regular data grid (dtu_mdt_rg)
 regrid_mod = xe.Regridder(da_model, 

@@ -62,12 +62,25 @@ def cutdomain(ds, margin, min_lat, max_lat, min_lon, max_lon):
     
 #     return grid_model
 
+def chunk_data_grid(data_grid):
+    chunk_dict = {"i": -1, "j": -1}
+
+    # Check if the dataset has 'vertex' or 'vertices'
+    if "vertex" in data_grid.dims:
+        chunk_dict["vertex"] = -1
+    elif "vertices" in data_grid.dims:
+        chunk_dict["vertices"] = -1
+
+    return data_grid.chunk(chunk_dict)
+
 def regrid_regions_gfdl(da_model, ds_obs_cnes, ds_obs_dtu, min_lat, max_lat, min_lon, max_lon):
     # Mask region, with buffer 
     margin=2
 
-    da_model = da_model.chunk({"i": -1, "j": -1, "vertex": -1})
+    #da_model = da_model.chunk({"i": -1, "j": -1, "vertex": -1})
+    #da_model = chunk_data_grid(da_model)
 
+    
     ds_obs_cnes = cutdomain(ds_obs_cnes, margin, min_lat, max_lat, min_lon, max_lon)
     ds_obs_dtu = cutdomain(ds_obs_dtu, margin, min_lat, max_lat, min_lon, max_lon)
     #ds_bathy=cutdomain(ds_bathy, margin)

@@ -1072,7 +1072,7 @@ class DefaultDatasetParser:
         expectations based on the model's convention (*our_var*), for the bounds
         on the dimension coordinate *our_coord*.
         """
-        if len(ds.cf.bounds) > 0:
+        if len(ds.cf.bounds.get(ds_coord_name, [])) > 0:
             bounds = ds.cf.get_bounds(ds_coord_name)
         elif hasattr(ds[ds_coord_name], 'attrs'):
             if ds[ds_coord_name].attrs.get('bounds', None):

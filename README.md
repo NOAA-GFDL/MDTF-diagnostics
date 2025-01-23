@@ -224,8 +224,8 @@ mamba env create --force -q -f ./src/conda/_env_synthetic_data.yml
 conda activate _MDTF_synthetic_data
 pip install mdtf-test-data
 mkdir mdtf_test_data && cd mdtf_test_data
-mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5
-mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5
+mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5 --freq day
+mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5 --freq day
 ```
 Then, modify the ``path`` entries in diagnostic/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.csv, and
 the `"catalog_file":` path in diagnostic/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json to include the

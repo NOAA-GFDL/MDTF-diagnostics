@@ -49,9 +49,13 @@ numpy, xarray, matplotlib, pandas, xesmf, os, intake, sys, yaml,
 cartopy.crs, cartopy.features, momlevel, sparse, cf_xarray
 
 The custom functions needed are stored in below files:
+
 ~diagnostics/MDSL/gfdl_grid_fx
+
 ~diagnostics/MDSL/other_grid_fx
+
 ~diagnostics/MDSL/plot_fx
+
 ~diagnostics/MDSL/nch
 
 Required input data to the module

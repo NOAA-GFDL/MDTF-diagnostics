@@ -50,13 +50,13 @@ cartopy.crs, cartopy.features, momlevel, sparse, cf_xarray
 
 The custom functions needed are stored in below files:
 
-~diagnostics/MDSL/gfdl_grid_fx
+~diagnostics/MDSL/gfdl_grid_fx.py
 
-~diagnostics/MDSL/other_grid_fx
+~diagnostics/MDSL/other_grid_fx.py
 
-~diagnostics/MDSL/plot_fx
+~diagnostics/MDSL/plot_fx.py
 
-~diagnostics/MDSL/nch
+~diagnostics/MDSL/nch.py
 
 Required input data to the module
 ---------------------------------
@@ -73,9 +73,13 @@ The diagnostics provides regional and global MDSL outputs.
    :align: center
    :width: 75 %
 
+**Figure 2**: MDSL regional/coastal output for the Gulf Stream region. **(a)** MDSL difference between model and DTU referece data. **(b)** MDSL error of the model. **(c)** Number of points in an n-cornered hat box. **(d)** MDSL difference between DTU and CNES reference products. **(e)** MDSL error of DTU. **(f)** MDSL error of DTU. **(g)** Locations of the tide guages used as reference to calculate the coastal NCH. **(h)** Coastal MDSL of tide gauges and reference products relative to alongcoast mean. **(i)** Coastal MDSL error.
+
 .. figure:: ./global_output.png
    :align: center
    :width: 75 %
+
+**Figure 3**: MDSL global output. A schematic showing the MDSL diagnostic's functionality. **(a)** MDSL difference between model and DTU referece data. **(b)** MDSL error of the model. **(c)** Number of points in an n-cornered hat box. **(d)** MDSL difference between DTU and CNES reference products. **(e)** MDSL error of DTU. **(f)** MDSL error of DTU.
 
 
 

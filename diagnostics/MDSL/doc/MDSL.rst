@@ -21,17 +21,22 @@ Model Data
 
 The package has been successfully teseted for GFDL's CM4 and ESM4 model data and below HighResMIP model output:
 
-ECMWF-IFS-HR_e_hist-1950_vl_r1i1p1f1
+**ECMWF-IFS-HR_e_hist-1950_vl_r1i1p1f1**
 
-In addition the functionality of the POD has been tested successfully for oyher HighResMIP models of CMIP6 outside the MDTF.
+In addition the functionality of the POD has been tested successfully for other HighResMIP models of CMIP6 outside the MDTF.
 
 Observed/Reference DATA
 -----------------------
 
-We use two reference MDSL products from National Center for Space Studies (CNES) and Technical University Denmark (DTU). For the alongcoast MDSL we use tide-gauge data as a reference in addition to the above mentioned reference products. The reference datasets (MDSL and Tide Gaude) are available at ~diagnostics/MDSL/ref_data
+We use two reference MDSL products from National Center for Space Studies (CNES) and Technical University Denmark (DTU). For the alongcoast MDSL we use tide-gauge data as a reference in addition to the above mentioned reference products. The reference datasets (MDSL and Tide Gaude) are available at ~diagnostics/MDSL/Ref_data
 
 Functionality
 -------------
+The core functionality of the package can be explined by the functionality of the MDSL.py file. The code routine of the MDSL.py file is segmented into **six parts**
+
+** Part 1:** Read in the model data utilizing the pre determined data_catalog in the runtime configuration file. Several runtime config files are avaialble as examples in \i{~diagnostics/MDSL/Example_files}
+
+
 
 .. figure:: ./MDSL_Schematic.png
    :align: center
@@ -80,7 +85,6 @@ The diagnostics provides regional and global MDSL outputs.
    :width: 75 %
 
 **Figure 3**: MDSL global output. A schematic showing the MDSL diagnostic's functionality. **(a)** MDSL difference between model and DTU referece data. **(b)** MDSL error of the model. **(c)** Number of points in an n-cornered hat box. **(d)** MDSL difference between DTU and CNES reference products. **(e)** MDSL error of DTU. **(f)** MDSL error of DTU.
-
 
 
 References

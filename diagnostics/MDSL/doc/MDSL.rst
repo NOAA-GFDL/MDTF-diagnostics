@@ -34,7 +34,7 @@ Functionality
 -------------
 The core functionality of the package can be explined by the functionality of the MDSL.py file. The code routine of the MDSL.py file is segmented into **six parts**
 
-** Part 1:** Read in the model data utilizing the pre determined data_catalog in the runtime configuration file. Several runtime config files are avaialble as examples in \i{~diagnostics/MDSL/Example_files}
+** Part 1:** Read in the model data utilizing the pre determined data_catalog in the runtime configuration file. Several runtime config files are avaialble as examples in {\i ~diagnostics/MDSL/Example_files}
 
 
 

@@ -281,14 +281,14 @@ print("Functions Defined!")
 ###############################################################
 
 
-#### Set Parameters ####
-########################
+# Section 1: Set parameters
+# -------------------------
 
-reg_choice = "all"       # gs or all
-modname="cm4"       # cm4 or esm4 or ECMWF-HR
-threshold = 25.0         # Threshold for number of non-nan grid points to perform TCH on that cell
-tch_size = 2.0           # Size of TCH box in degrees for regional POD (recommend ~5+ time model horiz resolution); set automatically for global
-rez = 1.0                # Resolution for global regridding. Options are 0.5 or 1.0 (degrees)
+reg_choice     = "all"       # gs or all
+modname        ="cm4"       # cm4 or esm4 or ECMWF-HR
+threshold      = 25.0         # Threshold for number of non-nan grid points to perform TCH on that cell
+tch_size       = 3.0           # Size of TCH box in degrees for regional POD (recommend ~5+ time model horiz resolution); set automatically for global
+rez            = 0.5                # Resolution for global regridding. Options are 0.5 or 1.0 (degrees)
 cost_threshold = 5.0     # cost --> higher means larger model error relative to data
 
 if modname == "cm4":
@@ -303,8 +303,8 @@ if modname == "ECMWF-HR":
 print("Parameters Set!")
 
 
-# Part 1: Read in the model data
-# ------------------------------
+# Section 2: Read in the model data
+# ---------------------------------
 
 work_dir = os.environ["WORK_DIR"]
 outputdir = f'{work_dir}/model/'
@@ -363,16 +363,12 @@ da_model   = da_model.mean(dim="time").load()
 
 print("Model data imported")
 
-# Part 2: Read in the obs data & ancillary data
-# ---------------------------------------------
+# Section 3: Read in the obs data & ancillary data
+# ------------------------------------------------
 
-#Below line is the proper way of calling OBS data. Since it is not functional we are calling in the OBS data root manually.
+#obs_dir = os.environ["OBS_DATA_ROOT"] 
 
-#obs_dir = os.environ["OBS_DATA_ROOT"] #this line does not work 
-
-#Reading in the OBS data manually
-
-obs_dir = "/glade/work/netige/mdtf_Nov24/mdtf/inputdata/obs_data/"
+obs_dir = "/glade/work/netige/mdtf_Nov24/mdtf/inputdata/obs_data/" #modify accordingly
 
 #Read in CNES and DTU data
 
@@ -414,8 +410,8 @@ match rez:
         tch_size_global = 6   # size of TCH box in degrees
 
 
-# Part 3: Setting up regions
-# --------------------------
+# Section 4: Setting up regions
+# -----------------------------
 
 # Bounds for region of interest.
 wbound  =  [360-165.,95,360-95,110,136,5]
@@ -472,8 +468,8 @@ else:
     reginfo=reginfo
 
 
-# Part 4: Regional TCH
-# --------------------
+# Section 5: Regional & Coastal NCH
+# ---------------------------------
 
 # Regrid to model grid on regional domain
 
@@ -567,8 +563,8 @@ make_regional_plots(modname,
 
 print("Regional POD completed successfully")
 
-# Part 5: Global TCH
-# ------------------
+# Section 6: Global TCH
+# ---------------------
 
 
 def horizontal_mean_no_wet(da, metrics, lsm):
@@ -628,14 +624,14 @@ make_global_plots(data_dict,
                   outputdir)
 
 
-# Part 6: Close the catalog files and
+# Section 7: Close the catalog files and
 # release variable dict reference for garbage collection
 # ------------------------------------------------------
 cat.close()
 zos_dict = None
 
 
-# Part 7: Confirm POD executed successfully
-# ----------------------------------------
-print("Last log message by MDSL POD: finished successfully !!!")
+# Sectionn 8: Confirm POD executed successfully
+# ---------------------------------------------
+print("Last log message by MDSL POD: Finished successfully !!!")
 sys.exit(0)

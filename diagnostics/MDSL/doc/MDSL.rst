@@ -33,33 +33,46 @@ cartopy.crs, cartopy.features, momlevel, sparse, cf_xarray
 
 The custom functions needed are stored in below files:
 
--*~diagnostics/MDSL/gfdl_grid_fx.py*
-
--*~diagnostics/MDSL/other_grid_fx.py*
-
--*~diagnostics/MDSL/plot_fx.py*
-
--*~diagnostics/MDSL/nch.py*
+- *~diagnostics/MDSL/gfdl_grid_fx.py*
+- *~diagnostics/MDSL/other_grid_fx.py*
+- *~diagnostics/MDSL/plot_fx.py*
+- *~diagnostics/MDSL/nch.py*
 
 Package Functionality
 ---------------------
 The core functionality of the package can be explained by the functionality of the MDSL.py file. The code routine of the MDSL.py file is segmented into **seven sections**.
 
-**Section 1**: Sets up parameters. Here, you can pre-set the parameters for the model data and the NCH calculation. 
+**Section 1**: 
 
-**Section 2**: Reads in the "zos" data utilizing the pre-determined data catalog in the runtime configuration file (Several runtime config files are available as examples in ~diagnostics/MDSL/Example_files). Once read in the model data is subset into the reference data time period (1993-2012) and the time mean is computed.
+Sets up parameters. Here, you can pre-set the parameters for the model data and the NCH calculation. 
 
-**Section 3**: Reads in the native and re-gridded reference products (DTU and CNES) from the *["OBS_DATA_ROOT"]*.
+**Section 2**: 
 
-**Section 4**: This section sets up regions for the regional NCH calculations. The current version of the package sets up six regions that include - California, Leeuwin, Gulf Stream, Kuroshio, East Australia, and Norway.
+Reads in the "zos" data utilizing the pre-determined data catalog in the runtime configuration file (Several runtime config files are available as examples in ~diagnostics/MDSL/Example_files). Once read in the model data is subset into the reference data time period (1993-2012) and the time mean is computed.
 
-**Section 5**: First re-grid reference data on regional domains to the model grid.  Then calculates the MDSL error for the regional domain (NCH calculation). Also calculates the coastal NCH using tide gauge information. Finally, plots the outputs for each region (see **Figure 2**).
+**Section 3**: 
 
-**Section 6**: First re-grids the model to a global 1-degree or 0.5-degree grid (based on the rez parameter in Section 1). Then calculates the MDSL error globally and produces a plot similar to **Figure 3**.
+Reads in the native and re-gridded reference products (DTU and CNES) from the *["OBS_DATA_ROOT"]*.
 
-**Section 7**: Closes the catalog files and disposes of the variable reference.
+**Section 4**: 
 
-**Section 8**: Prints the successful run of the package and exits from the system.
+This section sets up regions for the regional NCH calculations. The current version of the package sets up six regions that include - California, Leeuwin, Gulf Stream, Kuroshio, East Australia, and Norway.
+
+**Section 5**: 
+
+First re-grid reference data on regional domains to the model grid.  Then calculates the MDSL error for the regional domain (NCH calculation). Also calculates the coastal NCH using tide gauge information. Finally, plots the outputs for each region (see **Figure 2**).
+
+**Section 6**: 
+
+First re-grids the model to a global 1-degree or 0.5-degree grid (based on the rez parameter in Section 1). Then calculates the MDSL error globally and produces a plot similar to **Figure 3**.
+
+**Section 7**: 
+
+Closes the catalog files and disposes of the variable reference.
+
+**Section 8**: 
+
+Prints the successful run of the package and exits from the system.
 
 .. figure:: ./MDSL_Schematic.png
    :align: center

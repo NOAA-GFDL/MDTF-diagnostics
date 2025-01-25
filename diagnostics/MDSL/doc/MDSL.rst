@@ -2,7 +2,7 @@ Mean Dynamic Sea Level (MDSL) Package
 =====================================
 Last Update: 01/24/2025
 
-This POD computes model errors in mean dynamic sea level (MDSL) using an improved approach called Generalized Tri-Cornered Hat (GTCH). The POD computes MDSL errors for coastal, regional, and global domains.
+This POD computes model and reference product errors in time-mean dynamic sea level (MDSL) using a Generalized Three-Cornered Hat (GTCH)method. The POD computes MDSL errors for coastal, regional, and global domains.
 
 Model Data
 ----------
@@ -11,16 +11,16 @@ The package has been successfully tested for GFDL's CM4 and ESM4 model data and 
 
 **ECMWF-IFS-HR_e_hist-1950_vl_r1i1p1f1**
 
-In addition, the functionality of the POD has been tested successfully for other HighResMIP models of CMIP6 outside the MDTF.
+In addition, functionality has been tested successfully for other CMIP6 HighResMIP models with varying grid specifications. The POD requires monthly zos output for 1993-2012, along with latitude and longitude information at grid centers, and vertices of the underlying grid.
 
 Model output variable - *zos* : sea_surface_height_above_geoid
 
-The model has to be called using a data catalog. We used the MDTF catalog_builder to build data catalogs for the models tested for the package.
+Model output is read in using a data catalog. We used the MDTF catalog_builder to generate data catalogs for the models tested for the package.
 
 Observed/Reference Data
 -----------------------
 
-We use two reference MDSL products from the National Center for Space Studies (CNES) and Technical University Denmark (DTU). For the coastal MDSL error calculations, we use tide-gauge data as a reference in addition to the above-mentioned reference products. The reference datasets (MDSL and Tide Gaude) are available at *~diagnostics/MDSL/Ref_data*
+We use two reference MDSL products from the National Center for Space Studies (CNES) and Technical University Denmark (DTU). Minimal preprocessing is performed on DTU; the related code is provided [HERE]. For the coastal MDSL error calculations, we use tide-gauge data as a reference in addition to the above-mentioned reference products. The reference datasets (MDSL and Tide Gauge) are available at *~diagnostics/MDSL/Ref_data*
 
 Required Programing Language and Libraries
 ------------------------------------------
@@ -39,11 +39,11 @@ The custom functions needed are stored in below files:
 
 Package Functionality
 ---------------------
-The core functionality of the package can be explained by the functionality of the MDSL.py file. The code routine of the MDSL.py file is segmented into **seven sections**.
+The core functionality of the package is contained in the MDSL.py file. The code routine of the MDSL.py file is segmented into **seven sections**.
 
 **Section 1**
 
-Sets up parameters. Here, you can pre-set the parameters for the model data and the NCH calculation. 
+Sets up parameters. Here, you can pre-set parameters for the model data and the NCH calculation. 
 
 **Section 2**
 
@@ -59,11 +59,11 @@ This section sets up regions for the regional NCH calculations. The current vers
 
 **Section 5**
 
-First re-grid reference data on regional domains to the model grid.  Then calculates the MDSL error for the regional domain (NCH calculation). Also calculates the coastal NCH using tide gauge information. Finally, plots the outputs for each region (see **Figure 2**).
+First re-grids reference data to the model grid on regional domains.  Then calculates the MDSL error for the regional domain (NCH calculation). Also calculates the coastal NCH using tide gauge information. Finally, plots the outputs for each region (see **Figure 2**).
 
 **Section 6**
 
-First re-grids the model to a global 1-degree or 0.5-degree grid (based on the rez parameter in Section 1). Then calculates the MDSL error globally and produces a plot similar to **Figure 3**.
+First re-grids the model to a global 1-degree or 0.5-degree grid (based on the “rez” parameter in Section 1). Then calculates MDSL error globally and produces a plot similar to **Figure 3**.
 
 **Section 7**
 
@@ -87,13 +87,13 @@ The diagnostics provides regional and global MDSL outputs.
    :align: center
    :width: 75 %
 
-**Figure 2**: MDSL regional/coastal output for the Gulf Stream region. **(a)** MDSL difference between model and DTU reference data. **(b)** MDSL error of the model. **(c)** Number of points in an n-cornered hat box. **(d)** MDSL difference between DTU and CNES reference products. **(e)** MDSL error of DTU. **(f)** MDSL error of DTU. **(g)** Locations of the tide gauges used as reference to calculate the coastal NCH. **(h)** Coastal MDSL of tide gauges and reference products relative to the coastal mean. **(i)** Coastal MDSL error.
+**Figure 2**: MDSL regional/coastal output for the Gulf Stream region. **(a)** MDSL difference between model and DTU reference data. **(b)** MDSL error of the model. **(c)** Number of points in an n-cornered hat box. **(d)** MDSL difference between DTU and CNES reference products. **(e)** MDSL error of DTU. **(f)** MDSL error of CNES. **(g)** Locations of the tide gauges used as reference to calculate the coastal NCH. **(h)** Coastal MDSL of tide gauges and reference products relative to the coastal mean. **(i)** Coastal MDSL error.
 
 .. figure:: ./global_output.png
    :align: center
    :width: 75 %
 
-**Figure 3**: MDSL global output. A schematic showing the MDSL diagnostic's functionality. **(a)** MDSL difference between model and DTU reference data. **(b)** MDSL error of the model. **(c)** Number of points in an n-cornered hat box. **(d)** MDSL difference between DTU and CNES reference products. **(e)** MDSL error of DTU. **(f)** MDSL error of DTU.
+**Figure 3**: MDSL global output. **(a)** MDSL difference between model and DTU reference data. **(b)** MDSL error of the model. **(c)** Number of points in an n-cornered hat box. **(d)** MDSL difference between DTU and CNES reference products. **(e)** MDSL error of DTU. **(f)** MDSL error of CNES.
 
 References
 ----------

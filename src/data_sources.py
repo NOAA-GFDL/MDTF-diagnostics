@@ -49,6 +49,11 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
             k: case_dict[k] for k in ("startdate", "enddate", "convention")
         })
         self.env_vars.update({"CASENAME": case_name})
+        optional_case_attrs = {'realm'}
+        for att in optional_case_attrs:
+            if case_dict.get(att, None) is not None:
+                self.query[att] = case_dict[att]
+
 
     @property
     def _children(self):
@@ -66,10 +71,11 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         self.date_range = util.DateRange(start=startdate, end=enddate)
     
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
-        realm_regex = var.realm
         date_range = var.T.range
         var_id = var.name
         standard_name = var.standard_name
+        if self.query['realm'] == '':
+            self.query['realm'] = var.realm
         if var.translation.convention is not None:
             var_id = var.translation.name
             standard_name = var.translation.standard_name
@@ -90,7 +96,6 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         # the variable is translated
         self.query['frequency'] = freq
         self.query['path'] = path_regex
-        self.query['realm'] = realm_regex
         self.query['standard_name'] = standard_name
         self.query['variable_id'] = var_id
 

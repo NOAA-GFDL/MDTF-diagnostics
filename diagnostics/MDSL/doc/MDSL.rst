@@ -20,7 +20,7 @@ Model output is read in using a data catalog. We used the MDTF catalog_builder t
 Observed/Reference Data
 -----------------------
 
-We use two reference MDSL products from the National Center for Space Studies (CNES) and Technical University Denmark (DTU). Minimal preprocessing is performed on DTU; the related code is provided [HERE]. For the coastal MDSL error calculations, we use tide-gauge data as a reference in addition to the above-mentioned reference products. The reference datasets (MDSL and Tide Gauge) are available at *~diagnostics/MDSL/Ref_data*
+We use two reference MDSL products from the National Center for Space Studies (CNES) and Technical University Denmark (DTU). Minimal preprocessing is performed on DTU; the related code is provided at *~diagnostics/MDSL/Ancillary_Codes/*. For the coastal MDSL error calculations, we use tide-gauge data as a reference in addition to the above-mentioned reference products. The reference datasets (MDSL and Tide Gauge) are available at *~diagnostics/MDSL/Ref_data/*
 
 Required Programing Language and Libraries
 ------------------------------------------
@@ -47,7 +47,7 @@ Sets up parameters. Here, you can pre-set parameters for the model data and the 
 
 **Section 2**
 
-Reads in the "zos" data utilizing the pre-determined data catalog in the runtime configuration file (Several runtime config files are available as examples in ~diagnostics/MDSL/Example_files). Once read in the model data is subset into the reference data time period (1993-2012) and the time mean is computed.
+Reads in the "zos" data utilizing the pre-determined data catalog in the runtime configuration file (Several runtime config files are available as examples in *~diagnostics/MDSL/Example_files/*). Once read in the model data is subset into the reference data time period (1993-2012) and the time mean is computed.
 
 **Section 3** 
 
@@ -100,7 +100,7 @@ References
 
    .. _1:
 
-1.  Mengnan's Paper?
+1.  Zhao, M., Little, C. M., & Krasting, J. P. (In Review). An improved approach for evaluating ocean and climate model errors in mean dynamic sea level. Journal of Atmospheric and Oceanic Technology.
 
 Contact info
 ------------

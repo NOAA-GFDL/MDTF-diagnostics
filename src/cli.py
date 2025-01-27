@@ -124,11 +124,12 @@ def check_date_format(date_string: str):
 
 def verify_case_atts(case_list: util.NameSpace):
     # required case attributes
-    case_attrs = ['convention', 'startdate', 'enddate']
-    conventions = ['cmip', 'gfdl', 'cesm']
+    required_case_attrs = {'convention', 'startdate', 'enddate'}
+    optional_case_attrs = {'realm', 'model'}
+    conventions = {'cmip', 'gfdl', 'cesm'}
     for name, att_dict in case_list.items():
         try:
-            all(att in att_dict.keys() for att in case_attrs)
+            all(att in att_dict.keys() for att in required_case_attrs)
         except KeyError:
             raise util.exceptions.MDTFBaseException(
                 f"Missing or incorrect convention, startdate, or enddate for case {name}"
@@ -139,6 +140,11 @@ def verify_case_atts(case_list: util.NameSpace):
             raise util.exceptions.MDTFBaseException(
                 f"Convention {att_dict['convention']} not supported"
             )
+        try:
+            {att for att in att_dict.keys()}.issubset(required_case_attrs.union(optional_case_attrs))
+        except KeyError:
+            raise util.exceptions.MDTFBaseException(f"Runtime case attribute is not a required or optional attribute. Check runtime config file for typo or unsupported entry.")
+
         st = check_date_format(att_dict.startdate)
         en = check_date_format(att_dict.enddate)
 

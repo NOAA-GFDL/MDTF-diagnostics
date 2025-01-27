@@ -20,7 +20,9 @@ Model output is read in using a data catalog. We used the MDTF catalog_builder t
 Observed/Reference Data
 -----------------------
 
-We use two reference MDSL products from the National Center for Space Studies (CNES) and Technical University Denmark (DTU). Minimal preprocessing is performed on DTU; the related code is provided at *~diagnostics/MDSL/Ancillary_Codes/*. For the coastal MDSL error calculations, we use tide-gauge data as a reference in addition to the above-mentioned reference products. The reference datasets (MDSL and Tide Gauge) are available at *~diagnostics/MDSL/Ref_data/*
+We use two reference MDSL products from the National Center for Space Studies (CNES) and Technical University Denmark (DTU). Minimal preprocessing is performed on DTU; the related code is provided at *~diagnostics/MDSL/Ancillary_Codes/*. 
+
+For the coastal MDSL error calculations, we use tide-gauge data as a reference in addition to the above-mentioned reference products. The reference datasets (MDSL and Tide Gauge) are available at *~diagnostics/MDSL/Ref_data/*
 
 Required Programing Language and Libraries
 ------------------------------------------

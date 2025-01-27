@@ -27,13 +27,16 @@
      "example_multicase"
    ],
    // Each case corresponds to a different simulation/output dataset
+   // convention: cmip, cesm, or gfdl
    // startdate, enddate: either YYYY-MM-DD, YYYYMMDD:HHMMSS, or YYYY-MM-DD:HHMMSS
+   // optional: model, realm
    "case_list":
     {
       "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231":
         {
           "model": "test",
           "convention": "CMIP",
+          "realm": "atmos",  // can be used to refine query if dataset realm definition differs from POD realm
           "startdate": "19800101120000",
           "enddate": "19841231000000"
         }
@@ -42,6 +45,7 @@
         {
           "model": "test",
           "convention": "CMIP",
+          "realm": "atmos",
           "startdate": "19850101",
           "enddate": "19891231"
         }

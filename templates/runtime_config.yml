@@ -7,19 +7,23 @@ pod_list:
   - "example_multicase"
 
 # Case list entries (must be unique IDs for each simulation)
+# convention: cmip, cesm, or gfdl
+# required: convention, startdate, enddate
+# optional: model, realm (used to refine query if dataset realm differs from POD realm)
 case_list:
   "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231" :
     model: "test"
     convention: "CMIP"
     startdate: "19800101120000"
     enddate: "19841231000000"
+    realm: "atmos"
 
   "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231" :
     model: "test"
     convention: "CMIP"
     startdate: "19850101000000"
     enddate: "19891231000000"
-
+    realm: "atmos"
 ### Data location settings ###
 # Required: full or relative path to ESM-intake catalog header file
 DATA_CATALOG: "./diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json"

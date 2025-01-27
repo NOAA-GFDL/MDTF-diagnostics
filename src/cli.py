@@ -143,7 +143,7 @@ def verify_case_atts(case_list: util.NameSpace):
         try:
             {att for att in att_dict.keys()}.issubset(required_case_attrs.union(optional_case_attrs))
         except KeyError:
-            raise util.exceptions.MDTFBaseException(f"Runtime case attribute is not a required or optional attriute")
+            raise util.exceptions.MDTFBaseException(f"Runtime case attribute is not a required or optional attribute. Check runtime config file for typo or unsupported entry.")
 
         st = check_date_format(att_dict.startdate)
         en = check_date_format(att_dict.enddate)

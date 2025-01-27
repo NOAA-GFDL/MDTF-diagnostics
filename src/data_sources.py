@@ -66,7 +66,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         self.date_range = util.DateRange(start=startdate, end=enddate)
     
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
-        realm_regex = var.realm + '*'
+        realm_regex = var.realm
         date_range = var.T.range
         var_id = var.name
         standard_name = var.standard_name

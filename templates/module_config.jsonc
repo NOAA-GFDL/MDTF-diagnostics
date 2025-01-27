@@ -102,7 +102,7 @@
   // Settings affecting what output is generated:
   // Set to true to run the preprocessor; default true:
   "run_pp": true,
-  // Set to true to perform data translation; default false:
+  // Set to true to perform data translation; default true:
   "translate_data": true,
   // Set to true to have PODs save postscript figures in addition to bitmaps.
   "save_ps": false,

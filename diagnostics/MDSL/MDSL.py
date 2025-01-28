@@ -368,7 +368,7 @@ print("Model data imported")
 
 #obs_dir = os.environ["OBS_DATA_ROOT"] 
 
-obs_dir = "/glade/work/netige/mdtf_Nov24/mdtf/inputdata/obs_data/" #modify accordingly
+obs_dir = os.environ["OBS_DATA"] + "/"
 
 #Read in CNES and DTU data
 

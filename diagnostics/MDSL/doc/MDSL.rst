@@ -47,6 +47,8 @@ The core functionality of the package is contained in the MDSL.py file. The code
 
 Sets up parameters. Here, you can pre-set parameters for the model data and the NCH calculation. 
 
+Make sure to change plot filenames in the MDSL.html to match the model name (ex:cm4) of choice.
+
 **Section 2**
 
 Reads in the "zos" data utilizing the pre-determined data catalog in the runtime configuration file (Several runtime config files are available as examples in *~diagnostics/MDSL/Example_files/*). Once read in the model data is subset into the reference data time period (1993-2012) and the time mean is computed.

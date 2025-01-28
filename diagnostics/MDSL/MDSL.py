@@ -1,7 +1,6 @@
 # Import modules used in the POD
 import numpy as np
 import xarray as xr
-from matplotlib import pyplot as plt
 import pandas as pd
 import xesmf as xe
 import os
@@ -9,16 +8,13 @@ import intake
 import sys
 import yaml
 
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
 import momlevel
 from sparse import COO
-import cf_xarray as cfxr
 
 from gfdl_grid_fx import regrid_regions_gfdl
 from other_grid_fx import generate_reg_grid, generate_global_grid
 from plot_fx import make_regional_plots, make_global_plots
-from nch import compute_error, generalized_TCH
+from nch import compute_error
 
 print("Libs imported!")
 

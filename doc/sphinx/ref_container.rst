@@ -58,8 +58,8 @@ We generate our synthetic data by running:
       micromamba activate _MDTF_synthetic_data
       pip install mdtf-test-data
       mkdir mdtf_test_data && cd mdtf_test_data
-      mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5
-      mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5
+      mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5 --freq day
+      mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5 --freq day
 
 Now would be a good time to generate a catalog for the synthetic data, but, in the sake
 of testing, we provide a catalog for the files needed to run the example POD.

@@ -276,8 +276,8 @@ using the configuration in the
     % conda activate _MDTF_synthetic_data
     % pip install mdtf-test-data
     % mkdir mdtf_test_data && cd mdtf_test_data
-    % mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5
-    % mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5
+    % mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5 --freq day
+    % mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5 --freq day
 
 Obtaining supporting data for 3rd-generation and older single-run PODs
 -------------------------------------------------------------------------

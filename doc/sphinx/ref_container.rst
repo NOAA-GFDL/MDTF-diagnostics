@@ -1,15 +1,17 @@
 .. role:: code-rst(code)
    :language: reStructuredText
 .. _ref-container:
+
 Container Reference
-===============================
+===================
+
 This section provides basic directions for downloading,
 installing, and running the example_multicase POD in the
 Model Diagnostics Task Force (MDTF) container.
 
 Getting the Container
--------------------------------
-The container assumes that the MDTF-diangnostics GitHub repo is located on your local machine.
+---------------------
+The container assumes that the MDTF-diagnostics GitHub repo is located on your local machine.
 If you have not already, please clone the repo to your local machine with:
 
    .. code-block:: bash
@@ -28,6 +30,7 @@ If you do not have a container software, Docker can be downloaded from `here <ht
 
 Launching the Container
 -------------------------------
+
 The container itself can be launched with Docker using:
 
    .. code-block:: bash
@@ -43,9 +46,10 @@ wherein:
 These happen to be the only required volumes. Further volumes may need to be mounted including volumes such as data storage.
 
 Generating Synthetic Data
--------------------------------
+-------------------------
+
 Now that we are in the container, we can create some data to run the POD with.
-The MDTF has a synthetic data generator for just this case. First, move into the MDTF-diagnostics dir:
+The MDTF has a synthetic data generator for just this case. First,`cd` into the MDTF-diagnostics directory:
 
    .. code-block:: bash
 
@@ -65,7 +69,7 @@ Now would be a good time to generate a catalog for the synthetic data, but, in t
 of testing, we provide a catalog for the files needed to run the example POD.
 
 Running the POD
--------------------------------
+---------------
 The POD can now be ran using:
 
    .. code-block:: bash
@@ -76,7 +80,8 @@ The POD can now be ran using:
 The results can be found in :code-rst:`/proj/wkdir/`
 
 Building the Container
---------------------------------
+----------------------
+
 If you would like, you can build the container using the Dockerfile found in the GitHub repo.
 If using podman (as required internally at the GFDL),
 please build with the command:

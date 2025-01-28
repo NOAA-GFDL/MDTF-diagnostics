@@ -1,5 +1,9 @@
 .. _ref-pod-requirements:
 
+.. role:: bash(code)
+   :language: bash
+
+
 POD requirements
 =========================
 
@@ -14,7 +18,7 @@ to the `NOAA-GFDL GitHub repo <https://github.com/NOAA-GFDL/MDTF-diagnostics>`__
 This is described in :doc:`dev_git_intro`.
 
 Use the `example_multicase POD <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/diagnostics/example_multicase>`__
- as a reference for how each component of the submission should be structured.
+as a reference for how each component of the submission should be structured.
 
 The POD feature must be up-to-date with the NOAA-GFDL main branch, with no outstanding merge conflicts.
 See :doc:`dev_git_intro` for instructions on syncing your fork with NOAA-GFDL, and pulling updates from
@@ -30,8 +34,10 @@ after your POD's short name.
 For instance, ``diagnostics/convective_transition_diag/`` contains its driver script
 ``convective_transition_diag.py``, ``convective_transition_diag.html``, and ``settings.jsonc``, etc.
 
-PODs may also be submitted as Python notebooks instead of native Python modules.
-PODs submitted as Python modules may include additional scripts that are called by driver script.
+PODs may also be submitted as Python notebooks instead of native Python modules. See
+the `example notebook <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_notebook>`__ for
+reference.
+PODs submitted as Python modules or notebooks may include additional scripts that are called by driver script.
 Whichever format the developer chooses, the POD code must use supported environment variables described in
 :ref:`ref-env-vars` and :ref:`intake-ESM data catalogs <ref-catalogs>` to read the data into xarray. The
 `example_multicase POD driver script <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase/example_multicase.py>`__
@@ -102,7 +108,8 @@ Sample and supporting data submission
 -------------------------------------
 
 Data hosting for the MDTF framework is currently managed manually. The data
-is hosted via anonymous FTP on UCAR's servers. 
+is hosted via anonymous FTP on UCAR's servers. Download the sample data by
+running :bash:`wget ftp://ftp.cgd.ucar.edu/archive/mdtf/obs_data_latest/\*`
 
 
 Digested observational or supporting data
@@ -154,7 +161,7 @@ with 'latest' pointing to the date-or-version-tagged tar file
 
 Note that prior to version 3, obs_data from all PODs was consolidated in one
 tar file. To assist in usability as the number of PODs grow, they will now
-be available individually, with the responsiblity for creating the tar
+be available individually, with the responsibility for creating the tar
 files on the developer.
 
 Sample model data

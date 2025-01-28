@@ -50,11 +50,13 @@ The following variables are accessed using the ``os.environ`` method:
 
   - ``$WORK_DIR/obs/PS`` and ``$WORK_DIR/model/PS``: All output plots produced by your diagnostic should be written to
     one of these two directories. Only files in these locations will be converted to bitmaps for HTML output.
+
   - ``$WORK_DIR/obs/netCDF`` and ``$WORK_DIR/model/netCDF``: Any output data files your diagnostic wants to make
     available to the user should be saved to one of these two directories.
 
 Model run information
 ---------------------
+
 ``case_env_file``:
   location of the yaml file with case-specific environment variables accessed by calling
   ``os.environ[`case_env_file`]``. The following environment variables are loaded into a dictionary

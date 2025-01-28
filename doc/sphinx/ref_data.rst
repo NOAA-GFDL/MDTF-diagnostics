@@ -1,7 +1,9 @@
 .. role:: console(code)
    :language: console
    :class: highlight
+
 .. _ref-data:
+
 Model data format
 =================
 
@@ -23,12 +25,15 @@ File organization
 
 - Model data must be supplied in the form of a set of netCDF or Zarr files with locations and metadata defined in an
   ESM-intake catalog.
+
 - The framework developers have provided a simple tool for generating data catalogs using CMIP, GFDL, and CESM
   conventions. The user community may modify this generator to suit their needs
+
 - Each file may contain one variable (i.e., an array with the values of a single dependent variable, along with all of
   the values of the coordinates at which the dependent variable was sampled), or multiple variables. Refer to the
   ESM-intake documentation for `instructions to create and access data catalogs with multiple assets
   <https://intake-esm.readthedocs.io/en/stable/how-to/use-catalogs-with-assets-containing-multiple-variables.html>`__.
+
 - The data for one variable may be spread across multiple netCDF files, but this must take the form of contiguous chunks
   by date (e.g., one file for 2000-2009, another for 2010-2019, etc.). The spatial coordinates in each file in a series
   of chunks must be identical.
@@ -71,6 +76,7 @@ in addition to the ``calendar`` attribute on the time coordinate:
    This is used to confirm that the framework has downloaded the physical quantity that the POD has requested,
    independently of what name the model has given to the variable. If the input files do not contain a `standard_name`,
    attribute, substitute the `long_name`.
+
 - ``realm``: The model realm(s) that each variable is part of.
   
   If the user or data source has specified a :ref:`naming convention<ref-data-conventions>`, missing values for this

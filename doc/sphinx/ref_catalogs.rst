@@ -52,7 +52,7 @@ columns are optional at this time but may be used to refine query results in fut
       * "CESM"
       * "GFDL"
   * file_path: (str) full path to the file
-  * frequency: (str) output frequency of the data; use the following CMIP definitions:
+  * frequency: (str) output frequency of data; use the following CMIP definitions:
       * sampled hourly = "1hr""sampled hourly"
       * monthly-mean diurnal cycle resolving each day into 1-hour means = "1hrCM"
       * sampled hourly at specified time point within an hour = "1hrPt"
@@ -69,7 +69,7 @@ columns are optional at this time but may be used to refine query results in fut
       * sampled sub-hourly at specified time point within an hour = "subhrPt"
       * annual mean samples = "yr"
       * sampled yearly at specified time point within the time period = "yrPt"
-  * realm | modeling_realm: (str) model realm for the variable; use the following CMIP definitions:
+  * realm | modeling_realm: (str) model realm for the variable; use the following CMIP definitions if possible:
       * Aerosol = "aerosol"
       * Atmosphere = "atmos"
       * Atmospheric Chemistry = "atmosChem"
@@ -79,9 +79,13 @@ columns are optional at this time but may be used to refine query results in fut
       * Ocean Biogeochemistry = "ocnBgchem"
       * Sea Ice = "seaIce"
   * standard_name: (str) if a standard_name is not defined for a variable in the target file, use the equivalent CMIP6
-    standard_name or the long_name with underscores in place of spaces (e.g., air temperature -> air_temperature)
+    standard_name defined in the appropriate
+    `fieldlist table <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/data>__ if one is available. If no
+    standard_name is available, open an issue requesting an addition to the fieldlist tables(s) for your variable. The
+    task force will create a standard_name if one does not exist so that the catalog builders and the framework can
+    cross-reference the entries in the field table.
   * time_range: (str or int) time range spanned by file with start_time and end_time separated by a '-', e.g.,:
       * yyyy-mm-dd-yyyy-mm-dd
       * yyyymmdd:HHMMSS-yyyymmdd:HHMMSS
-  * units: (str) variable units
+  * units: (str) variable units. Unitless variables should have units of '1'.
   * variable_id: (str) variable name id (e.g., temp, precip, PSL, TAUX)

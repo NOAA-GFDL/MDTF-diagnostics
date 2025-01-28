@@ -287,15 +287,6 @@ tch_size       = 3.0           # Size of TCH box in degrees for regional POD (re
 rez            = 0.5                # Resolution for global regridding. Options are 0.5 or 1.0 (degrees)
 cost_threshold = 5.0     # cost --> higher means larger model error relative to data
 
-if modname == "cm4":
-    key = 'CMIP.NOAA-GFDL.GFDL-CM4.historical.mon.r1i1p1f1.Omon.gn.ocean.r1i1p1f1'
-
-if modname == "esm4":
-    key = 'CMIP.NOAA-GFDL.GFDL-ESM4.historical.mon.r1i1p1f1.Omon.gn.ocean.r1i1p1f1'
-
-if modname == "ECMWF-HR":
-    key = 'HighResMIP.ECMWF.ECMWF-IFS-HR.hist-1950.mon.r1i1p1f1.Omon.gn.ocean.r1i1p1f1'
-
 print("Parameters Set!")
 
 
@@ -339,7 +330,7 @@ zos_dict   = zos_subset.to_dataset_dict(
 )
 
 # Extract the dataset from the dictionary
-print("Available keys:", list(zos_dict.keys()))
+print("Available s:", list(zos_dict.keys()))
 dataset = zos_dict[list(zos_dict)[0]]
 
 print(dataset)

@@ -344,7 +344,7 @@ zos_dict   = zos_subset.to_dataset_dict(
 
 # Extract the dataset from the dictionary
 print("Available keys:", list(zos_dict.keys()))
-dataset    = zos_dict[key]
+dataset = zos_dict[list(zos_dict)[0]]
 
 print(dataset)
 

@@ -1,0 +1,42 @@
+{
+   "settings":{
+      "driver":"finite_amplitude_wave_diag_zonal_mean.py",
+      "long_name":"Finite-amplitude Rossby Wave Diagnostics (zonal-mean version)",
+      "realm" : "atmos",
+      "description":"Finite-amplitude Rossby Wave Diagnostics (zonal-mean version)",
+      "runtime_requirements":{
+         "python3":[
+            "matplotlib",
+            "xarray",
+            "netCDF4",
+            "numpy",
+            "cartopy",
+            "falwa"
+         ]
+      }
+   },
+   "data":{"frequency":"day"},
+   "dimensions":{
+      "lat": {"standard_name": "latitude"},
+      "lon": {"standard_name": "longitude"},
+      "plev":{"standard_name":"air_pressure", "units":"Pa", "positive":"down", "axis":"Z"},
+      "time": {"standard_name": "time"}
+   },
+   "varlist":{
+      "ua":{
+         "standard_name":"eastward_wind",
+         "units":"m s-1",
+         "dimensions":["time", "plev", "lat", "lon"],
+         "freq":"day"},
+      "va":{
+         "standard_name":"northward_wind",
+         "units":"m s-1",
+         "dimensions":["time", "plev", "lat", "lon"],
+         "freq":"day"},
+      "ta":{
+         "standard_name":"air_temperature",
+         "units":"K",
+         "dimensions":["time", "plev", "lat", "lon"],
+         "freq":"day"}
+   }
+}

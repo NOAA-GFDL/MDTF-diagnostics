@@ -1,0 +1,128 @@
+// Configuration for MDTF-diagnostics driver script self-test.
+//
+// Copy this file and customize the settings as needed to run the framework on
+// your own model output without repeating command-line options. Pass it to the
+// framework at the end of the command line (positionally) or with the
+// -f/--input-file flag. Any other explicit command line options will override
+// what's listed here.
+//
+// All text to the right of an unquoted "//" is a comment and ignored, as well
+// as blank lines (JSONC quasi-standard.)
+{
+  "case_list" : [
+    // The cases below correspond to the different sample model data sets. Note
+    // that the MDTF package does not currently support analyzing multiple
+    // models in a single invocation. Comment out or delete the first entry and
+    // uncomment the second to run NOAA-GFDL-AM4 only for the MJO_prop_amp POD,
+    // and likewise for the SM_ET_coupling POD.
+    {
+      "CASENAME" : "GFDL-CM3_historical_r1i1p1",
+      "model" : "CMIP",
+      "convention" : "CMIP",
+      "FIRSTYR" : 2005,
+      "LASTYR" : 2005,
+      "pod_list": [
+          // Optional: PODs to run for this model only (defaults to all)
+          "finite_amplitude_wave_diag"
+      ]
+    }
+    // {
+    //   "CASENAME" : "GFDL.CM4.c96L32.am4g10r8",
+    //   "model" : "AM4",
+    //   "convention" : "GFDL",
+    //   "FIRSTYR" : 1,
+    //   "LASTYR" : 10,
+    //   "pod_list" : ["MJO_prop_amp"]
+    // }
+    // {
+    //   "CASENAME" : "Lmon_GISS-E2-H_historical_r1i1p1",
+    //   "model" : "CMIP",
+    //   "convention" : "CMIP",
+    //   "FIRSTYR" : 1951,
+    //   "LASTYR" : 2005,
+    //   "pod_list" : ["SM_ET_coupling"]
+    // }
+    // {
+    //   "CASENAME" : "NCAR-CAM5.timeslice",
+    //   "model" : "CESM",
+    //   "convention" : "CMIP",
+    //   "FIRSTYR" : 2000,
+    //   "LASTYR" : 2004,
+    //   "pod_list": ["example"]
+    // }
+  ],
+  // PATHS ---------------------------------------------------------------------
+  // Location of supporting data downloaded when the framework was installed.
+
+  // If a relative path is given, it's resolved relative to the MDTF-diagnostics
+  // code directory. Environment variables (eg, $HOME) can be referenced with a
+  // "$" and will be expended to their current values when the framework runs.
+
+  // Parent directory containing observational data used by individual PODs.
+  "OBS_DATA_ROOT": "../inputdata/obs_data/",
+
+  // Parent directory containing results from different models.
+  "MODEL_DATA_ROOT": "../inputdata/model/",
+
+  // Working directory. Defaults to OUTPUT_DIR if blank.
+  "WORKING_DIR": "../wkdir",
+
+  // Directory to write output. The results of each run of the framework will be
+  // put in a subdirectory of this directory.
+  "OUTPUT_DIR": "../wkdir",
+
+  // Location of the Anaconda/miniconda or micromamba installation to use for managing
+  // dependencies (path returned by running `[conda | micromamba] info`.) If empty,
+  // framework will attempt to determine location of system's conda installation.
+  "conda_root": "$HOME/miniconda3",
+
+  // Location of micromamba executable if using micromamba
+  "micromamba_exe":"",
+
+  // Directory containing the framework-specific conda environments. This should
+  // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
+  // blank, the framework will look for its environments in the system default
+  // location.
+  "conda_env_root": "$HOME/miniconda3/envs",
+
+  // SETTINGS ------------------------------------------------------------------
+  // Any command-line option recognized by the mdtf script (type `mdtf --help`)
+  // can be set here, in the form "flag name": "desired setting".
+
+  // Method used to fetch model data.
+  "data_manager": "Local_File",
+    
+  // Type of data that POD(s) will analyze
+  // "single_run" (default) or "multi_run"
+  "data_type": "single_run",
+
+  // Method used to manage dependencies.
+  "environment_manager": "Conda",
+
+  // Settings affecting what output is generated:
+
+  // Set to true to have PODs save postscript figures in addition to bitmaps.
+  "save_ps": true,
+
+  // Set to true to have PODs save netCDF files of processed data.
+  "save_nc": true,
+
+  // Set to true to save HTML and bitmap plots in a .tar file.
+  "make_variab_tar": true,
+
+  // Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
+  // under a unique name.
+  "overwrite": false,
+
+  // Settings used in debugging:
+
+  // Log verbosity level.
+  "verbose": 2,
+
+  // Set to true for framework test. Data is fetched but PODs are not run.
+  "test_mode": false,
+
+  // Set to true for framework test. No external commands are run and no remote
+  // data is copied. Implies test_mode.
+  "dry_run": false
+}

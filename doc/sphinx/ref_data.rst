@@ -75,7 +75,8 @@ in addition to the ``calendar`` attribute on the time coordinate:
   `standard name <http://cfconventions.org/Data/cf-standard-names/77/build/cf-standard-name-table.html>`__.
    This is used to confirm that the framework has downloaded the physical quantity that the POD has requested,
    independently of what name the model has given to the variable. If the input files do not contain a `standard_name`,
-   attribute, substitute the `long_name`.
+   attribute, consult the appropriate `fieldlist <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/data>`__ for the standard_name, or open an issue requesting that the fieldlists
+   be updated with entries for your variables if they are missing.
 
 - ``realm``: The model realm(s) that each variable is part of.
   
@@ -97,9 +98,10 @@ provided via the  `cftime <https://unidata.github.io/cftime/>`__ library. We als
 `cf_xarray <https://cf-xarray.readthedocs.io/en/latest/>`__ to access data attributes in a more convention-independent
 way.
 
-If you're deciding how to post-process your model's data for use by the MDTF package, or are debugging issues with your
+If you're deciding how to post-process your model's data for use by the MDTF-diagnostics package, or are debugging
+issues with your
 model's data format, it may be simpler to load and examine your data with these packages interactively, rather than by
-invoking the entire MDTF package. The following python snippet approximates how the framework loads datasets for
+invoking the entire package. The following python snippet approximates how the framework loads datasets for
 preprocessing. Use the `\_MDTF_base <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_base.yml>`__
 conda environment to install the correct versions of each package.
 

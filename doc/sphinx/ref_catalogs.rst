@@ -36,11 +36,11 @@ to perform catalog queries.
 
 The MDTF-diagnostics package provides a basic :ref:`catalog builder tool <ref-catalog-builder>` built on top of
 `ecgtools <https://github.com/ncar-xdev/ecgtools>`__ that has been tested with
-CMIP6 and GFDL datasets. The catalog builder contains hooks for CESM datasets that will be implemented in later
-versions of the MDTF-diagnostics package. GFDL also maintains a lightweight
+CMIP6, CESM, and GFDL datasets. GFDL also maintains a lightweight
 `CatalogBuilder <https://github.com/NOAA-GFDL/CatalogBuilder>`__ that has been tested with GFDL and CMIP6 datasets.
 Users may try both tools and select the one works best for their dataset and system, or create their own builder script.
-
+The framework team will eventually merge the capabilities in the MDTF-diagnostics into the GFDL builder as the ecgtools
+package is no longer under active development.
 Required catalog information
 ----------------------------
 
@@ -80,10 +80,10 @@ columns are optional at this time but may be used to refine query results in fut
       * Sea Ice = "seaIce"
   * standard_name: (str) if a standard_name is not defined for a variable in the target file, use the equivalent CMIP6
     standard_name defined in the appropriate
-    `fieldlist table <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/data>__ if one is available. If no
+    `fieldlist table <https://github.com/NOAA-GFDL/MDTF-diagnostics/tree/main/data>`__ if one is available. If no
     standard_name is available, open an issue requesting an addition to the fieldlist tables(s) for your variable. The
     task force will create a standard_name if one does not exist so that the catalog builders and the framework can
-    cross-reference the entries in the field table.
+    cross-reference the entries for catalog generation and data translation.
   * time_range: (str or int) time range spanned by file with start_time and end_time separated by a '-', e.g.,:
       * yyyy-mm-dd-yyyy-mm-dd
       * yyyymmdd:HHMMSS-yyyymmdd:HHMMSS

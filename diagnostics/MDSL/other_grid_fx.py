@@ -2,7 +2,6 @@
 
 import numpy as np
 import xarray as xr
-import xesmf as xe
 from nch import * # saved generalized TCH function in python script for readability
 
 

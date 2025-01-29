@@ -28,7 +28,8 @@
    ],
    // Each case corresponds to a different simulation/output dataset
    // convention: cmip, cesm, or gfdl
-   // startdate, enddate: either YYYY-MM-DD, YYYYMMDD:HHMMSS, or YYYY-MM-DD:HHMMSS
+   // startdate, enddate: YYYY, YYYYmm, YYYYmmdd,
+   // YYYYmmdd:HHMMSS, YYYYmmddHHMMSS
    // optional: model, realm
    "case_list":
     {

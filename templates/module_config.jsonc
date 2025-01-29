@@ -43,7 +43,10 @@
        }
    },
    // Each case corresponds to a different simulation/output dataset
-   // startdate, enddate: either YYYY-MM-DD, YYYYMMDD:HHMMSS, or YYYY-MM-DD:HHMMSS
+   // convention: cmip, cesm, or gfdl
+   // startdate, enddate: YYYY, YYYYmm, YYYYmmdd,
+   // YYYYmmdd:HHMMSS, YYYYmmddHHMMSS
+   // optional: model, realm
    "case_list":
     {
       "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231":

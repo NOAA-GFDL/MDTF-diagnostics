@@ -6,7 +6,6 @@ from scipy import optimize
 from itertools import combinations
 import math
 # from tqdm.notebook import tnrange, tqdm
-import xarray as xr
 
 
 

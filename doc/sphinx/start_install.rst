@@ -388,8 +388,14 @@ A complete description of the configuration options is at :doc:`ref_cli`, or can
 Running the package on the example_multicase POD with synthetic CMIP model data
 -------------------------------------------------------------------------------
 
-You are now ready to run the example_multicase POD on the synthetic CMIP data.
-which is saved at <*config_file_path*> as described in the previous section.
+You are now ready to run the example_multicase POD on the synthetic CMIP data
+that is saved at <*config_file_path*> as described in the previous section.
+Make sure to the modify the path entries in
+`diagnostic/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.csv`,
+and the "catalog_file" path in `diagnostic/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json`
+to include the root directory locations on your file system. Full paths must be specified.
+
+Next, run
 
 .. code-block:: console
 

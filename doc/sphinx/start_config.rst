@@ -109,13 +109,18 @@ The configuration options required to specify what analysis the package should d
   explicit *CASENAME* paramater in the configuration file; the framework will define each *CASENAME* key using string
   value that defines the case block.
 
-    * **model**: (string) name of the model for each case
+    * **Convention**: (string, required): convention of case; ["CMIP" | "CESM" | "GFDL"]
 
-    * **Convention**: (string) convention of case; ["CMIP" | "CESM" | "GFDL"]
+    * **startdate**: (string with format <YYYY>, <YYYYmm> <*YYYYmmdd*> or <*YYYYmmddHHMMSS>, required):
+      The starting date of the analysis period
 
-    * **startdate**: (string with format <*YYYYMMDD*> or <*YYYYMMDDHHmmss>) The starting date of the analysis period
+    * **enddate** (string with format <YYYY>, <YYYYmm> <*YYYYmmdd*> or <*YYYYmmddHHMMSS, required): The end date of the
+      analysis period.
 
-    * **enddate** (string with format <*YYYYMMDD*> or <*YYYYMMDDHHmmss>) The end date of the analysis period.
+    * **realm** (string, optional): realm of the dataset. If defined, the preprocessor will query the catalog with the
+      dataset realm instead of the POD realm.
+
+    * **model**: (string, optional) name of the model for each case
 
 An error will be raised if the data provided for any requested variable doesn't span the date range defined by
 **startdate** and **enddate**

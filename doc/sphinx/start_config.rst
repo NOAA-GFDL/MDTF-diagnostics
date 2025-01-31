@@ -109,7 +109,7 @@ The configuration options required to specify what analysis the package should d
   explicit *CASENAME* paramater in the configuration file; the framework will define each *CASENAME* key using string
   value that defines the case block.
 
-    * **Convention**: (string, required): convention of case; ["CMIP" | "CESM" | "GFDL"]
+    * **convention**: (string, required): convention of case; ["CMIP" | "CESM" | "GFDL"]
 
     * **startdate**: (string with format <YYYY>, <YYYYmm> <*YYYYmmdd*> or <*YYYYmmddHHMMSS>, required):
       The starting date of the analysis period
@@ -179,6 +179,57 @@ Options for workflow control
   the MDTF-diagnostics repository. The scripts will run even if the list is populated whether **run_pp** is set to
   *true* or *false*.
 
+Running the MDTF-diagnostics package in "multirun" mode
+=======================================================
+
+Version 3 and later of the MDTF-diagnostics package provides support for "multirun" diagnostics that analyze output from
+multiple model and/or observational datasets. "Single-run" PODs that analyze one model dataset and/or one observational
+dataset and multirun PODs cannot be run together because the framework is configured to run each case on each POD.
+
+The example_multicase POD and configuration
+--------------------------------------------
+A multirun test POD called *example_multicase* is available in ``diagnostics/example_multicase`` that demonstrates
+how to configure "multirun" diagnostics that analyze output from multiple datasets.
+The `multirun_config_template.jsonc file
+<https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase/multirun_config_template.jsonc>`__
+contains separate ``pod_list`` and ``case_list`` blocks. As with the single-run configuration, the ``pod_list`` may
+contain multiple PODs separated by commas. The `case_list` contains multiple blocks of information for each case that
+the POD(s) in the ``pod_list`` will analyze. The ``CASENAME``, ``convention``, ``startdate``, and ``enddate`` attributes
+must be defined for each case. The ``convention`` must be the same for each case, but ``startdate`` and ``enddate``
+may differ among cases. ``realm`` and ``model`` are optional case attributes that the user can include to refine the catalog
+query (e.g., search for data with realm = 'atmos-cmip' instead of 'atmos'.
+
+Directions for generating the synthetic data in the configuration file are provided in the file comments, and in the
+quickstart section of the `README file
+<https://github.com/NOAA-GFDL/MDTF-diagnostics#5-run-the-framework-in-multi_run-mode-under-development>`__
+
+POD output
+----------
+The framework defines a root directory ``$WORK_DIR/[POD name]`` for each
+POD in the pod_list. ``$WORK_DIR/[POD name]`` contains the the main framework log files, and subdirectories for each
+case. Processed data files for each case are placed in ``$WORK_DIR/[CASENAME]/[data output frequency]``.
+The pod html file is written to ``$OUTPUT_DIR/[POD name]/[POD_name].html`` (`$OUTPUT_DIR` defaults to ``$WORK_DIR``
+if it is not defined), and the output figures are placed in ``$OUTPUT_DIR/[POD name]/model`` depending on how the paths
+are defined in the POD's html template.
+
+.. note::
+
+  The framework creates an ``obs/`` subirectory in each ``$WORK_DIR/[POD_NAME]``by default, but will be empty unless a
+  POD uses observational dataset and writes observational data figures to this directory.
+  Figures that are generated as .eps files before conversion to .png files are written to
+  ``$WORK_DIR/[POD name]/model/PS``.
+
+Multirun environment variables
+------------------------------
+Multirun PODs obtain information for environment variables for the case and variable attributes
+described in the :doc:`configuration section <./start_config>`
+from a yaml file named *case_info.yaml* that the framework generates at runtime. The *case_info.yaml* file is written
+to ``$WORK_DIR/[POD name]``, and has a corresponding environment variable *case_env_file* that the POD uses to
+parse the file. The *example_multicase.py* script demonstrates to how to read the environment variables from
+*case_info.yaml* using the *case_env_file* environment variable into a dictionary,
+then loop through the dictionary to obtain the post-processed data for analysis. An example *case_info.yaml* file
+with environment variables defined for the synthetic test data is located in the *example_multicase* directory.
+
 Running the package
 +++++++++++++++++++
 
@@ -193,8 +244,8 @@ same way:
     % cd <CODE_ROOT>
     % ./mdtf -f <new config file path>
 
-The output of the package will be saved as a series of web pages in a directory named MDTF_output/[pod_name] in
-<*OUTPUT_DIR*>.
+The output of the package will be saved as a series of web pages in a directory named ``MDTF_output/[pod_name]`` in
+``<OUTPUT_DIR>``.
 
 If you run the package multiple times with the same configuration values and **overwrite** set to *false, the suffixes
-".v1", ".v2", etc. will be added to duplicate `MDTF_output` directory names.
+".v1", ".v2", etc. will be added to duplicate ``MDTF_output`` directory names.

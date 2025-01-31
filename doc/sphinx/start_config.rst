@@ -179,12 +179,13 @@ Options for workflow control
   the MDTF-diagnostics repository. The scripts will run even if the list is populated whether **run_pp** is set to
   *true* or *false*.
 
-Running the MDTF-diagnostics package in "multirun" mode
-=======================================================
+Running the MDTF-diagnostics package with multiple cases
+========================================================
 
 Version 3 and later of the MDTF-diagnostics package provides support for "multirun" diagnostics that analyze output from
-multiple model and/or observational datasets. "Single-run" PODs that analyze one model dataset and/or one observational
-dataset and multirun PODs cannot be run together because the framework is configured to run each case on each POD.
+multiple model datasets (with or without observational data). "Single-run" PODs that analyze one model dataset
+and/or one observational dataset and multirun PODs cannot be run together because the framework is
+configured to run each case on each POD.
 
 The example_multicase POD and configuration
 --------------------------------------------
@@ -205,30 +206,30 @@ quickstart section of the `README file
 
 POD output
 ----------
-The framework defines a root directory ``$WORK_DIR/[POD name]`` for each
-POD in the pod_list. ``$WORK_DIR/[POD name]`` contains the the main framework log files, and subdirectories for each
-case. Processed data files for each case are placed in ``$WORK_DIR/[CASENAME]/[data output frequency]``.
+The framework defines a root directory ``_MDTF_output[_v#]/[POD name]`` for each
+POD in the pod_list. ``_MDTF_output[_v#]/[POD name]`` contains the the main framework log files, and subdirectories for each
+case. Processed data files for each case are placed in ``_MDTF_output[_v#]/[CASENAME]/[data output frequency]``.
 The pod html file is written to ``$OUTPUT_DIR/[POD name]/[POD_name].html`` (`$OUTPUT_DIR` defaults to ``$WORK_DIR``
 if it is not defined), and the output figures are placed in ``$OUTPUT_DIR/[POD name]/model`` depending on how the paths
 are defined in the POD's html template.
 
 .. note::
 
-  The framework creates an ``obs/`` subirectory in each ``$WORK_DIR/[POD_NAME]``by default, but will be empty unless a
+  The framework creates an ``obs/`` subirectory in each ``$WORK_DIR``by default, but will be empty unless a
   POD uses observational dataset and writes observational data figures to this directory.
   Figures that are generated as .eps files before conversion to .png files are written to
-  ``$WORK_DIR/[POD name]/model/PS``.
+  ``_MDTF_OUTPUT[_v#]/[POD name]/model/PS``.
 
 Multirun environment variables
 ------------------------------
 Multirun PODs obtain information for environment variables for the case and variable attributes
 described in the :doc:`configuration section <./start_config>`
-from a yaml file named *case_info.yaml* that the framework generates at runtime. The *case_info.yaml* file is written
-to ``$WORK_DIR/[POD name]``, and has a corresponding environment variable *case_env_file* that the POD uses to
-parse the file. The *example_multicase.py* script demonstrates to how to read the environment variables from
-*case_info.yaml* using the *case_env_file* environment variable into a dictionary,
-then loop through the dictionary to obtain the post-processed data for analysis. An example *case_info.yaml* file
-with environment variables defined for the synthetic test data is located in the *example_multicase* directory.
+from a yaml file named *case_info.yaml* that the framework generates at runtime. The ``case_info.yaml`` file is written
+to ``_MDTF_OUTPUT[_v#]/[POD name]``, and has a corresponding environment variable ``case_env_file`` that the POD uses to
+parse the file. The ``example_multicase.py`` script demonstrates to how to read the environment variables from
+``case_info.yaml`` using the ``case_env_file`` environment variable into a dictionary,
+then loop through the dictionary to obtain the post-processed data for analysis. An example ``case_info.yaml`` file
+with environment variables defined for the synthetic test data is located in the ``example_multicase`` directory.
 
 Running the package
 +++++++++++++++++++

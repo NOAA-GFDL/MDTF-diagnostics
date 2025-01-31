@@ -127,4 +127,4 @@ The framework will set the following environment variables in the `case_env_file
    ``pr`` data, e.g. ``/dir/precip.nc``.
 
 As with ``CASENAME``, ``startdate``, and ``enddate``, the variable-specific environment variables are
-accessed with the `os.environ` method in single-run PODs from framework versions older than v4.0.
+accessed with the ``os.environ`` method in single-run PODs from framework versions older than v4.0.

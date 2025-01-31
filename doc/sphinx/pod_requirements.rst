@@ -38,6 +38,7 @@ PODs may also be submitted as Python notebooks instead of native Python modules.
 the `example notebook <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_notebook>`__ for
 reference.
 PODs submitted as Python modules or notebooks may include additional scripts that are called by driver script.
+
 Whichever format the developer chooses, the POD code must use supported environment variables described in
 :ref:`ref-env-vars` and :ref:`intake-ESM data catalogs <ref-catalogs>` to read the data into xarray. The
 `example_multicase POD driver script <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_multicase/example_multicase.py>`__
@@ -115,7 +116,7 @@ running :bash:`wget ftp://ftp.cgd.ucar.edu/archive/mdtf/obs_data_latest/\*`
 Digested observational or supporting data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Create a directory under ``inputdata/obs_data/`` named after the short name
+Create a directory under `inputdata/obs_data/` named after the short name
 of your POD, and put all your *digested* observation data in (or more
 generally, any quantities that are independent of the model being
 analyzed).

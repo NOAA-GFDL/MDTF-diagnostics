@@ -36,7 +36,9 @@ For instance, ``diagnostics/convective_transition_diag/`` contains its driver sc
 
 PODs may also be submitted as Python notebooks instead of native Python modules. See
 the `example notebook <https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/example_notebook>`__ for
-reference.
+reference. The famework uses `nbconvert <https://nbconvert.readthedocs.io/en/latest/>`__ to run Python notebooks as
+scripts, making their implementation VERY similar to regular .py files.
+
 PODs submitted as Python modules or notebooks may include additional scripts that are called by driver script.
 
 Whichever format the developer chooses, the POD code must use supported environment variables described in

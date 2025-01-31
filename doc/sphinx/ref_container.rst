@@ -29,7 +29,7 @@ or with the equivalent command in your container software.
 If you do not have a container software, Docker can be downloaded from `here <https://docs.docker.com/desktop/>`_.
 
 Launching the Container
--------------------------------
+-----------------------
 
 The container itself can be launched with Docker using:
 

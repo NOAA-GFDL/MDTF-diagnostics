@@ -26,6 +26,10 @@
      "example_multicase"
    ],
    // Each case corresponds to a different simulation/output dataset
+   // convention: cmip, cesm, or gfdl
+   // startdate, enddate: YYYY, YYYYmm, YYYYmmdd,
+   // YYYYmmdd:HHMMSS, YYYYmmddHHMMSS
+   // optional: model, realm
    "case_list":
     {
       "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231":
@@ -33,14 +37,16 @@
           "model": "test",
           "convention": "CMIP",
           "startdate": "19800101",
-          "enddate": "19841231"
+          "enddate": "19841231",
+          "realm": "atmos"
         },
       "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231":
         {
           "model": "test",
           "convention": "CMIP",
           "startdate": "19850101",
-          "enddate": "19891231"
+          "enddate": "19891231",
+          "realm": "atmos"
         }
     },
 

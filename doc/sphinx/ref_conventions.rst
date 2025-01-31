@@ -11,7 +11,7 @@ Naming conventions are specified with the ``convention`` parameter. The currentl
 s been `published <https://esgf-node.llnl.gov/projects/cmip6/>`__ as part of CMIP6, or processed with the
 `CMOR3 <https://cmor.llnl.gov/>`__ tool, should follow this convention.
 
-* ``NCAR``: Variable names and units used in the default output of models developed at the
+* ``CESM``: Variable names and units used in the default output of models developed at the
 `National Center for Atmospheric Research <https://ncar.ucar.edu>`__ (NCAR), headquartered in Boulder, CO, USA.
 Recognized synonyms for this convention: ``CAM4``, ``CESM``, ``CESM2``.
 
@@ -31,11 +31,12 @@ described above. All of them involve more manual effort on the part of the user.
 - The third-party `CMOR <https://cmor.llnl.gov/>`__ tool exists to convert model output into the ``CMIP`` convention.
 - `NCO <http://nco.sourceforge.net/>`__, `CDO <https://code.mpimet.mpg.de/projects/cdo>`__ and other utilities provide
   command-line functionality for renaming variables, unit conversion, editing metadata, etc.
-- As mentioned above, ``--convention=None`` turns off the variable translation functionality. The user is then
+- As mentioned in :ref:`the cli documentation<ref-cli>`, setting ``translate_data`` to `false` in the runtime
+  configuration file turns off the variable translation functionality. The user is then
   responsible for ensuring that input model data has the variable names and units expected by each POD.
-- Finally, the ``--disable-preprocessor`` flag skips all unit conversion and checking associated with model metadata.
+- Finally, setting ``run_pp`` to `false` will disable all unit conversion and checking associated with model metadata.
   The user is then responsible for ensuring that input model data has the variable names and units expected by each POD.
 
 If using any of the above methods, please carefully consult the documentation for what data is needed by each POD. Note
-that we do not require POD developers to use any variable naming convention or set of units, so different PODs may
+that we do not require POD developers to use standard variable names or set of units, so different PODs may
 request data in mutually inconsistent conventions (e.g., precipitation as a rate vs. as a flux).

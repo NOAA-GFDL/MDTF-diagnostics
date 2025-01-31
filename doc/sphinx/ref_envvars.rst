@@ -12,7 +12,7 @@ Your code communicates with this wrapper in two ways:
 - The :doc:`settings file <./pod_settings>` is where your code talks to the framework: when you write your code,
   you document what model data your code uses (not covered on this page, follow the link for details).
 - The framework "talks" to a POD through a combination of shell environment variables passed directly to the subprocess
-  via the `env` parameter, and by defining a `case_info.yml` file in the `$WORK_DIR` with case-specific environment
+  via the `env` parameter, and by defining a ``case_info.yml`` file in the ``$WORK_DIR`` with case-specific environment
   variables. The framework communicates **all** runtime information this way: this is in order to 1) pass information
   in a language-independent way, and 2) to make writing diagnostics easier (i.e., the POD does not need to parse
   command-line settings).
@@ -38,7 +38,7 @@ The following variables are accessed using the ``os.environ`` method:
       ``.../MDTF-diagnostics/diagnostics/<your POD's name>``. This can be used to call sub-scripts from your diagnostic's
       driver script. This directory should be treated as **read-only**.
 
-    ``DATA_DIR``:
+    ``DATADIR``:
       (retained for backwards compatibility with v3.5 and earlier PODs) location of the model
       input data directory.
 
@@ -50,14 +50,16 @@ The following variables are accessed using the ``os.environ`` method:
 
   - ``$WORK_DIR/obs/PS`` and ``$WORK_DIR/model/PS``: All output plots produced by your diagnostic should be written to
     one of these two directories. Only files in these locations will be converted to bitmaps for HTML output.
+
   - ``$WORK_DIR/obs/netCDF`` and ``$WORK_DIR/model/netCDF``: Any output data files your diagnostic wants to make
     available to the user should be saved to one of these two directories.
 
 Model run information
 ---------------------
+
 ``case_env_file``:
   location of the yaml file with case-specific environment variables accessed by calling
-  ``os.environ[`case_env_file`]``. The following environment variables are loaded into a dictionary
+  ``os.environ[case_env_file]``. The following environment variables are loaded into a dictionary
   from the case environment file:
 
     ``CATALOG_FILE``:
@@ -73,14 +75,15 @@ Model run information
     ``startdate``, ``enddate``:
       Strings in the format <yyyymmdd> or <yyyymmddHHMMSS> describing the start and end dates of the
       analysis period for a case associated with ``CASENAME``. Single-run PODs submitted to version 3.5 and
-      earlier of the framework directly access this variable with ``os.environ['startdate]`` and ``os.environ['enddate]``.
+      earlier of the framework directly access this variable with ``os.environ['startdate]`` and
+      ``os.environ['enddate]``.
 
 Locations of model data files
 -----------------------------
 
 The processed model data files are written to the ``$WORK_DIR`` and accessed via the esm-intake catalog
 output by the framework, or by the original catalog passed to the framework at runtime if no preprocessing
-is performed via the ``CATALOG_FILE`` environment variable in the ``case_env_file``
+is performed via the ``CATALOG_FILE`` environment variable in the ``case_env_file``.
 
 Names of variables and dimensions
 ---------------------------------
@@ -114,7 +117,7 @@ We only give the relevant parts of the :doc:`settings file <ref_settings>` below
     }
   }
 
-The framework will set the following environment variables in the ``case_env_file``:
+The framework will set the following environment variables in the `case_env_file`:
 
 #. ``lat_coord``: Name of the latitude dimension in the model's native format
 #. ``lon_coord``: Name of the longitude dimension in the model's native format

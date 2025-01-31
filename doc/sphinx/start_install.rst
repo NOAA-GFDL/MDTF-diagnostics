@@ -162,14 +162,15 @@ by the package's diagnostics.
 
 - First, determine the location of your conda/micromamba installation by running :console:`% conda info --base` or
   :console:`% micromamba info` as the user who will be using the package. This path will be referred to as
-  <*CONDA_ROOT*> or <*MICROMAMBA_ROOT*> below.
+  ``<CONDA_ROOT>`` or ``<MICROMAMBA_ROOT>`` below.
 
-- If you don't have write access to <*CONDA_ROOT*>/<*MICROMAMBA_ROOT*>
-  (for example, if conda has been installed for all users of a multi-user system),
-  you will need to tell conda to install its files in a different, writable location.
-  You can also choose to do this out of convenience, e.g. to keep all files and programs used by the MDTF package
-  together in the ``mdtf`` directory for organizational purposes. This location will be referred to as
-  <*CONDA_ENV_DIR*> below.
+.. note::
+
+  If you don't have write access to ``[<CONDA_ROOT> | <MICROMAMBA_ROOT>]``
+  (for example, if conda has been installed for all users of a multi-user system), or opt to install environments in a
+  location other than ``<CONDA>_ROOT/envs``, you will need to alias your environment directory to
+  ``[<CONDA_ROOT> | <MICROMAMBA_ROOT>]/envs``.
+  This location will be referred to as ``<CONDA_ENV_DIR>`` below.
 
 To display information about all of the options in the conda_env_setup.sh and
 micromamba_env_setup.sh environment installation scripts, run
@@ -190,7 +191,7 @@ Install all the package's conda environments with anaconda/miniconda by running
 The names of all conda environments used by the package begin with “_MDTF”, so as not to conflict with other
 environments in your conda installation. The installation process should finish within ten minutes.
 
-Substitute the paths identified above for <*CONDA_ROOT*> and <*CONDA_ENV_DIR*>.
+Substitute the paths identified above for ``<CONDA_ROOT>`` and ``<CONDA_ENV_DIR>``.
 
 Install all the package's conda environments with micromamba by running
 
@@ -199,9 +200,9 @@ Install all the package's conda environments with micromamba by running
         % cd <CODE_ROOT>
         % ./src/conda/micromamba_env_setup.sh --all --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
 
-<*MICROMAMBA_ROOT*> is the path to the micromamba installation on your system (e.g., /home/${USER}/micromamba)
+``<MICROMAMBA_ROOT>`` is the path to the micromamba installation on your system (e.g., /home/${USER}/micromamba)
 
-<*MICROMAMBA_EXE*> is the path to the micromamba executable on your system (e.g., /home/${USER}/.local/bin/micromamba)
+``<MICROMAMBA_EXE>`` is the path to the micromamba executable on your system (e.g., /home/${USER}/.local/bin/micromamba)
 
 .. note::
 
@@ -222,8 +223,7 @@ Install all the package's conda environments with micromamba by running
     (i.e., never run ``conda update`` on them). To update the environments after an update to a new release
     of the framework code, re-run the above commands.
 
-    These environments can be uninstalled by deleting their corresponding directories under <*CONDA_ENV_DIR*>
-    (or <*CONDA_ROOT*>/envs/).
+    These environments can be uninstalled by deleting their corresponding directories under `<CONDA_ENV_DIR>`.
 
 .. note::
     The micromamba environments may differ from the conda environments because of package compatibility discrepancies
@@ -388,8 +388,14 @@ A complete description of the configuration options is at :doc:`ref_cli`, or can
 Running the package on the example_multicase POD with synthetic CMIP model data
 -------------------------------------------------------------------------------
 
-You are now ready to run the example_multicase POD on the synthetic CMIP data.
-which is saved at <*config_file_path*> as described in the previous section.
+You are now ready to run the example_multicase POD on the synthetic CMIP data
+that is saved at <*config_file_path*> as described in the previous section.
+Make sure to the modify the path entries in
+`diagnostic/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.csv`,
+and the "catalog_file" path in `diagnostic/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json`
+to include the root directory locations on your file system. Full paths must be specified.
+
+Next, run
 
 .. code-block:: console
 

@@ -280,12 +280,12 @@ print("Functions Defined!")
 # Section 1: Set parameters
 # -------------------------
 
-reg_choice     = "all"       # gs or all
-modname        ="cm4"       # cm4 or esm4 or ECMWF-HR
-threshold      = 25.0         # Threshold for number of non-nan grid points to perform TCH on that cell
-tch_size       = 3.0           # Size of TCH box in degrees for regional POD (recommend ~5+ time model horiz resolution); set automatically for global
-rez            = 0.5                # Resolution for global regridding. Options are 0.5 or 1.0 (degrees)
-cost_threshold = 5.0     # cost --> higher means larger model error relative to data
+reg_choice = os.environ['reg_choice']
+modname = os.environ['modname']
+threshold = float(os.environ['threshold'])
+tch_size = float(os.environ['tch_size'])
+rez = float(os.environ['rez'])
+cost_threshold = float(os.environ['cost_threshold'])
 
 print("Parameters Set!")
 

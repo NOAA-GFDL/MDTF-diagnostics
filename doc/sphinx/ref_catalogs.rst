@@ -41,6 +41,7 @@ CMIP6, CESM, and GFDL datasets. GFDL also maintains a lightweight
 Users may try both tools and select the one works best for their dataset and system, or create their own builder script.
 The framework team will eventually merge the capabilities in the MDTF-diagnostics into the GFDL builder as the ecgtools
 package is no longer under active development.
+
 Required catalog information
 ----------------------------
 
@@ -53,7 +54,7 @@ columns are optional at this time but may be used to refine query results in fut
       * "GFDL"
   * file_path: (str) full path to the file
   * frequency: (str) output frequency of data; use the following CMIP definitions:
-      * sampled hourly = "1hr""sampled hourly"
+      * sampled hourly = "1hr"
       * monthly-mean diurnal cycle resolving each day into 1-hour means = "1hrCM"
       * sampled hourly at specified time point within an hour = "1hrPt"
       * 3 hourly mean samples = "3hr"

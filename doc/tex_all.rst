@@ -8,7 +8,7 @@ Documentation for the MDTF diagnostics framework
 
    sphinx/start_toc
    sphinx/pod_dev_toc
-   sphinx/pod_toc
+   sphinx/pods_toc
    sphinx/ref_toc
    sphinx/fmwk_toc
    sphinx/tools_toc

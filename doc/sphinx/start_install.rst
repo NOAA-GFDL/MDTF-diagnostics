@@ -148,6 +148,7 @@ In this section, we install the conda package manager if it's not already presen
 
 - Start a new shell to reload the updated shell login script.
 
+
 .. _ref-micromamba-install:
 Installing micromamba
 ^^^^^^^^^^^^^^^^^^^^^
@@ -164,16 +165,31 @@ by the package's diagnostics.
   :console:`% micromamba info` as the user who will be using the package. This path will be referred to as
   ``<CONDA_ROOT>`` or ``<MICROMAMBA_ROOT>`` below.
 
-.. note::
+.. Note::
 
-  If you don't have write access to ``[<CONDA_ROOT> | <MICROMAMBA_ROOT>]``
-  (for example, if conda has been installed for all users of a multi-user system), or opt to install environments in a
-  location other than ``<CONDA>_ROOT/envs``, you will need to alias your environment directory to
-  ``[<CONDA_ROOT> | <MICROMAMBA_ROOT>]/envs``.
-  This location will be referred to as ``<CONDA_ENV_DIR>`` below.
+   Users working on machines (e.g., Derecho, Casper) using centrally-managed Conda distributions
+   will need to symlink the Conda binaries to a writeable location to use as
+   ``CONDA_ROOT``. A contributor provided the following solution:
 
-To display information about all of the options in the conda_env_setup.sh and
-micromamba_env_setup.sh environment installation scripts, run
+     #. Create a directory ``[CONDA_LINK_DIR]`` in a writeable location.
+     #. :console:`cd [CONDA_LINK_DIR] && mkdir bin && mkdir envs`
+     #. Create symbolic links to the CISL Conda binary in ``bin``
+
+        .. code-block:: console
+
+          % ln -s /glade/u/apps/opt/conda/condabin/conda bin/conda
+
+     #. If your ``CONDA_ENV_DIR`` is defined in a different location, create a symbolic link for the
+        Conda environments
+
+        .. code-block:: console
+
+          % mkdir envs
+          % ln -s [CONDA_ENV_DIR] envs
+
+
+To display information about all of the options in the ``conda_env_setup.sh`` and
+``micromamba_env_setup.sh`` environment installation scripts, run
 
     .. code-block:: console
 

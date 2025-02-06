@@ -283,17 +283,18 @@ Obtaining supporting data for 3rd-generation and older single-run PODs
 -------------------------------------------------------------------------
 
 Supporting observational data and sample model data for second and third generation single-run PODs are available
-via anonymous FTP from ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation,
+via globus. The observational data is required for the PODs’ operation,
 while the sample model data is optional and only needed for test and demonstration purposes. The files you will need
 to download are:
 
-- Digested observational data (159 Mb): `MDTF_v2.1.a.obs_data.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.obs_data.tar>`__.
-- NCAR-CESM-CAM sample data (12.3 Gb): `model.QBOi.EXP1.AMIP.001.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar>`__.
-- NOAA-GFDL-CM4 sample data (4.8 Gb): `model.GFDL.CM4.c96L32.am4g10r8.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar>`__.
+- `Digested observational data (Globus) <https://app.globus.org/file-manager?origin_id=87726236-cbdd-4a91-a904-7cc1c47f8912>`__.
+- NOAA-GFDL-CM4 sample data (FTP 4.8 Gb): `model.GFDL.CM4.c96L32.am4g10r8.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar>`__.
+- `NCAR-CESM2-CAM4 Atmosphere Model sample data MDTFv2 (Globus 12.6 Gb tar file, QBOi case) <https://app.globus.org/file-manager?origin_id=52f097f5-b6ba-4cbb-8c10-8e17fa2b9bf4&origin_path=%2F>`__.
+- `NCAR-CESM2-CAM6 Coupled Model sample data MDTFv3 (Globus, individual files) <https://app.globus.org/file-manager?origin_id=200c3a02-0c49-4e3c-ad24-4a24db9b1c2d&origin_path=%2F>`__.
 
-The default single-run test case uses the ``QBOi.EXP1.AMIP.001`` sample dataset, and the ``GFDL.CM4.c96L32.am4g10r8``
+The default single-run test case uses the ``QBOi`` sample dataset, and the ``GFDL.CM4.c96L32.am4g10r8``
 sample dataset is only for testing the `MJO Propagation and Amplitude POD <../sphinx_pods/MJO_prop_amp.html>`__.
-Note that the above paths are symlinks to the most recent versions of the data, and will be reported as having
+Note that the above FTP paths are symlinks to the most recent versions of the data, and will be reported as having
 a size of zero bytes in an FTP client.
 
 Download these files and extract the contents in the following directory hierarchy under the ``mdtf`` directory:

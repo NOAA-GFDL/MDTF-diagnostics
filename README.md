@@ -116,16 +116,17 @@ for, the Windows Subsystem for Linux.
 
 ## 2. Download the sample data
 
-Supporting observational data and sample model data are available via anonymous FTP at [ftp://ftp.cgd.ucar.edu/archive/mdtf](ftp://ftp.cgd.ucar.edu/archive/mdtf).
-- Digested observational data: run ` wget ftp://ftp.cgd.ucar.edu/archive/mdtf/obs_data_latest/\*` or download the
-  collection "NCAR CGD Anon" from [Globus](https://www.globus.org/)
-- NCAR-CESM-CAM sample data (12.3 Gb): model.QBOi.EXP1.AMIP.001.tar 
-  (ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar)
+Supporting observational data and sample model data are available via 
+Globus.
+-  [Digested observational data](https://app.globus.org/file-manager?origin_id=87726236-cbdd-4a91-a904-7cc1c47f8912)
 - NOAA-GFDL-CM4 sample data (4.8 Gb): model.GFDL.CM4.c96L32.am4g10r8.tar
   (ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar)
+- [CESM2-CAM6 Coupled model timeslice data, individual files]
+  (https://app.globus.org/file-manager?origin_id=200c3a02-0c49-4e3c-ad24-4a24db9b1c2d&origin_path=%2F)
+- [CESM2-CAM4 Atmosphere timeslice data (QBOi case) tar or individual files] 
+  (https://app.globus.org/file-manager?origin_id=52f097f5-b6ba-4cbb-8c10-8e17fa2b9bf4&origin_path=%2F)
 
-Note that the above paths are symlinks to the most recent versions of the data and will be reported as zero bytes in an FTP client.
-
+For tar files tranfered over ftp, please note that the above paths are symlinks to the most recent versions of the data and will be reported as zero bytes in an FTP client.
 Running `tar -xvf [filename].tar` will extract the contents in the following hierarchy under the `mdtf` directory:
 
 ```

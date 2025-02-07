@@ -28,7 +28,7 @@ the package. The currently recognized conventions are:
 * ``CESM``: Variable names and units used in the default output of models developed at the
   `National Center for Atmospheric Research <https://ncar.ucar.edu>`__, such as
   `CAM <https://www.cesm.ucar.edu/models/cesm2/atmosphere/>`__ (all versions) and
-  `CESM2 <https://www.cesm.ucar.edu/models/cesm2/>`__.
+  `CESM <https://www.cesm.ucar.edu/models/cesm2/>`__.
 
 * ``GFDL``: Variable names and units used in the default output of models developed at the
   `Geophysical Fluid Dynamics Laboratory <https://www.gfdl.noaa.gov/>`__, such as

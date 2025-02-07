@@ -111,8 +111,11 @@ Sample and supporting data submission
 -------------------------------------
 
 Data hosting for the MDTF framework is currently managed manually. The data
-is hosted via anonymous FTP on UCAR's servers. Download the sample data by
-running :bash:`wget ftp://ftp.cgd.ucar.edu/archive/mdtf/obs_data_latest/\*`
+is hosted via Globus on UCAR's machines. Download the sample data at 
+- `Digested observational data (Globus) <https://app.globus.org/file-manager?origin_id=87726236-cbdd-4a91-a904-7cc1c47f8912>`__.
+- NOAA-GFDL-CM4 sample data (FTP 4.8 Gb): `model.GFDL.CM4.c96L32.am4g10r8.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar>`__.
+- `NCAR-CESM-CAM4 Atmosphere Model sample data MDTFv2 (Globus 12.6 Gb tar file, QBOi case) <https://app.globus.org/file-manager?origin_id=52f097f5-b6ba-4cbb-8c10-8e17fa2b9bf4&origin_path=%2F>`__.
+- `NCAR-CESM2-CAM6 Coupled Model sample data MDTFv3 (Globus, individual files) <https://app.globus.org/file-manager?origin_id=200c3a02-0c49-4e3c-ad24-4a24db9b1c2d&origin_path=%2F>`__.
 
 
 Digested observational or supporting data
@@ -154,13 +157,13 @@ code and data provided.
        MJO_suite/ERA.v200.EOF.summer-0.png
        MJO_suite/ERA.u200.EOF.summer-1.png
 
-After following the above instructions, please refer to 
-`the GitHub Discussion on transferring obs_data <https://github.com/NOAA-GFDL/MDTF-diagnostics/discussions/125>`__
-or email Dani Coleman at bundy at ucar dot edu or contact your liaison on the MDTF Leads Team.
+After following the above instructions, please use Globus to transfer a tar file of your data,
+with the name $pod_name.$tartail.tar
+`MDTF Share (for incoming data from POD developers) <https://app.globus.org/file-manager?origin_id=620e84f2-1f5b-46b7-addd-06e9ba44cfac&origin_path=%2F">`__.
+Then email Dani Coleman at bundy at ucar dot edu or contact your liaison on the MDTF Leads Team.
 
-Files will be posted for Guest/anonymous access :
-ftp://ftp.cgd.ucar.edu/archive/mdtf/obs_data_latest/{$pod_name}.latest.tar
-with 'latest' pointing to the date-or-version-tagged tar file
+Files will be posted on Globus
+- `Digested observational data (Globus) <https://app.globus.org/file-manager?origin_id=87726236-cbdd-4a91-a904-7cc1c47f8912>`__.
 
 Note that prior to version 3, obs_data from all PODs was consolidated in one
 tar file. To assist in usability as the number of PODs grow, they will now
@@ -170,8 +173,9 @@ files on the developer.
 Sample model data
 ^^^^^^^^^^^^^^^^^
 
-For PODs dealing with atmospheric phenomena, we recommend that you use sample data from the following sources,
+We recommend that you use sample data from the following sources,
 if applicable:
 
-- A timeslice run of `NCAR CAM5 <https://www.earthsystemgrid.org/dataset/ucar.cgd.ccsm4.NOAA-MDTF.html>`__ 
-- A timeslice run of `GFDL AM4 <http://data1.gfdl.noaa.gov/MDTF/>`__ (contact the leads for password).
+- NOAA-GFDL-CM4 sample data (FTP 4.8 Gb): `model.GFDL.CM4.c96L32.am4g10r8.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar>`__.
+- `NCAR-CESM2-CAM4 Atmosphere Model sample data MDTFv2 (Globus 12.6 Gb tar file, QBOi case) <https://app.globus.org/file-manager?origin_id=52f097f5-b6ba-4cbb-8c10-8e17fa2b9bf4&origin_path=%2F>`__.
+- `NCAR-CESM2-CAM6 Coupled Model sample data MDTFv3 (Globus, individual files) <https://app.globus.org/file-manager?origin_id=200c3a02-0c49-4e3c-ad24-4a24db9b1c2d&origin_path=%2F>`__.

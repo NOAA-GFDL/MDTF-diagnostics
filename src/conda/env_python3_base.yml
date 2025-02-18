@@ -50,3 +50,18 @@ dependencies:
     - git+https://github.com/jkrasting/xwavelet
     - git+https://github.com/jetesdal/xwmt
     - git+https://github.com/raphaeldussin/om4labs
+=======
+#- pip=23.3.1
+#- pip:
+    #- falwa==2.0.0
+    #- cmocean
+    #- regionmask
+    #- falwa==1.2.1
+    #- cmocean
+    #- global_land_mask
+    #- git+https://github.com/raphaeldussin/static_downsampler
+    #- git+https://github.com/jkrasting/xcompare
+    #- git+https://github.com/raphaeldussin/xoverturning
+    #- git+https://github.com/jkrasting/xwavelet
+    #- git+https://github.com/jetesdal/xwmt
+    #- git+https://github.com/raphaeldussin/om4labs

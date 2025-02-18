@@ -37,7 +37,6 @@ Version & Contact info
 - Contributors: Charlotte A. DeMott (CSU); Eric D. Maloney (CSU);
   Jingxuan Cui (CSU)
 
-
 Open source copyright agreement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -99,7 +98,7 @@ Required model output variables
 This POD requires the following variables:
 
 * Zonal wind stress (TAUU, 3D (time-lat-lon), Units: Pa, Frequency: Daily
-* Percentage of the grid  cell occupied by land (sftlf),  2D
+* Percentage of the grid cell occupied by land (sftlf),  2D
   (lat-lon), Units: %, Frequency: Fixed
 
 
@@ -135,11 +134,3 @@ variability, though there are some models that accurately capture MJO
 and CRW variability while still misprepresenting WWE forcing in the
 west Pacific. For more details on this work please see Riley Dellaripa
 et al. (2014).
-
-
-Links to external sites
-^^^^^^^^^^^^^^^^^^^^^^^
-
-
-More references and citations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

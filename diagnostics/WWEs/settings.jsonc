@@ -1,9 +1,9 @@
 // Basic POD Settings
 {
   "settings" : {
-    "description" : "Test WWE POD",
+    "description" : "WWE POD",
     "driver" : "WWEs.py",
-    "long_name" : "Test WWE POD",
+    "long_name" : " WWE POD",
     "convention": "cmip",
     "runtime_requirements": {
       "python3": ["matplotlib", "xarray", "netCDF4", "pandas", "xesmf", "scipy"]

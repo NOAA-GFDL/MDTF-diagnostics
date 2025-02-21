@@ -842,9 +842,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def drop_attributes(self, xr_ds: xr.Dataset) -> xr.Dataset:
         """ Drop attributes that cause conflicts with xarray dataset merge"""
         drop_atts = ['average_T2',
-                     'time_bnds',
-                     'lat_bnds',
-                     'lon_bnds',
+                     #'time_bnds',
+                     #'lat_bnds',
+                     #'lon_bnds',
                      'average_DT',
                      'average_T1',
                      'height',
@@ -853,10 +853,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         for att in drop_atts:
             if xr_ds.get(att, None) is not None:
                 xr_ds = xr_ds.drop_vars(att)
-                for coord in xr_ds.coords:
-                    if 'bounds' in xr_ds[coord].attrs:
-                        if xr_ds[coord].attrs['bounds'] == att:
-                            del xr_ds[coord].attrs['bounds']
+                #for coord in xr_ds.coords:
+                #    if 'bounds' in xr_ds[coord].attrs:
+                #        if xr_ds[coord].attrs['bounds'] == att:
+                #            del xr_ds[coord].attrs['bounds']
         return xr_ds
 
     def check_multichunk(self, group_df: pd.DataFrame, case_dr, log) -> pd.DataFrame:
@@ -1638,6 +1638,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 d.update({'time_range': f'{util.cftime_to_str(ds_match.time.values[0]).replace('-',':')}-'
                                         f'{util.cftime_to_str(ds_match.time.values[-1]).replace('-',':')}'})
                 d.update({'standard_name': ds_match[var.name].attrs['standard_name']})
+                d.update({'variable_id': var_name})
                 cat_entries.append(d)
 
         # create a Pandas dataframe from the catalog entries

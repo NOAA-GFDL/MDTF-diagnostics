@@ -1127,7 +1127,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             path_regex = [re.compile(r'({})'.format(case_name))]
 
             for var in case_d.varlist.iter_vars():
-                date_range = var.T.range
+                if not var.is_static:
+                    date_range = var.T.range
                 
                 # define initial query dictionary with variable settings requirements that do not change if
                 # the variable is translated
@@ -1639,6 +1640,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                         f'{util.cftime_to_str(ds_match.time.values[-1]).replace('-',':')}'})
                 d.update({'standard_name': ds_match[var.name].attrs['standard_name']})
                 d.update({'variable_id': var_name})
+                d.update({'frequency': ds_match[var.name].attrs['frequency']})
                 cat_entries.append(d)
 
         # create a Pandas dataframe from the catalog entries

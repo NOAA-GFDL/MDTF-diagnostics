@@ -1272,14 +1272,17 @@ class DefaultDatasetParser:
         else:
             ds_T_units = None
 
-        var_T_units = var.translation.T.units
+        if var.is_static:
+            var_T_units = None
+        else:
+            var_T_units = var.translation.T.units
 
-        if ds_T_units is not None:
+        if ds_T_units is not None and not var.is_static:
             if str(var_T_units) != str(ds_T_units):
                 var.translation.T.units = ds_T_units
                 self.log.info("Units for 'time' on var '%s' found in dataset; setting to '%s'.",
                               var.translation.name, ds_T_units)
-        else:
+        elif not var.is_static:
             var.translation.T.units = ""
             self.log.info("Units for 'time' on var '%s' not found in dataset; setting to ''.",
                           var.translation.name)

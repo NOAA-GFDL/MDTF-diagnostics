@@ -71,7 +71,11 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         self.date_range = util.DateRange(start=startdate, end=enddate)
     
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
-        date_range = var.T.range
+        if var.is_static:
+            freq = "fx"
+        else:
+            freq = var.T.frequency
+
         var_id = var.name
         standard_name = var.standard_name
         if self.query['realm'] == '':
@@ -81,12 +85,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
             standard_name = var.translation.standard_name
             if any(var.translation.alternate_standard_names):
                 standard_name = [var.translation.standard_name] + var.translation.alternate_standard_names
-                date_range = var.translation.T.range
-        if var.is_static:
-            date_range = None
-            freq = "fx"
-        else:
-            freq = var.T.frequency
+
         if not isinstance(freq, str):
             freq = freq.format_local()
         if freq == 'hr':

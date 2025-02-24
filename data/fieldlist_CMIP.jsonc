@@ -395,6 +395,12 @@
       "units": "degC",
       "ndim": 4
     },
+    "sftlf": {
+      "standard_name": "land_area_fraction",
+      "realm": "atmos",
+      "units": "%",
+      "ndim": 2
+    },
     // Variables for Convective Transition Diagnostics module:
     // ta: 3D temperature, units = K:
     "ta": {

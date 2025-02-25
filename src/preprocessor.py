@@ -1645,6 +1645,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 d.update({'variable_id': var_name})
                 if 'frequency' in ds_match[var.name].attrs:
                     d.update({'frequency': ds_match[var.name].attrs['frequency']})
+                elif not var.is_static:
+                    d.update({'frequency': var.T.frequency.unit})
                 cat_entries.append(d)
 
         # create a Pandas dataframe from the catalog entries

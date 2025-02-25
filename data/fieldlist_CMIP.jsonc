@@ -418,6 +418,12 @@
       "units": "kg m-2",
       "ndim": 3
     },
+    "sftlf": {
+      "standard_name": "land_area_fraction",
+      "realm": "land",
+      "units": "%",
+      "ndim": 2
+    },
     "evspsbl": {
       "standard_name": "water_evapotranspiration_flux",
       "realm": "land",

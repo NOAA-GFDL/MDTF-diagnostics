@@ -73,7 +73,12 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         if var.is_static:
             freq = "fx"
         else:
-            freq = var.T.frequency
+            freq = var.T.frequency.unit
+
+        if not isinstance(freq, str):
+            freq = freq.format_local()
+        if freq == 'hr':
+            freq = '1hr'
 
         var_id = var.name
         standard_name = var.standard_name
@@ -84,11 +89,6 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
             standard_name = var.translation.standard_name
             if any(var.translation.alternate_standard_names):
                 standard_name = [var.translation.standard_name] + var.translation.alternate_standard_names
-
-        if not isinstance(freq, str):
-            freq = freq.format_local()
-        if freq == 'hr':
-            freq = '1hr'
 
         # define initial query dictionary with variable settings requirements that do not change if
         # the variable is translated

@@ -750,6 +750,12 @@
       "realm": "atmos",
       "units": "kg m-2 s-1",
       "ndim": 3
+    },
+    "sftlf": {
+      "standard_name": "land_area_fraction",
+      "long_name": "Land Area Fraction",
+      "units": "%",
+      "ndim": 2
     }
   },
   "env_vars" : {

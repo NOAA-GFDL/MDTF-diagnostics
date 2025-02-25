@@ -20,7 +20,7 @@ dependencies:
 - dask=2024.1.1
 - numba=0.60.0
 - scikit-learn=1.4.2
-- xesmf=0.8.8
+- xesmf=0.8.7
 - esmf=8.4.2
 - esmpy=8.4.2
 - gsw=3.6.17

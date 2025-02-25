@@ -90,9 +90,9 @@ jobs:
         pip install mdtf-test-data
         mkdir mdtf_test_data ; cd mdtf_test_data
         # generate the data and run unit tests
-        mdtf_synthetic.py -c GFDL --startyear 1 --nyears 10 --unittest
+        mdtf_synthetic.py -c GFDL --startyear 1 --nyears 10 --freq day --unittest
         mdtf_synthetic.py -c NCAR --startyear 1975 --nyears 7
-        mdtf_synthetic.py -c CMIP --startyear 1990 --nyears 20
+        mdtf_synthetic.py -c CMIP --startyear 1990 --nyears 20 --freq day mon
         cd ../
         mkdir wkdir
         ## make input data directories

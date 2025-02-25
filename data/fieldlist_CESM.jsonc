@@ -440,8 +440,13 @@
       "realm": "atmos",
       "units": "kg m-2",
       "ndim": 3
+    },
+    "sftlf": {
+      "standard_name": "land_area_fraction",
+      "long_name": "Land Area Fraction",
+      "units": "%",
+      "ndim": 2
     }
-
     // Variables for SM_ET_coupling module
     // "mrsos": {
     //   "standard_name": "mass_content_of_water_in_soil_layer",

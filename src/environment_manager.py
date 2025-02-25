@@ -302,7 +302,7 @@ class SubprocessRuntimePODWrapper:
                 # define env vars for varlist entries without data. Name collisions
                 # are OK in this case.
                 try:
-                    self.pod_env_vars.update(var.env_vars)
+                    self.env_vars.update(var.env_vars)
                 except util.WormKeyError:
                     continue
 

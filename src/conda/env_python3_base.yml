@@ -20,7 +20,7 @@ dependencies:
 - dask=2024.1.1
 - numba=0.60.0
 - scikit-learn=1.4.2
-- xesmf=0.8.1
+- xesmf=0.8.7
 - esmf=8.4.2
 - esmpy=8.4.2
 - gsw=3.6.17
@@ -38,6 +38,7 @@ dependencies:
 - gridfill=1.1.1
 - bottleneck=1.3.8
 - gfortran=11.3.0
+- momlevel=1.0.1
 - pip=23.3.1
 - pip:
     - falwa==2.0.0

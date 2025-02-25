@@ -148,6 +148,7 @@ In this section, we install the conda package manager if it's not already presen
 
 - Start a new shell to reload the updated shell login script.
 
+
 .. _ref-micromamba-install:
 Installing micromamba
 ^^^^^^^^^^^^^^^^^^^^^
@@ -162,17 +163,33 @@ by the package's diagnostics.
 
 - First, determine the location of your conda/micromamba installation by running :console:`% conda info --base` or
   :console:`% micromamba info` as the user who will be using the package. This path will be referred to as
-  <*CONDA_ROOT*> or <*MICROMAMBA_ROOT*> below.
+  ``<CONDA_ROOT>`` or ``<MICROMAMBA_ROOT>`` below.
 
-- If you don't have write access to <*CONDA_ROOT*>/<*MICROMAMBA_ROOT*>
-  (for example, if conda has been installed for all users of a multi-user system),
-  you will need to tell conda to install its files in a different, writable location.
-  You can also choose to do this out of convenience, e.g. to keep all files and programs used by the MDTF package
-  together in the ``mdtf`` directory for organizational purposes. This location will be referred to as
-  <*CONDA_ENV_DIR*> below.
+.. Note::
 
-To display information about all of the options in the conda_env_setup.sh and
-micromamba_env_setup.sh environment installation scripts, run
+   Users working on machines (e.g., Derecho, Casper) using centrally-managed Conda distributions
+   will need to symlink the Conda binaries to a writeable location to use as
+   ``CONDA_ROOT``. A contributor provided the following solution:
+
+     #. Create a directory ``[CONDA_LINK_DIR]`` in a writeable location.
+     #. :console:`cd [CONDA_LINK_DIR] && mkdir bin && mkdir envs`
+     #. Create symbolic links to the CISL Conda binary in ``bin``
+
+        .. code-block:: console
+
+          % ln -s /glade/u/apps/opt/conda/condabin/conda bin/conda
+
+     #. If your ``CONDA_ENV_DIR`` is defined in a different location, create a symbolic link for the
+        Conda environments
+
+        .. code-block:: console
+
+          % mkdir envs
+          % ln -s [CONDA_ENV_DIR] envs
+
+
+To display information about all of the options in the ``conda_env_setup.sh`` and
+``micromamba_env_setup.sh`` environment installation scripts, run
 
     .. code-block:: console
 
@@ -190,7 +207,7 @@ Install all the package's conda environments with anaconda/miniconda by running
 The names of all conda environments used by the package begin with “_MDTF”, so as not to conflict with other
 environments in your conda installation. The installation process should finish within ten minutes.
 
-Substitute the paths identified above for <*CONDA_ROOT*> and <*CONDA_ENV_DIR*>.
+Substitute the paths identified above for ``<CONDA_ROOT>`` and ``<CONDA_ENV_DIR>``.
 
 Install all the package's conda environments with micromamba by running
 
@@ -199,9 +216,9 @@ Install all the package's conda environments with micromamba by running
         % cd <CODE_ROOT>
         % ./src/conda/micromamba_env_setup.sh --all --micromamba_root <MICROMAMBA_ROOT> --micromamba_exe <MICROMAMBA_EXE> --env_dir <CONDA_ENV_DIR>
 
-<*MICROMAMBA_ROOT*> is the path to the micromamba installation on your system (e.g., /home/${USER}/micromamba)
+``<MICROMAMBA_ROOT>`` is the path to the micromamba installation on your system (e.g., /home/${USER}/micromamba)
 
-<*MICROMAMBA_EXE*> is the path to the micromamba executable on your system (e.g., /home/${USER}/.local/bin/micromamba)
+``<MICROMAMBA_EXE>`` is the path to the micromamba executable on your system (e.g., /home/${USER}/.local/bin/micromamba)
 
 .. note::
 
@@ -222,8 +239,7 @@ Install all the package's conda environments with micromamba by running
     (i.e., never run ``conda update`` on them). To update the environments after an update to a new release
     of the framework code, re-run the above commands.
 
-    These environments can be uninstalled by deleting their corresponding directories under <*CONDA_ENV_DIR*>
-    (or <*CONDA_ROOT*>/envs/).
+    These environments can be uninstalled by deleting their corresponding directories under `<CONDA_ENV_DIR>`.
 
 .. note::
     The micromamba environments may differ from the conda environments because of package compatibility discrepancies
@@ -276,24 +292,25 @@ using the configuration in the
     % conda activate _MDTF_synthetic_data
     % pip install mdtf-test-data
     % mkdir mdtf_test_data && cd mdtf_test_data
-    % mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5
-    % mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5
+    % mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5 --freq day
+    % mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5 --freq day
 
 Obtaining supporting data for 3rd-generation and older single-run PODs
 -------------------------------------------------------------------------
 
 Supporting observational data and sample model data for second and third generation single-run PODs are available
-via anonymous FTP from ftp://ftp.cgd.ucar.edu/archive/mdtf. The observational data is required for the PODs’ operation,
+via globus. The observational data is required for the PODs’ operation,
 while the sample model data is optional and only needed for test and demonstration purposes. The files you will need
 to download are:
 
-- Digested observational data (159 Mb): `MDTF_v2.1.a.obs_data.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/MDTF_v2.1.a.obs_data.tar>`__.
-- NCAR-CESM-CAM sample data (12.3 Gb): `model.QBOi.EXP1.AMIP.001.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar>`__.
-- NOAA-GFDL-CM4 sample data (4.8 Gb): `model.GFDL.CM4.c96L32.am4g10r8.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar>`__.
+- `Digested observational data (Globus) <https://app.globus.org/file-manager?origin_id=87726236-cbdd-4a91-a904-7cc1c47f8912>`__.
+- NOAA-GFDL-CM4 sample data (FTP 4.8 Gb): `model.GFDL.CM4.c96L32.am4g10r8.tar <ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar>`__.
+- `NCAR-CESM2-CAM4 Atmosphere Model sample data MDTFv2 (Globus 12.6 Gb tar file, QBOi case) <https://app.globus.org/file-manager?origin_id=52f097f5-b6ba-4cbb-8c10-8e17fa2b9bf4&origin_path=%2F>`__.
+- `NCAR-CESM2-CAM6 Coupled Model sample data MDTFv3 (Globus, individual files) <https://app.globus.org/file-manager?origin_id=200c3a02-0c49-4e3c-ad24-4a24db9b1c2d&origin_path=%2F>`__.
 
-The default single-run test case uses the ``QBOi.EXP1.AMIP.001`` sample dataset, and the ``GFDL.CM4.c96L32.am4g10r8``
+The default single-run test case uses the ``QBOi`` sample dataset, and the ``GFDL.CM4.c96L32.am4g10r8``
 sample dataset is only for testing the `MJO Propagation and Amplitude POD <../sphinx_pods/MJO_prop_amp.html>`__.
-Note that the above paths are symlinks to the most recent versions of the data, and will be reported as having
+Note that the above FTP paths are symlinks to the most recent versions of the data, and will be reported as having
 a size of zero bytes in an FTP client.
 
 Download these files and extract the contents in the following directory hierarchy under the ``mdtf`` directory:
@@ -388,8 +405,14 @@ A complete description of the configuration options is at :doc:`ref_cli`, or can
 Running the package on the example_multicase POD with synthetic CMIP model data
 -------------------------------------------------------------------------------
 
-You are now ready to run the example_multicase POD on the synthetic CMIP data.
-which is saved at <*config_file_path*> as described in the previous section.
+You are now ready to run the example_multicase POD on the synthetic CMIP data
+that is saved at <*config_file_path*> as described in the previous section.
+Make sure to the modify the path entries in
+`diagnostic/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.csv`,
+and the "catalog_file" path in `diagnostic/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json`
+to include the root directory locations on your file system. Full paths must be specified.
+
+Next, run
 
 .. code-block:: console
 

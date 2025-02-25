@@ -49,6 +49,10 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
             k: case_dict[k] for k in ("startdate", "enddate", "convention")
         })
         self.env_vars.update({"CASENAME": case_name})
+        optional_case_attrs = {'realm'}
+        for att in optional_case_attrs:
+            if case_dict.get(att, None) is not None:
+                self.query[att] = case_dict[att]
 
     @property
     def _children(self):
@@ -59,41 +63,39 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
     def iter_vars_only(self, active=None):
         yield from self.varlist.iter_vars_only(active=active)
 
-    def read_varlist(self, parent, append_vars: bool=False):
+    def read_varlist(self, parent, append_vars: bool = False):
         self.varlist = varlist_util.Varlist.from_struct(parent, append_vars)
 
     def set_date_range(self, startdate: str, enddate: str):
         self.date_range = util.DateRange(start=startdate, end=enddate)
-    
+
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
-        realm_regex = var.realm + '*'
-        date_range = var.T.range
-        var_id = var.name
-        standard_name = var.standard_name
-        if var.translation.convention is not None:
-            var_id = var.translation.name
-            standard_name = var.translation.standard_name
-            if any(var.translation.alternate_standard_names):
-                standard_name = [var.translation.standard_name] + var.translation.alternate_standard_names
-                date_range = var.translation.T.range
         if var.is_static:
-            date_range = None
             freq = "fx"
         else:
-            freq = var.T.frequency
+            freq = var.T.frequency.unit
+
         if not isinstance(freq, str):
             freq = freq.format_local()
         if freq == 'hr':
             freq = '1hr'
 
+        var_id = var.name
+        standard_name = var.standard_name
+        if self.query['realm'] == '':
+            self.query['realm'] = var.realm
+        if var.translation is not None:
+            var_id = var.translation.name
+            standard_name = var.translation.standard_name
+            if any(var.translation.alternate_standard_names):
+                standard_name = [var.translation.standard_name] + var.translation.alternate_standard_names
+
         # define initial query dictionary with variable settings requirements that do not change if
         # the variable is translated
         self.query['frequency'] = freq
         self.query['path'] = path_regex
-        self.query['realm'] = realm_regex
         self.query['standard_name'] = standard_name
         self.query['variable_id'] = var_id
-
 
     def translate_varlist(self,
                           var: varlist_util.VarlistEntry,
@@ -124,10 +126,11 @@ class CMIPDataSource(DataSourceBase):
     # col_spec = sampleLocalFileDataSource_col_spec
     # varlist = diagnostic.varlist
     convention: str = "CMIP"
-    
+
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
         super().set_query(var, path_regex)
         return
+
 
 @data_source.maker
 class CESMDataSource(DataSourceBase):
@@ -138,10 +141,11 @@ class CESMDataSource(DataSourceBase):
     # col_spec = sampleLocalFileDataSource_col_spec
     # varlist = diagnostic.varlist
     convention: str = "CESM"
-    
+
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
         super().set_query(var, path_regex)
         return
+
 
 @data_source.maker
 class GFDLDataSource(DataSourceBase):

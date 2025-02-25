@@ -19,37 +19,38 @@ PODs. PODs generate diagnostic figures that can be viewed as an html file using 
 The links in the table below show sample output, a brief description,
 and a link to the full documentation for each currently-supported POD.
 
-| Diagnostic                                                                                                                                                                                                              | Contributor                                                          |
-|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------|                                      
-| [Blocking Neale](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/blocking_neale/doc/blocking_neale.rst)                                                                                             | Rich Neale (NCAR), Dani Coleman (NCAR) |
-| [Convective Transition Diagnostics](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/convective_transition_diag/convective_transition_diag.html) | J. David Neelin (UCLA) |
-| [Diurnal Cycle of Precipitation](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/precip_diurnal_cycle/precip_diurnal_cycle.html) | Rich Neale (NCAR) |
-| [Eulerian Storm Track](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/eulerian_storm_track/doc/eulerian_storm_track.rst)                                                                           | James Booth (CUNY), Jeyavinoth Jeyaratnam |
-| [Extratropical Variance (EOF 500hPa Height)](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/EOF_500hPa/EOF_500hPa.html) | CESM/AMWG (NCAR) |
-| [Forcing Feedback Diagnostic](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/forcing_feedback/doc/forcing_feedback.rst) | Brian Soden (U. Miami), Ryan Kramer|
-| [Mixed Layer Depth](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/mixed_layer_depth/doc/mixed_layer_depth.rst)                                                                                    | Cecilia Bitz (U. Washington), Lettie Roach |
-| [MJO Propagation and Amplitude ](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_GFDL.CM4.c96L32.am4g10r8/MJO_prop_amp/MJO_prop_amp.html)| Xianan Jiang (UCLA) |
-| [MJO Spectra and Phasing](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/MJO_suite/MJO_suite.html) | CESM/AMWG (NCAR) |
-| [MJO Teleconnections](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/MJO_teleconnection/MJO_teleconnection.html)                                                | Eric Maloney (CSU) |
-| [Moist Static Energy Diagnostic Package](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/ENSO_MSE/doc/ENSO_MSE.rst)                                                                                 | H. Annamalai (U. Hawaii), Jan Hafner (U. Hawaii)                     |
-| [Ocean Surface Flux Diagnostic](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/ocn_surf_flux_diag/doc/ocn_surf_flux_diag.rst)                                                                      | Charlotte A. DeMott (Colorado State University), Chia-Weh Hsu (GFDL) |
-| [Precipitation Buoyancy Diagnostic](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/precip_buoy_diag/doc/precip_buoy_diag.rst)                                                                      | J. David Neelin (UCLA), Fiaz Ahmed                                   |
-| [Rossby Wave Sources Diagnostic Package](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/ENSO_RWS/doc/ENSO_RWS.rst)                                                                                 | H. Annamalai (U. Hawaii), Jan Hafner (U. Hawaii)                     |
-| [Sea Ice Suite](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/seaice_suite/doc/seaice_suite.rst) | Cecilia Bitz (U. Washington), Lettie Roach |
-| [Soil Moisture-Evapotranspiration coupling](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/SM_ET_coupling/doc/SM_ET_coupling.rst)     | Eric Wood (Princeton) |
-| [Stratosphere-Troposphere Coupling: Annular Modes](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_annular_modes/doc/stc_annular_modes.rst) | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL) |
-| [Stratosphere-Troposphere Coupling: Eddy Heat Fluxes](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_eddy_heat_fluxes/doc/stc_eddy_heat_fluxes.rst) | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL) |
-| [Stratosphere-Troposphere Coupling: QBO and ENSO stratospheric teleconnections](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_qbo_enso/doc/stc_qbo_enso.rst) | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL), Dillon Elsbury (NOAA) |
-| [Stratosphere-Troposphere Coupling: Stratospheric Ozone and Circulation](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_eddy_heat_fluxes/doc/stc_ozone.rst) | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL) |
-| [Stratosphere-Troposphere Coupling: Stratospheric Polar Vortex Extremes](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_spv_extremes/doc/stc_spv_extremes.rst) | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL) |
-| [Stratosphere-Troposphere Coupling: Vertical Wave Coupling](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_vert_wave_coupling/doc/stc_vert_wave_coupling.rst) | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL) |
-| [Surface Albedo Feedback](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/albedofb/doc/surface_albedo_feedback.rst) | Cecilia Bitz (U. Washington), Aaron Donahoe (U. Washington), Ed Blanchard, Wei Cheng, Lettie Roach |
-| [Surface Temperature Extremes and Distribution Shape](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/temp_extremes_distshape/doc/temp_extremes_distshape.rst)                                      | J. David Neelin (UCLA), Paul C Loikith (PSU), Arielle Catalano (PSU) |
-| [TC MSE Variance Budget Analysis](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/TC_MSE/doc/TC_MSE.rst)                                                                      | Allison Wing (Florida State University), Jarrett Starr (Florida State University)|
-| [Top Heaviness Metric](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/top_heaviness_metric/doc/top_heaviness_metric.rst)                                                                      | Zhuo Wang (U.Illinois Urbana-Champaign), Jiacheng Ye (U.Illinois Urbana-Champaign)|
-| [Tropical Cyclone Rain Rate Azimuthal Average](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/TC_Rain/doc/TC_Rain.rst)                                                                      | Daehyun Kim (U. Washington), Nelly Emlaw (U.Washington) |
-| [Tropical Pacific Sea Level](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/tropical_pacific_sea_level/doc/tropical_pacific_sea_level.rst) | Jianjun Yin (U. Arizona), Chia-Weh Hsu (GFDL)|
-| [Wavenumber-Frequency Spectra](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/Wheeler_Kiladis/Wheeler_Kiladis.html) | CESM/AMWG (NCAR) |
+| Diagnostic                                                                                                                                                                                             | Contributor                                                                                        |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------|                                      
+| [Blocking Neale](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/blocking_neale/doc/blocking_neale.rst)                                                                            | Rich Neale (NCAR), Dani Coleman (NCAR)                                                             |
+| [Convective Transition Diagnostics](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/convective_transition_diag/convective_transition_diag.html) | J. David Neelin (UCLA)                                                                             |
+| [Diurnal Cycle of Precipitation](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/precip_diurnal_cycle/precip_diurnal_cycle.html)                | Rich Neale (NCAR)                                                                                  |
+| [Eulerian Storm Track](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/eulerian_storm_track/doc/eulerian_storm_track.rst)                                                          | James Booth (CUNY), Jeyavinoth Jeyaratnam                                                          |
+| [Extratropical Variance (EOF 500hPa Height)](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/EOF_500hPa/EOF_500hPa.html)                        | CESM/AMWG (NCAR)                                                                                   |
+| [Forcing Feedback Diagnostic](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/forcing_feedback/doc/forcing_feedback.rst)                                                           | Brian Soden (U. Miami), Ryan Kramer                                                                |
+| [Mean Dynamic Sea Level Package](https://github.com/wrongkindofdoctor/MDTF-diagnostics/blob/main/diagnostics/MDSL/doc/MDSL.rst)                                             | C.Little (AER, Inc.), N. Etige, S. Vannah, M. Zhao                                                 |
+| [Mixed Layer Depth](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/mixed_layer_depth/doc/mixed_layer_depth.rst)                                                                   | Cecilia Bitz (U. Washington), Lettie Roach                                                         |
+| [MJO Propagation and Amplitude ](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_GFDL.CM4.c96L32.am4g10r8/MJO_prop_amp/MJO_prop_amp.html)                               | Xianan Jiang (UCLA)                                                                                |
+| [MJO Spectra and Phasing](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/MJO_suite/MJO_suite.html)                                             | CESM/AMWG (NCAR)                                                                                   |
+| [MJO Teleconnections](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/MJO_teleconnection/MJO_teleconnection.html)                               | Eric Maloney (CSU)                                                                                 |
+| [Moist Static Energy Diagnostic Package](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/ENSO_MSE/doc/ENSO_MSE.rst)                                                                | H. Annamalai (U. Hawaii), Jan Hafner (U. Hawaii)                                      |
+| [Ocean Surface Flux Diagnostic](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/ocn_surf_flux_diag/doc/ocn_surf_flux_diag.rst)                                                     | Charlotte A. DeMott (Colorado State University), Chia-Weh Hsu (GFDL)                               |
+| [Precipitation Buoyancy Diagnostic](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/precip_buoy_diag/doc/precip_buoy_diag.rst)                                                     | J. David Neelin (UCLA), Fiaz Ahmed                                                                 |
+| [Rossby Wave Sources Diagnostic Package](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/ENSO_RWS/doc/ENSO_RWS.rst)                                                                | H. Annamalai (U. Hawaii), Jan Hafner (U. Hawaii)                                     |
+| [Sea Ice Suite](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/seaice_suite/doc/seaice_suite.rst)                                                                                 | Cecilia Bitz (U. Washington), Lettie Roach                                                         |
+| [Soil Moisture-Evapotranspiration coupling](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/SM_ET_coupling/doc/SM_ET_coupling.rst)                                                 | Eric Wood (Princeton)                                                                              |
+| [Stratosphere-Troposphere Coupling: Annular Modes](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_annular_modes/doc/stc_annular_modes.rst)                                    | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL)                                     |
+| [Stratosphere-Troposphere Coupling: Eddy Heat Fluxes](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_eddy_heat_fluxes/doc/stc_eddy_heat_fluxes.rst)                           | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL)                                     |
+| [Stratosphere-Troposphere Coupling: QBO and ENSO stratospheric teleconnections](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_qbo_enso/doc/stc_qbo_enso.rst)                 | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL), Dillon Elsbury (NOAA)              |
+| [Stratosphere-Troposphere Coupling: Stratospheric Ozone and Circulation](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_eddy_heat_fluxes/doc/stc_ozone.rst)                   | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL)                                     |
+| [Stratosphere-Troposphere Coupling: Stratospheric Polar Vortex Extremes](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_spv_extremes/doc/stc_spv_extremes.rst)                | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL)                                     |
+| [Stratosphere-Troposphere Coupling: Vertical Wave Coupling](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/stc_vert_wave_coupling/doc/stc_vert_wave_coupling.rst)                 | Amy H. Butler (NOAA CSL), Zachary D. Lawrence (CIRES/NOAA PSL)                                     |
+| [Surface Albedo Feedback](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/albedofb/doc/surface_albedo_feedback.rst)                                                                | Cecilia Bitz (U. Washington), Aaron Donahoe (U. Washington), Ed Blanchard, Wei Cheng, Lettie Roach |
+| [Surface Temperature Extremes and Distribution Shape](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/temp_extremes_distshape/doc/temp_extremes_distshape.rst)                     | J. David Neelin (UCLA), Paul C Loikith (PSU), Arielle Catalano (PSU)                               |
+| [TC MSE Variance Budget Analysis](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/TC_MSE/doc/TC_MSE.rst)                                                                           | Allison Wing (Florida State University), Jarrett Starr (Florida State University)                  |
+| [Top Heaviness Metric](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/top_heaviness_metric/doc/top_heaviness_metric.rst)                                                          | Zhuo Wang (U.Illinois Urbana-Champaign), Jiacheng Ye (U.Illinois Urbana-Champaign)                 |
+| [Tropical Cyclone Rain Rate Azimuthal Average](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/TC_Rain/doc/TC_Rain.rst)                                                            | Daehyun Kim (U. Washington), Nelly Emlaw (U.Washington)                                            |
+| [Tropical Pacific Sea Level](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/tropical_pacific_sea_level/doc/tropical_pacific_sea_level.rst)                                        | Jianjun Yin (U. Arizona), Chia-Weh Hsu (GFDL)                                                      |
+| [Wavenumber-Frequency Spectra](https://www.cgd.ucar.edu/cms/bundy/Projects/diagnostics/mdtf/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/Wheeler_Kiladis/Wheeler_Kiladis.html)                            | CESM/AMWG (NCAR)                                                                                   |
 
 ## Example POD Analysis Results
 
@@ -109,24 +110,23 @@ for, the Windows Subsystem for Linux.
      (e.g., /home/${USER}/.local/bin/micromamba). This is defined by the `MAMBA_EXE` environment variable on your system
   - All flags noted for your system above must be supplied for the script to work.
 
-  #### NOTE: The micromamba environments may differ from the conda environments because of package compatibility discrepancies between solvers
-  `% ./src/conda/micromamba_env_setup.sh --all --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR` builds
-  the **base** environment, **NCL_base** environment, and a limited version of the **python3_base** enviroment that excludes the following packages
-  and dependencies that may be required by the POD(s) you want to run:
-  - falwa
-  - gridfill
+  #### NOTE: The micromamba environments may differ from the conda environments because of package compatibility discrepancies between solvers `% ./src/conda/micromamba_env_setup.sh --all --micromamba_root $MICROMAMBA_ROOT --micromamba_exe $MICROMAMBA_EXE --env_dir $CONDA_ENV_DIR` builds the **base** environment, **NCL_base** environment, and the **python3_base** environment.
+  
+  #### NOTE: If you are trying to install environments with a Conda package managed by your institution, you will need to set your environment directory to a location with write access, and symbolically link $CONDA_ROOT/envs to this environment directory: `% ln -s [ROOT_DIR]/miniconda3/envs [path to your environment directory]`
+
 ## 2. Download the sample data
 
-Supporting observational data and sample model data are available via anonymous FTP at [ftp://ftp.cgd.ucar.edu/archive/mdtf](ftp://ftp.cgd.ucar.edu/archive/mdtf).
-- Digested observational data: run ` wget ftp://ftp.cgd.ucar.edu/archive/mdtf/obs_data_latest/\*` or download the
-  collection "NCAR CGD Anon" from [Globus](https://www.globus.org/)
-- NCAR-CESM-CAM sample data (12.3 Gb): model.QBOi.EXP1.AMIP.001.tar 
-  (ftp://ftp.cgd.ucar.edu/archive/mdtf/model.QBOi.EXP1.AMIP.001.tar)
+Supporting observational data and sample model data are available via 
+Globus.
+-  [Digested observational data](https://app.globus.org/file-manager?origin_id=87726236-cbdd-4a91-a904-7cc1c47f8912)
 - NOAA-GFDL-CM4 sample data (4.8 Gb): model.GFDL.CM4.c96L32.am4g10r8.tar
   (ftp://ftp.cgd.ucar.edu/archive/mdtf/model.GFDL.CM4.c96L32.am4g10r8.tar)
+- [CESM2-CAM6 Coupled model timeslice data, individual files]
+  (https://app.globus.org/file-manager?origin_id=200c3a02-0c49-4e3c-ad24-4a24db9b1c2d&origin_path=%2F)
+- [CESM2-CAM4 Atmosphere timeslice data (QBOi case) tar or individual files] 
+  (https://app.globus.org/file-manager?origin_id=52f097f5-b6ba-4cbb-8c10-8e17fa2b9bf4&origin_path=%2F)
 
-Note that the above paths are symlinks to the most recent versions of the data and will be reported as zero bytes in an FTP client.
-
+For tar files tranfered over ftp, please note that the above paths are symlinks to the most recent versions of the data and will be reported as zero bytes in an FTP client.
 Running `tar -xvf [filename].tar` will extract the contents in the following hierarchy under the `mdtf` directory:
 
 ```
@@ -211,7 +211,8 @@ If you re-run the above command, the result will be written to another subdirect
 i.e., output files saved previously will not be overwritten unless you change `overwrite` in the configuration file
 to `true`.
 
-The output files for the test case will be written to `$OUTPUT_DIR/MDTF_Output/`. 
+The output files for the test case will be written to `$OUTPUT_DIR/MDTF_Output/` (_[v(number)] will be appended
+output directories if an existing MDTF_Output directory is present in the `$OUTPUT_DIR`). 
 When the framework is finished, open `$OUTPUT_DIR/MDTF_Output/[POD NAME]/index.html` in a web browser to view 
 the output report.
 
@@ -224,8 +225,8 @@ mamba env create --force -q -f ./src/conda/_env_synthetic_data.yml
 conda activate _MDTF_synthetic_data
 pip install mdtf-test-data
 mkdir mdtf_test_data && cd mdtf_test_data
-mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5
-mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5
+mdtf_synthetic.py -c CMIP --startyear 1980 --nyears 5 --freq day
+mdtf_synthetic.py -c CMIP --startyear 1985 --nyears 5 --freq day
 ```
 Then, modify the ``path`` entries in diagnostic/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.csv, and
 the `"catalog_file":` path in diagnostic/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json to include the

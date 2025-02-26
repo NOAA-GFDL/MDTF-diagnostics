@@ -1133,14 +1133,20 @@ class DefaultDatasetParser:
         if our_axes_set == ds_axes_set:
             # check dimension coordinate names, std_names, units, bounds
             for coord in our_var.dim_axes.values():
-                ds_coord_name = ds_axes[coord.axis]
-                self.reconcile_names(coord, ds, ds_coord_name, overwrite_ours=True)
-                if coord.axis == 'T':
+                # check for irregular grid coordinates
+                coord_search = re.compile('[ij]')
+                coord_regex_result = coord_search.fullmatch(ds_axes[coord.axis])
+                if coord_regex_result is None:
+                    ds_coord_name = ds_axes[coord.axis]
+                    self.reconcile_names(coord, ds, ds_coord_name, overwrite_ours=True)
+                    if coord.axis == 'T':
                     # special case for time coordinate
-                    self.reconcile_time_units(coord, ds[ds_coord_name])
+                        self.reconcile_time_units(coord, ds[ds_coord_name])
+                    else:
+                        self.reconcile_units(coord, ds[ds_coord_name])
+                    self.reconcile_coord_bounds(coord, ds, ds_coord_name)
                 else:
-                    self.reconcile_units(coord, ds[ds_coord_name])
-                self.reconcile_coord_bounds(coord, ds, ds_coord_name)
+                    continue
         else:
             _log.warning(f"Variable {our_var.name} has unexpected dimensionality: "
                          f" expected axes {list(our_axes_set)}, got {list(ds_axes_set)}.")

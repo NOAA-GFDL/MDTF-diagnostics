@@ -73,7 +73,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         if var.is_static:
             freq = "fx"
         else:
-            freq = var.T.frequency.unit
+            freq = var.T.frequency
 
         if not isinstance(freq, str):
             freq = freq.format_local()

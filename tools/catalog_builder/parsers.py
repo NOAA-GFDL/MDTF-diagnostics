@@ -231,7 +231,7 @@ def parse_gfdl_am5_data(file_name: str):
         print(exc)
         return {INVALID_ASSET: file, TRACEBACK: traceback.format_exc()}
 
-
+    return catalog_info
 
 # custom parser for pp data stored on GFDL archive filesystem
 # assumed DRS of [root_dir]/pp/[realm]/[analysis type (e.g, 'ts')]/[frequency]/[chunk size (e.g., 1yr, 5yr)]
@@ -248,8 +248,14 @@ def parse_gfdl_pp_ts(file_name: str):
     realm = split[0]
     time_range = split[1]
     variable_id = split[2]
+    fname = file.parts[num_parts - 1]
     chunk_freq = file.parts[num_parts - 2]  # e.g, 1yr, 5yr
-
+    freq = file.parts[num_parts - 3] # e.g mon, day, 6hr, 3hr
+   
+    catalog_info.update({"activity_id": "GFDL"})
+    catalog_info.update({"institution_id": "GFDL"})
+    catalog_info.update({"path": file_name})
+    catalog_info.update({"file_name": fname})
     catalog_info.update({"variable_id": variable_id})
     catalog_info.update({"chunk_freq": chunk_freq})
     catalog_info.update({"realm": realm})
@@ -270,6 +276,8 @@ def parse_gfdl_pp_ts(file_name: str):
     except Exception as exc:
         print(exc)
         return {INVALID_ASSET: file, TRACEBACK: traceback.format_exc()}
+    
+    return catalog_info
 
 # custom parser for CESM data that uses fieldlist metadata and the DRS to populate
 # required catalog fields. Bas

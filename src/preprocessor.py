@@ -8,6 +8,8 @@ import dataclasses
 import datetime
 import importlib
 import pandas as pd
+from dask.bag.core import groupby_disk
+
 from src import util, varlist_util, translation, xr_parser, units
 from src.util import datelabel as dl
 import cftime
@@ -845,9 +847,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def drop_attributes(self, xr_ds: xr.Dataset) -> xr.Dataset:
         """ Drop attributes that cause conflicts with xarray dataset merge"""
         drop_atts = ['average_T2',
-                     'time_bnds',
-                     'lat_bnds',
-                     'lon_bnds',
                      'average_DT',
                      'average_T1',
                      'height',
@@ -1477,7 +1476,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         ds.attrs['history'] = hist
         return ds
 
-    def write_dataset(self, var, ds):
+    def write_dataset(self, var: varlist_util.VarlistEntry, ds: xr.Dataset):
         """Writes processed Dataset *ds* to location specified by the
         ``dest_path`` attribute of *var*, using xarray `to_netcdf()
         <https://xarray.pydata.org/en/stable/generated/xarray.Dataset.to_netcdf.html>`__.
@@ -1486,11 +1485,24 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         var_ds = ds[var.translation.name].to_dataset()
         var_ds = var_ds.rename_vars(name_dict={var.translation.name: var.name})
-        var.log.info("Writing '%s'.", var.dest_path, tags=util.ObjectLogTag.OUT_FILE)
         if var.is_static:
             unlimited_dims = []
         else:
             unlimited_dims = [var.T.name]
+        # append other grid types here as needed
+        irregular_grids = {'tripolar'}
+        if ds.attrs.get('grid', None) is not None:
+            # search for tripolar grid type
+            for g in irregular_grids:
+                grid_search = re.compile(g, re.IGNORECASE)
+                grid_regex_result = grid_search.search(ds.attrs.get('grid'))
+                if grid_regex_result is not None:
+                    # add variables not included in xarray dataset
+                    append_vars = list(set([v for v in ds.variables]).difference([v for v in var_ds.variables]))
+                    for v in append_vars:
+                        v_dataset = ds[v].to_dataset()
+                        var_ds = xr.merge([var_ds, v_dataset])
+
 
         # The following block is retained for time comparison with dask delayed write procedure
         # var_ds.to_netcdf(
@@ -1503,6 +1515,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         # Uncomment the timing lines and log calls if desired
         # start_time = time.monotonic()
+        var.log.info("Writing '%s'.", var.dest_path, tags=util.ObjectLogTag.OUT_FILE)
         delayed_write = var_ds.to_netcdf(
             path=var.dest_path,
             mode='w',
@@ -1542,6 +1555,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 except Exception as exc:
                     raise util.chain_exc(exc, f"writing data for {var.full_name}.",
                                          util.DataPreprocessEvent)
+
 
             # del ds  # shouldn't be necessary
 
@@ -1648,7 +1662,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 elif not var.is_static:
                     d.update({'frequency': var.T.frequency.unit})
                 cat_entries.append(d)
-
         # create a Pandas dataframe from the catalog entries
 
         cat_df = pd.DataFrame(cat_entries)

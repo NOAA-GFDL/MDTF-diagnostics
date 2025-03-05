@@ -1178,7 +1178,7 @@ class DateFrequency(datetime.timedelta):
         elif s in ['seasonally', 'seasonal', 'seasons', 'season', 'se']:
             s = 'season'
         elif s in ['monthly', 'month', 'months', 'mon', 'mo']:
-            s = 'mo'
+            s = 'mon'
         elif s in ['weekly', 'weeks', 'week', 'wk', 'w']:
             s = 'wk'
         elif s in ['daily', 'day', 'days', 'dy', 'd', 'diurnal', 'diurnally']:
@@ -1203,7 +1203,7 @@ class DateFrequency(datetime.timedelta):
             return {'days': 365 * q}
         elif s == 'season':
             return {'days': 91 * q}
-        elif s == 'mo':
+        elif s == 'mon':
             return {'days': 30 * q}
         elif s == 'wk':
             return {'weeks': q}
@@ -1234,7 +1234,7 @@ class DateFrequency(datetime.timedelta):
         (defined in :meth:`src.data_manager.DataManager.dest_path`.)
         """
         if self.quantity == 1:
-            if self.unit == 'mo':
+            if self.unit == 'mon':
                 return 'mon'
             elif self.unit == 'day':
                 return 'day'

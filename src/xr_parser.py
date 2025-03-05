@@ -1133,7 +1133,7 @@ class DefaultDatasetParser:
         if our_axes_set == ds_axes_set:
             # check dimension coordinate names, std_names, units, bounds
             for coord in our_var.dim_axes.values():
-                # check for irregular grid coordinates
+                # check for irregular grid coordinates and skip them if found
                 coord_search = re.compile('[ij]')
                 coord_regex_result = coord_search.fullmatch(ds_axes[coord.axis])
                 if coord_regex_result is None:

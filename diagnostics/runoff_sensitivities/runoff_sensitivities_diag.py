@@ -4,7 +4,7 @@
 # 
 # Runoff sensitivities Diagnostic POD
 # 
-#   Last update: 10/31/2023
+#   Last update: 12/02/2024
 # 
 #   Synopsis
 #
@@ -14,8 +14,8 @@
 #
 #   In this diagnostics, we try to measure the land process biases in ESMs. 
 #   First, the land processes related to runoff projections in each ESM can be statistically emulated by 
-#   quantifying the inter-annual sensitivity of runoff to temperature (temperature sensitivity) and
-#   precipitation (precipitation sensitivity) using multiple linear regression (Lehner et al. 2019). 
+#   quantifying the inter-decadal sensitivity of runoff to temperature (temperature sensitivity) and
+#   precipitation (precipitation sensitivity) using multiple linear regression (Lehner et al. 2019; Kim et al. 2024). 
 #   To represent the land process biases, the runoff senstivities for each ESM are compared to 
 #   observational estimations, which is pre-calculated using same regression method.
 #   For the observational estimation, we used the GRUN-ENSEMBLE data 
@@ -26,7 +26,7 @@
 #   
 #   Version & Contact info
 # 
-#    - Version/revision information: version 1 (10/31/2023)
+#    - Version/revision information: version 3 (12/02/2024)
 #    - PI: Flavio Lehner, Cornell University, flavio.lehner@cornell.edu
 #    - Developer/point of contact: Hanjun Kim, Cornell University, hk764@cornell.edu
 #    - Other contributors: 
@@ -39,12 +39,11 @@
 #
 #    The main driver code (runoff_sensitivities_diag.py) include all functions, codes for calculations and figures.
 #    0) Functions are pre-defined for further analysis.
-#    1) The codes will load data and do area average for 78 global river basins.
-#    2) Water budget clousre (precipitaton - evaporation == runoff) in long term average is checked.
-#    3) Every variables are averaged for water year with OBS-based start month which maximizes the inter-annual correlation between precipitaiton and runoff.
-#    4) Using the pre-defined function "runoff_sens_reg", runoff sensitivities are calculated.
-#    5) Calculated runoff sensitivities for target models are saved as .nc file.
-#    6) The diagnostic figures will be plotted with the pre-calculated OBS and CMIP data.
+#    1) The codes will load data and do area average for 131 global river basins for each water year (Mask source - GRDC Major River Basins of the World).
+#    2) Water budget clousre (precipitaton - evapotranspiration == runoff) in long term average is checked.
+#    3) Using the pre-defined function "runoff_sens_reg", runoff sensitivities are calculated.
+#    4) Calculated runoff sensitivities for target models are saved as .nc file.
+#    5) The diagnostic figures will be plotted with the pre-calculated OBS and CMIP data.
 #
 #   Programm language summary
 #
@@ -56,7 +55,7 @@
 # 
 #   Required model output variables
 #  
-#    - The monthly historical simulations including period 1905-2005 are needed (Model outputs are assumed to be same with CMIP output).
+#    - The monthly historical simulations including period 1940-2014 are needed (Model outputs are assumed to be same with CMIP6 output).
 #    - Target variables
 #        - tas (surface air temperature, K), [time, lat, lon]
 #        - pr (precipitaiton, kg m-2 s-1), [time, lat, lon] 
@@ -72,10 +71,12 @@
 #    The potential to reduce uncertainty in regional runoff projections from climate models. Nature Climate Change, 9(12), 926-933.
 #    doi: 10.1038/s41558-019-0639-x
 #
+#    Kim, H., Lehner, F., Dagon, K., Lawrence, D. M., Swenson, S., & Wood, A. W. (2024).
+#    Constraining climate model projections with observations amplifies future runoff declines. In preparation
+#
 #    Ghiggi, G., Humphrey, V., Seneviratne, S. I., & Gudmundsson, L. (2021). 
 #    G‐RUN ENSEMBLE: A multi‐forcing observation‐based global runoff reanalysis. Water Resources Research, 57(5), e2020WR028787.
 #    doi:10.1029/2020WR028787
-#
 # ================================================================================
 
 import os
@@ -84,7 +85,7 @@ import time as time
 import numpy as np # python library for dealing with data array
 import cartopy.io.shapereader as shpreader # cartopy library for loading with shapefiles
 import matplotlib
-matplotlib.use('Agg') # non-X windows backend
+# matplotlib.use('Agg') # non-X windows backend
 import matplotlib.pyplot as plt    # python library we use to make plots
 import matplotlib.patches as patches # python library for filling the polygons in plots
 import matplotlib.colors as colors # python library for customizing colormaps
@@ -107,58 +108,125 @@ def area_weight(lat, lon):
     aw = dx * dy
     return aw
 
-## function for runoff sensitivity calculation
+################################################################
+## function for runoff sensitivity calculation (least square) ##
+################################################################
 from sklearn.linear_model import LinearRegression
 import scipy.stats as stats
 import numpy as np
-def runoff_sens_reg(r, p, t, alpha=0.05):
-    # Ensure input vectors are column vectors
-    if r.ndim == 1:
-        r = r[:, np.newaxis]
-    if p.ndim == 1:
-        p = p[:, np.newaxis]
-    if t.ndim == 1:
-        t = t[:, np.newaxis]
+def runoff_sens_reg(r, p, t, mw=1, alpha=0.1):
+    nan_val=np.mean(np.isnan(r))+np.mean(np.isnan(p))+np.mean(np.isnan(t))
+    if nan_val == 0:
+        # Ensure input vectors are column vectors
+        if r.ndim == 1:
+            r = r[:, np.newaxis]
+        if p.ndim == 1:
+            p = p[:, np.newaxis]
+        if t.ndim == 1:
+            t = t[:, np.newaxis]
 
-    # Create the regression matrix
-    X = np.column_stack((p, t, p * t))
+        # Create the regression matrix and do normalization
+        Xraw = np.column_stack((p, t, p * t))
+        Xstd = np.nanstd(Xraw,axis=0)
+        rstd = np.nanstd(r,axis=0)
+        Xnorm = (Xraw - np.nanmean(Xraw,axis=0)) / Xstd
+        rnorm = (r - np.nanmean(r,axis=0)) / rstd
 
-    # Perform linear regression
-    model = LinearRegression()
-    model.fit(X, r)
+        # Perform linear regression
+        model = LinearRegression()
+        model.fit(Xnorm, rnorm)
 
-    # Get regression coefficients
-    a1 = model.coef_[0][0]
-    b1 = model.coef_[0][1]
-    c1 = model.coef_[0][2]
-    
-    # Calculate the standard errors for coefficients
-    y_pred = model.predict(X)
-    residuals = r - y_pred
-    n, k = X.shape
-    mse = np.sum(residuals ** 2) / (n - k)
-    var_b = mse * np.linalg.pinv(np.dot(X.T, X))
-    se_a1 = np.sqrt(var_b[0, 0])
-    se_b1 = np.sqrt(var_b[1, 1])
-    se_c1 = np.sqrt(var_b[2, 2])
+        # Get regression coefficients
+        a1 = np.squeeze(model.coef_[0][0] * rstd / Xstd[0])
+        b1 = np.squeeze(model.coef_[0][1] * rstd / Xstd[1])
+        c1 = np.squeeze(model.coef_[0][2] * rstd / Xstd[2])
+        
+        # Calculate the standard errors for coefficients
+        y_pred = a1*Xraw[:,0] + b1*Xraw[:,1] + c1*Xraw[:,2]
+        residuals = r - y_pred[:,np.newaxis]
+        n, k = Xraw.shape
+        # autocorr=get_autocorr(r,1);
+        # dof2 = (n-k)*(1-autocorr)/(1+autocorr)
+        dof=np.ceil((n-k)/mw)
+        mse = np.sum(residuals ** 2) / (dof)
+        var_b = mse * np.linalg.pinv(np.dot(Xraw.T, Xraw))
+        se_a1 = np.sqrt(var_b[0, 0])
+        se_b1 = np.sqrt(var_b[1, 1])
+        se_c1 = np.sqrt(var_b[2, 2])
 
-    # Calculate the t-statistic for a given confidence level (e.g., alpha = 0.05)
-    alpha=0.05
-    t_critical = stats.t.ppf(1 - alpha / 2, df=n - k)
+        # Calculate the t-statistic for a given confidence level (e.g., alpha = 0.05)
+        t_critical = stats.t.ppf(1 - alpha / 2, dof)
 
-    # Calculate the confidence intervals
-    a2 = (a1 - t_critical * se_a1, a1 + t_critical * se_a1)
-    b2 = (b1 - t_critical * se_b1, b1 + t_critical * se_b1)
-    c2 = (c1 - t_critical * se_c1, c1 + t_critical * se_c1)
-    
-    # R-squared value
-    corr, _ = stats.pearsonr(np.squeeze(r), np.squeeze(y_pred))
-    r2 = corr**2
-    
-    return a1, a2, b1, b2, c1, c2, r2
+        # Calculate the confidence intervals
+        a2 = np.array([a1 - t_critical * se_a1, a1 + t_critical * se_a1])
+        b2 = np.array([b1 - t_critical * se_b1, b1 + t_critical * se_b1])
+        c2 = np.array([c1 - t_critical * se_c1, c1 + t_critical * se_c1])
+        
+        # R-squared value
+        corr, _ = stats.pearsonr(np.squeeze(r), np.squeeze(y_pred))
+        r2 = corr**2
+        
+        return a1, a2, b1, b2, c1, c2, r2
+    else:
+        a1=np.nan; a2=np.nan; b1=np.nan; b2=np.nan; c1=np.nan; c2=np.nan; r2=np.nan;
+        return a1, a2, b1, b2, c1, c2, r2
+
+## function for calculate moving average!
+def moving_avg(x_1d,n_mw):
+    nt=len(x_1d)
+    weight = np.ones((n_mw))/n_mw
+    n_delete=int((n_mw)/2);
+    smoothed=np.convolve(x_1d,weight,mode='same')
+    if n_delete != 0:
+        del_ind=np.concatenate((np.arange(n_delete),np.arange(nt-n_delete,nt)))
+        smoothed_final=np.delete(smoothed,del_ind)
+    return smoothed_final
+
+## function for ignoring NaN value for correlation
+def corr_nan(temp1,temp2):
+    indnan=np.nanmean(temp1)+np.nanmean(temp2)
+    if ~np.isnan(indnan):
+        tempind=np.nonzero(np.isnan(temp1)|np.isnan(temp2))
+        temp1=np.delete(temp1,tempind)
+        temp2=np.delete(temp2,tempind)
+        corr,_=stats.pearsonr(temp1,temp2)
+        return corr
+    else:
+        return np.nan
+
+## Calculate confidence interval of the data by t-test
+def get_confidence_interval(data,alpha):
+    # alpha=0.9 --> 5%-95% confidence interval
+    # data is assumed to be not containing nan-value
+    mean = np.mean(data)
+    std_dev = np.std(data, ddof=1)  # ddof=1 for sample standard deviation
+    # Number of samples
+    n = len(data)
+    # dof for t-distributions
+    dof = n - 1    
+    # Calculate the standard error of the mean
+    se = std_dev / np.sqrt(n)
+    # Calculate the t-score for the confidence level
+    t_score = stats.t.ppf((1 + alpha) / 2, dof)
+    # Calculate the margin of error
+    margin_of_error = t_score * se
+    return margin_of_error
+
+## find statistically significant r, given n
+import numpy as np
+import scipy.stats as stats
+def significant_pearsonr(n,alpha):
+    # Degrees of freedom
+    df = n - 2
+    # Critical t-value (two-tailed)
+    t_critical = stats.t.ppf(1 - alpha/2, df)
+    # Calculate critical r
+    r_critical = t_critical / np.sqrt(df + t_critical**2)
+    r_critical = np.abs(r_critical)  # Consider absolute value for significance
+    return r_critical
 
 ################################################################################
-### 1) Loading model data files and doing area average #########################
+### 1) Loading model data files and doing area average for each water-year #####
 ################################################################################
 #
 # The framework copies model data to a regular directory structure of the form
@@ -215,27 +283,46 @@ if np.mean(lonm) > 100:
     mrrom = mrrom[:, :, western_ind]
     hflsm = hflsm[:, :, western_ind]
 
-print("Model data are succefully loaded for {CASENAME}.".format(**os.environ))
+## water year average (Oct-Sep water year for every basin)
+## do time average and then do basin average (save computation time a lot)
+syr_sens=1945
+eyr_sens=2014
+nyr = eyr_sens - syr_sens
+inds=(syr_sens-syr_model)*12 + 10 - 1
+inde=inds + (nyr)*12
+prm_wy = np.nanmean(np.reshape(prm[inds:inde,:,:],(12,nyr,nlat,nlon),order="F"), axis=0)
+tasm_wy = np.nanmean(np.reshape(tasm[inds:inde,:,:],(12,nyr,nlat,nlon),order="F"), axis=0)
+mrrom_wy = np.nanmean(np.reshape(mrrom[inds:inde,:,:],(12,nyr,nlat,nlon),order="F"), axis=0)
+hflsm_wy = np.nanmean(np.reshape(hflsm[inds:inde,:,:],(12,nyr,nlat,nlon),order="F"), axis=0)
 
-## average variables for specific river basins
-# load basin masks from shapefile provided by world bank
-shapefile_path = "{OBS_DATA}/Major_Basins_of_the_World.shp".format(**os.environ)
+## area average for specific river basins
+# load basin masks from shapefile provided by GRDC
+shapefile_path = "{OBS_DATA}/mrb_basins.shp".format(**os.environ)
 records=list(list(shpreader.Reader(shapefile_path).records()))
 
 # Select large basins based on the pre-defined indices (this reduces computation time)
-bind = np.array([1, 2, 3, 5, 6, 11, 12, 16, 21, 23, 24, 25, 26, 29, 31, 32, 36, 37, 38, 42, 43, 44, 46, 48, 51, 53, 59, 67, 69,
-        71, 72, 80, 86, 90, 96, 97, 102, 104, 107, 108, 109, 111, 114, 115, 119, 120, 121, 128, 129, 130, 138, 146, 149,
-        156, 163, 170, 176, 183, 185, 186, 191, 192, 196, 200, 204, 206, 209, 210, 213, 219, 222, 227, 228, 230, 236, 244,
-        252, 253])
+bind = np.array([9, 12, 14, 19, 28, 29, 33, 34, 39, 42, 46, 54, 55, 62, 64, 65, 66, 71, 72, 73, 76, 79, 82, 83, 84, 85, 89, 90, 91, \
+    92, 94, 95, 99, 100, 101, 102, 103, 106, 110, 111, 113, 114, 116, 117, 119, 123, 124, 128, 129, 130, 138, 144, 148, 153, 160, 161, 163, 164, \
+    166, 169, 170, 172, 173, 174, 176, 178, 179, 181, 187, 194, 196, 211, 216, 218, 222, 223, 227, 229, 231, 232, 270, 276, 280, 283, 284, 293, 297, \
+    298, 299, 300, 306, 307, 312, 318, 328, 329, 340, 347, 358, 363, 364, 368, 372, 383, 393, 394, 399, 403, 409, 415, 416, 439, 443, 445, 452, 454, \
+    461, 463, 465, 467, 470, 485, 494, 495, 500, 501, 517, 519, 520, 379, 381])
 
+# get basin masks/names for the slected ones
 bind = bind - 1;
-nb=len(bind)
-basin_points=[list(records[i].geometry.exterior.coords) for i in bind]
-basin_names=[records[i].attributes['NAME'] for i in bind]
+basin_points=[]
+basin_names=[]
+for i in bind:
+    geom = records[i].geometry
+    if geom.geom_type == 'Polygon':
+        coords = list(geom.exterior.coords)
+        basin_points.append(coords[0::10])
+    elif geom.geom_type == 'MultiPolygon':
+        npoly=len(geom.geoms)
+        coords = list(geom.geoms[npoly-1].exterior.coords)
+        basin_points.append(coords[0::10])
+    basin_names.append(records[i].attributes['RIVER_BASI'])
 
-# area weight and masking out the ocean if it is defined in runoff data
-aw=area_weight(latm,lonwm)
-aw[np.isnan(np.mean(mrrom, axis=0))] = 0
+nb=len(basin_points)
 
 # basin mask for each basin
 basin_maskm = np.zeros((nlat, nlon, nb))
@@ -243,149 +330,125 @@ lon2d, lat2d = np.meshgrid(lonwm, latm)
 lon_points=np.reshape(lon2d,(nlat*nlon,1),order='F')
 lat_points=np.reshape(lat2d,(nlat*nlon,1),order='F')
 for b in range(nb):
-    print(b)    
     path = mpltPath.Path(basin_points[b])
     inside=path.contains_points(np.column_stack([lon_points,lat_points]))
     inside2d=np.reshape(inside,(nlat,nlon),order='F')
     basin_maskm[:, :, b] = inside2d
-print("Basin mask is calculated for {CASENAME}: ".format(**os.environ))
 
 # area weight for each basin
+aw = area_weight(latm, lonwm)
 aw_basins = np.tile(aw[:,:,np.newaxis], (1, 1, nb)) * basin_maskm
+# print(np.nansum(np.nansum(aw_basins,axis=1),axis=0))
+## note that basin 114 (PECHORA) is not captured by CESM2 grid -> area is 0
 
 # basin average
-awm = np.tile(aw_basins,(12,1,1,1))
-prb_model=np.empty((nyr*12,nb))
-prb_model[:] = np.nan
-tasb_model=np.empty((nyr*12,nb))
-tasb_model[:] = np.nan
-mrrob_model=np.empty((nyr*12,nb))
-mrrob_model[:] = np.nan
-hflsb_model=np.empty((nyr*12,nb))
-hflsb_model[:] = np.nan
-for y in range(nyr):
-    print("-----" + str(y+1) + "-----" )   
-    # pr
-    sind = (y * 12)
-    pry=prm[sind:sind+12,:,:]
-    prb_model[sind:sind+12, :] = \
-        np.nansum(np.nansum( \
-                            np.tile(pry[:, :, :, np.newaxis], (1, 1, 1, nb)) * awm \
-                                , axis=1), axis=1) / np.nansum(np.nansum(awm, axis=1), axis=1)
-    # tas
-    sind = (y * 12)
-    tasy=tasm[sind:sind+12,:,:]
-    tasb_model[sind:sind+12, :] = \
-        np.nansum(np.nansum( \
-                            np.tile(tasy[:, :, :, np.newaxis], (1, 1, 1, nb)) * awm \
-                                , axis=1), axis=1) / np.nansum(np.nansum(awm, axis=1), axis=1)
-    # mrro
-    sind = (y * 12)
-    mrroy=mrrom[sind:sind+12,:,:]
-    mrrob_model[sind:sind+12, :] = \
-        np.nansum(np.nansum( \
-                            np.tile(mrroy[:, :, :, np.newaxis], (1, 1, 1, nb)) * awm \
-                                , axis=1), axis=1) / np.nansum(np.nansum(awm, axis=1), axis=1)
-    # hfls
-    sind = (y * 12)
-    hflsy=hflsm[sind:sind+12,:,:]
-    hflsb_model[sind:sind+12, :] = \
-        np.nansum(np.nansum( \
-                            np.tile(hflsy[:, :, :, np.newaxis], (1, 1, 1, nb)) * awm \
-                                , axis=1), axis=1) / np.nansum(np.nansum(awm, axis=1), axis=1)
+awm = np.transpose(np.tile(aw_basins[:,:,:,np.newaxis],(1,1,1,nyr)),(3,0,1,2))
 
-print("Basin average is calculated for {CASENAME}: ".format(**os.environ))
+prb_wy = np.nansum(np.nansum( \
+                        np.tile(prm_wy[:, :, :, np.newaxis], (1, 1, 1, nb)) * awm \
+                            , axis=1), axis=1) / np.nansum(np.nansum(awm, axis=1), axis=1)
+
+tasb_wy = np.nansum(np.nansum( \
+                        np.tile(tasm_wy[:, :, :, np.newaxis], (1, 1, 1, nb)) * awm \
+                            , axis=1), axis=1) / np.nansum(np.nansum(awm, axis=1), axis=1)
+
+mrrob_wy = np.nansum(np.nansum( \
+                        np.tile(mrrom_wy[:, :, :, np.newaxis], (1, 1, 1, nb)) * awm \
+                            , axis=1), axis=1) / np.nansum(np.nansum(awm, axis=1), axis=1)
+
+hflsb_wy = np.nansum(np.nansum( \
+                        np.tile(hflsm_wy[:, :, :, np.newaxis], (1, 1, 1, nb)) * awm \
+                            , axis=1), axis=1) / np.nansum(np.nansum(awm, axis=1), axis=1)
+
+
 
 ################################################################################
-### 2) check water budget closure: #############################################
+### 2) check water budget closure, negative values, consistent values: #############################################
 ################################################################################
+## sanity check to ensure that runoff output is not strange
 
-## check the water budget closure
-pmeb_model = np.nanmean(prb_model - hflsb_model/(2.5*1e6), axis=0)
-error_val = (pmeb_model - np.nanmean(mrrob_model, axis=0)) / np.nanmean(mrrob_model, axis=0)
+## Note that CESM is almost free from this problem when we analyzed CEMS1 and CESM2
+
+## some CMIP model's mrro (runoff) shows some erronous behaviour for some basins
+# 1. water budget is not closed; P(precip)-E(evap) is way different from Q(runoff)
+# 2. runoff is negative in some basins, leading to negative or very small climatological runoff
+# 3. same and small runoff value is repeated for long times in some dry basins
+
+## 1. check the water budget closure
+pmeb_model = np.nanmean(prb_wy - hflsb_wy/(2.5*1e6), axis=0)
+error_val = (pmeb_model - np.nanmean(mrrob_wy, axis=0)) / np.nanmean(mrrob_wy, axis=0)
 pval = 0.05
 closed_fraction=np.nansum( np.abs(error_val)<0.05 ,axis=0) / nb
-# if closed_fraction<0.8:
-#     raise ValueError('water budget is not closed more than 80% of ' + str(nb) + 'basins')
+if closed_fraction<0.8:
+    raise ValueError('water budget is not closed more than 80% of ' + str(nb) + 'basins')
 
-print("water budget closure is checked for {CASENAME}.".format(**os.environ))
+ 
 
 ##############################################################################
-##  3,4) get water year average and calculate runoff sensitivities  ##########
+##  3) calculate runoff sensitivities  ##########
 ##############################################################################
 # initialization
-prsens_model = np.empty((nb, 3))
-prsens_model[:] = np.nan
-tsens_model = np.empty((nb, 3))
-tsens_model[:] = np.nan
-intsens_model = np.empty((nb, 3))
-intsens_model[:] = np.nan
-r2_mrro_wy_int = np.empty((nb))
-r2_mrro_wy_int[:] = np.nan
-r2_model_int = np.empty((nb))
-r2_model_int[:] = np.nan
-r2_model_pred = np.empty((nb))
-r2_model_pred[:] = np.nan
-syr_sens=1905
-eyr_sens=2005
-nyr = eyr_sens - syr_sens
+psens_model = np.full((nb, 3),np.nan)
+tsens_model = np.full((nb, 3),np.nan)
+intsens_model = np.full((nb, 3),np.nan)
+r2_mrro_wy_int = np.full((nb),np.nan)
+r2_model_int = np.full((nb),np.nan)
+r2_model_pred = np.full((nb),np.nan)
+r2_model_pred_int = np.full((nb),np.nan)
 
-# pre-defined start month for the water year average
-cormax_mon_obs = np.array([ 4, 4, 7, 10, 12, 7, 11, 7, 7, 6, 6, 6, 8, 6, 5, 5, 6,
-        8, 6, 8, 7, 6, 7, 6, 10, 10, 8, 11, 7, 8, 3, 5, 10, 6,
-        5, 11, 12, 2, 1, 2, 11, 11, 12, 3, 4, 1, 2, 1, 2, 5, 2,
-        2, 9, 9, 1, 2, 9, 8, 6, 1, 3, 9, 9, 9, 9, 10, 10, 8,
-        8, 9, 9, 8, 1, 9, 2, 4, 7, 9])
-
-# get water-year average and calculate runoff sensitvities!
+# water year average (Oct-Sep water year for every basin)
+# after 5-year average, the definition of differnet water year for each basin does not matter much
+mw=5 # 5-year moving window
 for b in range(nb):
     # specify start and end indices
-    inds=(syr_sens-syr_model)*12 + cormax_mon_obs[b]-1
-    inde=inds + (nyr)*12
 
-    # water year average
-    mrrob_wy = np.nanmean(np.reshape(mrrob_model[inds:inde, b],(12,nyr),order="F"), axis=0)
-    prb_wy = np.nanmean(np.reshape(prb_model[inds:inde, b],(12,nyr),order="F"), axis=0)
-    tasb_wy = np.nanmean(np.reshape(tasb_model[inds:inde, b],(12,nyr),order="F"), axis=0)
+    # smoothing (5-year moving average)
+    mrrobym = moving_avg(mrrob_wy[:,b],mw)
+    prbym = moving_avg(prb_wy[:,b],mw)
+    tasbym = moving_avg(tasb_wy[:,b],mw)
 
     # get anomalies
-    amrrob_wy = mrrob_wy - np.nanmean(mrrob_wy)
-    aprb_wy = prb_wy - np.nanmean(prb_wy)
-    atasb_wy = tasb_wy - np.nanmean(tasb_wy)
+    amrrobym = mrrobym - np.nanmean(mrrobym)
+    aprbym = prbym - np.nanmean(prbym)
+    atasbym = tasbym - np.nanmean(tasbym)
 
     # get % anomalies
-    amrrob_wy_pct = amrrob_wy / np.nanmean(mrrob_wy) * 100
-    aprb_wy_pct = aprb_wy / np.nanmean(prb_wy) * 100
+    amrrobym_pct = amrrobym / np.nanmean(mrrobym) * 100
+    aprbym_pct = aprbym / np.nanmean(prbym) * 100
 
     # calculate runoff sensitivities using def runoff_sens_reg(r, p, t):
-    a1, a2, b1, b2, c1, c2, r2 = runoff_sens_reg(amrrob_wy_pct, aprb_wy_pct, atasb_wy)
-    prsens_model[b,0] = a1
-    prsens_model[b,1:3] = a2
+    a1, a2, b1, b2, c1, c2, r2 = runoff_sens_reg(amrrobym_pct, aprbym_pct, atasbym, mw=5, alpha=0.1)
+    psens_model[b,0] = a1
+    psens_model[b,1:3] = a2
     tsens_model[b,0] = b1
     tsens_model[b,1:3] = b2
     intsens_model[b,0] = c1
     intsens_model[b,1:3] = c2
     r2_mrro_wy_int[b] = r2
 
-    # prediction and resulting R2 (prediction accuracy)
-    amrrob_wy_pct_pred_model = a1 * aprb_wy_pct + b1 * atasb_wy
-    amrrob_wy_pct_pred_int_model = a1 * aprb_wy_pct + b1 * atasb_wy + c1 * atasb_wy * aprb_wy_pct
-    corr, _ = stats.pearsonr(amrrob_wy_pct_pred_model, amrrob_wy_pct_pred_int_model)
+    # prediction and resulting R2 (training accuracy)
+    amrrobym_pct_pred_model = a1 * aprbym_pct + b1 * atasbym
+    amrrobym_pct_pred_int_model = a1 * aprbym_pct + b1 * atasbym + c1 * atasbym * aprbym_pct
+    corr = corr_nan(amrrobym_pct_pred_model, amrrobym_pct_pred_int_model)
     r2_model_int[b] = corr**2
-    corr, _ = stats.pearsonr(amrrob_wy_pct_pred_model, amrrob_wy_pct)
+    corr = corr_nan(amrrobym_pct_pred_model, amrrobym_pct)
     r2_model_pred[b] = corr**2
+    corr = corr_nan(amrrobym_pct_pred_int_model, amrrobym_pct)
+    r2_model_pred_int[b] = corr**2
 
 # display warning if the interaction term is affecting the regression models
+# role of interaction term (P*T) is usually negligible, consistent to Lehner et al. 2019
 condition=np.asarray(r2_model_int<0.8)
+# condition=np.asarray(np.abs(r2_model_pred_int-r2_model_pred)>0.2)
 for b in range(b):
     if condition[b]:
-        warning_message = 'Warning: Interaction term matters for model '+' basin #'+str(b+1)
+        warning_message = f'Warning: Interaction term may matter for model + basin #{b+1} (r={r2_model_int[b]:.2f})'
         warnings.warn(warning_message)
 
-print("runoff sensitivities are calculated for {CASENAME}.".format(**os.environ))
+
 
 #####################################################
-### 5) Saving output data: ##########################
+### 4) Saving output data: ##########################
 #####################################################
 ## save runoff sensitivity data in netCDF4 file
 out_path = "{WK_DIR}/model/netCDF/runoff_sensitivities_{CASENAME}.nc".format(**os.environ)
@@ -396,52 +459,52 @@ basin_dim = tsens_model.shape[0]
 sens_dim = tsens_model.shape[1]
 dataset.createDimension("basin", basin_dim)
 dataset.createDimension("sens_type", sens_dim)
-string_length = 25
+string_length = 45
 dataset.createDimension("string_len", string_length)
 # Create variables
 basin_var = dataset.createVariable('basin', 'S1', ('basin', 'string_len'))
 tsens_model_var = dataset.createVariable('tsens_model', np.float64, ('basin', 'sens_type'), fill_value=-9999)
-prsens_model_var = dataset.createVariable('prsens_model', np.float64, ('basin', 'sens_type'), fill_value=-9999)
+psens_model_var = dataset.createVariable('psens_model', np.float64, ('basin', 'sens_type'), fill_value=-9999)
 r2_model_pred_var = dataset.createVariable('r2_model_pred', np.float64, ('basin'), fill_value=-9999)
 # assign attributes
 basin_var.long_name = 'target basins'
-basin_var.reference = 'ref: https://datacatalog.worldbank.org/search/dataset/0041426/Major-River-Basins-of-the-World'
-tsens_model_var.long_name = 'temperature sensitivity (1905-2005)'
+basin_var.reference = 'ref: https://grdc.bafg.de/GRDC/EN/02_srvcs/22_gslrs/221_MRB/riverbasins_node.html'
+tsens_model_var.long_name = f'temperature sensitivity ({syr_sens}-{eyr_sens})'
 tsens_model_var.units = '%/K'
 tsens_model_var.sens_type_index = '1: sensitivity value / 2,3: 95% confidence interval'
-prsens_model_var.long_name = 'precipitation sensitivity (1905-2005)'
-prsens_model_var.units = '%/%'
-prsens_model_var.sens_type_index = '1: sensitivity value / 2,3: 95% confidence interval'
-r2_model_pred_var.long_name = 'regression model accuracy (R^2) (1905-2005)'
+psens_model_var.long_name = f'precipitation sensitivity ({syr_sens}-{eyr_sens})'
+psens_model_var.units = '%/%'
+psens_model_var.sens_type_index = '1: sensitivity value / 2,3: 95% confidence interval'
+r2_model_pred_var.long_name = f'regression model accuracy (R^2) ({syr_sens}-{eyr_sens})'
 r2_model_pred_var.units = 'no units'
 # assign variables
 for i, s in enumerate(basin_names):
     basin_var[i, :len(s)] = np.array(list(s), dtype='S1')
-tsens_model_var[:,:] = tsens_model
-prsens_model_var[:,:] = prsens_model
+tsens_model_var[:] = tsens_model
+psens_model_var[:] = psens_model
 r2_model_pred_var[:] = r2_model_pred
 # close and save
 dataset.close()
 
 
 ################################################################################
-### 6) Loading digested data  & plotting obs figures: ##########################
+### 5) Loading digested data  & plotting obs figures: ##########################
 ################################################################################
 ## load pre-calculated obs and cmip data
 # load obs
 obs_path = "{OBS_DATA}/runoff_sensitivity_obs.nc".format(**os.environ)
-tsens_obs = nc.Dataset(obs_path)['tsens_obs'][:,0:nb,:]
-prsens_obs = nc.Dataset(obs_path)['prsens_obs'][:,0:nb,:]
-r2_obs_pred = nc.Dataset(obs_path)['r2_obs_pred'][:,0:nb]
+tsens_obs = nc.Dataset(obs_path)['tsens_obs'][:,:,0:nb,:]
+psens_obs = nc.Dataset(obs_path)['psens_obs'][:,:,0:nb,:]
+r2_obs_pred = nc.Dataset(obs_path)['r2_obs_pred'][:,:,0:nb]
 # load cmip5
 hist5_path = "{OBS_DATA}/runoff_sensitivity_hist5.nc".format(**os.environ)
 tsens_hist5 = nc.Dataset(hist5_path)['tsens_hist5'][:,0:nb,:]
-prsens_hist5 = nc.Dataset(hist5_path)['prsens_hist5'][:,0:nb,:]
+psens_hist5 = nc.Dataset(hist5_path)['psens_hist5'][:,0:nb,:]
 r2_hist5_pred = nc.Dataset(hist5_path)['r2_hist5_pred'][:,0:nb]
 # load cmip6
 hist6_path = "{OBS_DATA}/runoff_sensitivity_hist6.nc".format(**os.environ)
 tsens_hist6 = nc.Dataset(hist6_path)['tsens_hist6'][:,0:nb,:]
-prsens_hist6 = nc.Dataset(hist6_path)['prsens_hist6'][:,0:nb,:]
+psens_hist6 = nc.Dataset(hist6_path)['psens_hist6'][:,0:nb,:]
 r2_hist6_pred = nc.Dataset(hist6_path)['r2_hist6_pred'][:,0:nb]
 
 
@@ -455,8 +518,8 @@ def plot_and_save_basin_filled(values, basin_points, color_bins, color_bins2, pl
     # make colormap
     custom_cmap=colors.LinearSegmentedColormap.from_list('custom_colormap',plt_colormap, N=len(color_bins)-1)
     # load coastline
-    lonmap = nc.Dataset(coast_path)['lonmap'][:]
-    latmap = nc.Dataset(coast_path)['latmap'][:]
+    lonmap = nc.Dataset(coast_path)['lonmap'][0:9850]
+    latmap = nc.Dataset(coast_path)['latmap'][0:9850]
     ## draw figure
     fig, ax = plt.subplots(figsize=(12, 4.8))
     plt.rcParams.update({'font.size': 12})
@@ -493,18 +556,19 @@ def plot_and_save_basin_filled(values, basin_points, color_bins, color_bins2, pl
     plt.close()
 
 
+
 ## figures for T sensitivity ##
-bins = [-60, -30, -10, -8, -6, -4, -3, -2, -1, 0, 1, 2, 3, 4, 6, 8, 10, 30, 60]
-bins2 = [-1000, -30, -10, -8, -6, -4, -3, -2, -1, 0, 1, 2, 3, 4, 6, 8, 10, 30, 1000]
+bins = [-30,-15,-12,-9,-6,-3,0,3,6,9,12,15,30]
+bins2 = [-60,-15,-12,-9,-6,-3,0,3,6,9,12,15,60]
 plot_colormap = [(0.4000, 0, 0, 1),(0.7706, 0, 0, 1),(0.9945, 0.0685, 0.0173, 1),(0.9799, 0.2483, 0.0627, 1),(0.9715, 0.4442, 0.0890, 1),(0.9845, 0.6961, 0.0487, 1),(0.9973, 0.9480, 0.0083, 1),(1.0000, 1.0000, 0.3676, 1),(1.0000, 1.0000, 1.0000, 1),(1.0000, 1.0000, 1.0000, 1),(0.6975, 0.8475, 0.9306, 1),(0.4759, 0.7358, 0.8797, 1),(0.2542, 0.6240, 0.8289, 1),(0.0436, 0.5130, 0.7774, 1),(0.0533, 0.4172, 0.7138, 1),(0.0630, 0.3215, 0.6503, 1),(0.0411, 0.1760, 0.5397, 1),(0, 0, 0.4000, 1)]
 plot_unit='[%/K]'
 coast_path = "{OBS_DATA}/coastline.nc".format(**os.environ)
 
 # OBS
-values=np.nanmean(tsens_obs[:,:,0],axis=0)
+obs_val=np.nanmean(np.nanmean(tsens_obs[:,:,:,0],axis=0),axis=0)
 plot_title='T sensitivity: OBS'
 plot_path = "{WK_DIR}/obs/PS/tsens_obs.eps".format(**os.environ)
-plot_and_save_basin_filled(values, basin_points, bins, bins2, \
+plot_and_save_basin_filled(obs_val, basin_points, bins, bins2, \
     plot_colormap, plot_unit, plot_title, plot_path, coast_path)
 
 # model
@@ -515,14 +579,14 @@ plot_and_save_basin_filled(values, basin_points, bins, bins2, \
     plot_colormap, plot_unit, plot_title, plot_path, coast_path)
 
 # model bias
-values=tsens_model[:,0]-np.nanmean(tsens_obs[:,:,0],axis=0)
+values=tsens_model[:,0]-obs_val
 plot_title='T sensitivity bias: MODEL - OBS'
 plot_path= "{WK_DIR}/model/PS/tsens_model_bias.eps".format(**os.environ)
 plot_and_save_basin_filled(values, basin_points, bins, bins2, \
     plot_colormap, plot_unit, plot_title, plot_path, coast_path)
 
 # hist6 bias
-values=np.nanmean(tsens_hist6[:,:,0],axis=0)-np.nanmean(tsens_obs[:,:,0],axis=0)
+values=np.nanmean(tsens_hist6[:,:,0],axis=0)-obs_val
 plot_title='T sensitivity bias: CMIP6 - OBS'
 plot_path= "{WK_DIR}/obs/PS/tsens_hist6_bias.eps".format(**os.environ)
 plot_and_save_basin_filled(values, basin_points, bins, bins2, \
@@ -530,36 +594,37 @@ plot_and_save_basin_filled(values, basin_points, bins, bins2, \
 
 
 ## figures for P sensitivity ##
-bins=[-30, -2, -1.6, -1.4, -1.2, -1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 2, 30];
-bins2=[-100, -2, -1.6, -1.4, -1.2, -1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 2, 100];
+bins=[-3.5, -3, -2.5, -2, -1.6, -1.2, -0.8, -0.4, 0, 0.4, 0.8, 1.2, 1.6, 2, 2.5, 3, 3.5];
+bins2=[-100, -3, -2.5, -2, -1.6, -1.2, -0.8, -0.4, 0, 0.4, 0.8, 1.2, 1.6, 2, 2.5, 3, 100];
+plot_colormap = [(0.4000, 0, 0, 1), (0.7316, 0, 0, 1), (0.9975, 0.0306, 0.0078, 1), (0.9845, 0.1915, 0.0484, 1), (0.9715, 0.3525, 0.0890, 1), (0.9776, 0.5636, 0.0700, 1), (0.9891, 0.7889, 0.0338, 1), (1.0000, 1.0000, 0.0263, 1), (1.0000, 1.0000, 0.4408, 1), (1.0000, 1.0000, 1.0000, 1), (1.0000, 1.0000, 1.0000, 1), (0.7325, 0.8651, 0.9386, 1), (0.5342, 0.7652, 0.8931, 1), (0.3359, 0.6652, 0.8476, 1), (0.1375, 0.5652, 0.8020, 1), (0.0477, 0.4727, 0.7506, 1), (0.0563, 0.3870, 0.6938, 1), (0.0651, 0.3013, 0.6370, 1), (0.0368, 0.1575, 0.5250, 1), (0, 0, 0.4000, 1)]
 plot_colormap = [(0.4000, 0, 0, 1), (0.7316, 0, 0, 1), (0.9975, 0.0306, 0.0078, 1), (0.9845, 0.1915, 0.0484, 1), (0.9715, 0.3525, 0.0890, 1), (0.9776, 0.5636, 0.0700, 1), (0.9891, 0.7889, 0.0338, 1), (1.0000, 1.0000, 0.0263, 1), (1.0000, 1.0000, 0.4408, 1), (1.0000, 1.0000, 1.0000, 1), (1.0000, 1.0000, 1.0000, 1), (0.7325, 0.8651, 0.9386, 1), (0.5342, 0.7652, 0.8931, 1), (0.3359, 0.6652, 0.8476, 1), (0.1375, 0.5652, 0.8020, 1), (0.0477, 0.4727, 0.7506, 1), (0.0563, 0.3870, 0.6938, 1), (0.0651, 0.3013, 0.6370, 1), (0.0368, 0.1575, 0.5250, 1), (0, 0, 0.4000, 1)]
 plot_unit='[%/%]'
 
 # OBS
-values=np.nanmean(prsens_obs[:,:,0],axis=0)
+obs_val=np.nanmean(np.nanmean(psens_obs[:,:,:,0],axis=0),axis=0)
 plot_title='P sensitivity: OBS'
-plot_path= "{WK_DIR}/obs/PS/prsens_obs.eps".format(**os.environ)
-plot_and_save_basin_filled(values, basin_points, bins, bins2, \
+plot_path= "{WK_DIR}/obs/PS/psens_obs.eps".format(**os.environ)
+plot_and_save_basin_filled(obs_val, basin_points, bins, bins2, \
     plot_colormap, plot_unit, plot_title, plot_path, coast_path)
 
 # model
-values=prsens_model[:,0]
+values=psens_model[:,0]
 plot_title=f'P sensitivity: MODEL (WBC={closed_fraction:0.2f})'
-plot_path= "{WK_DIR}/model/PS/prsens_model.eps".format(**os.environ)
+plot_path= "{WK_DIR}/model/PS/psens_model.eps".format(**os.environ)
 plot_and_save_basin_filled(values, basin_points, bins, bins2, \
     plot_colormap, plot_unit, plot_title, plot_path, coast_path)
 
 # model bias
-values=prsens_model[:,0]-np.nanmean(prsens_obs[:,:,0],axis=0)
+values=psens_model[:,0]-obs_val
 plot_title='P sensitivity bias: MODEL - OBS'
-plot_path= "{WK_DIR}/model/PS/prsens_model_bias.eps".format(**os.environ)
+plot_path= "{WK_DIR}/model/PS/psens_model_bias.eps".format(**os.environ)
 plot_and_save_basin_filled(values, basin_points, bins, bins2, \
     plot_colormap, plot_unit, plot_title, plot_path, coast_path)
 
 # hist6 bias
-values=np.nanmean(prsens_hist6[:,:,0],axis=0)-np.nanmean(prsens_obs[:,:,0],axis=0)
+values=np.nanmean(psens_hist6[:,:,0],axis=0)-obs_val
 plot_title='P sensitivity bias: CMIP6 - OBS'
-plot_path= "{WK_DIR}/obs/PS/prsens_hist6_bias.eps".format(**os.environ)
+plot_path= "{WK_DIR}/obs/PS/psens_hist6_bias.eps".format(**os.environ)
 plot_and_save_basin_filled(values, basin_points, bins, bins2, \
     plot_colormap, plot_unit, plot_title, plot_path, coast_path)
 
@@ -569,8 +634,8 @@ plot_and_save_basin_filled(values, basin_points, bins, bins2, \
 ###########################################
 def plot_and_save_basin_filled_summary(values_obs, values_model, values_hist5, values_hist6, basin_points, color_bins, color_bins2, plt_colormap, plt_unit, plt_title, plt_path, coast_path, closed_fraction):
     # load coastline
-    lonmap = nc.Dataset(coast_path)['lonmap'][:]
-    latmap = nc.Dataset(coast_path)['latmap'][:]
+    lonmap = nc.Dataset(coast_path)['lonmap'][0:9850]
+    latmap = nc.Dataset(coast_path)['latmap'][0:9850]
     # colormap
     custom_cmap=colors.LinearSegmentedColormap.from_list('custom_colormap',plt_colormap, N=len(bins)-1)
     
@@ -673,15 +738,15 @@ def plot_and_save_basin_filled_summary(values_obs, values_model, values_hist5, v
     plt.savefig(plt_path)
     plt.close()
 
-# summary for prediction accuracy
+# summary for training accuracy
 bins=[0, 0.16, 0.36, 0.49, 0.64, 0.81, 1]
 bins2=[0, 0.16, 0.36, 0.49, 0.64, 0.81, 1]
 plt_colormap=[(1.0000, 1.0000, 1.0000), (0.9961, 0.9020, 0), (1.0000, 0.6980, 0), (1.0000, 0.2980, 0.0039), (0.8471, 0, 0.0039), (0.5882, 0.0196, 0.0196)]
-values_obs=np.nanmean(r2_obs_pred[:,:], axis=0)
+values_obs=np.nanmean(np.nanmean(r2_obs_pred[:,:,:], axis=0), axis=0)
 values_model=r2_model_pred[:]
 values_hist5=np.nanmean(r2_hist5_pred[:,:], axis=0)
 values_hist6=np.nanmean(r2_hist6_pred[:,:], axis=0)
-plt_title='Summary: prediction accuracy'
+plt_title='Summary: training accuracy'
 plt_unit='[R$^2$]'
 plt_path="{WK_DIR}/model/PS/summary_prediction_accuracy.eps".format(**os.environ)
 plot_and_save_basin_filled_summary(values_obs, values_model, values_hist5, values_hist6, \
@@ -689,10 +754,10 @@ plot_and_save_basin_filled_summary(values_obs, values_model, values_hist5, value
                                    coast_path, closed_fraction)
 
 # summary for T sensitivity
-bins=[-60, -30, -10, -8, -6, -4, -3, -2, -1, 0, 1, 2, 3, 4, 6, 8, 10, 30, 60]
-bins2=[-1000, -30, -10, -8, -6, -4, -3, -2, -1, 0, 1, 2, 3, 4, 6, 8, 10, 30, 1000]
+bins = [-30,-15,-12,-9,-6,-3,0,3,6,9,12,15,30]
+bins2 = [-60,-15,-12,-9,-6,-3,0,3,6,9,12,15,60]
 plt_colormap=[(0.4000, 0, 0, 1),(0.7706, 0, 0, 1),(0.9945, 0.0685, 0.0173, 1),(0.9799, 0.2483, 0.0627, 1),(0.9715, 0.4442, 0.0890, 1),(0.9845, 0.6961, 0.0487, 1),(0.9973, 0.9480, 0.0083, 1),(1.0000, 1.0000, 0.3676, 1),(1.0000, 1.0000, 1.0000, 1),(1.0000, 1.0000, 1.0000, 1),(0.6975, 0.8475, 0.9306, 1),(0.4759, 0.7358, 0.8797, 1),(0.2542, 0.6240, 0.8289, 1),(0.0436, 0.5130, 0.7774, 1),(0.0533, 0.4172, 0.7138, 1),(0.0630, 0.3215, 0.6503, 1),(0.0411, 0.1760, 0.5397, 1),(0, 0, 0.4000, 1)]
-values_obs=np.nanmean(tsens_obs[:, :, 0], axis=0)
+values_obs=np.nanmean(np.nanmean(tsens_obs[:, :, :, 0], axis=0), axis=0)
 values_model=tsens_model[:, 0]
 values_hist5=np.nanmean(tsens_hist5[:, :, 0], axis=0)
 values_hist6=np.nanmean(tsens_hist6[:, :, 0], axis=0)
@@ -704,50 +769,119 @@ plot_and_save_basin_filled_summary(values_obs, values_model, values_hist5, value
                                    coast_path, closed_fraction)
 
 # summary for P sensitivity
-bins=[-30, -2, -1.6, -1.4, -1.2, -1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 2, 30];
-bins2=[-100, -2, -1.6, -1.4, -1.2, -1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 2, 100];
+bins=[-3.5, -3, -2.5, -2, -1.6, -1.2, -0.8, -0.4, 0, 0.4, 0.8, 1.2, 1.6, 2, 2.5, 3, 3.5];
+bins2=[-100, -3, -2.5, -2, -1.6, -1.2, -0.8, -0.4, 0, 0.4, 0.8, 1.2, 1.6, 2, 2.5, 3, 100];
 plt_colormap=[(0.4000, 0, 0, 1), (0.7316, 0, 0, 1), (0.9975, 0.0306, 0.0078, 1), (0.9845, 0.1915, 0.0484, 1), (0.9715, 0.3525, 0.0890, 1), (0.9776, 0.5636, 0.0700, 1), (0.9891, 0.7889, 0.0338, 1), (1.0000, 1.0000, 0.0263, 1), (1.0000, 1.0000, 0.4408, 1), (1.0000, 1.0000, 1.0000, 1), (1.0000, 1.0000, 1.0000, 1), (0.7325, 0.8651, 0.9386, 1), (0.5342, 0.7652, 0.8931, 1), (0.3359, 0.6652, 0.8476, 1), (0.1375, 0.5652, 0.8020, 1), (0.0477, 0.4727, 0.7506, 1), (0.0563, 0.3870, 0.6938, 1), (0.0651, 0.3013, 0.6370, 1), (0.0368, 0.1575, 0.5250, 1), (0, 0, 0.4000, 1)]
-values_obs=np.nanmean(prsens_obs[:, :, 0], axis=0)
-values_model=prsens_model[:, 0]
-values_hist5=np.nanmean(prsens_hist5[:, :, 0], axis=0)
-values_hist6=np.nanmean(prsens_hist6[:, :, 0], axis=0)
+values_obs=np.nanmean(np.nanmean(psens_obs[:, :, :, 0], axis=0), axis=0)
+values_model=psens_model[:, 0]
+values_hist5=np.nanmean(psens_hist5[:, :, 0], axis=0)
+values_hist6=np.nanmean(psens_hist6[:, :, 0], axis=0)
 plt_title='Summary: P sensitivity'
 plt_unit='[%/%]'
-plt_path="{WK_DIR}/model/PS/summary_prsens.eps".format(**os.environ)
+plt_path="{WK_DIR}/model/PS/summary_psens.eps".format(**os.environ)
 plot_and_save_basin_filled_summary(values_obs, values_model, values_hist5, values_hist6, \
                                    basin_points, bins, bins2, plt_colormap, plt_unit, plt_title, plt_path,\
                                    coast_path, closed_fraction)
 
 
+
+
+###########################################
+## significant test ##
+###########################################
+## Are the runoff sensitivities reliable? (Prediction skill of the regression model itself)
+# observations, CMIP6 models, target model
+nfoc=r2_obs_pred.shape[0]; nens=r2_obs_pred.shape[1];
+hval_r2_ia_gobs=np.full(nb,False);
+hval_r2_ia_hist6=np.full(nb,False);
+hval_r2_ia_model=np.full(nb,False);
+r2_ia_sig=significant_pearsonr(np.floor(70/5),0.05)**2
+hval_r2_ia_gobs = np.sum(np.reshape(r2_obs_pred,(nfoc*nens,nb),order='F')>r2_ia_sig,axis=0)==nfoc*nens
+nmodel6=r2_hist6_pred.shape[0]
+for b in range(nb):
+    hval_r2_ia_hist6[b] = np.sum(r2_hist6_pred[:,b]>r2_ia_sig,axis=0) == np.nansum(~np.isnan(r2_hist6_pred[:,b]))
+hval_r2_ia_model = r2_model_pred > r2_ia_sig
+hval_r2_ia = hval_r2_ia_gobs & hval_r2_ia_hist6 & hval_r2_ia_model
+ind_r2_sig = np.nonzero(hval_r2_ia)[0]
+
+## Are the runoff sensitivity bias large enough to overcome the uncertainty?
+# confidence interval of observational uncertainty
+pct90_tsens_obs=np.full((nb,2),np.nan)
+pct90_psens_obs=np.full((nb,2),np.nan)
+nobs=nfoc*nens
+for b in range(nb):
+    tsens=np.reshape(tsens_obs[:,:,b,0],(nobs),order='F')
+    pct90_tsens_obs[b,:] = (np.percentile(tsens,5),np.percentile(tsens,95))
+    psens=np.reshape(psens_obs[:,:,b,0],(nobs),order='F')
+    pct90_psens_obs[b,:] = (np.percentile(psens,5),np.percentile(psens,95))
+
+# compare the observational uncertainty to the pre-calculated uncertainty in regression coefficient
+def range_difference(a1,a2,b1,b2):
+    return (a2<b1) | (b2<a1)
+obs=np.nanmean(np.nanmean(tsens_obs[:,:,:,:],axis=0),axis=0)
+model=tsens_model
+# ind_diff_tsens=np.nonzero(range_difference(obs[:,0],obs[:,0],model[:,1],model[:,2]))[0]
+ind_diff_tsens=np.nonzero(range_difference(pct90_tsens_obs[:,0],pct90_tsens_obs[:,1],model[:,1],model[:,2]))[0]
+obs=np.nanmean(np.nanmean(psens_obs[:,:,:,:],axis=0),axis=0)
+model=psens_model
+# ind_diff_psens=np.nonzero(range_difference(obs[:,0],obs[:,0],model[:,1],model[:,2]))[0]
+ind_diff_psens=np.nonzero(range_difference(pct90_psens_obs[:,0],pct90_psens_obs[:,1],model[:,1],model[:,2]))[0]
+
+
 #########################
 ##  basin information  ##
 #########################
-fig = plt.figure(figsize=(14, 10))
+fig = plt.figure(figsize=(14, 14))
 plt.rcParams.update({'font.size': 12})
-h = fig.add_axes([0.05, 0.47, 0.9, 0.48])
+h = fig.add_axes([0.05, 0.585, 0.9, 0.38])
 # load coastline
 lonmap = nc.Dataset(coast_path)['lonmap'][:]
 latmap = nc.Dataset(coast_path)['latmap'][:]
 h.plot(lonmap, latmap, color=[0.8, 0.8, 0.8, 0], linewidth=0.5)
 h.add_patch(patches.Polygon(np.column_stack([lonmap, latmap]), closed=True, facecolor=(0.8, 0.8, 0.8), edgecolor=(0.5, 0.5, 0.5), linestyle='none'))
-# Plot basins with prediction accuracy values
+# Plot basins with basin numbers
 for b in range(nb):
     X = [item[0] for item in basin_points[b]]
     Y = [item[1] for item in basin_points[b]]
-    X = X[0:-int(np.floor(len(X)/50))]
-    Y = Y[0:-int(np.floor(len(Y)/50))]
+    # X = X[0:-int(np.floor(len(X)/50))]
+    # Y = Y[0:-int(np.floor(len(Y)/50))]
     h.add_patch(patches.Polygon(np.column_stack([X, Y]), closed=True, facecolor=(1, 1, 1), edgecolor=(0.5, 0.5, 0.5), linewidth=0.5))
     center_x = (max(X) + min(X)) / 2
     center_y = (max(Y) + min(Y)) / 2
-    h.text(center_x, center_y, str(b+1), color='black', fontsize=9, horizontalalignment='center', fontweight='bold')
-for b in range(1,21):
-    h.text(-170, -67-(b*6), 'basin ' + str(b) + ': ' + str(basin_names[b-1]), color='black', fontsize=12, horizontalalignment='left')
-for b in range(21,40):
-    h.text(-80, -67-(b-20)*6, 'basin ' + str(b) + ': ' + str(basin_names[b-1]), color='black', fontsize=12, horizontalalignment='left')
-for b in range(41,60):
-    h.text(10, -67-(b-40)*6, 'basin ' + str(b) + ': ' + str(basin_names[b-1]), color='black', fontsize=12, horizontalalignment='left')
-for b in range(61,nb):
-    h.text(100, -67-(b-60)*6, 'basin ' + str(b) + ': ' + str(basin_names[b-1]), color='black', fontsize=12, horizontalalignment='left')
+    h.text(center_x, center_y, str(b+1), color='gray', fontsize=8, horizontalalignment='center', fontweight='bold')
+    if b not in ind_r2_sig:
+        h.add_patch(patches.Polygon(np.column_stack([X, Y]),closed=True,fill=False, hatch='//', edgecolor=(0.5,0.5,0.5), linewidth=0.1))
+
+if len(ind_diff_tsens) != 0:
+    for b in range(len(ind_diff_tsens)):
+        X = [item[0] for item in basin_points[ind_diff_tsens[b]]]
+        Y = [item[1] for item in basin_points[ind_diff_tsens[b]]]
+        center_x = (max(X) + min(X)) / 2
+        center_y = (max(Y) + min(Y)) / 2
+        h.text(center_x, center_y, str(ind_diff_tsens[b]+1), color='black', fontsize=8, horizontalalignment='center', fontweight='bold')
+        h.plot(X, Y, color=(0,0,0), linewidth=1.5)
+
+if len(ind_diff_psens) != 0:
+    for b in range(len(ind_diff_psens)):
+        X = [item[0] for item in basin_points[ind_diff_psens[b]]]
+        Y = [item[1] for item in basin_points[ind_diff_psens[b]]]
+        center_x = (max(X) + min(X)) / 2
+        center_y = (max(Y) + min(Y)) / 2
+        h.text(center_x, center_y, str(ind_diff_psens[b]+1), color='black', fontsize=8, horizontalalignment='center', fontweight='bold')
+
+h.text(-175,-40,'Hatchings: unreliable sensitivity')
+h.text(-175,-48,'Black outlines: sig. model bias in T sens.')
+h.text(-175,-56,'Black numbers: sig. model bias in P or T sens.')
+
+for b in range(1,34):
+    h.text(-180, -70-(b*6), '#' + str(b) + ': ' + str(basin_names[b-1]), color='black', fontsize=12, horizontalalignment='left')
+for b in range(34,67):
+    h.text(-85, -70-(b-33)*6, '#' + str(b) + ': ' + str(basin_names[b-1]), color='black', fontsize=12, horizontalalignment='left')
+for b in range(67,100):
+    h.text(0, -70-(b-66)*6, '#' + str(b) + ': ' + str(basin_names[b-1]), color='black', fontsize=12, horizontalalignment='left')
+for b in range(100,nb):
+    h.text(100, -70-(b-99)*6, '#' + str(b) + ': ' + str(basin_names[b-1]), color='black', fontsize=12, horizontalalignment='left')
+
 h.set_xticks(range(-180, 181, 30))
 h.set_xticklabels(['', '', '120°W', '', '60°W', '', '0°', '', '60°E', '', '120°E', '', ''])
 h.set_yticks(range(-90, 91, 15))
@@ -755,27 +889,57 @@ h.set_yticklabels(['', '', '60°S', '', '30°S', '', '0°', '', '30°N', '', '60
 h.set_xlim([-180, 180])
 h.set_ylim([-60, 80])
 # Set title
-h.set_title('River basin info. (world bank data)', fontsize=17)
+h.set_title('River basin info. (GRDC Major River Basin of the World)', fontsize=17)
 plt_path="{WK_DIR}/obs/PS/basin_info.eps".format(**os.environ)
-plt.savefig(plt_path)
+plt.savefig(plt_path,dpi=300)
 plt.close()
+
 
 ########################################################
 ##  basin specific sensitivities including errorbars  ##
 ########################################################
-stdt_obs=np.empty((nb,1))
-stdt_hist5=np.empty((nb,1))
-stdt_hist6=np.empty((nb,1))
-stdp_obs=np.empty((nb,1))
-stdp_hist5=np.empty((nb,1))
-stdp_hist6=np.empty((nb,1))
+nobs=tsens_obs.shape[0]*tsens_obs.shape[1]
+
+# stdt_obs=np.empty((nb,1))
+# stdt_hist5=np.empty((nb,1))
+# stdt_hist6=np.empty((nb,1))
+# stdp_obs=np.empty((nb,1))
+# stdp_hist5=np.empty((nb,1))
+# stdp_hist6=np.empty((nb,1))
+# for b in range(nb):
+#     stdt_obs[b]=np.std(np.reshape(tsens_obs[:,:,b,0],(nobs),order='F'))
+#     stdt_hist5[b]=np.std(tsens_hist5[:,b,0])
+#     stdt_hist6[b]=np.std(tsens_hist6[:,b,0])
+#     stdp_obs[b]=np.std(np.reshape(psens_obs[:,:,b,0],(nobs),order='F'))
+#     stdp_hist5[b]=np.std(psens_hist5[:,b,0])
+#     stdp_hist6[b]=np.std(psens_hist6[:,b,0])
+
+cit_obs=np.empty((nb,1))
+cit_hist5=np.empty((nb,1))
+cit_hist6=np.empty((nb,1))
+cip_obs=np.empty((nb,1))
+cip_hist5=np.empty((nb,1))
+cip_hist6=np.empty((nb,1))
 for b in range(nb):
-    stdt_obs[b]=np.std(tsens_obs[:,b,0])
-    stdt_hist5[b]=np.std(tsens_hist5[:,b,0])
-    stdt_hist6[b]=np.std(tsens_hist6[:,b,0])
-    stdp_obs[b]=np.std(prsens_obs[:,b,0])
-    stdp_hist5[b]=np.std(prsens_hist5[:,b,0])
-    stdp_hist6[b]=np.std(prsens_hist6[:,b,0])
+    cit_obs[b]=get_confidence_interval(np.reshape(tsens_obs[:,:,b,0],(nobs),order='F'),alpha=0.9)
+    cit_hist5[b]=get_confidence_interval(tsens_hist5[:,b,0],alpha=0.9)
+    cit_hist6[b]=get_confidence_interval(tsens_hist6[:,b,0],alpha=0.9)
+    cip_obs[b]=get_confidence_interval(np.reshape(psens_obs[:,:,b,0],(nobs),order='F'),alpha=0.9)
+    cip_hist5[b]=get_confidence_interval(psens_hist5[:,b,0],alpha=0.9)
+    cip_hist6[b]=get_confidence_interval(psens_hist6[:,b,0],alpha=0.9)
+
+pct50_tsens_obs=np.full((nb),np.nan)
+pct90_tsens_obs_err=np.full((nb,2),np.nan)
+pct50_psens_obs=np.full((nb),np.nan)
+pct90_psens_obs_err=np.full((nb,2),np.nan)
+nobs=nfoc*nens
+for b in range(nb):
+    tsens=np.reshape(tsens_obs[:,:,b,0],(nobs),order='F')
+    pct90_tsens_obs_err[b,:] = (np.percentile(tsens,50)-np.percentile(tsens,5), np.percentile(tsens,95)-np.percentile(tsens,50))
+    pct50_tsens_obs[b] = np.percentile(tsens,50)
+    psens=np.reshape(psens_obs[:,:,b,0],(nobs),order='F')
+    pct90_psens_obs_err[b,:] = (np.percentile(psens,50)-np.percentile(psens,5),np.percentile(psens,95)-np.percentile(psens,50))
+    pct50_psens_obs[b] = np.percentile(psens,50)
 
 Black=(0.1,0.1,0.1,1);
 Orange=(1.0000,0.2695,0,1);
@@ -783,29 +947,35 @@ Green=(0.2,0.55,0.2,1);
 Blue=(0.1172,0.5625,1.0000,1);
 blist = np.arange(0,nb)
 
+
+# for bi in blist:
 for bi in blist:
+    print(bi)
     fig = plt.figure(figsize=(9.5, 5))
     plt.rcParams.update({'font.size': 12})
 
     h1 = fig.add_axes([0.07, 0.1, 0.31, 0.7])
-    h1.plot(1, np.nanmean(tsens_obs[:, bi, 0], axis=0), 'o', color=Black, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
+    h1.plot(1, np.nanmean(np.nanmean(tsens_obs[:, :, bi, 0], axis=0), axis=0), 'o', color=Black, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
     h1.plot(2, tsens_model[bi, 0], 'o', color=Orange, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
     h1.plot(3, np.nanmean(tsens_hist5[:, bi, 0], axis=0), 'o', color=Green, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
     h1.plot(4, np.nanmean(tsens_hist6[:, bi, 0], axis=0), 'o', color=Blue, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
     legend_labels = ['GRUN', 'MODEL', 'CMIP5 hist', 'CMIP6 hist']
     hl = fig.legend(legend_labels, loc='upper right', fontsize=11, bbox_to_anchor=(0.86, 0.75, 0.0875, 0.0475))
     h1.plot([0, 5],[0, 0], ':k', linewidth=1)
-    h1.errorbar(1, np.nanmean(tsens_obs[:, bi, 0], axis=0), np.nanmean(tsens_obs[:, bi, 2] - tsens_obs[:, bi, 0], axis=0), color=Black, capsize=5)
-    h1.plot(1, np.nanmean(tsens_obs[:, bi, 0], axis=0), 'o', color=Black, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
-    h1.plot(np.ones((tsens_obs.shape[0], 1)), tsens_obs[:, bi, 0], 'o', color=Black, markersize=2, markerfacecolor=Black)
+    error=np.nanmean(np.nanmean(tsens_obs[:,:,bi,2] - tsens_obs[:,:,bi,0], axis=0), axis=0)
+    h1.errorbar(1, np.nanmean(np.nanmean(tsens_obs[:, :, bi, 0], axis=0), axis=0), error, color=Black, capsize=5)
+    # h1.errorbar(1, np.nanmean(np.nanmean(tsens_obs[:, :, bi, 0], axis=0), axis=0), cit_obs[bi], color=Black, capsize=5)
+    h1.plot(np.ones((tsens_obs.shape[0], 1)), tsens_obs[:, :, bi, 0], 'o', color=Black, markersize=2, markerfacecolor=Black)
+    h1.plot(1, np.nanmean(np.nanmean(tsens_obs[:, :, bi, 0], axis=0), axis=0), 'o', color=Black, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
+    h1.errorbar(1.2, pct50_tsens_obs[bi], [[pct90_tsens_obs_err[bi,0]], [pct90_tsens_obs_err[bi,1]]], color=(0.5,0.5,0.5,1), capsize=5, linestyle='')
     h1.errorbar(2, tsens_model[bi, 0], tsens_model[bi, 2] - tsens_model[bi, 0], color=Orange, capsize=5)
     h1.plot(2, tsens_model[bi, 0], 'o', color=Orange, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
-    h1.errorbar(3, np.nanmean(tsens_hist5[:, bi, 0], axis=0), stdt_hist5[bi], color=Green, capsize=5)
-    h1.plot(3, np.nanmean(tsens_hist5[:, bi, 0], axis=0), 'o', color=Green, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
+    h1.errorbar(3, np.nanmean(tsens_hist5[:, bi, 0], axis=0), cit_hist5[bi], color=Green, capsize=5)
     h1.plot(np.ones((tsens_hist5.shape[0], 1))*3, tsens_hist5[:, bi, 0], 'o', color=Green, markersize=2, markerfacecolor=Green)
-    h1.errorbar(4, np.nanmean(tsens_hist6[:, bi, 0], axis=0), stdt_hist6[bi], color=Blue, capsize=5)
-    h1.plot(4, np.nanmean(tsens_hist6[:, bi, 0], axis=0), 'o', color=Blue, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
+    h1.plot(3, np.nanmean(tsens_hist5[:, bi, 0], axis=0), 'o', color=Green, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
+    h1.errorbar(4, np.nanmean(tsens_hist6[:, bi, 0], axis=0), cit_hist6[bi], color=Blue, capsize=5)
     h1.plot(np.ones((tsens_hist6.shape[0], 1))*4, tsens_hist6[:, bi, 0], 'o', color=Blue, markersize=2, markerfacecolor=Blue)
+    h1.plot(4, np.nanmean(tsens_hist6[:, bi, 0], axis=0), 'o', color=Blue, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
     h1.set_xlim(0, 5)
     h1.set_xticks([1, 2, 3, 4])
     h1.set_xticklabels(['OBS', 'MODEL', 'CMIP5', 'CMIP6'],fontsize=11)
@@ -813,21 +983,26 @@ for bi in blist:
     h1.set_title('T sensitivity', fontsize=16)
     ymax = max(h1.get_ylim())
     ymin = min(h1.get_ylim())
-    h1.text(6, ymax + (ymax - ymin) * 0.19, f'Basin {bi+1}: {basin_names[bi]} (1905-2005)', fontsize=17, ha='center')
+    h1.text(6, ymax + (ymax - ymin) * 0.19, f'Basin {bi+1}: {basin_names[bi]} ({syr_sens}-{eyr_sens})', fontsize=17, ha='center')
 
     h2 = fig.add_axes([0.47, 0.1, 0.31, 0.7])
     # h2.plot([0, 5],[0, 0], ':k', linewidth=1)
-    h2.errorbar(1, np.nanmean(prsens_obs[:, bi, 0], axis=0), np.nanmean(prsens_obs[:, bi, 2] - prsens_obs[:, bi, 0], axis=0), color=Black, capsize=5)
-    h2.plot(1, np.nanmean(prsens_obs[:, bi, 0], axis=0), 'o', color=Black, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
-    h2.plot(np.ones((prsens_obs.shape[0], 1)), prsens_obs[:, bi, 0], 'o', color=Black, markersize=2, markerfacecolor=Black)
-    h2.errorbar(2, prsens_model[bi, 0], prsens_model[bi, 2] - prsens_model[bi, 0], color=Orange, capsize=5)
-    h2.plot(2, prsens_model[bi, 0], 'o', color=Orange, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
-    h2.errorbar(3, np.nanmean(prsens_hist5[:, bi, 0], axis=0), stdp_hist5[bi], color=Green, capsize=5)
-    h2.plot(3, np.nanmean(prsens_hist5[:, bi, 0], axis=0), 'o', color=Green, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
-    h2.plot(np.ones((prsens_hist5.shape[0], 1))*3, prsens_hist5[:, bi, 0], 'o', color=Green, markersize=2, markerfacecolor=Green)
-    h2.errorbar(4, np.nanmean(prsens_hist6[:, bi, 0], axis=0), stdp_hist6[bi], color=Blue, capsize=5)
-    h2.plot(4, np.nanmean(prsens_hist6[:, bi, 0], axis=0), 'o', color=Blue, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
-    h2.plot(np.ones((prsens_hist6.shape[0], 1))*4, prsens_hist6[:, bi, 0], 'o', color=Blue, markersize=2, markerfacecolor=Blue)
+    error=np.nanmean(np.nanmean(psens_obs[:,:,bi,2] - psens_obs[:,:,bi,0], axis=0), axis=0)
+    h2.errorbar(1, np.nanmean(np.nanmean(psens_obs[:, :, bi, 0], axis=0), axis=0), error, color=Black, capsize=5)
+    # h2.errorbar(1, np.nanmean(np.nanmean(psens_obs[:, :, bi, 0], axis=0), axis=0), cip_obs[bi], color=Black, capsize=5)
+    h2.plot(np.ones((psens_obs.shape[0], 1)), psens_obs[:, :, bi, 0], 'o', color=Black, markersize=2, markerfacecolor=Black)
+    h2.plot(1, np.nanmean(np.nanmean(psens_obs[:, :, bi, 0], axis=0), axis=0), 'o', color=Black, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
+    h2.errorbar(1.2, pct50_psens_obs[bi], [[pct90_psens_obs_err[bi,0]], [pct90_psens_obs_err[bi,1]]], color=(0.5,0.5,0.5,1), capsize=5, linestyle='')
+    h2.plot(np.ones((psens_obs.shape[0], 1)), psens_obs[:, :, bi, 0], 'o', color=Black, markersize=2, markerfacecolor=Black)
+    h2.plot(1, np.nanmean(np.nanmean(psens_obs[:, :, bi, 0], axis=0), axis=0), 'o', color=Black, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
+    h2.errorbar(2, psens_model[bi, 0], psens_model[bi, 2] - psens_model[bi, 0], color=Orange, capsize=5)
+    h2.plot(2, psens_model[bi, 0], 'o', color=Orange, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
+    h2.errorbar(3, np.nanmean(psens_hist5[:, bi, 0], axis=0), cip_hist5[bi], color=Green, capsize=5)
+    h2.plot(np.ones((psens_hist5.shape[0], 1))*3, psens_hist5[:, bi, 0], 'o', color=Green, markersize=2, markerfacecolor=Green)
+    h2.plot(3, np.nanmean(psens_hist5[:, bi, 0], axis=0), 'o', color=Green, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
+    h2.errorbar(4, np.nanmean(psens_hist6[:, bi, 0], axis=0), cip_hist6[bi], color=Blue, capsize=5)
+    h2.plot(np.ones((psens_hist6.shape[0], 1))*4, psens_hist6[:, bi, 0], 'o', color=Blue, markersize=2, markerfacecolor=Blue)
+    h2.plot(4, np.nanmean(psens_hist6[:, bi, 0], axis=0), 'o', color=Blue, markersize=9, markeredgewidth=2, markerfacecolor=(1, 1, 1, 1))
     h2.set_xlim(0, 5)
     h2.set_xticks([1, 2, 3, 4])
     h2.set_xticklabels(['OBS', 'MODEL', 'CMIP5', 'CMIP6'],fontsize=11)
@@ -837,3 +1012,7 @@ for bi in blist:
     plt_path=os.environ["WK_DIR"] + "/model/PS/basin_specific" + str(basin_number) + ".eps"
     plt.savefig(plt_path)
     plt.close()
+
+
+
+

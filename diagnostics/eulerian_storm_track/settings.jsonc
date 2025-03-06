@@ -2,7 +2,7 @@
   "settings" : {
     "driver" : "eulerian_storm_track.py",
     "long_name" : "Eulerian Storm Track",
-    "realm" : "atmos",
+    "convention": "cmip",
     "description" : "Eulerian Storm Track",
     "pod_env_vars" : {
       "lat_var": "lat", 
@@ -13,8 +13,16 @@
     }
   },
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
     "time": {"standard_name": "time"},
     "lev": {
       "standard_name": "air_pressure",
@@ -29,6 +37,7 @@
   "varlist" : {
     "v850": {
       "standard_name" : "northward_wind",
+      "realm": "atmos",
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"], 
       "use_exact_name": true,

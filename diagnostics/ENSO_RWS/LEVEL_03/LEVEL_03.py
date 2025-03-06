@@ -55,14 +55,12 @@ print("===============================================================")
 
 generate_ncl_call(os.environ["POD_HOME"] + "/LEVEL_03/NCL/plot_RWS_composite.ncl")
 
-## copy the html file
-file_src  = os.environ["POD_HOME"]+"/LEVEL_03/LEVEL_03.html"
-file_dest = os.environ["ENSO_RWS_WKDIR"]+"/LEVEL_03.html"
-if os.path.isfile( file_dest ):
-    os.system("rm -f "+file_dest)
-os.system("cp "+file_src+" "+file_dest)
-
+# copy the html file
+file_src = os.environ["POD_HOME"] + "/LEVEL_03/LEVEL_03.html"
+file_dest = os.environ["ENSO_RWS_WKDIR"] + "/LEVEL_03.html"
+if os.path.isfile(file_dest):
+    os.system("rm -f " + file_dest)
+os.system("cp " + file_src + " " + file_dest)
 
 now = datetime.datetime.now()
-print (" LEVEL_03 completed " +  now.strftime("%Y-%m-%d %H:%M") )
-
+print(" LEVEL_03 completed " + now.strftime("%Y-%m-%d %H:%M"))

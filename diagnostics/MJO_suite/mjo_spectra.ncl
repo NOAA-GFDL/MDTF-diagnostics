@@ -15,7 +15,7 @@ vars = (/"pr","rlut","u200","u850","v200","v850"/)
 
 casename = getenv("CASENAME")
 
-file_dir = getenv("WK_DIR")+"/model/netCDF/"
+file_dir = getenv("WORK_DIR")+"/model/"
 filename_pr = file_dir+casename+".pr.day.anom.nc"
 filename_rlut = file_dir+casename+".rlut.day.anom.nc"
 filename_u200 = file_dir+casename+".u200.day.anom.nc"
@@ -37,7 +37,7 @@ filename_v850 = file_dir+casename+".v850.day.anom.nc"
 ;  fili   = "uwnd.day.850.anomalies.1980-2005.nc"
 ;  f      = addfile(diri+fili, "r")  
 
-  pltDir  = getenv("WK_DIR")+"/model/PS"
+  pltDir  = getenv("WORK_DIR")+"/model/PS/"
   pltType = "ps"
   
 

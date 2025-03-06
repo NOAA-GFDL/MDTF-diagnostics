@@ -9,7 +9,7 @@
    https://docutils.sourceforge.io/docs/user/rst/quickref.html#section-structure
 
 Stratosphere-Troposphere Coupling: Eddy Heat Fluxes
-================================
+===================================================
 
 Last update: 2022-09-26
 

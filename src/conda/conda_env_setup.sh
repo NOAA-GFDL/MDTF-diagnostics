@@ -6,7 +6,22 @@ set -Eeo pipefail
 # Enable extended globbing, see
 # https://www.gnu.org/software/bash/manual/bashref.html#Pattern-Matching
 shopt -s extglob
-
+#########################
+# The command line help
+# Everything is stackoverflow: https://stackoverflow.com/questions/5474732/how-can-i-add-a-help-method-to-a-shell-script
+#########################
+display_help() {
+    echo "Usage: ./src/conda/conda_env_setup [option 1, ... option n]" >&2
+    echo ""
+    echo "   -a, --all    build all conda environments in src/conda with 'env' prefix"
+    echo "   -e, --env [base | python3_base | R_base | NCL_base]    build specific environment defined in src/conda/env_[name]_base.yml "
+    echo "   -cr, --conda_root    root path to anaconda or miniconda directory"
+    echo "   -d, --env_dir    directory path where conda environments will be installed"
+    echo "   --wrapper_only   do not change conda enviroments; only build the mdtf wrapper"
+    echo ""
+    # echo some stuff here for the -a or --add-options
+    exit 1
+}
 # get directory this script is located in, resolving any
 # symlinks/aliases (https://stackoverflow.com/a/246128)
 _source="${BASH_SOURCE[0]}"
@@ -31,6 +46,11 @@ make_envs="true"
 env_glob=""
 while (( "$#" )); do
     case "$1" in
+         # call the help function
+        -h | --help)
+            display_help
+            exit 0
+            ;;
         -a|--all)
             # install all envs except dev environment
             env_glob="env_!(dev).yml"
@@ -146,8 +166,15 @@ if [ "$make_envs" = "true" ]; then
         else
             conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
         fi
+	echo "$conda_prefix"
+	if [ -d "$conda_prefix" ]; then
+		# remove conda env of same name
+		echo "Removing previous conda env ${env_name}..."
+		conda remove -q -y -n "$env_name" --all
+		echo "... previous env ${env_name} removed."
+	fi
         echo "Creating conda env ${env_name} in ${conda_prefix}..."
-        "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
+        "$_INSTALL_EXE" env create -q -p "$conda_prefix" -f "$env_file" 
         echo "... conda env ${env_name} created."
     done
     "$_INSTALL_EXE" clean -aqy

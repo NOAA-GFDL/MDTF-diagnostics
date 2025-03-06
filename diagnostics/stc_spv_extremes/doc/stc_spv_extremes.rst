@@ -9,7 +9,7 @@
    https://docutils.sourceforge.io/docs/user/rst/quickref.html#section-structure
 
 Stratosphere-Troposphere Coupling: Stratospheric Polar Vortex Extremes
-================================
+======================================================================
 
 Last update: 2023-08-22
 

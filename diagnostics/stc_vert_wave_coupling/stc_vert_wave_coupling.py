@@ -107,9 +107,9 @@ print('=======================================')
 # Parse MDTF-set environment variables
 print('*** Parse MDTF-set environment variables ...')
 CASENAME = os.environ['CASENAME']
-FIRSTYR = int(os.environ['FIRSTYR'])
-LASTYR = int(os.environ['LASTYR'])
-WK_DIR = os.environ['WK_DIR']
+FIRSTYR = int(os.environ['startdate'])
+LASTYR = int(os.environ['enddate'])
+WK_DIR = os.environ['WORK_DIR']
 OBS_DATA = os.environ['OBS_DATA']
 
 z10fi = os.environ['ZG10_FILE']
@@ -184,11 +184,12 @@ try:
 
     can_plot_obs = True
 
-except Exception:
+except Exception as exc:
     msg = '*** Unable to read all of the pre-digested ERA5 data. ' +\
           f'Please check that you have the pre-digested data in {OBS_DATA}'
     print(msg)
     print(traceback.format_exc())
+    print(exc)
     can_plot_obs = False
 
 # Begin computing the necessary diagnostics
@@ -215,7 +216,7 @@ z_eddy_500 = z500 - z500.mean('lon')
 # different sets of plots. Each block will iterate over making plots for the NH
 # and SH, and then saving the digested model data (if requested by the user)
 #
-### BEGIN WAVE AMP CLIMO CODEBLOCK ###
+# BEGIN WAVE AMP CLIMO CODEBLOCK ###
 hs = {60: 'N', -60: 'S'}
 amp_titles = '{} 60°{} GeoHgt Wave Amplitudes ({}-{})'
 amp_finames = '{}-60{}-wave-amps.eps'
@@ -265,10 +266,10 @@ if SAVE_DERIVED_DATA is True:
                 'z_k_imag': {'dtype': 'float32'}}
     dat2save = xr.merge([z_k_real, z_k_imag])
     dat2save.to_netcdf(outfile, encoding=encoding)
-### END WAVE AMP CLIMO CODEBLOCK ###
+# END WAVE AMP CLIMO CODEBLOCK ###
 
 
-### BEGIN EDDY HEAT FLUX HISTO CODEBLOCK ###
+# BEGIN EDDY HEAT FLUX HISTO CODEBLOCK ###
 hs = {1: 'NH', -1: 'SH'}
 seas = {1: 'JFM', -1: 'SON'}
 mons = {1:  [1, 2, 3], -1: [9, 10, 11]}
@@ -311,10 +312,10 @@ if SAVE_DERIVED_DATA is True:
     outfile = f'{data_dir}/{CASENAME}_50hPa_pcap_eddy-heat-flux.nc'
     encoding = {'ehf_pcap_50': {'dtype': 'float32'}}
     vt50_k_pcap.to_netcdf(outfile, encoding=encoding)
-### END EDDY HEAT FLUX HISTO CODEBLOCK ###
+# END EDDY HEAT FLUX HISTO CODEBLOCK ###
 
 
-### BEGIN EDDY HEIGHT COMPOSITE CODEBLOCK ###
+# BEGIN EDDY HEIGHT COMPOSITE CODEBLOCK ###
 ehc_titles = '{} Extreme Heat Flux Composites\n' +\
              '{} Eddy Heights & Anomalies ({}, {}-{})'
 ehc_finames = '{}-extreme-vt-eddy-heights-{}.eps'
@@ -365,7 +366,7 @@ for hemi in [1, -1]:
         lo_thresh = obs_lo_thresh
         hi_thresh = obs_hi_thresh
 
-    if (lo_thresh > 0):
+    if lo_thresh > 0:
         print('*** (WARNING) The lower heat flux threshold exceeds 0! Interpret results with caution!')
     print('*** Finding model dates of extreme pos/neg heat flux events ' +
           f'for {hs[hemi]} {seas[hemi]}')
@@ -380,10 +381,10 @@ for hemi in [1, -1]:
 
     finame = ehc_finames.format(CASENAME, hs[hemi])
     fig.savefig(plot_dir+finame, facecolor='white', dpi=150, bbox_inches='tight')
-### END EDDY HEIGHT COMPOSITE CODEBLOCK ###
+# END EDDY HEIGHT COMPOSITE CODEBLOCK ###
 
 
-### BEGIN CORRELATION COHERENCE CODEBLOCK ###
+# BEGIN CORRELATION COHERENCE CODEBLOCK ###
 cc_titles = '{} {} Winter Seasons ({}-{})'
 cc_finames = '{}-corr-coh-{}.eps'
 
@@ -410,7 +411,7 @@ for hemi in [1, -1]:
     fig.savefig(plot_dir+finame, facecolor='white', dpi=150, bbox_inches='tight')
 
 # Save the relevant digested geohgt data
-if SAVE_DERIVED_DATA is True:
+if SAVE_DERIVED_DATA:
     print('*** Saving the model FFT coefficients for 45-80 lat bands')
     z_k_real = np.real(z_k_4580)
     z_k_real.name = 'z_k_real'
@@ -430,7 +431,7 @@ if SAVE_DERIVED_DATA is True:
     dat2save = xr.merge([z_k_real, z_k_imag])
     dat2save.hemi.attrs['long_name'] = 'hemisphere (-1 for SH, 1 for NH)'
     dat2save.to_netcdf(outfile, encoding=encoding)
-### END CORRELATION COHERENCE CODEBLOCK ###
+# END CORRELATION COHERENCE CODEBLOCK ###
 
 print('\n=====================================')
 print('END stc_vert_wave_coupling.py ')

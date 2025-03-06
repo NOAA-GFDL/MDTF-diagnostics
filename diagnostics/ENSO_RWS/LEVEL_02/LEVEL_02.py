@@ -10,11 +10,10 @@
 #       programming :  Jan Hafner,  jhafner@hawaii.edu
 #
 #
-##      This package is distributed under the LGPLv3 license (see LICENSE.txt)
+#  This package is distributed under the LGPLv3 license (see LICENSE.txt)
 
 import sys
 import os
-
 import datetime
 
 shared_dir = os.path.join(
@@ -60,14 +59,14 @@ generate_ncl_call(os.environ["POD_HOME"] + "/LEVEL_02/NCL/plot_stream_fnc_clima.
 generate_ncl_call(os.environ["POD_HOME"] + "/LEVEL_02/NCL/plot_U_wind_clima.ncl")
 generate_ncl_call(os.environ["POD_HOME"] + "/LEVEL_02/NCL/plot_wave_number_clima.ncl")
 
-## copy the html file
-file_src  = os.environ["POD_HOME"]+"/LEVEL_02/LEVEL_02.html"
-file_dest = os.environ["ENSO_RWS_WKDIR"]+"/LEVEL_02.html"
-if os.path.isfile( file_dest ):
-    os.system("rm -f "+file_dest)
-os.system("cp "+file_src+" "+file_dest)
+# copy the html file
+file_src = os.environ["POD_HOME"] + "/LEVEL_02/LEVEL_02.html"
+file_dest = os.environ["ENSO_RWS_WKDIR"] + "/LEVEL_02.html"
+if os.path.isfile(file_dest):
+    os.system("rm -f " + file_dest)
+os.system("cp " + file_src + " " + file_dest)
 
 
 now = datetime.datetime.now()
-print (" LEVEL_02 completed " +  now.strftime("%Y-%m-%d %H:%M") )
+print(" LEVEL_02 completed " + now.strftime("%Y-%m-%d %H:%M"))
 

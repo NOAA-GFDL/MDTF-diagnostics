@@ -1,0 +1,77 @@
+// Strat-Trop Coupling: Vertical Wave Propagation
+//
+// This POD requires monthly-frequency meridional winds, air temperatures,
+// and geopotential heights with pressure levels in the troposphere
+// and stratosphere.
+//
+{
+  "settings" : {
+    "driver" : "stc_qbo_enso.py",
+    "long_name" : "Metrics of QBO and extratropical circulation impact of QBO and ENSO",
+    "description" : "Assess the representation of the QBO",
+    "pod_env_vars" : {
+      // Isobar (hPa) used to define the QBO in the tropical stratosphere
+      // Defaults to 30 hPa
+      "QBOisobar" : "30"
+    },
+    "runtime_requirements": {
+      "python3": ["matplotlib", "numpy", "scipy", "xarray", "xesmf"]
+    }
+  },
+  "data": {
+    "min_frequency": "6hr",
+    "max_frequency": "yr"},
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "Pa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {"standard_name": "time"}
+  },
+  "varlist": {
+    "tos": {
+      "standard_name" : "sea_surface_temperature",
+      "units" : "degC",
+      "realm": "ocean",
+      "frequency": "mon",
+      "dimensions": ["time", "lat", "lon"],
+      "requirement": "required"
+    },
+    "ua": {
+      "standard_name" : "eastward_wind",
+      "units" : "m s-1",
+      "frequency": "mon",
+      "realm": "atmos",
+      "dimensions": ["time", "lev", "lat", "lon"],
+      "requirement": "required"
+    },
+    "va": {
+      "standard_name" : "northward_wind",
+      "units" : "m s-1",
+      "frequency": "mon",
+      "realm": "atmos",
+      "dimensions": ["time", "lev", "lat", "lon"],
+      "requirement": "required"
+    },
+    "ta": {
+      "standard_name" : "air_temperature",
+      "units" : "K",
+      "realm": "atmos",
+      "frequency": "mon",
+      "dimensions": ["time", "lev", "lat", "lon"],
+      "requirement": "required"
+    },
+    "psl": {
+      "standard_name" : "air_pressure_at_mean_sea_level",
+      "units" : "Pa",
+      "frequency": "mon",
+       "realm": "atmos",
+      "dimensions": ["time", "lat", "lon"],
+      "requirement": "required"
+    }
+  }
+}

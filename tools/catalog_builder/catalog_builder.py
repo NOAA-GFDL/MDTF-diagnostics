@@ -15,26 +15,30 @@
 import click
 import intake
 import os
-import pathlib
 import sys
 import time
-import traceback
 import typing
-import xarray as xr
 import yaml
-from datetime import datetime, timedelta
+import parsers
+from datetime import timedelta
 from ecgtools import Builder
-from ecgtools.builder import INVALID_ASSET, TRACEBACK
-from ecgtools.parsers import parse_cmip6
+from ecgtools.parsers.cmip import parse_cmip6
 from ecgtools.parsers.cesm import parse_cesm_timeseries
+import logging
 
+ROOT_DIR = os.path.dirname(os.path.realpath(__file__)).split('/tools/catalog_builder')[0]
+assert(os.path.isdir(ROOT_DIR)), f'{ROOT_DIR} not found'
+# from src import util
 
+# Define a log object for debugging
+_log = logging.getLogger(__name__)
 # The ClassMaker is cribbed from SO
 # https://stackoverflow.com/questions/1176136/convert-string-to-python-class-object
 # Classmaker and the @catalog_class.maker decorator allow class instantiation from
 # strings. The main block can simply call the desired class using the convention
 # argument instead of messy if/then/else blocks. Yes, both work, but I wanted
 # to try something that, if it is not more "Pythonic", is more extensible
+
 
 class ClassMaker:
     def __init__(self):
@@ -55,73 +59,6 @@ class ClassMaker:
 # instantiate the class maker
 catalog_class = ClassMaker()
 
-
-# custom parser for pp data stored on GFDL archive filesystem
-def parse_gfdl_pp_ts(file_name: str):
-    # files = sorted(glob.glob(os.path.join(file_name,'*.nc')))  # debug comment when ready to run
-    # file = pathlib.Path(files[0])  # debug comment when ready to run
-    file = pathlib.Path(file_name)  # uncomment when ready to run
-
-    try:
-        # isolate file from rest of path
-        stem = file.stem
-        # split the file name into components based on _
-        split = stem.split('.')
-        realm = split[0]
-        time_range = split[1]
-        variable_id = split[2]
-        source_type = file.parts[3]
-        member_id = file.parts[4]
-        experiment_id = file.parts[5]
-        source_id = file.parts[6]
-        freq = file.parts[10]
-        chunk_freq = file.parts[11]
-        variant_label = ""
-        grid_label = ""
-        table_id = ""
-        assoc_files = ""
-        if 'mon' in freq.lower():
-            output_frequency = 'mon'
-        elif 'day' in freq.lower():
-            output_frequency = 'day'
-        elif '6hr' in freq.lower():
-            output_frequency = '6hr'
-        elif 'subhr' in freq.lower():
-            output_frequency = 'subhr'
-
-        # call to xr.open_dataset required by ecgtoos.builder.Builder
-        with xr.open_dataset(file, chunks={}, decode_times=False) as ds:
-            # variable_list = [var for var in ds if 'standard_name' in ds[var].attrs or 'long_name' in ds[var].attrs]
-            # assert(variable_id in variable_list), \
-            # "Did not find variable with standard_name or long_name {variable_id}" \
-            # "in {file}"
-            info = {
-                'activity_id': source_id,
-                'assoc_files': assoc_files,
-                'institution_id': "GFDL",
-                'member_id': member_id,
-                'realm': realm,
-                'variable_id': variable_id,
-                'table_id': table_id,
-                'source_id': source_id,
-                'source_type': source_type,
-                'experiment_id': experiment_id,
-                'variant_label': variant_label,
-                'grid_label': grid_label,
-                'time_range': time_range,
-                'chunk_freq': chunk_freq,
-                'frequency': output_frequency,
-                'variable': variable_id,
-                'file_name': stem,
-                'path': str(file)
-            }
-
-            return info
-
-    except Exception:
-        return {INVALID_ASSET: file, TRACEBACK: traceback.format_exc()}
-
-
 class CatalogBase(object):
     """Catalog base class\n
     """
@@ -137,22 +74,17 @@ class CatalogBase(object):
             'table_id',
             'grid_label',
             'realm',
-            'variant_label',
-            'time_range'
+            'variant_label'
         ]  # attributes to group by when reading
         # in variables using intake-esm
         self.xarray_aggregations = [
-            {'type': 'union', 'attribute_name': 'variable_id'},
-            {
-                'type': 'join_existing',
-                'attribute_name': 'time_range',
-                'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'}
-            }
+            {'type': 'union', 'attribute_name': 'variable_id'}
         ]
         self.data_format = "netcdf" # netcdf or zarr
         self.variable_col_name = "variable_id"
         self.path_col_name = "path"
         self.cb = None
+        self.file_parse_method = ""
 
     def cat_builder(self, data_paths: list,
                     exclude_patterns=None,
@@ -168,10 +100,17 @@ class CatalogBase(object):
                           depth=dir_depth,
                           exclude_patterns=exclude_patterns,  # Exclude the following directories
                           include_patterns=include_patterns,
-                          joblib_parallel_kwargs={'n_jobs': nthreads},  # Number of jobs to execute -
+                          joblib_parallel_kwargs={'n_jobs': nthreads}  # Number of jobs to execute -
                           # should be equal to # threads you are using
-                          extension='.nc'  # extension of target files
                           )
+
+    def call_build(self, file_parse_method=None):
+        if file_parse_method is None:
+            file_parse_method = self.file_parse_method
+        # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cmip6.py
+        # for more parsing methods
+        self.cb = self.cb.build(parsing_func=file_parse_method)
+        print('Build complete')
 
     def call_save(self, output_dir: str,
                   output_filename: str
@@ -201,14 +140,7 @@ class CatalogCMIP(CatalogBase):
 
     def __init__(self):
         super().__init__()
-
-    def call_build(self, file_parse_method=None):
-        if file_parse_method is None:
-            file_parse_method = parse_cmip6
-        # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cmip6.py
-        # for more parsing methods
-        self.cb = self.cb.build(parsing_func=file_parse_method)
-        print('Build complete')
+        self.file_parse_method = parse_cmip6
 
 
 @catalog_class.maker
@@ -223,18 +155,9 @@ class CatalogGFDL(CatalogBase):
             'experiment_id',
             'frequency',
             'member_id',
-            'realm',
-            'time_range'
+            'realm'
         ]
-    def call_build(self,
-                   file_parse_method=None):
-
-        if file_parse_method is None:
-            file_parse_method = parse_gfdl_pp_ts
-        # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cmip6.py
-        # for more parsing methods
-        self.cb = self.cb.build(parsing_func=file_parse_method)
-        print('Build complete')
+        self.file_parse_method = parsers.parse_gfdl_pp_ts
 
 
 @catalog_class.maker
@@ -246,27 +169,14 @@ class CatalogCESM(CatalogBase):
     def __init__(self):
         super().__init__()
         self.groupby_attrs = [
-            'component',
-            'stream',
-            'case',
-            'frequency'
+            'activity_id',
+            'institution_id',
+            'experiment_id',
+            'frequency',
+            'member_id',
+            'realm'
         ]
-
-        self.xarray_aggregations = [
-            {'type': 'union', 'attribute_name': 'variable_id'},
-            {
-                'type': 'join_existing',
-                'attribute_name': 'date',
-                'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'}
-            }
-        ]
-
-    def call_build(self, file_parse_method=None):
-        if file_parse_method is None:
-            file_parse_method = parse_cesm_timeseries
-        # see https://github.com/ncar-xdev/ecgtools/blob/main/ecgtools/parsers/cesm.py
-        # for more parsing methods
-        self.cb.build(file_parse_method)
+        self.file_parse_method = parsers.parse_cesm
 
 
 def load_config(config):
@@ -295,7 +205,7 @@ def main(config: str):
     # initialize the catalog object
     cat_obj = cat_cls()
     # instantiate the esm catalog builder
-    opt_keys = ['include_patterns', 'exclude_patterns']
+    opt_keys = ['include_patterns', 'exclude_patterns', 'dataset_id']
     for k in opt_keys:
         if k not in conf:
             conf[k] = None
@@ -306,17 +216,24 @@ def main(config: str):
                         dir_depth=conf['dir_depth'],
                         nthreads=conf['num_threads']
                         )
+
+    file_parse_method = None
+    if conf['dataset_id'] is not None:
+        if 'am5' in conf['dataset_id'].lower():
+            file_parse_method = parsers.parse_gfdl_am5_data
+
     # build the catalog
     print('Building the catalog')
     start_time = time.monotonic()
 
-    cat_obj.call_build()
+    cat_obj.call_build(file_parse_method=file_parse_method)
 
     end_time = time.monotonic()
 
     print("Time to build catalog:", timedelta(seconds=end_time - start_time))
     # save the catalog
-    print('Saving catalog to', conf['output_filename'] + ".csv")
+    print('Saving catalog to',conf['output_dir'],'/',conf['output_filename'] + ".csv")
+
     cat_obj.call_save(output_dir=conf['output_dir'],
                       output_filename=conf['output_filename']
                       )

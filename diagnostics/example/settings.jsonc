@@ -15,9 +15,8 @@
     // Human-readable name of the diagnostic. May contain spaces.
     "long_name" : "Example diagnostic",
 
-    // Modeling realm. If your diagnostic uses data from multiple realms, give
-    // this as a list.
-    "realm" : "atmos",
+    // Data convention expected by the POD: cmip (default), cesm, or gfdl
+    "convention": "cmip",
 
     // Human-readable name of the diagnostic. May contain spaces. This
     // is used to describe your diagnostic on the top-level index.html page.
@@ -43,10 +42,19 @@
   // In this section, you define the names and units for the coordinates used by
   // the variables defined below in the "varlist" section. Names in the
   // "dimensions" attribute for each variable must correspond to a coordinate
-  // named here.
+  // named here. Units must be specified for horizontal and vertical coordinates.
+  // If a dimension is unitless, set "units" to "1".
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+     "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
     "time": {"standard_name": "time"}
   },
 
@@ -62,6 +70,9 @@
       // name in the output format of the model being analyzed.
       "standard_name" : "air_temperature",
 
+      // modeling realm of the variable: atmos, ocean, land, seaIce, landIce, etc...
+      "realm": "atmos",
+
       // Units the script expects this variable to be in (UDUnits2- compatible
       // string). If the model being analyzed provides the variable in different
       // units, the MDTF package will do unit conversion before calling the script.
@@ -69,7 +80,7 @@
 
       // Time frequency the data should be sampled at. Currently recognized
       // values are '1hr', '3hr', '6hr', 'day' and 'mon'.
-      "frequency" : "mon",
+      "frequency" : "day",
 
       // Coordinates of the variable (defined in the section above.)
       "dimensions": ["time", "lat", "lon"],

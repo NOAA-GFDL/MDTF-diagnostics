@@ -29,8 +29,7 @@ debug_print("Starting...",routine_name,debug)
 casename = getenv("CASENAME")
 datadir = getenv("DATADIR")
 level = getenv("lev_coord")
-wk_dir = getenv("WK_DIR")+"/model/netCDF/"
-
+wk_dir = getenv("WORK_DIR")+"/model/"
 
 file_u200 = getenv("U200_FILE")
 file_v200 = getenv("V200_FILE")
@@ -42,8 +41,8 @@ print("daily_netcdf.ncl reading "+file_pr+" for time coordinates.")
 print("   Assuming without checking that all have same time coordinates!")
 f = addfile(file_pr,"r")
 
-yr1 = stringtointeger(getenv("FIRSTYR"))
-yr2 = stringtointeger(getenv("LASTYR"))
+yr1 = stringtointeger(getenv("startdate"))
+yr2 = stringtointeger(getenv("enddate"))
 
 lat_coord = getenv("lat_coord")
 lon_coord = getenv("lon_coord")
@@ -171,8 +170,9 @@ do i=0,dimsizes(plevs)-1
       ; DRB: TO DO: move this into read_model_file and only use in the
       ;      case that PS file isn't found. Also change hard-coded PS var
       ;      name and require PS file if level files aren't found
-
-      file_in = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
+      file_var_name = str_upper(var_names(j))+tostring(plev)+"_FILE"
+      ;file_in = datadir+"/day/"+casename+"."+var_name_plev_model+".day.nc"
+      file_in = getenv(file_var_name)
       file_out = wk_dir+casename+"."+var_name_plev_package+".day.nc"
       ; All files supplied to POD are 3D slices; PS not part of varlist request
       file_in_3d =  datadir+"/day/"+casename+"."+var_name_3d_model+".day.nc"

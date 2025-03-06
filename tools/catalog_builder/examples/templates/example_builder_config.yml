@@ -1,29 +1,29 @@
-# Configuration file template for catalog_builder
-# DRS convention to use cmip | gfdl | cesm
+## Configuration file template for catalog_builder
+## DRS convention to use cmip | gfdl | cesm
 convention: cmip
-# IMPORTANT: Attempting to build a catalog of the entire contents of a pp directory will likely max out available PPAN resources (i.e., it takes longer than 12 hours to build a catalog for atmos/ts/monthly/5yr one node w/16 threads). It is strongly recommended to use include_patterns and/or exclude_patterns to target a specific subset of variables and dates to improve the performance of the catalog builder.
-# Path(s) to the root directory with the target dataset
+## IMPORTANT: Attempting to build a catalog of the entire contents of a pp directory will likely max out available PPAN resources (i.e., it takes longer than 12 hours to build a catalog for atmos/ts/monthly/5yr one node w/16 threads). It is strongly recommended to use include_patterns and/or exclude_patterns to target a specific subset of variables and dates to improve the performance of the catalog builder.
+## Path(s) to the root directory with the target dataset
 data_root_dirs:
   - /uda/cmip6/CMIP/IPSL/IPSL-CM6A-LR-INCA/historical/r1i1p1f1
  # - /archive/oar.gfdl.cmip6/ESM4/DECK/ESM4_historical_D1/gfdl.ncrc4-intel16-prod-openmp/pp/atmos/ts/monthly/5yr
-
-# depth to traverse for files from data_root_dir(s)
-# (e.g., files that are in the root directory have dir_depth=1)
+## (optional) dataset id used to determine parser for selected convention. Accepted values: am5
+# dataset_id: am5
+## depth to traverse for files from data_root_dir(s)
+## (e.g., files that are in the root directory have dir_depth=1)
 dir_depth: 5
-# where to write catalog csv and json header files 
+## where to write catalog csv and json header files
 output_dir: /nbhome/[INSERT USERNAME HERE]
-# name of catalog (.csv and .json will be appended to catalog and 
-# header files)
+## name of catalog (.csv and .json will be appended to catalog and header files)
 output_filename: esm_catalog_IPSL-CM6A-LR-INCA_historica_r1i1p1f1
-# number of threads: 16 (for job running on one analysis node)
-# The example catalog for the UDA directory takes a little over 5 min to build
+## number of threads: 16 (for job running on one analysis node)
+## The example catalog for the UDA directory takes a little over 5 min to build
 num_threads: 16
-# optional list of patterns to include in file and directory search
+## optional list of patterns to include in file and directory search
 #include_patterns:
 #  - "*hght.nc"
 #  - "*slp.nc"
 #  - "*t_surf.nc"
 #  - "*t_ref.nc"
-# optional list of patterns to exclude from file and directory search
+## optional list of patterns to exclude from file and directory search
 exclude_patterns:
   - "DO_NOT_USE"

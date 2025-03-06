@@ -8,8 +8,6 @@ import dataclasses
 import datetime
 import importlib
 import pandas as pd
-from dask.bag.core import groupby_disk
-
 from src import util, varlist_util, translation, xr_parser, units
 from src.util import datelabel as dl
 import cftime

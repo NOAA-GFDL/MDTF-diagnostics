@@ -1492,13 +1492,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # append other grid types here as needed
         irregular_grids = {'tripolar'}
         if ds.attrs.get('grid', None) is not None:
-            # search for tripolar grid type
+            # search for irregular grid types
             for g in irregular_grids:
                 grid_search = re.compile(g, re.IGNORECASE)
                 grid_regex_result = grid_search.search(ds.attrs.get('grid'))
                 if grid_regex_result is not None:
-                    # add variables not included in xarray dataset
-                    append_vars = list(set([v for v in ds.variables]).difference([v for v in var_ds.variables]))
+                    # add variables not included in xarray dataset if dims correspond to vertices and bounds
+                    append_vars =\
+                        (list(set([v for v in ds.variables
+                                   if 'vertices' in ds[v].dims
+                                   or 'bnds' in ds[v].dims]).difference([v for v in var_ds.variables])))
                     for v in append_vars:
                         v_dataset = ds[v].to_dataset()
                         var_ds = xr.merge([var_ds, v_dataset])

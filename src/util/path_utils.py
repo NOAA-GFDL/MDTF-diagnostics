@@ -60,8 +60,9 @@ class PathManagerBase:
                     self.OUTPUT_DIR = os.path.join(self._init_path('OUTPUT_DIR', config, env=env))
 
             if new_work_dir:
+                output_dir_main = os.path.abspath(os.path.join(self.OUTPUT_DIR, ".."))
                 self.WORK_DIR, ver = filesystem.bump_version(
-                    self.WORK_DIR, extra_dirs=[self.OUTPUT_DIR])
+                    self.WORK_DIR, extra_dirs=[output_dir_main])
                 self.OUTPUT_DIR, _ = filesystem.bump_version(self.OUTPUT_DIR, new_v=ver)
 
             # set root directory for TempDirManager

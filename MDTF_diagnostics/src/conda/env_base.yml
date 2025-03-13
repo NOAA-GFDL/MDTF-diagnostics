@@ -7,7 +7,6 @@ dependencies:
 # versions are current as of Jul 2020
 # see https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/pkg-specs.html
 - python=3.12
-- ghostscript
 - numpy=1.26.4
 - netCDF4=1.6.4
 - cftime=1.6.2

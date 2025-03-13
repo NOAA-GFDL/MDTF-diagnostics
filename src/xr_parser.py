@@ -917,12 +917,13 @@ class DefaultDatasetParser:
                 else:
                     # attempt to match on standard_name attribute if present in data
                     for v in ds.variables:
-                        if hasattr(v, 'name') and ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
-                            ds_names.append(ds.variables[v].name)
-                            break
-                        elif ds.variables[v].attrs.get('name', "") and \
-                                ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
-                            ds_names.append(ds.variables[v].attrs.get('name'))
+                        if ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
+                            # define variable id using ds name attribute
+                            if hasattr(v, 'name'):
+                                ds_names.append(ds.variables[v].name)
+                            # define var id using whatever id is written to the dataset
+                            else:
+                                ds_names.append(v)
                             break
 
                 if len(ds_names) == 1:

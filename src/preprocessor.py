@@ -1143,7 +1143,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # search catalog for convention specific query object
                 var.log.info("Querying %s for variable %s for case %s.",
                              data_catalog,
-                             case_d.query['variable_id'],
+                             var.name,
                              case_name)
                 cat_subset = cat.search(**case_d.query)
                 if cat_subset.df.empty:

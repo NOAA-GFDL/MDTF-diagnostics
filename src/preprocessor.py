@@ -924,13 +924,17 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         date_range_cf_start = self.cast_to_cftime(case_date_range.start.lower, cal)
         date_range_cf_end = self.cast_to_cftime(case_date_range.end.lower, cal)
 
+        # dataset has no overlap with the user-specified date range
         if ds_start < date_range_cf_start and ds_end < date_range_cf_start or \
                 ds_end > date_range_cf_end and ds_start > date_range_cf_end:
             new_xr_ds = None
         # dataset falls entirely within user-specified date range
         elif ds_start >= date_range_cf_start and ds_end <= date_range_cf_end:
             new_xr_ds = xr_ds.sel({time_coord.name: slice(ds_start, ds_end)})
-        # dataset overlaps user-specified date range start
+        # dataset overlaps user-specified date range start (corrected)
+        elif ds_start <= date_range_cf_start <= ds_end <= date_range_cf_end:
+            new_xr_ds = xr_ds.sel({time_coord.name: slice(date_range_cf_start, ds_end)})
+        # dataset overlaps user-specified date range start (orig)
         elif date_range_cf_start < ds_start and \
                 date_range_cf_start <= ds_end <= date_range_cf_end:
             new_xr_ds = xr_ds.sel({time_coord.name: slice(date_range_cf_start, ds_end)})
@@ -940,6 +944,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # dataset contains all of requested date range
         elif date_range_cf_start >= ds_start and date_range_cf_end <= ds_end:
             new_xr_ds = xr_ds.sel({time_coord.name: slice(date_range_cf_start, date_range_cf_end)})
+        else:
+            print(f'ERROR: new_xr_ds is unset because of incompatibility of time:')
+            print(f'       Dataset   start: {ds_start=}')
+            print(f'       Dataset   end  : {ds_end=}')
+            print(f'       Requested start: {date_range_cf_start=}')
+            print(f'       Requested end  : {date_range_cf_end=}')
 
         return new_xr_ds
 

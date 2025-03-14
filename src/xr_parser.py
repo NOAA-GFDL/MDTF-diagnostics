@@ -430,6 +430,7 @@ class DefaultDatasetParser:
 
         self.fallback_cal = 'proleptic_gregorian'  # CF calendar used if no attribute found
         self.attrs_backup = dict()
+        self.vars_backup = dict()
 
         self.log = util.MDTFObjectLogger.get_logger(self._log_name)
 
@@ -562,7 +563,7 @@ class DefaultDatasetParser:
                 default=self.fallback_cal
             )
 
-    def normalize_pre_decode(self, ds):
+    def normalize_pre_decode(self, ds: xr.Dataset, drop_vars: list):
         """Initial munging of xarray Dataset attribute dicts, before any
         parsing by `xarray.decode_cf()
         <https://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__
@@ -593,6 +594,9 @@ class DefaultDatasetParser:
             # update the variable attributes with the normalized
             # values before decode_cf is called on the dataset
             ds[var].attrs.update(self.attrs_backup[var])
+            if var in drop_vars:
+                self.vars_backup[var] = ds[var].copy()
+
         self.attrs_backup['Dataset'] = ds.attrs.copy()
 
     def restore_attrs_backup(self, ds):
@@ -623,6 +627,10 @@ class DefaultDatasetParser:
         for var in ds.variables:
             _restore_one(var, ds[var].attrs)
 
+
+    def restore_vars_backup(self, ds, drop_vars: list):
+        for var in drop_vars:
+            ds[var] = self.vars_backup.get(var, dict())
     def normalize_standard_name(self, new_attr_d, attr_d):
         """Method for munging standard_name attribute prior to parsing.
         """
@@ -1384,15 +1392,17 @@ class DefaultDatasetParser:
             Except in specific cases, attributes of *var* are updated to reflect
             the 'ground truth' of data in *ds*.
         """
-
-        self.normalize_pre_decode(ds)
+        drop_vars = ["time_bnds"]
+        self.normalize_pre_decode(ds, drop_vars)
         ds = xr.decode_cf(ds,
-                          decode_coords=True,  # parse coords attr
+                          decode_coords=True, # parse coords attr
                           decode_times=True,
-                          use_cftime=True  # use cftime instead of np.datetime64
+                          use_cftime=True,
+                          drop_variables=drop_vars  # use cftime instead of np.datetime64
                           )
         # ds = ds.cf.guess_coord_axis()  # may not need this
-        # self.restore_attrs_backup(ds)
+        self.restore_attrs_backup(ds)
+        self.restore_vars_backup(ds, drop_vars)
         # self.normalize_metadata(var, ds)
         self.check_calendar(ds)
         self.check_time_units(var, ds)

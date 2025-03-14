@@ -274,6 +274,7 @@
       "standard_name": "surface_downwelling_shortwave_flux_in_air",
       "realm": "atmos",
       "units": "W m-2",
+      "alternate_standard_names": ["downwelling_shortwave_flux_in_sea_water"],
       "ndim": 3
     },
     "rsdt": {

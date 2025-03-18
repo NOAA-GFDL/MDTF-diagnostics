@@ -16,7 +16,7 @@ import numpy as np
 import xarray as xr
 import collections
 import re
-import time
+
 
 # TODO: Make the following lines a unit test
 # import sys
@@ -848,16 +848,22 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                      'average_DT',
                      'average_T1',
                      'height',
-                     'date']
+                     'date'
+                     ]
         # TODO: find a suitable answer to conflicts in xarray merging (i.e. nctoolkit)
         for att in drop_atts:
             if xr_ds.get(att, None) is not None:
+                # save attribute to restore to xarray written to pp file after xr_parser checks
+                self.parser.vars_backup[att] = xr_ds[att].copy()
                 xr_ds = xr_ds.drop_vars(att)
                 for coord in xr_ds.coords:
                     if 'bounds' in xr_ds[coord].attrs:
                         if xr_ds[coord].attrs['bounds'] == att:
+                            self.parser.attrs_backup[coord] = xr_ds[coord].attrs.copy()
                             del xr_ds[coord].attrs['bounds']
+
         return xr_ds
+
 
     def check_multichunk(self, group_df: pd.DataFrame, case_dr, log) -> pd.DataFrame:
         """Sort the files found by date, grabs the files whose 'chunk_freq' is the
@@ -1150,7 +1156,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # search catalog for convention specific query object
                 var.log.info("Querying %s for variable %s for case %s.",
                              data_catalog,
-                             case_d.query['variable_id'],
+                             var.name,
                              case_name)
                 cat_subset = cat.search(**case_d.query)
                 if cat_subset.df.empty:
@@ -1189,9 +1195,25 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                 f"configuration file.")
                     else:
                         raise util.DataRequestError(
-                            f"Unable to find match or alternate for {case_d.query['variable_id']}"
+                            f"Unable to find match or alternate for {var.translation.name}"
                             f" for case {case_name} in {data_catalog}")
 
+                # if multiple entries exist, refine with variable_id
+                # this will solve issues where standard_id is not enough to uniquely ID a variable
+                # e.g. for catalogs with variables defined at individual levels
+                if len(cat_subset.df.variable_id) > 1:
+                    var.log.info(f"Query for case {case_name} variable {var.name} in {data_catalog} returned multiple"
+                                 f"entries. Refining query using variable_id")
+                    if var.translation is not None:
+                        case_d.query.update({'variable_id': var.translation.name})
+                    else:
+                        case_d.query.update({'variable_id': var.name})
+                    cat_subset = cat.search(**case_d.query)
+                    if len(cat_subset.df.variable_id) > 1:
+                        raise util.DataRequestError(
+                            f"Unable to find unique entry for {case_d.query['variable_id']}"
+                            f" for case {case_name} in {data_catalog}")
+                    case_d.query.pop('variable_id', None)
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
                 if not var.is_static:
@@ -1259,11 +1281,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             new_standard_name = case_query_standard_name
                         var_xr[vname].attrs['standard_name'] = new_standard_name
                         var_xr[vname].attrs['name'] = vname
+
+                var.log.info(f'Merging {var.name}')
                 if case_name not in cat_dict:
                     cat_dict[case_name] = var_xr
                 else:
                     cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr], compat='no_conflicts')
-
                 # check that the trimmed variable data in the merged dataset matches the desired date range
                 if not var.is_static:
                     try:

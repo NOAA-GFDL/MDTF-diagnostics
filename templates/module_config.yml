@@ -25,7 +25,8 @@ case_list:
     convention: "CMIP"
     startdate: "19800101120000"
     enddate: "19841231000000"
-    realm: "atmos"
+    realm: "atmos",
+    frequency: "day"
 
   "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231" :
     model: "test"
@@ -33,6 +34,7 @@ case_list:
     startdate: "19850101000000"
     enddate: "19891231000000"
     realm: "atmos"
+    frequency: "day"
 
 ### Data location settings ###
 # Required: full or relative path to ESM-intake catalog header file

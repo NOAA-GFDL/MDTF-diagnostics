@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering",
+]
+description = "Process-oriented diagnostics for weather and climate simulations"
+keywords = ["process-oriented", "diagnostics", "climate", "weather", "mdtf"]
+license = { text = "LGPLv3" }
+maintainers = [{ name = "MDTF Collaboration", email = "20195932+wrongkindofdoctor@users.noreply.github.com" }]
+name = "MDTF-Diagnostics"
+version = "4.2"
+readme = "README.md"
+requires-python = ">=3.12"
+dynamic = ["dependencies"]
+
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.packages.find]
+include = ["MDTF_diagnostics*"]
+
+[tool.setuptools]
+script-files = ["MDTF_diagnostics/mdtf_framework.py"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+MDTF_diagnostics = [
+    'data/*', 
+    'data/gfdl-cmor-tables/*',
+    'data/cmip6-cmor-tables/Tables/*',
+    'diagnostics/*/*' 
+]

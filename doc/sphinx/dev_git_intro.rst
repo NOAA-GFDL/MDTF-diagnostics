@@ -2,7 +2,7 @@
 Git-based development workflow
 ==============================
 Steps for brand new users:
-------------------------------
+--------------------------
 #. Fork the MDTF-diagnostics branch to your GitHub account (:ref:`ref-fork-code`)
 #. Clone (:ref:`ref-clone`) your fork of the MDTF-diagnostics repository (repo) to your local machine
    (if you are not using the web interface for development)
@@ -14,7 +14,7 @@ Steps for brand new users:
 #. Submit a pull request to the NOAA-GFDL repo for review (:ref:`ref-pull-request`).
 
 Steps for users continuing work on an existing POD branch
--------------------------------------------------------------
+---------------------------------------------------------
 #. Create a backup copy of the MDTF-Diagnostics repo on your local machine
 #. Pull in updates from the NOAA-GFDL/main branch to the main branch in your remote repo (:ref:`ref-update-main`)
 #. Pull in updates from the main branch in your remote fork into the main branch in your local repo
@@ -45,7 +45,7 @@ Creating a fork of the MDTF-diagnostics repository
 .. _ref-clone:
 
 Cloning a repository onto your machine
-------------------------------------------
+--------------------------------------
 Before following the instructions below, make sure that a) you've created a fork of the project, and b) the ``git``
 command is available on your machine (`installation instructions <https://git-scm.com/download/>`__).
 
@@ -67,7 +67,7 @@ on git for interested developers.
 .. _ref-new-pod:
 
 Working on a brand new POD
-------------------------------
+--------------------------
 Developers can either clone the MDTF-diagnostics repo to their computer, or manage the MDTF package using the GitHub
 webpage interface.
 Whichever method you choose, remember to create your [POD branch name] branch from the main branch, not the main branch.
@@ -104,7 +104,7 @@ Since developers commonly work on their own machines, this manual provides comma
 .. _ref-push:
 
 Pushing to your remote POD branch on your fork
-----------------------------------------------------------
+----------------------------------------------
 When you are ready to push your updates to the remote POD branch on your fork
 
 1. Type ``git status`` to list the file(s) that have been updated
@@ -149,7 +149,7 @@ To submit a PR :
 .. _ref-update-main:
 
 Updating your remote and local main branches
------------------------------------------------
+--------------------------------------------
 
 Method 1: Web interface+command line
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -193,7 +193,7 @@ and is described in the GitHub discussion post
 
 .. _ref-merge:
 Updating your POD branch by merging in changes from the main branch
----------------------------------------------------------------------------
+-------------------------------------------------------------------
 1. Create a backup copy of your repo on your machine.
 
 2. Update the local and remote main branches on your fork as described in :ref:`ref-update-main`.

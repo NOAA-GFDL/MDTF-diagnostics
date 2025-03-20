@@ -49,7 +49,7 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
             k: case_dict[k] for k in ("startdate", "enddate", "convention")
         })
         self.env_vars.update({"CASENAME": case_name})
-        optional_case_attrs = {'realm'}
+        optional_case_attrs = {'realm', 'frequency'}
         for att in optional_case_attrs:
             if case_dict.get(att, None) is not None:
                 self.query[att] = case_dict[att]
@@ -70,32 +70,33 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         self.date_range = util.DateRange(start=startdate, end=enddate)
 
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
-        if var.is_static:
-            freq = "fx"
-        else:
-            freq = var.T.frequency.unit
+        if self.query['frequency'] == '':
+            if var.is_static:
+                freq = "fx"
+            else:
+                freq = var.T.frequency
 
-        if not isinstance(freq, str):
-            freq = freq.format_local()
-        if freq == 'hr':
-            freq = '1hr'
+            if not isinstance(freq, str):
+                freq = freq.format_local()
+            if freq == 'hr':
+                freq = '1hr'
+            self.query['frequency'] = freq
 
         var_id = var.name
         standard_name = var.standard_name
         if self.query['realm'] == '':
             self.query['realm'] = var.realm
         if var.translation is not None:
-            var_id = var.translation.name
+            #var_id = var.translation.name
             standard_name = var.translation.standard_name
             if any(var.translation.alternate_standard_names):
                 standard_name = [var.translation.standard_name] + var.translation.alternate_standard_names
 
         # define initial query dictionary with variable settings requirements that do not change if
         # the variable is translated
-        self.query['frequency'] = freq
         self.query['path'] = path_regex
         self.query['standard_name'] = standard_name
-        self.query['variable_id'] = var_id
+
 
     def translate_varlist(self,
                           var: varlist_util.VarlistEntry,

@@ -284,6 +284,7 @@ class SubprocessRuntimePODWrapper:
 
     def __init__(self, pod):
         self.pod = pod
+        self.env_vars = dict()
 
     def set_pod_env_vars(self, pod, cases: dict):
         """Sets all environment variables for the POD: paths and names of each

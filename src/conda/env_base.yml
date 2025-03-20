@@ -7,11 +7,10 @@ dependencies:
 # versions are current as of Jul 2020
 # see https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/pkg-specs.html
 - python=3.12
-- ghostscript
 - numpy=1.26.4
 - netCDF4=1.6.4
 - cftime=1.6.2
-- xarray=2024.1.1
+- xarray=2025.1.2
 # Note: newer versions of cf_xarray are causing issues with missing
 # xarray dataset attributes. There seem to be modifications where
 # ds.cf attributes are defined later in the process, and this clashes
@@ -20,11 +19,11 @@ dependencies:
 - matplotlib=3.8.2
 - pandas=2.2.2
 - pint=0.24.3
-- dask=2024.7.1
+- dask=2025.2.0
 - ecgtools=2024.7.31
 - cfunits=3.3.6
-- intake=0.7.0
-- intake-esm=2024.2.6
+- intake=2.0.8
+- intake-esm=2025.2.3
 - subprocess32=3.5.4
 - pyyaml=6.0.1
 - click=8.1.7

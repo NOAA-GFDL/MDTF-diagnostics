@@ -107,7 +107,11 @@ Settings determining what analyses the package performs.
 
 -model     <str> Optional. Name of model, mainly for user reference.
 
--realm     <str> Optional. Dataset realm. May be used to refine query search. If not defined, the query uses the POD realm.
+-realm     <str | list of strings> Optional. Dataset realm. May be used to refine query search.
+ If not defined, the query uses the POD realm.
+
+-frequency    <str | list of strings> Optional. Dataset frequency. May be used to refine query search.
+ If not defined, the query uses the POD frequency.
 
 Runtime options
 +++++++++++++++

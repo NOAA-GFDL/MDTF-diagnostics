@@ -430,6 +430,7 @@ class DefaultDatasetParser:
 
         self.fallback_cal = 'proleptic_gregorian'  # CF calendar used if no attribute found
         self.attrs_backup = dict()
+        self.vars_backup = dict()
 
         self.log = util.MDTFObjectLogger.get_logger(self._log_name)
 
@@ -562,7 +563,7 @@ class DefaultDatasetParser:
                 default=self.fallback_cal
             )
 
-    def normalize_pre_decode(self, ds):
+    def normalize_pre_decode(self, ds: xr.Dataset, drop_vars: list):
         """Initial munging of xarray Dataset attribute dicts, before any
         parsing by `xarray.decode_cf()
         <https://xarray.pydata.org/en/stable/generated/xarray.decode_cf.html>`__
@@ -593,6 +594,9 @@ class DefaultDatasetParser:
             # update the variable attributes with the normalized
             # values before decode_cf is called on the dataset
             ds[var].attrs.update(self.attrs_backup[var])
+            if var in drop_vars:
+                self.vars_backup[var] = ds[var].copy()
+
         self.attrs_backup['Dataset'] = ds.attrs.copy()
 
     def restore_attrs_backup(self, ds):
@@ -623,6 +627,10 @@ class DefaultDatasetParser:
         for var in ds.variables:
             _restore_one(var, ds[var].attrs)
 
+
+    def restore_vars_backup(self, ds, drop_vars: list):
+        for var in drop_vars:
+            ds[var] = self.vars_backup.get(var, dict())
     def normalize_standard_name(self, new_attr_d, attr_d):
         """Method for munging standard_name attribute prior to parsing.
         """
@@ -917,12 +925,13 @@ class DefaultDatasetParser:
                 else:
                     # attempt to match on standard_name attribute if present in data
                     for v in ds.variables:
-                        if hasattr(v, 'name') and ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
-                            ds_names.append(ds.variables[v].name)
-                            break
-                        elif ds.variables[v].attrs.get('name', "") and \
-                                ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
-                            ds_names.append(ds.variables[v].attrs.get('name'))
+                        if ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
+                            # define variable id using ds name attribute
+                            if hasattr(v, 'name'):
+                                ds_names.append(ds.variables[v].name)
+                            # define var id using whatever id is written to the dataset
+                            else:
+                                ds_names.append(v)
                             break
 
                 if len(ds_names) == 1:
@@ -1133,14 +1142,20 @@ class DefaultDatasetParser:
         if our_axes_set == ds_axes_set:
             # check dimension coordinate names, std_names, units, bounds
             for coord in our_var.dim_axes.values():
-                ds_coord_name = ds_axes[coord.axis]
-                self.reconcile_names(coord, ds, ds_coord_name, overwrite_ours=True)
-                if coord.axis == 'T':
+                # check for irregular grid coordinates and skip them if found
+                coord_search = re.compile('[ij]')
+                coord_regex_result = coord_search.fullmatch(ds_axes[coord.axis])
+                if coord_regex_result is None:
+                    ds_coord_name = ds_axes[coord.axis]
+                    self.reconcile_names(coord, ds, ds_coord_name, overwrite_ours=True)
+                    if coord.axis == 'T':
                     # special case for time coordinate
-                    self.reconcile_time_units(coord, ds[ds_coord_name])
+                        self.reconcile_time_units(coord, ds[ds_coord_name])
+                    else:
+                        self.reconcile_units(coord, ds[ds_coord_name])
+                    self.reconcile_coord_bounds(coord, ds, ds_coord_name)
                 else:
-                    self.reconcile_units(coord, ds[ds_coord_name])
-                self.reconcile_coord_bounds(coord, ds, ds_coord_name)
+                    continue
         else:
             _log.warning(f"Variable {our_var.name} has unexpected dimensionality: "
                          f" expected axes {list(our_axes_set)}, got {list(ds_axes_set)}.")
@@ -1377,15 +1392,17 @@ class DefaultDatasetParser:
             Except in specific cases, attributes of *var* are updated to reflect
             the 'ground truth' of data in *ds*.
         """
-
-        self.normalize_pre_decode(ds)
+        drop_vars = ["time_bnds"]
+        self.normalize_pre_decode(ds, drop_vars)
         ds = xr.decode_cf(ds,
-                          decode_coords=True,  # parse coords attr
+                          decode_coords=True, # parse coords attr
                           decode_times=True,
-                          use_cftime=True  # use cftime instead of np.datetime64
+                          use_cftime=True,
+                          drop_variables=drop_vars  # use cftime instead of np.datetime64
                           )
         # ds = ds.cf.guess_coord_axis()  # may not need this
-        # self.restore_attrs_backup(ds)
+        self.restore_attrs_backup(ds)
+        self.restore_vars_backup(ds, drop_vars)
         # self.normalize_metadata(var, ds)
         self.check_calendar(ds)
         self.check_time_units(var, ds)

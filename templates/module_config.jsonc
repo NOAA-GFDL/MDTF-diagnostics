@@ -55,7 +55,8 @@
           "convention": "CMIP",
           "startdate": "19800101120000",
           "enddate": "19841231000000",
-          "realm": "atmos"
+          "realm": "atmos",
+          "frequency": "day"
         }
       ,
       "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231":
@@ -64,7 +65,8 @@
           "convention": "CMIP",
           "startdate": "19850101",
           "enddate": "19891231",
-          "realm": "atmos"
+          "realm": "atmos",
+          "frequency": "day"
         }
     },
   // PATHS ---------------------------------------------------------------------

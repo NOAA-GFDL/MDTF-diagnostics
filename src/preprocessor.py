@@ -16,7 +16,7 @@ import numpy as np
 import xarray as xr
 import collections
 import re
-import time
+
 
 # TODO: Make the following lines a unit test
 # import sys
@@ -845,22 +845,25 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
     def drop_attributes(self, xr_ds: xr.Dataset) -> xr.Dataset:
         """ Drop attributes that cause conflicts with xarray dataset merge"""
         drop_atts = ['average_T2',
-                     'time_bnds',
-                     'lat_bnds',
-                     'lon_bnds',
                      'average_DT',
                      'average_T1',
                      'height',
-                     'date']
+                     'date'
+                     ]
         # TODO: find a suitable answer to conflicts in xarray merging (i.e. nctoolkit)
         for att in drop_atts:
             if xr_ds.get(att, None) is not None:
+                # save attribute to restore to xarray written to pp file after xr_parser checks
+                self.parser.vars_backup[att] = xr_ds[att].copy()
                 xr_ds = xr_ds.drop_vars(att)
                 for coord in xr_ds.coords:
                     if 'bounds' in xr_ds[coord].attrs:
                         if xr_ds[coord].attrs['bounds'] == att:
+                            self.parser.attrs_backup[coord] = xr_ds[coord].attrs.copy()
                             del xr_ds[coord].attrs['bounds']
+
         return xr_ds
+
 
     def check_multichunk(self, group_df: pd.DataFrame, case_dr, log) -> pd.DataFrame:
         """Sort the files found by date, grabs the files whose 'chunk_freq' is the
@@ -927,13 +930,17 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         date_range_cf_start = self.cast_to_cftime(case_date_range.start.lower, cal)
         date_range_cf_end = self.cast_to_cftime(case_date_range.end.lower, cal)
 
+        # dataset has no overlap with the user-specified date range
         if ds_start < date_range_cf_start and ds_end < date_range_cf_start or \
                 ds_end > date_range_cf_end and ds_start > date_range_cf_end:
             new_xr_ds = None
         # dataset falls entirely within user-specified date range
         elif ds_start >= date_range_cf_start and ds_end <= date_range_cf_end:
             new_xr_ds = xr_ds.sel({time_coord.name: slice(ds_start, ds_end)})
-        # dataset overlaps user-specified date range start
+        # dataset overlaps user-specified date range start (corrected)
+        elif ds_start <= date_range_cf_start <= ds_end <= date_range_cf_end:
+            new_xr_ds = xr_ds.sel({time_coord.name: slice(date_range_cf_start, ds_end)})
+        # dataset overlaps user-specified date range start (orig)
         elif date_range_cf_start < ds_start and \
                 date_range_cf_start <= ds_end <= date_range_cf_end:
             new_xr_ds = xr_ds.sel({time_coord.name: slice(date_range_cf_start, ds_end)})
@@ -943,6 +950,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # dataset contains all of requested date range
         elif date_range_cf_start >= ds_start and date_range_cf_end <= ds_end:
             new_xr_ds = xr_ds.sel({time_coord.name: slice(date_range_cf_start, date_range_cf_end)})
+        else:
+            print(f'ERROR: new_xr_ds is unset because of incompatibility of time:')
+            print(f'       Dataset   start: {ds_start=}')
+            print(f'       Dataset   end  : {ds_end=}')
+            print(f'       Requested start: {date_range_cf_start=}')
+            print(f'       Requested end  : {date_range_cf_end=}')
 
         return new_xr_ds
 
@@ -1143,7 +1156,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # search catalog for convention specific query object
                 var.log.info("Querying %s for variable %s for case %s.",
                              data_catalog,
-                             case_d.query['variable_id'],
+                             var.name,
                              case_name)
                 cat_subset = cat.search(**case_d.query)
                 if cat_subset.df.empty:
@@ -1182,9 +1195,25 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                 f"configuration file.")
                     else:
                         raise util.DataRequestError(
-                            f"Unable to find match or alternate for {case_d.query['variable_id']}"
+                            f"Unable to find match or alternate for {var.translation.name}"
                             f" for case {case_name} in {data_catalog}")
 
+                # if multiple entries exist, refine with variable_id
+                # this will solve issues where standard_id is not enough to uniquely ID a variable
+                # e.g. for catalogs with variables defined at individual levels
+                if len(cat_subset.df.variable_id) > 1:
+                    var.log.info(f"Query for case {case_name} variable {var.name} in {data_catalog} returned multiple"
+                                 f"entries. Refining query using variable_id")
+                    if var.translation is not None:
+                        case_d.query.update({'variable_id': var.translation.name})
+                    else:
+                        case_d.query.update({'variable_id': var.name})
+                    cat_subset = cat.search(**case_d.query)
+                    if len(cat_subset.df.variable_id) > 1:
+                        raise util.DataRequestError(
+                            f"Unable to find unique entry for {case_d.query['variable_id']}"
+                            f" for case {case_name} in {data_catalog}")
+                    case_d.query.pop('variable_id', None)
                 # Get files in specified date range
                 # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
                 if not var.is_static:
@@ -1252,11 +1281,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             new_standard_name = case_query_standard_name
                         var_xr[vname].attrs['standard_name'] = new_standard_name
                         var_xr[vname].attrs['name'] = vname
+
+                var.log.info(f'Merging {var.name}')
                 if case_name not in cat_dict:
                     cat_dict[case_name] = var_xr
                 else:
                     cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr], compat='no_conflicts')
-
                 # check that the trimmed variable data in the merged dataset matches the desired date range
                 if not var.is_static:
                     try:
@@ -1477,7 +1507,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         ds.attrs['history'] = hist
         return ds
 
-    def write_dataset(self, var, ds):
+    def write_dataset(self, var: varlist_util.VarlistEntry, ds: xr.Dataset):
         """Writes processed Dataset *ds* to location specified by the
         ``dest_path`` attribute of *var*, using xarray `to_netcdf()
         <https://xarray.pydata.org/en/stable/generated/xarray.Dataset.to_netcdf.html>`__.
@@ -1486,11 +1516,27 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         os.makedirs(os.path.dirname(var.dest_path), exist_ok=True)
         var_ds = ds[var.translation.name].to_dataset()
         var_ds = var_ds.rename_vars(name_dict={var.translation.name: var.name})
-        var.log.info("Writing '%s'.", var.dest_path, tags=util.ObjectLogTag.OUT_FILE)
         if var.is_static:
             unlimited_dims = []
         else:
             unlimited_dims = [var.T.name]
+        # append other grid types here as needed
+        irregular_grids = {'tripolar'}
+        if ds.attrs.get('grid', None) is not None:
+            # search for irregular grid types
+            for g in irregular_grids:
+                grid_search = re.compile(g, re.IGNORECASE)
+                grid_regex_result = grid_search.search(ds.attrs.get('grid'))
+                if grid_regex_result is not None:
+                    # add variables not included in xarray dataset if dims correspond to vertices and bounds
+                    append_vars =\
+                        (list(set([v for v in ds.variables
+                                   if 'vertices' in ds[v].dims
+                                   or 'bnds' in ds[v].dims]).difference([v for v in var_ds.variables])))
+                    for v in append_vars:
+                        v_dataset = ds[v].to_dataset()
+                        var_ds = xr.merge([var_ds, v_dataset])
+
 
         # The following block is retained for time comparison with dask delayed write procedure
         # var_ds.to_netcdf(
@@ -1503,6 +1549,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         # Uncomment the timing lines and log calls if desired
         # start_time = time.monotonic()
+        var.log.info("Writing '%s'.", var.dest_path, tags=util.ObjectLogTag.OUT_FILE)
         delayed_write = var_ds.to_netcdf(
             path=var.dest_path,
             mode='w',
@@ -1542,6 +1589,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 except Exception as exc:
                     raise util.chain_exc(exc, f"writing data for {var.full_name}.",
                                          util.DataPreprocessEvent)
+
 
             # del ds  # shouldn't be necessary
 
@@ -1648,7 +1696,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 elif not var.is_static:
                     d.update({'frequency': var.T.frequency.unit})
                 cat_entries.append(d)
-
         # create a Pandas dataframe from the catalog entries
 
         cat_df = pd.DataFrame(cat_entries)

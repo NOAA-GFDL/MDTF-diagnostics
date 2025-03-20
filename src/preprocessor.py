@@ -1201,15 +1201,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # if multiple entries exist, refine with variable_id
                 # this will solve issues where standard_id is not enough to uniquely ID a variable
                 # e.g. for catalogs with variables defined at individual levels
-                if len(cat_subset.df.variable_id) > 1:
+                if len(set(cat_subset.df.variable_id)) > 1:
                     var.log.info(f"Query for case {case_name} variable {var.name} in {data_catalog} returned multiple"
                                  f"entries. Refining query using variable_id")
                     if var.translation is not None:
+                        print(var.translation.name)
                         case_d.query.update({'variable_id': var.translation.name})
                     else:
                         case_d.query.update({'variable_id': var.name})
                     cat_subset = cat.search(**case_d.query)
-                    if len(cat_subset.df.variable_id) > 1:
+                    if len(set(cat_subset.df.variable_id)) > 1:
                         raise util.DataRequestError(
                             f"Unable to find unique entry for {case_d.query['variable_id']}"
                             f" for case {case_name} in {data_catalog}")

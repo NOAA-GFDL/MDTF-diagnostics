@@ -173,8 +173,8 @@ def verify_conda_envs(config: util.NameSpace, filename: str):
     c_exists = os.path.exists(config['conda_root'])
     cenv_exists = os.path.exists(config['conda_env_root'])
     if not m_exists and not c_exists:
-        raise util.exceptions.MDTFBaseException(
-            f"Could not find conda or micromamba executable; please check the runtime config file: "
+        print(
+            f"WARNING: Could not find conda or micromamba executable, assuming user wants to run in current environment; if this is not the case, please check the runtime config file: "
             f'{filename}'
         ) 
     if c_exists and not cenv_exists:

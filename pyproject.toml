@@ -24,11 +24,25 @@ name = "MDTF-Diagnostics"
 version = "4.2"
 readme = "README.md"
 requires-python = ">=3.12"
-dynamic = ["dependencies"]
-
-
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements.txt"] }
+dependencies = [
+    "numpy==1.26.4",
+    "cftime==1.6.2",
+    "xarray==2025.1.2",
+    "cf_xarray==0.8.4",
+    "matplotlib==3.8.2",
+    "pandas==2.2.2",
+    "pint==0.24.3",
+    "dask==2025.2.0",
+    "ecgtools==2024.7.31",
+    "cfunits==3.3.6",
+    "intake==2.0.8",
+    "intake-esm @ https://github.com/jtmims/intake-esm/archive/refs/tags/2025.2.3.tar.gz",
+    "subprocess32==3.5.4",
+    "pyyaml==6.0.1",
+    "click==8.1.7",
+    "ghostscript",
+    "pybind11==2.12.0"                 
+]
 
 [tool.setuptools.packages.find]
 include = ["MDTF_diagnostics*"]
@@ -42,5 +56,7 @@ MDTF_diagnostics = [
     'data/*', 
     'data/gfdl-cmor-tables/*',
     'data/cmip6-cmor-tables/Tables/*',
-    'diagnostics/*/*' 
+    'diagnostics/*/*',
+    'src/conda/*',
+    'src/html/*'
 ]

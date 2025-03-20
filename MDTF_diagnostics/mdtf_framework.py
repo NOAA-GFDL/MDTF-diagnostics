@@ -8,6 +8,15 @@
 # created during installation.
 
 import sys
+import importlib.util
+# check to see if package is installed
+import MDTF_diagnostics
+MDTF_PACKAGE_PATH = MDTF_diagnostics.__path__[0]
+sys.path.append(MDTF_PACKAGE_PATH)
+print(MDTF_PACKAGE_PATH)
+#UDUNITS2_XML_PATH='/local2/home/Jacob.Mims/mdtf-pip/share/udunits/udunits2.xml'
+#sys.path.append(UDUNITS2_XML_PATH)
+#print(UDUNITS2_XML_PATH)
 
 # do version check before anything else
 if sys.version_info.major != 3 or sys.version_info.minor < 10:
@@ -18,6 +27,7 @@ if sys.version_info.major != 3 or sys.version_info.minor < 10:
 import os
 import copy
 import click
+#from src import util, cli, data_sources, pod_setup, preprocessor, translation, environment_manager, output_manager
 from src import util, cli, data_sources, pod_setup, preprocessor, translation, environment_manager, output_manager
 import dataclasses
 import logging
@@ -128,6 +138,8 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # Test ctx.config
     # print(ctx.config.WORK_DIR)
     ctx.config.CODE_ROOT = os.path.dirname(os.path.realpath(__file__))
+    if MDTF_PACKAGE_PATH != '':
+        ctx.config.CODE_ROOT = MDTF_PACKAGE_PATH 
     ctx.config.TEMP_DIR_ROOT = ctx.config.WORK_DIR
     log_config = cli.read_config_file(
         ctx.config.CODE_ROOT, "src", "logging.jsonc"
@@ -158,7 +170,6 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # configure a variable translator object with information from Fieldlist tables
     var_translator = translation.VariableTranslator(ctx.config.CODE_ROOT)
     var_translator.read_conventions(ctx.config.CODE_ROOT)
-
     # initialize the preprocessor (dummy pp object if run_pp=False)
     data_pp = preprocessor.init_preprocessor(model_paths,
                                              ctx.config,
@@ -173,7 +184,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
                                                                                                  model_paths,
                                                                                                  parent=None)
         cases[case_name].set_date_range(case_dict.startdate, case_dict.enddate)
-
+        
     pods = dict.fromkeys(ctx.config.pod_list, [])
     pod_runtime_reqs = dict()
     # configure pod object(s)

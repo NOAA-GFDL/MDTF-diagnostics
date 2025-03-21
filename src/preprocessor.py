@@ -1205,7 +1205,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     var.log.info(f"Query for case {case_name} variable {var.name} in {data_catalog} returned multiple"
                                  f"entries. Refining query using variable_id")
                     if var.translation is not None:
-                        print(var.translation.name)
                         case_d.query.update({'variable_id': var.translation.name})
                     else:
                         case_d.query.update({'variable_id': var.name})

@@ -139,7 +139,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # print(ctx.config.WORK_DIR)
     ctx.config.CODE_ROOT = os.path.dirname(os.path.realpath(__file__))
     if MDTF_PACKAGE_PATH != '':
-        ctx.config.CODE_ROOT = MDTF_PACKAGE_PATH 
+        ctx.config.CODE_ROOT = MDTF_PACKAGE_PATH
     ctx.config.TEMP_DIR_ROOT = ctx.config.WORK_DIR
     log_config = cli.read_config_file(
         ctx.config.CODE_ROOT, "src", "logging.jsonc"
@@ -162,7 +162,6 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         backup_filename=None,
         contents=log_config
     )
-
     # Set up main logger
     log = MainLogger(log_dir=model_paths.WORK_DIR)
     if verbose:

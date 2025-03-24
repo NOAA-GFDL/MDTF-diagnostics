@@ -57,6 +57,7 @@ MDTF_diagnostics = [
     'data/gfdl-cmor-tables/*',
     'data/cmip6-cmor-tables/Tables/*',
     'diagnostics/*/*',
+    'src/*',
     'src/conda/*',
     'src/html/*'
 ]

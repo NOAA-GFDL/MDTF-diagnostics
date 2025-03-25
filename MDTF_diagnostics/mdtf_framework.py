@@ -9,14 +9,14 @@
 
 import sys
 import importlib.util
-# check to see if package is installed
-import MDTF_diagnostics
-MDTF_PACKAGE_PATH = MDTF_diagnostics.__path__[0]
-sys.path.append(MDTF_PACKAGE_PATH)
-print(MDTF_PACKAGE_PATH)
-#UDUNITS2_XML_PATH='/local2/home/Jacob.Mims/mdtf-pip/share/udunits/udunits2.xml'
-#sys.path.append(UDUNITS2_XML_PATH)
-#print(UDUNITS2_XML_PATH)
+# check to see if MDTF package is installed; if not run the legacy way
+try:
+    import MDTF_diagnostics
+    MDTF_PACKAGE_PATH = MDTF_diagnostics.__path__[0]
+    sys.path.append(MDTF_PACKAGE_PATH)
+except:
+    MDTF_PACKAGE_PATH = ''
+    print('WARNING: MDTF python package not found; will try to run using conda environments')
 
 # do version check before anything else
 if sys.version_info.major != 3 or sys.version_info.minor < 10:
@@ -27,7 +27,6 @@ if sys.version_info.major != 3 or sys.version_info.minor < 10:
 import os
 import copy
 import click
-#from src import util, cli, data_sources, pod_setup, preprocessor, translation, environment_manager, output_manager
 from src import util, cli, data_sources, pod_setup, preprocessor, translation, environment_manager, output_manager
 import dataclasses
 import logging

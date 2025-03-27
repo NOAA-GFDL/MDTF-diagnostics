@@ -23,7 +23,7 @@ maintainers = [{ name = "MDTF Collaboration", email = "20195932+wrongkindofdocto
 name = "MDTF-Diagnostics"
 version = "4.2"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
     "numpy==1.26.4",
     "cftime==1.6.2",

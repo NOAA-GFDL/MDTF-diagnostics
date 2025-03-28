@@ -413,7 +413,7 @@
       "ndim": 4
     },
     "SST": {
-      "standard_name": "Potential Temperature",
+      "standard_name": "sea_surface_temperature",
       "realm": "ocean",
       "units": "degC",
       "ndim": 4

@@ -44,7 +44,7 @@ dependencies:
     - falwa==2.0.0
     - cmocean
     - regionmask
-    - momgrid=1.9.0
+    - momgrid==1.9.0
     - git+https://github.com/jkrasting/doralite
     - git+https://github.com/raphaeldussin/static_downsampler
     - git+https://github.com/jkrasting/xcompare

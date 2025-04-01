@@ -25,6 +25,8 @@ Diagnostics reference
 .. toctree::
    :maxdepth: 1
 
+"""
+
 # generate tools toc source file on-the-fly
 _tools_toc_header = """
 Tools documentation

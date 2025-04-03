@@ -361,6 +361,7 @@ class SubprocessRuntimePODWrapper:
         self.pod.pod_env_vars["case_env_file"] = out_file
         case_info = dict()
         case_info['CATALOG_FILE'] = catalog_file
+        self.pod.pod_env_vars['CATALOG_FILE'] = catalog_file
         case_info['CASE_LIST'] = dict()
         assert os.path.isfile(case_info['CATALOG_FILE']), 'CATALOG_FILE json not found in WORK_DIR'
         for case_name, case in case_list.items():
@@ -553,7 +554,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         return subprocess.Popen(
             commands,
             shell=True, executable=self.bash_exec,
-            env=env_vars, cwd=p.pod.paths.POD_WORK_DIR,
+            env=env_vars.copy(), cwd=p.pod.paths.POD_WORK_DIR,
             stdout=p.pod.log_file, stderr=p.pod.log_file,
             universal_newlines=True, bufsize=1
         )

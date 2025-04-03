@@ -1013,6 +1013,7 @@ for bi in blist:
     plt.savefig(plt_path)
     plt.close()
 
-
+# end of the script
+sys.exit(0)
 
 

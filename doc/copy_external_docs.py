@@ -23,16 +23,6 @@ _pod_toc_header = """
 Diagnostics reference
 ---------------------
 .. toctree::
-   :maxdepth: 2
-
-   pod_summary
-"""
-
-# generate site toc source file on-the-fly
-_site_toc_header = """
-Site-specific documentation
----------------------------
-.. toctree::
    :maxdepth: 1
 
 """
@@ -40,7 +30,7 @@ Site-specific documentation
 # generate tools toc source file on-the-fly
 _tools_toc_header = """
 Tools documentation
----------------------------
+-------------------
 .. toctree::
    :maxdepth: 1
 
@@ -51,7 +41,7 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
     """Look for documentation files, copy them to the build directory, and
     generate toc file linking to pod/site documentation.
     Args:
-        type_ (str): either "pod" or "site".
+        type_ (str): e.g., "pods" or "tools" 
         docs_dir (str): Directory this script is located in.
         search_root (str): Directory to search for PODs or sites.
         header (str): header of the toc file.

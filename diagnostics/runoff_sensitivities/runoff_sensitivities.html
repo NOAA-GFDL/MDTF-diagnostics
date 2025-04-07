@@ -21,8 +21,8 @@ Runoff sensitivity: The sensitivity of runoff to surface air temperature and pre
 <b>General discription</b> <br />
 The sensitivity of runoff (Q) to temperature (T sensitivity; %/K) and precipitation (P sensitivity; %/%)
 are calculated using the multiple linear regression, using the 5-year averaged annual timeseries of the historical period during 1945-2014.
-The sensitivity is calculated respectively for 131 global river basins, 
-after averaging the variables for water year (Oct. to Sep.) and each basin using the GRDC Major River Basin masks <br /><br />
+The sensitivity is calculated respectively for 131 global river basins. 
+Before calculating the sensitivity, the variables are averaged for water year (Oct. to Sep.) and each basin using the GRDC Major River Basin masks <br /><br />
 
 The calculated runoff sensitivity is then compared with the pre-calculated sensitivities for observations (GRUN-ENSEMBLE), CMIP5/6 historical simulations.
 GRUN-ENSEMBLE is machine-learning based global runoff reanalysis, providing 100 realizations to sample to observational uncertainty (Ghiggi et al. 2021).
@@ -32,8 +32,8 @@ The ranges from observational uncertainty, inter-model spread, and uncertainty o
 In CMIP5 and CMIP6, the uncertainty of T sensitivity can contribute to the runoff projection uncertainty as much as the different P projections among models.
 The runoff sensitivity in climate model is often biased; the negative T sensitivity is often too weak in climate models, indicating the underestimation of future runoff declines. <br /><br />
 
-While the P sensitivity is generally correlated with the mean state biases, the T sensitivity exhibits no systematic relationship with mean state variables.
-Hence, the traditional modeling approaches, which focus on improving mean state biases, may not reseolve the biases in T sensitivity.
+While the P sensitivity is generally correlated with the mean state runoff ratio (Q/P), the T sensitivity exhibits no systematic relationship with mean state variables.
+Hence, the traditional modeling approaches, which focus on improving mean state biases, may not resolve the biases in T sensitivity.
 Therefore, the new diagnostic metric related to the runoff sensitivity is needed for future land model development.
 </p>
 
@@ -43,7 +43,7 @@ Calculation and interpretation of runoff sensitivities:<br />
 <small>Lehner, F., Wood, A. W., Vano, J. A., Lawrence, D. M., Clark, M. P., and Mankin, J. S. (2019). 
 The potential to reduce uncertainty in regional runoff projections from climate models. Nature Climate Change, 9(12), 926-933.</small><br />
 <small>Kim, H., Lehner, F., Dagon K., Lawrence, D. M., Swenson, S., Wood, A. W. (2025). 
-Constraining climate model projections with observations amplifies future runoff declines. in preparation.</small><br />
+Constraining climate model projections with observations amplifies future runoff declines. in revision.</small><br />
 Observational estimate (GRUN-ENSEMBLE):<br />
 <small>Ghiggi, G., Humphrey, V., Seneviratne, S. I., & Gudmundsson, L. (2021). 
 G‐RUN ENSEMBLE: A multi‐forcing observation‐based global runoff reanalysis. Water Resources Research, 57(5), e2020WR028787.</small>
@@ -51,7 +51,7 @@ G‐RUN ENSEMBLE: A multi‐forcing observation‐based global runoff reanalysis
 <p>
 <b>Caution</b> <br />
 For some models, the surface water budget (Precipitation - Evaporation = Runoff) is not closed in the long-term average. <br />
-To evaluate the water budget closure (WBC) for the period of {{FIRSTYR}}-{{LASTYR}}, we specify river basins in which WBC is kept within 10% error. The fraction of closed river basins compraed to all river basins is used as criteria. <br />
+To evaluate the water budget closure (WBC) for the period of {{FIRSTYR}}-{{LASTYR}}, we specify river basins in which WBC is kept within 10% error. The fraction of closed river basins compared to all river basins is used as criteria. <br />
 For example, WBC = 0.91 for CESM2, and it means that WBC is kept for 91% of the area of global river basins. <br />
 if WBC < 0.6, we consider the model's runoff data to be inappropriate for runoff sensitivity calculations. We do not know why the water balance is not closeable in some models; it might have more to do with the data they provide in the CMIP archive rather than the model itself.<br />
 WBC value is shown in the plots of MODEL runoff sensitivities (title).
@@ -106,17 +106,38 @@ WBC value is shown in the plots of MODEL runoff sensitivities (title).
 
 <p><br /></p>
 
+
+
 <TABLE>
 <TR>
-<TH align=left><font color=navy>Sensitivities with uncertainty ranges
-</TR>
-<TR>
-<TH align=left>for individual river basins:&nbsp; 
 <TH align=left><A href=obs/basin_info.png>Global map of river basins with significant biases</A>
 </TR>
 <TR>
-<TH align=left>&emsp;
+<TH align=left>In the above map, the sensitivity bias is significant if the model value falls outside the 5th–95th percentile range of the observational sensitivity.
 </TR>
+<TR>
+<TH align=left>Basins outlined in black indicate regions where the T sensitivity bias is significant.
+</TR>
+<TR>
+<TH align=left>Basins with black numbering indicate regions where either the T or P sensitivity bias is significant.
+</TR>
+<TR>
+<TH align=left>Note that the criterion of being “outside the 5th–95th percentile range” is more stringent than conventional significance tests, such as the t-test.
+</TR>
+<TR>
+<TH align=left>Basins with hatchings indicate regions where the regression model for runoff sensitivity does not have significant R2 relative to the original variability; this means that the sensitivity is not reliable for those basins in the target model.
+</TR>
+</TABLE>
+
+
+<p><br /></p>
+
+<TABLE>
+<TR>
+<TH align=left><font color=navy>For individual river basins:&nbsp; 
+<TH align=left><font color=navy>Sensitivities with uncertainty ranges
+</TR>
+
 <TR>
 <TH align=left>&emsp;</A>
 <TH align=left><A href=model/basin_specific1.png>1:CONGO</A>&nbsp;&nbsp;
@@ -125,6 +146,7 @@ WBC value is shown in the plots of MODEL runoff sensitivities (title).
 <TH align=left><A href=model/basin_specific4.png>4:KUNENE</A>&nbsp;&nbsp;
 <TH align=left><A href=model/basin_specific5.png>5:NIGER</A>&nbsp;&nbsp;
 </TR>
+
 <TR>
 <TH align=left>&emsp;</A>
 <TH align=left><A href=model/basin_specific6.png>6:NILE</A>&nbsp;&nbsp;

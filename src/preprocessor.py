@@ -1158,7 +1158,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                              data_catalog,
                              var.name,
                              case_name)
-                print(case_d.query)
                 cat_subset = cat.search(**case_d.query)
                 if cat_subset.df.empty:
                     # check whether there is an alternate variable to substitute
@@ -1278,8 +1277,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             del_list.append(vname)
                     for del_name in del_list:
                         del var_xr[del_name]
-                            
-                print(var_xr)
                 # add standard_name to the variable xarray dataset if it is not defined
                 for vname in var_xr.variables:
                     if (not isinstance(var_xr.variables[vname], xr.IndexVariable)

@@ -1,0 +1,43 @@
+{
+  "settings" : {
+    "driver" : "SST_bias_NOAA_OISSTv2.ipynb",
+    "long_name" : "Example diagnostic",
+    "convention": "gfdl",
+    "mar": true,
+    "description" : "Example diagnostic",
+    "runtime_requirements": {
+        "python3": ["matplotlib", "xarray", "netCDF4"]
+    }
+  },
+
+  "dimensions": {
+     "yh": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "xh": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
+    "time": {"standard_name": "time"}
+  },
+
+  "varlist" : {
+    "tos": {
+      "standard_name" : "sea_surface_temperature",
+      "realm": "ocean",
+      "units": "degC",
+      "frequency" : "mon",
+      "dimensions": ["time", "yh", "xh"]
+    },
+    "areacello": {
+      "standard_name": "cell_area",
+      "dimensions": ["yh", "xh"],
+      "realm": "ocean",
+      "units": "m2",
+      "requirement": "optional"
+    }
+  }
+}

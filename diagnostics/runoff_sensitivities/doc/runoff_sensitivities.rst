@@ -119,10 +119,6 @@ How does such runoff sensitivity bias affect future projections? This motivates 
 
    \Delta{Q}_{obs} = {\alpha}_{obs}\Delta{P}_{ESM} + {\beta}_{obs}\Delta{T}_{ESM}
 
-.. math::
-
-   \frac{ \sum_{t=0}^{N}f(t,k) }{N}
-
 where {\alpha}_{obs} and {\beta}_{obs} are observational estimate of P and T sensitivity, \Delta{P}_{ESM} and \Delta{T}_{ESM} represent the ESM projection in P and T, and \Delta{Q}_{obs} is the observationally-constrained runoff projection.
 
 The difference between this observationally-constrained projection and the unconstrained ESM projection is the observational constraining effect. We developed a systematic approach to test the significance and robustness of the constraining effect (Fig.2a; see details in Kim et al., 2025, *in preparation*). The observationally-constrained projections indicate a drier future than the unconstrained projections (Fig. 2b,c). The downward correction is significant for 41 of 131 global river basins. Specifically, in CMIP6, the modest runoff reductions in regions like the Amazon, Eastern Europe, and Australia are intensified (Fig. 1d,e). Moreover, the originally projected runoff increases over North Africa and Southeast Asia become weaker or are even reversed. The downward correction mainly arises from the T sensitivity bias (Fig. 2b,c). **In other words, the ESMs underestimate the future runoff decline mainly because negative T sensitivity is too weak compared to observations.** This systematic underestimation of runoff decline is consistent with previous studies that have adjusted runoff projections downward using other observational datasets and statistical methods (:ref:`Zhang et al., 2023 <ref-Zhang>`; :ref:`Douville et al., 2024 <ref-Douville>`).

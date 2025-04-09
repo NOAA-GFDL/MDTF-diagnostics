@@ -1,10 +1,10 @@
 {
   "settings" : {
     "driver" : "SST_bias_NOAA_OISSTv2.ipynb",
-    "long_name" : "Example diagnostic",
+    "long_name" : "Sea Surface Temperature Bias - NOAA OISSTv2",
     "convention": "gfdl",
     "mar": true,
-    "description" : "Example diagnostic",
+    "description" : "This notebook plots the SST bias of a model simulation vs. climataology derived from NOAA OISSTv2",
     "runtime_requirements": {
         "python3": ["matplotlib", "xarray", "netCDF4"]
     }

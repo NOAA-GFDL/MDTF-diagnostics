@@ -1,25 +1,16 @@
-<title>MDTF example-multicase diagnostic</title>
+<title>Sea Surface Temperature Bias - NOAA OISSTv2</title>
 <img src="../mdtf_diag_banner.png">
-<h3>Multi-Case Example Diagnostic: zonal-average near-surface temperature anomaly</h3>
+<h3>MAR Diagnostic notebook: Sea Surface Temperature Bias - NOAA OISSTv2</h3>
 <p>
-    This POD illustrates how multiple cases (experiments) can be analyzed together.
-    The MDTF-diagnostics framework initializes and processes each case, writes the environment variables for the cases
-    to a yaml file (case_info.yml), and exports an ESM Intake catalog with information about the post-processed
-    data for each ease to the working directory (WORK_DIR). The example_multicase POD driver script reads
-    environment information from case_info.yml into a dictionary that it references to read data from the
-    post-processed files in the data catalog.
-</p>
-<p>
-    The example_multicase POD reads near-surface air temperature (TAS) from netcdf output files for multiple cases.
-    The POD time averages the TAS data and calculates the anomaly relative to the global mean.
-    The anomalies are zonally-averaged and the results from all cases are shown on a single plot.
+    This notebook plots the SST bias of a model simulation vs. climataology derived from NOAA OISSTv2    
+    Authors: Xinru Li and John Krasting
 </p>
 <TABLE>
     <TR>
         <TH align=left style="color:navy;">Time averages
         <TH align=left>Model Results
     <TR>
-        <TH align=left>Zonal-mean near-surface temperature anomalies (K)
+        <TH align=left>SST bias
 </TABLE>
 <!-- update the name of the template to [your_pod_name]_ipynb.html -->
 <TH align=center><A href=SST_bias_NOAA_OISSTv2_ipynb.html>notebook</A>

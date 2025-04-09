@@ -8,7 +8,7 @@ Introduction to runoff sensitivity
 
 Runoff projections are essential for future water security. While Earth System Models (ESMs) are now being used to inform water resource assessments, the substantial model uncertainty has undermined the reliability of ESM projections. The primary source of the runoff projection uncertainty is the model's climate forcing of the land surface, namely inter-model differences in precipitation (P) and surface air temperature (T) trends.
 
-However, runoff projections are generally more uncertain than either P and T projections, implying that additional uncertainties arise at the terrestrial interface (:ref:`Lehner et al., 2019 <ref-Lehner>`; :ref:`Wang et al., 2022 <ref-Wang>`). These additional uncertainties stem from differences in the sensitivity of runoff to climate change - how runoff responds to a given set of climate forcings. Previous studies have measured this using runoff sensitivity, a metric that qunatifies runoff (Q) changes in response to changes in precipitation (P sensitivity; δQ/δP, %/%) and temperature (T sensitivity; δQ/δT, %/°C) (:ref:`Tang and Lettenmaier, 2012 <ref-Tang>`; :ref:`Hoerling et al., 2019 <ref-Hoerling>`; :ref:`Lehner et al., 2019 <ref-Lehner>`; :ref:`Milly and Dunne, 2020 <ref-Milly>`). 
+However, runoff projections are generally more uncertain than either P and T projections, implying that additional uncertainties arise at the terrestrial interface (:ref:`Lehner et al., 2019 <ref-Lehner>`; :ref:`Wang et al., 2022 <ref-Wang>`). These additional uncertainties stem from differences in the sensitivity of runoff to climate change - how runoff responds to a given set of climate forcings. Previous studies have measured this using runoff sensitivity, a metric that quantifies runoff (Q) changes in response to changes in precipitation (P sensitivity; δQ/δP, %/%) and temperature (T sensitivity; δQ/δT, %/K) (:ref:`Tang and Lettenmaier, 2012 <ref-Tang>`; :ref:`Hoerling et al., 2019 <ref-Hoerling>`; :ref:`Lehner et al., 2019 <ref-Lehner>`; :ref:`Milly and Dunne, 2020 <ref-Milly>`). 
 
 Uncertainty in this runoff sensitivity, inherent to each ESM, can contribute to the projection uncertainty as much as the uncertainty in meteorological forcings (Kim et al. 2025, *in preparation*). In addition, the runoff sensitivity is often biased in ESMs, such that ESMs tend to underestimate future runoff declines in several global basins (:ref:`Zhang et al., 2023 <ref-Zhang>`; :ref:`Douville et al., 2024 <ref-Douville>`; Kim et al. 2025, *in preparation*). Therefore, reducing the runoff sensitivity bias is important for producing more reliable projections of terrestrial climate change.
 
@@ -79,7 +79,7 @@ The monthly mean output from historical simulations, including period 1945-2014,
 
 Target variables:
    - ``tas`` (surface air temperature, K), [time, lat, lon]
-   - ``pr`` (precipitaiton, kg m-2 s-1), [time, lat, lon] 
+   - ``pr`` (precipitation, kg m-2 s-1), [time, lat, lon] 
    - ``hfls`` (latent heat flux, W m-2), [time, lat, lon]
    - ``mrro`` (runoff, kg m-2 s-1), [time, lat, lon]
 

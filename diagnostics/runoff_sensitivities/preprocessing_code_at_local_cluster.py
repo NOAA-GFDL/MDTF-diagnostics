@@ -1,11 +1,30 @@
 ####################################################################
-## import libraries and functions
-import sys
-sys.path.append('C:/Users/reapr/내 드라이브/Research/code/runoff/sensitivity_final/ver2_mrb_grdc')
-from functions_hjkim2 import *
-from joblib import Parallel, delayed
-import multiprocessing
+## import libraries
+import os
+import numpy as np
+import cartopy.io.shapereader as shpreader
+import netCDF4 as nc
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import matplotlib.colors as colors
+from sklearn.linear_model import LinearRegression
+import scipy.stats as stats
+import scipy.io as sio
 
+####################################################################
+## Define functions
+## calculate moving average! (smoothing)
+def moving_avg(x_1d,n_mw):
+    nt=len(x_1d)
+    weight = np.ones((n_mw))/n_mw
+    n_delete=int((n_mw)/2);
+    smoothed=np.convolve(x_1d,weight,mode='same')
+    if n_delete != 0:
+        smoothed[0:n_delete]=np.nan
+        smoothed[-n_delete:nt]=np.nan
+    return smoothed
+
+####################################################################
 ## file path
 dpath="C:/runoff_mrb_grdc3/"
 figpath="C:/Users/reapr/내 드라이브/Research/runoff_project/MDTF/ver241202/runoff_sensitivities";
@@ -27,9 +46,6 @@ for b in range(nbasin):
         basin_names.extend([basin_names_raw[b][0]])
 
 ## function for runoff sensitivity calculation
-from sklearn.linear_model import LinearRegression
-import scipy.stats as stats
-import numpy as np
 def runoff_sens_reg(r, p, t, mw=1, alpha=0.1):
     nan_val=np.mean(np.isnan(r))+np.mean(np.isnan(p))+np.mean(np.isnan(t))
     if nan_val == 0:
@@ -159,9 +175,7 @@ print(f"HIST6/SSP245: {nmodel_cmip6_closed}/{nmodel_cmip6_available}")
 closed_fraction_cmip6=closed_fraction_c2f6
 closed_area_fraction_cmip6=closed_area_fraction_c2f6
 closed_nmodel_cmip6=closed_nmodel_c2f6
-
-############################################################################
-# assign nan for basins with negative timeseries > 10%
+############################################
 temp2=negative_fraction_c2f6>0.1
 ind_c2f6_nm=np.nonzero(temp2)[0]
 ind_c2f6_nb=np.nonzero(temp2)[1]
@@ -212,11 +226,8 @@ for m in mind_cmip6:
             prb_wym_c2f6[m,:,b,n] = moving_avg(prb_wy_c2f6[m,:,b],n_mw[n])
             evspsblb_wym_c2f6[m,:,b,n] = moving_avg(evspsblb_wy_c2f6[m,:,b],n_mw[n])
             mrrob_wym_c2f6[m,:,b,n] = moving_avg(mrrob_wy_c2f6[m,:,b],n_mw[n])
-
-# get timeslice
 yrs=np.arange(syr_c2f6,eyr_c2f6)
-syr1=syr_sens_cri; eyr1=eyr_sens_cri;
-inds1=int(np.nonzero(yrs==syr1)[0]); inde1=int(np.nonzero(yrs==eyr1)[0])+1;
+inds1=int(np.nonzero(yrs==syr_sens_cri)[0]); inde1=int(np.nonzero(yrs==eyr_sens_cri)[0])+1;
 
 ## get long-term average for % anomaly
 prb_hist6_mw=np.mean(np.tile(prb_wy_c2f6[:,inds1:inde1,:,np.newaxis],(1,1,1,nmw)),axis=1);
@@ -337,9 +348,7 @@ print(f"HIST6/SSP245: {nmodel_cmip5_closed}/{nmodel_cmip5_available}")
 closed_fraction_cmip5=closed_fraction_c2f5
 closed_area_fraction_cmip5=closed_area_fraction_c2f5
 closed_nmodel_cmip5=closed_nmodel_c2f5
-
-############################################################################
-# assign nan for basins with negative timeseries > 10%
+############################################
 temp2=negative_fraction_c2f5>0.1
 ind_c2f5_nm=np.nonzero(temp2)[0]
 ind_c2f5_nb=np.nonzero(temp2)[1]
@@ -388,11 +397,8 @@ for m in mind_cmip5:
             prb_wym_c2f5[m,:,b,n] = moving_avg(prb_wy_c2f5[m,:,b],n_mw[n])
             evspsblb_wym_c2f5[m,:,b,n] = moving_avg(evspsblb_wy_c2f5[m,:,b],n_mw[n])
             mrrob_wym_c2f5[m,:,b,n] = moving_avg(mrrob_wy_c2f5[m,:,b],n_mw[n])
-
-# get timeslice
 yrs=np.arange(syr_c2f5,eyr_c2f5)
-syr1=syr_sens_cri; eyr1=eyr_sens_cri;
-inds1=int(np.nonzero(yrs==syr1)[0]); inde1=int(np.nonzero(yrs==eyr1)[0])+1;
+inds1=int(np.nonzero(yrs==syr_sens_cri)[0]); inde1=int(np.nonzero(yrs==eyr_sens_cri)[0])+1;
 
 ## get long-term average for % anomaly
 prb_hist5_mw=np.mean(np.tile(prb_wy_c2f5[:,inds1:inde1,:,np.newaxis],(1,1,1,nmw)),axis=1);
@@ -700,19 +706,3 @@ plot_title='T sensitivity'
 plot_path = figpath + 'mdtf_check.png'
 plot_and_save_basin_filled(values, basin_points, bins, bins2, \
     plot_colormap, plot_unit, plot_title, plot_path, coast_path)
-
-
-## figures for P sensitivity ##
-bins=[-3.5, -3, -2.5, -2, -1.6, -1.2, -0.8, -0.4, 0, 0.4, 0.8, 1.2, 1.6, 2, 2.5, 3, 3.5];
-bins2=[-100, -3, -2.5, -2, -1.6, -1.2, -0.8, -0.4, 0, 0.4, 0.8, 1.2, 1.6, 2, 2.5, 3, 100];
-plot_colormap = [(0.4000, 0, 0, 1), (0.7316, 0, 0, 1), (0.9975, 0.0306, 0.0078, 1), (0.9845, 0.1915, 0.0484, 1), (0.9715, 0.3525, 0.0890, 1), (0.9776, 0.5636, 0.0700, 1), (0.9891, 0.7889, 0.0338, 1), (1.0000, 1.0000, 0.0263, 1), (1.0000, 1.0000, 0.4408, 1), (1.0000, 1.0000, 1.0000, 1), (1.0000, 1.0000, 1.0000, 1), (0.7325, 0.8651, 0.9386, 1), (0.5342, 0.7652, 0.8931, 1), (0.3359, 0.6652, 0.8476, 1), (0.1375, 0.5652, 0.8020, 1), (0.0477, 0.4727, 0.7506, 1), (0.0563, 0.3870, 0.6938, 1), (0.0651, 0.3013, 0.6370, 1), (0.0368, 0.1575, 0.5250, 1), (0, 0, 0.4000, 1)]
-plot_colormap = [(0.4000, 0, 0, 1), (0.7316, 0, 0, 1), (0.9975, 0.0306, 0.0078, 1), (0.9845, 0.1915, 0.0484, 1), (0.9715, 0.3525, 0.0890, 1), (0.9776, 0.5636, 0.0700, 1), (0.9891, 0.7889, 0.0338, 1), (1.0000, 1.0000, 0.0263, 1), (1.0000, 1.0000, 0.4408, 1), (1.0000, 1.0000, 1.0000, 1), (1.0000, 1.0000, 1.0000, 1), (0.7325, 0.8651, 0.9386, 1), (0.5342, 0.7652, 0.8931, 1), (0.3359, 0.6652, 0.8476, 1), (0.1375, 0.5652, 0.8020, 1), (0.0477, 0.4727, 0.7506, 1), (0.0563, 0.3870, 0.6938, 1), (0.0651, 0.3013, 0.6370, 1), (0.0368, 0.1575, 0.5250, 1), (0, 0, 0.4000, 1)]
-plot_unit='[%/%]'
-
-## test for runoff_sens_reg function
-# z=np.array([1,2,3,3,5,8,np.nan]);
-# x=np.array([1,2,3,4,5,6,np.nan]);
-# y=np.array([1,3,4,5,6,8,np.nan]);
-# a1, a2, b1, b2, c1, c2, r2 = runoff_sens_reg(z,x,y)
-# a1*x+b1*y+c1*x*y
-# r,_=stats.pearsonr(z,a1*x+b1*y+c1*x*y)

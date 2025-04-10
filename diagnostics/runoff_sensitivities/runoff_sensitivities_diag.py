@@ -257,8 +257,8 @@ nlat = len(latm)
 nlon = len(lonm)
 nt = len(time)
 nyr = int(nt/12)
-syr_model = int(os.environ["FIRSTYR"])
-eyr_model = int(os.environ["LASTYR"])
+syr_model = int(os.environ["startdate"])
+eyr_model = int(os.environ["enddate"])
 
 # variables
 pr_var_name = os.environ["pr_var"]
@@ -451,7 +451,7 @@ for b in range(b):
 ### 4) Saving output data: ##########################
 #####################################################
 ## save runoff sensitivity data in netCDF4 file
-out_path = "{WK_DIR}/model/netCDF/runoff_sensitivities_{CASENAME}.nc".format(**os.environ)
+out_path = "{WORK_DIR}/model/netCDF/runoff_sensitivities_{CASENAME}.nc".format(**os.environ)
 # Create a NetCDF dataset
 dataset = nc.Dataset(out_path, 'w')
 # Create dimensions

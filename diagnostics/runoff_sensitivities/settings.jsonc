@@ -10,10 +10,6 @@
     "realm" : ["atmos","land"],
     "description" : "runoff sensitivity diagnostics",
 
-    "pod_env_vars" : {
-      "EXAMPLE_FAV_COLOR": "blue"
-    },
-
     "runtime_requirements": {
         "python3": ["matplotlib", "netCDF4", "scipy", "numpy", "sklearn", "cartopy"]
     }

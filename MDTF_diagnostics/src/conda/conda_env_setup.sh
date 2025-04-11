@@ -174,7 +174,7 @@ if [ "$make_envs" = "true" ]; then
 		echo "... previous env ${env_name} removed."
 	fi
         echo "Creating conda env ${env_name} in ${conda_prefix}..."
-        "$_INSTALL_EXE" env create -q -p "$conda_prefix" -f "$env_file" 
+        "$_INSTALL_EXE" env create -qy -p "$conda_prefix" -f "$env_file"
         echo "... conda env ${env_name} created."
     done
     "$_INSTALL_EXE" clean -aqy

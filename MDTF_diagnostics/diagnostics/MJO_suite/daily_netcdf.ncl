@@ -17,6 +17,36 @@ begin
   end if
 end ; procedure debug_print
 
+undef("check_date_format")
+function check_date_format(date_in,date_type,routine_name,debug)
+begin
+  if (date_in.lt.1.e4) then  ; input just YYYY, need to add MMDDHH
+    if (date_type.eq."start") then  
+      date_suffix = 101*100
+    else if (date_type.eq."end") then  
+      date_suffix = 1231*10
+      else 
+        print("ERROR: "+routine_name+" No date_type given to function check_date_format")
+      end if
+    end if
+    
+    debug_print("Incoming "+date_type+" date YYYY format: "+date_in,routine_name,debug)
+    date_out = date_in*1000000+ date_suffix
+    debug_print("Corrected "+date_type+" date to:"+date_out,routine_name,debug)
+
+  else
+    if (date_in .lt. 100000000) ; YYYYMMDD
+      debug_print("Incoming "+date_type+" date YYYYMMDD format: "+date_in,routine_name,debug)
+      date_out = date_in*100 ;; HH = 00
+      debug_print("Corrected "+date_type+" date to:"+date_out,routine_name,debug)
+    else
+      debug_print("Found start date format YYYYMMDDHH: "+yr,routine_name,debug)
+      date_out = date_in
+    end if ; YYYYMMDD
+  end if ; YYYY
+
+  return date_out
+end ; function check_date_format
 
 begin
 ; read daily output files from CAM2 and process the data
@@ -63,12 +93,10 @@ nd = dimsizes(time_all)
 i2 = nd(0) - 1
 debug_print("Time range in file: "+time_all(0)+" -"+time_all(i2),routine_name,debug)
 
-  ; in hours to match cd_calendar/ut_calendar output YYYYMMDDHH
-  ; uses 18 hrs for endtime since 6-hourly is the most high res we expect
-  ; should still work for daily, just finds YYYY123100
-  start_time = yr1*1000000+101*100
-  end_time = yr2*1000000+1231*100+18
-  debug_print("Time range requested: "+start_time+" "+end_time,routine_name,debug)
+; Check if date came in as YYYYMMDD or YYYY (historic)
+start_time = check_date_format(yr1,"start",routine_name,debug)
+end_time   = check_date_format(yr2,"end",routine_name,debug)
+
   tol = 24  ; 24 hours tolerance allows for different time resolutions
   do i=0,dimsizes(time_all)-1
 ;     debug_print("examining times "+i+" "+time_all(i),routine_name,debug)
@@ -108,8 +136,7 @@ if (  isMonotonic(date) .ne. 1 ) then
    exit  ; exit on error
 end if
 
-; DRB: used to do pr, rlut separately. Folding them into the loop instead.
-; **here first just use read_model_file for pr here, then put into var loop below
+; First just use read_model_file for pr here, then put into var loop below
 ; precipitation rate (pr)
 print("daily_netcdf.ncl reading "+file_pr+" for making precip file!")
 

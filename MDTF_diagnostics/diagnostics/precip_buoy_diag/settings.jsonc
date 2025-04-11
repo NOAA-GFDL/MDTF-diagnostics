@@ -1,4 +1,4 @@
-// Convection Transition
+// Precipitation-buoyancy diagnostics
 //
 // This requires sub-daily-timescale precipitation rate, air temperature, specific humidity, 
 // and surface pressure (optional).
@@ -27,6 +27,13 @@
 			"python3": ["numpy", "scipy", "cython", "matplotlib", "xarray", "numba", "networkx"]
 		}
 	},
+	"data": {
+    "multi_file_ok": true,
+    "frequency": "3hr",
+    "min_duration": "1yr",
+    "max_duration": "any",
+    "realm" : "atmos"
+  	},
     "dimensions": {
         "lat": {
                  "standard_name": "latitude",
@@ -49,41 +56,29 @@
 	"varlist": {
 	    "pr": {
 			"standard_name": "precipitation_flux",
-			"freq": "1hr",
-			"realm": "atmos",
 			"requirement": "required",
 			"units": "kg m-2 s-1",
-            "dimensions" : ["time", "lat", "lon"],
-            "multi_file_ok" : true
+            "dimensions" : ["time", "lat", "lon"]
 		},
 		"ta": {
 			"standard_name": "air_temperature",
-			"realm": "atmos",
-			"freq": "1hr",
 			"requirement": "required",
 			"units": "K",
-            "dimensions" : ["time", "lev", "lat", "lon"],
-            "multi_file_ok" : true
+            "dimensions" : ["time", "lev", "lat", "lon"]
 		},
 		"qa": {
 			"standard_name": "specific_humidity",
-		    "realm": "atmos",
-			"freq": "1hr",
 			"requirement": "required",
 			"units": "kg/kg",
-            "dimensions" : ["time", "lev", "lat", "lon"],
-            "multi_file_ok" : true
+            "dimensions" : ["time", "lev", "lat", "lon"]
 		},
 		"ps": {
 			"standard_name": "surface_air_pressure",
-			"realm": "atmos",
-			"freq": "1hr",
 			// this is optional only if height co-ordinates are on pressure levels
 			// if height co-ordinates are sigma, then surface pressure is required.
 			"requirement": "optional",
 			"units": "Pa",
-            "dimensions" : ["time", "lat", "lon"],
-            "multi_file_ok" : true
+            "dimensions" : ["time", "lat", "lon"]
 		}
 	}
 }

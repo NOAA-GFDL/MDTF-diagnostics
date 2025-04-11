@@ -7,7 +7,7 @@ dependencies:
 - numpy=1.26.4
 - netCDF4=1.6.4
 - cftime=1.6.2
-- xarray=2024.1.1
+- xarray=2025.1.2
 - setuptools=68.1.2
 - esmf=8.4.2
 - esmpy=8.4.2

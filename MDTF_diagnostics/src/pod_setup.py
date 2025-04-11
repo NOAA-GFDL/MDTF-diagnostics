@@ -201,9 +201,9 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
                     has_pkgs = [o for o in output if p.lower() in o.lower()]
                     if not any(has_pkgs):
                         self.log.error(f'Package {p} not found in POD environment {pod_env}')
-
         try:
-            verify_runtime_reqs(self.pod_settings['runtime_requirements'])
+            if self.pod_env_vars['CONDA_ROOT'] or self.pod_env_vars['MICROMAMBA_EXE']:
+                verify_runtime_reqs(self.pod_settings['runtime_requirements'])
         except Exception as exc:
             raise util.PodConfigError('POD runtime requirements not defined in specified Conda environment') \
                 from exc

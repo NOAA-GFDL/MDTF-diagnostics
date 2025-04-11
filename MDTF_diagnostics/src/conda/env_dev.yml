@@ -13,7 +13,7 @@ dependencies:
 - xesmf=0.8.1
 - esmf=8.4.2
 - esmpy=8.4.2
-- xarray=2024.1.1
+- xarray=2025.1.2
 - matplotlib=3.8.2
 - cartopy=0.22.0
 - cython=3.0.2
@@ -22,11 +22,11 @@ dependencies:
 - gsw=3.6.17
 - h5py=3.9.0
 - nc-time-axis=1.4.1
-- dask=2024.7.1
+- dask=2025.2.0
 - pyyaml=6.0.1
 - cfunits=3.3.6
-- intake=0.7.0
-- intake-esm=2024.2.6
+- intake=2.0.8
+- intake-esm=2025.2.3
 - kerchunk=0.2.7
 - intake-esgf=2024.12.7
 - cf_xarray=0.8.4

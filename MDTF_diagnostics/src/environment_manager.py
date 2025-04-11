@@ -99,6 +99,12 @@ class NullEnvironmentManager(AbstractEnvironmentManager):
     """EnvironmentManager class which does nothing; intended as a dummy setting
     for building framework test harnesses.
     """
+    log: logging.log
+
+    def __init__(self, config: util.NameSpace, log):
+        self.code_root = config.CODE_ROOT
+        self.log = log    
+
     def create_environment(self, env_name):
         """No-op."""
         pass
@@ -284,6 +290,7 @@ class SubprocessRuntimePODWrapper:
 
     def __init__(self, pod):
         self.pod = pod
+        self.env_vars = dict()
 
     def set_pod_env_vars(self, pod, cases: dict):
         """Sets all environment variables for the POD: paths and names of each
@@ -499,7 +506,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
     kernel's scheduler.
     """
     _PodWrapperClass = SubprocessRuntimePODWrapper
-    _EnvironmentManagerClass = CondaEnvironmentManager
+    _EnvironmentManagerClass = None
     pods: list = []
     bash_exec: str = ""
     no_preprocessing: bool = False
@@ -509,8 +516,12 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         # transfer all pods, even failed ones, because we need to call their
         self.pods = [self._PodWrapperClass(p) for p in pod_dict.values()]
         # init object-level logger
+        if config.conda_root or config.micromamba_exe:
+            self._EnvironmentManagerClass = CondaEnvironmentManager
+        else:
+            self._EnvironmentManagerClass = NullEnvironmentManager
+        print(_log)    
         self.env_mgr = self._EnvironmentManagerClass(config, log=_log)
-
         # Need to run bash explicitly because 'conda activate' sources
         # env vars (can't do that in posix sh). tcsh could also work.
         self.bash_exec = find_executable('bash')

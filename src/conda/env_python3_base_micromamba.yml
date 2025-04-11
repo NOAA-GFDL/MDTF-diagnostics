@@ -11,13 +11,13 @@ dependencies:
 - scipy=1.14.0
 - netCDF4=1.6.5
 - cftime=1.6.2
-- xarray=2024.1.1
+- xarray=2025.1.2
 - matplotlib=3.8.2
 - pandas=2.2.2
 - cartopy=0.22.0
 - cython=3.0.2
 - pint=0.24.3
-- dask=2024.1.1
+- dask=2025.2.0
 - numba=0.60.0
 - scikit-learn=1.4.2
 - xesmf=0.8.1
@@ -28,9 +28,9 @@ dependencies:
 #- enso_metrics=3.1.1 Required by pcmdi_metrics, but no support for python>3.10
 #- pcmdi_metrics=3.0.2 Not used by current PODs-implement later
 - h5py=3.9.0
-- intake=0.7.0
+- intake=2.0.8
 - intake-xarray=0.7.0
-- intake-esm=2024.2.6
+- intake-esm=2025.2.3
 - nc-time-axis=1.4.1
 - pyyaml=6.0.1
 - networkx=3.1
@@ -42,6 +42,8 @@ dependencies:
     - cmocean
     - regionmask
     - falwa==2.0.0
+    - momgrid==1.9.0
+    - git+https://github.com/jkrasting/doralite
     - git+https://github.com/ajdawson/gridfill
     - git+https://github.com/raphaeldussin/static_downsampler
     - git+https://github.com/jkrasting/xcompare

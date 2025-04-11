@@ -37,7 +37,8 @@
         {
           "model": "test",
           "convention": "CMIP",
-          "realm": "atmos",  // can be used to refine query if dataset realm definition differs from POD realm
+          "realm": "atmos", // optional list or str; use to refine query if dataset realm definition differs from POD realm
+          "frequency": "", // optional list or str; use to refine query frequency (e.g., you want 6hrPT instead of 6hr)
           "startdate": "19800101120000",
           "enddate": "19841231000000"
         }
@@ -46,7 +47,8 @@
         {
           "model": "test",
           "convention": "CMIP",
-          "realm": "atmos",
+          "realm": "atmos", // optional list or str; use to refine query realm (e.g., dataset realm differs from POD realm)
+          "frequency": "", // optional list or str; use to refine query frequency (e.g., you want 6hrPT instead of 6hr)
           "startdate": "19850101",
           "enddate": "19891231"
         }

@@ -1,6 +1,5 @@
 # script to make the MDTF runtime configs for each realm/freq to run requested PODs
 import sys
-import os
 import json
 import copy
 

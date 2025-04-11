@@ -70,17 +70,16 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
         self.date_range = util.DateRange(start=startdate, end=enddate)
 
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
-        if self.query['frequency'] == '':
-            if var.is_static:
-                freq = "fx"
-            else:
-                freq = var.T.frequency
+        if var.is_static:
+            freq = "fx"
+        else:
+            freq = var.T.frequency
 
-            if not isinstance(freq, str):
-                freq = freq.format_local()
-            if freq == 'hr':
-                freq = '1hr'
-            self.query['frequency'] = freq
+        if not isinstance(freq, str):
+            freq = freq.format_local()
+        if freq == 'hr':
+            freq = '1hr'
+        self.query['frequency'] = freq
 
         var_id = var.name
         standard_name = var.standard_name
@@ -160,6 +159,10 @@ class GFDLDataSource(DataSourceBase):
 
     def set_query(self, var: varlist_util.VarlistEntry, path_regex: str):
         super().set_query(var, path_regex)
+        # this might need updating; currently, static files have the variable_id 'fixed' for GFDL catalogs
+        if var.is_static:
+            self.query['variable_id'] = 'fixed'
+            self.query.pop('standard_name')
         # this is hacky, but prevents the framework from grabbing from ice_1x1deg
         if self.query['realm'] == 'seaIce*':
             self.query['realm'] = 'ice'

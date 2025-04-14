@@ -129,7 +129,9 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
 
     def parse_pod_settings_file(self, code_root: str) -> util.NameSpace:
         """Parse the POD settings file"""
-        settings_file_query = Path(code_root, 'diagnostics', self.name).glob('*settings.*')
+        settings_file_query = list(Path(code_root, 'diagnostics', self.name).glob('*settings.*'))
+        if len(settings_file_query) == 0:
+            settings_file_query = list(Path(code_root, 'diagnostics', 'mar', self.name).glob('*settings.*'))
         settings_file_path = str([p for p in settings_file_query][0])
         # Use wildcard to support settings file in yaml and jsonc format
         settings_dict = cli.parse_config_file(settings_file_path)
@@ -236,16 +238,23 @@ class PodObject(util.MDTFObjectBase, util.PODLoggerMixin, PodBaseClass):
 
         Raises: :class:`~util.PodRuntimeError` if driver script can't be found.
         """
-        self.driver = os.path.join(self.paths.POD_CODE_DIR, self.pod_settings["driver"])
-        if not self.driver:
-            raise util.PodRuntimeError((f"No driver script found in "
-                                        f"{self.paths.POD_CODE_DIR}. Specify 'driver' in settings.jsonc."),
-                                       self)
-        if not os.path.isabs(self.driver):  # expand relative path
-            self.driver = os.path.join(self.paths.POD_CODE_DIR, self.driver)
+        if getattr(self.pod_settings, 'mar', False):
+            self.driver = os.path.join(self.paths.POD_CODE_DIR, 'mar', self.pod_settings["driver"])
+            if not self.driver:
+                raise util.PodRuntimeError((f"No driver script found in location "
+                                                f"{self.driver}. Specify 'driver' in settings.jsonc."),
+                                            self)
+        else:
+            self.driver = os.path.join(self.paths.POD_CODE_DIR, self.pod_settings["driver"])
+            if not self.driver:
+                raise util.PodRuntimeError((f"No driver script found in "
+                                            f"{self.paths.POD_CODE_DIR}. Specify 'driver' in settings.jsonc."),
+                                           self)
+            if not os.path.isabs(self.driver):  # expand relative path
+                self.driver = os.path.join(self.paths.POD_CODE_DIR, self.driver)
 
-        self.log.debug("Setting driver script for %s to '%s'.",
-                       self.full_name, self.driver)
+            self.log.debug("Setting driver script for %s to '%s'.",
+                           self.full_name, self.driver)
 
     def set_interpreter(self, pod_settings: util.NameSpace):
         """Determine what executable should be used to run the driver script.

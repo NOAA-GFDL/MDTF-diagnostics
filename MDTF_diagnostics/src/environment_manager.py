@@ -12,6 +12,7 @@ import typing
 import subprocess
 from src import util
 import yaml
+import shutil
 
 import logging
 _log = logging.getLogger(__name__)
@@ -367,6 +368,7 @@ class SubprocessRuntimePODWrapper:
         self.pod.pod_env_vars["case_env_file"] = out_file
         case_info = dict()
         case_info['CATALOG_FILE'] = catalog_file
+        self.pod.pod_env_vars['CATALOG_FILE'] = catalog_file
         case_info['CASE_LIST'] = dict()
         assert os.path.isfile(case_info['CATALOG_FILE']), 'CATALOG_FILE json not found in WORK_DIR'
         for case_name, case in case_list.items():
@@ -410,10 +412,14 @@ class SubprocessRuntimePODWrapper:
     def run_commands(self):
         """Produces the shell command(s) to run the POD.
         """
-        output_name = self.pod.driver.rstrip(".ipynb") + "_ipynb"
         if self.pod.program == 'jupyter':
+            output_name = os.path.basename(self.pod.driver).rstrip(".ipynb")+"_ipynb"
+            # I am really not a fan of this, but nbconvert does not have good output functions.
+            # This means that I need to copy over the notebook and run it from the wkdir
+            driver_copy = os.path.join(self.pod.pod_env_vars['WORK_DIR'], os.path.basename(self.pod.driver))
+            shutil.copy(self.pod.driver, driver_copy)
             return [f"/usr/bin/env {self.pod.program} nbconvert --to html" +\
-                    f" --output-dir='{self.pod.pod_env_vars['WORK_DIR']}' --output {output_name} --execute {self.pod.driver}"]
+                    f" --output-dir {self.pod.pod_env_vars['WORK_DIR']} --output {output_name} --execute {driver_copy}"]
         else:
             return [f"/usr/bin/env {self.pod.program} {self.pod.driver}"]
 
@@ -563,7 +569,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         return subprocess.Popen(
             commands,
             shell=True, executable=self.bash_exec,
-            env=env_vars, cwd=p.pod.paths.POD_WORK_DIR,
+            env=env_vars.copy(), cwd=p.pod.paths.POD_WORK_DIR,
             stdout=p.pod.log_file, stderr=p.pod.log_file,
             universal_newlines=True, bufsize=1
         )

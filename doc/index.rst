@@ -20,7 +20,7 @@ This site contains documentation for the MDTF-Diagnostics package. The code is f
    sphinx/pod_dev_toc
    sphinx/ref_toc
    sphinx/fmwk_toc
-   sphinx/pod_toc
+   sphinx/pods_toc
    sphinx/tools_toc
 
 

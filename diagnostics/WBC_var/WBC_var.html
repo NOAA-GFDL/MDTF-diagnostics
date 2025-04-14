@@ -1,0 +1,47 @@
+<!--
+    This file is the HTML output template for the example diagnostic and shows
+    how you should describe and link to the plots your diagnostic generates.
+    The framework will "fill in the blanks" corresponding to environment
+    variables and copy the file to <WK_DIR>.
+
+    EPS or PS files saved by your diagnostic are converted by the framework into
+    bitmaps in the following locations:
+    <WK_DIR>/model/PS/<plot_name>.eps -> <WK_DIR>/model/<plot_name>.png
+    <WK_DIR>/obs/PS/<plot_name>.eps -> <WK_DIR>/obs/<plot_name>.png
+    so the target of each link only needs to be the relative path,
+    eg. "model/<plot_name>.png".
+-->
+<title>WBC</title>
+<img src="../mdtf_diag_banner.png">
+<h3>Western Boundary Current (WBC)</h3>
+<p>
+The diagnostic plots show Western Boundary Current (WBC) analysis.
+</p>
+<p>
+</p>
+<TABLE>
+<TR>
+<TH align=left>Time period, 19500101-20141231
+<TR>
+<TH ALIGH=LEFT>WBC index
+<TH ALIGH=CENTER><A HREF=obs/WBCI.gulf.png>Gulf</A>	
+<TH ALIGH=CENTER><A HREF=obs/WBCI.kuroshio.png>Kuroshio</A>	
+<TH ALIGH=CENTER><A HREF=obs/WBCI.brazil.png>Brazil</A>	
+<TH ALIGH=CENTER><A HREF=obs/WBCI.agulhas.png>Agulhas</A>	
+<TH ALIGH=CENTER><A HREF=obs/WBCI.australia.png>Australia</A>	
+<TR>
+<TH ALIGH=LEFT>WBC path variability
+<TH ALIGH=CENTER><A HREF=obs/Amplitude_path_variability.gulf.png>Gulf</A>
+<TH ALIGH=CENTER><A HREF=obs/Amplitude_path_variability.kuroshio.png>Kuroshio</A>
+<TH ALIGH=CENTER><A HREF=obs/Amplitude_path_variability.brazil.png>Brazil</A>
+<TH ALIGH=CENTER><A HREF=obs/Amplitude_path_variability.agulhas.png>Agulhas</A>
+<TH ALIGH=CENTER><A HREF=obs/Amplitude_path_variability.australia.png>Australia</A>
+<TR>
+<TH ALIGH=LEFT>WBC EOF analysis
+<TH ALIGH=CENTER><A HREF=obs/EOF_path_variability.gulf.png>Gulf</A>
+<TH ALIGH=CENTER><A HREF=obs/EOF_path_variability.kuroshio.png>Kuroshio</A>
+<TH ALIGH=CENTER><A HREF=obs/EOF_path_variability.brazil.png>Brazil</A>
+<TH ALIGH=CENTER><A HREF=obs/EOF_path_variability.agulhas.png>Agulhas</A>
+<TH ALIGH=CENTER><A HREF=obs/EOF_path_variability.australia.png>Australia</A>
+</TABLE>
+

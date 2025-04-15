@@ -200,15 +200,15 @@ NumPy and xarray both have extensive documentation and many tutorials, such as:
 Python: Plotting
 ----------------
 
-- **Use the 'Agg' backend when testing your POD**: For reproducibility, set the shell environment variable
-  ``MPLBACKEND`` to ``Agg`` when testing your POD outside of the framework.
+**Use the 'Agg' backend when testing your POD**: For reproducibility, set the shell environment variable
+``MPLBACKEND`` to ``Agg`` when testing your POD outside of the framework.
 
-  *Why*: Matplotlib can use a variety of `backends <https://matplotlib.org/tutorials/introductory/usage.html#backends>`__\:
-  interfaces to low-level graphics libraries. Some of these are platform-dependent, or require additional libraries
-  that the MDTF framework doesn't install. In order to achieve cross-platform portability and reproducibility, the
-  framework specifies the ``'Agg'`` non-interactive (ie, writing files only) backend for all PODs, by setting the
-  ``MPLBACKEND`` environment variable.
+*Why*: Matplotlib can use a variety of `backends <https://matplotlib.org/tutorials/introductory/usage.html#backends>`__\:
+interfaces to low-level graphics libraries. Some of these are platform-dependent, or require additional libraries
+that the MDTF framework doesn't install. In order to achieve cross-platform portability and reproducibility, the
+framework specifies the ``'Agg'`` non-interactive (ie, writing files only) backend for all PODs, by setting the
+``MPLBACKEND`` environment variable.
 
-  When developing your POD, you'll want an interactive backend -- for example, this is automatically set up for you in
-  a Jupyter notebook. When it comes to testing your POD outside of the framework, however, you should be aware of this
-  backend difference.
+When developing your POD, you'll want an interactive backend -- for example, this is automatically set up for you in
+a Jupyter notebook. When it comes to testing your POD outside of the framework, however, you should be aware of this
+backend difference.

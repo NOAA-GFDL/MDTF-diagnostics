@@ -5,6 +5,7 @@
 
 # dir references
 run_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+echo "${run_dir}"
 mdtf_dir=/home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics
 #mdtf_dir=/home/Jacob.Mims/mdtf/MDTF-diagnostics
 activate=/home/oar.gfdl.mdtf/miniconda3/bin/activate
@@ -23,7 +24,7 @@ usage() {
 tempdir=""
 pod_config=""
 declare -a pods=()
-while getopts "hi:o:s:e:p:t:l:" arg; do
+while getopts "hi:o:s:e:p:t:l:c:" arg; do
    case "${arg}" in
       h) 
          usage
@@ -60,76 +61,87 @@ while getopts "hi:o:s:e:p:t:l:" arg; do
          ;;
       l)
          pod_config="${OPTARG}"
+         ;;
+      c)
+         convention="${OPTARG}"
    esac
 done
+
 shift $((OPTIND-1))
-if ! [ -d $outdir/config ]; then
-   mkdir -p $outdir/config
+if ! [ -d "${outdir}"/config ]; then
+   mkdir -p "${outdir}"/config
 fi
-if [ -z $tempdir ]; then
-   wkdir=$outdir
+
+if [ -z "${tempdir}" ]; then
+   wkdir="${outdir}"
 else
-   wkdir=$tempdir
+   wkdir="${tempdir}"
 fi
-if [ -z $pod_config ]; then 
-   pod_config="$run_dir/config/pod_config.json"
+
+if [ -z "${pod_config}" ]; then
+   pod_config="${run_dir}/config/pod_config.json"
 fi
 
 # check to see if catalog exists
 #  ^..^
 # /o  o\   
 # oo--oo~~~
-echo "looking for catalog in $ppdir"
-cat=$(grep -s -H "esmcat_version" $ppdir/*.json  | cut -d: -f1)
-if [[ "$cat" == "" ]]; then
-   env=/nbhome/fms/conda/envs/fre-2025.01
-   source $activate $env
-   fre catalog builder --overwrite $ppdir $outdir/catalog 
-   cat=$outdir/catalog.json
-   echo "new catalog generated: $cat"
-else
-   echo "found catalog: $cat"
-fi
+output_catalog="${outdir}"/catalog.json
+if [ ! -f "${output_catalog}" ]; then
+      echo "Looking for catalog in ${ppdir}"
+      input_catalog=$(grep -s -H "esmcat_version" "${ppdir}"/*.json  | cut -d: -f1)
+   if [[ "${input_catalog}" == "" ]]; then
+      env=/nbhome/fms/conda/envs/fre-2025.01
+      source $activate ${env}
+      fre catalog builder --slow --overwrite "${ppdir}" "${outdir}"/catalog
+      echo "New catalog generated: ${output_catalog}"
+   else
+      echo "found catalog: ${input_catalog}"
+   fi
 
+fi
 # edit template config file
-cp $run_dir/config/template_config.jsonc $outdir
-f=$outdir/template_config.jsonc
-if [ ! -f $f ]; then
-   echo "ERROR: failed to find $f"
+cp "${run_dir}"/config/template_config.jsonc "${outdir}"
+f=${outdir}/template_config.jsonc
+if [ ! -f "${f}" ]; then
+   echo "ERROR: failed to find ${f}"
    exit 0
 fi
 config='"DATA_CATALOG": "",'
 config_edit='"DATA_CATALOG": "'"${cat}"'",'
-sed -i "s|$config|$config_edit|ig" $f
+sed -i "s|${config}|${config_edit}|ig" "${f}"
 config='"WORK_DIR": "",'
 config_edit='"WORK_DIR": "'"${wkdir}"'",'
-sed -i "s|$config|$config_edit|ig" $f
+sed -i "s|${config}|${config_edit}|ig" "${f}"
 config='"OUTPUT_DIR": "",'
 config_edit='"OUTPUT_DIR": "'"${outdir}"'",'
-sed -i "s|$config|$config_edit|ig" $f
+sed -i "s|${config}|${config_edit}|ig" "${f}"
 config='"startdate": "",'
 config_edit='"startdate": "'"${startyr}"'",'
-sed -i "s|$config|$config_edit|ig" $f
+sed -i "s|${config}|${config_edit}|ig" "${f}"
 config='"enddate": ""'
 config_edit='"enddate": "'"${endyr}"'"'
-sed -i "s|$config|$config_edit|ig" $f
-echo "edited file $f"
+sed -i "s|${config}|${config_edit}|ig" "${f}"
+config_edit='"convention": "'"${convention}"'"'
+sed -i "s|${config}|${config_edit}|ig" "${f}"
+echo "edited file ${f}"
 
 # load mdtf base conda env
 env=/home/oar.gfdl.mdtf/miniconda3/envs/_MDTF_base
-source $activate $env
+source ${activate} ${env}
 #generate config files
-python $run_dir/scripts/gen_config.py $outdir/ $pod_config
+python "${run_dir}"/scripts/gen_config.py "${outdir}"/ "${pod_config}"
 
 # launch the mdtf with the config files
-for f in $(ls ${outdir}/config) ; do
-   echo "launching MDTF with $f"
-   "$mdtf_dir"/mdtf -f $outdir/config/$f
+file_list=$( ls "${outdir}"/config )
+for f in ${file_list}; do
+   echo "Launching MDTF-diagnostics with configuration ${f}"
+   "${mdtf_dir}"/mdtf -f "${outdir}/config/${f}"
 done
 
 # consolidate outputs into index
-cp $run_dir/scripts/index.html $outdir/
-cp $run_dir/scripts/mdtf_diag_banner.png $outdir/
-python $run_dir/scripts/gen_index.py $outdir/ $pod_config
+cp "${run_dir}"/scripts/index.html "${outdir}"/
+cp "${run_dir}"/scripts/mdtf_diag_banner.png "${outdir}"/
+python "${run_dir}"/scripts/gen_index.py "${outdir}"/ "${pod_config}"
 
 exit 0

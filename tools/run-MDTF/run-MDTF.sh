@@ -7,7 +7,7 @@
 run_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 echo "${run_dir}"
 mdtf_dir=/home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics
-#mdtf_dir=/home/Jacob.Mims/mdtf/MDTF-diagnostics
+#mdtf_dir=/net/jml/mdtf/MDTF-diagnostics
 activate=/home/oar.gfdl.mdtf/miniconda3/bin/activate
 
 #TEST: /archive/jpk/fre/FMS2024.02_OM5_20240819/CM4.5v01_om5b06_piC_noBLING_xrefine_test4/gfdl.ncrc5-intel23-prod-openmp/pp/ starts 0001
@@ -108,7 +108,7 @@ if [ ! -f "${f}" ]; then
    exit 0
 fi
 config='"DATA_CATALOG": "",'
-config_edit='"DATA_CATALOG": "'"${cat}"'",'
+config_edit='"DATA_CATALOG": "'"${output_catalog}"'",'
 sed -i "s|${config}|${config_edit}|ig" "${f}"
 config='"WORK_DIR": "",'
 config_edit='"WORK_DIR": "'"${wkdir}"'",'

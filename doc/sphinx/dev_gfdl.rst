@@ -45,8 +45,8 @@ Adding copies of POD observational data to the oar.gfdl.mdtf/inputdata directory
 --------------------------------------------------------------------------------
 
 Copies of POD bservational datasets are located the /home/oar.gfdl.mdtf/mdtf/inputdata directory.
-The data are available in the `NCAR MDTF obs_data collection on Globus
- <https://app.globus.org/file-manager?origin_id=87726236-cbdd-4a91-a904-7cc1c47f8912&origin_path=%2F&two_pane=false>`__.
+The data are available in the NCAR MDTF obs_data collection on `Globus 
+<https://app.globus.org/file-manager?origin_id=87726236-cbdd-4a91-a904-7cc1c47f8912&origin_path=%2F&two_pane=false>`__.
 In addition, GFDL developers who are responsible for reviewing POD pull requests can ask POD developers to email
 tarballs with observational and test datasets. This may be necessary to debug issues with the framework that POD
 developers encounter when integrating their code into the package.

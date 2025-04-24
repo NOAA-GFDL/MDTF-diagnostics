@@ -15,3 +15,9 @@ Input:
 - `-o`: path to directory to write the output
 - `-s`: start year of the dataset
 - `-e`: end year of the dataset
+- `-c`: (optional) data convention, cmip (default), gfdl, or cesm
+
+
+# /home/oar.gfdl.mdtf/mdtf/MDTF-diagnostics/tools/run-MDTF
+# ./run-MDTF.sh -i /archive/John.Krasting/fre_om5/FMS2024.02_om5_20250206/om5_b08/gfdl.ncrc5-intel23-prod/pp/ocean_monthly/ts
+# -o ~/mdtf_test_out -s 1978 -e 1988 -l config/pod_config.json

@@ -4,7 +4,7 @@
     "long_name" : "Sea Surface Temperature Bias - NOAA OISSTv2",
     "convention": "gfdl",
     "mar": true,
-    "description" : "This notebook plots the SST bias of a model simulation vs. climataology derived from NOAA OISSTv2",
+    "description" : "This notebook plots the SST bias of a model simulation vs. climatology derived from NOAA OISSTv2",
     "runtime_requirements": {
         "python3": ["matplotlib", "xarray", "netCDF4"]
     }

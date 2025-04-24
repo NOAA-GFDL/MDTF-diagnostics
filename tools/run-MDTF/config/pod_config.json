@@ -20,7 +20,7 @@
     "vars": ["ts", "ta", "hus", "rsus", "rsuscs", "rsds", "rsdscs", "rsdt", "rsut", "rsutcs", "rlut", "rlutcs"]
   },
   "SST_bias_NOAA_OISSTv2": {
-    "realm": "ocean",
+    "realm": "ocean_monthly",
     "frequency": "mon",
     "vars": ["tos", "areacello"]
   }  

@@ -173,9 +173,9 @@
       }
     ]
   },
-  "id": "esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.csv",
+  "id": "esm_catalog_CESM2_historical_r1i1p1f1",
   "description": null,
   "title": null,
-  "last_updated": "2023-06-01",
-  "catalog_file": "file:///Users/eriley/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.csv"
+  "last_updated": "2025-03-03T20:03:41Z",
+  "catalog_file": "file:///Users/eriley/mdtf/MDTF-diagnostics/diagnostics/WWEs/esm_catalog_CESM2_historical_r1i1p1f1.csv"
 }

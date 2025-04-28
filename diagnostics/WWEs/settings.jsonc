@@ -1,0 +1,67 @@
+// Basic POD Settings
+{
+  "settings" : {
+    "description" : "WWE POD",
+    "driver" : "WWEs.py",
+    "long_name" : " WWE POD",
+    "convention": "cmip",
+    "runtime_requirements": {
+      "python3": ["matplotlib", "xarray", "netCDF4", "pandas", "xesmf", "scipy"]
+    },
+    "pod_env_vars": {
+      "first_yr": "1980",
+      "last_yr": "2014",
+      // End of 20 is the last year in the first 20 years analyzed. This will be the first page of Hovmollers created
+      "endof20": "1999",
+      // The first year in the second set of 20 years worth of Hovmollers created
+      "start2nd20": "2000",
+      // Lower latitude limit for zonal wind stress lat band avgs (defaults to -2.5)
+      "min_lat": "-2.5",
+      // Upper latitude limit for zonal wind stress lat band avgs (defaults to 2.5)
+      "max_lat": "2.5",
+      // Lower longitude limit for zonal wind stress, lons should be 0-360 (defaults to 120)
+      "min_lon": "120",
+      // Upper longitude limit for zonal wind stresx, lons should be 0-360 (defaults to 280)
+      "max_lon": "280",
+      // Choose how native model grid should be regridded to match TropFlux grid (default is 'conservative_normed')
+      // The other option is biliniar
+      "regrid_method": "conservative_normed",
+      //How the zonal wind stress threshold to ID WWEs is determine.
+      //Default True uses the same 2sigma threshold as the obs.
+      //If False, the model's 2sigma tauu is the threshold
+      "do_static_threshold": "True"
+    }
+  },  
+// Variable Coordinates
+  "dimensions": {
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
+    "time": {"standard_name": "time"}
+  },
+
+// Variables
+  "varlist" : {
+    "tauu": {
+      "frequency" : "day",
+      "dimensions": ["time", "lat", "lon"],
+      "standard_name" : "surface_downward_eastward_stress",
+      "realm": "atmos",
+      "units": "Pa"
+    },
+    "sftlf": {
+     // "frequency": "fx",
+      "dimensions": ["lat", "lon"],
+      "standard_name": "land_area_fraction",
+      "realm": "land",
+      "units": "%"
+      }
+  }
+}

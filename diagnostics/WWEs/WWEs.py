@@ -296,6 +296,11 @@ mean_lon220p5 = np.array(np.mean(tauu_region_latavg.sel(lon = 220.5)))
 print('mean tauu at 220.5E:', mean_lon220p5)
 factor = -1 if mean_lon220p5 > 0 else 1
 tauu   = tauu_region_latavg * factor
+
+#Control the chunk size because the chunk size when computing data2use below goes to (1, 1) 
+#using the latest MDTF python 3.12, which then takes forever to run
+tauu = tauu.chunk({"time": tauu["time"].size})
+
 print('tauu after lat averaging:', tauu)
 print('At this point, tauu is a DataArray with time longitude dimensions on the TropFlux grid')
 
@@ -304,7 +309,10 @@ print('At this point, tauu is a DataArray with time longitude dimensions on the 
 ###################################################################################
 #filt_dataLP = filter_data(data = tauu, nweights = 201, a = 5)
 #For now the only option is to apply a 120-day highpass filter
-filt_dataHP = filter_data(data = tauu, nweights = 201, a = 120) 
+filt_dataHP = filter_data(data = tauu, nweights = 201, a = 120)
+
+#As above, control the chunk size
+filt_dataHP = filt_dataHP.chunk({"time": tauu["time"].size})
 
 data2use        = tauu - filt_dataHP
 obs_tauu_thresh = 0.04 #Nm-2 Two standard deviations of the TropFlux lat-averaged 120E-280E zonal wind stress.

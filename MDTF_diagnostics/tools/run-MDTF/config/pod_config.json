@@ -2,21 +2,26 @@
   "Wheeler_Kiladis": {
     "realm": "atmos_cmip",
     "frequency": "day",
-    "vars": ["rlut","pr","wap500","ua200","ua850"]
+    "vars": ["rlut", "pr", "wap500", "ua200", "ua850"]
   },
   "MJO_suite": {
     "realm": "atmos_cmip",
     "frequency": "day",
-    "vars": ["rlut","pr","ua200","ua850","va200","va850"]
+    "vars": ["rlut", "pr", "ua200", "ua850", "va200", "va850"]
   },
   "ocn_surf_flux_diag": {
     "realm": "atmos_cmip",
     "frequency": "day",
-    "vars": ["ts","psl","sfcWind","huss","hfls","pr"]
+    "vars": ["ts", "psl", "sfcWind", "huss", "hfls" ,"pr"]
   },
   "forcing_feedback": {
     "realm": "atmos_cmip",
     "frequency": "mon",
-    "vars": ["ts","ta","hus","rsus","rsuscs","rsds","rsdscs","rsdt","rsut","rsutcs","rlut","rlutcs"]
-  }
+    "vars": ["ts", "ta", "hus", "rsus", "rsuscs", "rsds", "rsdscs", "rsdt", "rsut", "rsutcs", "rlut", "rlutcs"]
+  },
+  "SST_bias_NOAA_OISSTv2": {
+    "realm": "ocean_monthly",
+    "frequency": "mon",
+    "vars": ["tos", "areacello"]
+  }  
 }

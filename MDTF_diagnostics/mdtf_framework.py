@@ -8,6 +8,15 @@
 # created during installation.
 
 import sys
+import importlib.util
+# check to see if MDTF package is installed; if not run the legacy way
+try:
+    import MDTF_diagnostics
+    MDTF_PACKAGE_PATH = MDTF_diagnostics.__path__[0]
+    sys.path.append(MDTF_PACKAGE_PATH)
+except:
+    MDTF_PACKAGE_PATH = ''
+    print('WARNING: MDTF python package not found; will try to run using conda environments')
 
 # do version check before anything else
 if sys.version_info.major != 3 or sys.version_info.minor < 10:
@@ -128,6 +137,8 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # Test ctx.config
     # print(ctx.config.WORK_DIR)
     ctx.config.CODE_ROOT = os.path.dirname(os.path.realpath(__file__))
+    if MDTF_PACKAGE_PATH != '':
+        ctx.config.CODE_ROOT = MDTF_PACKAGE_PATH
     ctx.config.TEMP_DIR_ROOT = ctx.config.WORK_DIR
     log_config = cli.read_config_file(
         ctx.config.CODE_ROOT, "src", "logging.jsonc"
@@ -150,7 +161,6 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         backup_filename=None,
         contents=log_config
     )
-
     # Set up main logger
     log = MainLogger(log_dir=model_paths.WORK_DIR)
     if verbose:
@@ -158,7 +168,6 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
     # configure a variable translator object with information from Fieldlist tables
     var_translator = translation.VariableTranslator(ctx.config.CODE_ROOT)
     var_translator.read_conventions(ctx.config.CODE_ROOT)
-
     # initialize the preprocessor (dummy pp object if run_pp=False)
     data_pp = preprocessor.init_preprocessor(model_paths,
                                              ctx.config,
@@ -173,7 +182,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
                                                                                                  model_paths,
                                                                                                  parent=None)
         cases[case_name].set_date_range(case_dict.startdate, case_dict.enddate)
-
+        
     pods = dict.fromkeys(ctx.config.pod_list, [])
     pod_runtime_reqs = dict()
     # configure pod object(s)

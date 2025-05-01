@@ -891,7 +891,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         return pd.DataFrame.from_dict(group_df).reset_index()
 
     def crop_date_range(self, case_date_range: util.DateRange, xr_ds, time_coord) -> xr.Dataset:
-        xr_ds = self.drop_attributes(xr_ds)
         xr_ds = xr.decode_cf(xr_ds,
                              decode_coords=True,  # parse coords attr
                              decode_times=True,

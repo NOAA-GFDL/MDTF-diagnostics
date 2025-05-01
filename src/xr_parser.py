@@ -630,7 +630,7 @@ class DefaultDatasetParser:
 
     def restore_vars_backup(self, ds, drop_vars: list):
         for var in drop_vars:
-            ds[var] = self.vars_backup.get(var, dict())
+            ds[var] = self.vars_backup.get(var, list())
     def normalize_standard_name(self, new_attr_d, attr_d):
         """Method for munging standard_name attribute prior to parsing.
         """

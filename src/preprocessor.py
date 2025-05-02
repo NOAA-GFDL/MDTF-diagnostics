@@ -891,7 +891,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         return pd.DataFrame.from_dict(group_df).reset_index()
 
     def crop_date_range(self, case_date_range: util.DateRange, xr_ds, time_coord) -> xr.Dataset:
-        xr_ds = self.drop_attributes(xr_ds)
         xr_ds = xr.decode_cf(xr_ds,
                              decode_coords=True,  # parse coords attr
                              decode_times=True,
@@ -1545,6 +1544,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         v_dataset = ds[v].to_dataset()
                         var_ds = xr.merge([var_ds, v_dataset])
 
+        # assign lat/lon coordinate standard_name if not defined or incorrect
+        for v in var_ds.variables:
+            if 'lat' in v.lower() and 'lat' not in var_ds[v].attrs['standard_name'].lower():
+                var_ds[v].attrs['standard_name'] = var.Y.standard_name
+            elif 'lon' in v.lower() and 'lon' not in var_ds[v].attrs['standard_name'].lower():
+                var_ds[v].attrs['standard_name'] = var.X.standard_name
 
         # The following block is retained for time comparison with dask delayed write procedure
         # var_ds.to_netcdf(

@@ -1,0 +1,54 @@
+{
+  "settings": {
+    "driver": "gulf_stream_diag_new.py",
+    "long_name": "Gulf stream index diagnostic",
+    "convention" : "cmip",
+    "description": "Gulf stream index diagnostic",
+    "runtime_requirements": {
+      //"python3": ["matplotlib","xarray","numpy","scipy","metpy","datetime","warnings","cftime","eofs","seaborn","statsmodels","netCDF4","cmocean"]
+      //"python3": ["datetime","warnings","eofs","seaborn","statsmodels"]
+      "python3": ["eofs","seaborn","statsmodels"]
+    },
+    "pod_env_vars": {
+      "predef_obs" : "True",
+      "obs_start_year" : "1993",
+      "obs_end_year" : "2022",
+      "x_axis_name" : "lon",
+      "y_axis_name" : "lat",
+      "lon_coord_name" : "lon",
+      "lat_coord_name" : "lat",
+      "lat_min": "32",
+      "lat_max": "46",
+      "lon_min": "279",
+      "lon_max": "310"
+    }
+  },
+  "data": {
+    "frequency": "mon"
+  },
+  "dimensions": {
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+            },
+    "time": {
+              "standard_name": "time"
+            }
+  },
+  "varlist": {
+      "adt": {
+        "standard_name": "sea_surface_height_above_geoid",
+        "realm": "ocean",
+        "units": "m",
+        "dimensions" : ["time", "lat", "lon"]
+        }
+
+  }
+}
+

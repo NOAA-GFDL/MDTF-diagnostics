@@ -1,0 +1,106 @@
+// Example MDTF diagnostic settings file
+//
+// This should be an ascii text file in JSON format 
+// (https://en.wikipedia.org/wiki/JSON#Data_types_and_syntax), with the addition
+// that all text to the  right of a "//" is a comment and ignored (sometimes 
+// called "JSONC" format).
+// 
+{
+  "settings" : {
+    // Name of the driver script. This should be a single script, taking no 
+    // command-line arguments, which runs the entire analysis (calling any other
+    // scripts or subroutines as needed.)
+    "driver" : "blocking_neale.py",
+
+    // Human-readable name of the diagnostic. May contain spaces. 
+    "long_name" : "Rich Neale's blocking diagnostic",
+    // Data convention exepected by the diagnostic: cmip (default), cesm, or gfdl
+    "convention": "cesm",
+
+    // Human-readable name of the diagnostic. May contain spaces. This
+    // is used to describe your diagnostic on the top-level index.html page.
+    "description" : "Rich Neale's blocking diagnostic",
+
+    // (optional) Any diagnostic-specific environment variables, given as 
+    // key:value pairs. The user can't change these at runtime, but they can be 
+    // used to set site-specific installation settings for your diagnostic.
+    // Years behavior: Ideally, there analysis is only done on overlapping obs & MDTF case data
+    //                 If there isn't overlapping data, set USE_CASE_YEARS false and specify years
+    //                 Note that MDTF case years are set in the input file: src/default_tests.jsonc
+    "pod_env_vars" : {
+	"MDTF_BLOCKING_OBS"               : "True",  //both ERA & MERRA for now
+        "MDTF_BLOCKING_OBS_USE_CASE_YEARS": "False", //if False, must set ERA/MERRA/CAM5 FIRST/LAST-YRS below
+	"MDTF_BLOCKING_OBS_ERA_FIRSTYR"   : 2010,    
+	"MDTF_BLOCKING_OBS_ERA_LASTYR"    : 2014,  
+	"MDTF_BLOCKING_OBS_MERRA_FIRSTYR" : 2009,  
+	"MDTF_BLOCKING_OBS_MERRA_LASTYR"  : 2011,  
+	"MDTF_BLOCKING_OBS_CAM5_FIRSTYR"  : 1979,     
+	"MDTF_BLOCKING_OBS_CAM5_LASTYR"   : 2007,  
+	"MDTF_BLOCKING_CAM3": "False", //will run but doesn't show on webpage
+	"MDTF_BLOCKING_CAM4": "False", //will run but doesn't show on webpage
+	"MDTF_BLOCKING_CAM5": "True",  //webpage will fail without- 4/26/23 maybe not true anymore
+	"MDTF_BLOCKING_READ_DIGESTED" : "True",     // file should be available!
+	"MDTF_BLOCKING_WRITE_DIGESTED": "False",    // writes out case data as digested. requires READ_DIGESTED = False(DRB?!)
+	"MDTF_BLOCKING_WRITE_DIGESTED_DIR": "",       //default outdir
+        "MDTF_BLOCKING_DEBUG": "False"
+    },
+  // MDTF_BLOCKING_COMPARE_LONG_YEARS:
+  //            True  : uses 1979-1999 (or available) for comparisons
+  //            False : uses same years as the MDTF case
+  // MDTF_BLOCKING_DEBUG: True cuts ensembles to 2 members
+
+
+
+    // Programs and third-party libraries your diagnostic needs to run. This is
+    // a set of key:value pairs, where "key" is the name of a language's 
+    // executable and "value" is a list of all the libraries that language needs.
+    // The framework will ensure everything listed here is on your diagnostic's
+    // $PATH when it runs.
+    "runtime_requirements": {
+      "python3": [],
+      "ncl": ["contributed", "gsn_code", "gsn_csm"]
+    }
+  },
+
+
+  // In this section, you define the names and units for the coordinates used by
+  // the variables defined below in the "varlist" section. Names in the 
+  // "dimensions" attribute for each variable must correspond to a coordinate
+  // named here.
+  "dimensions": {
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"},
+    "time": {"standard_name": "time"}
+  },
+
+  // In this section, you describe what model data your diagnostic uses. Add one
+  // list entry (the section in curly braces) for each variable, separated by 
+  // commas.
+  "varlist" : {
+    // Variable identifier. An environment variable with this name followed by _var 
+    // will be set
+   // to what the corresponding field is called in the model being analyzed.
+    "zg": {    
+      "path_variable" : "MODEL_DATA_PATH",
+      "standard_name" : "geopotential_height", 
+      "units": "m",
+      "realm" : "atmos",
+      "frequency" : "day",
+      "dimensions": ["time", "lat", "lon"],	 
+      "scalar_coordinates": {"lev" : 500}
+    }
+  }
+}

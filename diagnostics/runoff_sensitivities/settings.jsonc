@@ -7,13 +7,16 @@
   "settings" : {
     "driver" : "runoff_sensitivities_diag.py",
     "long_name" : "diagnostic for the runoff sensitivities",
-    "realm" : ["atmos","land"],
     "description" : "runoff sensitivity diagnostics",
-
     "runtime_requirements": {
         "python3": ["matplotlib", "netCDF4", "scipy", "numpy", "sklearn", "cartopy"]
     }
   },
+  
+  // Data block is newly added (Hanjun Kim - 070325)
+  data": {
+    "realm": ["atmos", "land"]
+  }
 
   "dimensions": {
     "lat": {"standard_name": "latitude"},

@@ -47,7 +47,7 @@ print("Model: " + Model)
 ;------------ Read in zonal wind and olr --------------------
 
 diri1   = getenv("OBS_DATA")+"/"         ;Observed Input data directory
-diro    = getenv("WK_DIR")+"/model/netCDF/" 
+diro    = getenv("WORK_DIR")+"/model/netCDF/"
 filolr  = getenv("olr_file")          ; input file
 filu850 = getenv("u850_file")          ; input file
 filu250 = getenv("u250_file")          ; input file

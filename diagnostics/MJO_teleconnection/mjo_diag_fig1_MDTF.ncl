@@ -41,8 +41,8 @@ print("-------------------------------------------------------------------------
 ;                                    Input and output data directories
 ;---------------------------------------------------------------------------------------------------------|
 dirobs   = getenv("OBS_DATA")+"/" 
-dirm     = getenv("WK_DIR")+"/model/netCDF/"
-dirfig   = getenv("WK_DIR")+"/model/PS/"
+dirm     = getenv("WORK_DIR")+"/model/netCDF/"
+dirfig   = getenv("WORK_DIR")+"/model/PS/"
 
 
 print("precipitation and geopotential height composites are read in")

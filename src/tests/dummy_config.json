@@ -1,32 +1,38 @@
 {
-  "case_list" : [
+  "pod_list" : [
+     "example_multicase"
+   ],
+  "case_list":
     {
-      "CASENAME" : "DUMMY.CASENAME",
-      "model" : "DUMMY_MODEL",
-      "convention" : "CF",
-      "FIRSTYR" : 0,
-      "LASTYR" : 100,
-      "pod_list": [
-          "example"
-      ]
-    }
-  ],
+      "TEST_01":
+        {
+          "model": "test",
+          "convention": "CMIP",
+          "startdate": "00000101",
+          "enddate": "01001231"
+        }
+      ,
+      "TEST_02":
+        {
+          "model": "test",
+          "convention": "CMIP",
+          "startdate": "01010101120000",
+          "enddate": "02001231000000"
+        }
+    },
   "OBS_DATA_ROOT": "/DUMMY/PATH/OBS_DATA_ROOT",
   "MODEL_DATA_ROOT": "/DUMMY/PATH/MODEL_DATA_ROOT",
-  "WORKING_DIR": "/DUMMY/PATH/WORKING_DIR",
+  "WORK_DIR": "/DUMMY/PATH/WORKING_DIR",
   "OUTPUT_DIR": "/DUMMY/PATH/OUTPUT_DIR",
-  "data_manager": "Local_File",
-  "environment_manager": "Conda",
+  "micromamba_exe": "/DUMMY/PATH/.local/bin/micromamba",
   "conda_root": "/DUMMY/PATH/conda_root",
   "conda_env_root": "/DUMMY/PATH/conda_env_root",
-  "preprocessor": "SampleModelData",
   "file_transfer_timeout": 300,
   "save_ps": true,
   "save_nc": false,
   "make_variab_tar": false,
   "overwrite": false,
   "verbose": 1,
-  "test_mode": false,
-  "dry_run": false,
-  "keep_temp": false
+  "keep_temp": false,
+  "translate_data": true
 }

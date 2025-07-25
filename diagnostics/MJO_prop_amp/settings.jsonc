@@ -13,7 +13,7 @@
   "settings": {
     "driver": "MJO_prop_amp.py",
     "long_name": "MJO propagation and amplitude in GCMs",
-    "realm" : "atmos",
+    "convention" : "cesm",
     "description": "Diagnostics of the Madden-Julian Oscillation (Jiang UCLA)",
     "runtime_requirements": {
       "python3": [],
@@ -24,8 +24,16 @@
     "frequency": "day"
   },
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
     "lev": {
       "standard_name": "air_pressure",
       "units": "Pa",
@@ -38,15 +46,18 @@
     "pr": {
       "standard_name": "precipitation_flux",
       "units": "kg m-2 s-1",
+      "realm": "atmos",
       "dimensions": ["time", "lat", "lon"]
     },
     "prw": {
       "standard_name": "atmosphere_mass_content_of_water_vapor",
       "units": "kg m-2",
+      "realm": "atmos",
       "dimensions": ["time", "lat", "lon"]
     },
     "hus": {
       "standard_name": "specific_humidity",
+      "realm": "atmos",
       "units": "1",
       "dimensions": ["time", "lev", "lat", "lon"]
     }

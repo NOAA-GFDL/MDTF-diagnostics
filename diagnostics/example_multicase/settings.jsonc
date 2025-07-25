@@ -17,7 +17,7 @@
     "description" : "Example diagnostic with multiple cases",
     "driver" : "example_multicase.py",
     "long_name" : "Example diagnostic with multiple cases",
-    "realm" : "atmos",
+    "convention": "cmip",
     "runtime_requirements": {
         "python3": ["matplotlib", "xarray", "netCDF4"]
     }
@@ -25,8 +25,16 @@
 
 // Variable Coordinates
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
     "time": {"standard_name": "time"}
   },
 
@@ -34,6 +42,7 @@
   "varlist" : {
     "tas": {
       "frequency" : "day",
+      "realm": "atmos",
       "dimensions": ["time", "lat", "lon"],
       "modifier": "atmos_height",
       "standard_name" : "air_temperature",

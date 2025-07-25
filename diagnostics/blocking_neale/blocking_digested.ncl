@@ -12,12 +12,13 @@ begin
 
 
   file_opts_out = file_opts_in  ; copy everything
-  path_out        = set_from_env("WK_DIR",False)                    ; wkdir
+  path_out        = set_from_env("WORK_DIR",False)                    ; wkdir
   dir_out = set_from_env("MDTF_BLOCKING_WRITE_DIGESTED_DIR",False)  ; write directory
 
   strs = str_split(file_opts_in@file_name, "/")  ; separate strings of path by "/"
 
   file_name_digested = strs(dimsizes(strs)-1)    ; file name is last string
+
 
   dir_one_up = strs(dimsizes(strs)-2)  ;add obs names to their file names
   if ((dir_one_up.eq."ERAI").or.(dir_one_up.eq."MERRA")) then  
@@ -72,6 +73,7 @@ begin
 
     time_ymd = file_opts_in@time_ymd
     dims_time_ymd = dimsizes(time_ymd)
+    print("write_digested "+dims_time_ymd)
     ncalendar = dims_time_ymd(1)
 
     dimSizes = (/ -1   , nlon, ncalendar /) 

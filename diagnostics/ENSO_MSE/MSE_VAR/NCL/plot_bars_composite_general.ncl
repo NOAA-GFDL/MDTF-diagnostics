@@ -8,8 +8,6 @@ begin
      factor  = 1./ff
 ;;;   get in the general  custom selectable domain lat/lons
 
-;;      composite_dir_data  = getenv("ENSO_MSE_WKDIR_COMPOSITE")+"/model/netCDF/DATA/"
-
        slon1 = tofloat( getenv("slon1"))
        slon2 = tofloat( getenv("slon2"))
        slat1 = tofloat( getenv("slat1"))
@@ -21,10 +19,6 @@ begin
      
        model = getenv( "CASENAME")
 
-;;       varcode = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/diagnostics/ENSO_MSE/"
-;;      vardata = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/wkdir/MDTF_CESM2_1950_2005.v1/ENSO_MSE/MSE_VAR/"
-;;      outdir = "/export/oat/hafner/gyoji7/VARIOUS/HANA/MSE_SRC/PYTHON/MDTF_2021-07-06/wkdir/MDTF_CESM2_1950_2005.v1/ENSO_MSE/"
-;;      model = "CESM2"
  
       slon1 = 160.
       slon2 = 200.

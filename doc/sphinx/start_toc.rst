@@ -8,4 +8,3 @@ Getting started
    start_overview
    start_install
    start_config
-   start_multirun

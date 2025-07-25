@@ -17,13 +17,13 @@ import datetime
 # ======================================================================
 # ======================================================================`
 
-###  the switches to select LEVEL_04 or LEVEL_05  either 0 or 1 but not both the same
-level4  = 1
-level5  = 0
+# The switches to select LEVEL_04 or LEVEL_05  either 0 or 1 but not both the same
+level4 = 1
+level5 = 0
 
 print( "Starting ENSO_RWS.py ") 
 
-os.environ["ENSO_RWS_WKDIR"] = os.environ["WK_DIR"]
+os.environ["ENSO_RWS_WKDIR"] = os.environ["WORK_DIR"]
 
 #DRB: unfortunately these don't get copied to namelist_save, which means
 #debugging requires starting from this script. To add them here requires

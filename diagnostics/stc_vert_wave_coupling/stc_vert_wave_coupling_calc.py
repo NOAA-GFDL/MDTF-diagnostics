@@ -57,7 +57,7 @@ def zonal_wave_coeffs(dat, keep_waves=None):
 
     Parameters
     ----------
-    ds : `xarray.DataArray`
+    dat : `xarray.DataArray`
         The input DataArray to take the FFT on.
 
     keep_waves : list of ints (optional) or None
@@ -231,10 +231,10 @@ def cross_spectral_corr(Z_fc, nlons, months, src_lev, des_lev, lags):
 
         """
 
-        if (s.ndim > 1) or (c.ndim > 1):
+        if s.ndim > 1 or c.ndim > 1:
             msg = 'cross_spectral_corr._sigma: s an c must both be 1-D'
             raise ValueError(msg)
-        if (s.size != c.size):
+        if s.size != c.size:
             msg = 'cross_spectral_corr._sigma: s and c must have the same size'
             raise ValueError(msg)
 
@@ -278,7 +278,7 @@ def cross_spectral_corr(Z_fc, nlons, months, src_lev, des_lev, lags):
 
         """
 
-        if (x.size != y.size):
+        if x.size != y.size:
             msg = 'cross_spectral_corr._lin_corr_times: x and y must have the same size'
             raise ValueError(msg)
 
@@ -295,7 +295,7 @@ def cross_spectral_corr(Z_fc, nlons, months, src_lev, des_lev, lags):
             # because some elements will sit next to elements that are from the next year.
             # The trick here is to use an array of times that match the data, and to select
             # only the pairs that have the given lag equal to tau.
-            if (tau > 0):
+            if tau > 0:
                 times_x = times[0:n-tau]
                 times_y = times[tau:n+1]
                 good_pairs = np.where(times_y-times_x == np.timedelta64(tau, 'D'))
@@ -356,4 +356,4 @@ def cross_spectral_corr(Z_fc, nlons, months, src_lev, des_lev, lags):
     phas = np.arctan2(-qd, co)
     phas = xr.DataArray(phas, dims=['lag'], coords=[lags])
 
-    return (coh, phas)
+    return coh, phas

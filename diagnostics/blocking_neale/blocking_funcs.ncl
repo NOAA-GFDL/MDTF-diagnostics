@@ -170,19 +170,37 @@ begin
 end
 
 ; ------------------------------------------------------
-procedure check_time_range(year0,year1,time_y_in)
+function check_time_range(year,year_type,time_y_in)
 begin
   func_name = "check_time_range"
 
-  if (year0.lt.min(time_y_in)) then
-    print("WARNING: user requested start year "+year0+" precedes data start year "+min(time_y_in))
-    print("         proceeding with whatever is found")
-  end if
+;print("Requested year "+year_type+" "+year)
+if (year_type.eq."start") then
+  min_year = min(time_y_in)
+  if (year.lt.min_year) then    
+    print("WARNING: user requested "+year_type+" year "+year+" precedes data start year "+min_year)
+    print("         Resetting start year to "+min_year)
+    return min_year
+  else 
+    return year
+  end if 
+end if
 
-  if (year1.gt.max(time_y_in)) then
-    print("WARNING: user requested end year "+year1+" is after data end year "+max(time_y_in))
-    print("         proceeding with whatever is found")
+if (year_type.eq."end") then
+  max_year = max(time_y_in)
+    if (year.gt.max_year) then
+    print("WARNING: user requested "+year_type+" year "+year+" is after data end year "+max_year)
+    print("         Resetting end year to "+max_year)  
+    return max_year
+  else  
+    return year
   end if
+end if
+
+print("ERROR: year type "+year_type+" not recognized by func_name.")
+exit
+
+
 end
 ; ------------------------------------------------------
 function find_required_days(year0,year1,period_name,time_ymd)
@@ -203,16 +221,24 @@ begin
    print("Time range in file  : "+time_y_in(0)+" "+time_m_in(0)+" "+time_d_in(0)+" - "+time_y_in(ntime-1)+" "+time_m_in(ntime-1)+" "+time_d_in(ntime-1))
 
 ; Find required days of whole input data period.
-   check_time_range(year0,year1,time_y_in)
+   print("Requested time range: "+year0+" - "+year1)
+   year0_new = check_time_range(year0,"start",time_y_in)
+   year1_new = check_time_range(year1,"end",time_y_in)
    if (period_name.eq."ANN") then
      idays = ind(time_y_in.ge.year0.and.time_y_in.le.year1)
    else
      idays = ind((time_y_in.ge.year0.and.time_y_in.le.year1).and.(time_m_in.eq.mnths(0).or.time_m_in.eq.mnths(1).or.time_m_in.eq.mnths(2)))  
    end if
 
+
    ndays = dimsizes(idays)	
+   if (ndays.eq.1 ) then
+      print("ERROR: no days found in common")
+      exit
+   end if	
+
    ; Selected dates
-   print("Requested time range: "+time_y_in(idays(0))+" "+time_m_in(idays(0))+" "+time_d_in(idays(0))+" - "+time_y_in(idays(ndays-1))+" "+time_m_in(idays(ndays-1))+" "+time_d_in(idays(ndays-1)))
+   print("Returned time range: "+time_y_in(idays(0))+" "+time_m_in(idays(0))+" "+time_d_in(idays(0))+" - "+time_y_in(idays(ndays-1))+" "+time_m_in(idays(ndays-1))+" "+time_d_in(idays(ndays-1)))
 
    return idays
 
@@ -363,6 +389,7 @@ function blocking_readfile_orig (opts)
 
 begin ;  blocking_readfile_orig
      func_name = "blocking_readfile_orig"
+             
 
      fin = addfile(opts@file_name,"r")
 
@@ -454,34 +481,32 @@ begin
 
   func_name = "set_from_env"
 
-  opts = get_input_opts(func_name,opts_in)
-  
-  found_good_setting = False ; flag to check at the end
+  opts = get_input_opts(func_name,opts_in)  ;initializes if not yet done
+ 
+  if (ismissing(opts@$name_in$)) then
+    setting = getenv(name_in)  ; ncl function to grab env vars
 
-  setting = getenv(name_in)  ; ncl function to grab env vars
-
-  ; If it is supposed to be logical, check it or if it looks logical, convert it
-  if ( check_if_setting_is_type_logical(name_in,setting,opts).or.string_looks_logical(setting)) then
-    opts@$name_in$ = set_from_env_logical(name_in,opts_in)
-    if ( ismissing(opts@$name_in$) ) then
-      print("WARNING: "+name_in+" "+setting+" should be/looks logical but check/conversion failed")
-    end if ; ismissnig
-
-  ; If it is supposed to be integer, try to convert it
-  else 
-    if ( check_if_setting_is_type_integer(name_in,opts)) then
-      opts@$name_in$ = stringtointeger(setting)
-      if ( ismissing(opts@$name_in$)) then
-        print("WARNING: error converting env var "+name_in+" = "+setting+" to integer")
-      end if ; ismissing
-    else
-      opts@$name_in$ = setting
-    end if ; check if integer 
-  end if ; check if logical (ncl doesn't really have an else if)
-
+    if (ismissing(setting)) then
+   	print("ERROR "+func_name+": No env var or opts setting found for "+name_in)
+    else 
+       ; If it is supposed to be logical, check it or if it looks logical, convert it
+       ; Note: could just use the tological(set_from_env (like tointeger in calls to this)?
+         if ( check_if_setting_is_type_logical(name_in,setting,opts).or.string_looks_logical(setting)) then
+	     opts@$name_in$ = set_from_env_logical(name_in,opts_in)
+	     if ( ismissing(opts@$name_in$) ) then
+	       print("WARNING: "+name_in+" "+setting+" should be/looks logical but check/conversion failed")
+    	     end if ; ismissnig
+	 end if ; logical 
+       opts@$name_in$ = setting	
+   end if ; (ismissing(setting)
+  else ; if (ismissing(opts@$name_in$)) then
+;       print(func_name+" found "+name_in+" = "+opts@$name_in$+" already in opts")
+  end if ; if (ismissing(opts@$name_in$)) then
 
   if (ismissing(opts@$name_in$)) then 
-    print("WARNING: "+func_name+" did not find a value for env var "+name_in)
+;    print("WARNING: "+func_name+" did not find a value for env var "+name_in)
+  else		    
+;    print(func_name+" found env var "+name_in+" = "+opts@$name_in$)
   end if
 
   return opts@$name_in$   ; might be missing. Also returned in opts@name_in
@@ -738,32 +763,58 @@ begin
 end 
 
 ; ------------------------------------------------------
-function get_years_run(nruns,opts)
-; If compare_long_years = True, over-rides user settings 
-; to use (whatever is available from) 1979-1999
+function get_years_run(nruns,run_type,opts)
 ;
 ; extends single value to dimsize nfiles = dimseizes(opts@file_names)
 ;
+; run_type = OBS or MODEL_COMPARISON (cam3,4,5)
+;
+; for OBS, 
 ; sets start years (years_run0 = years_run(0,:))  
 ;  and   end years (years_run1 = years_run(1,:))  
 ;
+; for MODEL: uses FIRSTYR_ALL (MIN) AND LASTYR_ALL (MAX)
 
 begin
 
-  compare_long_years = set_from_env_logical("MDTF_BLOCKING_COMPARE_LONG_YEARS",opts)
-; False = user input dates control obs/ensembles
-; True  = 1979-1999 used for obs/ensembles regardless of user input
+func_name = "get_years_run"
 
-  years_run = new((/2,nruns/),"integer")
-  
-  if ( compare_long_years ) then
-    years_run(0,:) = 1979 
-    years_run(1,:) = 1999
-  else 
-    years_run(0,:) = tointeger(set_from_env("FIRSTYR",opts))
-    years_run(1,:) = tointeger(set_from_env("LASTYR",opts))
-  end if
-  
+  use_case_years = set_from_env_logical("MDTF_BLOCKING_OBS_USE_CASE_YEARS",opts)
+; if False = use OBS setting in diagnostic/blocking_neale/settings.jsonc, MODEL hard-coded here
+; if True  = use FIRSTYR_ALL(min) and LASTYR_ALL(max) from MDTF_CASES in src/input.jsonc
+
+; Hard-coded indices for OBS; redundant dimension for MODEL. Improve this when we move to python!
+; dims:  [FIRST,LAST] x [ ERA, MERRA]
+
+nruns = min((/ nruns,2 /))  ; make dimensions always longer than 1
+years_run = new((/2,nruns/),"integer")  
+
+print(func_name+" run_type:"+run_type+", use_case_years: "+use_case_years)
+if ( use_case_years ) then  ; uses min/max of all user cases
+   if ((isvar("FIRSTYR_ALL")).and.(isvar("LASTYR_ALL")))then  ; set by translate_multicase_to_envs
+      years_run(0,:) = tointeger(set_from_env("FIRSTYR_ALL",opts)) ; already integer
+      years_run(1,:) = tointeger(set_from_env("LASTYR_ALL",opts))
+   else  ; either obs or single case
+      years_run(0,:) = tointeger(set_from_env("FIRSTYR",opts))
+      years_run(1,:) = tointeger(set_from_env("LASTYR",opts))
+   end if 
+   print(run_type+" requesting "+years_run(0,0)+"-"+years_run(1,0))	
+else
+    if (run_type.eq."OBS") then
+        years_run(0,0) = tointeger(set_from_env("MDTF_BLOCKING_OBS_ERA_FIRSTYR"  ,opts))
+    	years_run(1,0) = tointeger(set_from_env("MDTF_BLOCKING_OBS_ERA_LASTYR"   ,opts))
+    	years_run(0,1) = tointeger(set_from_env("MDTF_BLOCKING_OBS_MERRA_FIRSTYR",opts))
+    	years_run(1,1) = tointeger(set_from_env("MDTF_BLOCKING_OBS_MERRA_LASTYR" ,opts))
+  	print("ERA   requesting years "+years_run(0,0)+"-"+years_run(1,0))
+  	print("MERRA requesting years "+years_run(0,1)+"-"+years_run(1,1))
+    end if ; OBS
+    if (run_type.eq."MODEL_COMPARISON") then
+        years_run(0,:) = 1979
+    	years_run(1,:) = 2007
+	print(run_type+" requesting "+years_run(0,0)+"-"+years_run(1,0))
+    end if
+    end if ; use_case_years
+
   return years_run
 end
 ; ------------------------------------------------------
@@ -827,6 +878,15 @@ begin
   check_required_file(file_names)
   case_type  = "MDTF"  ; currently used to prevent from using read_digested
 
+  if (False) then
+     print("appending case info "+\
+        "file_names "+file_names+\
+	"case_names "+case_names+\
+	"case_type  "+case_type+\
+	"var_names  "+var_names+\
+	"years_run  "+years_run0+"-"+years_run1+\
+	"lcolors    "+lcolors)
+  end if
   ; add this to other case info
   append_case_info(case_info,file_names,case_names,case_type,var_names,\
                    years_run0,years_run1,lcolors)
@@ -873,6 +933,7 @@ begin
   run_info@line_colors = "blue"  
   nruns = 5
   run_info@nruns =  nruns
+
 
   file_names  = new(nruns,"string")
   do ile=0,nruns-1
@@ -979,8 +1040,8 @@ begin
   ; Extends attributes that are group/ensemble wide to be size nfiles
   extend_run_info_attributes_to_nfiles(run_info)
 
- ; change depending on compare_long_years setting
-  years_run = get_years_run(dimsizes(run_info@file_names),opts)
+ ; change depending on env var settings
+  years_run = get_years_run(dimsizes(run_info@file_names),run_info@case_type(0),opts)
 
   ; Add modifications if un/digested, and check if the file exists
   file_names_path = set_and_check_file_names(run_info@file_path,run_info@file_names,opts)
@@ -1048,7 +1109,7 @@ begin
         ; Add modifications if un/digested, and check if the file exists
         file_names_full = set_and_check_file_names(path_obs,file_names_base,opts)
 
-        years_run = get_years_run(case_info@nobs,opts) 
+        years_run = get_years_run(case_info@nobs,case_type(0),opts) 
 
 	obs_data_o   = (/True,True/)
         plot_colors = (/"black","black"/)
@@ -1074,6 +1135,8 @@ begin
   func_name = "add_case_info"
 
   opts = get_input_opts(func_name,opts_in)
+
+  print(func_name+" recieved case_name arg "+case_name)
   ; This is used by the CAM model ensembles as well as actual OBS, so set here
   path_obs   = get_path_obs(opts)
   opts@path_obs = path_obs
@@ -1098,7 +1161,7 @@ begin
     get_run_info_obs(case_info,opts)
   end if
   if ( case_name.eq."MDTF_CASE") then
-    get_run_info_mdtf(case_info,opts)
+     get_run_info_mdtf(case_info,opts)
   end if
 
 
@@ -1238,6 +1301,74 @@ begin
 end
 
 ; ------------------------------------------------------
+procedure set_min_max_years(varname,opts)
+; if varname = FIRSTYR or LASTYR, record MIN_FIRSTYR and MAX_LASTYR
+; else return
+begin
+
+  if ((varname.eq."FIRSTYR").or. (varname.eq."LASTYR")) then
+     ; change opt to INT
+     opts_int = stringtointeger(opts@$varname$)
+     delete(opts@$varname$)
+     opts@$varname$ = opts_int
+     varname_new = varname+"_ALL"
+
+     if (ismissing(opts@$varname_new$)) then ; first time through
+       opts@$varname_new$ = opts@$varname$
+       print(" new opt@"+varname_new+" = "+opts@$varname_new$)
+     else  ; not the first time--calculate min
+       ; It is a design choice to choose the min of firstyears and max of lastyrs
+       ; This leads to the longest possible comparison
+       ; It could also make sense to choose the max of firstyears and min of lastyrs 
+       ; to only compare the overlap (especially if obs & mdtf cases did the same)
+       if (varname.eq."FIRSTYR") then
+       	  opts@$varname_new$ = min((/opts@$varname_new$,opts@$varname$/))
+       	  print(" updated opt@"+varname_new+" = "+opts@$varname_new$+" (calculated min of "+opts@$varname_new$+","+opts@$varname$+")")
+       end if
+       if (varname.eq."LASTYR") then
+       	  opts@$varname_new$ = max((/opts@$varname_new$,opts@$varname$/))
+       	  print(" updated opt@"+varname_new+" = "+opts@$varname_new$+" (calculated max of "+opts@$varname_new$+","+opts@$varname$+")")
+       end if ; LASTYR
+    end if ; is missing 
+ end if ; FIRSTYR or LASTYR
+
+end
+; ------------------------------------------------------
+function translate_multicase_to_envs(icase,opts_in)
+;  foreach VAR needed by add_case_info ( CASENAME, FIRSTYR, LASTYR, MODEL_DATA_PATH,VAR_NAME )  
+;     sets from multicase envs "CASE"+str(icase)+"_"+str(k)
+;     as translated from yaml file in blocking_neale.py
+
+begin
+
+func_name = "translate_multicase_to_envs"
+opts = get_input_opts(func_name,opts_in)  ; initializes if not yet done
+
+varlist = (/ "CASENAME", "FIRSTYR", "LASTYR", "RGB", "MODEL_DATA_PATH", "zg_var" /)  
+nvar = dimsizes(varlist)
+do ivar = 0,nvar - 1
+   single_name = varlist(ivar)
+   multi_name = "CASE"+icase+"_"+single_name
+   env_value = getenv(multi_name)
+    if (.not.ismissing(opts@$single_name$)) then
+        delete(opts@$single_name$)
+    end if
+   opts@$single_name$ = env_value
+   print(" .... set "+opts@$single_name$+" = "+env_value)
+   set_min_max_years(single_name,opts)  ; also converts strings to integer!
+end do ; ivar
+;These don't seem to work
+;system("export "+single_name+"="+env_value)
+;system("setenv "+single_name+" "+env_value)
+;print("testing: "+single_name+" =? "+getenv(single_name))
+
+
+return opts
+
+end ; procedure  translate_multicase_to_envs(icase,opts)
+
+
+; ------------------------------------------------------
 function blocking_get_all_case_info(opts_in)
 ; USAGE
 ; all_cases = blocking_get_all_case_info(opts)
@@ -1255,18 +1386,39 @@ begin
 	func_name = "blocking_get_all_case_info"
 
         opts = opts_in
+        case_info = True  ; structure that will hold all cases (MDTF, MODEL, OBS)
 
-        ;Defaults of logical variables to turn on/off comparsions
-        ; To change, set matching envvars in settings.jsonc or input file to MDTF
+
+	; MDTF Input
+	; Check for CASE_N envvar that signifies multicase, or CASENAME that signifies single case
+	ncases_in = stringtointeger(set_from_env("CASE_N",opts))
+	print("blocking_funcs.ncl ncases_in "+ncases_in)
+        if (ismissing(ncases_in)) then                         ; not multi-case
+           if (ismissing(set_from_env("CASENAME",opts))) then
+	      ncases_in = 0                                    ; not single case
+              print("--- Skipping MDTF input (no CASENAME env var found) ")
+	   else	      
+	      ncases_in = 1
+	      print("--- Setting MDTF ncases_in = 1 since no sign of multicase ( CASE_N is not set as an env var)")
+	   end if	      
+	else	   
+	      print("--- Found "+ncases_in+" MDTF cases from CASE_N")
+	end if	
+
+
+        do icase = 1,ncases_in	
+          if (ncases_in .gt. 1 ) then
+	    opts = translate_multicase_to_envs(icase,opts) ; sets CASENMAE, FIRSTYR, LASTYR, MODEL_DATA_PATH,VAR_NAME
+          end if ; if (ncases_in .gt. 0 ) then
+          add_case_info("MDTF_CASE",case_info,opts) ; load file names, var names, etc
+        end do
+
+	; All the internal cases: OBS and MODEL_COMPARISON
+        ; To change from defaults, set matching envvars in settings.jsonc or input file to MDTF
         default_cases = (/"MDTF_BLOCKING_OBS","MDTF_BLOCKING_CAM5","MDTF_BLOCKING_CAM4","MDTF_BLOCKING_CAM3"/)
-
-        ; Check envvar settings, if found will change default
         ncases_init = dimsizes(default_cases)
-
-        case_info = True
         do icase = 0,ncases_init - 1
           case_name = default_cases(icase)
-
           if ( set_from_env_logical(case_name,opts) ) then  ; check  env/opts/defaults to decide to do this case
             print("--- Adding   "+case_name)
             add_case_info(case_name,case_info,opts) ; load file names, var names, etc
@@ -1276,16 +1428,7 @@ begin
         end do ; i
 
 
-        ; Input models (single or eventually multiple/ensembles)
-        if (.not.ismissing(set_from_env("CASENAME",opts))) then
-          ncases_in = 1  ;for now
-          do icase = 0,ncases_in - 1
-            add_case_info("MDTF_CASE",case_info,opts) ; load file names, var names, etc
-          end do
-        else
-            print("--- Skipping MDTF input (no CASENAME env var found) ")
-        end if
-
+	; Summarize all cases: OBS, MODEL_COMPARISON & MDTF CASE(S)
         if (verbose.gt.1) then
           print(func_name+" returning file_names : "+case_info@file_names)
           print(          "           years_run0: "+case_info@years_run0)
@@ -1309,6 +1452,7 @@ begin
         else
           case_info@nobs = 0
         end if
+
         
         return case_info
 

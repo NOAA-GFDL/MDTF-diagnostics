@@ -4,8 +4,10 @@ import unittest
 import unittest.mock as mock
 from src.util import filesystem as util
 from src.util import exceptions
+
+
 class TestCheckDirs(unittest.TestCase):
-    @mock.patch('os.path.isdir', return_value = True)
+    @mock.patch('os.path.isdir', return_value=True)
     @mock.patch('os.makedirs')
     def test_check_dirs_found(self, mock_makedirs, mock_isdir):
         # exit function normally if all directories found
@@ -16,7 +18,7 @@ class TestCheckDirs(unittest.TestCase):
             self.fail()
         mock_makedirs.assert_not_called()
 
-    @mock.patch('os.path.isdir', return_value = False)
+    @mock.patch('os.path.isdir', return_value=False)
     @mock.patch('os.makedirs')
     def test_check_dirs_not_found(self, mock_makedirs, mock_isdir):
         # try to exit() if any directories not found
@@ -24,7 +26,7 @@ class TestCheckDirs(unittest.TestCase):
             util.check_dir('DUMMY/PATH/NAME', create=False)
         mock_makedirs.assert_not_called()
 
-    @mock.patch('os.path.isdir', return_value = False)
+    @mock.patch('os.path.isdir', return_value=False)
     @mock.patch('os.makedirs')
     def test_check_dirs_not_found_created(self, mock_makedirs, mock_isdir):
         # don't exit() and call os.makedirs if in create_if_nec
@@ -33,6 +35,7 @@ class TestCheckDirs(unittest.TestCase):
         except (Exception, SystemExit):
             self.fail()
         mock_makedirs.assert_called_once_with('DUMMY/PATH/NAME', exist_ok=False)
+
 
 class TestBumpVersion(unittest.TestCase):
     @mock.patch('os.path.exists', return_value=False)
@@ -57,12 +60,12 @@ class TestBumpVersion(unittest.TestCase):
     @mock.patch('os.path.exists', return_value=False)
     def test_bump_version_delver(self, mock_exists):
         for f in [
-            ('AAA','AAA'), ('AAA.v1','AAA'), ('D/C/B/AA','D/C/B/AA'),
-            ('D/C.v1/B/AA/','D/C.v1/B/AA/'), ('D/C/B/AA.v23','D/C/B/AA'),
-            ('D/C3/B.v8/AA.v23/','D/C3/B.v8/AA/'), ('A.foo','A.foo'),
-            ('A.v23.foo','A.foo'), ('A.v23.bar.v45.foo','A.v23.bar.foo'),
-            ('D/C/A.foo','D/C/A.foo'), ('D/C.v1/A234.v3.foo','D/C.v1/A234.foo'),
-            ('D/C/A.v23.bar.v45.foo','D/C/A.v23.bar.foo')
+            ('AAA', 'AAA'), ('AAA.v1', 'AAA'), ('D/C/B/AA', 'D/C/B/AA'),
+            ('D/C.v1/B/AA/', 'D/C.v1/B/AA/'), ('D/C/B/AA.v23', 'D/C/B/AA'),
+            ('D/C3/B.v8/AA.v23/', 'D/C3/B.v8/AA/'), ('A.foo', 'A.foo'),
+            ('A.v23.foo', 'A.foo'), ('A.v23.bar.v45.foo', 'A.v23.bar.foo'),
+            ('D/C/A.foo', 'D/C/A.foo'), ('D/C.v1/A234.v3.foo', 'D/C.v1/A234.foo'),
+            ('D/C/A.v23.bar.v45.foo', 'D/C/A.v23.bar.foo')
         ]:
             f1, ver = util.bump_version(f[0], new_v=0)
             self.assertEqual(f1, f[1])
@@ -71,12 +74,12 @@ class TestBumpVersion(unittest.TestCase):
     @mock.patch('os.path.exists', return_value=False)
     def test_bump_version_setver(self, mock_exists):
         for f in [
-            ('AAA','AAA.v42'), ('AAA.v1','AAA.v42'), ('D/C/B/AA','D/C/B/AA.v42'),
-            ('D/C.v1/B/AA/','D/C.v1/B/AA.v42/'), ('D/C/B/AA.v23','D/C/B/AA.v42'),
-            ('D/C3/B.v8/AA.v23/','D/C3/B.v8/AA.v42/'), ('A.foo','A.v42.foo'),
-            ('A.v23.foo','A.v42.foo'), ('A.v23.bar.v45.foo','A.v23.bar.v42.foo'),
-            ('D/C/A.foo','D/C/A.v42.foo'), ('D/C.v1/A.v23.foo','D/C.v1/A.v42.foo'),
-            ('D/C/A.v23.bar.v45.foo','D/C/A.v23.bar.v42.foo')
+            ('AAA', 'AAA.v42'), ('AAA.v1', 'AAA.v42'), ('D/C/B/AA', 'D/C/B/AA.v42'),
+            ('D/C.v1/B/AA/', 'D/C.v1/B/AA.v42/'), ('D/C/B/AA.v23', 'D/C/B/AA.v42'),
+            ('D/C3/B.v8/AA.v23/', 'D/C3/B.v8/AA.v42/'), ('A.foo', 'A.v42.foo'),
+            ('A.v23.foo', 'A.v42.foo'), ('A.v23.bar.v45.foo', 'A.v23.bar.v42.foo'),
+            ('D/C/A.foo', 'D/C/A.v42.foo'), ('D/C.v1/A.v23.foo', 'D/C.v1/A.v42.foo'),
+            ('D/C/A.v23.bar.v45.foo', 'D/C/A.v23.bar.v42.foo')
         ]:
             f1, ver = util.bump_version(f[0], new_v=42)
             self.assertEqual(f1, f[1])
@@ -108,6 +111,7 @@ class TestBumpVersion(unittest.TestCase):
     #         self.assertEqual(f1, f[1])
     #         self.assertEqual(ver, f[2])
 
+
 class TestJSONC(unittest.TestCase):
     def test_parse_json_basic(self):
         s = """{
@@ -122,15 +126,15 @@ class TestJSONC(unittest.TestCase):
         }
         """
         d = util.parse_json(s)
-        self.assertEqual(set(d.keys()), set(['a','b','c','d','e']))
+        self.assertEqual(set(d.keys()), {'a', 'b', 'c', 'd', 'e'})
         self.assertEqual(d['a'], "test_string")
         self.assertEqual(d['b'], 3)
         self.assertEqual(d['c'], False)
         self.assertEqual(len(d['d']), 3)
-        self.assertEqual(d['d'], [1,2,3])
-        self.assertEqual(set(d['e'].keys()), set(['aa','bb']))
+        self.assertEqual(d['d'], [1, 2, 3])
+        self.assertEqual(set(d['e'].keys()), {'aa', 'bb'})
         self.assertEqual(len(d['e']['aa']), 3)
-        self.assertEqual(d['e']['aa'], [4,5,6])
+        self.assertEqual(d['e']['aa'], [4, 5, 6])
         self.assertEqual(d['e']['bb'], True)
 
     def test_parse_json_comments(self):
@@ -150,7 +154,7 @@ class TestJSONC(unittest.TestCase):
 
         """
         d = util.parse_json(s)
-        self.assertEqual(set(d.keys()), set(['a','b // c','e','f']))
+        self.assertEqual(set(d.keys()), {'a', 'b // c', 'e', 'f'})
         self.assertEqual(d['a'], 1)
         self.assertEqual(d['b // c'], "// d x ////")
         self.assertEqual(d['e'], False)
@@ -244,6 +248,7 @@ class TestJSONC(unittest.TestCase):
             ('"foo": bar\\"ba', [0])
         )
 
+
 class TestDoubleBraceTemplate(unittest.TestCase):
     def sub(self, template_text, template_dict=dict()):
         tmp = util._DoubleBraceTemplate(template_text)
@@ -262,25 +267,25 @@ class TestDoubleBraceTemplate(unittest.TestCase):
         self.assertEqual(
             self.sub("asdf\t{{\t foo \n\t }}baz", {'foo': 'bar'}),
             "asdf\tbarbaz"
-            )
+        )
 
     def test_replace_3(self):
         self.assertEqual(
             self.sub(
                 "{{FOO}}\n{{  foo }}asdf\t{{\t FOO \n\t }}baz_{{foo}}",
-                {'foo': 'bar', 'FOO':'BAR'}
+                {'foo': 'bar', 'FOO': 'BAR'}
             ),
             "BAR\nbarasdf\tBARbaz_bar"
-            )
+        )
 
     def test_replace_4(self):
         self.assertEqual(
             self.sub(
                 "]{ {{_F00}}\n{{  f00 }}as{ { }\n.d'f\t{{\t _F00 \n\t }}ba} {[z_{{f00}}",
-                {'f00': 'bar', '_F00':'BAR'}
+                {'f00': 'bar', '_F00': 'BAR'}
             ),
             "]{ BAR\nbaras{ { }\n.d'f\tBARba} {[z_bar"
-            )
+        )
 
     def test_ignore_1(self):
         self.assertEqual(self.sub("{{goo}}", {'foo': 'bar'}), "{{goo}}")
@@ -289,16 +294,16 @@ class TestDoubleBraceTemplate(unittest.TestCase):
         self.assertEqual(
             self.sub("asdf\t{{\t goo \n\t }}baz", {'foo': 'bar'}),
             "asdf\t{{\t goo \n\t }}baz"
-            )
+        )
 
     def test_ignore_3(self):
         self.assertEqual(
             self.sub(
                 "{{FOO}}\n{{  goo }}asdf\t{{\t FOO \n\t }}baz_{{goo}}",
-                {'foo': 'bar', 'FOO':'BAR'}
+                {'foo': 'bar', 'FOO': 'BAR'}
             ),
             "BAR\n{{  goo }}asdf\tBARbaz_{{goo}}"
-            )
+        )
 
     def test_nomatch_1(self):
         self.assertEqual(self.sub("{{foo", {'foo': 'bar'}), "{{foo")
@@ -307,16 +312,17 @@ class TestDoubleBraceTemplate(unittest.TestCase):
         self.assertEqual(
             self.sub("asdf\t{{\t foo \n\t }baz", {'foo': 'bar'}),
             "asdf\t{{\t foo \n\t }baz"
-            )
+        )
 
     def test_nomatch_3(self):
         self.assertEqual(
             self.sub(
                 "{{FOO\n{{  foo }asdf}}\t{{\t FOO \n\t }}baz_{{foo}}",
-                {'foo': 'bar', 'FOO':'BAR'}
+                {'foo': 'bar', 'FOO': 'BAR'}
             ),
             "{{FOO\n{{  foo }asdf}}\tBARbaz_bar"
-            )
+        )
+
 
 # ---------------------------------------------------
 

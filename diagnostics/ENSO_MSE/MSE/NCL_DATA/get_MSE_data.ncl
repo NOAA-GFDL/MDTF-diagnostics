@@ -15,8 +15,8 @@ begin
      outdir2  = getenv("ENSO_MSE_WKDIR_MSE") + "/model/" ; envvar set in ENSO_MSE.py
      case =  getenv( "CASENAME")
 
-     iy1 = toint( ( getenv("FIRSTYR")) )
-     iy2 = toint( (  getenv("LASTYR")) )
+     iy1 = toint( ( getenv("startdate")) )
+     iy2 = toint( (  getenv("enddate")) )
 
      nameout = outdir2 + "netCDF/"
 ;;;  input variables 

@@ -65,7 +65,7 @@ begin
 ;;  levels1  =  RWS terms 
    levels1 = (/ -30,  -27,  -24, -21, -18, -15, -12, -9, -6,  6, 9, 12, 15, 18, 21, 24, 27, 30 /)
     
-;;;   absolute corticity
+;;;   absolute vorticity
   
    cmin4 = -16 ;; 
    cmax4 =  16 ;; 

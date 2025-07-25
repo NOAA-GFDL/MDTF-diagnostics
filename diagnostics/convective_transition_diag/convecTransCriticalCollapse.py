@@ -5,14 +5,14 @@
 #
 #   Convective Transition Critical Collapse
 #    as part of functionality provided by 
-#    Convective Transiton Diagnostic Package (convective_transition_diag_v1r2.py)
+#    Convective Transition Diagnostic Package (convective_transition_diag_v1r2.py)
 #
 #   Version 1 revision 3 3-Nov-2017 Yi-Hung Kuo (UCLA)
 #   Contributors: K. A. Schiro (UCLA), B. Langenbrunner (UCLA), F. Ahmed (UCLA), 
 #    C. Martinez (UCLA), C.-C. (Jack) Chen (NCAR)
 #   PI: J. David Neelin (UCLA)
 #
-#   Computes Citical CWV for Convective Transition Statistics following 
+#   Computes Critical CWV for Convective Transition Statistics following
 #    Kuo et al. (2017a, 2017b), similar to Sahany et al. (2012)
 #  
 #   Generates plots of:
@@ -84,6 +84,7 @@ import json
 from convecTransCriticalCollapse_util import convecTransCriticalCollapse_loadAnalyzedData
 from convecTransCriticalCollapse_util import convecTransCriticalCollapse_fitCritical
 from convecTransCriticalCollapse_util import convecTransCriticalCollapse_plot
+
 print("**************************************************")
 print("Excuting Convective Transition Critical Collapse (convecTransCriticalCollapse.py)......")
 print("**************************************************")
@@ -95,39 +96,39 @@ print("**************************************************")
 print("Load user-specified binning parameters..."),
 
 # Create and read user-specified parameters
-os.system("python "+os.environ["POD_HOME"]+"/convecTransCriticalCollapse_usp.py")
-with open(os.environ["WK_DIR"]+"/convecTransCriticalCollapse_parameters.json") as outfile:
-    params_data=json.load(outfile)
+os.system("python " + os.environ["POD_HOME"] + "/convecTransCriticalCollapse_usp.py")
+with open(os.environ["WORK_DIR"] + "/convecTransCriticalCollapse_parameters.json") as outfile:
+    params_data = json.load(outfile)
 print("...Loaded!")
 
 # ======================================================================
 # Check if binned MODEL data from convecTransBasic.py 
 #  exists in wkdir/casename/ from a previous computation
-if (len(params_data["bin_output_list"])!=0): # binned MODEL data exists
+if len(params_data["bin_output_list"]) != 0:  # binned MODEL data exists
 
     print("Binned output detected...")
-    binned_model=convecTransCriticalCollapse_loadAnalyzedData(params_data["args1"])
-    binned_obs=convecTransCriticalCollapse_loadAnalyzedData(params_data["args2"])
+    binned_model = convecTransCriticalCollapse_loadAnalyzedData(params_data["args1"])
+    binned_obs = convecTransCriticalCollapse_loadAnalyzedData(params_data["args2"])
     print("Binned output Loaded!")
 
-    print("Starting fitting procedure..."),  
-    plot_model=convecTransCriticalCollapse_fitCritical(binned_model,params_data["fit_model_params"])
-    plot_obs=convecTransCriticalCollapse_fitCritical(binned_obs,params_data["fit_obs_params"])
+    print("Starting fitting procedure..."),
+    plot_model = convecTransCriticalCollapse_fitCritical(binned_model, params_data["fit_model_params"])
+    plot_obs = convecTransCriticalCollapse_fitCritical(binned_obs, params_data["fit_obs_params"])
     print("...Fitted!")
 
     # ======================================================================
     # Plot binning results & save the figure in wkdir/casename/.../   
-    convecTransCriticalCollapse_plot(binned_model,plot_model,\
-                                 binned_obs,plot_obs,\
-                                 params_data["args3"],params_data["plot_params"])
-    print("Plotting Complete!") 
+    convecTransCriticalCollapse_plot(binned_model, plot_model,
+                                     binned_obs, plot_obs,
+                                     params_data["args3"], params_data["plot_params"])
+    print("Plotting Complete!")
 
-else: 
+else:
     print("Binned output from convecTransBasic.py does not exists!")
-    print("   If you are certain that binned output exists, "\
-          +"please double-check convecTransCriticalCollapse_usp.py, "\
-          +"making sure that it is consistent with "\
-          +"convecTransBasic_usp_calc.py & convecTransBasic_usp_plot.py!")
+    print("   If you are certain that binned output exists, " \
+          + "please double-check convecTransCriticalCollapse_usp.py, " \
+          + "making sure that it is consistent with " \
+          + "convecTransBasic_usp_calc.py & convecTransBasic_usp_plot.py!")
 
 print("**************************************************")
 print("Convective Transition Thermodynamic Critical Collapse (convecTransCriticalCollapse.py) Executed!")

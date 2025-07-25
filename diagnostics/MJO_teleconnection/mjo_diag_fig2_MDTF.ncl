@@ -34,8 +34,8 @@ pentad = 0
 ;                                    Input and output data directories
 ;---------------------------------------------------------------------------------------------------------|
 dirobs   = getenv("OBS_DATA")+"/" 
-dirm     = getenv("WK_DIR")+"/model/netCDF/"
-dirfig   = getenv("WK_DIR")+"/model/PS/"
+dirm     = getenv("WORK_DIR")+"/model/netCDF/"
+dirfig   = getenv("WORK_DIR")+"/model/PS/"
 ;==============================================================================================
 print("read in pattern correlation data")
 ;----------------------------------------------------------------------------------------------
@@ -57,11 +57,7 @@ print("read in pattern correlation data")
 print("read in zonal wind RMS error data                           ")
 ;----------------------------------------------------------------------------------------------
      RMS_U_jet = asciiread(dirm+"U250_RMS_jetext_updated",(/-1/),"float") ;basic state zonal wind corr 
-     RMS_U = asciiread(dirm+ "U250_RMS_updated",(/-1/),"float")   
-
-     ;print(model_good)
-     ;print(RMS_U)
-;     print(RMS_U_jet)
+     RMS_U = asciiread(dirm+ "U250_RMS_updated",(/-1/),"float")
 
      RMS_U_M = new((/dimsizes(model_good)+1/),typeof(RMS_U))
      RMS_U_M(0) = 0.0
@@ -70,7 +66,6 @@ print("read in zonal wind RMS error data                           ")
      RMS_U_jet_M = new((/dimsizes(model_good)+1/),typeof(RMS_U))
      RMS_U_jet_M(0) = 0.0
      RMS_U_jet_M(1:) = RMS_U_jet(model_good)
-;     print(RMS_U_jet_M)
 
 
 ;-- Make E/W ratio vs teleconnection plot plot -
@@ -78,15 +73,11 @@ print("read in zonal wind RMS error data                           ")
  ;colors  = (/"white","black","grey59","palevioletred1","deepskyblue2","aquamarine4","maroon2","red3","darkorange","blue","darkgreen","purple"/)
 
 
-
           wks   = gsn_open_wks ("eps",dirfig +"wvEWR_MJOav_250mb" + Domain + "_updated") 
           avdataP = crr_M
           avdataT = EWR  ;E/W ratio
-         ;print(avdataP)
-         ;print(avdataT)
 
           acr = esccr(avdataP(1:),avdataT(1:),0)
-         ;print(acr)
 
     gsn_define_colormap(wks,"wgne15")
 ;----------------------------------------------------------------------
@@ -113,12 +104,10 @@ print("read in zonal wind RMS error data                           ")
 
   amaxy = maxy - abs(miny)
   amaxy = amaxy / 2.
-;print(amaxy)
   amaxy = amaxy + 1.0
   
   aminy = maxy - abs(miny)
   aminy = aminy / 2.
-;print(aminy)
   aminy = aminy - 1.0
 
 ;---Resources for X/Y axes.
@@ -281,19 +270,14 @@ delete(acr)
 delete(avdataP)
 
 
-
 print("250hPa zonal mean wind error plot")
 print("--------------------------------------------------------------------")
 
 mod_goodall = new((/dimsizes(model_good)+1/),integer)
 mod_goodall(0) = 0
 mod_goodall(1:) = model_good + 1
-;print(mod_goodall)
 
 avdataP = crr_M(mod_goodall)
-;print(dimsizes(avdataP))
-;print(dimsizes(RMS_U_M))
-;print(avdataP)
 ;print("make BS metric plot")
 
    avdataT = new((/2,dimsizes(RMS_U_M)/),typeof(RMS_U_M))
@@ -302,17 +286,11 @@ avdataP = crr_M(mod_goodall)
 
  acr = esccr(avdataP(1:),avdataT(0,1:),0)
  acr2 = esccr(avdataP(1:),avdataT(1,1:),0)
- ;print(acr + "   " + acr2)
-
 
  ;t-statistic
- ;print("t-statistic")
 
  n = dimsizes(avdataP(1:))    ;-1 to exclude reanalysis
-; print(n)
  tstat = acr * sqrt(n-2.)/sqrt(1.-acr^2.)
- ;print(tstat)
-
 
 
 ;-- make plot of BS metrics --
@@ -364,7 +342,6 @@ delete(colors)
 colModel = (/3,2,4,7,8,11,13,14,15,16,18/)
 
    colors         = new ((/dimsizes(model_good)+1/),"string")
-   ;print(colModel(model_good))
 
    colors (0) = "black"
    colors (1:) = colModel(model_good)
@@ -381,10 +358,7 @@ colModel = (/3,2,4,7,8,11,13,14,15,16,18/)
   res@tiXAxisFontHeightF = 0.0135
 
 
-
 ;GPCP","bcc_csm1_1","CanESM2","CNRM_CM5","GFDL_CM3","GFDL_ESM2G","GFDL_ESM2M","IPSL_CM5A_MR"
-;print(avdataT)
-;print(avdataP)
 
   res@xyMarkers  = (/2,2,2,2,2,2,2,2/)    
   plot_o = gsn_csm_xy (wks,transpose((/avdataT(0,:),avdataT(0,:)/)), \
@@ -401,8 +375,6 @@ colModel = (/3,2,4,7,8,11,13,14,15,16,18/)
 ;----------------------------------------------------------------------
 ; Draw some individual labelbars.
 ;----------------------------------------------------------------------
-;delete(colors1)
-
 
   labels2  = labels1(model_good)
   colors2  = colors1(model_good)
@@ -434,10 +406,8 @@ do i = 0,dimsizes( labels2)-1
 ; Draw some markers and text.
 ;----------------------------------------------------------------------
 
-
   frame(wks)    ; Now advance the frame.
 
 print("ploting of figures are done")
-
 
 end

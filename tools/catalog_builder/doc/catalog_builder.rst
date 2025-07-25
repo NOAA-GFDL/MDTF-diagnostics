@@ -1,7 +1,7 @@
 .. _ref-catalog-builder:
 
 catalog_builder.py
-=====================
+==================
 
 USAGE
 -----
@@ -55,7 +55,7 @@ environment:
 - yaml
 
 Configuration file:
-------------------
+-------------------
 The configuration file defines the following parameters to generate the ESM-intake catalog:
 
 - convention (required): DRS convention to use: cmip (default), gfdl, or cesm

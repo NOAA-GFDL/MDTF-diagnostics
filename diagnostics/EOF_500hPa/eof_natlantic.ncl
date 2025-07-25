@@ -9,10 +9,10 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
 
 begin
-yr1 = getenv("FIRSTYR")
-yr2 = getenv("LASTYR")
+yr1 = getenv("startdate")
+yr2 = getenv("enddate")
 rgb = getenv("RGB")
-wk_dir = getenv("WK_DIR")
+wk_dir = getenv("WORK_DIR")
 casename = getenv("CASENAME")
 
 firstyr = stringtointeger(yr1)

@@ -2,7 +2,7 @@
   "settings": {
     "driver": "ocn_surf_flux_diag.py",
     "long_name": "ocean surface flux diagnostic",
-    "realm": "atmosphere",
+    "convention" : "cmip",
     "description": "Ocean surface flux diagnostic",
     "runtime_requirements": {
       "python3": [
@@ -25,19 +25,24 @@
   },
   "dimensions": {
     "lat": {
-      "standard_name": "latitude"
-    },
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
     "lon": {
-      "standard_name": "longitude"
-    },
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+            },
     "time": {
-      "standard_name": "time"
-    }
+              "standard_name": "time"
+            }
   },
   "varlist": {
     "ts": {
       "standard_name": "surface_temperature",
       "units": "K",
+      "realm": "atmos",
       "dimensions": [
         "time",
         "lat",
@@ -47,6 +52,7 @@
     "psl": {
       "standard_name": "air_pressure_at_mean_sea_level",
       "units": "Pa",
+      "realm": "atmos",
       "dimensions": [
         "time",
         "lat",
@@ -55,6 +61,7 @@
     },
     "sfcWind": {
       "standard_name": "wind_speed",
+      "realm": "atmos",
       "units": "m s-1",
       "modifier": "atmos_height",
       "dimensions": [
@@ -65,6 +72,7 @@
     },
     "huss": {
       "standard_name": "specific_humidity",
+      "realm": "atmos",
       "units": "1",
       "modifier": "atmos_height",
       "dimensions": [
@@ -75,6 +83,7 @@
     },
     "hfls": {
       "standard_name": "surface_upward_latent_heat_flux",
+      "realm": "atmos",
       "units": "W m-2",
       "dimensions": [
         "time",
@@ -84,6 +93,7 @@
     },
     "pr": {
       "standard_name": "precipitation_flux",
+      "realm": "atmos",
       "units": "kg m-2 s-1",
       "dimensions": [
         "time",

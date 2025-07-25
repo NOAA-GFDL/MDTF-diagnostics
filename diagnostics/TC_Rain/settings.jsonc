@@ -9,7 +9,7 @@
   "settings" : {
     "driver" : "TC_rain.py",
     "long_name" : "Azimuthal Average of TC Rain Rate",
-    "realm" : "atmos",
+    "convention" : "cmip",
     "description" : "TC rain rate azimuthal average",
     "runtime_requirements": {
         "python3": [
@@ -27,8 +27,16 @@
   },
 
   "dimensions": {
-    "latitude": {"standard_name": "latitude"},
-    "longitude": {"standard_name": "longitude"},
+    "latitude": {
+                  "standard_name": "latitude",
+                  "units": "degrees_north",
+                  "axis": "Y"
+                 },
+    "longitude": {
+                   "standard_name": "longitude",
+                   "units": "degrees+_east"
+                   "axis": "X"
+                  },
     "time": {"standard_name": "time"}
   },
 "data": {
@@ -37,6 +45,7 @@
   "varlist" : {
     "tp": {
       "standard_name" : "total_precipitation",
+      "realm": "atmos",
       "units": "kg m-2",
       "dimensions": ["time", "latitude", "longitude"]
 

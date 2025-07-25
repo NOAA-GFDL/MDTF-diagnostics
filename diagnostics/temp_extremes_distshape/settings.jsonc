@@ -13,8 +13,8 @@
     // Human-readable name of the diagnostic.
     "long_name" : "Surface Temperature Extremes and Distribution Shape",
 
-    // Modeling realm.
-    "realm" : "atmos",
+    // Data convention expected by POD: cmip (default), cesm, or gfdl
+    "convention" : "cmip",
 
     // Human-readable name of the diagnostic.
     "description" : "Surface Temperature Extremes and Distribution Shape",
@@ -50,8 +50,16 @@
     "frequency": "day"
   },
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+    "lat": {
+              "standard_name": "latitude",
+              "units": "degrees_north",
+              "axis": "Y"
+            },
+    "lon": {
+              "standard_name": "longitude",
+              "units": "degrees_east",
+              "axis": "X"
+            },
     "time": {"standard_name": "time"},
     "plev": {  // only used to specify level of zg
       "standard_name": "air_pressure",
@@ -64,18 +72,21 @@
   "varlist": {
     "tas": {
       "standard_name": "air_temperature",
+      "realm": "atmos",
       "units": "K",
       "dimensions": ["time", "lat", "lon"],
       "modifier" : "atmos_height"
     },
     "zg": {
       "standard_name": "geopotential_height",
+      "realm": "atmos",
       "units": "m",
       "dimensions": ["time", "lat", "lon"],
       "scalar_coordinates": {"plev": 500}
     },
     "psl": {
       "standard_name": "air_pressure_at_mean_sea_level",
+      "realm": "atmos",
       "units": "Pa",
       "dimensions": ["time", "lat", "lon"]
     }

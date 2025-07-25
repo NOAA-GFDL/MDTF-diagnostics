@@ -57,15 +57,17 @@
 # =========================================================================================================
 # OPEN SOURCE COPYRIGHT Agreement TBA
 # ======================================================================
-#============================================================
+# ============================================================
 
 import os
 import subprocess
 import time
 
-#============================================================
+# ============================================================
 # generate_ncl_plots - call a nclPlotFile via subprocess call
-#============================================================
+# ============================================================
+
+
 def generate_ncl_plots(nclPlotFile):
     """generate_plots_call - call a nclPlotFile via subprocess call
    
@@ -82,7 +84,7 @@ def generate_ncl_plots(nclPlotFile):
         while pipe.poll() is None:
             time.sleep(0.5)
     except OSError as e:
-        print('WARNING',e.errno,e.strerror)
+        print('WARNING', e.errno, e.strerror)
 
     return 0
 
@@ -92,7 +94,7 @@ print("    Execution of MJO Teleconnection Diagnotics is started from here")
 print("-----------------------------------------------------------------------")
 # create synonyms for env var names to avoid changes to rest of this POD's code
 os.environ["prec_file"] = os.environ["PR_FILE"]
-os.environ["olr_file"]  = os.environ["RLUT_FILE"]
+os.environ["olr_file"] = os.environ["RLUT_FILE"]
 os.environ["u850_file"] = os.environ["U850_FILE"]
 os.environ["u250_file"] = os.environ["U250_FILE"]
 os.environ["z250_file"] = os.environ["Z250_FILE"]
@@ -109,18 +111,18 @@ if os.path.isfile(os.environ["prec_file"]) & os.path.isfile(os.environ["olr_file
     print(os.environ["u250_file"])
     print(os.environ["z250_file"])
     print("-----------------------------------------------------------------------")      
-#===================================================================================
+# ===================================================================================
 #                               Set up directories
-#===================================================================================
+# ===================================================================================
 
-    if not os.path.exists(os.environ["WK_DIR"]+"/htmls"):
-        os.makedirs(os.environ["WK_DIR"]+"/htmls")
+    if not os.path.exists(os.environ["WORK_DIR"]+"/htmls"):
+        os.makedirs(os.environ["WORK_DIR"]+"/htmls")
 
-#======================================================================================
+# ======================================================================================
 #      Calling a NCL script to calculate RMM index of a given model data
-#======================================================================================
-    os.environ["strtdy"] = os.environ["FIRSTYR"]+"0101"
-    os.environ["lastdy"] = os.environ["LASTYR"] +"1231"
+# ======================================================================================
+    os.environ["strtdy"] = os.environ["startdate"]+"0101"
+    os.environ["lastdy"] = os.environ["enddate"] +"1231"
 
     os.chdir(os.environ["DATADIR"])
 
@@ -133,9 +135,7 @@ if os.path.isfile(os.environ["prec_file"]) & os.path.isfile(os.environ["olr_file
     generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig1_MDTF.ncl")
     generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_diag_fig2_MDTF.ncl")
 
-      
-
-#============================================================
+# ============================================================
     print("-----------------------------------------------------------------------------")
     print("|----Execution of MJO Teleconnections diagnostics module is completed now----|")
     print("=============================================================================")

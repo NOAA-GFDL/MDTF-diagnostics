@@ -3,7 +3,7 @@
 
 begin
    
-      varcode = getenv("POD_HOME")
+     varcode = getenv("POD_HOME")
      dirname1  =  getenv("ENSO_RWS_WKDIR")
      obsname  =  getenv("OBS_DATA") + "/DATA/"
 

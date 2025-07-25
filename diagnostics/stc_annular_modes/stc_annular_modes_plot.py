@@ -56,18 +56,18 @@ def plot_doy_timeseries(dat, diag, title=''):
 
         """
 
-        if (diag == 'eftscale'):
+        if diag == 'eftscale':
             clevs = [5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20,
                      24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 88]
             clines = clevs+[96, 104, 112, 120, 130, 140, 150]
             cbar_label = 'e-folding timescale [days]'
             csfmt = '%d'
-        elif (diag == 'interannstdv'):
+        elif diag == 'interannstdv':
             clevs = np.linspace(0, 2, 21)
             clines = list(clevs)+[2.2, 2.4, 2.6, 2.8, 3.0, 3.5, 4.0]
             cbar_label = 'Interannual Std. Deviation'
             csfmt = '%0.1f'
-        elif (diag == 'predictability'):
+        elif diag == 'predictability':
             clevs = np.linspace(0, 0.4, 21)
             clines = list(clevs)+[0.42, 0.44, 0.46, 0.48,
                                   0.5, 0.55, 0.6, 0.65, 0.70]
@@ -87,7 +87,7 @@ def plot_doy_timeseries(dat, diag, title=''):
 
     # make sure user inputs a valid diagnostic
     diag_options = ['eftscale', 'interannstdv', 'predictability']
-    if (diag not in diag_options):
+    if diag not in diag_options:
         msg = f'diag must be one of {diag_options}'
         raise ValueError(msg)
 
@@ -98,12 +98,12 @@ def plot_doy_timeseries(dat, diag, title=''):
     # centered in the middle of the plot, but the position of Jan 1 and other
     # months varies based on the underlying calendar of the data
     max_doy = int(dat.dayofyear.max())
-    if (max_doy == 365):
+    if max_doy == 365:
         # July 1 falls on DOY 182
         roll_to = -181
         xticks = np.array([1, 32, 63, 93, 124, 154, 185,
                           213, 244, 274, 305, 335, 365])
-    elif (max_doy == 360):
+    elif max_doy == 360:
         # July 1 falls on DOY 181
         roll_to = -180
         xticks = np.array([1, 31, 61, 91, 121, 151, 181,

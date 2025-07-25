@@ -1,17 +1,18 @@
 import unittest
-import unittest.mock as mock
 from src import units
-from src.util import exceptions
+
 
 # TODO: better tests
+
 
 class TestUnitConversionFactor(unittest.TestCase):
     def test_conversion_factors(self):
         # assertAlmostEqual w/default precision for comparison of floating-point
         # values
         self.assertAlmostEqual(units.conversion_factor('inch', 'cm'), 2.54)
-        self.assertAlmostEqual(units.conversion_factor('cm', 'inch'), 1.0/2.54)
+        self.assertAlmostEqual(units.conversion_factor('cm', 'inch'), 1.0 / 2.54)
         self.assertAlmostEqual(units.conversion_factor((123, 'inch'), 'cm'), 123.0 * 2.54)
+
 
 class TestRefTime(unittest.TestCase):
     def get_test_date_strings(self, unit=None, time=None):
@@ -24,8 +25,8 @@ class TestRefTime(unittest.TestCase):
             return [f"{unit} since {s} {time}" for s in strs]
 
     def get_test_reftimes(self, unit=None, time=None, calendar=None):
-        return [units.Units(s, calendar=calendar) \
-            for s in self.get_test_date_strings(unit, time)]
+        return [units.Units(s, calendar=calendar)
+                for s in self.get_test_date_strings(unit, time)]
 
     def test_isreftime(self):
         self.assertFalse(units.Units('days').isreftime)
@@ -40,12 +41,12 @@ class TestRefTime(unittest.TestCase):
             with self.subTest(test_u=u):
                 self.assertTrue(u.isreftime)
 
-        for u in self.get_test_reftimes(time= '12:34:56', calendar='noleap'):
+        for u in self.get_test_reftimes(time='12:34:56', calendar='noleap'):
             with self.subTest(test_u=u):
                 self.assertTrue(u.isreftime)
 
-        for u in self.get_test_reftimes(unit='minutes', time= '12:34:56',
-            calendar='proleptic_gregorian'):
+        for u in self.get_test_reftimes(unit='minutes', time='12:34:56',
+                                        calendar='proleptic_gregorian'):
             with self.subTest(test_u=u):
                 self.assertTrue(u.isreftime)
 
@@ -65,16 +66,16 @@ class TestRefTime(unittest.TestCase):
                     # without has_year_zero=True. There is no way to pass this
                     # parameter to the cftime_dateparse method via this test,so
                     # this hack will have to do for now
-                    if '0000' in list_1[i].units.split('-')[0] or\
-                        '0000' in list_1[j].units.split('-')[0] or\
-                        'days' not in list_1[i].units.split('-')[0] and\
+                    if '0000' in list_1[i].units.split('-')[0] or \
+                            '0000' in list_1[j].units.split('-')[0] or \
+                            'days' not in list_1[i].units.split('-')[0] and \
                             'days' not in list_1[j].units.split('-')[0]:
                         #  print(str(list_1[i].units.split('-')[0]))
                         continue
                     elif i == j:
                         self.assertTrue(
-                                getattr(list_1[i], compare_method)(list_1[j])
-                            )
+                            getattr(list_1[i], compare_method)(list_1[j])
+                        )
                     else:
                         self.assertFalse(
                             getattr(list_1[i], compare_method)(list_1[j])
@@ -83,10 +84,10 @@ class TestRefTime(unittest.TestCase):
     def test_equal(self):
         # equal if they're equivalent and the unit conversion is the identity
         us = self.get_test_reftimes() \
-            + self.get_test_reftimes(calendar='julian') \
-            + self.get_test_reftimes(unit='minutes', time= '12:34:56',
-                                     calendar='proleptic_gregorian') \
-            + [units.Units('days'), units.Units('minutes')]
+             + self.get_test_reftimes(calendar='julian') \
+             + self.get_test_reftimes(unit='minutes', time='12:34:56',
+                                      calendar='proleptic_gregorian') \
+             + [units.Units('days'), units.Units('minutes')]
 
         self.multi_compare_id(us, 'equals')
 
@@ -102,22 +103,22 @@ class TestRefTime(unittest.TestCase):
         us_2 = self.get_test_reftimes(calendar='julian')
         self.multi_compare(us, us_2, 'equivalent', False)
 
-        us_2 = self.get_test_reftimes(unit='minutes', time= '12:34:56',
-            calendar='proleptic_gregorian')
+        us_2 = self.get_test_reftimes(unit='minutes', time='12:34:56',
+                                      calendar='proleptic_gregorian')
         self.multi_compare(us, us_2, 'equivalent', False)
 
     def test_reftime_base_eq(self):
         # true if base units are equal
         us = self.get_test_reftimes() \
-            + self.get_test_reftimes(calendar='julian')
+             + self.get_test_reftimes(calendar='julian')
         u_day = [units.Units('days')]
 
         self.multi_compare_id(us, 'reftime_base_eq')
         self.multi_compare(u_day, us, 'reftime_base_eq', True)
         self.multi_compare(us, u_day, 'reftime_base_eq', True)
 
-        us_2 = self.get_test_reftimes(unit='minutes', time= '12:34:56',
-            calendar='proleptic_gregorian')
+        us_2 = self.get_test_reftimes(unit='minutes', time='12:34:56',
+                                      calendar='proleptic_gregorian')
         u_min = [units.Units('minutes')]
 
         self.multi_compare_id(us_2, 'reftime_base_eq')
@@ -128,5 +129,3 @@ class TestRefTime(unittest.TestCase):
         self.multi_compare(u_min, us, 'reftime_base_eq', False)
         self.multi_compare(u_day, us_2, 'reftime_base_eq', False)
         self.multi_compare(us, us_2, 'reftime_base_eq', False)
-
-

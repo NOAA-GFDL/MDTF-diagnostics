@@ -1,4 +1,4 @@
-// Convection Transition
+// Precipitation-buoyancy diagnostics
 //
 // This requires sub-daily-timescale precipitation rate, air temperature, specific humidity, 
 // and surface pressure (optional).
@@ -17,7 +17,7 @@
 	"settings": {
 		"driver": "precip_buoy_diag.py",
 		"long_name": "Precipitation Buoyancy Diagnostics",
-		"realm": "atmos",
+		"convention" : "cmip",
 		"description": "Precipitation Buoyancy Diagnostics",
 		// threshold precipitation value to compute precipitating pdfs
 		"pod_env_vars": { "PRECIP_THRESHOLD": "0.25", 
@@ -27,43 +27,58 @@
 			"python3": ["numpy", "scipy", "cython", "matplotlib", "xarray", "numba", "networkx"]
 		}
 	},
-	"varlist": [{
-			"var_name": "pr_var",
-			"freq": "1hr",
+	"data": {
+    "multi_file_ok": true,
+    "frequency": "3hr",
+    "min_duration": "1yr",
+    "max_duration": "any",
+    "realm" : "atmos"
+  	},
+    "dimensions": {
+        "lat": {
+                 "standard_name": "latitude",
+                 "units": "degrees_north",
+                 "axis": "Y"
+                },
+        "lon": {
+                 "standard_name": "longitude",
+                 "units": "degrees_east",
+                 "axis": "X"
+               },
+        "lev": {
+                 "standard_name": "air_pressure",
+                 "units": "hPa",
+                 "positive": "down",
+                 "axis": "Z"
+                },
+        "time": {"standard_name": "time"}
+  },
+	"varlist": {
+	    "pr": {
+			"standard_name": "precipitation_flux",
 			"requirement": "required",
-			"path_variable": "pr_file",
 			"units": "kg m-2 s-1",
-            "dimensions" : ["time", "lat", "lon"],
-            "multi_file_ok" : true
+            "dimensions" : ["time", "lat", "lon"]
 		},
-		{
-			"var_name": "ta_var",
-			"freq": "1hr",
+		"ta": {
+			"standard_name": "air_temperature",
 			"requirement": "required",
-            "path_variable": "ta_file",
 			"units": "K",
-            "dimensions" : ["time", "lev", "lat", "lon"],
-            "multi_file_ok" : true
+            "dimensions" : ["time", "lev", "lat", "lon"]
 		},
-		{
-			"var_name": "qa_var",
-			"freq": "1hr",
+		"qa": {
+			"standard_name": "specific_humidity",
 			"requirement": "required",
-            "path_variable": "hus_file",
 			"units": "kg/kg",
-            "dimensions" : ["time", "lev", "lat", "lon"],
-            "multi_file_ok" : true
+            "dimensions" : ["time", "lev", "lat", "lon"]
 		},
-		{
-			"var_name": "ps_var",
-			"freq": "1hr",
+		"ps": {
+			"standard_name": "surface_air_pressure",
 			// this is optional only if height co-ordinates are on pressure levels
 			// if height co-ordinates are sigma, then surface pressure is required.
 			"requirement": "optional",
-            "path_variable": "ps_file",
 			"units": "Pa",
-            "dimensions" : ["time", "lat", "lon"],
-            "multi_file_ok" : true
+            "dimensions" : ["time", "lat", "lon"]
 		}
-	]
+	}
 }

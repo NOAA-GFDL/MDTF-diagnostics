@@ -1,0 +1,24 @@
+CASE_LIST:
+  CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231:
+    TAS_ASSOC_FILES: ''
+    TAS_FILE: /home/mdtf/wkdir/MDTF_output/MDTF_CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231_19800101120000_19841231000000/day/CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231.tas.day.nc
+    case_name: CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231
+    convention: CMIP
+    enddate: '19841231000000'
+    lat_coord: lat
+    lon_coord: lon
+    startdate: '19800101120000'
+    tas_var: tas
+    time_coord: time
+  CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231:
+    TAS_ASSOC_FILES: ''
+    TAS_FILE: /home/mdtf/wkdir/MDTF_output/MDTF_CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231/day/CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231.tas.day.nc
+    case_name: CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231
+    convention: CMIP
+    enddate: '19891231'
+    lat_coord: lat
+    lon_coord: lon
+    startdate: '19850101'
+    tas_var: tas
+    time_coord: time
+CATALOG_FILE: /home/mdtf/wkdir/MDTF_output/MDTF_postprocessed_data.json

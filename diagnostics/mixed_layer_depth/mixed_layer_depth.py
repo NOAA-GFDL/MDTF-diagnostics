@@ -83,7 +83,7 @@ months = [
 
 DATADIR = os.environ["DATADIR"]
 OBS_DATA = os.environ["OBS_DATA"]
-WK_DIR = os.environ["WK_DIR"]
+WK_DIR = os.environ["WORK_DIR"]
 CASENAME = os.environ["CASENAME"]
 modelname = CASENAME
 
@@ -240,6 +240,7 @@ def computemean(field=None, firstyr=2010, lastyr=2014):
 
     Returns
     -------
+
     field.mean
     """
     firstyr = int(firstyr)
@@ -254,7 +255,7 @@ def computemean(field=None, firstyr=2010, lastyr=2014):
     return field.mean(dim="year")
 
 
-def monthlyplot(field, edgec=None, figfile=None, cmapname="PuBu_r", myname=modelname):
+def monthlyplot(field, figfile=None, cmapname="PuBu_r", myname=modelname):
     fig = plt.figure(figsize=(12, 10))
     cmap_c = cmapname
 
@@ -283,6 +284,8 @@ def monthlyplot(field, edgec=None, figfile=None, cmapname="PuBu_r", myname=model
     plt.close()
     return
 # 1) Loading model data files: ###############################################
+
+
 print("DATADIR: ", DATADIR)
 print("OBS_DATA: ", OBS_DATA)
 print("---")
@@ -290,10 +293,10 @@ print("Model working directory: ", WK_DIR, "model/")
 
 so_var = "{so_var}".format(**os.environ)
 thetao_var = "{thetao_var}".format(**os.environ)
-firstyr = "{FIRSTYR}".format(**os.environ)
-lastyr = "{LASTYR}".format(**os.environ)
+firstyr = "{startdate}".format(**os.environ)
+lastyr = "{enddate}".format(**os.environ)
 
-print("thetao_var, so_var, firstyr, lastyr: ", thetao_var, so_var, firstyr, lastyr)
+print("thetao_var, so_var, startdate, enddate: ", thetao_var, so_var, firstyr, lastyr)
 
 input_file_so = DATADIR+"/mon/"+CASENAME+"."+so_var+".mon.nc"
 input_file_thetao = DATADIR+"/mon/"+CASENAME+"."+thetao_var+".mon.nc"

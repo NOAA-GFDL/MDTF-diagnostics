@@ -12,7 +12,7 @@
   "settings" : {
     "driver" : "precip_diurnal_cycle.py",
     "long_name": "Diurnal cycle of precipitation",
-    "realm" : "atmos",
+    "convention" : "cmip",
     "description": "Diurnal Cycle of Precipitation",
     "runtime_requirements": {
       "python3": [],
@@ -20,13 +20,22 @@
     }
   },
   "dimensions": {
-    "lat": {"standard_name": "latitude"},
-    "lon": {"standard_name": "longitude"},
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
     "time": {"standard_name": "time"}
   },
   "varlist": {
     "pr": {
       "standard_name": "precipitation_flux",
+      "realm": "atmos",
       "units": "kg m-2 s-1",
       "dimensions": ["time", "lat", "lon"],
       "frequency": "3hr"

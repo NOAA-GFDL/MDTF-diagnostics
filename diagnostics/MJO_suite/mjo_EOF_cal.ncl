@@ -13,7 +13,7 @@ begin
 
   routine_name = "mjo_EOF_cal.ncl"
    casename = getenv("CASENAME")
-   file_dir = getenv("WK_DIR")+"/model/netCDF/"
+   file_dir = getenv("WORK_DIR")+"/model/"
 
    neof    =  2
 
@@ -26,7 +26,7 @@ begin
 ;   yrStrt  = ymdStrt/10000
 ;   yrLast  = ymdLast/10000
 
-   pltDir  = getenv("WK_DIR")+"/model/PS/"                             ; plot directory
+   pltDir  = getenv("WORK_DIR")+"/model/PS/"                             ; plot directory
    pltType = "ps"  
    pltName = "mjoclivar"                      ; yrStrt+"_"+yrLast
   

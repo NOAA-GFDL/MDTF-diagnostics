@@ -78,8 +78,7 @@ import matplotlib.pyplot as plt  # python library we use to make plots
 from scipy.interpolate import interp2d  # used to interpolate the output model data
 import numpy as np
 
-
-### 1) Loading model data files: ###############################################
+# ## 1) Loading model data files: ###############################################
 #
 basin = os.getenv("basin")  # specifying the basin of TC Track input data
 thresh = [np.float(os.getenv("minthresh")), np.float(os.getenv("maxthresh"))]
@@ -163,7 +162,7 @@ for line in tracks:
             }
             x = x + 1
 
-### 2) Doing azimuthal average computations: #####################################################
+#  2) Doing azimuthal average computations: #####################################################
 
 
 # dist function calculates the distancing between two points on a sphere
@@ -295,7 +294,7 @@ for storm in track_dict:
                 azaverage_plot.append(azavs)
 
 
-### 3) plotting and saving output: #####################################################
+#  3) plotting and saving output: #####################################################
 
 r = [
     12.5,
@@ -337,7 +336,7 @@ plt.yticks(fontsize=16)
 
 fname = "azimuthalaverage.eps"
 
-output_fname = os.path.join(os.environ.get("WK_DIR"), "model", "PS", fname)
+output_fname = os.path.join(os.environ.get("WORK_DIR"), "model", "PS", fname)
 
 plt.savefig(output_fname, format="eps")
 

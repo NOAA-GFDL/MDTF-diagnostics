@@ -1,0 +1,67 @@
+<!-- This file is part of the html module of the MDTF code package (see mdtf/MDTF_v2.0/LICENSE.txt) -->
+
+<IMG SRC="../mdtf_diag_banner.png" border=0 usemap="#logo">
+<TITLE>Forcing and Feedbacks</TITLE>
+<!-- <H3>Convective Transition Statistics</h3> -->
+<P>
+The Forcing and Feedback module uses radiative kernels to compute the model's Instantaneous Radiative Forcing and the
+    Planck, lapse rate, water vapor, surface albedo and cloud radiative feedbacks. The total radiative change
+    (in W/m2/K) is also computed. These quantities are defined at the top-of-the-atmosphere (TOA) and decomposed
+    into longwave (LW) and shortwave (SW) components when applicable. Radiative feedbacks are diagnosed by regressing
+    local radiative anomalies against global-mean surface temperature.
+
+These results can be used to understand what is driving the a model's particular climate sensitivity and more broadly
+    provide insights on how changes in the model's atmospheric state alter the model's energy budget.
+
+<p>
+<!--<a href="MDTF_Documentation_convective_transition.pdf">Full Documentation and Contact Information</a> -->
+<P>
+<TABLE>
+<TR>
+<TH ALIGN=LEFT>< color=navy> Forcing and Feedbacks
+<TH ALIGN=LEFT>{CASENAME} vs. Observations
+<TR>
+<TH ALIGN=LEFT>Global-Mean Total Radiation Change
+<TH ALIGN=CENTER><A HREF=model/forcing_feedback_globemean_Rad.png>plot</A>
+<TR>
+<TR>
+<TH ALIGN=LEFT>Global-Mean Instantaneous Radiative Forcing
+<TH ALIGN=CENTER><A HREF=model/forcing_feedback_globemean_IRF.png>plot</A>
+<TR>
+<TR>
+<TH ALIGN=LEFT>Global-Mean Longwave Feedbacks
+<TH ALIGN=CENTER><A HREF=model/forcing_feedback_globemean_LWFB.png>plot</A>
+<TR>
+<TR>
+<TH ALIGN=LEFT>Global-Mean Shortwave Feedbacks
+<TH ALIGN=CENTER><A HREF=model/forcing_feedback_globemean_SWFB.png>plot</A>
+<TR>
+<TR>
+<TH ALIGN=LEFT>Comparison with CMIP6 Models
+<TH ALIGN=CENTER><A HREF=model/forcing_feedback_CMIP6scatter.png>plot</A>
+<TR>
+<TR>
+<TH ALIGN=LEFT>Map of Temperature Feedback
+<TH ALIGN=CENTER><A HREF=model/forcing_feedback_maps_Temperature.png>plot</A>
+<TR>
+<TR>
+<TH ALIGN=LEFT>Map of Water Vapor Feedback
+<TH ALIGN=CENTER><A HREF=model/forcing_feedback_maps_WaterVapor.png>plot</A>
+<TR>
+<TR>
+<TH ALIGN=LEFT>Map of Surface Albedo Feedback
+<TH ALIGN=CENTER><A HREF=model/forcing_feedback_maps_SfcAlbedo.png>plot</A>
+<TR>
+<TR>
+<TH ALIGN=LEFT>Map of Cloud Feedback
+<TH ALIGN=CENTER><A HREF=model/forcing_feedback_maps_Cloud.png>plot</A>
+<TR>
+<TR>
+<TH ALIGN=LEFT>Map of Total Radiation Change
+<TH ALIGN=CENTER><A HREF=model/forcing_feedback_maps_Rad.png>plot</A>
+<TR>
+<TR>
+<TH ALIGN=LEFT>Map of Instantaneous Radiative Forcing Trend
+<TH ALIGN=CENTER><A HREF=model/forcing_feedback_maps_IRF.png>plot</A>
+<TR>
+</TABLE>

@@ -1,0 +1,60 @@
+// Example MDTF diagnostic settings file for multiple cases
+//
+// This example builds upon the single case (i.e. `example`) example POD
+// and illustrates how to design and implement a POD that uses multiple
+// model source datasets. These can be the same experiment with different
+// models, two different experiments from the same model, or two different
+// time periods within the same simulation.
+//
+// Comments are restricted to those relevant to the multi-case example.
+// Please see the single case example POD and the documentation for more
+// details.
+//
+
+// Basic POD Settings
+{
+  "settings" : {
+    "description" : "A sea level diagnostic that evaluates ocean model errors in mean dynamic sea level in alongcoast, regional, and global scales",
+    "driver" : "MDSL.py",
+    "long_name" : "Mean Dynamic Sea Level Errors",
+    "convention": "cmip",
+    "runtime_requirements": {
+        "python3": ["matplotlib", "xarray", "netCDF4"]
+    },
+    "pod_env_vars" : {
+      "reg_choice" : "all", // gs or all
+      "modname" : "cm4", // cm4 or esm4 or ECMWF-HR
+      "threshold" : "25.0", // Threshold for number of non-nan grid points to perform TCH on that cell
+      "tch_size" : "3.0", // Size of TCH box in degrees for regional POD (recommend ~5+ time model horiz resolution); set automatically for global
+      "rez" : "0.5", // Resolution for global regridding. Options are 0.5 or 1.0 (degrees)
+      "cost_threshold" : "5.0" // cost --> higher means larger model error relative to data
+    }
+  },
+
+// Variable Coordinates
+  "dimensions": {
+    "lat": {
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
+    "lon": {
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
+    "time": {"standard_name": "time"}
+  },
+
+// Variables
+  "varlist" : {
+    "zos": {
+      "frequency" : "mon",
+      "realm": "ocean",
+      "dimensions": ["time", "lat", "lon"],
+      "modifier": "",
+      "standard_name" : "sea_surface_height_above_geoid",
+      "units": "m"
+    }
+  }
+}

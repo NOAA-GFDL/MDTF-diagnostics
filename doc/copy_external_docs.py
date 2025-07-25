@@ -16,22 +16,12 @@ documentation files, stores alongside individual PODs and site files in
 """
 import os
 import shutil
-from sphinx.util import status_iterator
+import sphinx.util
 
 # generate POD toc source file on-the-fly
 _pod_toc_header = """
 Diagnostics reference
 ---------------------
-.. toctree::
-   :maxdepth: 2
-
-   pod_summary
-"""
-
-# generate site toc source file on-the-fly
-_site_toc_header = """
-Site-specific documentation
----------------------------
 .. toctree::
    :maxdepth: 1
 
@@ -40,45 +30,45 @@ Site-specific documentation
 # generate tools toc source file on-the-fly
 _tools_toc_header = """
 Tools documentation
----------------------------
+-------------------
 .. toctree::
    :maxdepth: 1
 
 """
 
+
 def find_copy_make_toc(type_, docs_dir, search_root, header):
     """Look for documentation files, copy them to the build directory, and
     generate toc file linking to pod/site documentation.
     Args:
-        type_ (str): either "pod" or "site".
+        type_ (str): e.g., "pods" or "tools" 
         docs_dir (str): Directory this script is located in.
         search_root (str): Directory to search for PODs or sites.
         header (str): header of the toc file.
     """
+
     def _docname(item):
         """Helper for status_iterator()."""
         return str(os.path.basename(item))
 
     # destination directory to copy docs to
-    sphinx_subdir = 'sphinx_{}s'.format(type_)
+    sphinx_subdir = 'sphinx_{}'.format(type_)
     sphinx_dir = os.path.join(docs_dir, sphinx_subdir)
     if not os.path.isdir(sphinx_dir):
         os.makedirs(sphinx_dir)
 
     # find PODs or sites as directories under search_root
-    entries = [x for x in os.listdir(search_root) \
-        if os.path.isdir(os.path.join(search_root, x)) and x[0].isalnum()
-    ]
+    entries = [x for x in os.listdir(search_root)
+               if os.path.isdir(os.path.join(search_root, x)) and x[0].isalnum()
+               ]
     # Case-insensitive alpha sort
-    entries = sorted(entries, key=(lambda s: s.lower())) # handles unicode
+    entries = sorted(entries, key=(lambda s: s.lower()))  # handles unicode
+    # unique entries (removes duplicate docs from example multicase directories)
+    entries = list(set(entries))
     # put example POD documentation first
     if 'example' in entries:
         entries.remove('example')
         entries.insert(0, 'example')
-    # put local site documentation first
-    elif 'local' in entries:
-        entries.remove('local')
-        entries.insert(0, 'local')
 
     # find documentation files
     # = all non-PDF files (.rst and graphics) in /doc subdirectory
@@ -87,12 +77,12 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
         doc_dir = os.path.join(search_root, entry, 'doc')
         if os.path.isdir(doc_dir):
             docs.extend([
-                os.path.join(doc_dir, x) for x in os.listdir(doc_dir) \
+                os.path.join(doc_dir, x) for x in os.listdir(doc_dir)
                 if os.path.isfile(os.path.join(doc_dir, x)) and not x.endswith('.pdf')
             ])
 
     # copy the docs we found
-    iter_ = status_iterator(
+    iter_ = sphinx.util.display.status_iterator(
         docs, 'Copying {} files... '.format(type_),
         color='purple', stringify_func=_docname
     )
@@ -115,11 +105,7 @@ def config_inited(app, config):
 
     # Process PODs: find, copy, make toc
     pod_root = os.path.abspath(os.path.join(cwd, '..', 'diagnostics'))
-    find_copy_make_toc("pod", cwd, pod_root, _pod_toc_header)
-
-    # Process site docs: find, copy, make toc
-    site_root = os.path.abspath(os.path.join(cwd, '..', 'sites'))
-    find_copy_make_toc("site", cwd, site_root, _site_toc_header)
+    find_copy_make_toc("pods", cwd, pod_root, _pod_toc_header)
 
     # Process tools docs: find, copy, make toc
     tools_root = os.path.abspath(os.path.join(cwd, '..', 'tools'))

@@ -19,8 +19,14 @@ begin
 ; Set variables for two runs.
 
 
-  date_off = getenv("date_int_offset")
-  date_offset = stringtointeger(date_off) ; 1 for native CESM, 0 for GFDL & CMIP
+  ; date_off = getenv("date_int_offset")
+  ; date_offset = stringtointeger(date_off) ; 1 for native CESM, 0 for GFDL & CMIP
+  
+  date_offset = 0
+  if getenv("convention").eq."CESM" then
+    date_offset = 1
+  end if
+  print(date_offset)
 
   setfileoption("nc", "SuppressClose", False)
 
@@ -33,9 +39,9 @@ begin
   phase_only = False ; Set true iff not amplitude color saturation is required.
   
 ;  ps_dir = "/datalocal/haystack/cchen/dcycle/"
-  ps_dir = getenv("WK_DIR")+"/model/PS/"
-  firstyr = stringtoint(getenv("FIRSTYR"))
-  lastyr = stringtoint(getenv("LASTYR"))
+  ps_dir = getenv("WORK_DIR")+"/model/PS/"
+  firstyr = stringtoint(str_get_cols(getenv("startdate"),0,3))
+  lastyr = stringtoint(str_get_cols(getenv("enddate"),0,3))
   print(firstyr)
   print(lastyr)
 ;;;;; For model only   ;;;;;
@@ -212,8 +218,8 @@ ps_name = ps_name0+"_pr."+region_plot+".dc."
 ;      end if
 ;      print(ps_dir+ps_name+sprinti("%0.4i",min(mrun_years))+"."+season+tphase)
             
-       wks1 = gsn_open_wks("ps",ps_dir+"/"+ps_name1+season)
-       wks2 = gsn_open_wks("ps",ps_dir+"/"+ps_name2+season)
+       wks1 = gsn_open_wks("ps",ps_dir+ps_name1+season)
+       wks2 = gsn_open_wks("ps",ps_dir+ps_name2+season)
 
       nmonths = dimsizes(months)
       nyears = dimsizes(mrun_years)

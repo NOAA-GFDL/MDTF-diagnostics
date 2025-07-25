@@ -1,0 +1,38 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": true,
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "bitterbark",
+      "name": "Dani Coleman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30841536?v=4",
+      "profile": "https://github.com/bitterbark",
+      "contributions": [
+        "test"
+      "login": "jkrasting",
+      "name": "John Krasting",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6594675?v=4",
+      "profile": "http://www.gfdl.noaa.gov/john-krasting-homepage",
+      "contributions": [
+        "review"
+      "login": "aradhakrishnanGFDL",
+      "name": "Aparna Radhakrishnan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26334954?v=4",
+      "profile": "https://github.com/aradhakrishnanGFDL",
+      "contributions": [
+        "ideas"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "MDTF-diagnostics",
+  "projectOwner": "NOAA-GFDL"
+}

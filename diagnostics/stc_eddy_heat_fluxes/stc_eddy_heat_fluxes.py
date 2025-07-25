@@ -414,9 +414,9 @@ print('=======================================\n')
 # Parse MDTF-set environment variables
 print('*** Parse MDTF-set environment variables ...')
 CASENAME = os.environ['CASENAME']
-FIRSTYR = os.environ['FIRSTYR']
-LASTYR = os.environ['LASTYR']
-WK_DIR = os.environ['WK_DIR']
+FIRSTYR = os.environ['startdate']
+LASTYR = os.environ['enddate']
+WK_DIR = os.environ['WORK_DIR']
 OBS_DATA = os.environ['OBS_DATA']
 
 vfi = os.environ['V100_FILE']
@@ -427,22 +427,22 @@ t100fi = os.environ['T100_FILE']
 
 # Parse POD-specific environment variables
 print('*** Parse POD-specific environment variables ...')
-EHF_LO_LAT  = int(os.environ['HEAT_FLUX_LO_LAT'])
-EHF_HI_LAT  = int(os.environ['HEAT_FLUX_HI_LAT'])
+EHF_LO_LAT = int(os.environ['HEAT_FLUX_LO_LAT'])
+EHF_HI_LAT = int(os.environ['HEAT_FLUX_HI_LAT'])
 PCAP_LO_LAT = int(os.environ['PCAP_LO_LAT'])
 
 # Do error-checking on these environment variables. Rather than trying to
 # correct the values, we throw errors so that users can adjust their config
 # files in the appropriate manner, and obtain expected results.
-if (EHF_LO_LAT >= EHF_HI_LAT):
+if EHF_LO_LAT >= EHF_HI_LAT:
     msg = 'EHF_LO_LAT must be less than EHF_HI_LAT, and both must be >= 30'
     raise ValueError(msg)
 
-if (EHF_LO_LAT < 30):
+if EHF_LO_LAT < 30:
     msg = 'EHF_LO_LAT must be >= 30'
     raise ValueError(msg)
 
-if (PCAP_LO_LAT < 30):
+if PCAP_LO_LAT < 30:
     msg = 'PCAP_LO_LAT must be >= 30'
     raise ValueError(msg)
 
@@ -458,9 +458,10 @@ try:
     print('     t50')
     t50 = xr.open_dataset(t50fi)['t50']
     t_lev_fis = True
-except:
-    print('Unable to read individal prs level ta files; querying 4D fields')
+except Exception as exc:
+    print('Unable to read individual prs level ta files; querying 4D fields')
     print('      ta')
+    print(exc)
     ta = xr.open_dataset(tfi)['ta']
     t50 = ta.sel(lev=50)
     t100 = ta.sel(lev=100)
@@ -486,16 +487,17 @@ zg_pcap['SH'] = lat_avg(zg_zm, -90, -PCAP_LO_LAT)
 
 print('*** Computing polar cap averages of 50 hPa temperature')
 ta_pcap = {}
-ta_zm_50  = t50.mean('lon')
+ta_zm_50 = t50.mean('lon')
 ta_pcap['NH'] = lat_avg(ta_zm_50, PCAP_LO_LAT,  90)
 ta_pcap['SH'] = lat_avg(ta_zm_50, -90, -PCAP_LO_LAT)
 
 # At this point, no longer need the raw data
+
 v100 = v100.close()
-zg   =   zg.close()
-if (t_lev_fis is True):
+zg = zg.close()
+if t_lev_fis:
     t100 = t100.close()
-    t50  =  t50.close()
+    t50 = t50.close()
 else:
     ta = ta.close()
 
@@ -504,7 +506,7 @@ plot_dir = f'{WK_DIR}/model/PS'
 for hemi in ['NH','SH']:
     print(f'*** Plotting {hemi} EHF vs polar cap T scatter plot')
     scatter_plot = f'{plot_dir}/{CASENAME}_{hemi}_EHF-Tpcap_Scatter.eps'
-    fig,ax = plot_ehf_tcap_corr(ehf_band[hemi], ta_pcap[hemi], hemi)
+    fig, ax = plot_ehf_tcap_corr(ehf_band[hemi], ta_pcap[hemi], hemi)
     ax.set_title(f'{CASENAME}\n{hemi}, {FIRSTYR}-{LASTYR}', fontsize=20)
     fig.savefig(scatter_plot)
 
@@ -521,12 +523,12 @@ data_dir = f'{WK_DIR}/model/netCDF'
 outfile = data_dir+f'/{CASENAME}_eddy-heat-flux_diagnostics.nc'
 
 # Prepare the output variables and their metadata
-zg_pcap   = xr.concat([zg_pcap['SH'], zg_pcap['NH']], dim='hemi')
+zg_pcap = xr.concat([zg_pcap['SH'], zg_pcap['NH']], dim='hemi')
 zg_pcap.name = 'zg_pcap'
 zg_pcap.attrs['units'] = 'm'
 zg_pcap.attrs['long_name'] = f'{PCAP_LO_LAT}-90 polar cap geopotential height'
 
-ta_pcap   = xr.concat([ta_pcap['SH'], ta_pcap['NH']], dim='hemi')
+ta_pcap = xr.concat([ta_pcap['SH'], ta_pcap['NH']], dim='hemi')
 ta_pcap.name = 'ta_pcap_50'
 ta_pcap.attrs['units'] = 'K'
 ta_pcap.attrs['long_name'] = f'50 hPa {PCAP_LO_LAT}-90 polar cap temperature'
@@ -580,19 +582,20 @@ try:
     for hemi in ['NH','SH']:
         print(f'*** Plotting {hemi} EHF vs polar cap T scatter plot from obs')
         scatter_plot = f'{plot_dir}/obs_{hemi}_EHF-Tpcap_Scatter.eps'
-        fig,ax = plot_ehf_tcap_corr(ehf_band[hemi], ta_pcap[hemi], hemi)
+        fig, ax = plot_ehf_tcap_corr(ehf_band[hemi], ta_pcap[hemi], hemi)
         ax.set_title(f'{rean}\n{hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
         fig.savefig(scatter_plot)
 
         print(f'*** Plotting {hemi} EHF vs polar cap Z lag correlations from obs')
         levcorr_plot = f'{plot_dir}/obs_{hemi}_EHF-Zpcap_LagCorr.eps'
-        fig,ax = plot_ehf_zcap_lags(ehf_band[hemi], zg_pcap[hemi], hemi)
+        fig, ax = plot_ehf_zcap_lags(ehf_band[hemi], zg_pcap[hemi], hemi)
         plt.suptitle(f'{rean}, {hemi}, {obs_firstyr}-{obs_lastyr}', fontsize=20)
         fig.savefig(levcorr_plot)
 
-except:
+except Exception as exc:
     print('*** Unable to create plots from the observational data: ')
     print(traceback.format_exc())
+    print(exc)
 
 print('\n=====================================')
 print('END stc_eddy_heat_fluxes.py ')

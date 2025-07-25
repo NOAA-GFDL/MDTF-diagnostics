@@ -2,7 +2,7 @@
   "settings": {
     "driver": "seaice_suite_sic_mean_sigma.py",
     "long_name": "Arctic Sea Ice Suite Diagnostics",
-    "realm": "seaIce",
+    "convention": "cmip",
     "description": "Sea Ice Concentration Mean, Std",
     "runtime_requirements": {
       "python3": [
@@ -24,11 +24,15 @@
   },
   "dimensions": {
     "lat": {
-      "standard_name": "latitude"
-    },
+             "standard_name": "latitude",
+             "units": "degrees_north",
+             "axis": "Y"
+           },
     "lon": {
-      "standard_name": "longitude"
-    },
+             "standard_name": "longitude",
+             "units": "degrees_east",
+             "axis": "X"
+           },
     "time": {
       "standard_name": "time"
     }
@@ -36,6 +40,7 @@
   "varlist": {
     "siconc": {
       "standard_name": "sea_ice_area_fraction",
+      "realm": "seaIce",
       "frequency": "mon",
       "units": "%",
       "dimensions": [

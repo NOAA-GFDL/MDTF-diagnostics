@@ -18,7 +18,8 @@
 #
 # ================================================================================
 # Functionality
-# 1) calculate the coefficient of Q1 and Q2 (Q1 ~= idealized deep convection profile; Q2 ~= idealized deep stratiform profile);
+# 1) calculate the coefficient of Q1 and Q2 (Q1 ~= idealized deep convection profile; Q2 ~=
+# idealized deep stratiform profile);
 # 2) calculate top-heaviness ratio (defined as O2/O1)
 #
 # ================================================================================
@@ -43,27 +44,27 @@
 import os
 import glob
 
-missing_file=0
-if len(glob.glob(os.environ["OMEGA_FILE"]))==0:
+missing_file = 0
+if len(glob.glob(os.environ["OMEGA_FILE"])) == 0:
     print("Required OMEGA data missing!")
-    missing_file=1
+    missing_file = 1
 
-if missing_file==1:
+if missing_file == 1:
     print("Top-heaviness metric diagnostics Package will NOT be executed!")
 else:
     try:
-        os.system("python3 "+os.environ["POD_HOME"]+"/"+"top_heaviness_ratio_calculation.py")
+        os.system("python3 " + os.environ["POD_HOME"] + "/" + "top_heaviness_ratio_calculation.py")
     except OSError as e:
-        print('WARNING',e.errno,e.strerror)
+        print('WARNING', e.errno, e.strerror)
         print("**************************************************")
         print("Top-Heaviness Metric Diagnostics (top_heaviness_ratio_calculation.py) is NOT Executed as Expected!")
         print("**************************************************")
     # if the user only focuses on calculating top-heaviess ratio instead of applying some tests on 
     #   ratio robustness, the user can choose not to run the following python file.  
     try:
-        os.system("python3 "+os.environ["POD_HOME"]+"/"+"top_heaviness_ratio_robustness_calc.py")
+        os.system("python3 " + os.environ["POD_HOME"] + "/" + "top_heaviness_ratio_robustness_calc.py")
     except OSError as e:
-        print('WARNING',e.errno,e.strerror)
+        print('WARNING', e.errno, e.strerror)
         print("**************************************************")
         print("Top-Heaviness Metric Diagnostics (top_heaviness_ratio_robustness_calc.py) is NOT Executed as Expected!")
         print("**************************************************")
@@ -71,5 +72,3 @@ else:
     print("**************************************************")
     print("Top-Heaviness Metric Diagnostics Executed!")
     print("**************************************************")
-
-

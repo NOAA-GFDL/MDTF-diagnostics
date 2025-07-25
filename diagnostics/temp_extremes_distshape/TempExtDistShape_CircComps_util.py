@@ -21,9 +21,11 @@
 
 # Import standard Python packages
 import numpy
-from netCDF4 import Dataset,num2date
+from netCDF4 import Dataset
 from datetime import datetime, timedelta
 import cftime
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as mplt
 from matplotlib import cm
 import matplotlib.colors as mcolors
@@ -91,7 +93,7 @@ def Seasonal_Subset(model_netcdf_filename,lon_var,lat_var,field_var,time_var,mon
     ### Subset temperature to season specified by "monthsub" vector
     moinds=numpy.in1d(mo,monthsub)
     moinds=(numpy.where(moinds)[0])
-    moinds=[numpy.int(indval) for indval in moinds]
+    moinds=[int(indval) for indval in moinds]
     leapstr=leapstr[moinds]
     var_data=var_data[:,:,moinds]
 

@@ -42,31 +42,37 @@ print("Executing Moments (TempExtDistShape_Moments.py)......")
 print("**************************************************")
 
 # ======================================================================
-### Load user-specified parameters (usp) for calcluating and plotting shift ratio
+# Load user-specified parameters (usp) for calcluating and plotting shift ratio
 print("Load user-specified parameters...")
-os.system("python "+os.environ["POD_HOME"]+"/TempExtDistShape_Moments_usp.py")
-with open(os.environ["WK_DIR"]+"/TempExtDistShape_Moments_parameters.json") as outfile:
-    mom_data=json.load(outfile)
+os.system("python " + os.environ["POD_HOME"] + "/TempExtDistShape_Moments_usp.py")
+with open(os.environ["WORK_DIR"] + "/TempExtDistShape_Moments_parameters.json") as outfile:
+    mom_data = json.load(outfile)
 print("...Loaded!")
-monthsub=json.loads(mom_data["monthsub"]) #change unicode string into array of integers
+monthsub = json.loads(mom_data["monthsub"])  # change unicode string into array of integers
 
 # ======================================================================
-### List model filenames for two-meter temperature data
+# List model filenames for two-meter temperature data
 print(mom_data["MODEL_OUTPUT_DIR"])
-T2Mfile=sorted(glob.glob(mom_data["MODEL_OUTPUT_DIR"]+"/"+mom_data["MODEL"]+"*"+mom_data["T2M_VAR"]+".day.nc"))[0]
+T2Mfile = (
+    sorted(glob.glob(mom_data["MODEL_OUTPUT_DIR"] + "/" + mom_data["MODEL"] + "*" + mom_data["T2M_VAR"]
+                     + ".day.nc")))[0]
 
 # ======================================================================
-### Load & pre-process region mask
+# Load & pre-process region mask
 # ----  Generate a map of values corresponding to land regions only
-msk=Region_Mask(mom_data["REGION_MASK_DIR"]+'/'+mom_data["REGION_MASK_FILENAME"],T2Mfile,mom_data["LON_VAR"],mom_data["LAT_VAR"])
+msk = Region_Mask(mom_data["REGION_MASK_DIR"] + '/' + mom_data["REGION_MASK_FILENAME"], T2Mfile, mom_data["LON_VAR"],
+                  mom_data["LAT_VAR"])
 
 # ======================================================================
-### Calculate seasonal subset for two-meter temperature
-seas_mean,seas_std,seas_skew,lon,lat=Seasonal_Moments(T2Mfile,mom_data["LON_VAR"],mom_data["LAT_VAR"],mom_data["T2M_VAR"],mom_data["TIME_VAR"],monthsub,mom_data["yearbeg"],mom_data["yearend"],msk)
+# Calculate seasonal subset for two-meter temperature
+seas_mean, seas_std, seas_skew, lon, lat = Seasonal_Moments(T2Mfile, mom_data["LON_VAR"], mom_data["LAT_VAR"],
+                                                            mom_data["T2M_VAR"], mom_data["TIME_VAR"], monthsub,
+                                                            mom_data["yearbeg"], mom_data["yearend"], msk)
 
 # ======================================================================
-data=[seas_mean,seas_std,seas_skew]
-Moments_Plot(T2Mfile,mom_data["LON_VAR"],lat,mom_data["monthstr"],mom_data["cmaps"],mom_data["titles"],data,mom_data["tickrange"],mom_data["var_units"],mom_data["FIG_OUTPUT_DIR"],mom_data["FIG_OUTPUT_FILENAME"])
+data = [seas_mean, seas_std, seas_skew]
+Moments_Plot(T2Mfile, mom_data["LON_VAR"], lat, mom_data["monthstr"], mom_data["cmaps"], mom_data["titles"], data,
+             mom_data["tickrange"], mom_data["var_units"], mom_data["FIG_OUTPUT_DIR"], mom_data["FIG_OUTPUT_FILENAME"])
 
 # ======================================================================
 

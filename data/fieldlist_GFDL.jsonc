@@ -135,6 +135,12 @@
       "units": "N m-2",
       "ndim": 3
     },
+    "tos": {
+      "standard_name": "sea_surface_temperature",
+      "realm": "ocean",
+      "units": "degC",
+      "ndim": 3
+    },
     "alb_sfc": {
       "standard_name": "",
       "long_name":"surface albedo",

@@ -57,6 +57,7 @@ Creating and submitting a POD
 
 Notes:
 ------
+
 - **Make sure that WORK_DIR and OUTPUT_DIR have enough space to hold data for your POD(s) AND any PODs included in the
   package.**
 - Defining POD variables

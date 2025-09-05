@@ -63,6 +63,8 @@ def find_copy_make_toc(type_, docs_dir, search_root, header):
                ]
     # Case-insensitive alpha sort
     entries = sorted(entries, key=(lambda s: s.lower()))  # handles unicode
+    # unique entries (removes duplicate docs from example multicase directories)
+    entries = list(set(entries))
     # put example POD documentation first
     if 'example' in entries:
         entries.remove('example')

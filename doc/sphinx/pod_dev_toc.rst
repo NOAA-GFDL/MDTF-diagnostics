@@ -12,3 +12,4 @@ Developer information
    dev_coding_tips
    dev_git_intro
    dev_cheatsheet
+   dev_gfdl

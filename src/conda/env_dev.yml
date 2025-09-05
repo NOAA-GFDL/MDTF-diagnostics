@@ -10,9 +10,9 @@ dependencies:
 - netCDF4=1.6.5
 - cftime=1.6.2
 - scikit-learn=1.4.2
-- xesmf=0.8.1
-- esmf=8.4.2
-- esmpy=8.4.2
+- xesmf=0.8.9
+- esmf=8.8.1
+- esmpy=8.8.1
 - xarray=2025.1.2
 - matplotlib=3.8.2
 - cartopy=0.22.0

@@ -192,7 +192,7 @@ def dataset_get(block_meta,var_name,season,diag_hem):
         run_names = block_meta.loc[ens_name]['Run Name']
         date_start = block_meta.loc[ens_name]['Start Year']
         date_end = block_meta.loc[ens_name]['End Year']
-        
+
         num_runs = len(run_names)    
         # Shorten any dates to the first 4 digits (str needed for slicing)
         year_start = str(date_start)[:4]
@@ -201,7 +201,7 @@ def dataset_get(block_meta,var_name,season,diag_hem):
      # MDTF cases are already opened as xarray datasets
         type_run_file = type(run_files)
         if isinstance(run_files, xr.Dataset):
-            print(fname,'Run file is already an xarray dataset')
+            print(fname,'Run file is already an xarray dataset, trying to use it as such')
             ds_run = run_files
             ds_run = ds_run.expand_dims(name=[ens_name])  # Add 'name' dimension
         else:  
@@ -227,7 +227,6 @@ def dataset_get(block_meta,var_name,season,diag_hem):
                         ds_run = xr.open_mfdataset(run_file,parallel=True,chunks=chunk_sizes)
                         
                     case 'CESM2': 
-                        
                         # Just concatonate all files for now. (after changing DATE to *)
                         run_file = run_file.replace('DATE_RANGE', '*')
                         ds_run = xr.open_mfdataset(run_file,parallel=True,chunks=chunk_sizes)
@@ -245,12 +244,19 @@ def dataset_get(block_meta,var_name,season,diag_hem):
                             
 # Subset for years and season 
         
-        ds_run = ds_run.sel(time=slice(year_start,year_end))                    
+        ds_run = ds_run.sel(time=slice(year_start,year_end))    
+        print(f'DRBDBG {irun=}')                 
         # Append datasets
 
         if irun==0 :
             ds_this_ens = ds_run
         else:
+            # Add 'name' dimension so files to concat are the same
+            if 'name' not in ds_run.dims:
+                ds_run = ds_run.expand_dims({'name': [irun]})
+            else:
+                # if it already has 'name' dim but with wrong label/length, replace coord
+                ds_run = ds_run.assign_coords(name=('name', [irun]))
             ds_this_ens = xr.concat([ds_this_ens, ds_run], 'name')
         
 # Name the dataset dimension from from name

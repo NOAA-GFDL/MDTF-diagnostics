@@ -152,11 +152,8 @@ def find_ens_info(ens_names,mem_num,ystart,yend):
         all_ens_info[ens_name] = [ens_type,mem_num[iens],ystart[iens],yend[iens],run_names,file_templates]  
 
     
-#    pprint.pprint(all_ens_info)
-    print(fname,'Dict before DataFrame:',all_ens_info)
     df_info = pd.DataFrame.from_dict(all_ens_info, orient='index',columns=['Ensemble Type','Ensemble Size','Start Year','End Year','Run Name','Run File'])
-#    df_info = pd.DataFrame(data=all_ens_info)
-#    display(df_info)
+
     
     return df_info
 
@@ -232,20 +229,16 @@ def dataset_get(block_meta,var_name,season,diag_hem):
                         ds_run = xr.open_mfdataset(run_file,parallel=True,chunks=chunk_sizes)
                         
                     case _ :
-
-                        
                             ds_run = xr.open_mfdataset(run_file,combine="nested",parallel=True,chunks=chunk_sizes)
                             # Data on the file is in silly Julian days that need to be converted to gregorian
-                            print(fname,'L243 Finished opening')
+                            print(fname,'Finished opening')
                             if ens_name in ['ERAI','MERRA']:
                                     ds_run['time'] = pd.to_datetime(ds_run['time'], origin='julian', unit='D')
                             if ens_name in ['ERAI']:
                                     ds_run = ds_run.reindex(lat=ds_run.lat[::-1])
                             
 # Subset for years and season 
-        
         ds_run = ds_run.sel(time=slice(year_start,year_end))    
-        print(f'DRBDBG {irun=}')                 
         # Append datasets
 
         if irun==0 :
@@ -378,7 +371,7 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,file_opts
             ds_this_ens = ens_ds[ens_name]
         
         # Grab data and variable        
-            ens_z500 = ds_this_ens['Z500'] #DRBDBG sub varname here
+            ens_z500 = ds_this_ens['Z500'] 
     
         # Subset required latitude limits.
             ens_z500 = ens_z500.sel(lat=slice(lat_s_in,lat_n_in))
@@ -444,13 +437,10 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,file_opts
 
                     ghgn = xr.zeros_like(ens_z500)
                     ghgs = xr.zeros_like(ens_z500)
-                    print(f"{fname} {ghgn.dims=} ")
-
-              
-                    for ilat,blat_0 in enumerate(ens_z500.lat.sel(lat=slice(lat_s_in,lat_n_in))):               
-
-
-                        blat_n = blat_0+dlat_2d
+                    for ilat,blat_0 in enumerate(ens_z500.lat.sel(lat=slice(lat_s_in,lat_n_in))):
+                        # blat_0 is the latitude being looped over
+                        # blat_n/blat_s are the latitudes north and south of it by dlat_2d (15 deg)               
+                        blat_n = blat_0+dlat_2d 
                         blat_s = blat_0-dlat_2d
                         
                         z500_blat_n = ens_z500.sel(lat=blat_n, method="nearest")
@@ -458,7 +448,8 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,file_opts
                         z500_blat_s = ens_z500.sel(lat=blat_s, method="nearest")
                         
                         # Use all times & all lons, choose lat = ilat
-                        loc_dict = dict(time=slice(None), lat=ilat, lon=slice(None))
+                        # in this case, ilat = 0 (the index, not the lat value) )
+                        loc_dict = dict(time=slice(None), lat=blat_0, lon=slice(None))
                         ghgn.loc[loc_dict] = (z500_blat_n-z500_blat_0) / (blat_n-blat_0)
                         ghgs.loc[loc_dict] = (z500_blat_0-z500_blat_s) / (blat_0-blat_s)  
 
@@ -466,7 +457,6 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,file_opts
                         
                     # Boolean for saying whether a time, lat and lon point is blocked or not 
                     is_blocked =  xr.where((ghgs > ghgs_thresh) & (ghgn < ghgn_thresh),True,False)
-
                 case _ :
                     print (fname,' No such blocking diagnostic - ',block_diag)
                     sys.errror(0)
@@ -566,10 +556,10 @@ def set_file_name_and_check_existance(ens_name, nens, year_start, year_end, bsea
     if file_opts == 'x' :  
             print(fname,' called with file_opts = x, Checking if file is already written')
             if Path(file_data).is_file():
-                print(fname,'File exists, reading in ...')
+                print(f"{fname} {file_data=} File exists, reading in ...")
                 file_opts = 'r'
             else:
-                print(fname,'File does not exist, writing out ...')
+                print(f"{fname} {file_data=} File does not exist, writing out ...")
                 file_opts = 'w'
     return file_opts,file_data      
 

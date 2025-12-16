@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+    <meta charset=\"UTF-8\">
+    <title>WBC Diagnostic Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h3 {
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        td a {
+            text-decoration: none;
+            color: #0066cc;
+        }
+        td a:hover {
+            text-decoration: underline;
+        }
+        .method-section, .region-section {
+            margin-top: 30px;
+        }
+        .method-section h4, .region-section h4 {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<img src="../mdtf_diag_banner.png" alt="MDTF Diagnostic Banner" width="30%">
+
+<h3>Western Boundary Current (WBC) Analysis</h3>
+
+<p>
+    The following diagnostic plots present analyses of the Western Boundary Currents (WBC).
+</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Analysis Type</th>
+            <th>Gulf Stream</th>
+            <th>Kuroshio Extension</th>
+            <th>North Brazil Current</th>
+            <th>Agulhas Current</th>
+            <th>East Australia Current</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>WBC Index</strong></td>
+            <td><a href="obs/WBCI.gulf.png">View Plot</a></td>
+            <td><a href="obs/WBCI.kuroshio.png">View Plot</a></td>
+            <td><a href="obs/WBCI.brazil.png">View Plot</a></td>
+            <td><a href="obs/WBCI.agulhas.png">View Plot</a></td>
+            <td><a href="obs/WBCI.australia.png">View Plot</a></td>
+        </tr>
+        <tr>
+            <td><strong>WBC Path Variability</strong></td>
+            <td><a href="obs/Amplitude_path_variability.gulf.png">View Plot</a></td>
+            <td><a href="obs/Amplitude_path_variability.kuroshio.png">View Plot</a></td>
+            <td><a href="obs/Amplitude_path_variability.brazil.png">View Plot</a></td>
+            <td><a href="obs/Amplitude_path_variability.agulhas.png">View Plot</a></td>
+            <td><a href="obs/Amplitude_path_variability.australia.png">View Plot</a></td>
+        </tr>
+        <tr>
+            <td><strong>WBC EOF Analysis</strong></td>
+            <td><a href="obs/EOF_path_variability.gulf.png">View Plot</a></td>
+            <td><a href="obs/EOF_path_variability.kuroshio.png">View Plot</a></td>
+            <td><a href="obs/EOF_path_variability.brazil.png">View Plot</a></td>
+            <td><a href="obs/EOF_path_variability.agulhas.png">View Plot</a></td>
+            <td><a href="obs/EOF_path_variability.australia.png">View Plot</a></td>
+        </tr>
+    </tbody>
+</table>
+
+<div class=\"method-section\">
+    <h4>Method</h4>
+    <strong>Preprocessing:</strong>
+    <ul>
+        <li>Use monthly mean Sea Surface Height (SSH) anomalies.</li>
+        <li>Remove the climatological seasonal cycle.</li>
+    </ul>
+
+    <strong>Identifying the Mean WBC Path:</strong>
+    <ul>
+        <li>For each longitude within a target region, identify the latitude where the standard deviation of SSH anomalies is maximized.</li>
+        <li>Select the climatological mean SSH isoline that is closest, in a least-distance sense, to these maximum-STD latitude points.</li>
+        <li>This isoline is defined as the Mean Western Boundary Current (WBC) Path.</li>
+    </ul>
+
+    <strong>WBC Index:</strong>
+    <ul>
+        <li>At each month, average SSH anomalies along the mean WBC path.</li>
+        <li>This monthly time series represents the WBC Index, which reflects the overall north-south displacement of the WBC path.</li>
+    </ul>
+</div>
+
+<div class=\"region-section\">
+    <h4>Regions</h4>
+    <ul>
+        <li><strong>Gulf Stream:</strong> Longitude: 290–309, Latitude: 33–42</li>
+        <li><strong>Kuroshio Extension:</strong> Longitude: 145–157, Latitude: 31–45</li>
+        <li><strong>East Australia Current:</strong> Longitude: 157–168, Latitude: -40 to -30</li>
+        <li><strong>Agulhas Current:</strong> Longitude: 25–36, Latitude: -45 to -37</li>
+        <li><strong>North Brazil Current:</strong> Longitude: 315–330, Latitude: -44 to -33</li>
+    </ul>
+</div>
+
+</body>
+</html>
+
+<img src="../mdtf_diag_banner.png">
+<h3>Multi-Case Example Diagnostic: zonal-average near-surface temperature anomaly</h3>
+<p>
+    This POD illustrates how multiple cases (experiments) can be analyzed together.
+    The MDTF-diagnostics framework initializes and processes each case, writes the environment variables for the cases
+    to a yaml file (case_info.yml), and exports an ESM Intake catalog with information about the post-processed
+    data for each ease to the working directory (WORK_DIR). The example_multicase POD driver script reads
+    environment information from case_info.yml into a dictionary that it references to read data from the
+    post-processed files in the data catalog.
+</p>
+<p>
+    The example_multicase POD reads near-surface air temperature (TAS) from netcdf output files for multiple cases.
+    The POD time averages the TAS data and calculates the anomaly relative to the global mean.
+    The anomalies are zonally-averaged and the results from all cases are shown on a single plot.
+</p>
+<TABLE>
+    <TR>
+        <TH align=left style="color:navy;">Time averages
+        <TH align=left>Model Results
+    <TR>
+        <TH align=left>Zonal-mean near-surface temperature anomalies (K)
+</TABLE>
+<!--
+  If the POD generates one figure per case, use the following format in your python script file paths:
+  <TH align=center><A href=model/example_model_plot_{{CASENAME}}.png>{{CASENAME}}</A>
+  The framework output manager will automatically append a link to each file
+-->
+<TH align=center><A href=model/example_multicase_plot.png>plot</A> -->

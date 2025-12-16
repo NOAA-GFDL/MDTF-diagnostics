@@ -23,46 +23,85 @@
   // Run each ensemble on the example POD.
   // Add other PODs that work on ensemble datasets to the pod_list as needed
   "pod_list" : [
-     "example_multicase"
+      "WBC_var"
    ],
    // Each case corresponds to a different simulation/output dataset
-   // convention: cmip, cesm, or gfdl
-   // startdate, enddate: YYYY, YYYYmm, YYYYmmdd,
-   // YYYYmmdd:HHMMSS, YYYYmmddHHMMSS
-   // optional: model, realm
+   // startdate, enddate: either YYYY-MM-DD, YYYYMMDD:HHMMSS, or YYYY-MM-DD:HHMMSS
    "case_list":
     {
-      "CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231":
+      "CESM1-CAM5-SE-HR":
         {
-          "model": "test",
+          "model": "cmip",
           "convention": "CMIP",
-          "startdate": "19800101",
-          "enddate": "19841231",
-          "realm": "atmos"
+          "startdate": "19500101",
+          "enddate": "20141230"
         },
-      "CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231":
+      "CESM1-CAM5-SE-LR":
         {
-          "model": "test",
+          "model": "cmip",
           "convention": "CMIP",
-          "startdate": "19850101",
-          "enddate": "19891231",
-          "realm": "atmos"
+          "startdate": "19500101",
+          "enddate": "20060331"
+        },
+      "EC-Earth3P-HR":
+        {
+          "model": "cmip",
+          "convention": "CMIP",
+          "startdate": "19500101",
+          "enddate": "20141230"
+        },
+      "EC-Earth3P":
+        {
+          "model": "cmip",
+          "convention": "CMIP",
+          "startdate": "19500101",
+          "enddate": "20141230"
+        },
+      "ECMWF-IFS-HR":
+        {
+          "model": "cmip",
+          "convention": "CMIP",
+          "startdate": "19500101",
+          "enddate": "20141230"
+        },
+      "ECMWF-IFS-LR":
+        {
+          "model": "cmip",
+          "convention": "CMIP",
+          "startdate": "19500101",
+          "enddate": "20141230"
+        },
+      "HadGEM3-GC31-HH":
+        {
+          "model": "cmip",
+          "convention": "CMIP",
+          "startdate": "19500116",
+          "enddate": "20141230"
+        },
+      "HadGEM3-GC31-LL":
+        {
+          "model": "cmip",
+          "convention": "CMIP",
+          "startdate": "19500116",
+          "enddate": "20141230"
         }
-    },
 
+    },
   // PATHS ---------------------------------------------------------------------
   // Location of supporting data downloaded when the framework was installed.
   // If a relative path is given, it's resolved relative to the MDTF-diagnostics
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
   // Full or relative path to model data ESM-intake catalog header file
-  "DATA_CATALOG": "/glade/work/jshin/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
+
+  "DATA_CATALOG": "/glade/work/jshin/mdtf/MDTF-diagnostics/diagnostics/WBC_var/esm_catalog_WBC_CMIP.json",
+  //"DATA_CATALOG": "./diagnostics/WBC_var/settings.jsonc",
 
   // Backwards compatibility
-  "MODEL_DATA_ROOT": "../inputdata/mdtf_test_data",
+  "MODEL_DATA_ROOT": "/glade/work/jshin/mdtf/inputdata/model/WBC_var",
 
   // Parent directory containing observational data used by individual PODs.
-  "OBS_DATA_ROOT": "../inputdata/obs_data",
+  "OBS_DATA_ROOT": "/glade/work/jshin/mdtf/inputdata/obs_data/WBC_var",
 
   // Working directory.
   "WORK_DIR": "../wkdir",
@@ -72,16 +111,15 @@
   "OUTPUT_DIR": "../wkdir",
 
   // Location of the Anaconda/miniconda or micromamba installation to use for managing
-  // dependencies (path returned by running `[conda | micromamba] info`.) If empty,
-  // framework will attempt to determine location of system's conda installation.
-  "conda_root": "/glade/u/apps/opt/conda",
+  // dependencies (path returned by running `conda info --base` or `micromamba info`.)
+  "conda_root": "/glade/work/jshin/conda",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in conda_root/envs
   "conda_env_root": "/glade/work/jshin/conda/envs",
 
-  // Path to micromamba executable if using micromamba
+  // Location of the micromamba executable. Required if using micromamba
   "micromamba_exe": "",
 
   // SETTINGS ------------------------------------------------------------------
@@ -91,10 +129,8 @@
   // Settings affecting what output is generated:
   // Set to true to run the preprocessor; default true:
   "run_pp": true,
-
   // Set to true to perform data translation; default false:
-  "translate_data": true,
-
+  "translate_data": false,
   // Set to true to have PODs save postscript figures in addition to bitmaps.
   "save_ps": false,
 
@@ -103,18 +139,24 @@
 
   // If true, leave pp data in OUTPUT_DIR after preprocessing; if false, delete pp data after PODs
   // run to completion
-  "save_pp_data": true,
+  "save_pp_data": false,
 
   // Set to true to save HTML and bitmap plots in a .tar file.
   "make_variab_tar": false,
 
   // Generate html output for multiple figures per case
-  "make_multicase_figure_html": false,
+  "make_multicase_figure_html": true,
 
   // Set to true to overwrite results in OUTPUT_DIR; otherwise results saved
   // under a unique name.
   "overwrite": false,
+
   // List with custom preprocessing script(s) to run on data
   // Place these scripts in the user_scripts directory of your copy of the MDTF-diagnostics repository
-  "user_pp_scripts" : []
+  "user_pp_scripts" : [],
+
+  // Settings used in debugging:
+
+  // Log verbosity level.
+  "verbose": 1
 }

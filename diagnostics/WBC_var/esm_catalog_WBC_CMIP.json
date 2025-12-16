@@ -173,9 +173,9 @@
       }
     ]
   },
-  "id": "esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.csv",
+  "id": "esm_catalog_WBC_CMIP",
   "description": null,
   "title": null,
-  "last_updated": "2023-06-01",
-  "catalog_file": "file:/glade/work/jshin/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.csv"
+  "last_updated": "2025-12-16T06:43:40Z",
+  "catalog_file": "file:///glade/work/jshin/mdtf/MDTF-diagnostics/tools/catalog_builder/WBC_var/esm_catalog_WBC_CMIP.csv"
 }

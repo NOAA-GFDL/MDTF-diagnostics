@@ -40,8 +40,8 @@
         {
           "model": "cmip",
           "convention": "CMIP",
-          "startdate": "19500101",
-          "enddate": "20060331"
+          "startdate": "19500116",
+          "enddate": "20061230"
         },
       "EC-Earth3P-HR":
         {
@@ -98,10 +98,10 @@
   //"DATA_CATALOG": "./diagnostics/WBC_var/settings.jsonc",
 
   // Backwards compatibility
-  "MODEL_DATA_ROOT": "/glade/work/jshin/mdtf/inputdata/model/WBC_var",
+  "MODEL_DATA_ROOT": "/glade/work/jshin/mdtf/inputdata/model/WBC_var/",
 
   // Parent directory containing observational data used by individual PODs.
-  "OBS_DATA_ROOT": "/glade/work/jshin/mdtf/inputdata/obs_data/WBC_var",
+  "OBS_DATA_ROOT": "../inputdata/obs_data",
 
   // Working directory.
   "WORK_DIR": "../wkdir",

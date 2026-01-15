@@ -177,5 +177,5 @@
   "description": null,
   "title": null,
   "last_updated": "2025-12-16T06:43:40Z",
-  "catalog_file": "file:///glade/work/jshin/mdtf/MDTF-diagnostics/tools/catalog_builder/WBC_var/esm_catalog_WBC_CMIP.csv"
+  "catalog_file": "file:/glade/work/jshin/mdtf/MDTF-diagnostics/diagnostics/WBC_var/esm_catalog_WBC_CMIP.csv"
 }

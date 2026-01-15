@@ -16,9 +16,8 @@ warnings.simplefilter("ignore")
 # =============================================================================
 # 1. Setup & Config
 # =============================================================================
-#obs_dir = '/glade/work/jshin/mdtf/inputdata/obs_data/WBC_var/'
-work_dir = os.environ.get("WORK_DIR", "./")
-obs_dir = os.environ.get("OBS_DATA_ROOT", "./")
+work_dir = os.environ.get("WORK_DIR")
+obs_dir  = os.environ.get("OBS_DATA")
 print(f"Work Dir: {work_dir}")
 print(f"Obs Root: {obs_dir}")
 
@@ -34,7 +33,7 @@ with open(case_env_file, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
-save_dir = os.path.join(work_dir, 'obs/')
+save_dir = os.path.join(work_dir, 'model/')
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
@@ -43,7 +42,7 @@ if not os.path.exists(save_dir):
 # =============================================================================
 
 # --- 2.1 Load Observation (Global Raw) ---
-print("\n[Step 1] Opening Observation Data (Lazy)...")
+print("\n[Step 1] Opening Observation Data ...")
 obs_filename = "cmems_obs.1993-01-01-2022-12-31_r360x180.nc"
 obs_path = os.path.join(obs_dir, obs_filename)
 ds_obs_global = None
@@ -98,8 +97,8 @@ if ds_obs_global is None and len(data_model_global) > 0:
 # =============================================================================
 # 3. Main Analysis Loop
 # =============================================================================
-#REGION = ["gulf", "kuroshio", "australia", "agulhas", "brazil"]
-REGION = ["gulf"] 
+REGION = ["gulf", "kuroshio", "australia", "agulhas", "brazil"]
+#REGION = ["gulf"] 
 #REGION = ["kuroshio"]
 #REGION = ["australia"]
 #REGION = ["agulhas"]

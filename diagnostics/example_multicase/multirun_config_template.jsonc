@@ -56,7 +56,7 @@
   // code directory. Environment variables (eg, $HOME) can be referenced with a
   // "$" and will be expended to their current values when the framework runs.
   // Full or relative path to model data ESM-intake catalog header file
-  "DATA_CATALOG": "/glade/work/jshin/mdtf/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
+  "DATA_CATALOG": "../diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json",
 
   // Backwards compatibility
   "MODEL_DATA_ROOT": "../inputdata/mdtf_test_data",
@@ -74,12 +74,12 @@
   // Location of the Anaconda/miniconda or micromamba installation to use for managing
   // dependencies (path returned by running `[conda | micromamba] info`.) If empty,
   // framework will attempt to determine location of system's conda installation.
-  "conda_root": "/glade/u/apps/opt/conda",
+  "conda_root": "/net/jml/miniconda3",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in conda_root/envs
-  "conda_env_root": "/glade/work/jshin/conda/envs",
+  "conda_env_root": "/net/jml/miniconda3/envs",
 
   // Path to micromamba executable if using micromamba
   "micromamba_exe": "",

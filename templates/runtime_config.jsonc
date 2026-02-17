@@ -24,7 +24,7 @@
   // Add other PODs that work on ensemble datasets to the pod_list as needed
   "pod_list" : [
       //"example"
-     "example"
+     "example_multicase"
    ],
    // Each case corresponds to a different simulation/output dataset
    // convention: cmip, cesm, or gfdl
@@ -74,15 +74,15 @@
 
   // Location of the Anaconda/miniconda or micromamba installation to use for managing
   // dependencies (path returned by running `conda info --base` or `micromamba info`.)
-  "conda_root": "/glade/work/jshin/conda/envs",
+  "conda_root": "",
 
   // Directory containing the framework-specific conda environments. This should
   // be equal to the "--env_dir" flag passed to conda_env_setup.sh. If left
   // blank, the framework will look for its environments in conda_root/envs
-  "conda_env_root": "/glade/work/jshin/conda/envs",
+  "conda_env_root": "",
 
   // Location of the micromamba executable. Required if using micromamba
-  "micromamba_exe": "/glade/u/home/jshin/.local/bin/micromamba",
+  "micromamba_exe": "",
 
   // SETTINGS ------------------------------------------------------------------
   // Any command-line option recognized by the mdtf script (type `mdtf --help`)

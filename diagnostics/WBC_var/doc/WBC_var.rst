@@ -47,7 +47,7 @@ The following 3-D (time-lat-lon) Sea Surface Height fields are required with mon
 - Sea Surface Height (units: m)
 
 | Preprocessed observational data from CMEMS satellite altimeter and model output from HighResMIP ``mdtf/inputdata/obs_data/WBC_var/`` and ``mdtf/inputdata/model/WBC_var/``
-| Data respository: https://10.6084/m9.figshare.30892322 
+| Data respository: https://doi.org/10.6084/m9.figshare.30892322 
 
 Available Analyses
 ------------------

@@ -1,6 +1,6 @@
 Western Boundary Current (WBC) Diagnostics
 ==========================================
-Last update: 12/16/2025
+Last update: 03/02/2026
 
 This diagnostic package provides a set of analyses of Western Boundary Currents (WBCs) after their separation from the coast, focusing on five major regions:
 
@@ -14,7 +14,7 @@ Contact info
 ------------
 
 - PI: Young-Oh Kwon, WHOI
-- Current Developer: Jongsoo Shin (<200b>jongsoo.shin@whoi.edu<200b>), WHOI
+- Current Developer: Jongsoo Shin (jongsoo.shin@whoi.edu), WHOI
 - Contributors: Lilli Enders, MIT-WHOI Joint Program
 
 Open source copyright agreement
@@ -26,51 +26,47 @@ The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt).
 Functionality
 -------------
 
-All scripts can be found at: ``mdtf/MDTF_$ver/var_code/WBC_var``
+All scripts can be found at: ``mdtf/MDTF-diagnostics/diagnostics/WBC_var``
 
-1. Main script: WBC_var.py
-2. Preprocessing script: postprocessing.py
-4. Calculating index: calculate_index.py
-3. Plotting script: draw_figure.py
-
-| Preprocessed observational data from CMEMS satellite altimeter and HighResMIP ``mdtf/inputdata/obs_data/WBC_var/``.
-| Place your input data at: ``mdtf/inputdata/model/WBC_var/``
-| index.html can be found at: ``mdtf/MDTF_$ver/wkdir/MDTF_$model_name``
-Dataset is available at https://10.6084/m9.figshare.30219853.
+| 1. Main script: WBC_var.py
+| 2. Preprocessing script: postprocessing.py
+| 3. Calculating index: calculate_index.py
+| 4. Plotting script: draw_figure.py
 
 Required Programming Language and libraries
 ------------------------------------------
 
- Python Version 3.7 or higher is required.
- Required Python packages: eofs,statsmodels
+| Python Version 3.7 or higher is required.
+| Required Python packages: eofs,statsmodels
 
 Required input data to the module
 ---------------------------------
 
 The following 3-D (time-lat-lon) Sea Surface Height fields are required with monthly mean temporal resolution
 
-1. Sea Surface Height (units: m)
+| Sea Surface Height (units: m)
 
-Data respository: https://10.6084/m9.figshare.30892322 
+| Preprocessed observational data from CMEMS satellite altimeter and model output from HighResMIP ``mdtf/inputdata/obs_data/WBC_var/`` and ``mdtf/inputdata/model/WBC_var/``
+| Data respository: https://10.6084/m9.figshare.30892322 
 
 Available Analyses
 ------------------
 
 1. **WBC Index**  
-- Comparison of the spatial maps of the mean WBC path, which are defined as the locations of maximum SSH anomalies at each longitude, on top of the mean and standard deviations of SSH anomalies.   
-- Comparison of the WBC indices, which are time series of SSH anomalies averaged along the mean WBC path, representing meridional displacement of the currents.
+| - Comparison of the spatial maps of the mean WBC path, which are defined as the locations of maximum SSH anomalies at each longitude, on top of the mean and standard deviations of SSH anomalies.   
+| - Comparison of the WBC indices, which are time series of SSH anomalies averaged along the mean WBC path, representing meridional displacement of the currents.
 
 2. **WBC Path Variability**  
--  Comparison of the amplitudes of variability in the WBC path, calculated from the SSH anomalies along the WBC mean path.
--  Comparison of the temporal characteristics of the WBC indices, represented by the auto-correlations of the WBC indices.
-- Comparison of the e-folding time scales of the auto-correlation functions of the WBC indices.
+| - Comparison of the amplitudes of variability in the WBC path, calculated from the SSH anomalies along the WBC mean path.
+| - Comparison of the temporal characteristics of the WBC indices, represented by the auto-correlations of the WBC indices.
+| - Comparison of the e-folding time scales of the auto-correlation functions of the WBC indices.
 
 3. **WBC EOF Analysis**  
- - Comparison of the leading Empirical Orthogonal Function (EOF) mode of SSH anomalies along the WBC mean path.
-- Comparison of the portion of total variance explained by the leading EOFs.
-- Comparison of the waviness of the spatial patterns of the leading EOFs.
-- Comparison of the spatial auto-correlation of the leading EOF patterns.
-- Comparison of the e-folding length scales of the spatial auto-correlation functions of the leading EOF patterns.
+| - Comparison of the leading mode of Empirical Orthogonal Function (EOF) of SSH anomalies along the WBC mean path.
+| - Comparison of the portion of total variance explained by the leading EOFs.
+| - Comparison of the waviness of the spatial patterns of the leading EOFs.
+| - Comparison of the spatial auto-correlation of the leading EOF patterns.
+| - Comparison of the e-folding length scales of the spatial auto-correlation functions of the leading EOF patterns.
 
 Each diagnostic is available for the five WBC regions, with separate figures for each metric.
 
@@ -79,11 +75,12 @@ Methodology
 
 **Preprocessing**
 
-- Use monthly mean sea surface height (SSH) anomalies.
-- Remove the climatological mean monthly means.
+- Regird horizontally to a 1 degree resoultion using interpolation.
 
 **Mean WBC Path Identification**
 
+- Use monthly mean sea surface height (SSH) anomalies.
+- Remove the climatological mean monthly means.
 - For each longitude within a region, locate the latitude where the standard deviation of SSH anomalies is maximum.
 - Select the climatological mean SSH isoline closest to those latitudes.
 - This isoline defines the **Mean WBC Path**.
@@ -98,11 +95,11 @@ Methodology
 Regions Analyzed
 ----------------
 
-- **Gulf Stream**: Longitude 51-70W, Latitude 33–42N
+- **Gulf Stream**: Longitude 51–70W, Latitude 33–42N
 - **Kuroshio Extension**: Longitude 145–157E, Latitude 31–45N
-- **Brazil Current**: Longitude 30-45W, Latitude 33 to 44S
-- **Agulhas Current**: Longitude 25–36E, Latitude 37 to 45S
-- **East Australia Current**: Longitude 157–168E, Latitude 30 to 40S
+- **Brazil Current**: Longitude 30–45W, Latitude 33–44S
+- **Agulhas Current**: Longitude 25–36E, Latitude 37–45S
+- **East Australia Current**: Longitude 157–168E, Latitude 30–40S
 
 Output Directory Structure
 --------------------------

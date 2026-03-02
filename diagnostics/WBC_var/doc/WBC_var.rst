@@ -44,7 +44,7 @@ Required input data to the module
 
 The following 3-D (time-lat-lon) Sea Surface Height fields are required with monthly mean temporal resolution
 
-| Sea Surface Height (units: m)
+- Sea Surface Height (units: m)
 
 | Preprocessed observational data from CMEMS satellite altimeter and model output from HighResMIP ``mdtf/inputdata/obs_data/WBC_var/`` and ``mdtf/inputdata/model/WBC_var/``
 | Data respository: https://10.6084/m9.figshare.30892322 
@@ -52,21 +52,24 @@ The following 3-D (time-lat-lon) Sea Surface Height fields are required with mon
 Available Analyses
 ------------------
 
-1. **WBC Index**  
-| - Comparison of the spatial maps of the mean WBC path, which are defined as the locations of maximum SSH anomalies at each longitude, on top of the mean and standard deviations of SSH anomalies.   
-| - Comparison of the WBC indices, which are time series of SSH anomalies averaged along the mean WBC path, representing meridional displacement of the currents.
+1. **WBC Index**
+  
+- Comparison of the spatial maps of the mean WBC path, which are defined as the locations of maximum SSH anomalies at each longitude, on top of the mean and standard deviations of SSH anomalies.   
+- Comparison of the WBC indices, which are time series of SSH anomalies averaged along the mean WBC path, representing meridional displacement of the currents.
 
 2. **WBC Path Variability**  
-| - Comparison of the amplitudes of variability in the WBC path, calculated from the SSH anomalies along the WBC mean path.
-| - Comparison of the temporal characteristics of the WBC indices, represented by the auto-correlations of the WBC indices.
-| - Comparison of the e-folding time scales of the auto-correlation functions of the WBC indices.
+
+- Comparison of the amplitudes of variability in the WBC path, calculated from the SSH anomalies along the WBC mean path.
+- Comparison of the temporal characteristics of the WBC indices, represented by the auto-correlations of the WBC indices.
+- Comparison of the e-folding time scales of the auto-correlation functions of the WBC indices.
 
 3. **WBC EOF Analysis**  
-| - Comparison of the leading mode of Empirical Orthogonal Function (EOF) of SSH anomalies along the WBC mean path.
-| - Comparison of the portion of total variance explained by the leading EOFs.
-| - Comparison of the waviness of the spatial patterns of the leading EOFs.
-| - Comparison of the spatial auto-correlation of the leading EOF patterns.
-| - Comparison of the e-folding length scales of the spatial auto-correlation functions of the leading EOF patterns.
+
+- Comparison of the leading mode of Empirical Orthogonal Function (EOF) of SSH anomalies along the WBC mean path.
+- Comparison of the portion of total variance explained by the leading EOFs.
+- Comparison of the waviness of the spatial patterns of the leading EOFs.
+- Comparison of the spatial auto-correlation of the leading EOF patterns.
+- Comparison of the e-folding length scales of the spatial auto-correlation functions of the leading EOF patterns.
 
 Each diagnostic is available for the five WBC regions, with separate figures for each metric.
 

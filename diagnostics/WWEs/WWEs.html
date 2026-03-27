@@ -1,0 +1,78 @@
+<!-- This file is part of the taux_diag module of the MDTF code package (see LICENSE.txt) -->
+
+<title>Westerly wind events</title>
+<img src="../mdtf_diag_banner.png">
+<h3>Westerly wind events</h3>
+<p>
+Westerly wind events (WWEs) are anomalously strong, long lasting westerlies
+that predominantly occur over the west Pacific Ocean. They are capable
+of exciting oceanic Kelvin waves, which in turn warm the ocean surface
+and deepen the thermocline as the wave propagates eastward. These
+WWE-Kelvin wave interactions can therefore play an important role in
+ENSO variability and it is important to understand the fidelity of
+WWEs and Kelvin waves in earth system models relative to observations.
+</p>
+<p>
+This POD identifies WWEs and their characteristics across the Pacific
+Ocean (120E-280E) using daily equatorially averaged (2.5S - 2.5N)
+120-day highpass filtered zonal wind stress from TropFlux observation
+and earth system models (ESMs). The WWE characteristics include
+central longitude and date, zonal extent, duration, and integrated
+wind work (IWW), which is the sum of all zonal wind stress within the
+WWE time-longitude patch. The IWW indicates the WWE's total forcing to
+the ocean. The methods for WWE identification are fully discussed in
+Riley Dellaripa et al. (2024).
+<p>
+The results of the WWE identification are plotted below in
+time-longitude space (i.e., Hovmollers). The shading is the anomalous
+zonal wind stress and the black outlines indicate the WWEs. Each
+Hovmoller represents one year in the obserations or ESM.
+<p>
+Also plotted is a 1D histogram of the likelihood of each 1 longitude
+bin across the Pacific experiencing a WWE per day. The likelihood is
+calculated as the total number of unique events at each 1 longitude
+divided by the total number of days in each data set. The reciprocal
+of the frequncy indicates the average return rate of a WWE per
+longitude or the average number of days between WWEs at each
+longitude.  
+<p>
+A complementary POD assesses the fidelity of oceanic
+Kelvin waves in ESMs. 
+</p>
+
+<h3>Reference:</h3>
+Riley Dellaripa, E. M., C. A. DeMott, J. Cui, and E. D. Maloney, 2024:
+Evaluation of Equatorial Westerly Wind Events in the Pacific Ocean in
+CMIP6 Models. J. Climate, https://doi.org/10.1175/JCLI-D-23-0629.1
+</p>
+<h3>{{CASENAME}}</h3>
+<TH align=left><h3> Hovmollers of zonal wind stress and WWEs:</h3>
+<TABLE>
+<TR>
+  <TH align=left>Hovmollers of first 20 years:
+</TR>
+<TR>
+    <TH align=left><A
+      href=model/{{CASENAME}}.{{startdate}}.YearlyHovmollers.png> {{CASENAME}} </A>
+    <TH align=center><A
+      href=obs/TropFlux.1980-1999.YearlyHovmollers.png>TropFlux 1980-1999</A>
+</TR>
+</TABLE>
+<p></p>
+<TABLE>
+  <TR>
+  <TH align=left>Hovmollers beyond year 20:
+</TR>
+<TR>
+    <TH align=left><A
+      href=model/{{CASENAME}}.{{enddate}}.YearlyHovmollers.png> {{CASENAME}} </A>
+    <TH align=center><A
+      href=obs/TropFlux.2000-2014.YearlyHovmollers.png>TropFlux 2000-2014</A>
+</TR>
+</TABLE>
+
+<p></p>
+<TR>
+<TH align=left><h3>WWE probability per longitude in TropFlux and {{CASENAME}}</h3>
+<TH align=center><A href=model/{{CASENAME}}_and_TropFlux_WWE_prob_per_day.png>plot</A>
+</TR>

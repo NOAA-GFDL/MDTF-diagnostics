@@ -41,7 +41,7 @@ dependencies:
 - cloud_sptheme
 - snakeviz=2.2.0
 - graphviz=2.50.0
-- pip=24.3.1
-- pip:
-  - gprof2dot==2024.6.6
-  - viztracer==1.0.0
+#- pip=24.3.1
+#- pip:
+#  - gprof2dot==2024.6.6
+#  - viztracer==1.0.0

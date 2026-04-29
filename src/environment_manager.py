@@ -171,9 +171,6 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
             self.log.log.warning("Conda env directory '%s' not found; creating.",
                              self.conda_env_root)
             os.makedirs(self.conda_env_root)  # recursive mkdir if needed
-        else:
-            # only true in default anaconda install, may need to fix
-            self.conda_env_root = os.path.join(self.conda_root, 'envs')
 
     def create_environment(self, env_name):
         # check to see if conda env exists, and if not, try to create it

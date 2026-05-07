@@ -30,7 +30,7 @@ def ens_setup(ens_name,ens_mem_num,ystart,yend):
 # Construct and display Settings
 
     ens_info = find_ens_info(ens_name,ens_mem_num,ystart,yend)  
-   
+    pprint.pprint(ens_info)
     
 
     return ens_info
@@ -195,7 +195,7 @@ def dataset_get(block_meta,var_name,season,diag_hem):
         year_start = str(date_start)[:4]
         year_end   = str(date_end)[:4]
 
-     # MDTF cases are already opened as xarray datasets
+     # MDTF cases might be already opened as xarray datasets. But need to add 'name' dimension.
         type_run_file = type(run_files)
         if isinstance(run_files, xr.Dataset):
             print(fname,'Run file is already an xarray dataset, trying to use it as such')
@@ -217,7 +217,7 @@ def dataset_get(block_meta,var_name,season,diag_hem):
             # Grab each dataset separately (will require some work for CESM2 as they are in decadal files.)
             
             for irun,run_file in enumerate(run_files):    
-                print(fname,'Opening file: ',irun,run_file, 'ensemble: ',ens_name)
+                print(fname,' Opening file: ',irun,run_file, 'ensemble: ',ens_name)
                 match(ens_name):
                     
                     case 'ERA5':
@@ -230,11 +230,11 @@ def dataset_get(block_meta,var_name,season,diag_hem):
                         
                     case _ :
                             ds_run = xr.open_mfdataset(run_file,combine="nested",parallel=True,chunks=chunk_sizes)
-                            # Data on the file is in silly Julian days that need to be converted to gregorian
-                            print(fname,'Finished opening')
-                            if ens_name in ['ERAI','MERRA']:
+                            print(fname,'Finished opening',ds_run)
+                            
+                            if ens_name in ['ERAI','MERRA']:  #Change from Julian days to gregorian calendar
                                     ds_run['time'] = pd.to_datetime(ds_run['time'], origin='julian', unit='D')
-                            if ens_name in ['ERAI']:
+                            if ens_name in ['ERAI']:          # Re-index lat dim
                                     ds_run = ds_run.reindex(lat=ds_run.lat[::-1])
                             
 # Subset for years and season 
@@ -250,12 +250,15 @@ def dataset_get(block_meta,var_name,season,diag_hem):
             else:
                 # if it already has 'name' dim but with wrong label/length, replace coord
                 ds_run = ds_run.assign_coords(name=('name', [irun]))
+
             ds_this_ens = xr.concat([ds_this_ens, ds_run], 'name')
+
         
 # Name the dataset dimension from from name
         if not isinstance(run_names, list):
             run_names = [run_names]
         ds_this_ens = ds_this_ens.assign_coords(name = ("name", run_names))
+
 
         if num_runs == 1:
             ds_this_ens[var_name] = ds_this_ens[var_name].expand_dims(name=run_names)
@@ -320,6 +323,12 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,file_opts
 
     ens_names = list(block_meta.index)
 
+    for i in range(len(ens_names)):
+        ens_name = ens_names[i]
+        if 'name' not in ens_ds[ens_name]['Z500'].dims:
+            ens_ds[ens_name]['Z500'] = ens_ds[ens_name]['Z500'].expand_dims(name=[ens_name])
+
+
     block_freq_ens = {}  # Dictionary for ensemble specific block freq.
 
 
@@ -355,6 +364,7 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,file_opts
     
     for iens,ens_name in enumerate(ens_names):
 
+
         tstart = time.time()
 
         block_freq = None
@@ -365,24 +375,24 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,file_opts
         
         # Check if the file exists and set the file options accordingly (promote 'x' to 'r' or 'w')
         file_opts_checked, file_path = set_file_name_and_check_existance(ens_name, nens_mem, year_start, year_end, bseason, file_opts, block_diag, fout_dir)
-
-        if file_opts_checked in ['w']: # Do not calculate if just reading in. (No more 'x' since that is changed to 'w' or 'r' in set_file_name_and_check_existance)
-
+        
+                  
+        if file_opts_checked in ['w']: # Calculate if writing out, but not if just reading in.
             ds_this_ens = ens_ds[ens_name]
         
-        # Grab data and variable        
-            ens_z500 = ds_this_ens['Z500'] 
+            #  Grab data and variable        
+            ens_z500 = ds_this_ens['Z500']   
     
-        # Subset required latitude limits.
+            # Subset required latitude limits.
             ens_z500 = ens_z500.sel(lat=slice(lat_s_in,lat_n_in))
     
-        # Grab actual latitudes nearest blats_x on the data grid
+            # Grab actual latitudes nearest blats_x on the data grid
             blats_ng = ens_z500.lat.sel(lat=blats_n, method="nearest")
             blats_0g = ens_z500.lat.sel(lat=blats_0, method="nearest")
             blats_sg = ens_z500.lat.sel(lat=blats_s, method="nearest")
     
             
-        # Calculate Z500 for on-grid N,S and central points for all longitudes.   
+            # Calculate Z500 for on-grid N,S and central points for all longitudes.   
             
             z500_blats_n = ens_z500.sel(lat=blats_ng)
             z500_blats_0 = ens_z500.sel(lat=blats_0g)
@@ -461,13 +471,13 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,file_opts
                     print (fname,' No such blocking diagnostic - ',block_diag)
                     sys.errror(0)
             
-        # Determine frequency
+            # Determine frequency
             
             block_days = is_blocked.sum(dim='time')
             block_freq = block_days / is_blocked.sizes['time']
 
 
-            # Read or write file of block values
+        # Read or write file of block values
         block_freq = block_file_read_write(ens_name,nens_mem,year_start,year_end,bseason,block_freq,block_diag,file_opts_checked,file_path=file_path)  
 
        
@@ -511,6 +521,7 @@ def block_file_read_write(ens_name,nens,year_start,year_end,bseason,block_array_
     
         case 'w' : 
             print(fname,'Writing file ', file_path)  
+
             block_array_ens = block_array_ens.rename('BLOCK_'+block_diag)
             block_array_fout = block_array_ens.to_dataset()
 
@@ -725,13 +736,13 @@ def block_z500_1d(block_meta,ens_ds,bseason,file_opts='x'):
                  is_blocked = np.logical_or(is_blocked_idel,is_blocked)
     
             
-        # Determine frequency
+            # Determine frequency
             
             block_days = is_blocked.sum(dim='time')
             block_freq = block_days / is_blocked.sizes['time']
 
 
-            # Read or write file of block values
+        # Read or write file of block values
         block_freq = block_file_read_write(ens_name,nens_mem,year_start,year_end,bseason,block_freq,file_opts) 
 
        

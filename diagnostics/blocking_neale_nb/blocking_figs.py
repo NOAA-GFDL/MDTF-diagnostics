@@ -69,7 +69,6 @@ def block_plot_1d (block_meta,ens_block_1d,bseason,pshade='1',fig_out=False,dir_
         
         
         # Model vs. obs line settings.
-        print(f"DRBDBG L74 {ens_type=}")
         match ens_type:
             case ('model', 'mdtf'):
                 ens_col = ens_cols[imod]
@@ -84,7 +83,6 @@ def block_plot_1d (block_meta,ens_block_1d,bseason,pshade='1',fig_out=False,dir_
                 mark_size = 15
                 iobs += 1
         # Do a deep copy as rpeated invocation of this routine for fine turning messes the original data up if I don't.
-        print(f"DRBDBG {ens_block_1d[ens_name].dims=}")
 
         da_iens = ens_block_1d[ens_name]
 
@@ -92,7 +90,7 @@ def block_plot_1d (block_meta,ens_block_1d,bseason,pshade='1',fig_out=False,dir_
         # Shift lon of data for better regional plotting
         ilon_roll =  int(lone_offset/(da_iens.lon[1]-da_iens.lon[0]))
         da_iens = da_iens.roll(lon=ilon_roll)
-            
+
         
         # Set rolling smoothing for display.
         da_iens = da_iens.rolling(lon=3,center=True).mean()
@@ -101,7 +99,6 @@ def block_plot_1d (block_meta,ens_block_1d,bseason,pshade='1',fig_out=False,dir_
         #  Set min/mean/max of each ensemble set
         da_iens_ave = da_iens.mean(dim='name')
 
-        
         # Shade betweeen options min/max range of +/- 1 or 2 std.
         
         if pshade=='mm':
@@ -168,7 +165,11 @@ def block_plot_1d (block_meta,ens_block_1d,bseason,pshade='1',fig_out=False,dir_
     
     if fig_out: 
         fig_mid_text = '_' + ens_ystarts[0]+ '-' + ens_yends[1]
-        mp.savefig(dir_fig + 'block_1d_freq_' + "_".join(ens_names) + fig_mid_text + '_' +bseason+'.png',dpi=80,bbox_inches="tight")
+        fig_out_name = dir_fig + '/block_1d_freq_' + "_".join(ens_names) + fig_mid_text + '_' +bseason+'.png'
+        print(fname,'Saving figure to',fig_out_name)
+        mp.savefig(fig_out_name,dpi=80,bbox_inches="tight")
+    else:
+        print(fname,'Figure output turned off. Not saving figure.')
 
 
 
@@ -325,6 +326,15 @@ def block_plot_2d(block_meta,ens_block_2d,block_season,fig_out=True,dir_fig='',e
 
 #    fig.tight_layout()
     
+    # Output figure
+    
+    if fig_out: 
+        fig_mid_text = '_' + ens_ystarts[0]+ '-' + ens_yends[1]
+        fig_out_name = dir_fig + '/block_2d_freq_' + "_".join(ens_names) + fig_mid_text + '_' +bseason+'.png'
+        print(fname,'Saving figure to',fig_out_name)
+        mp.savefig(fig_out_name,dpi=80,bbox_inches="tight")
+    else:
+        print(fname,'Figure output turned off. Not saving figure.')
     
     tstart = time.time()
 

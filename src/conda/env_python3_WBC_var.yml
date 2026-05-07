@@ -1,4 +1,4 @@
-name: _MDTF_python3_base
+name: _MDTF_python3_WBC_var
 channels:
 - conda-forge # NOTE: critical to give highest priority to conda-forge
 dependencies:
@@ -7,30 +7,30 @@ dependencies:
 # see https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/pkg-specs.
 
 - python=3.12
+- numpy=1.26.4
 - scipy=1.14.0
 - netCDF4=1.6.5
 - cftime=1.6.2
-- xarray=2025.1.2
+- xarray=2024.1.1
 - matplotlib=3.8.2
 - pandas=2.2.2
 - cartopy=0.22.0
 - cython=3.0.2
 - pint=0.24.3
-- dask=2025.2.0
+- dask=2024.1.1
 - numba=0.60.0
 - scikit-learn=1.4.2
-- xesmf=0.8.9
-- esmf=8.8.1
-- esmpy=8.8.1
+- xesmf=0.8.7
+- esmf=8.4.2
+- esmpy=8.4.2
 - gsw=3.6.17
-- cfunits=3.3.6
 - metpy=1.5.1
 #- enso_metrics=3.1.1 Required by pcmdi_metrics, but no support for python>3.10
 #- pcmdi_metrics=3.0.2 Not used by current PODs-implement later
 - h5py=3.9.0
-- intake=2.0.8
+- intake=0.7.0
 - intake-xarray=0.7.0
-- intake-esm=2025.2.3
+- intake-esm=2024.2.6
 - nc-time-axis=1.4.1
 - pyyaml=6.0.1
 - networkx=3.1
@@ -41,12 +41,11 @@ dependencies:
 - momlevel=1.0.1
 - pip=23.3.1
 - pip:
-    - numpy==1.26.4
     - falwa==2.0.0
     - cmocean
+    - statsmodels==0.14.4
+    - eofs==2.0.0
     - regionmask
-    - momgrid==1.9.0
-    - git+https://github.com/jkrasting/doralite
     - git+https://github.com/raphaeldussin/static_downsampler
     - git+https://github.com/jkrasting/xcompare
     - git+https://github.com/raphaeldussin/xoverturning

@@ -205,24 +205,10 @@ def convert_dataarray(ds, da_name: str, src_unit=None, dest_unit=None, log=_log)
                         da = dset
                         da_name = var
                         break
-    # try to find approximate matches to input name in standard_name and long_name attributes
     if da is None:
-        da_name_words = re.split('[-, _:;]', da_name)
-        for var in merged:
-            dset = ds.get(var)
-            for attr in search_attrs:
-                att_value = dset.attrs.get(attr, None)
-                if isinstance(att_value, str):
-                    att_words = re.split('[-, _:;]', att_value)
-                    name_matches = list(set(da_name_words) & set(att_words))
-                    if len(name_matches) >= min(len(da_name_words), len(att_words)):
-                        log.info("Found approximate match for %s in dataset %s attribute %s",
-                                 da_name, attr, att_value)
-                        da = dset
-                        da_name = var
-                        break
-    if da is None:
-        raise ValueError(f"convert_dataarray: '{da_name}' not found in dataset.")
+        log.warning(f"units.convert_dataarray: standard_name attribute '{da_name}' not found in dataset. "
+                    f"Skipping the unit conversion for the variable/coordinate associated with {da_name}")
+        return ds
     if src_unit is None:
         try:
             src_unit = da.attrs['units']

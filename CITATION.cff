@@ -1,0 +1,10 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+
+Title: MDTF-diagnostics for Western Boundary Currents
+authors: Jongsoo Shin, Young-Oh Kwon, and Lilli Enders
+Affilation: Physical Oceanography Department, Woods Hole Oceanographic Institution, MA, USA
+
+Git title:jongsooshin5/MDTF-diagnostics: MDTF-diagnostics for Western Boundary Currents
+version: WBC_var
+date-released: 2025-12-16

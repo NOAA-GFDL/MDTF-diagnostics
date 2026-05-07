@@ -101,8 +101,11 @@ class PodPathManager(PathManagerBase):
                  new_work_dir: bool = True):
 
         super().__init__(config, env, unittest, new_work_dir)
-
+        
         self.POD_CODE_DIR = os.path.join(self.CODE_ROOT, 'diagnostics', pod_name)
+        if not os.path.exists(self.POD_CODE_DIR):
+            self.POD_CODE_DIR = os.path.join(self.CODE_ROOT, 'diagnostics', 'mar',  pod_name)
+            
         self.POD_WORK_DIR = os.path.join(self.WORK_DIR, pod_name)
         self.POD_OUTPUT_DIR = os.path.join(self.OUTPUT_DIR, pod_name)
         if any(self.OBS_DATA_ROOT):

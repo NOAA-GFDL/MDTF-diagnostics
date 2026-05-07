@@ -248,6 +248,7 @@
     },
     "tos": {
       "standard_name": "sea_surface_temperature",
+      "realm": "ocean",
       "units": "degC",
       "ndim": 3
     },
@@ -256,11 +257,6 @@
       "realm": "atmos",
       "units": "m s-1",
       "modifier": "atmos_height",
-      "ndim": 3
-    },
-    "tos": {
-      "standard_name": "sea_surface_temperature",
-      "units": "K",
       "ndim": 3
     },
     // radiative fluxes:

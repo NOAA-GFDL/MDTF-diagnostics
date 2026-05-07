@@ -891,7 +891,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         return pd.DataFrame.from_dict(group_df).reset_index()
 
     def crop_date_range(self, case_date_range: util.DateRange, xr_ds, time_coord) -> xr.Dataset:
-        xr_ds = self.drop_attributes(xr_ds)
         xr_ds = xr.decode_cf(xr_ds,
                              decode_coords=True,  # parse coords attr
                              decode_times=True,
@@ -1201,7 +1200,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # if multiple entries exist, refine with variable_id
                 # this will solve issues where standard_id is not enough to uniquely ID a variable
                 # e.g. for catalogs with variables defined at individual levels
-                if len(cat_subset.df.variable_id) > 1:
+                if len(set(cat_subset.df.variable_id)) > 1:
                     var.log.info(f"Query for case {case_name} variable {var.name} in {data_catalog} returned multiple"
                                  f"entries. Refining query using variable_id")
                     if var.translation is not None:
@@ -1209,7 +1208,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     else:
                         case_d.query.update({'variable_id': var.name})
                     cat_subset = cat.search(**case_d.query)
-                    if len(cat_subset.df.variable_id) > 1:
+                    if len(set(cat_subset.df.variable_id)) > 1:
                         raise util.DataRequestError(
                             f"Unable to find unique entry for {case_d.query['variable_id']}"
                             f" for case {case_name} in {data_catalog}")
@@ -1269,6 +1268,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         else:
                             var_xr = xr.concat([var_xr, cat_subset_dict.values[cat_index]], var.N.name)
                 var_xr = self.drop_attributes(var_xr)
+                # grab only the requested static variable
+                if var.is_static:
+                    del_list = []
+                    for vname in var_xr.variables:
+                        if vname != var.name:
+                            del_list.append(vname)
+                    for del_name in del_list:
+                        del var_xr[del_name]
                 # add standard_name to the variable xarray dataset if it is not defined
                 for vname in var_xr.variables:
                     if (not isinstance(var_xr.variables[vname], xr.IndexVariable)
@@ -1537,6 +1544,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         v_dataset = ds[v].to_dataset()
                         var_ds = xr.merge([var_ds, v_dataset])
 
+        # assign lat/lon coordinate standard_name if not defined or incorrect
+        for v in var_ds.variables:
+            if 'lat' in v.lower() and 'lat' not in var_ds[v].attrs['standard_name'].lower():
+                var_ds[v].attrs['standard_name'] = var.Y.standard_name
+            elif 'lon' in v.lower() and 'lon' not in var_ds[v].attrs['standard_name'].lower():
+                var_ds[v].attrs['standard_name'] = var.X.standard_name
 
         # The following block is retained for time comparison with dask delayed write procedure
         # var_ds.to_netcdf(

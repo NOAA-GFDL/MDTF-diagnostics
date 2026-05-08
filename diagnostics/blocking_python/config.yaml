@@ -1,0 +1,49 @@
+# -----------------------------------------------------------------
+# MASTER CONFIGURATION for Diurnal Cycle Analysis
+# -----------------------------------------------------------------
+
+# === 1. File & Directory Paths ===
+# (Using your /work/s1b/test_dc_pod/ structure)
+
+# Path to the single model NetCDF file
+# (Used by: pr_diurnal_cycle_PY.py)
+pr_file: "/work/s1b/dc_pod/1_input_model/atmos_4xdaily_avg.2011010100-2020123123.precip.nc"
+
+# Path to the directory full of RAW satellite HDF5 files
+# (Used by: preprocess_satellite_data.py)
+raw_satellite_dir: "/work/s1b/dc_pod/2_input_satellite_raw/"
+
+# Path to the directory where pre-processing will SAVE its output
+# AND where the analysis script will READ its obs data from.
+# (Used by: BOTH scripts)
+processed_satellite_dir: "/work/s1b/dc_pod/3_processed_satellite/"
+
+# Path to the final directory for plots and logs
+# (Used by: pr_diurnal_cycle_PY.py)
+work_dir: "/work/s1b/dc_pod/4_output_plots_and_logs/"
+
+
+# === 2. Analysis & Plotting Settings ===
+
+# The specific time period to analyze (must be in 'YYYY-MM-DD' format)
+# (Used by: BOTH scripts)
+analysis_period:
+  start: "2015-01-01"
+  end: "2015-12-31"
+  
+# Settings for the final plot titles
+# (Used by: pr_diurnal_cycle_PY.py)
+casename: "SPEAR JJA 2015 Test"
+startdate: "2015"
+enddate: "2015"
+
+# The variable name for precipitation in your model file
+# (Used by: pr_diurnal_cycle_PY.py)
+pr_var: "precip"
+
+
+# === 3. Preprocessing Dask Settings ===
+# (Used by: preprocess_satellite_data.py)
+
+n_cores: 4
+memory_per_worker: "16GB"

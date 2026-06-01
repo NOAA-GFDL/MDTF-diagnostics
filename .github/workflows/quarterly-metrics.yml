@@ -23,7 +23,7 @@ jobs:
       - name: Fetch Repository Traffic
         uses: sangonzal/repository-traffic-action@v.0.1.6
         env:
-          TRAFFIC_ACTION_TOKEN: ${{ secrets.METRIC_TOKEN_PUB }} # <-- Updated here
+          TRAFFIC_ACTION_TOKEN: ${{ secrets.METRIC_TOKEN_PUB }}  
 
       # 3. Automatically commit the new CSV data
       - name: Commit Changes to Traffic Branch

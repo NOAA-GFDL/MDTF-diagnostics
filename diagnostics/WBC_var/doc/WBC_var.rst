@@ -1,6 +1,6 @@
 Western Boundary Current (WBC) Diagnostics
 ==========================================
-Last update: 03/02/2026
+Last update: 06/02/2026
 
 This diagnostic package provides a set of analyses of Western Boundary Currents (WBCs) after their separation from the coast, focusing on five major regions:
 
@@ -22,6 +22,12 @@ Open source copyright agreement
 
 The MDTF framework is distributed under the LGPLv3 license (see LICENSE.txt).
 
+
+Citation
+-------------
+
+Please cite this software if you use it in your work:
+Shin, J., Kwon, Y.-O., Enders, L., & Radhakrishnan, A. (2026). Western Boundary Current (WBC) Diagnostics. Zenodo. https://doi.org/10.5281/zenodo.19265586
 
 Functionality
 -------------

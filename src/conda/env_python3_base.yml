@@ -7,7 +7,6 @@ dependencies:
 # see https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/pkg-specs.
 
 - python=3.12
-- numpy=1.26.4
 - scipy=1.14.0
 - netCDF4=1.6.5
 - cftime=1.6.2
@@ -42,6 +41,7 @@ dependencies:
 - momlevel=1.0.1
 - pip=23.3.1
 - pip:
+    - numpy==1.26.4
     - falwa==2.0.0
     - cmocean
     - regionmask

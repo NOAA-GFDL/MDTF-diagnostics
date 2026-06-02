@@ -1,0 +1,35 @@
+name: Project Metrics Logger
+
+on:
+  schedule:
+    - cron: "55 23 * * *" 
+  workflow_dispatch: 
+
+jobs:
+  traffic:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      # 1. Checkout the traffic branch using the updated token name
+      - name: Checkout Traffic Branch
+        uses: actions/checkout@v4
+        with:
+          ref: "traffic"
+          token: ${{ secrets.METRIC_TOKEN_PUB }} # <-- Updated here
+
+      # 2. Run the metrics scraper action using the updated token name
+      - name: Fetch Repository Traffic
+        uses: sangonzal/repository-traffic-action@v.0.1.6
+        env:
+          TRAFFIC_ACTION_TOKEN: ${{ secrets.METRIC_TOKEN_PUB }}  
+
+      # 3. Automatically commit the new CSV data
+      - name: Commit Changes to Traffic Branch
+        uses: EndBug/add-and-commit@v9
+        with:
+          author_name: "Organization Metrics Bot"
+          author_email: "actions@github.com"
+          message: "Accounted daily traffic logs"
+          add: "traffic"

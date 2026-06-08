@@ -81,7 +81,6 @@ if os.path.isfile(case_env_file):
         print(f"     File: {os.path.basename(filepath)}")
 
         try:
-            # [중요] use_cftime=True 필수
             ds_mod = xr.open_dataset(filepath, chunks={'time': 12}, use_cftime=True)
             ds_mod = normalize_metadata_global(ds_mod, target_var=zos_var_model)
             data_model_global[case_name] = ds_mod

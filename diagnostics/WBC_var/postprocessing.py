@@ -23,7 +23,6 @@ def normalize_metadata_global(ds, target_var='zos'):
 
     # 2. Time Format (cftime -> datetime64[ns])
     if 'time' in ds.coords:
-        # cftime 객체(Object)인지 확인
         if ds['time'].dtype == 'O' or isinstance(ds.indexes['time'], xr.CFTimeIndex):
             try:
                 # print(f"  -> Converting time format manually... (Original len: {len(ds['time'])})")

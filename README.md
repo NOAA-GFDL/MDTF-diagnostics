@@ -51,6 +51,7 @@ and a link to the full documentation for each currently-supported POD.
 | [Tropical Cyclone Rain Rate Azimuthal Average](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/TC_Rain/doc/TC_Rain.rst)                                                            | Daehyun Kim (U. Washington), Nelly Emlaw (U.Washington)                                            |
 | [Tropical Pacific Sea Level](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/tropical_pacific_sea_level/doc/tropical_pacific_sea_level.rst)                                        | Jianjun Yin (U. Arizona), Chia-Weh Hsu (GFDL)                                                      |
 | [Wavenumber-Frequency Spectra](https://project.cgd.ucar.edu/projects/MDTF/mdtf_figures/MDTF_QBOi.EXP1.AMIP.001.save/Wheeler_Kiladis/Wheeler_Kiladis.html)                            | CESM/AMWG (NCAR)                                                                                   |
+| [Western Boundary Current](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/diagnostics/WBC_var/doc/WBC_var.rst)                                                                                | Jongsoo Shin (WHOI), Young-Oh Kwon (WHOI), Lilli. Enders (WHOI)         
 
 ## Example POD Analysis Results
 

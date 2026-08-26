@@ -1,0 +1,17 @@
+name: diurnal_cycle
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - xarray
+  - dask
+  - distributed
+  - netcdf4
+  - h5netcdf
+  - matplotlib
+  - cartopy
+  - cftime
+  - pyyaml
+  - pandas
+  - numpy

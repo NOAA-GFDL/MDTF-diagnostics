@@ -1,0 +1,38 @@
+{
+	"settings": {
+		"long_name": "Tropical Upper-Tropospheric Trough (TUTT) Diagnostic Package",
+		"driver": "TUTT.py",
+		"realm": "atmos",
+		"description": "This diagnostic package is used to evaluate 200-hPa TUTT area in both climate models and reanalysis datasets.",
+		"runtime_requirements": {
+			"python3": ["netCDF4", "skimage", "numpy", "scipy", "shapely.geometry", "cartopy"]
+		}
+	},
+	"data": {
+		"frequency": "month"
+	},
+	"dimensions": {
+		"lat": {
+			"standard_name": "latitude",
+			"units": "degrees_north"
+		},
+		"lon": {
+			"standard_name": "longitude",
+			"units": "degrees_east"
+		},
+		"time": {
+			"standard_name": "time",
+			"units": "mon"
+		}
+	},
+	"varlist": {
+		"Z200": {
+			"path_variable": "Z200_FILE",
+			"standard_name": "geopotential_height_200_mbar",
+			"freq": "mon",
+			"requirement": "required",
+			"units": "m",
+			"dimensions": ["time", "lat", "lon"]
+		}
+	}
+}

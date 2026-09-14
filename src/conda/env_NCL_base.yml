@@ -1,7 +1,6 @@
 name: _MDTF_NCL_base
 channels:
 - conda-forge # NOTE: critical to give highest priority to conda-forge
-- defaults
 dependencies:
 - python=3.10
 # - ncl=6.5 # has a font rendering issue fixed in 6.6

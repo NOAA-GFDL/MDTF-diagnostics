@@ -174,11 +174,11 @@ class VirtualenvEnvironmentManager(AbstractEnvironmentManager):
         if self.r_lib_root != '':
             env_path = os.path.join(self.r_lib_root, env_name)
             if not os.path.isdir(env_path):
-                os.makedirs(env_path) # recursive mkdir if needed
+                os.makedirs(env_path)  # recursive mkdir if needed
             cmds = [
                 f'export R_LIBS_USER="{env_path}"',
-                f'Rscript -e \'install.packages(c({r_pkg_str}), ' \
-                    + 'lib=Sys.getenv("R_LIBS_USER"))\''
+                f'Rscript -e \'install.packages(c({r_pkg_str}), '
+                + 'lib=Sys.getenv("R_LIBS_USER"))\''
             ]
         else:
             cmds = [f'Rscript -e \'install.packages(c({r_pkg_str}))\'']
@@ -238,9 +238,15 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         # find conda executable
         # conda_init for bash defines conda as a shell function; will get error
         # if we try to call the conda executable directly
+        if any(paths.get('micromamba_exe','')):
+            print("micromamba_exe found") 
+            cmd = f"{self.conda_dir}/micromamba_init.sh --micromamba_root {paths.get('conda_root','')} --micromamba_exe {paths.get('micromamba_exe','')}"
+        else:
+            cmd = f"{self.conda_dir}/conda_init.sh {paths.get('conda_root','')}"
+
         try:
             conda_info = util.run_shell_command(
-                f"{self.conda_dir}/conda_init.sh {paths.get('conda_root','')}",
+                cmd,
                 log=self.log
             )
             for line in conda_info:
@@ -258,8 +264,8 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
             self.conda_env_root = paths.conda_env_root
             if not os.path.isdir(self.conda_env_root):
                 self.log.warning("Conda env directory '%s' not found; creating.",
-                    self.conda_env_root)
-                os.makedirs(self.conda_env_root) # recursive mkdir if needed
+                                 self.conda_env_root)
+                os.makedirs(self.conda_env_root)  # recursive mkdir if needed
         else:
             # only true in default anaconda install, may need to fix
             self.conda_env_root = os.path.join(self.conda_root, 'envs')
@@ -331,15 +337,22 @@ class CondaEnvironmentManager(AbstractEnvironmentManager):
         # conda_init for bash defines conda as a shell function; will get error
         # if we try to call the conda executable directly
         conda_prefix = os.path.join(self.conda_env_root, env_name)
-        return [
-            f'source {self.conda_dir}/conda_init.sh {self.conda_root}',
-            f'conda activate {conda_prefix}'
-        ]
+        if os.path.split(self.conda_exe)[-1] == 'micromamba':
+            return [
+                f'source {self.conda_dir}/micromamba_init.sh --micromamba_exe {self.conda_exe} --conda_root {self.conda_root}',
+                f'micromamba activate {conda_prefix}'
+            ]
+        else:
+            return [
+                f'source {self.conda_dir}/conda_init.sh {self.conda_root}',
+                f'conda activate {conda_prefix}'
+            ]
 
     def deactivate_env_commands(self, env_name):
         return []
 
 # ============================================================================
+
 
 class AbstractRuntimeManager(abc.ABC):
     """Interface for RuntimeManager classes. The RuntimeManager is responsible
@@ -380,7 +393,7 @@ class SubprocessRuntimePODWrapper(object):
         self.pod.log.info('### Starting %s', self.pod.full_name)
         self.pod.pre_run_setup()
         self.pod.log.info("%s will run using '%s' from conda env '%s'.",
-            self.pod.full_name, self.pod.program, self.env)
+                          self.pod.full_name, self.pod.program, self.env)
 
         self.pod.log_file.write(self.pod.format_log(children=True))
         self.pod._log_handler.reset_buffer()
@@ -452,7 +465,7 @@ class SubprocessRuntimePODWrapper(object):
         execution (including setup and clean up).
         """
         chained_exc = util.chain_exc(exc, f"running {self.pod.full_name}.",
-            util.PodExecutionError)
+                                     util.PodExecutionError)
         self.pod.deactivate(chained_exc)
         self.tear_down()
         raise exc  # include in production, or just for debugging?
@@ -463,6 +476,8 @@ class SubprocessRuntimePODWrapper(object):
             if hasattr(self.process, 'retcode'):
                 retcode = self.process.returncode
             try:
+                log_str = f" Tearing down runtime process for {self.pod.full_name})."
+                self.pod.log.info(log_str)
                 self.process.kill()
             except ProcessLookupError:
                 pass
@@ -472,7 +487,11 @@ class SubprocessRuntimePODWrapper(object):
             if retcode == 0:
                 log_str = f"{self.pod.full_name} exited successfully (code={retcode})."
                 self.pod.log.info(log_str)
-            elif retcode is None or self.pod.failed:
+            elif retcode is None:
+                log_str = f"{self.pod.full_name} terminated, but the subprocess did not yield a return code." \
+                          f" This does not necessarily indicate a failure."
+                self.pod.log.info(log_str)
+            elif self.pod.failed:
                 log_str = f"{self.pod.full_name} was terminated or exited abnormally."
                 self.pod.log.info(log_str)
             else:
@@ -480,10 +499,10 @@ class SubprocessRuntimePODWrapper(object):
                 exc = util.PodExecutionError(log_str)
                 self.pod.deactivate(exc)
 
-        if self.pod.log_file is not None:
+        if self.pod.log_file is not None and not self.pod.log_file.closed:
             self.pod.log_file.write(80 * '-' + '\n')
             self.pod.log_file.write(log_str + '\n')
-            self.pod.log_file.flush() # redundant?
+            self.pod.log_file.flush()  # redundant?
 
         if not self.pod.failed:
             self.pod.status = core.ObjectStatus.INACTIVE
@@ -553,7 +572,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         )
 
     def run(self):
-        # Call cleanup method if we're killed
+        # Call cleanup method if we're kiled
         signal.signal(signal.SIGTERM, self.runtime_terminate)
         signal.signal(signal.SIGINT, self.runtime_terminate)
 
@@ -585,7 +604,7 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         # tee if procs are run with asyncio? https://stackoverflow.com/a/59041913
         for p in self.pods:
             if p.process is not None:
-                p.process.wait()
+               p.process.wait()
             p.tear_down()
         self.case.log.info('%s: completed all PODs.', self.__class__.__name__)
         self.tear_down()
@@ -664,9 +683,11 @@ class MultirunSubprocessRuntimePODWrapper(object):
         out_file = os.path.join(self.pod.POD_WK_DIR, 'case_info.yaml')
         self.pod.pod_env_vars["case_env_file"] = out_file
         case_info = dict()
+
         for case_name, case in case_list.items():
             case_info[case_name] = {k: v
                                     for k, v in case.env_vars.items()}
+            
             # append case environment vars
             for v in case.iter_vars_only(case, active=True):
                 for kk, vv in v.env_vars.items():
@@ -676,10 +697,11 @@ class MultirunSubprocessRuntimePODWrapper(object):
                         case_info[case_name][kk] = v.dest_path
                     else:
                         case_info[case_name][kk] = vv
-        # write the case_info env vars to a yaml file that the POD will read
+        
         f = open(out_file, 'w+')
         assert (os.path.isfile(out_file))
         yaml.dump(case_info, f, allow_unicode=True, default_flow_style=False)
+        self.pod.multi_case_dict = case_info
 
     def setup_exception_handler(self, exc):
         chained_exc = util.chain_exc(exc, f"preparing to run {self.pod.full_name}.",

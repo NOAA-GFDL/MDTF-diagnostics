@@ -1,12 +1,12 @@
 # Stage 1: Pull micromamba binary from official image
-FROM mambaorg/micromamba:1.5.8 AS micromamba_bin
-
+FROM docker.io/mambaorg/micromamba:1.5.8 AS micromamba_bin
 # Stage 2: Build main container on Rocky Linux 9
 FROM rockylinux:9-minimal AS base
 
 # Copy micromamba binary and setup user/paths
 COPY --from=micromamba_bin /bin/micromamba /usr/local/bin/micromamba
 
+#######
 USER root
 ARG GIT_COMMIT_HASH=unknown
 
@@ -36,6 +36,7 @@ RUN microdnf -y update && \
 
 # Copy the MDTF-diagnostics package contents from local machine to image
 ENV CODE_ROOT=/proj/MDTF-diagnostics
+ENV MDTF_OUTDIR=/output
 
 COPY src ${CODE_ROOT}/src
 COPY data ${CODE_ROOT}/data
@@ -44,6 +45,7 @@ COPY mdtf_framework.py ${CODE_ROOT}
 COPY shared ${CODE_ROOT}/shared
 COPY tests ${CODE_ROOT}/tests
 COPY Dockerfile ${CODE_ROOT}/Dockerfile.state
+RUN ln -s /proj/MDTF-diagnostics/mdtf_framework.py /usr/local/bin/mdtf
 
 # Configure Conda / Micromamba environment paths
 ENV MAMBA_ROOT_PREFIX=/opt/conda
@@ -111,7 +113,7 @@ RUN micromamba create -p /opt/conda/envs/_MDTF_NCL_base -f ${CODE_ROOT}/src/cond
 # ==============================================================================
 # 1. FIX LIBNSL: Symlink libnsl directly into system and env library paths
 # ==============================================================================
-RUN dnf install -y libnsl && dnf clean all && \
+RUN microdnf install -y libnsl && microdnf clean all && \
     mkdir -p /opt/conda/envs/_MDTF_NCL_base/lib && \
     ln -sf $(find /usr/lib64 /opt/conda -name "libnsl.so*" | head -n 1) /opt/conda/envs/_MDTF_NCL_base/lib/libnsl.so.1
 # Direct default PATH to the target NCL environment binaries
@@ -124,3 +126,5 @@ ENV BASH_ENV=/opt/conda/etc/bash_init.sh \
     LD_LIBRARY_PATH=/opt/conda/envs/_MDTF_NCL_base/lib:$LD_LIBRARY_PATH
 ENV PATH="/opt/conda/envs/_MDTF_base/bin:/opt/conda/bin:/opt/conda/condabin:/usr/local/bin:${CODE_ROOT}:${PATH}"
 ENV PATH="${PATH}:/proj/MDTF-diagnostics/"
+
+

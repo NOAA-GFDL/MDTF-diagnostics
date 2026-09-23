@@ -52,6 +52,13 @@ from typing import Iterable
 import numpy as np
 import xarray as xr
 
+# The plotting code is retained separately from the numerical implementation.
+# Add its POD-relative location so the driver works regardless of the current
+# working directory used by MDTF.
+_PLOT_SCRIPT_DIR = Path(__file__).resolve().parents[1] / "plots" / "scripts"
+if str(_PLOT_SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(_PLOT_SCRIPT_DIR))
+
 from compute_lwa import LWA_FLAGS, compute_one_lwa, find_coordinate, select_z500
 from plot_block_maps import plot_event_atlas, plot_event_summary
 from process_blocking import run_hemisphere

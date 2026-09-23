@@ -41,6 +41,39 @@ their structure, and writes the gridded masks and event catalogs.
 ``plots/scripts/plot_block_maps.py`` draws fixed-name PNG panels for the MDTF results page
 and a PDF event atlas.
 
+Running the POD
+---------------
+
+MDTF runs the driver automatically when ``lwa_block_detect`` is included in
+the runtime configuration's ``pod_list``. Starting from the MDTF source
+directory, a typical framework invocation is::
+
+   python mdtf_framework.py -f /path/to/runtime_config.jsonc
+
+The runtime configuration supplies the model cases, dates, data catalog,
+working directory, and output directory. The framework preprocesses the
+requested ``zg500`` field before invoking ``src/lwa_block_detect.py``.
+
+For development, the driver can also process a standalone model NetCDF file.
+For example, the following command analyzes one year in both hemispheres using
+the default p85 threshold::
+
+   python diagnostics/lwa_block_detect/src/lwa_block_detect.py \
+      --input /path/to/model_daily_z500.nc \
+      --variable zg \
+      --start-date 2000-01-01 \
+      --end-date 2000-12-31 \
+      --hemisphere both \
+      --threshold-method percentile_max \
+      --threshold-percentile 85 \
+      --output-dir /path/to/output/lwa_block_detect
+
+Replace ``zg`` with the variable name in the input file. The driver discovers
+coordinate names and dimension order from CF metadata when possible. List all
+command-line options with::
+
+   python diagnostics/lwa_block_detect/src/lwa_block_detect.py --help
+
 Required programming language and libraries
 -------------------------------------------
 

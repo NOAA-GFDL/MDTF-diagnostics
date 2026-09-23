@@ -101,8 +101,6 @@ The request in ``settings.jsonc`` uses a 500-hPa scalar pressure coordinate,
 so the MDTF preprocessor can extract the level from a model's four-dimensional
 ``zg`` field or translate a native three-dimensional Z500 field. The framework
 performs convention translation and unit conversion before the driver runs.
-Consequently, the POD analyzes model output rather than opening reanalysis
-files directly. ERA5 is used only as an independent one-year development test.
 
 Input-grid and calendar support
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

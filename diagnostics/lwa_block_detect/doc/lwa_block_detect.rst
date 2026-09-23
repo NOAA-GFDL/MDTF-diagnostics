@@ -203,11 +203,3 @@ References
    diabatic heating in the Northern Hemisphere. *Nature Communications*,
    **16**, 5613,
    `doi:10.1038/s41467-025-60811-4 <https://doi.org/10.1038/s41467-025-60811-4>`__.
-
-More about this diagnostic
---------------------------
-
-The strongest-event panels are an entry point to the event catalogs, not a
-frequency climatology. Use the catalog for event selection and the companion
-track table for lifecycle analysis. The gridded event ID supports composites
-with other model fields without rerunning detection.

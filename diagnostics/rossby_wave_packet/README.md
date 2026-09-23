@@ -258,7 +258,6 @@ for direct command-line use.
 - `doc/rossby_wave_packet.rst`: Diagnostics Reference source.
 - `settings.jsonc`: MDTF data request and defaults.
 - `rossby_wave_packet.html`: MDTF results-page template.
-- `rossby_wave_packet_runtime_config_template.yml`: runtime example.
 - `tests/`: synthetic software tests.
 
 Generated NetCDF files and figures from scientific runs should be written to

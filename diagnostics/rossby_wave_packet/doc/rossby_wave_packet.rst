@@ -47,11 +47,6 @@ performs the scientific calculation. It:
    packet at the adjacent times, and calculates zonal and meridional group
    velocity using the packet-segment method.
 
-The selected model field is loaded after spatial, level, and date selection.
-This is necessary because phase derivatives and packet tracking require the
-complete selected time sequence. Restrict long archives to the analysis
-period of interest if memory is limited.
-
 Required programming language and libraries
 -------------------------------------------
 

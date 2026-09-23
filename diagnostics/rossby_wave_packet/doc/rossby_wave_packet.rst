@@ -1,17 +1,11 @@
 .. _rossby_wave_packet:
 
-Rossby Wave Packet Amplitude and Propagation
+Rossby Wave Packet Diagnostics
 ============================================
 
 Last update: September 2026
 
-The Rossby Wave Packet (RWP) POD diagnoses the local envelope amplitude,
-wrapped phase, phase speed, and horizontal group velocity of midlatitude
-upper-tropospheric waves. It operates on six-hourly model northward wind at
-250 hPa supplied by the MDTF data layer. The POD reads every model case from
-the framework's Intake-ESM catalog, uses the variable, coordinate, calendar,
-and analysis-period metadata supplied for that case, and writes case-resolved
-NetCDF fields together with four multi-case summary figures.
+This Rossby Wave Packet (RWP) POD diagnoses envelope amplitude, wrapped phase, phase speed, and horizontal group velocity from six-hourly model northward wind at 250 hPa. For each model case selected in an MDTF run, the POD uses the framework-prepared wind field and writes the diagnostic fields to NetCDF together with summary figures. It also supports direct analysis of a NetCDF file without using the MDTF framework.
 
 Version and contact information
 -------------------------------
@@ -251,7 +245,7 @@ For a direct model-file run, invoke the same driver:
      --input <model-wind.nc> \
      --output-dir output \
      --start-date 1980-01-01 \
-     --end-date 1980-12-31T23:59:59
+     --end-date 1980-12-31
 
 Use ``--level none`` for a field already reduced to one pressure level. Print
 the complete generated interface with:

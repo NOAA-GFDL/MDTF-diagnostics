@@ -7,8 +7,7 @@ cyclonic LWA; tracks connected regions through time; and classifies retained
 events as ridge, trough, or dipole blocking.
 
 The primary products are event catalogs, daily tracks, gridded event masks,
-and horizontal maps at peak intensity. The POD does not calculate annual or
-seasonal blocking statistics.
+and horizontal maps at peak intensity.
 
 - Scientific PI: Lei Wang, wanglei@purdue.edu
 - Developer: Yuan-Bing Zhao, dr.yuanbingzhao@gmail.com

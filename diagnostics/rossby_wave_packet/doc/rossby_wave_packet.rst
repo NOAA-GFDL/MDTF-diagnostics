@@ -200,7 +200,7 @@ Output and interpretation
 
 The POD writes the following fixed-name web figures to ``$WORK_DIR/model``:
 
-* ``rossby_wave_packet_amplitude.png``: time-mean envelope amplitude for every model case;
+* ``rossby_wave_packet_amplitude.png``: time-mean envelope amplitude for each selected case;
 * ``rossby_wave_packet_phase.png``: wrapped phase at the configured snapshot time;
 * ``rossby_wave_packet_phase_speed.png``: phase speed at the configured snapshot time;
 * ``rossby_wave_packet_group_velocity.png``: horizontal group-velocity magnitude and vectors

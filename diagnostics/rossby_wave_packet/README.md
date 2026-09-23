@@ -201,18 +201,6 @@ python plots/scripts/plot_rossby_wave_packet_snapshot.py \
 This plotting command does not recompute the diagnostic and does not draw
 vectors.
 
-## Validation
-
-Run the synthetic tests from the package directory:
-
-```bash
-python -m pytest -q
-```
-
-Before an upstream pull request, run at least one model case through the full
-MDTF framework, build the Sphinx documentation, inspect the generated HTML and
-NetCDF metadata, and compare a retained model case with the scientific method.
-
 ## Reference
 
 Fragkoulidis, G., and V. Wirth, 2020: Local Rossby wave packet amplitude,

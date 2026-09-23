@@ -1,0 +1,58 @@
+// LWA-Based Blocking Detection and Classification settings for MDTF 4.x.
+{
+  "settings": {
+    "driver": "src/lwa_block_detect.py",
+    "long_name": "LWA-Based Blocking Detection and Classification",
+    "description": "Detects persistent atmospheric blocks from daily 500-hPa geopotential height and reports each event's track, duration, peak date, location, size, strength, and ridge/trough/dipole class.",
+    "convention": "cmip",
+    "runtime_requirements": {
+      "python3": ["numpy", "scipy", "pandas", "xarray", "netCDF4", "matplotlib", "intake-esm", "pyyaml"]
+    },
+    "pod_env_vars": {
+      "LWA_BLOCK_DETECT_INPUT_KIND": "height",
+      "LWA_BLOCK_DETECT_HEMISPHERE": "both",
+      "LWA_BLOCK_DETECT_DURATION": "5",
+      "LWA_BLOCK_DETECT_THRESHOLD_METHOD": "percentile_max",
+      "LWA_BLOCK_DETECT_THRESHOLD_PERCENTILE": "85",
+      "LWA_BLOCK_DETECT_CHUNK_DAYS": "366",
+      "LWA_BLOCK_DETECT_KEEP_LWA": "false",
+      "LWA_BLOCK_DETECT_PLOT": "true"
+    }
+  },
+  "data": {
+    "frequency": "day",
+    "realm": "atmos"
+  },
+  "dimensions": {
+    "lat": {
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y"
+    },
+    "lon": {
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X"
+    },
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {
+      "standard_name": "time",
+      "axis": "T"
+    }
+  },
+  "varlist": {
+    "zg500": {
+      "standard_name": "geopotential_height",
+      "units": "m",
+      "frequency": "day",
+      "realm": "atmos",
+      "dimensions": ["time", "lat", "lon"],
+      "scalar_coordinates": {"lev": 500}
+    }
+  }
+}

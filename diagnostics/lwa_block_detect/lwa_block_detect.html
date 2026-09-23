@@ -1,0 +1,29 @@
+<!-- MDTF copies and templates this file into the POD output directory. -->
+<title>LWA-Based Blocking Detection and Classification</title>
+<img src="../mdtf_diag_banner.png" alt="MDTF Diagnostics">
+<h3>LWA-Based Blocking Detection and Classification</h3>
+<p>
+This process-oriented diagnostic derives local wave activity (LWA) from daily
+500-hPa model geopotential height, tracks persistent features, and reports the
+location, duration, peak date and position, horizontal size, strength, and
+ridge/trough/dipole structure of every detected event. The figures show
+representative ridge and dipole events in each hemisphere at peak intensity.
+Color shading is total LWA, gray lines are Z500, the blue contour is the
+detected boundary, and the star is the LWA maximum.
+</p>
+<p>
+<a href="https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx_pods/lwa_block_detect.html">Full diagnostic documentation</a>
+</p>
+<TABLE>
+<TR><TH align=left style="color:navy;">Peak-date maps and event-resolved output, {{startdate}}-{{enddate}}
+<TH align=center>Model results
+<TR><TD>All cases, hemispheres, maps, event catalogs, tracks, and gridded masks
+<TD align=center><A href=model/lwa_block_detect_cases.html>blocking results</A>
+</TABLE>
+
+<p>
+The event ID links each catalog row and daily track to the gridded mask. LWA
+strength is model-relative because the detection threshold is diagnosed from
+the analyzed case. A short model interval is suitable for software testing,
+but not for interpreting blocking climatology.
+</p>

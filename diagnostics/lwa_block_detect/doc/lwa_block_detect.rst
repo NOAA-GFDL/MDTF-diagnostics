@@ -38,8 +38,10 @@ and units, and calculate the three LWA components in bounded time chunks.
 ``src/process_blocking.py`` detects contiguous regions, connects them across the
 cyclic longitude boundary, tracks them through consecutive days, classifies
 their structure, and writes the gridded masks and event catalogs.
-``plots/scripts/plot_block_maps.py`` draws fixed-name PNG panels for the MDTF results page
-and a PDF event atlas.
+``plots/scripts/plot_block_maps.py`` creates the post-detection figures. For
+each hemisphere, it writes a two-panel PNG of representative ridge and dipole
+events and a multipage PDF atlas of selected
+events.
 
 Running the POD
 ---------------

@@ -1,0 +1,40 @@
+# Runtime template for the rossby_wave_packet POD.
+# Copy this file outside the source tree and replace every angle-bracket value.
+
+pod_list:
+  - "rossby_wave_packet"
+
+case_list:
+  "<unique_model_case_label>":
+    model: "<model_name>"
+    convention: "<CMIP_or_CESM_or_GFDL>"
+    startdate: "<YYYYMMDD>"
+    enddate: "<YYYYMMDD>"
+    realm: "atmos"
+    frequency: "6hr"
+
+# Intake-ESM header for the model output.
+DATA_CATALOG: "<absolute_or_code-root-relative_catalog.json>"
+
+# Working and final-output locations.
+WORK_DIR: "<working_directory>"
+OUTPUT_DIR: "<output_directory>"
+
+# Existing framework environment installation.
+conda_root: "<conda_or_micromamba_root>"
+conda_env_root: "<directory_containing_MDTF_environments>"
+micromamba_exe: ""
+
+# This POD needs framework level selection, metadata normalization, and translation.
+run_pp: true
+translate_data: true
+
+# Set true when any processed variable will exceed 4 GB.
+large_file: false
+
+save_ps: false
+save_pp_data: true
+make_variab_tar: false
+make_multicase_figure_html: false
+overwrite: false
+user_pp_scripts: []

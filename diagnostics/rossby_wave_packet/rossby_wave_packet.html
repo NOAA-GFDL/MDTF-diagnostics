@@ -1,0 +1,56 @@
+<title>Rossby Wave Packet Diagnostic</title>
+<img src="../mdtf_diag_banner.png" alt="MDTF Diagnostics banner">
+
+<h3>Rossby Wave Packet Amplitude and Propagation</h3>
+
+<p>
+  The Rossby Wave Packet POD diagnoses the envelope amplitude, wrapped phase,
+  phase speed, and horizontal group velocity of midlatitude wave packets from
+  six-hourly model northward wind at 250 hPa. It accepts the CF calendars and
+  native variable and coordinate names supplied by the MDTF model-data layer,
+  provided that the model field is on a regular global latitude-longitude grid.
+  <a href="https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx_pods/rossby_wave_packet.html">
+    Full diagnostic documentation
+  </a>
+</p>
+
+<p>
+  Amplitude panels show time means for every model case in the run. Phase,
+  phase-speed, and group-velocity panels show the configured snapshot so the
+  instantaneous envelope and packet masks are retained. Group-speed color
+  shading is accompanied by zonal and meridional group-velocity vectors.
+</p>
+
+<table>
+  <tr>
+    <th align="left" style="color:navy;">Diagnostic</th>
+    <th align="left">Model results</th>
+  </tr>
+  <tr>
+    <td>Wave-packet envelope amplitude</td>
+    <td align="center"><a href="model/rossby_wave_packet_amplitude.png">PNG</a></td>
+  </tr>
+  <tr>
+    <td>Wrapped wave phase</td>
+    <td align="center"><a href="model/rossby_wave_packet_phase.png">PNG</a></td>
+  </tr>
+  <tr>
+    <td>Phase speed, c<sub>p</sub></td>
+    <td align="center"><a href="model/rossby_wave_packet_phase_speed.png">PNG</a></td>
+  </tr>
+  <tr>
+    <td>Horizontal group velocity, c<sub>g</sub></td>
+    <td align="center"><a href="model/rossby_wave_packet_group_velocity.png">PNG</a></td>
+  </tr>
+  <tr>
+    <td>Case-resolved gridded NetCDF products</td>
+    <td align="center"><a href="model/netCDF/rossby_wave_packet_output_manifest.csv">Output manifest</a></td>
+  </tr>
+</table>
+
+<p>
+  White or blank regions in speed fields do not satisfy the configured
+  envelope and packet-size criteria, fall outside the derivative endpoints,
+  or exceed the configured speed limit. Consult the NetCDF attributes and the
+  POD log for the numerical settings used in this run.
+</p>

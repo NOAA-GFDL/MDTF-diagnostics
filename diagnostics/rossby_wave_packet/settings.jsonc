@@ -1,0 +1,69 @@
+// Rossby wave packet diagnostic settings for MDTF 4.x model output.
+{
+  "settings": {
+    "driver": "src/rossby_wave_packet.py",
+    "long_name": "Rossby Wave Packet Amplitude and Propagation",
+    "description": "Diagnoses local Rossby wave packet envelope amplitude, phase, phase speed, and horizontal group velocity from model northward wind at 250 hPa.",
+    "convention": "cmip",
+    "runtime_requirements": {
+      "python3": ["numpy", "scipy", "xarray", "netCDF4", "matplotlib", "dask", "intake-esm", "pyyaml"]
+    },
+    "pod_env_vars": {
+      "ROSSBY_WAVE_PACKET_ANOMALY_METHOD": "harmonic",
+      "ROSSBY_WAVE_PACKET_PREFILTERED_INPUT": "false",
+      "ROSSBY_WAVE_PACKET_ANNUAL_HARMONICS": "4",
+      "ROSSBY_WAVE_PACKET_WAVENUMBER_MIN": "4",
+      "ROSSBY_WAVE_PACKET_WAVENUMBER_MAX": "15",
+      "ROSSBY_WAVE_PACKET_AMPLITUDE_THRESHOLD": "25.0",
+      "ROSSBY_WAVE_PACKET_PHASE_SPEED_LIMIT": "none",
+      "ROSSBY_WAVE_PACKET_GROUP_VELOCITY": "true",
+      "ROSSBY_WAVE_PACKET_GROUP_AMPLITUDE_THRESHOLD": "20.0",
+      "ROSSBY_WAVE_PACKET_MINIMUM_ZONAL_EXTENT": "20.0",
+      "ROSSBY_WAVE_PACKET_MINIMUM_MERIDIONAL_EXTENT": "10.0",
+      "ROSSBY_WAVE_PACKET_SMOOTHING_SIGMA_DEGREES": "4.0",
+      "ROSSBY_WAVE_PACKET_GROUP_SPEED_LIMIT": "100.0",
+      "ROSSBY_WAVE_PACKET_LATITUDE_MIN": "25.0",
+      "ROSSBY_WAVE_PACKET_LATITUDE_MAX": "85.0",
+      "ROSSBY_WAVE_PACKET_CHUNKS_TIME": "32",
+      "ROSSBY_WAVE_PACKET_PLOT": "true",
+      "ROSSBY_WAVE_PACKET_PLOT_TIME": "midpoint"
+    }
+  },
+  "data": {
+    "frequency": "6hr",
+    "realm": "atmos"
+  },
+  "dimensions": {
+    "lat": {
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y"
+    },
+    "lon": {
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X"
+    },
+    "lev": {
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {
+      "standard_name": "time",
+      "axis": "T",
+      "calendar": "any"
+    }
+  },
+  "varlist": {
+    "va250": {
+      "standard_name": "northward_wind",
+      "units": "m s-1",
+      "frequency": "6hr",
+      "realm": "atmos",
+      "dimensions": ["time", "lat", "lon"],
+      "scalar_coordinates": {"lev": 250}
+    }
+  }
+}

@@ -161,15 +161,15 @@ References
    Atmospheric Sciences*, **73**, 211--229,
    `doi:10.1175/JAS-D-15-0194.1 <https://doi.org/10.1175/JAS-D-15-0194.1>`__.
 
+#. Chen, G., J. Lu, D. A. Burrows, and L. R. Leung, 2015: Local
+   finite-amplitude wave activity as an objective diagnostic of midlatitude
+   extreme weather. *Geophysical Research Letters*, **42**, 10,952--10,960,
+   `doi:10.1002/2015GL066959 <https://doi.org/10.1002/2015GL066959>`__.
+
 #. Liu, Z., and L. Wang, 2025: Blocking diversity causes distinct roles of
    diabatic heating in the Northern Hemisphere. *Nature Communications*,
    **16**, 5613,
    `doi:10.1038/s41467-025-60811-4 <https://doi.org/10.1038/s41467-025-60811-4>`__.
-
-#. Barpanda, P., and N. Nakamura, 2025: Local wave activity analysis of
-   atmospheric blocks in the Northern Hemisphere winter. *Journal of Climate*,
-   **38**, 4653--4675,
-   `doi:10.1175/JCLI-D-24-0232.1 <https://doi.org/10.1175/JCLI-D-24-0232.1>`__.
 
 More about this diagnostic
 --------------------------

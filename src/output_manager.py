@@ -465,8 +465,10 @@ class HTMLOutputManager(AbstractOutputManager,
             append_footer = False
             append_case_info = False
         else:
-            shutil.copy2(self.html_src_file('mdtf_diag_banner.png'), self.obj.paths.WORK_DIR)
-
+          #workaround for container
+          dst_path = os.path.join(self.obj.paths.WORK_DIR, 'mdtf_diag_banner.png')
+          shutil.copyfile(self.html_src_file('mdtf_diag_banner.png'), dst_path)
+        # shutil.copy2(self.html_src_file('mdtf_diag_banner.png'), self.obj.paths.WORK_DIR)
         template_dict = self.obj.pod_env_vars.copy()
         template_dict['DATE_TIME'] = \
             datetime.datetime.now().strftime("%A, %d %B %Y %I:%M%p (UTC)")

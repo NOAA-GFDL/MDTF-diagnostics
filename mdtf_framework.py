@@ -186,6 +186,7 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
         pods[pod_name].setup_pod(ctx.config, model_paths, cases, append_vars)
         pods[pod_name].log.info(f"Preprocessing data for {pod_name}")
         for k, v in pods[pod_name].runtime_requirements.items():
+            print(f"process(): Found runtime requirement for {k}: {v}")
             if not hasattr(pod_runtime_reqs, k):
                 pod_runtime_reqs[k] = v
     # run module(s)
@@ -197,7 +198,17 @@ def main(ctx, configfile: str, verbose: bool = False) -> int:
                 func = getattr(module_obj, function)
                 func(args)
     # read the subset of data for the cases and date range(s) and preprocess the data
+    print(f"calling process(): Preprocessing data with config: {ctx.config}")
+    print(f"calling process(): Preprocessing data for cases: {list(cases.keys())}")
+    print("=" * 60)
+    print(f"DEBUG REAL TYPE OF data_pp: {type(data_pp)}")
+    print(f"DEBUG MODULE FILE OF data_pp: {data_pp.__class__.__module__}")
+    import inspect
+    print(f"DEBUG EXACT FILE OF process(): {inspect.getfile(data_pp.process)}")
+    print("=" * 60) 
     cat_subset = data_pp.process(cases, ctx.config, model_paths.MODEL_WORK_DIR)
+    print(f"DEBUG framework: data_pp.process() completed! cat_subset keys = {list(cat_subset.keys()) if cat_subset else 'EMPTY'}")
+    print(cat_subset)
     # write the preprocessed files
     data_pp.write_ds(cases, cat_subset, pod_runtime_reqs)
     # rename vars in cat_subset to align with POD convention

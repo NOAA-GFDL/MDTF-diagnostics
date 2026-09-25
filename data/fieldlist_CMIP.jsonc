@@ -8,6 +8,8 @@
   "coords": {
     "plev": {
       "standard_name": "air_pressure",
+      //"name":"plev,
+      "alt_names": ["plev19", "plev17","lev"],
       "units": "hPa",
       "positive": "down",
       "axis": "Z"
@@ -34,6 +36,42 @@
       "scalar_coord_templates": {"plev": "ua{value}"},
       "ndim": 4
     },
+"u200": {
+    "name": "ua",                  // Link to 3D variable on disk
+    "alt_names": ["ucomp","ua_unmsk"],
+    "standard_name": "eastward_wind",
+    "realm": "atmos_cmip",
+    "units": "m s-1",
+    "dimensions": ["time", "lat", "lon"],
+    "scalar_coordinates": {"plev": 200}  // Use 20000 if plev19 on disk is in Pa
+  },
+  "u850": {
+    "name": "ua",
+    "alt_names": ["ucomp","ua_unmsk"],
+    "standard_name": "eastward_wind",
+    "realm": "atmos_cmip",
+    "units": "m s-1",
+    "dimensions": ["time", "lat", "lon"],
+    "scalar_coordinates": {"plev": 850}  // Use 85000 if plev19 on disk is in Pa
+  },
+  "v200": {
+    "name": "va",
+    "alt_names": ["vcomp","va_unmsk"],
+    "standard_name": "northward_wind",
+    "realm": "atmos",
+    "units": "m s-1",
+    "dimensions": ["time", "lat", "lon"],
+    "scalar_coordinates": {"plev": 200}
+  },
+  "v850": {
+    "name": "va",
+    "alt_names": ["vcomp","va_unmsk"],
+    "standard_name": "northward_wind",
+    "realm": "atmos",
+    "units": "m s-1",
+    "dimensions": ["time", "lat", "lon"],
+    "scalar_coordinates": {"plev": 850}
+  },
     "u10": {
       "standard_name": "10 hPa zonal_wind",
       "units": "m s-1",

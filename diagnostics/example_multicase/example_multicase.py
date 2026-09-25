@@ -87,7 +87,7 @@ case_list = case_info['CASE_LIST']
 # all cases share variable names and dimension coords in this example, so just get first result for each
 tas_var = [case['tas_var'] for case in case_list.values()][0]
 time_coord = [case['time_coord'] for case in case_list.values()][0]
-lat_coord = [case['lat_coord'] for case in case_list.values()][0]
+# lat_coord = [case['lat_coord'] for case in case_list.values()][0]
 lon_coord = [case['lon_coord'] for case in case_list.values()][0]
 # open the csv file using information provided by the catalog definition file
 cat = intake.open_esm_datastore(cat_def_file)

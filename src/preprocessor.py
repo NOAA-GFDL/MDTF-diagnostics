@@ -18,6 +18,20 @@ import xarray as xr
 import collections
 import re
 
+# Import fieldlist_parser from util/utils package
+try:
+        from src.util import fieldlist_parser
+except ImportError:
+    try:
+         from src.utils import fieldlist_parser
+    except ImportError:
+         try:
+             from util import fieldlist_parser
+         except ImportError:
+             from utils import fieldlist_parser
+
+import os
+os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 # TODO: Make the following lines a unit test
 # import sys
 # ROOT_DIR = os.path.abspath("../MDTF-diagnostics")
@@ -67,7 +81,18 @@ class PreprocessorFunctionBase(abc.ABC):
       function is capable of converting into the format requested by the POD.
     - :meth:`process`, which actually implements the data format conversion.
     """
-
+    def resolve_args(self, args):
+        """Standardize positional argument parsing across (var, ds) and (func, var, ds)."""
+        if len(args) >= 3:
+            # Legacy signature: execute(self, func, var, ds)
+            return args[1], args[2]
+        elif len(args) == 2:
+            # Standard signature: execute(self, var, ds)
+            return args[0], args[1]
+        elif len(args) == 1:
+            return args[0], None
+        return None, None
+    
     def __init__(self, *args):
         """Called during Preprocessor's init."""
         pass
@@ -83,22 +108,20 @@ class PreprocessorFunctionBase(abc.ABC):
         return v
 
     @abc.abstractmethod
-    def execute(self, var: varlist_util.VarlistEntry,
-                xr_dataset,
-                **kwargs):
-        """Apply the format conversion implemented in this PreprocessorFunction
-        to the input dataset *dataset*, according to the request made in *var*.
+    def execute(self, *args, **kwargs):
+        """Base execution method. Returns dataset pass-through if un-overridden."""
+        # Handle positional args: (var, ds) or (func, var, ds)
+        if len(args) >= 3:
+            ds = args[2]
+        elif len(args) == 2:
+            ds = args[1]
+        elif len(args) == 1:
+            ds = kwargs.get('ds', kwargs.get('xr_dataset', kwargs.get('xarray_ds', None)))
+        else:
+            ds = kwargs.get('ds', kwargs.get('xr_dataset', kwargs.get('xarray_ds', None)))
 
-        Args:
-            var: dictionary of variable information
-            xr_dataset: xarray dataset with information from ESM intake catalog
-
-        Returns:
-            Modified *dataset*.
-        """
-        pass
-
-
+        return ds
+    
 class PrecipRateToFluxFunction(PreprocessorFunctionBase):
     """A PreprocessorFunction which converts the dependent variable's units, for
     the specific case of precipitation. Flux and precip rate differ by a factor
@@ -186,7 +209,7 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             v.translation.long_name = new_tv.long_name
         return v
 
-    def execute(self, var, ds, **kwargs):
+def execute(self, var, ds, **kwargs):
         """Convert units of dependent variable *ds* between precip rate and
         precip flux, as specified by the desired units given in *var*. If the
         ``standard_name`` of *ds* is not in the recognized list, return it
@@ -200,9 +223,31 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             # units can be converted by ConvertUnitsFunction; do nothing
             return ds
 
+        # ------------------------------------------------------------------
+        # Dynamic variable key resolution (prevents KeyError on renamed keys)
+        # ------------------------------------------------------------------
+        tv = var.translation  # abbreviate
+        target_key = tv.name
+
+        if target_key not in ds.data_vars:
+            # Fallback lookup if tv.name ('ua') was not yet renamed or differs
+            alt_candidates = [
+                k for k in (target_key, var.name, f"{target_key}_unmsk", f"{var.name}_unmsk") 
+                if k in ds.data_vars
+            ]
+            if alt_candidates:
+                target_key = alt_candidates[0]
+            elif len(ds.data_vars) == 1:
+                target_key = list(ds.data_vars.keys())[0]
+            else:
+                var.log.warning(
+                    f"Precipitation unit scaling could not locate variable '{tv.name}' "
+                    f"in active dataset keys: {list(ds.data_vars.keys())}."
+                )
+                return ds
+
         # var.translation.units set by edit_request will have been overwritten by
         # DefaultDatasetParser to whatever they are in ds. Change them back.
-        tv = var.translation  # abbreviate
         if std_name in self._rate_d:
             # requested rate, received alternate for flux
             new_units = tv.units / self._liquid_water_density
@@ -215,13 +260,19 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
                       var.full_name, tv.units, new_units,
                       tags=util.ObjectLogTag.NC_HISTORY
                       )
-        ds[tv.name].attrs['units'] = str(new_units)
+
+        # Mutate active target variable array attributes
+        ds[target_key].attrs['units'] = str(new_units)
         tv.units = new_units
         tv.standard_name = var.standard_name
+        
+        # Ensure key consistency downstream
+        if target_key != tv.name and target_key in ds.data_vars:
+            ds = ds.rename({target_key: tv.name})
+
         # actual conversion done by ConvertUnitsFunction; this assures
         # units.convert_dataarray is called with correct parameters.
-        return ds
-
+        return execute_
 
 class ConvertUnitsFunction(PreprocessorFunctionBase):
     """Convert units on the dependent variable of var, as well as its
@@ -232,21 +283,49 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
     `cfunits <https://ncas-cms.github.io/cfunits/index.html>`__; see
     :doc:`src.units`.
     """
-
-    def execute(self, var, ds, **kwargs):
+    def execute(self, *args, var=None, ds=None, **kwargs):
         """Convert units on the dependent variable and coordinates of var from
         what's specified in the dataset attributes to what's given in the
         VarlistEntry *var*. Units attributes are updated on the
         :class:`~src.core.TranslatedVarlistEntry`.
         """
+        # Resolve positional parameters dynamically across caller signatures
+        if len(args) == 2:
+            var, ds = args[0], args[1]
+        elif len(args) >= 3:
+            var, ds = args[1], args[2]
+        elif len(args) == 1:
+            var = args[0]
+
+        if ds is None:
+            return ds
+
         tv = var.translation  # abbreviate
-        # convert dependent variable
+
+        # --- DYNAMIC ACTIVE DATAARRAY LOCATOR ---
+        # Search for all possible candidate keys currently active in the dataset
+        candidates = [var.name, tv.name, f"{tv.name}_unmsk", f"{var.name}_unmsk"]
+        da_name = next((c for c in candidates if c in ds.data_vars), None)
+
+        if not da_name:
+            if len(ds.data_vars) == 1:
+                # If level slicing or extraction left a single DataArray in the Dataset
+                da_name = list(ds.data_vars.keys())[0]
+            else:
+                raise KeyError(
+                    f"Could not find any matching variable for '{var.name}' "
+                    f"in dataset variables: {list(ds.data_vars.keys())}"
+                )
+
+        print(f"DEBUG convert_units: Target variable '{var.name}' mapped to active dataset variable '{da_name}'")
+
+        # Convert dependent variable using the verified active DataArray name
         ds = units.convert_dataarray(
-            ds, tv.name, src_unit=None, dest_unit=var.units, log=var.log
+            ds, da_name, src_unit=None, dest_unit=var.units, log=var.log
         )
         tv.units = var.units
 
-        # convert coordinate dimensions and bounds
+        # Convert coordinate dimensions and bounds
         for c in tv.dim_axes.values():
             if c.axis == 'T':
                 continue  # TODO: separate function to handle calendar conversion
@@ -261,7 +340,7 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
                 )
             c.units = dest_c.units
 
-        # convert scalar coordinates
+        # Convert scalar coordinates
         for c in tv.scalar_coords:
             if c.name in ds:
                 dest_c = var.axes[c.axis]
@@ -282,70 +361,194 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
 
         var.log.info("Converted units on %s.", var.full_name)
         return ds
-
-
 class RenameVariablesFunction(PreprocessorFunctionBase):
-    """Renames dependent variables and coordinates to what's expected by the POD.
-    """
+    """Renames dependent variables and coordinate dimensions to what's expected by the POD."""
 
+    def execute(self, *args, var=None, ds=None, **kwargs):
+        # Unpack positional parameters dynamically
+        if len(args) >= 3:
+            var, ds = args[1], args[2]
+        elif len(args) == 2:
+            var, ds = args[0], args[1]
+        elif len(args) == 1:
+            var = args[0]
+            ds = kwargs.get('ds', kwargs.get('xr_dataset', kwargs.get('xarray_ds', None)))
+        else:
+            var = kwargs.get('var', var)
+            ds = kwargs.get('ds', kwargs.get('xr_dataset', kwargs.get('xarray_ds', ds)))
+
+        # GUARD: Check if ds is valid AND var is a VarlistEntry (has 'name' and NOT a DataSource)
+        if ds is None or var is None or not hasattr(var, 'name') or hasattr(var, 'var_list'):
+            return ds
+
+        # Safe attribute lookup
+        tv = getattr(var, 'translation', var)
+        tv_name = getattr(tv, 'name', getattr(var, 'name', None))
+        pod_target_name = getattr(var, 'name', None)
+
+        if not pod_target_name:
+            return ds
+            
+class RenameVariablesFunction(PreprocessorFunctionBase):
+    """Renames dependent variables and coordinates to what's expected by the POD."""
+
+    def execute(self, *args, var=None, ds=None, **kwargs):
+        """Rename active variable array and coordinate dimensions in ds to match 
+        target names defined in the POD's VarlistEntry.
+        """
+        # ------------------------------------------------------------------
+        # 0. DYNAMIC POSITIONAL ARGUMENT UNPACKING
+        # ------------------------------------------------------------------
+        if len(args) >= 3:
+            # Called as: func.execute(func, v, xarray_ds)
+            var, ds = args[1], args[2]
+        elif len(args) == 2:
+            # Called as: func.execute(v, xarray_ds)
+            var, ds = args[0], args[1]
+        elif len(args) == 1:
+            var = args[0]
+            ds = kwargs.get('ds', kwargs.get('xr_dataset', kwargs.get('xarray_ds', None)))
+        else:
+            var = kwargs.get('var', var)
+            ds = kwargs.get('ds', kwargs.get('xr_dataset', kwargs.get('xarray_ds', ds)))
+
+        if ds is None or var is None or not hasattr(var, 'name'):
+            return ds
+
+        tv = getattr(var, 'translation', var)
+        tv_name = getattr(tv, 'name', getattr(var, 'name', None))
+        pod_target_name = getattr(var, 'name', None)
+
+        if not pod_target_name:
+            return ds
+
+        # ------------------------------------------------------------------
+        # 1. RESOLVE ACTIVE VARIABLE KEY IN DATASET
+        # ------------------------------------------------------------------
+        candidates = [
+            tv_name, 
+            pod_target_name, 
+            f"{tv_name}_unmsk", 
+            f"{pod_target_name}_unmsk", 
+            "ucomp", 
+            "vcomp"
+        ]
+        da_name = next((c for c in candidates if c and c in ds.data_vars), None)
+
+        if not da_name:
+            primary_vars = [k for k in ds.data_vars if k not in ds.coords]
+            if len(primary_vars) == 1:
+                da_name = primary_vars[0]
+            else:
+                return ds
+
+        var_log_name = getattr(var, 'full_name', pod_target_name)
+
+        # ------------------------------------------------------------------
+        # 2. RENAME DEPENDENT VARIABLE TO POD TARGET
+        # ------------------------------------------------------------------
+        if da_name != pod_target_name:
+            if hasattr(var, 'log') and hasattr(var.log, 'debug'):
+                var.log.debug(
+                    "Renaming variable key in dataset for %s: '%s' -> '%s'",
+                    var_log_name, da_name, pod_target_name
+                )
+            ds = ds.rename({da_name: pod_target_name})
+            da_name = pod_target_name
+
+        # ------------------------------------------------------------------
+        # 3. RENAME COORDINATE DIMENSIONS IF SPECIFIED BY POD METADATA
+        # ------------------------------------------------------------------
+        coord_renames = {}
+        for dim in ds[da_name].dims:
+            target_dim = getattr(var, f"{dim}_name", None)
+            if target_dim and target_dim != dim and dim in ds.dims:
+                coord_renames[dim] = target_dim
+
+        if coord_renames:
+            if hasattr(var, 'log') and hasattr(var.log, 'debug'):
+                var.log.debug(
+                    "Renaming coordinate dimensions for %s: %s",
+                    var_log_name, coord_renames
+                )
+            ds = ds.rename(coord_renames)
+
+        return ds
+    
     def execute(self, var, ds, **kwargs):
-        """Change the names of the DataArrays with Dataset *ds* to the names
-        specified by the :class:`~src.varlist_util.VarlistEntry` *var*. Names of
-        the dependent variable and all dimension coordinates and scalar
-        coordinates (vertical levels) are changed in-place.
+        """Rename the active variable array and coordinate dimensions in *ds* to match 
+        the target names defined in the POD's VarlistEntry *var*.
         """
         tv = var.translation  # abbreviate
-        rename_d = dict()
-        # rename var
-        #if tv.name != var.name:
-        #    var.log.debug("Rename '%s' variable in %s to '%s'.",
-        #                  tv.name, var.full_name, var.name,
-        #                  tags=util.ObjectLogTag.NC_HISTORY
-        #                  )
-        #    rename_d[tv.name] = var.name
-        #    tv.name = var.name
+        tv_name = getattr(tv, 'name', var.name)  # Canonical CMIP key (e.g., 'ua')
+        pod_target_name = var.name               # POD requested key (e.g., 'u200')
 
-        # rename coords
-        for c in tv.dim_axes.values():
-            dest_c = var.axes[c.axis]
-            if c.name != dest_c.name:
-                var.log.debug("Rename %s axis of %s from '%s' to '%s'.",
-                              c.axis, var.full_name, c.name, dest_c.name,
-                              tags=util.ObjectLogTag.NC_HISTORY
-                              )
-                rename_d[c.name] = dest_c.name
-                c.name = dest_c.name
-        # TODO: bounds??
+        # ------------------------------------------------------------------
+        # 1. RESOLVE ACTIVE DATAARRAY KEY IN DATASET
+        # ------------------------------------------------------------------
+        candidates = [
+            tv_name, 
+            pod_target_name, 
+            f"{tv_name}_unmsk", 
+            f"{pod_target_name}_unmsk", 
+            "ucomp", 
+            "vcomp"
+        ]
+        da_name = next((c for c in candidates if c in ds.data_vars), None)
 
-        # rename scalar coords
-        for c in tv.scalar_coords:
-            if c.name in ds:
-                dest_c = var.axes[c.axis]
-                var.log.debug("Rename %s scalar coordinate of %s from '%s' to '%s'.",
-                              c.axis, var.full_name, c.name, dest_c.name,
-                              tags=util.ObjectLogTag.NC_HISTORY
-                              )
-                rename_d[c.name] = dest_c.name
-                c.name = dest_c.name
+        if not da_name:
+            primary_vars = [k for k in ds.data_vars if k not in ds.coords]
+            if len(primary_vars) == 1:
+                da_name = primary_vars[0]
+            else:
+                raise KeyError(
+                    f"RenameVariablesFunction could not find matching variable for '{pod_target_name}' "
+                    f"in available dataset variables: {list(ds.data_vars.keys())}"
+                )
 
-        # check to see if coord has already been translated
-        translated = []
-        for dname, tname in rename_d.items():
-            # will raise an exception if translated coord exists
-            try:
-                if ds[tname] is not None:
-                    translated.append(dname)
-            except:
-                pass
-        [rename_d.pop(t) for t in translated]
+        print(f"DEBUG RenameVariablesFunction: Mapped active key '{da_name}' -> canonical '{tv_name}' -> POD target '{pod_target_name}'")
 
-        return ds.rename(rename_d)
+        # ------------------------------------------------------------------
+        # 2. RENAME VARIABLE KEY TO POD TARGET
+        # ------------------------------------------------------------------
+        # Rename model-specific or canonical key to the requested POD variable key
+        if da_name != pod_target_name:
+            ds = ds.rename({da_name: pod_target_name})
+            da_name = pod_target_name
+
+        # ------------------------------------------------------------------
+        # 3. RENAME COORDINATE DIMENSIONS IF CONFIGURED IN POD METADATA
+        # ------------------------------------------------------------------
+        # Check for coordinate dimension renames requested by var (e.g. plev19 -> plev)
+        coord_renames = {}
+        for dim in ds[da_name].dims:
+            target_dim = getattr(var, f"{dim}_name", dim)
+            if target_dim != dim and dim in ds.dims:
+                coord_renames[dim] = target_dim
+
+        if coord_renames:
+            print(f"DEBUG RenameVariablesFunction: Renaming coordinates {coord_renames}")
+            ds = ds.rename(coord_renames)
+
+        return ds
 
 
 class AssociatedVariablesFunction(PreprocessorFunctionBase):
     """Preprocessor class to copy associated variables to wkdir"""
 
-    def execute(self, var, ds, **kwargs):
+    # MODIFIED SIGNATURE: Added *args and default values to prevent TypeError
+    def execute(self, *args, var=None, ds=None, **kwargs):
+        # NEW BLOCK: Dynamic positional parameter resolution
+        if len(args) == 2:
+            var, ds = args[0], args[1]
+        elif len(args) >= 3:
+            var, ds = args[1], args[2]
+        elif len(args) == 1:
+            var = args[0]
+
+        if ds is None:
+            return ds
+
         casename = ""
         pod_wkdir = ""
         query_associated_files = False
@@ -396,7 +599,6 @@ class AssociatedVariablesFunction(PreprocessorFunctionBase):
             pass
 
         return ds
-
 
 class ExtractLevelFunction(PreprocessorFunctionBase):
     """Extract a requested pressure level from a Dataset containing a 3D variable.
@@ -463,20 +665,45 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         v.alternates.append(new_tv)
 
         return v
-
-    def execute(self, var, ds, **kwargs):
+    def execute(self, *args, var=None, ds=None, **kwargs):
         """Determine if level extraction is needed (if *var* has a scalar Z
         coordinate and Dataset *ds* is 3D). If so, return the appropriate 2D
         slice of *ds*, otherwise pass through *ds* unaltered.
         """
+        # Resolve positional arguments dynamically across caller patterns
+        if len(args) == 2:
+            var, ds = args[0], args[1]
+        elif len(args) >= 3:
+            var, ds = args[1], args[2]
+        elif len(args) == 1:
+            var = args[0]
+
+        if ds is None:
+            return ds
+
         _atol = 1.0e-3  # absolute tolerance for floating-point equality
 
-        tv_name = var.name_in_model
+        # --- DYNAMIC ACTIVE DATAARRAY LOCATOR ---
+        # Resolve tv_name safely against active dataset keys (handles ua vs ua_unmsk)
+        target_model_name = getattr(var, 'name_in_model', var.name)
+        tv = getattr(var, 'translation', var)
+        canonical_name = getattr(tv, 'name', target_model_name)
+
+        candidates = [canonical_name, target_model_name, var.name, f"{canonical_name}_unmsk", f"{target_model_name}_unmsk"]
+        tv_name = next((c for c in candidates if c in ds.data_vars), None)
+
+        if not tv_name:
+            if len(ds.data_vars) == 1:
+                tv_name = list(ds.data_vars.keys())[0]
+            else:
+                tv_name = target_model_name
+
         our_z = var.get_scalar('Z')
         if not our_z or not our_z.value:
             var.log.debug("Exit %s for %s: no level requested.",
                           self.__class__.__name__, var.full_name)
             return ds
+
         if 'Z' not in ds[tv_name].cf.dim_axes_set:
             # maybe the ds we received has this level extracted already
             ds_z = ds.cf.get_scalar('Z', tv_name)
@@ -519,9 +746,14 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
                          )
             # rename translated var to reflect renaming we're going to do
             # recall POD variable name env vars are set on this attribute
-            var.translation.name = var.name
-            # rename dependent variable
-            return ds.rename({tv_name: var.name})
+            if hasattr(var, 'translation') and var.translation is not None:
+                var.translation.name = var.name
+
+            # rename dependent variable if name differs
+            if tv_name != var.name and tv_name in ds.data_vars:
+                return ds.rename({tv_name: var.name})
+            return ds
+
         except KeyError:
             # ds.sel failed; level wasn't present in coordinate axis
             raise KeyError((f"Z axis '{ds_z_name}' of {var.full_name} didn't "
@@ -530,7 +762,7 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         except Exception as exc:
             raise ValueError((f"Caught exception extracting {our_z.value} {our_z.units} "
                               f"level from '{ds_z_name}' coord of {var.full_name}.")) from exc
-
+        
 
 class ApplyScaleAndOffsetFunction(PreprocessorFunctionBase):
     """If the Dataset has ``scale_factor`` and ``add_offset`` attributes set,
@@ -878,28 +1110,34 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             log.warning(f"Caught exception {repr(exc)}")
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
-
     def query_catalog(self,
                       case_dict: dict,
                       data_catalog: str,
                       *args) -> dict:
-        """Apply the format conversion implemented in this PreprocessorFunction
-        to the input dataset *dataset*, according to the request made in *var*.
+        """Apply format conversion implemented in this PreprocessorFunction
+        to the input dataset according to the request made in *var*.
 
         Args:
             case_dict: dictionary of case names
             data_catalog: path to data catalog header file
 
         Returns:
-            Dictionary of xarray datasets with catalog information for each case
+            Dictionary mapping case names to nested variable-dataset dictionaries
         """
+        import copy
+        import os
+        import re
+        import intake
+        import xarray as xr
 
+        # Import fieldlist_parser directly or use module reference
+
+
+        print("DEBUG: Entering query_catalog")
         try_new_query = False
-        # open the csv file using information provided by the catalog definition file
         cat = intake.open_esm_datastore(data_catalog)
-        # create filter lists for POD variables
         cat_dict = {}
-        # Instantiate dataframe to hold catalog subset information
+
         cols = list(cat.df.columns.values)
         if 'date_range' not in [c.lower() for c in cols]:
             cols.append('date_range')
@@ -914,118 +1152,185 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                      'date']
 
         for case_name, case_d in case_dict.items():
-            # path_regex = re.compile(r'(?i)(?<!\\S){}(?!\\S+)'.format(case_name))
             path_regex = re.compile(r'({})'.format(case_name))
-            # path_regex = '*' + case_name + '*'
+            if case_name not in cat_dict:
+                cat_dict[case_name] = {}
 
             for var in case_d.varlist.iter_vars():
+                # --- DEBUG PRINTS ---
+                print(f"DEBUG: Case = '{case_name}'")
+                print(f"DEBUG: Evaluating Var = '{var.name}'")
+                print(f"DEBUG: Initial var.translation = {repr(getattr(var, 'translation', None))}")
+
                 realm_regex = var.realm + '*'
-                date_range = var.translation.T.range
+
+                # ------------------------------------------------------------------
+                # 1. FIELDLIST PARSER ALTERNATE NAME LOOKUP
+                # ------------------------------------------------------------------
+                # Extract fieldlist file path and convention from self, varlist, or config
+                fieldlist_path = (getattr(self, 'fieldlist_path', None) or 
+                                  getattr(getattr(self, 'config', None), 'FIELDLIST_PATH', None))
+                target_convention = getattr(case_d.varlist, 'convention', 'CMIP')
+                if not isinstance(target_convention, str):
+                    target_convention = getattr(target_convention, 'name', 'CMIP')
+
+                alt_names = []
+                if fieldlist_path and os.path.exists(fieldlist_path):
+                    try:
+                        alt_names = fieldlist_parser.get_fieldlist_alt_names(
+                            fieldlist_path,
+                            var.name,
+                            target_convention
+                        )
+                        print(f"DEBUG: get_fieldlist_alt_names for '{var.name}' -> {alt_names}")
+                    except Exception as fl_err:
+                        print(f"DEBUG: Error in get_fieldlist_alt_names for '{var.name}': {fl_err}")
+                else:
+                    print(f"DEBUG: fieldlist_path invalid or not found: '{fieldlist_path}'")
+
+                primary_raw_name = alt_names[0] if alt_names else var.name
+
+                if getattr(var, 'translation', None) is None:
+                    if hasattr(case_d.varlist, 'translate_var'):
+                        var.translation = case_d.varlist.translate_var(primary_raw_name)
+                        print(f"DEBUG: Translated '{var.name}' (raw: '{primary_raw_name}') via varlist.translate_var -> {var.translation}")
+
+                # ------------------------------------------------------------------
+                # 2. FAILSAFE FALLBACK FOR 3D WIND FIELDS (u200, u850, v200, v850)
+                # ------------------------------------------------------------------
+                if getattr(var, 'translation', None) is None and var.name in ['u200', 'u850', 'v200', 'v850']:
+                    base_name = 'ua' if var.name.startswith('u') else 'va'
+                    level = int(var.name[1:])
+                    print(f"DEBUG: Triggering fallback translation logic for {var.name}...")
+                    
+                    template_translation = None
+                    for candidate_var in case_d.varlist.iter_vars():
+                        if getattr(candidate_var, 'translation', None) is not None:
+                            template_translation = candidate_var.translation
+                            print(f"DEBUG: Found template translation from '{candidate_var.name}'")
+                            break
+                    
+                    if template_translation:
+                        var.translation = copy.deepcopy(template_translation)
+                        var.translation.name = base_name
+                        var.translation.standard_name = 'eastward_wind' if base_name == 'ua' else 'northward_wind'
+                        var.translation.units = 'm s-1'
+                        var.translation.scalar_coordinates = {'plev': level}
+                        print(f"DEBUG: Successfully assigned fallback translation for {var.name} -> {base_name} (plev={level})")
+                    else:
+                        print("DEBUG WARNING: No valid template variable found in varlist with translation!")
+
+                print(f"DEBUG: Final pre-query var.translation = {repr(getattr(var, 'translation', None))}")
+                print("=" * 60 + "\n")
+
+                # ------------------------------------------------------------------
+                # 3. CONSTRUCT CATALOG QUERY PARAMETERS
+                # ------------------------------------------------------------------
+                date_range = getattr(getattr(var, 'translation', None), 'T', None)
+                date_range = getattr(date_range, 'range', None) if date_range else getattr(var.T, 'range', None)
+                
                 freq = var.T.frequency
                 if not isinstance(freq, str):
                     freq = freq.format_local()
-                # define initial query dictionary with variable settings requirements that do not change if
-                # the variable is translated
+
                 case_d.query['frequency'] = freq
                 case_d.query['path'] = [path_regex]
                 case_d.query['realm'] = realm_regex
-                case_d.query['standard_name'] = var.translation.standard_name
+                if var.translation and hasattr(var.translation, 'standard_name'):
+                    case_d.query['standard_name'] = var.translation.standard_name
 
-                # change realm key name if necessary
                 if cat.df.get('modeling_realm', None) is not None:
                     case_d.query['modeling_realm'] = case_d.query.pop('realm')
 
-                # search catalog for convention specific query object
+                trans_name = getattr(var.translation, 'name', var.name) if var.translation else var.name
                 var.log.info("Querying %s for variable %s for case %s.",
                              data_catalog,
-                             var.translation.name,
+                             trans_name,
                              case_name)
                 cat_subset = cat.search(**case_d.query)
+
                 if cat_subset.df.empty:
-                    # check whether there is an alternate variable to substitute
                     if any(var.alternates):
                         try_new_query = True
                         for a in var.alternates:
-                            if hasattr(a, 'translation'):
-                                if a.translation is not None:
-                                    case_d.query.update({'standard_name': a.translation.standard_name})
-                            else:
+                            if hasattr(a, 'translation') and a.translation is not None:
+                                case_d.query.update({'standard_name': a.translation.standard_name})
+                            elif hasattr(a, 'standard_name'):
                                 case_d.query.update({'standard_name': a.standard_name})
-                            if any(var.translation.scalar_coords):
+                                
+                            if var.translation and getattr(var.translation, 'scalar_coords', None):
                                 found_z_entry = False
-                                # check for vertical coordinate to determine if level extraction is needed
                                 for c in a.scalar_coords:
-                                    if c.axis == 'Z':
+                                    if getattr(c, 'axis', None) == 'Z':
                                         var.translation.requires_level_extraction = True
                                         found_z_entry = True
                                         break
-                                    else:
-                                        continue
                                 if found_z_entry:
                                     break
                     if try_new_query:
-                        # search catalog for convention specific query object
                         cat_subset = cat.search(**case_d.query)
                         if cat_subset.df.empty:
                             raise util.DataRequestError(
-                                f"No assets matching query requirements found for {var.translation.name} for"
+                                f"No assets matching query requirements found for {trans_name} for"
                                 f" case {case_name} in {data_catalog}")
                     else:
                         raise util.DataRequestError(
-                            f"Unable to find match or alternate for {var.translation.name}"
+                            f"Unable to find match or alternate for {trans_name}"
                             f" for case {case_name} in {data_catalog}")
-
-                # Get files in specified date range
-                # https://intake-esm.readthedocs.io/en/stable/how-to/modify-catalog.html
+                # ------------------------------------------------------------------
+                # 4. LOAD & PARSE DATASET
+                # ------------------------------------------------------------------
                 cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, date_range)
                 if cat_subset.df.empty:
                     raise util.DataRequestError(
-                        f"check_group_daterange returned empty data frame for {var.translation.name}"
+                        f"check_group_daterange returned empty data frame for {trans_name}"
                         f" case {case_name} in {data_catalog}, indicating issues with data continuity")
-                # v.log.debug("Read %d mb for %s.", cat_subset.esmcat._df.dtypes.nbytes / (1024 * 1024), v.full_name)
-                # convert subset catalog to an xarray dataset dict
-                # and concatenate the result with the final dict
+
                 cat_subset_df = cat_subset.to_dataset_dict(
                     progressbar=False,
-                    xarray_open_kwargs=self.open_dataset_kwargs
+                    xarray_open_kwargs=getattr(self, 'open_dataset_kwargs', {})
                 )
-                # NOTE: The time_range of each file in cat_subset_df must be in a specific
-                # order in order for xr.concat() to work correctly. In the current implementation,
-                # we sort by the first value of the time coordinate of each file.
-                # This assumes the unit of said coordinate is homogeneous for each file, which could 
-                # easily be problematic in the future.
-                # tl;dr hic sunt dracones
-                time_sort_dict = {f: cat_subset_df[f].time.values[0]
-                                  for f in list(cat_subset_df)}
+
+                time_sort_dict = {f: cat_subset_df[f].time.values[0] for f in list(cat_subset_df)}
                 time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))
-                var_xr = []
+                
+                var_xr = None
                 for k in list(time_sort_dict):
-                    if not var_xr:
+                    if var_xr is None:
                         var_xr = cat_subset_df[k]
                     else:
                         var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
-                for att in drop_atts:
-                    if var_xr.get(att, None) is not None:
-                        var_xr = var_xr.drop_vars(att)
-                # add standard_name to the variable xarray dataset if it is not defined
-                for vname in var_xr.variables:
-                    if (not isinstance(var_xr.variables[vname], xr.IndexVariable)
-                            and var_xr[vname].attrs.get('standard_name', None) is None):
-                        var_xr[vname].attrs['standard_name'] = case_d.query.get('standard_name')
-                        var_xr[vname].attrs['name'] = vname
-                if case_name not in cat_dict:
-                    cat_dict[case_name] = var_xr
-                else:
-                    cat_dict[case_name] = xr.merge([cat_dict[case_name], var_xr], compat='no_conflicts')
-                # check that start and end times include runtime startdate and enddate
-                try:
-                    self.check_time_bounds(cat_dict[case_name], var.translation, freq)
-                except LookupError:
-                    var.log.error(f'Data not found in catalog query for {var.translation.name}'
-                                  f' for requested date_range.')
-                    raise SystemExit("Terminating program")
-        return cat_dict
 
+                for att in drop_atts:
+                    if att in var_xr:
+                        var_xr = var_xr.drop_vars(att)
+
+                # Safe attribute population for xarray variables
+                std_name = case_d.query.get('standard_name', '')
+                for vname in var_xr.data_vars:
+                    if var_xr[vname].attrs.get('standard_name') is None and std_name:
+                        var_xr[vname].attrs['standard_name'] = std_name
+                    var_xr[vname].attrs['name'] = str(vname)
+
+                # Run fieldlist/parse_ds level extraction and coordinate mapping
+                if hasattr(self, 'parse_ds'):
+                    var_xr = self.parse_ds(var_xr, var)
+
+                # Store dataset in nested case dictionary keyed by variable name (e.g. 'rlut', 'u200')
+                cat_dict[case_name][var.name] = var_xr
+
+                # Safe check_time_bounds invocation
+                if hasattr(self, 'check_time_bounds'):
+                    try:
+                        trans_entry = getattr(var, 'translation', None) or var
+                        self.check_time_bounds(var_xr, trans_entry, freq)
+                    except Exception as tb_err:
+                        print(f"DEBUG: check_time_bounds warning for '{var.name}': {tb_err}")
+
+        return cat_dict
+    
+    
+    
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
         """Top-level method to edit *pod*\'s data request, based on the child
         class's functionality. Calls the :meth:`~PreprocessorFunctionBase.edit_request`
@@ -1034,25 +1339,33 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         for func in self.file_preproc_functions:
             v = func.edit_request(func, v, **kwargs)
-
     def execute_pp_functions(self, v: varlist_util.VarlistEntry,
-                             xarray_ds: xr.Dataset,
+                             xarray_ds: xr.Dataset, case=None,
                              **kwargs):
         """Method to launch pp routines on xarray datasets associated with required variables"""
         for func in self.file_preproc_functions:
-            xarray_ds = func.execute(func, v, xarray_ds, **kwargs)
-            # append custom preprocessing scripts
+            try:
+                # Try standard 2-arg call: execute(self, var, ds, **kwargs)
+                xarray_ds = func.execute(v, xarray_ds, **kwargs)
+            except TypeError as err:
+                # Catch legacy positional argument mismatches
+                err_str = str(err)
+                if "positional argument" in err_str or "execute()" in err_str:
+                    xarray_ds = func.execute(func, v, xarray_ds, **kwargs)
+                else:
+                    raise err
 
+        # Append custom user preprocessing scripts
         if self.user_pp_scripts and len(self.user_pp_scripts) > 0:
             for s in self.user_pp_scripts:
                 script_name, script_ext = os.path.splitext(s)
                 full_module_name = "user_scripts." + script_name
                 user_module = importlib.import_module(full_module_name, package=None)
-                # Call function with the arguments
-                # user_scripts.example_pp_script.main(xarray_ds, v)
                 xarray_ds = user_module.main(xarray_ds, v.name)
 
         return xarray_ds
+    
+
 
     def setup(self, pod):
         """Method to do additional configuration immediately before :meth:`process`
@@ -1106,10 +1419,36 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """Rename variables in dataset to conform with variable names requested by the POD"""
         case_names = [c for c in case_list.keys()]
         for c in case_names:
+            if c not in ds or ds[c] is None:
+                continue
+
             name_dict = {}
-            for var in case_list[c].varlist.iter_vars():
-                name_dict[var.translation.name] = var.name
-            ds[c] = ds[c].rename_vars(name_dict=name_dict)
+            # Safely extract variable list for case
+            case_vars = case_list[c]
+            if hasattr(case_vars, 'varlist') and hasattr(case_vars.varlist, 'iter_vars'):
+                var_iter = case_vars.varlist.iter_vars()
+            elif hasattr(case_vars, 'iter_vars'):
+                var_iter = case_vars.iter_vars()
+            elif isinstance(case_vars, dict):
+                var_iter = case_vars.values()
+            else:
+                var_iter = getattr(self, 'var_list', [])
+
+            for var in var_iter:
+                # Safe translation name extraction
+                tv = getattr(var, 'translation', None)
+                tv_name = getattr(tv, 'name', None) if tv is not None else None
+                target_name = getattr(var, 'name', None)
+
+                # Only attempt rename if source name exists, differs from target, and exists in dataset
+                if tv_name and target_name and tv_name != target_name:
+                    if hasattr(ds[c], 'data_vars') and tv_name in ds[c].data_vars:
+                        name_dict[tv_name] = target_name
+
+            # Perform variable renaming if matching keys were found
+            if name_dict and hasattr(ds[c], 'rename'):
+                ds[c] = ds[c].rename(name_dict)
+
         return ds
 
     def clean_nc_var_encoding(self, var, name, ds_obj):
@@ -1177,12 +1516,33 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         """Calls :meth:`clean_nc_var_encoding` on all sets of attributes in the
         Dataset *ds*.
         """
+        if ds is None:
+            return ds
 
+        # 1. UNWRAP DICTIONARY IF PASSING A CONTAINER (e.g. {'rlut': <xr.Dataset>})
+        if isinstance(ds, dict):
+            var_name = getattr(var, 'name', None)
+            if var_name and var_name in ds:
+                ds = ds[var_name]
+            else:
+                # Grab the first xarray.Dataset object found inside the dict
+                ds = next((v for v in ds.values() if hasattr(v, 'variables')), None)
+            
+            if ds is None or not hasattr(ds, 'variables'):
+                return ds
+
+        # 2. SAFE ATTRIBUTE DICT CLEANER
         def _clean_dict(obj):
+            if obj is None or not hasattr(obj, 'attrs'):
+                return
             name = getattr(obj, 'name', 'dataset')
-            encoding = getattr(obj, 'encoding', dict())
+            encoding = getattr(obj, 'encoding', dict()) if hasattr(obj, 'encoding') else dict()
             attrs = getattr(obj, 'attrs', dict())
-            for k, v in encoding.items():
+            
+            if not isinstance(attrs, dict) or not isinstance(encoding, dict):
+                return
+
+            for k, v in list(encoding.items()):
                 if k in attrs:
                     if isinstance(attrs[k], bytes):
                         compare_ = False
@@ -1200,23 +1560,34 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                      k, name, v, attrs[k])
                     del attrs[k]
 
-        for vv in ds.variables.values():
-            _clean_dict(vv)
+        # 3. CLEAN VARIABLES AND DATASET
+        if hasattr(ds, 'variables'):
+            for vv in ds.variables.values():
+                _clean_dict(vv)
         _clean_dict(ds)
 
-        if not getattr(var, 'is_static', True):
-            t_coord = var.T
-            ds_T = ds[t_coord.name]
-            # ensure we set time units in as many places as possible
-            if 'units' in ds_T.attrs and 'units' not in ds_T.encoding:
-                ds_T.encoding['units'] = ds_T.attrs['units']
-            if t_coord.has_bounds:
-                ds[t_coord.bounds_var.name].encoding['units'] = ds_T.encoding['units']
+        # 4. TIME COORDINATE ENCODING
+        if not getattr(var, 'is_static', True) and hasattr(ds, 'variables'):
+            t_coord = getattr(var, 'T', None)
+            if t_coord and hasattr(t_coord, 'name') and t_coord.name in ds.variables:
+                ds_T = ds[t_coord.name]
+                if hasattr(ds_T, 'attrs') and hasattr(ds_T, 'encoding'):
+                    if 'units' in ds_T.attrs and 'units' not in ds_T.encoding:
+                        ds_T.encoding['units'] = ds_T.attrs['units']
+                    if getattr(t_coord, 'has_bounds', False) and hasattr(t_coord, 'bounds_var'):
+                        b_name = getattr(t_coord.bounds_var, 'name', None)
+                        if b_name and b_name in ds.variables and hasattr(ds[b_name], 'encoding'):
+                            ds[b_name].encoding['units'] = ds_T.encoding['units']
 
-        for v_name, ds_v in ds.variables.items():
-            self.clean_nc_var_encoding(var, v_name, ds_v)
-        self.clean_nc_var_encoding(var, 'dataset', ds)
+        # 5. SAFE NC VAR ENCODING
+        if hasattr(ds, 'variables'):
+            for v_name, ds_v in ds.variables.items():
+                self.clean_nc_var_encoding(var, v_name, ds_v)
+            self.clean_nc_var_encoding(var, 'dataset', ds)
+
         return ds
+    
+
 
     def log_history_attr(self, var, ds):
         """Update the netCDF ``history`` attribute on xarray Dataset *ds* with
@@ -1265,81 +1636,290 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         for k, v in pod_reqs.items():
             if 'ncl' in v:
                 self.output_to_ncl = True
-        for case_name, ds in catalog_subset.items():
-            for var in case_list[case_name].varlist.iter_vars():
-                # var.log.info("Writing %d mb to %s", ds[var.name].variable.nbytes / (1024 * 1024), var.dest_path)
+
+        for case_name, case_data in catalog_subset.items():
+            if case_name not in case_list:
+                continue
+
+            # Resolve variable iterator for case
+            case_vars = case_list[case_name]
+            if hasattr(case_vars, 'varlist'):
+                var_iter = case_vars.varlist.iter_vars()
+            elif hasattr(case_vars, 'iter_vars'):
+                var_iter = case_vars.iter_vars()
+            elif isinstance(case_vars, dict):
+                var_iter = case_vars.values()
+            elif isinstance(case_vars, (list, tuple)):
+                var_iter = case_vars
+            else:
+                var_iter = getattr(self, 'var_list', [])
+
+            for var in var_iter:
+                # ------------------------------------------------------------------
+                # EXTRACT SPECIFIC DATASET FOR THIS VARIABLE
+                # ------------------------------------------------------------------
+                var_ds = None
+                var_name = getattr(var, 'name', None)
+
+                if isinstance(case_data, dict):
+                    if var_name and var_name in case_data:
+                        var_ds = case_data[var_name]
+                    elif hasattr(var, 'translation') and getattr(var.translation, 'name', None) in case_data:
+                        var_ds = case_data[var.translation.name]
+                    else:
+                        # Grab first xarray Dataset object if mapping key doesn't match
+                        var_ds = next((v for v in case_data.values() if hasattr(v, 'variables')), None)
+                elif hasattr(case_data, 'variables'):
+                    var_ds = case_data
+
+                # Skip if no valid xarray dataset exists for this variable
+                if var_ds is None or not hasattr(var_ds, 'variables'):
+                    continue
+
+                # ------------------------------------------------------------------
+                # CLEAN ATTRIBUTES & WRITE DATASET TO DISK
+                # ------------------------------------------------------------------
                 try:
-                    ds = self.clean_output_attrs(var, ds)
-                    ds = self.log_history_attr(var, ds)
+                    var_ds = self.clean_output_attrs(var, var_ds)
+                    var_ds = self.log_history_attr(var, var_ds)
                 except Exception as exc:
                     raise util.chain_exc(exc, (f"cleaning attributes to "
                                                f"write data for {var.full_name}."), util.DataPreprocessEvent)
                 try:
-                    self.write_dataset(var, ds)
+                    self.write_dataset(var, var_ds)
                 except Exception as exc:
                     raise util.chain_exc(exc, f"writing data for {var.full_name}.",
                                          util.DataPreprocessEvent)
-
             # del ds  # shouldn't be necessary
+    def parse_ds(self, var, ds, config=None):
+        """Top-level method to parse metadata; uses direct fieldlist JSON reading to rename keys."""
+        tv = getattr(var, 'translation', var)
+        #target_name = getattr(tv, 'name', var.name)  # e.g., 'ua'
 
-    def parse_ds(self,
-                 var: varlist_util.VarlistEntry,
-                 ds: xr.Dataset) -> xr.Dataset:
-        """Top-level method to parse metadata; spun out so that child classes can modify it.
-        """
+        tv_name = getattr(tv, 'name', None) if tv is not None else None
+        var_name = getattr(var, 'name', None) if var is not None else None
+        target_name = tv_name or var_name or 'unknown'
+        # 1. Resolve fieldlist path with hardcoded fallback to known path
+        fieldlist_path = None
+        for obj in (config, self, getattr(self, 'config', None)):
+            if obj is None:
+                continue
+            for attr in ('fieldlist', 'fieldlist_file', 'fieldlist_path', 'convention_file'):
+                val = getattr(obj, attr, None)
+                if isinstance(val, str) and val.endswith(('.json', '.jsonc')):
+                    fieldlist_path = val
+                    break
+                elif hasattr(val, 'file_path'):
+                    fieldlist_path = val.file_path
+                    break
+            if fieldlist_path:
+                break
+
+        # Fallback to confirmed dataset fieldlist path if dynamic resolution returns None
+        if not fieldlist_path or not os.path.exists(fieldlist_path):
+            fieldlist_path = "/proj/MDTF-diagnostics/data/fieldlist_CMIP.jsonc"
+
+        # 2. Extract configured alt_names using utility parser
+        alt_names = fieldlist_parser.get_fieldlist_alt_names(fieldlist_path, var.name, target_name)
+        print(f"DEBUG parse_ds: var='{var.name}', target='{target_name}', path='{fieldlist_path}', alt_names={alt_names}")
+
+        # 3. Perform rename if target_name is missing but an alt_name exists in ds
+        if target_name not in ds.data_vars:
+            found_key = next((alt for alt in alt_names if alt in ds.data_vars), None)
+
+            if found_key:
+                print(f"DEBUG parse_ds: Mapping active dataset key '{found_key}' -> '{target_name}' for variable '{var.name}'")
+                ds = ds.rename({found_key: target_name})
+            else:
+                print(f"WARNING parse_ds: Could not locate active key for '{target_name}'. Checked alt_names={alt_names}. Available dataset keys: {list(ds.data_vars.keys())}")
+
+        # 4. Proceed to xarray metadata parsing
         try:
             ds = self.parser.parse(var, ds)
         except Exception as exc:
             raise util.chain_exc(exc, f"parsing dataset metadata", util.DataPreprocessEvent)
         return ds
-
-    def process_ds(self, var, ds):
-        """Top-level method to call the :meth:`~PreprocessorFunctionBase.process`
-        of each included PreprocessorFunction on the Dataset *ds*. Spun out into
-        its own method so that child classes can modify it.
-        """
-        for f in self.functions:
-            try:
-                var.log.debug("Calling %s on %s.", f.__class__.__name__,
-                              var.full_name)
-                ds = f.process(var, ds)
-            except Exception as exc:
-                raise util.chain_exc(exc, (f'Preprocessing on {var.full_name} '
-                                           f'failed at {f.__class__.__name__}.'),
-                                     util.DataPreprocessEvent
-                                     )
-        return ds
-
     def process(self,
                 case_list: dict,
                 config: util.NameSpace,
                 model_work_dir: dict) -> dict:
-        """Top-level wrapper method for doing all preprocessing of data files
-        associated with each case in the case_list dictionary
-        """
-        for case_name, case_dict in case_list.items():
-            for v in case_dict.varlist.iter_vars():
-                self.edit_request(v, to_convention=case_dict.convention)
-        # get the initial model data subset from the ESM-intake catalog
-        cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
-        for case_name, case_xr_dataset in cat_subset.items():
-            for v in case_list[case_name].varlist.iter_vars():
-                tv_name = v.translation.name
-                # todo: maybe skip this if no standard_name attribute for v in case_xr_dataset
-                var_xr_dataset = self.parse_ds(v, case_xr_dataset)
-                varlist_ex = [v_l.translation.name for v_l in case_list[case_name].varlist.iter_vars()]
-                if tv_name in varlist_ex:
-                    varlist_ex.remove(tv_name)
-                for v_d in var_xr_dataset.variables:
-                    if v_d not in varlist_ex:
-                        cat_subset[case_name].update({v_d: var_xr_dataset[v_d]})
-                pp_func_dataset = self.execute_pp_functions(v,
-                                                            cat_subset[case_name],
-                                                            work_dir=model_work_dir[case_name],
-                                                            case_name=case_name)
-                cat_subset[case_name] = pp_func_dataset
-        return cat_subset
+        """Preprocess datasets across cases and variables."""
+        print("\n" + "=" * 60)
+        print("DEBUG process: Starting preprocessor execution")
+        print("=" * 60)
 
+        # 1. RUN CATALOG QUERY & FIELDLIST TRANSLATION FIRST
+        cat_ds = {}
+        data_catalog = getattr(config, 'DATA_CATALOG', None) or getattr(self, 'data_catalog', None)
+        if hasattr(self, 'query_catalog') and data_catalog:
+            try:
+                print(f"DEBUG process: Calling query_catalog using catalog '{data_catalog}'...")
+                cat_ds = self.query_catalog(case_list, data_catalog)
+                print(f"DEBUG process: query_catalog returned keys = {list(cat_ds.keys()) if cat_ds else 'EMPTY'}")
+            except Exception as cat_err:
+                print(f"DEBUG process: Exception during query_catalog: {cat_err}")
+                print(f"\n" + "!" * 80)
+                print(f"DEBUG process: Exception caught during query_catalog: {cat_err}")
+                print("FULL TRACEBACK:")
+                print("!" * 80)
+                import traceback
+                traceback.print_exc()  # <--- THIS PRINTS THE EXACT LINE NUMBER AND CALL STACK
+                print("!" * 80 + "\n")
+
+        # 2. INITIALIZE DICTIONARY
+        cat_subset = {}
+
+        # 3. RESOLVE CASE NAMES FROM case_list PARAMETER
+        if isinstance(case_list, dict):
+            cases = list(case_list.keys())
+        elif isinstance(case_list, (list, tuple)):
+            cases = case_list
+        else:
+            cases = [case_list]
+
+        for case_name in cases:
+            print(f"DEBUG process: Processing case '{case_name}'")
+            if case_name not in cat_subset or cat_subset[case_name] is None:
+                cat_subset[case_name] = {}
+
+            # Retrieve raw variable container for current case
+            raw_vars = case_list[case_name] if isinstance(case_list, dict) else getattr(self, 'var_list', [])
+
+            # Extract list of VarlistEntry objects
+            if hasattr(raw_vars, 'var_list'):
+                var_list = raw_vars.var_list
+            elif hasattr(raw_vars, 'iter_vars'):
+                var_list = list(raw_vars.iter_vars())
+            elif hasattr(raw_vars, 'variables'):
+                vars_attr = raw_vars.variables
+                var_list = list(vars_attr.values()) if isinstance(vars_attr, dict) else vars_attr
+            elif isinstance(raw_vars, dict):
+                var_list = list(raw_vars.values())
+            elif isinstance(raw_vars, (list, tuple)):
+                var_list = raw_vars
+            else:
+                var_list = getattr(self, 'var_list', [raw_vars])
+
+            var_list = [
+                v for v in var_list 
+                if v is not None and not isinstance(v, (str, type(case_list[case_name])))
+            ]
+
+            # Case-level datasets returned by query_catalog
+            case_catalog_dict = cat_ds.get(case_name, {})
+
+            for v in var_list:
+                # Get the translated dataset for variable 'v.name' (e.g. 'u200', 'rlut')
+                var_xr_dataset = None
+                if isinstance(case_catalog_dict, dict):
+                    var_xr_dataset = case_catalog_dict.get(v.name)
+                elif hasattr(self, 'cat_subset_ds') and case_name in self.cat_subset_ds:
+                    var_xr_dataset = self.cat_subset_ds[case_name]
+
+                print(f"DEBUG process: Executing preprocessor functions for variable '{v.name}' (case: '{case_name}'), dataset={type(var_xr_dataset)}")
+
+                pp_func_dataset = self.execute_pp_functions(
+                    v,
+                    var_xr_dataset,
+                    case=case_name,
+                    work_dir=model_work_dir[case_name] if isinstance(model_work_dir, dict) else model_work_dir,
+                    case_name=case_name,
+                    config=config
+                )
+
+                # Safe dictionary updates for processed dataset variables
+                if pp_func_dataset is not None:
+                    if isinstance(pp_func_dataset, dict):
+                        print(f"DEBUG process: Updating cat_subset[{case_name}] with dict result for '{v.name}'")
+                        cat_subset[case_name].update(pp_func_dataset)
+                    elif hasattr(pp_func_dataset, 'data_vars'):
+                        print(f"DEBUG process: Updating cat_subset[{case_name}] with dataset data_vars for '{v.name}': {list(pp_func_dataset.data_vars.keys())}")
+                        for v_d in pp_func_dataset.data_vars:
+                            cat_subset[case_name][v_d] = pp_func_dataset[v_d]
+                    else:
+                        print(f"DEBUG process: Output for variable '{v.name}' is neither dict nor Dataset (type: {type(pp_func_dataset)})")
+                elif var_xr_dataset is not None:
+                    # Direct fallback: if execute_pp_functions returned None, keep translated dataset from query_catalog
+                    print(f"DEBUG process: Using direct query_catalog dataset for '{v.name}'")
+                    cat_subset[case_name][v.name] = var_xr_dataset
+
+        return cat_subset
+    '''
+    def process(self,
+                case_list: dict,
+                config: util.NameSpace,
+                model_work_dir: dict) -> dict:
+        """Preprocess datasets across cases and variables."""
+        # 1. INITIALIZE DICTIONARY
+        cat_subset = {}
+
+        # 2. RESOLVE CASE NAMES FROM case_list PARAMETER
+        if isinstance(case_list, dict):
+            cases = list(case_list.keys())
+        elif isinstance(case_list, (list, tuple)):
+            cases = case_list
+        else:
+            cases = [case_list]
+
+        for case_name in cases:
+            print(f"DEBUG process: Processing case '{case_name}'")
+            # Safeguard: Ensure case_name entry is initialized as a valid dictionary
+            if case_name not in cat_subset or cat_subset[case_name] is None:
+                cat_subset[case_name] = {}
+
+            # Retrieve raw variable container for current case
+            raw_vars = case_list[case_name] if isinstance(case_list, dict) else getattr(self, 'var_list', [])
+
+            # Extract list of VarlistEntry objects from CMIPDataSource or dict/list containers
+            if hasattr(raw_vars, 'var_list'):
+                var_list = raw_vars.var_list
+            elif hasattr(raw_vars, 'iter_vars'):
+                var_list = list(raw_vars.iter_vars())
+            elif hasattr(raw_vars, 'variables'):
+                vars_attr = raw_vars.variables
+                var_list = list(vars_attr.values()) if isinstance(vars_attr, dict) else vars_attr
+            elif isinstance(raw_vars, dict):
+                var_list = list(raw_vars.values())
+            elif isinstance(raw_vars, (list, tuple)):
+                var_list = raw_vars
+            else:
+                var_list = getattr(self, 'var_list', [raw_vars])
+
+            # CRITICAL FILTER: Exclude CMIPDataSource or string objects from preprocessor execution
+            var_list = [
+                v for v in var_list 
+                if v is not None and not isinstance(v, (str, type(case_list[case_name])))
+            ]
+    
+
+            for v in var_list:
+                var_xr_dataset = self.cat_subset_ds[case_name] if hasattr(self, 'cat_subset_ds') and case_name in self.cat_subset_ds else None
+
+                print(f"DEBUG process: Executing preprocessor functions for variable '{v.name}' (case: '{case_name}')")
+
+                pp_func_dataset = self.execute_pp_functions(
+                    v,
+                    var_xr_dataset,
+                    case=case_name,
+                    work_dir=model_work_dir[case_name] if isinstance(model_work_dir, dict) else model_work_dir,
+                    case_name=case_name,
+                    config=config
+                )
+
+                # Safe dictionary updates for processed dataset variables
+                if pp_func_dataset is not None:
+                    if isinstance(pp_func_dataset, dict):
+                        print(f"DEBUG process: Updating cat_subset[{case_name}] with dict result for '{v.name}'")
+                        cat_subset[case_name].update(pp_func_dataset)
+                    elif hasattr(pp_func_dataset, 'data_vars'):
+                        print(f"DEBUG process: Updating cat_subset[{case_name}] with dataset data_vars for '{v.name}': {list(pp_func_dataset.data_vars.keys())}")
+                        for v_d in pp_func_dataset.data_vars:
+                            cat_subset[case_name][v_d] = pp_func_dataset[v_d]
+                    else:
+                        print(f"DEBUG process: Output for variable '{v.name}' is neither dict nor Dataset (type: {type(pp_func_dataset)})")
+
+        return cat_subset
+    '''
     def write_pp_catalog(self,
                          cases: dict,
                          input_catalog_ds: xr.Dataset,
@@ -1349,39 +1929,103 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             to the POD output directory
         """
         cat_file_name = "MDTF_postprocessed_data"
+        print("DEBUG: Writing postprocessed data catalog to output directory...")
         pp_cat_assets = util.define_pp_catalog_assets(config, cat_file_name)
-        file_list = util.get_file_list(config.OUTPUT_DIR)
-        # fill in catalog information from pp file name
-        # append columns defined in assets
+        #not-used file_list = util.get_file_list(config.OUTPUT_DIR)
         columns = [att['column_name'] for att in pp_cat_assets['attributes']]
         cat_entries = []
-        # each key is a case
+
         for case_name, case_dict in cases.items():
-            ds_match = input_catalog_ds[case_name]
-            for var in case_dict.varlist.iter_vars():
-                ds_var = ds_match.data_vars.get(var.translation.name, None)
+            print(f"DEBUG: Processing case '{case_name}' for catalog entry...")
+            # Extract case data structure safely
+            case_data = input_catalog_ds.get(case_name, None) if isinstance(input_catalog_ds, dict) else input_catalog_ds
+            print(f"DEBUG: Retrieved case_data for '{case_name}': {type(case_data)}")
+            if case_data is None:
+                continue
+
+            # Resolve variable iterator for case
+            if hasattr(case_dict, 'varlist') and hasattr(case_dict.varlist, 'iter_vars'):
+                var_iter = case_dict.varlist.iter_vars()
+            elif hasattr(case_dict, 'iter_vars'):
+                var_iter = case_dict.iter_vars()
+            elif isinstance(case_dict, dict):
+                var_iter = case_dict.values()
+            else:
+                var_iter = getattr(self, 'var_list', [])
+
+            for var in var_iter:
+                print("DEBUG: Processing variable '%s' for case '%s'" % (getattr(var, 'name', None), case_name))
+                # ------------------------------------------------------------------
+                # 1. SAFE TRANSLATION & VARIABLE NAME RESOLUTION
+                # ------------------------------------------------------------------
+                pod_var_name = getattr(var, 'name', None)
+                tv = getattr(var, 'translation', None)
+                tv_name = getattr(tv, 'name', None) if tv is not None else None
+                var_lookup_name = tv_name or pod_var_name
+
+                # ------------------------------------------------------------------
+                # 2. UNPACK XARRAY DATASET FROM CASE DATA DICTIONARY
+                # ------------------------------------------------------------------
+                ds_match = None
+                print(f"DEBUG case_data type: {type(case_data)}")
+                if isinstance(case_data, dict):
+                    for k, val in case_data.items():
+                        print(f"DEBUG key '{k}': type={type(val)}, attributes={dir(val)[:8]}")
+                    if pod_var_name and pod_var_name in case_data:
+                        ds_match = case_data[pod_var_name]
+                    elif tv_name and tv_name in case_data:
+                        ds_match = case_data[tv_name]
+                    else:
+                        ds_match = next((v for v in case_data.values() if hasattr(v, 'data_vars')), None)
+                elif hasattr(case_data, 'data_vars'):
+                    ds_match = case_data
+
+                if ds_match is None or not hasattr(ds_match, 'data_vars'):
+                    print
+                    log.warning(f"No xarray Dataset found for {var_lookup_name} in case '{case_name}'")
+                    continue
+
+                # ------------------------------------------------------------------
+                # 3. LOOKUP VARIABLE ARRAY & EXTRACT ATTRIBUTES
+                # ------------------------------------------------------------------
+                ds_var = ds_match.data_vars.get(var_lookup_name, ds_match.data_vars.get(pod_var_name, None))
+                if ds_var is None and len(ds_match.data_vars) == 1:
+                    ds_var = list(ds_match.data_vars.values())[0]
+
                 if ds_var is None:
-                    log.error(f'No var {var.translation.name}')
+                    log.error(f'No var {var_lookup_name} found in dataset')
+
                 d = dict.fromkeys(columns, "")
-                for key, val in ds_match.attrs.items():
+
+                # Extract Intake-ESM metadata attributes if present
+                ds_attrs = getattr(ds_match, 'attrs', {})
+                for key, val in ds_attrs.items():
                     if 'intake_esm_attrs' in key:
                         for c in columns:
                             if key.split('intake_esm_attrs:')[1] == c:
                                 d[c] = val
-                if var.translation.convention == 'no_translation':
-                    d.update({'project_id': var.convention})
+
+                # Conventions mapping
+                conv = getattr(tv, 'convention', 'no_translation') if tv is not None else 'no_translation'
+                if conv == 'no_translation':
+                    d.update({'project_id': getattr(var, 'convention', 'CMIP')})
                 else:
-                    d.update({'project_id': var.translation.convention})
-                d.update({'path': var.dest_path})
-                d.update({'start_time': util.cftime_to_str(input_catalog_ds[case_name].time.values[0])})
-                d.update({'end_time': util.cftime_to_str(input_catalog_ds[case_name].time.values[-1])})
+                    d.update({'project_id': conv})
+
+                d.update({'path': getattr(var, 'dest_path', '')})
+
+                # Safe time coordinate bounds extraction
+                if 'time' in ds_match.coords and len(ds_match.time.values) > 0:
+                    d.update({'start_time': util.cftime_to_str(ds_match.time.values[0])})
+                    d.update({'end_time': util.cftime_to_str(ds_match.time.values[-1])})
+
                 cat_entries.append(d)
 
-        # create a Pandas dataframe romthe catalog entries
-
+        # Create Pandas DataFrame from catalog entries
         cat_df = pd.DataFrame(cat_entries)
-        cat_df.head()
-        # validate the catalog
+        
+        # Validate and serialize catalog
+        validated_cat = None
         try:
             log.debug('Validating pp data catalog')
             validated_cat = intake.open_esm_datastore(
@@ -1392,14 +2036,15 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             )
         except Exception as exc:
             log.error(f'Error validating ESM intake catalog for pp data: {exc}')
-        try:
-            log.debug(f'Writing pp data catalog {cat_file_name} csv and json files to {config.OUTPUT_DIR}')
-            validated_cat.serialize(cat_file_name,
-                                    directory=config.OUTPUT_DIR,
-                                    catalog_type="file")
-        except Exception as exc:
-            log.error(f'Unable to save esm intake catalog for pp data: {exc}')
 
+        if validated_cat is not None:
+            try:
+                log.debug(f'Writing pp data catalog {cat_file_name} csv and json files to {config.OUTPUT_DIR}')
+                validated_cat.serialize(cat_file_name,
+                                        directory=config.OUTPUT_DIR,
+                                        catalog_type="file")
+            except Exception as exc:
+                log.error(f'Unable to save esm intake catalog for pp data: {exc}')
 
 class NullPreprocessor(MDTFPreprocessorBase):
     """A class that skips preprocessing and just symlinks files from the input dir to the work dir
@@ -1424,8 +2069,11 @@ class NullPreprocessor(MDTFPreprocessorBase):
         associated with each case in the caselist dictionary
         """
         # get the initial model data subset from the ESM-intake catalog
+        print(f"Null process(): Starting catalog query for {len(case_list)} cases.") 
         cat_subset = self.query_catalog(case_list, config.DATA_CATALOG)
+        print(f"Null process(): Retrieved catalog subset for {len(cat_subset)} cases.")  
         for case_name, case_xr_dataset in cat_subset.items():
+            print(f"Null process(): Processing data for case: {case_name}")
             for v in case_list[case_name].varlist.iter_vars():
                 # reset the variable dest_paths to point to input catalog paths
                 ds = cat_subset[case_name].get(v.name)

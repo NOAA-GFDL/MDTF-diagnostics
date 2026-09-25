@@ -284,26 +284,51 @@ class SubprocessRuntimePODWrapper:
 
     def __init__(self, pod):
         self.pod = pod
+        # INITIALIZE ENVIRONMENT DICTIONARY AT INSTANTIATION
+        self.pod_env_vars = getattr(self, 'pod_env_vars', {})
+        self.env_vars = getattr(self, 'env_vars', self.pod_env_vars)
 
     def set_pod_env_vars(self, pod, cases: dict):
         """Sets all environment variables for the POD: paths and names of each
         variable and coordinate. Raise a :class:`~src.util.exceptions.WormKeyError`
         if any of these definitions conflict.
         """
+        # Ensure pod_env_vars exists on pod object
+        if not hasattr(pod, 'pod_env_vars') or pod.pod_env_vars is None:
+            pod.pod_env_vars = util.WormDict() if hasattr(util, 'WormDict') else {}
+
+        # Also alias to self.pod_env_vars so caller references work seamlessly
+        self.pod_env_vars = pod.pod_env_vars
+
         pod.pod_env_vars.update({
             "POD_HOME": pod.paths.POD_CODE_DIR,  # location of POD's code
             "OBS_DATA": pod.paths.POD_OBS_DATA,  # POD's observational data
             "WORK_DIR": pod.paths.POD_WORK_DIR,  # POD's subdir within working directory
-            "DATADIR": pod.paths.POD_WORK_DIR  # synonym so we don't need to change docs
+            "DATADIR": pod.paths.POD_WORK_DIR   # synonym so we don't need to change docs
         })
 
         for case_name, case_dict in cases.items():
-            for var in case_dict.iter_children(status_neq=util.ObjectStatus.ACTIVE):
-                # define env vars for varlist entries without data. Name collisions
-                # are OK in this case.
+            # Safely resolve variable iterator for case
+            if hasattr(case_dict, 'iter_children'):
+                var_iter = case_dict.iter_children(status_neq=util.ObjectStatus.ACTIVE)
+            elif hasattr(case_dict, 'varlist') and hasattr(case_dict.varlist, 'iter_vars'):
+                var_iter = case_dict.varlist.iter_vars()
+            elif hasattr(case_dict, 'iter_vars'):
+                var_iter = case_dict.iter_vars()
+            elif isinstance(case_dict, dict):
+                var_iter = case_dict.values()
+            else:
+                var_iter = getattr(case_dict, 'var_list', [])
+
+            for var in var_iter:
+                # Extract env_vars dictionary from VarlistEntry
+                var_env = getattr(var, 'env_vars', None)
+                if not var_env:
+                    continue
+
                 try:
-                    self.pod_env_vars.update(var.env_vars)
-                except util.WormKeyError:
+                    pod.pod_env_vars.update(var_env)
+                except (util.WormKeyError, AttributeError, KeyError):
                     continue
 
     def pre_run_setup(self, cases: dict, catalog_file: str):

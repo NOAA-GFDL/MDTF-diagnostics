@@ -22,10 +22,12 @@
         "python3": ["matplotlib", "xarray", "netCDF4"]
     }
   },
-
+  "data": {
+    "frequency": "day"
+  },
 // Variable Coordinates
   "dimensions": {
-    "lat": {
+    "latitude": {
              "standard_name": "latitude",
              "units": "degrees_north",
              "axis": "Y"
@@ -43,7 +45,7 @@
     "tas": {
       "frequency" : "day",
       "realm": "atmos",
-      "dimensions": ["time", "lat", "lon"],
+      "dimensions": ["time", "latitude", "lon"],
       "modifier": "atmos_height",
       "standard_name" : "air_temperature",
       "units": "K"

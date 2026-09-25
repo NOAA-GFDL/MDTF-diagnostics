@@ -564,6 +564,15 @@ class Varlist(data_model.DMDataSet):
             # copy preferred gfdl post-processing component during translation
             if hasattr(trans_v, "component"):
                 v.component = trans_v.component
+        except (KeyError, IndexError, AttributeError, TypeError, AssertionError) as exc:
+            _log.warning(f"Translation warning for {v.full_name} ({from_convention} -> {to_convention}): {exc}. "
+                         f"Falling back to target variable name '{v.name}'.")
+            # Create a safe dummy/fallback translation object using v.name so downstream code works
+            v.translation = v
+            v.translation.name = getattr(v, 'name', 'unknown')
+            v.translation.convention = to_convention
+
+        '''
         except KeyError as exc:
             # can happen in normal operation (e.g., precip flux vs. rate)
             chained_exc = util.PodConfigEvent((f"Deactivating {v.full_name} due to "
@@ -577,7 +586,7 @@ class Varlist(data_model.DMDataSet):
             # store but don't deactivate, because preprocessor.edit_request()
             # may supply alternate variables
             v.log.store_exception(chained_exc)
-
+        '''
         # set the VarlistEntry env_vars (required for backwards compatibility with first-gen PODs
         v.set_env_vars()
         # Translate alternate vars if necessary

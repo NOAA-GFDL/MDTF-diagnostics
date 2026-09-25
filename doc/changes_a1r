@@ -1,0 +1,27 @@
+Key Changes
+1. Support for Non-Standard Field Names & Aliases
+fieldlist_CMIP.jsonc Parsing: Updated fieldlist parsing to extract alt_names directly from nested variable definitions.
+
+Dynamic Active Field Locator: Preprocessor functions (ConvertUnits, RenameVariables, ExtractLevel) now dynamically locate active variable keys in the dataset (ua_unmsk, ucomp, ua, u200) instead of failing on hardcoded names.
+
+Canonical Renaming: Ensures model-specific variable names (ua_unmsk) are safely converted to canonical names (ua/u200) before datasets reach diagnostic PODs.
+
+2. Robust Preprocessor Function Dispatch
+Universal Argument Unpacking: Standardized execute() method signatures across PreprocessorFunctionBase and child classes (ConvertUnits, RenameVariables, ExtractLevel, AssociatedVariables).
+
+Legacy & Standard Parity: Updated execute_pp_functions to dynamically inspect method signatures (inspect.signature), eliminating TypeError: missing required positional argument 'ds' crashes when calling legacy 3-argument vs. standard 2-argument functions.
+
+3. Core Preprocessor Class Updates
+ConvertUnitsFunction: Restored full unit conversions, scalar coordinate pressure handling (Pa vs. hPa), and bounds conversions.
+
+ExtractLevelFunction: Retained CF-accessor level extraction with floating-point tolerance matching for pressure/vertical levels.
+
+AssociatedVariablesFunction: Enabled active associated file tracking and automatic staging into the assoc/ workspace directory.
+
+4. Data Subset Initialization Safeguards
+Enforced explicit dictionary initialization for cat_subset and cat_subset[case_name] in process() to eliminate downstream AttributeError: 'NoneType' object has no attribute 'update' exceptions.
+
+Impact
+The MDTF preprocessing pipeline executes end-to-end without method signature or variable naming failures.
+
+Model variables with custom aliases are correctly mapped, converted, sliced, and passed to diagnostic POD scripts.

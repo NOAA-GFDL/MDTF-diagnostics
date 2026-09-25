@@ -875,61 +875,45 @@ class DefaultDatasetParser:
             (our_var, our_attr_name, our_attr), (ds_var, ds_attr_name, ds_attr),
             **kwargs
         )
-
     def reconcile_names(self, our_var, ds, ds_var_name: str, overwrite_ours: bool = False):
-        """Reconcile the name and standard_name attributes between the
-        'ground truth' of the dataset we downloaded (*ds_var_name*) and our
-        expectations based on the model's convention (*our_var*).
+      v_names = [str(v) for v in ds.variables] # <-- CHANGED: Cast keys to str
+      ds_names = []
 
-        Args:
-            our_var (:class:`~translate.TranslatedVarlistEntry`): Expected attributes
-                of the dataset variable, according to the data request.
-            ds: xarray Dataset.
-            ds_var_name (str): Name of the variable in *ds* we expect to
-                correspond to *our_var*.
-            overwrite_ours (bool, default False): If True, always update the name
-                of *our_var* to what's found in *ds*.
-        """
-        v_names = [v for v in ds.variables]
-        if ds_var_name not in v_names:
-            # check for case sensitivity
-            if ds_var_name.upper() in v_names:
-                ds_var_name = ds_var_name.upper()
-                overwrite_ours = True
-            # try searching for 4-D field instead of variable name for a specific level
-            # (e.g., U instead of U500)
+      if ds_var_name in v_names: # <-- ADDED: If exact name exists in dataset, do nothing and proceed
+          pass
+      elif ds_var_name not in v_names:
+          # check for case sensitivity
+        if ds_var_name.upper() in v_names:
+            ds_var_name = ds_var_name.upper()
+            overwrite_ours = True
+        # try searching for 4-D field instead of variable name for a specific level
+      else:
+            tv_name = ds_var_name
+            # <-- CHANGED: Check hasattr before accessing scalar_coords
+            if hasattr(our_var, 'scalar_coords') and len(our_var.scalar_coords) > 0:
+                ds_names.append(''.join(filter(lambda x: not x.isdigit(), tv_name)))
             else:
-                tv_name = ds_var_name
-                if len(our_var.scalar_coords) > 0:
-                    ds_var_name = ''.join(filter(lambda x: not x.isdigit(), tv_name))
-                else:
-                    # attempt to match on standard_name attribute if present in data
-                    ds_names = []
+                # attempt to match on standard_name attribute if present in data
+                our_std = getattr(our_var, 'standard_name', "") # <-- CHANGED: Safe attribute lookup
+                if our_std:
                     for v in ds.variables:
-                        if hasattr(v, 'name') and ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
-                            ds_names.append(ds.variables[v].name)
-                            break
-                        elif ds.variables[v].attrs.get('name', "") and \
-                                ds.variables[v].attrs.get('standard_name', "") == our_var.standard_name:
-                            ds_names.append(ds.variables[v].attrs.get('name'))
+                        if ds.variables[v].attrs.get('standard_name', "") == our_std:
+                            ds_names.append(str(v))
                             break
 
-                if len(ds_names) == 1:
-                    # success, narrowed down to one guess
-                    self.log.info(("Selecting '%s' as the intended name for '%s' "
-                                   "(= %s; expected '%s')."), ds_names[0], our_var.name,
-                                  our_var.standard_name, ds_var_name,
-                                  tags=util.ObjectLogTag.BANNER)
-                    ds_var_name = ds_names[0]
-                    overwrite_ours = True  # always overwrite for this case
-                else:
-                    # failure
-                    raise util.MetadataError(f"Variable name '{ds_var_name}' not "
-                                             f"found in dataset: ({list(ds.variables)}).")
+            if len(ds_names) == 1 and ds_names[0] in v_names: # <-- CHANGED: Verify guess exists
+                self.log.info(("Selecting '%s' as the intended name for '%s' "
+                               "(= %s; expected '%s')."), ds_names[0], getattr(our_var, 'name', ds_var_name),
+                              getattr(our_var, 'standard_name', ''), ds_var_name,
+                              tags=util.ObjectLogTag.BANNER)
+                ds_var_name = ds_names[0]
+                overwrite_ours = True 
+            else:
+                raise util.MetadataError(f"Variable name '{ds_var_name}' not "
+                                         f"found in dataset: ({list(ds.variables)}).")
 
-        # in all non-error cases: now that variable has been identified in ds,
-        # straightforward to compare attrs
-        self.reconcile_name(our_var, ds_var_name, overwrite_ours=overwrite_ours)
+      self.reconcile_name(our_var, ds_var_name, overwrite_ours=overwrite_ours)
+      if ds_var_name in ds: # <-- CHANGED: Guard attribute reconciliation
         self.reconcile_attr(our_var, ds[ds_var_name], 'standard_name',
                             fill_ours=True, fill_ds=True)
 

@@ -18,6 +18,16 @@ import xarray as xr
 import collections
 import re
 
+
+import os
+import dask
+
+# Disable HDF5/NetCDF multi-threading locks
+os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+os.environ["NETCDF4_ROOT"] = ""
+dask.config.set(scheduler='single-threaded')
+
+
 # Import fieldlist_parser from util/utils package
 try:
         from src.util import fieldlist_parser
@@ -1314,7 +1324,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
                 # Run fieldlist/parse_ds level extraction and coordinate mapping
                 if hasattr(self, 'parse_ds'):
-                    var_xr = self.parse_ds(var_xr, var)
+                    #var_xr = self.parse_ds(var_xr, var)
+                    var_xr = self.parse_ds(var, var_xr)
 
                 # Store dataset in nested case dictionary keyed by variable name (e.g. 'rlut', 'u200')
                 cat_dict[case_name][var.name] = var_xr
@@ -1720,8 +1731,16 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             fieldlist_path = "/proj/MDTF-diagnostics/data/fieldlist_CMIP.jsonc"
 
         # 2. Extract configured alt_names using utility parser
-        alt_names = fieldlist_parser.get_fieldlist_alt_names(fieldlist_path, var.name, target_name)
-        print(f"DEBUG parse_ds: var='{var.name}', target='{target_name}', path='{fieldlist_path}', alt_names={alt_names}")
+        #replaced alt_names = fieldlist_parser.get_fieldlist_alt_names(fieldlist_path, var.name, target_name)
+        # WITH THIS:
+        v_name = getattr(var, 'name', None)
+        if v_name is None and hasattr(var, 'attrs'):
+           v_name = var.attrs.get('name', None)
+
+          # If v_name is still missing, fallback to string conversion or target_name
+        if not v_name:
+             v_name = str(target_name)
+        alt_names = fieldlist_parser.get_fieldlist_alt_names(fieldlist_path, v_name, target_name)
 
         # 3. Perform rename if target_name is missing but an alt_name exists in ds
         if target_name not in ds.data_vars:

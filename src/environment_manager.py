@@ -574,13 +574,25 @@ class SubprocessRuntimeManager(AbstractRuntimeManager):
         env_vars.update(p.pod.pod_env_vars)
         # Need to run bash explicitly because 'conda activate' sources
         # env vars (can't do that in posix sh). tcsh could also work.
+        print(f"DEBUG: commands to be executed:\n{commands}")
         return subprocess.Popen(
-            commands,
-            shell=True, executable=self.bash_exec,
-            env=env_vars, cwd=p.pod.paths.POD_WORK_DIR,
-            stdout=p.pod.log_file, stderr=p.pod.log_file,
-            universal_newlines=True, bufsize=1
+        commands,
+        shell=True,
+        executable=self.bash_exec,
+        env=env_vars,
+        cwd=p.pod.paths.POD_WORK_DIR,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,  # Combine stderr into stdout stream
+        universal_newlines=True,
+        bufsize=1,
         )
+        #return subprocess.Popen(
+        #    commands,
+        #    shell=True, executable=self.bash_exec,
+        #    env=env_vars, cwd=p.pod.paths.POD_WORK_DIR,
+        #    stdout=p.pod.log_file, stderr=p.pod.log_file,
+        #    universal_newlines=True, bufsize=1
+        #)
 
     def run(self, cases: dict, _log):
         # Call cleanup method if we're killed

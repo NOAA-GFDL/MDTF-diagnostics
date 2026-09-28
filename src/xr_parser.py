@@ -1159,9 +1159,9 @@ class DefaultDatasetParser:
                 if ds[ds_coord_name].size != 1:
                     self.log.error("Dataset has scalar coordinate '%s' of size %d != 1.",
                                    ds_coord_name, ds[ds_coord_name].size)
-                self.reconcile_names(coord, ds, ds_coord_name, overwrite_ours=True)
-                self.reconcile_scalar_value_and_units(coord, ds[ds_coord_name])
-            else:
+               # self.reconcile_names(coord, ds, ds_coord_name, overwrite_ours=True)
+               # self.reconcile_scalar_value_and_units(coord, ds[ds_coord_name])
+            else:                    
                 # scalar coord has presumably been read from Dataset attribute.
                 # At any rate, we only have a PlaceholderScalarCoordinate object,
                 # which only gives us the name. Assume everything else OK.
@@ -1169,6 +1169,7 @@ class DefaultDatasetParser:
                                   "a name attribute; assuming value and units are correct."),
                                  ds_coord_name)
                 self.reconcile_name(coord, ds_coord_name, overwrite_ours=True)
+                self.reconcile_scalar_value_and_units(coord, ds[ds_coord_name])
 
     def reconcile_variable(self, var, ds):
         """Top-level method for the MDTF-specific dataset validation: attempts to

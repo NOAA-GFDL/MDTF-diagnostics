@@ -1120,6 +1120,244 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             log.warning(f"Caught exception {repr(exc)}")
         # hit an exception; return empty DataFrame to signify failure
         return pd.DataFrame(columns=group_df.columns)
+    
+    def query_catalog(self,
+                      case_dict: dict,
+                      data_catalog: str,
+                      *args) -> dict:
+        """Apply format conversion implemented in this PreprocessorFunction
+        to the input dataset according to the request made in *var*.
+
+        Args:
+            case_dict: dictionary of case names
+            data_catalog: path to data catalog header file
+
+        Returns:
+            Dictionary mapping case names to nested variable-dataset dictionaries
+        """
+        import copy
+        import os
+        import re
+        import intake
+        import xarray as xr
+
+        # Import fieldlist_parser directly or use module reference
+
+
+        print("DEBUG: Entering query_catalog")
+        try_new_query = False
+        cat = intake.open_esm_datastore(data_catalog)
+        cat_dict = {}
+
+        cols = list(cat.df.columns.values)
+        if 'date_range' not in [c.lower() for c in cols]:
+            cols.append('date_range')
+
+        drop_atts = ['average_T2',
+                     'time_bnds',
+                     'lat_bnds',
+                     'lon_bnds',
+                     'average_DT',
+                     'average_T1',
+                     'height',
+                     'date']
+
+        for case_name, case_d in case_dict.items():
+            path_regex = re.compile(r'({})'.format(case_name))
+            if case_name not in cat_dict:
+                cat_dict[case_name] = {}
+
+            for var in case_d.varlist.iter_vars():
+                # --- DEBUG PRINTS ---
+                print(f"DEBUG: Case = '{case_name}'")
+                print(f"DEBUG: Evaluating Var = '{var.name}'")
+                print(f"DEBUG: Initial var.translation = {repr(getattr(var, 'translation', None))}")
+
+                realm_regex = var.realm + '*'
+
+                # ------------------------------------------------------------------
+                # 1. FIELDLIST PARSER ALTERNATE NAME LOOKUP
+                # ------------------------------------------------------------------
+                # Extract fieldlist file path and convention from self, varlist, or config
+                fieldlist_path = (getattr(self, 'fieldlist_path', None) or 
+                                  getattr(getattr(self, 'config', None), 'FIELDLIST_PATH', None))
+                if not fieldlist_path or not os.path.exists(fieldlist_path):
+                    #TODO DO NOT HARDCODE THE PATH HERE 
+                    fieldlist_path = "/proj/MDTF-diagnostics/data/fieldlist_CMIP.jsonc"
+                    print(f"DEBUG: fieldlist_path not set or invalid; defaulting to '{fieldlist_path}'")
+                target_convention = getattr(case_d.varlist, 'convention', 'CMIP')
+                if not isinstance(target_convention, str):
+                    target_convention = getattr(target_convention, 'name', 'CMIP')
+
+                alt_names = []
+                if fieldlist_path and os.path.exists(fieldlist_path):
+                    try:
+                        alt_names = fieldlist_parser.get_fieldlist_alt_names(
+                            fieldlist_path,
+                            var.name,
+                            target_convention
+                        )
+                        print(f"DEBUG: get_fieldlist_alt_names for '{var.name}' -> {alt_names}")
+                    except Exception as fl_err:
+                        print(f"DEBUG: Error in get_fieldlist_alt_names for '{var.name}': {fl_err}")
+                else:
+                    print(f"DEBUG: fieldlist_path invalid or not found: '{fieldlist_path}'")
+
+                primary_raw_name = alt_names[1] if alt_names else var.name
+                print("TEST VAR TRANSLATION",getattr(var, 'translation', None))
+
+                if getattr(var, 'translation', None) is None:
+                    print(f"DEBUG: var.translation is None for '{var.name}'; attempting to translate using varlist.translate_var...")
+                    if hasattr(case_d.varlist, 'translate_var'):
+                        var.translation = case_d.varlist.translate_var(primary_raw_name)
+                        print(f"DEBUG: Translated '{var.name}' (raw: '{primary_raw_name}') via varlist.translate_var -> {var.translation}")
+
+                # ------------------------------------------------------------------
+                # 2. FAILSAFE FALLBACK FOR 3D WIND FIELDS (u200, u850, v200, v850)
+                # ------------------------------------------------------------------
+                if getattr(var, 'translation', None) is None and var.name in ['u200', 'u850', 'v200', 'v850']:
+                    base_name = 'ua' if var.name.startswith('u') else 'va'
+                    level = int(var.name[1:])
+                    print(f"DEBUG: Triggering fallback translation logic for {var.name}...")
+                    
+                    template_translation = None
+                    for candidate_var in case_d.varlist.iter_vars():
+                        if getattr(candidate_var, 'translation', None) is not None:
+                            template_translation = candidate_var.translation
+                            print(f"DEBUG: Found template translation from '{candidate_var.name}'")
+                            break
+                    
+                    if template_translation:
+                        var.translation = copy.deepcopy(template_translation)
+                        var.translation.name = base_name
+                        var.translation.standard_name = 'eastward_wind' if base_name == 'ua' else 'northward_wind'
+                        var.translation.units = 'm s-1'
+                        var.translation.scalar_coordinates = {'plev': level}
+                        print(f"DEBUG: Successfully assigned fallback translation for {var.name} -> {base_name} (plev={level})")
+                    else:
+                        print("DEBUG WARNING: No valid template variable found in varlist with translation!")
+
+                print(f"DEBUG: Final pre-query var.translation = {repr(getattr(var, 'translation', None))}")
+                print("=" * 60 + "\n")
+
+                # ------------------------------------------------------------------
+                # 3. CONSTRUCT CATALOG QUERY PARAMETERS
+                # ------------------------------------------------------------------
+                date_range = getattr(getattr(var, 'translation', None), 'T', None)
+                date_range = getattr(date_range, 'range', None) if date_range else getattr(var.T, 'range', None)
+                
+                freq = var.T.frequency
+                if not isinstance(freq, str):
+                    freq = freq.format_local()
+
+                case_d.query['frequency'] = freq
+                case_d.query['path'] = [path_regex]
+                case_d.query['realm'] = realm_regex
+                if var.translation and hasattr(var.translation, 'standard_name'):
+                    case_d.query['standard_name'] = var.translation.standard_name
+
+                if cat.df.get('modeling_realm', None) is not None:
+                    case_d.query['modeling_realm'] = case_d.query.pop('realm')
+
+                trans_name = getattr(var.translation, 'name', var.name) if var.translation else var.name
+                var.log.info("Querying %s for variable %s for case %s.",
+                             data_catalog,
+                             trans_name,
+                             case_name)
+                case_d.query['variable_id'] = trans_name
+                print("DEBUG ", case_d.query)
+                cat_subset = cat.search(**case_d.query)
+
+                if cat_subset.df.empty:
+                    #if any(var.alternates):
+                    if(alt_names and len(alt_names) > 1):
+                        try_new_query = True
+                        for a in var.alternates:
+                            if hasattr(a, 'translation') and a.translation is not None:
+                                case_d.query.update({'standard_name': a.translation.standard_name})
+                            elif hasattr(a, 'standard_name'):
+                                case_d.query.update({'standard_name': a.standard_name})
+                                
+                            if var.translation and getattr(var.translation, 'scalar_coords', None):
+                                found_z_entry = False
+                                for c in a.scalar_coords:
+                                    if getattr(c, 'axis', None) == 'Z':
+                                        var.translation.requires_level_extraction = True
+                                        found_z_entry = True
+                                        break
+                                if found_z_entry:
+                                    break
+                    if try_new_query:
+                        case_d.query['variable_id'] = primary_raw_name #trans_name
+                        cat_subset = cat.search(**case_d.query)
+                        print("DEBUG: Retrying query with updated parameters")
+                        print("DEBUG try_new_query: ", case_d.query)
+                        if cat_subset.df.empty:
+                            raise util.DataRequestError(
+                                f"No assets matching query requirements found for {trans_name} for"
+                                f" case {case_name} in {data_catalog}")
+                    else:
+                        raise util.DataRequestError(
+                            f"Unable to find match or alternate for {trans_name}"
+                            f" for case {case_name} in {data_catalog}")
+                # ------------------------------------------------------------------
+                # 4. LOAD & PARSE DATASET
+                # ------------------------------------------------------------------
+                cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, date_range)
+                print("DEBUG after checking date_Range ",  cat_subset.esmcat._df )
+                print(cat_subset.esmcat._df["variable_id"].values)
+                #print(cat_subset.esmcat._df["path"].values)
+
+                if cat_subset.df.empty:
+                    raise util.DataRequestError(
+                        f"check_group_daterange returned empty data frame for {trans_name}"
+                        f" case {case_name} in {data_catalog}, indicating issues with data continuity")
+
+                cat_subset_df = cat_subset.to_dataset_dict(
+                    progressbar=False,
+                    xarray_open_kwargs=getattr(self, 'open_dataset_kwargs', {})
+                )
+
+                time_sort_dict = {f: cat_subset_df[f].time.values[0] for f in list(cat_subset_df)}
+                time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))
+                
+                var_xr = None
+                for k in list(time_sort_dict):
+                    if var_xr is None:
+                        var_xr = cat_subset_df[k]
+                    else:
+                        var_xr = xr.concat([var_xr, cat_subset_df[k]], "time")
+
+                for att in drop_atts:
+                    if att in var_xr:
+                        var_xr = var_xr.drop_vars(att)
+
+                # Safe attribute population for xarray variables
+                std_name = case_d.query.get('standard_name', '')
+                for vname in var_xr.data_vars:
+                    if var_xr[vname].attrs.get('standard_name') is None and std_name:
+                        var_xr[vname].attrs['standard_name'] = std_name
+                    var_xr[vname].attrs['name'] = str(vname)
+
+                # Run fieldlist/parse_ds level extraction and coordinate mapping
+                if hasattr(self, 'parse_ds'):
+                    #var_xr = self.parse_ds(var_xr, var)
+                    var_xr = self.parse_ds(var, var_xr)
+
+                # Store dataset in nested case dictionary keyed by variable name (e.g. 'rlut', 'u200')
+                cat_dict[case_name][var.name] = var_xr
+
+                # Safe check_time_bounds invocation
+                if hasattr(self, 'check_time_bounds'):
+                    try:
+                        trans_entry = getattr(var, 'translation', None) or var
+                        self.check_time_bounds(var_xr, trans_entry, freq)
+                    except Exception as tb_err:
+                        print(f"DEBUG: check_time_bounds warning for '{var.name}': {tb_err}")
+
+        return cat_dict
+    '''
+
     def query_catalog(self,
                       case_dict: dict,
                       data_catalog: str,
@@ -1258,7 +1496,33 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                              trans_name,
                              case_name)
                 cat_subset = cat.search(**case_d.query)
+                print(f"DEBUG search: Matched {len(cat_subset.df)} rows in catalog for '{trans_name}'")
 
+                # 1. Check date range filtering
+                cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, date_range)
+                print(f"DEBUG daterange: {len(cat_subset.df)} rows remaining after check_group_daterange")
+
+                # 2. Check dataset dict creation
+                #cat_subset_df = cat_subset.to_dataset_dict(
+                #     progressbar=False,
+                #     xarray_open_kwargs=getattr(self, 'open_dataset_kwargs', {})
+                #)
+                #print(f"DEBUG to_dataset_dict: Created {len(cat_subset_df)} dataset keys: {list(cat_subset_df.keys())}")
+
+
+                # 3. Check final dictionary storage
+               # cat_dict[case_name][var.name] = var_xr
+               # print(f"DEBUG cat_dict: Stored dataset for variable '{var.name}' under case '{case_name}' (ds size: {dict(var_xr.dims)})")
+                if cat_subset.df.empty:
+                      print("\n" + "!" * 80)
+                      print(f"DEBUG WARNING: Search returned 0 rows!")
+                      print(f"DEBUG Query dict passed to search: {case_d.query}")
+                      print(f"DEBUG Available catalog columns: {list(cat.df.columns)}")
+                      if 'variable_id' in cat.df.columns:
+                            print(f"DEBUG Unique variable_ids in CSV: {cat.df['variable_id'].unique().tolist()[:10]}")
+                      if 'frequency' in cat.df.columns:
+                           print(f"DEBUG Unique frequencies in CSV: {cat.df['frequency'].unique().tolist()}")
+                           print("!" * 80 + "\n")
                 if cat_subset.df.empty:
                     if any(var.alternates):
                         try_new_query = True
@@ -1269,6 +1533,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                                 case_d.query.update({'standard_name': a.standard_name})
                                 
                             if var.translation and getattr(var.translation, 'scalar_coords', None):
+                                print("DEBUG: Checking for Z axis in alternate variable's scalar coordinates...")
                                 found_z_entry = False
                                 for c in a.scalar_coords:
                                     if getattr(c, 'axis', None) == 'Z':
@@ -1287,6 +1552,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         raise util.DataRequestError(
                             f"Unable to find match or alternate for {trans_name}"
                             f" for case {case_name} in {data_catalog}")
+
+                print(cat_subset_df['ESM4.ESM4.5-historical-defobbfix.day.atmos_cmip.1yr'])
                 # ------------------------------------------------------------------
                 # 4. LOAD & PARSE DATASET
                 # ------------------------------------------------------------------
@@ -1295,11 +1562,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     raise util.DataRequestError(
                         f"check_group_daterange returned empty data frame for {trans_name}"
                         f" case {case_name} in {data_catalog}, indicating issues with data continuity")
-
+                print("DEBUG: check_group_daterange done, proceeding to to_dataset_dict...")
                 cat_subset_df = cat_subset.to_dataset_dict(
                     progressbar=False,
                     xarray_open_kwargs=getattr(self, 'open_dataset_kwargs', {})
                 )
+                print("DEBUG: to_dataset_dict done, checking time sorting...")
 
                 time_sort_dict = {f: cat_subset_df[f].time.values[0] for f in list(cat_subset_df)}
                 time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))
@@ -1314,7 +1582,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 for att in drop_atts:
                     if att in var_xr:
                         var_xr = var_xr.drop_vars(att)
-
+                #cat_dict[case_name][var.name] = var_xr
+                #print(f"DEBUG DEBUG DEBUG cat_dict: Stored dataset for variable '{var.name}' under case '{case_name}' (ds size: {dict(var_xr.dims)})")
+              
                 # Safe attribute population for xarray variables
                 std_name = case_d.query.get('standard_name', '')
                 for vname in var_xr.data_vars:
@@ -1340,7 +1610,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         return cat_dict
     
-    
+    '''
     
     def edit_request(self, v: varlist_util.VarlistEntry, **kwargs):
         """Top-level method to edit *pod*\'s data request, based on the child
@@ -1728,6 +1998,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         # Fallback to confirmed dataset fieldlist path if dynamic resolution returns None
         if not fieldlist_path or not os.path.exists(fieldlist_path):
+            #TODO DO NOT HARDCODE THE PATH HERE 
             fieldlist_path = "/proj/MDTF-diagnostics/data/fieldlist_CMIP.jsonc"
 
         # 2. Extract configured alt_names using utility parser

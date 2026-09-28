@@ -56,36 +56,36 @@
       "native_name": "ua",
       "realm": "atmos_cmip",
       "units": "m s-1",
-      "dimensions": ["time", "lat", "lon"],
-      "scalar_coordinates": {
-      "lev": 20000
-       }
+      "dimensions": ["time", "lev","lat", "lon"]//,
+      //"scalar_coordinates": {
+      //"lev": 20000
+       //}
     },
     "u850": {
       "standard_name": "eastward_wind",
       "native_name": "ua",
       "realm": "atmos_cmip",
       "units": "m s-1",
-      "dimensions": ["time", "lat", "lon"],
-      "scalar_coordinates": {
-      "lev": 85000
-      }
+      "dimensions": ["time", "lev","lat", "lon"]//,
+     // "scalar_coordinates": {
+     // "lev": 85000
+      //}
     },
     "v200": {
       "standard_name": "northward_wind",
       "native_name": "va",
       "realm": "atmos_cmip",
       "units": "m s-1",
-      "dimensions": ["time","lat", "lon"],
-      "scalar_coordinates": {"lev": 20000}
+      "dimensions": ["time","lev","lat", "lon"]//,
+    //  "scalar_coordinates": {"lev": 20000}
     },
     "v850": {
       "native_name":"va",
       "standard_name": "northward_wind",
       "realm": "atmos_cmip",
       "units": "m s-1",
-      "dimensions": ["time", "lat", "lon"],
-      "scalar_coordinates": {"lev": 85000}
-    }
+      "dimensions": ["time", "lev","lat", "lon"]//,
+     // "scalar_coordinates": {"lev": 85000}
+   }
   } //dimensions
 }

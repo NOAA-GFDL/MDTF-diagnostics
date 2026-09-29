@@ -1790,7 +1790,119 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         for k in attrs_to_delete:
             if k in attrs:
                 del attrs[k]
+    def clean_output_attrs(self,
+                           var: varlist_util.VarlistEntry,
+                           ds: xr.Dataset):
+        """Calls :meth:`clean_nc_var_encoding` on all sets of attributes in the
+        Dataset *ds*.
+        """
+        if ds is None:
+            return None
 
+        # ------------------------------------------------------------------
+        # [CHANGE 1]: SAFE DICTIONARY UNWRAPPING & FALLBACK
+        # Prevents returning 'None' when intake-esm returns nested dict keys 
+        # (e.g., 'ESM4.5-historical...') that don't match var.name ('u200').
+        # ------------------------------------------------------------------
+        if isinstance(ds, dict):
+            var_name = getattr(var, 'name', None)
+            if var_name and var_name in ds and hasattr(ds[var_name], 'variables'):
+                ds = ds[var_name]
+            else:
+                # Iterate and find the first actual xr.Dataset object in dict values
+                found_ds = None
+                for val in ds.values():
+                    if hasattr(val, 'variables') or isinstance(val, xr.Dataset):
+                        found_ds = val
+                        break
+                ds = found_ds
+
+            # [CHANGE 1b]: Explicit logging if unwrapping fails
+            if ds is None or not hasattr(ds, 'variables'):
+                print(f"DEBUG clean_output_attrs WARNING: Could not unwrap xarray.Dataset from dict for var '{getattr(var, 'name', 'unknown')}'")
+                return None
+
+        # ------------------------------------------------------------------
+        # [CHANGE 2]: NUMPY & ITERABLE-SAFE ATTRIBUTE COMPARISON
+        # Replaces direct truth testing (attrs[k].any() != v) which crashed 
+        # with ValueError when comparing NumPy arrays or multi-element lists.
+        # ------------------------------------------------------------------
+        def _clean_dict(obj):
+            if obj is None or not hasattr(obj, 'attrs'):
+                return
+            name = getattr(obj, 'name', 'dataset')
+            encoding = getattr(obj, 'encoding', dict()) if hasattr(obj, 'encoding') else dict()
+            attrs = getattr(obj, 'attrs', dict())
+
+            if not isinstance(attrs, dict) or not isinstance(encoding, dict):
+                return
+
+            for k in list(encoding.keys()):
+                if k in attrs:
+                    v = encoding[k]
+                    attr_val = attrs[k]
+                    
+                    try:
+                        # [CHANGE 2a]: Use np.array_equal for arrays and safe checks for iterables
+                        if isinstance(attr_val, np.ndarray) or isinstance(v, np.ndarray):
+                            compare_ = not np.array_equal(attr_val, v)
+                        elif isinstance(attr_val, (list, tuple)) or isinstance(v, (list, tuple)):
+                            compare_ = (attr_val != v)
+                        elif isinstance(attr_val, bytes) or isinstance(v, bytes):
+                            compare_ = False
+                        elif isinstance(attr_val, str) and isinstance(v, str):
+                            compare_ = (attr_val.lower() != v.lower())
+                        else:
+                            compare_ = (attr_val != v)
+
+                        if compare_ and str(k).lower() != 'source':
+                            _log.warning("Conflict in '%s' attribute of %s: %s != %s.",
+                                         k, name, v, attr_val)
+                    except Exception:
+                        # [CHANGE 2b]: Safely swallow uncomparable edge cases
+                        pass
+
+                    # Remove redundant attribute present in encoding
+                    del attrs[k]
+
+        # ------------------------------------------------------------------
+        # 3. CLEAN VARIABLES AND DATASET ATTRIBUTES
+        # ------------------------------------------------------------------
+        if hasattr(ds, 'variables'):
+            for vv in ds.variables.values():
+                _clean_dict(vv)
+        _clean_dict(ds)
+
+        # ------------------------------------------------------------------
+        # 4. TIME COORDINATE ENCODING RECONCILIATION
+        # ------------------------------------------------------------------
+        if not getattr(var, 'is_static', True) and hasattr(ds, 'variables'):
+            t_coord = getattr(var, 'T', None)
+            if t_coord and hasattr(t_coord, 'name') and t_coord.name in ds.variables:
+                ds_T = ds[t_coord.name]
+                if hasattr(ds_T, 'attrs') and hasattr(ds_T, 'encoding'):
+                    if 'units' in ds_T.attrs and 'units' not in ds_T.encoding:
+                        ds_T.encoding['units'] = ds_T.attrs['units']
+                    if getattr(t_coord, 'has_bounds', False) and hasattr(t_coord, 'bounds_var'):
+                        b_name = getattr(t_coord.bounds_var, 'name', None)
+                        if b_name and b_name in ds.variables and hasattr(ds[b_name], 'encoding'):
+                            ds[b_name].encoding['units'] = ds_T.encoding['units']
+
+        # ------------------------------------------------------------------
+        # [CHANGE 3]: DEFENSIVE METHOD CHECK BEFORE CALLING
+        # Prevents AttributeError if clean_nc_var_encoding is not present on self.
+        # ------------------------------------------------------------------
+        if hasattr(ds, 'variables'):
+            for v_name, ds_v in ds.variables.items():
+                if hasattr(self, 'clean_nc_var_encoding'):
+                    self.clean_nc_var_encoding(var, v_name, ds_v)
+            if hasattr(self, 'clean_nc_var_encoding'):
+                self.clean_nc_var_encoding(var, 'dataset', ds)
+
+        return ds
+    
+
+    '''
     def clean_output_attrs(self,
                            var: varlist_util.VarlistEntry,
                            ds: xr.Dataset):
@@ -1867,7 +1979,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             self.clean_nc_var_encoding(var, 'dataset', ds)
 
         return ds
-    
+    '''
 
 
     def log_history_attr(self, var, ds):
@@ -1914,6 +2026,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         that child classes can modify it. Calls the :meth:`write_dataset` method
         implemented by the child class.
         """
+        print("DEBUG: Starting write_ds for case_list keys: {}".format(list(case_list.keys())))
+        print("----------------------------------------", catalog_subset)
         for k, v in pod_reqs.items():
             if 'ncl' in v:
                 self.output_to_ncl = True
@@ -1961,8 +2075,10 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # CLEAN ATTRIBUTES & WRITE DATASET TO DISK
                 # ------------------------------------------------------------------
                 try:
+                    print("DEBUG: Cleaning attributes for variable '{}' before writing to disk...".format(var.name))
                     var_ds = self.clean_output_attrs(var, var_ds)
                     var_ds = self.log_history_attr(var, var_ds)
+                    print("DEBUG clean_output_attrs", var_ds)
                 except Exception as exc:
                     raise util.chain_exc(exc, (f"cleaning attributes to "
                                                f"write data for {var.full_name}."), util.DataPreprocessEvent)
@@ -1971,6 +2087,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 except Exception as exc:
                     raise util.chain_exc(exc, f"writing data for {var.full_name}.",
                                          util.DataPreprocessEvent)
+                
+            
             # del ds  # shouldn't be necessary
     def parse_ds(self, var, ds, config=None):
         """Top-level method to parse metadata; uses direct fieldlist JSON reading to rename keys."""
@@ -2023,11 +2141,42 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             else:
                 print(f"WARNING parse_ds: Could not locate active key for '{target_name}'. Checked alt_names={alt_names}. Available dataset keys: {list(ds.data_vars.keys())}")
 
+
         # 4. Proceed to xarray metadata parsing
         try:
             ds = self.parser.parse(var, ds)
+            print(ds)
         except Exception as exc:
             raise util.chain_exc(exc, f"parsing dataset metadata", util.DataPreprocessEvent)
+                # ------------------------------------------------------------------
+        # TIME COORDINATE & CALENDAR RECONCILIATION
+        # Fixes: "No calendar for 'time' found... setting to 'sentinel.NotSet'"
+        # ------------------------------------------------------------------
+        if 'time' in ds.coords or 'time' in ds.dims:
+            print("DEBUG parse_ds: Reconciling time coordinate and calendar for variable '{}'".format(target_name))
+            # 1. Ensure standard_name and axis attributes exist
+            ds['time'].attrs['standard_name'] = 'time'
+            ds['time'].attrs['axis'] = 'T'
+
+            # 2. Extract existing calendar from attrs, encoding, or cftime objects
+            cal = (
+                ds['time'].attrs.get('calendar', None) or 
+                ds['time'].encoding.get('calendar', None)
+            )
+            print(f"DEBUG parse_ds: Found time calendar '{cal}' on variable '{target_name}'")
+
+            # 3. Replace missing, empty, or sentinel calendars
+            if not cal or 'sentinel' in str(cal).lower():
+                # Attempt to extract calendar string directly from cftime array elements
+                if hasattr(ds['time'].values, 'dtype') and len(ds['time'].values) > 0 and hasattr(ds['time'].values[0], 'calendar'):
+                    cal = ds['time'].values[0].calendar
+                else:
+                    cal = 'gregorian'  # Standard fallback model calendar
+                    
+                # Explicitly populate both attrs and encoding
+                ds['time'].attrs['calendar'] = cal
+                ds['time'].encoding['calendar'] = cal
+                print(f"DEBUG parse_ds: Set valid time calendar '{cal}' on variable '{target_name}' (overrode sentinel.NotSet)")
         return ds
     def process(self,
                 case_list: dict,
@@ -2046,6 +2195,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 print(f"DEBUG process: Calling query_catalog using catalog '{data_catalog}'...")
                 cat_ds = self.query_catalog(case_list, data_catalog)
                 print(f"DEBUG process: query_catalog returned keys = {list(cat_ds.keys()) if cat_ds else 'EMPTY'}")
+                print(f"****************DEBUG process: query_catalog returned cat_ds = {cat_ds}")
             except Exception as cat_err:
                 print(f"DEBUG process: Exception during query_catalog: {cat_err}")
                 print(f"\n" + "!" * 80)
@@ -2057,7 +2207,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 print("!" * 80 + "\n")
 
         # 2. INITIALIZE DICTIONARY
-        cat_subset = {}
+        cat_subset = cat_ds.copy() #SERIOUSLY?
 
         # 3. RESOLVE CASE NAMES FROM case_list PARAMETER
         if isinstance(case_list, dict):

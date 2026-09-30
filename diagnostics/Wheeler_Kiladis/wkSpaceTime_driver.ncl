@@ -141,8 +141,7 @@ begin
        getenv("pr_var") +" "+\
        getenv("rlut_var") +" "+\
        getenv("u200_var") +" "+\
-       getenv("u850_var") +" "+\
-       getenv("omega500_var"),\
+       getenv("u850_var"),\
        routine_name,\
        debug)
 
@@ -157,9 +156,6 @@ begin
     end if
     if (varName.eq.getenv("u850_var")) then
       set_contours_by_varname("U850",opt)
-    end if
-    if (varName.eq.getenv("omega500_var")) then
-      set_contours_by_varname("OMEGA500",opt)
     end if
   end if ; fix_clevs
 

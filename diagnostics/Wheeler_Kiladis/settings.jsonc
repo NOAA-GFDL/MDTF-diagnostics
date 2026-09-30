@@ -55,13 +55,14 @@
       "units": "m s-1",
       "dimensions": ["time", "lat", "lon"]
     },
-    "omega500": {
-      "standard_name": "lagrangian_tendency_of_air_pressure",
-      "realm": "atmos",
-      "units": "Pa s-1",
-      "dimensions": ["time", "lat", "lon"],
-      "scalar_coordinates": {"lev": 500}
-    },
+    // omega500 removed: not available in all CESM output (e.g. alpha09e)
+    // "omega500": {
+    //   "standard_name": "lagrangian_tendency_of_air_pressure",
+    //   "realm": "atmos",
+    //   "units": "Pa s-1",
+    //   "dimensions": ["time", "lat", "lon"],
+    //   "scalar_coordinates": {"lev": 500}
+    // },
     "u200": {
       "standard_name": "eastward_wind",
       "realm": "atmos",

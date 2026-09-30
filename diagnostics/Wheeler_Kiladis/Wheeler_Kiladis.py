@@ -53,7 +53,8 @@ os.chdir(os.environ["DATADIR"])  # inputdata
 
 # OLR
 
-varlist = [("u200_var", "U200_FILE"), ("u850_var", "U850_FILE"), ("omega500_var", "OMEGA500_FILE"),
+# omega500 removed: not available in all CESM output (e.g. alpha09e)
+varlist = [("u200_var", "U200_FILE"), ("u850_var", "U850_FILE"),
            ("rlut_var", "RLUT_FILE"), ("pr_var", "PR_FILE")]
 
 for var, file_ in varlist:

@@ -1,0 +1,3 @@
+activity_id,institution_id,source_id,experiment_id,frequency,modeling_realm,table_id,member_id,grid_label,variable_id,temporal_subset,chunk_freq,grid_label,platform,dimensions,cell_methods,path
+dev,,,c384L65_am5f3b1r0_amip,daily,atmos_cmip,,n/a,,tas,,,,,,,/archive/am5/am5/am5f3b1r0/c384L65_am5f3b1r0_amip/gfdl.ncrc5-deploy-prod-openmp/pp/atmos_cmip/ts/daily/1yr/atmos_cmip.19810101-19811231.tas.nc
+dev,,,c384L65_am5f3b1r0_amip,daily,atmos_cmip,,n/a,,tas,,,,,,,/archive/am5/am5/am5f3b1r0/c384L65_am5f3b1r0_amip/gfdl.ncrc5-deploy-prod-openmp/pp/atmos_cmip/ts/daily/1yr/atmos_cmip.19820101-19821231.tas.nc

@@ -23,7 +23,9 @@ import dataclasses
 import logging
 import datetime
 import collections
-
+import os
+os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+os.umask(0)
 
 _log = logging.getLogger(__name__)
 

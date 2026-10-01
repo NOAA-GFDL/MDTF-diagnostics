@@ -1,0 +1,65 @@
+// Strat-Trop Coupling: Stratospheric Polar Vortex Extremes
+//
+// This POD requires daily-frequency zonal winds, geopotential heights, and 
+// mean sea level pressures.
+{
+  "settings" : {
+    "driver" : "stc_spv_extremes.py",
+    "long_name" : "Stratospheric Polar Vortex Extremes",
+    "realm" : "atmos",
+    "description" : "Detecting extreme polar vortex events and their surface impacts",
+    "pod_env_vars" : {
+      // Lower latitude limit for polar cap avg calculations (defaults to 65)
+      // Should be positive (values will also be calculated for southern hemi)
+      "PCAP_LO_LAT": "65",
+      // Save the derived data to netcdf files? Defaults to true
+      "SAVE_DERIVED_DATA" : "true"
+    },
+    "runtime_requirements": {
+      "python3": ["matplotlib", "numpy", "pandas", "xarray", "scipy"]
+    }
+  },
+  "dimensions": {
+    "lat": {"standard_name": "latitude"},
+    "lon": {"standard_name": "longitude"},
+    "plev": {
+      "standard_name": "air_pressure",
+      "units": "Pa",
+      "positive": "down",
+      "axis": "Z"
+    },
+    "time": {"standard_name": "time"}
+  },
+  "varlist": {
+    "ua": {
+      "standard_name" : "eastward_wind",
+      "units" : "m s-1",
+      "frequency": "day",
+      "dimensions": ["time", "plev", "lat"],
+      "requirement": "required"
+    },
+    "zg": {
+      "standard_name" : "geopotential_height",
+      "units" : "m",
+      "frequency": "day",
+      "dimensions": ["time", "plev", "lat"],
+      "requirement": "required"
+    },
+    "zg500": {
+      "standard_name" : "geopotential_height",
+      "units" : "m",
+      "frequency": "day",
+      "dimensions": ["time", "lat", "lon"],
+      "scalar_coordinates": {"plev": 50000},
+      "requirement": "required"
+    },
+    "tas": {
+      "standard_name" : "air_temperature",
+      "units" : "K",
+      "frequency": "day",
+      "dimensions": ["time", "lat", "lon"],
+      "requirement": "required",
+      "modifier" : "atmos_height"
+    }
+  }
+}

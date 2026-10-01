@@ -446,7 +446,10 @@ class HTMLOutputManager(AbstractOutputManager,
             append_footer = False
             append_case_info = False
         else:
-            shutil.copy2(self.html_src_file('mdtf_diag_banner.png'), self.obj.paths.WORK_DIR)
+            #shutil.copy2(self.html_src_file('mdtf_diag_banner.png'), self.obj.paths.WORK_DIR)
+            #workaround for container write permission issue: copy the banner to the WORK_DIR instead of using copy2
+            dst_path = os.path.join(self.obj.paths.WORK_DIR, 'mdtf_diag_banner.png')
+            shutil.copyfile(self.html_src_file('mdtf_diag_banner.png'), dst_path)
 
         template_dict = self.obj.pod_env_vars.copy()
         template_dict['DATE_TIME'] = \

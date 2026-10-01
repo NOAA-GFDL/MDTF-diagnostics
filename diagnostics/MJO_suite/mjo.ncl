@@ -6,7 +6,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 
-setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+load "$POD_HOME/nc_format.ncl"
+setfileoption("nc", "Format", get_ncl_nc_format())
 
 begin
 ; read daily output files from CAM2 and process the u200 data

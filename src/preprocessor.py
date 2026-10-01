@@ -219,12 +219,16 @@ class PrecipRateToFluxFunction(PreprocessorFunctionBase):
             v.translation.long_name = new_tv.long_name
         return v
 
-def execute(self, var, ds, **kwargs):
+    def execute(self, var, ds, **kwargs):
         """Convert units of dependent variable *ds* between precip rate and
         precip flux, as specified by the desired units given in *var*. If the
         ``standard_name`` of *ds* is not in the recognized list, return it
         unaltered.
         """
+        print("PRECIP FUNC:", getattr(var, 'name', None),
+            "| var.standard_name:", getattr(var, 'standard_name', None),
+            "| translation std_name:", getattr(getattr(var, 'translation', None), 'standard_name', None),
+            "| ds units:", {k: ds[k].attrs.get('units') for k in ds.data_vars}, flush=True)
         std_name = getattr(var, 'standard_name', "")
         if std_name not in self._rate_d and std_name not in self._flux_d:
             # logic not applicable to this VE; do nothing
@@ -254,6 +258,7 @@ def execute(self, var, ds, **kwargs):
                     f"Precipitation unit scaling could not locate variable '{tv.name}' "
                     f"in active dataset keys: {list(ds.data_vars.keys())}."
                 )
+
                 return ds
 
         # var.translation.units set by edit_request will have been overwritten by
@@ -282,7 +287,7 @@ def execute(self, var, ds, **kwargs):
 
         # actual conversion done by ConvertUnitsFunction; this assures
         # units.convert_dataarray is called with correct parameters.
-        return execute_
+        return ds
 
 class ConvertUnitsFunction(PreprocessorFunctionBase):
     """Convert units on the dependent variable of var, as well as its
@@ -680,6 +685,8 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
         coordinate and Dataset *ds* is 3D). If so, return the appropriate 2D
         slice of *ds*, otherwise pass through *ds* unaltered.
         """
+        print("EXECUTE ENTERED:", type(self), len(args), flush=True)
+        print("EXECUTE CALLED:", type(var).__name__, getattr(var, 'name', None), "ds is None:", ds is None, flush=True)
         # Resolve positional arguments dynamically across caller patterns
         if len(args) == 2:
             var, ds = args[0], args[1]
@@ -709,11 +716,15 @@ class ExtractLevelFunction(PreprocessorFunctionBase):
                 tv_name = target_model_name
 
         our_z = var.get_scalar('Z')
+        print("OUR_Z:", our_z,"| var.translation Z:", getattr(getattr(var, 'translation', None), 'get_scalar', lambda x: 'n/a')('Z'), flush=True)
         if not our_z or not our_z.value:
             var.log.debug("Exit %s for %s: no level requested.",
                           self.__class__.__name__, var.full_name)
             return ds
-
+        var.log.debug(f"EXTRACT DEBUG: tv_name={tv_name}, dims={ds[tv_name].dims}, "
+              f"dim_axes={ds[tv_name].cf.dim_axes_set}, our_z={our_z}")
+        print(f"DEBUG: EXTRACT DEBUG: tv_name={tv_name}, dims={ds[tv_name].dims}, "
+              f"dim_axes={ds[tv_name].cf.dim_axes_set}, our_z={our_z}")
         if 'Z' not in ds[tv_name].cf.dim_axes_set:
             # maybe the ds we received has this level extracted already
             ds_z = ds.cf.get_scalar('Z', tv_name)
@@ -1142,7 +1153,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         import xarray as xr
 
         # Import fieldlist_parser directly or use module reference
-
+        print("PREPROCESSOR MODULE LOADED:", __file__, flush=True)
 
         print("DEBUG: Entering query_catalog")
         try_new_query = False
@@ -1171,7 +1182,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # --- DEBUG PRINTS ---
                 print(f"DEBUG: Case = '{case_name}'")
                 print(f"DEBUG: Evaluating Var = '{var.name}'")
-                print(f"DEBUG: Initial var.translation = {repr(getattr(var, 'translation', None))}")
+                #print(f"DEBUG: Initial var.translation = {repr(getattr(var, 'translation', None))}")
 
                 realm_regex = var.realm + '*'
 
@@ -1237,7 +1248,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     else:
                         print("DEBUG WARNING: No valid template variable found in varlist with translation!")
 
-                print(f"DEBUG: Final pre-query var.translation = {repr(getattr(var, 'translation', None))}")
+                #print(f"DEBUG: Final pre-query var.translation = {repr(getattr(var, 'translation', None))}")
                 print("=" * 60 + "\n")
 
                 # ------------------------------------------------------------------
@@ -1304,19 +1315,25 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # 4. LOAD & PARSE DATASET
                 # ------------------------------------------------------------------
                 cat_subset.esmcat._df = self.check_group_daterange(cat_subset.df, date_range)
-                print("DEBUG after checking date_Range ",  cat_subset.esmcat._df )
-                print(cat_subset.esmcat._df["variable_id"].values)
+                print("DEBUG: Checked date_Range")
+                #print(cat_subset.esmcat._df["variable_id"].values)
                 #print(cat_subset.esmcat._df["path"].values)
 
                 if cat_subset.df.empty:
                     raise util.DataRequestError(
                         f"check_group_daterange returned empty data frame for {trans_name}"
                         f" case {case_name} in {data_catalog}, indicating issues with data continuity")
-
+                import time
+                print("OPENING:", len(cat_subset.df), "files; time range:",
+                cat_subset.df['start_time'].min() if 'start_time' in cat_subset.df else 'n/a',
+                "to", cat_subset.df['end_time'].max() if 'end_time' in cat_subset.df else 'n/a',
+                 "| open kwargs:", getattr(self, 'open_dataset_kwargs', {}), flush=True)
+                t0 = time.time()
                 cat_subset_df = cat_subset.to_dataset_dict(
                     progressbar=False,
                     xarray_open_kwargs=getattr(self, 'open_dataset_kwargs', {})
                 )
+                print(f"to_dataset_dict took {time.time()-t0:.0f}s", flush=True)
 
                 time_sort_dict = {f: cat_subset_df[f].time.values[0] for f in list(cat_subset_df)}
                 time_sort_dict = dict(sorted(time_sort_dict.items(), key=lambda item: item[1]))
@@ -1620,21 +1637,25 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
         for func in self.file_preproc_functions:
             v = func.edit_request(func, v, **kwargs)
+
     def execute_pp_functions(self, v: varlist_util.VarlistEntry,
                              xarray_ds: xr.Dataset, case=None,
                              **kwargs):
         """Method to launch pp routines on xarray datasets associated with required variables"""
+        print("PP LOOP ENTER:", v.name, "funcs:", self.file_preproc_functions, flush=True)
+
         for func in self.file_preproc_functions:
+            print("PP CALLING:", func.__name__, "on", v.name, flush=True)
             try:
-                # Try standard 2-arg call: execute(self, var, ds, **kwargs)
-                xarray_ds = func.execute(v, xarray_ds, **kwargs)
-            except TypeError as err:
-                # Catch legacy positional argument mismatches
-                err_str = str(err)
-                if "positional argument" in err_str or "execute()" in err_str:
-                    xarray_ds = func.execute(func, v, xarray_ds, **kwargs)
-                else:
-                    raise err
+                xarray_ds = func.execute(func, v, xarray_ds, **kwargs)
+            except Exception as e:
+                print(f"ERROR: {func.__name__} failed for {v.name}: {e}", flush=True)
+                raise
+            if xarray_ds is None:
+                raise RuntimeError(f"{func.__name__} returned None for {v.name}")
+            print("PP RETURNED:", func.__name__, "dims:", dict(xarray_ds.dims), flush=True)
+            print("PP RETURNED:", func.__name__, "dims:", dict(xarray_ds.dims),
+                 "units:", {k: xarray_ds[k].attrs.get('units') for k in xarray_ds.data_vars}, flush=True)
 
         # Append custom user preprocessing scripts
         if self.user_pp_scripts and len(self.user_pp_scripts) > 0:
@@ -2027,7 +2048,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         implemented by the child class.
         """
         print("DEBUG: Starting write_ds for case_list keys: {}".format(list(case_list.keys())))
-        print("----------------------------------------", catalog_subset)
+        #print("----------------------------------------", catalog_subset)
         for k, v in pod_reqs.items():
             if 'ncl' in v:
                 self.output_to_ncl = True
@@ -2067,8 +2088,11 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 elif hasattr(case_data, 'variables'):
                     var_ds = case_data
 
+                if var_ds is not None and hasattr(var_ds, 'to_dataset') and not hasattr(var_ds, 'variables'):
+                      var_ds = var_ds.to_dataset(name=var_name)
                 # Skip if no valid xarray dataset exists for this variable
                 if var_ds is None or not hasattr(var_ds, 'variables'):
+                    print(f"WARNING: no dataset to write for {var_name}; got {type(var_ds)}", flush=True)
                     continue
 
                 # ------------------------------------------------------------------
@@ -2078,7 +2102,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     print("DEBUG: Cleaning attributes for variable '{}' before writing to disk...".format(var.name))
                     var_ds = self.clean_output_attrs(var, var_ds)
                     var_ds = self.log_history_attr(var, var_ds)
-                    print("DEBUG clean_output_attrs", var_ds)
+                    #print("DEBUG clean_output_attrs", var_ds)
                 except Exception as exc:
                     raise util.chain_exc(exc, (f"cleaning attributes to "
                                                f"write data for {var.full_name}."), util.DataPreprocessEvent)
@@ -2145,7 +2169,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         # 4. Proceed to xarray metadata parsing
         try:
             ds = self.parser.parse(var, ds)
-            print(ds)
+            #print(ds)
         except Exception as exc:
             raise util.chain_exc(exc, f"parsing dataset metadata", util.DataPreprocessEvent)
                 # ------------------------------------------------------------------
@@ -2197,7 +2221,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 print(f"DEBUG process: query_catalog returned keys = {list(cat_ds.keys()) if cat_ds else 'EMPTY'}")
                 print(f"****************DEBUG process: query_catalog returned cat_ds = {cat_ds}")
             except Exception as cat_err:
-                print(f"DEBUG process: Exception during query_catalog: {cat_err}")
                 print(f"\n" + "!" * 80)
                 print(f"DEBUG process: Exception caught during query_catalog: {cat_err}")
                 print("FULL TRACEBACK:")
@@ -2221,12 +2244,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             print(f"DEBUG process: Processing case '{case_name}'")
             if case_name not in cat_subset or cat_subset[case_name] is None:
                 cat_subset[case_name] = {}
-
-            # Retrieve raw variable container for current case
+            ###########
             raw_vars = case_list[case_name] if isinstance(case_list, dict) else getattr(self, 'var_list', [])
 
-            # Extract list of VarlistEntry objects
-            if hasattr(raw_vars, 'var_list'):
+            # 1. assign var_list (new branch first)
+            if hasattr(raw_vars, 'iter_vars_only'):
+                var_list = list(raw_vars.iter_vars_only())
+            elif hasattr(raw_vars, 'var_list'):
                 var_list = raw_vars.var_list
             elif hasattr(raw_vars, 'iter_vars'):
                 var_list = list(raw_vars.iter_vars())
@@ -2240,12 +2264,34 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             else:
                 var_list = getattr(self, 'var_list', [raw_vars])
 
+            # 2. print BEFORE filtering
+            print("VAR_LIST (before filter):",
+                  [(type(v).__name__, getattr(v, 'name', None)) for v in var_list], flush=True)
+
+            # 3. filter
             var_list = [
-                v for v in var_list 
+                v for v in var_list
                 if v is not None and not isinstance(v, (str, type(case_list[case_name])))
             ]
 
-            # Case-level datasets returned by query_catalog
+            # 4. print AFTER filtering
+            print("VAR_LIST (after filter):",
+                  [getattr(v, 'name', v) for v in var_list], flush=True)
+            
+
+
+
+            print("RAW_VARS has var_list:", hasattr(raw_vars, 'var_list'),
+                "| iter_vars:", hasattr(raw_vars, 'iter_vars'),
+                "| variables:", hasattr(raw_vars, 'variables'),
+                 "| is dict:", isinstance(raw_vars, dict), flush=True)
+     
+
+
+            print("DIR raw_vars:", [a for a in dir(raw_vars) if not a.startswith('_')][:40], flush=True)
+
+
+# Case-level datasets returned by query_catalog
             case_catalog_dict = cat_ds.get(case_name, {})
 
             for v in var_list:
@@ -2266,7 +2312,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     case_name=case_name,
                     config=config
                 )
-
+                #print(f"DEBUG process: Preprocessor functions returned dataset of type {type(pp_func_dataset)} for variable '{v.name}' (case: '{case_name}')")
+                print(f"DEBUG process: returned type={type(pp_func_dataset)}; "
+                      f"dims={dict(pp_func_dataset.dims) if hasattr(pp_func_dataset, 'dims') else None}")
                 # Safe dictionary updates for processed dataset variables
                 if pp_func_dataset is not None:
                     if isinstance(pp_func_dataset, dict):
@@ -2274,8 +2322,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         cat_subset[case_name].update(pp_func_dataset)
                     elif hasattr(pp_func_dataset, 'data_vars'):
                         print(f"DEBUG process: Updating cat_subset[{case_name}] with dataset data_vars for '{v.name}': {list(pp_func_dataset.data_vars.keys())}")
-                        for v_d in pp_func_dataset.data_vars:
-                            cat_subset[case_name][v_d] = pp_func_dataset[v_d]
+                        #for v_d in pp_func_dataset.data_vars:
+                        #    cat_subset[case_name][v_d] = pp_func_dataset[v_d]
+                        cat_subset[case_name][v.name] = pp_func_dataset
                     else:
                         print(f"DEBUG process: Output for variable '{v.name}' is neither dict nor Dataset (type: {type(pp_func_dataset)})")
                 elif var_xr_dataset is not None:

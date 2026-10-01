@@ -1,0 +1,17 @@
+
+Methods are provided in order to test some functionality of
+this code without running the entire framework.
+
+They are all accessed through blocking.csh, which sets env vars as if MDTF
+were running the code. It can call blocking.ncl as if it was called by
+MDTF. Note this is only useful after MDTF has written the pre-processed
+model data into $WK_DIR/$PODNAME/$freq/$CASE.$VAR.$freq.nc
+(eg $WK_DIR/blocking_neale/day/30L_cam5301_FAMIP.zg500.day.nc)
+If this file is missing, set input flag (default_tests.jsonc):
+  "save_nc": true,
+
+blocking.csh can also call test.ncl, in which flags can be set to do
+unit-type testing for some small pieces of code.
+
+
+

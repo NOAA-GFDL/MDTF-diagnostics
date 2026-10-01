@@ -1,0 +1,56 @@
+<title>Surface Albedo Feedback</title>
+<p><img src="../mdtf_diag_banner.png" /></p>
+<h3>Surface Albedo Feedback</h3>
+<p>This POD calculates the top of atmosphere radiative impact of
+surface albedo changes associated with Arctic sea ice loss under
+global warming. Four quantities are calculated:</p>
+<p><strong>Climatological surface albedo</strong>: the ratio of
+upwelling to downwelling shortwave radiation at the surface expressed
+as a %.</p>
+<p><strong>Radiative sensitivity</strong>: the change in reflected
+shortwave radiation at the top of the atmosphere (in W m<sup>
+-2</sup>) per 0.01 increase in surface albedo. This quantity, akin to
+a surface albedo radiative kernel, is calculated from the
+climatological radiative fluxes at the top of atmosphere and surface
+using a simplified shortwave radiation model. Higher values generally
+correspond to less cloudy mean states.</p>
+<p><strong>Ice sensitivity (also called surface sensitivity)</strong>: the change in surface albedo
+normalized by the global mean surface temperature change. The observational quantity is 
+the change in sea ice concentration times the
+average albedo contrast between ocean and sea ice normalized by the global mean temperature change. </p>
+<p><strong>Radiative impact of sea ice loss</strong>: the change in
+top of atmosphere radiation (positive downward) due to changes in
+surface albedo normalized by global mean surface temperature change,
+in W m<sup>-2</sup> K<sup>-1</sup>. This quantity is equal to the
+product of the <em>Radiative sensitivity</em> and <em>Ice
+sensitivity</em>. The global and annual average of this quantity is
+equal to the ice albedo feedback of the Arctic.</p>
+<p>All calculated quantities are averages over the boreal summer,
+defined as May, June, July and August. Change refers to the trend over the time period.</p>
+<table>
+<tbody>
+
+  <tr>
+<th align="left"><span style="color: navy;"><span style="color:
+navy;">Climatological surface albedo</span></span></th>
+<th align="center"><a
+href=model/historical_surface_albedo_{{CASENAME}}.png>plot</a></th>
+
+  <tr>
+  <th align="left"><span style="color: navy;"><span style="color:
+navy;">Radiative Sensitivity</span></span></th>
+<th align="center"><a
+href=model/historical_albedo_kernel_{{CASENAME}}.png>plot</a></th>
+
+    <tr>
+  <th align="left"><span style="color: navy;"><span style="color:
+navy;">Albedo Sensitivity</span></span></th>
+<th align="center"><a href=model/historical_albedo_sensitivity_{{CASENAME}}.png>plot</a></th>
+
+      <tr>
+  <th align="left"><span style="color: navy;"><span style="color:
+navy;">Radiative Impact of sea ice loss</span></span></th>
+<th align="center"><a href=model/historical_surface_albedo_FB_{{CASENAME}}.png>plot</a></th>
+</tr>
+</tbody>
+</table>

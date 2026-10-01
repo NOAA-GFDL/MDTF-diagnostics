@@ -1,0 +1,190 @@
+<!-- 
+    This file is the HTML output template for the example diagnostic and shows
+    how you should describe and link to the plots your diagnostic generates.
+    The framework will "fill in the blanks" corresponding to environment
+    variables and copy the file to <WK_DIR>.
+        
+    EPS or PS files saved by your diagnostic are converted by the framework into
+    bitmaps in the following locations:
+    <WK_DIR>/model/PS/<plot_name>.eps -> <WK_DIR>/model/<plot_name>.png
+    <WK_DIR>/obs/PS/<plot_name>.eps -> <WK_DIR>/obs/<plot_name>.png
+    so the target of each link only needs to be the relative path, 
+    eg. "model/<plot_name>.png".
+-->
+<title>MDTF example diagnostic</title>
+<img src="../mdtf_diag_banner.png">
+<h3>STC QBO and ENSO stratospheric teleconnections</h3>
+<p>
+This script and its helper scripts (“stc_qbo_enso_plottingcodeqbo.py” and “stc_qbo_enso_plottingcodeenso.py”) do 
+calculations to assess the representation of stratospheric telconnections associated with the Quasi-Biennial
+Oscillation (QBO) and the El Nino Southern Oscillation (ENSO). This POD uses monthly 4D (time x plev x lat x lon) 
+zonal wind, 4D meridional wind, 4D temperature, 3D (time x lat x lon) sea level pressure, and 3D sea surface 
+temperature data. Coupling between the QBO and the boreal polar stratosphere takes place during boreal fall and 
+winter whereas coupling between the QBO and the austral polar stratosphere takes place mainly during austral 
+spring and summer. By default, the POD defines the QBO for NH (SH) analyses using the Oct-Nov (Jul-Aug) 5S-5N 
+30 hPa zonal winds. The QBO is thought to influence the polar stratospheres, the so-called “polar route,” by 
+modulating the lower stratospheric (~100-50 hPa) and middle stratospheric (~20-5 hPa) mid-latitude circulation. The  
+aforementioned lower stratospheric teleconnection is also associated with a change in the strength and position of 
+the tropospheric jet; the so-called “subtropical route.” In addition, evidence continues to show that the QBO directly 
+influences the underlying tropical tropospheric circulation, referred to as the “tropical route.” These three  
+teleconnections allow the QBO to elicit surface impacts globally. Said teleconnections are visualized herein by using 
+a metric of planetary wave propagation (eddy heat flux), circulation response (zonal wind), and surface impact (sea 
+level pressure). Additionally, metrics of model QBOs (e.g., amplitude, height, width) are produced. ENSO’s coupling 
+with the polar stratospheres takes place as the amplitude of ENSO maximizes during boreal fall and winter. By 
+default, the POD defines ENSO for NH (SH) analyses using the Nov-Mar (Sep-Jan) Nino3.4 SSTs. Though ENSO’s 
+teleconnections are truly global, it interacts with the stratosphere by stimulating tropical-extratropical Rossby waves 
+that constructively interfere with the climatological extratropical stationary wave, promoting enhanced upward 
+planetary wave propagation into the stratosphere. Similar to the QBO code, ENSO’s teleconnections are visualized 
+using the eddy heat flux, the zonal wind, and the sea level pressure.
+</p>
+
+<h3>{{CASENAME}}</h3>
+< color=navy>ENSO teleconnections northern hemisphere
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-enso34-uzm-NH.png>Model zonal mean zonal wind</A>
+    <TH align=center><A href=obs/obs-enso34-uzm-{{FIRSTYR}}-{{LASTYR}}-NH.png>Reanalysis zonal mean zonal wind</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{startdate}}-{{enddate}}-enso34-vt-NH.png>Model eddy heat flux</A>
+    <TH align=center><A href=obs/obs-enso34-vt-{{startdate}}-{{enddate}}-NH.png>Reanalysis eddy heat flux</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{startdate}}-{{enddate}}-enso34-psl-NH.png>Model sea level pressure</A>
+    <TH align=center><A href=obs/obs-enso34-psl-{{startdate}}-{{enddate}}-NH.png>Reanalysis sea level pressure</A>
+</TR>
+</TABLE>
+
+<p></p>
+
+< color=navy>ENSO teleconnections southern hemisphere
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{startdate}}-{{enddate}}-enso34-uzm-SH.png>Model zonal mean zonal wind</A>
+    <TH align=center><A href=obs/obs-enso34-uzm-{{startdate}}-{{enddate}}-SH.png>Reanalysis zonal mean zonal wind</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{startdate}}-{{endddate}}-enso34-vt-SH.png>Model eddy heat flux</A>
+    <TH align=center><A href=obs/obs-enso34-vt-{{startdate}}-{{enddate}}-SH.png>Reanalysis eddy heat flux</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{startdate}}-{{enddate}}-enso34-psl-SH.png>Model sea level pressure</A>
+    <TH align=center><A href=obs/obs-enso34-psl-{{startdate}}-{{enddate}}-SH.png>Reanalysis sea level pressure</A>
+</TR>
+</TABLE>
+
+<p></p>
+
+< color=navy>QBO teleconnections northern hemisphere
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{startdate}}-{{enddate}}-qbo{{QBOisobar}}hPa-uzm-NH.png>
+        Model zonal mean zonal wind</A>
+    <TH align=center><A href=obs/obs-qbo{{QBOisobar}}hPa-uzm-{{startdate}}-{{enddate}}-NH.png>
+    Reanalysis zonal mean zonal wind</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{startdate}}-{{enddate}}-qbo{{QBOisobar}}hPa-vt-NH.png>
+        Model eddy heat flux</A>
+    <TH align=center><A href=obs/obs-qbo{{QBOisobar}}hPa-vt-{{startdate}}-{{enddate}}-NH.png>
+    Reanalysis eddy heat flux</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{FIRSTYR}}-{{LASTYR}}-qbo{{QBOisobar}}hPa-psl-NH.png>Model sea level pressure</A>
+    <TH align=center><A href=obs/obs-qbo{{QBOisobar}}hPa-psl-{{FIRSTYR}}-{{LASTYR}}-NH.png>Reanalysis sea level pressure</A>
+</TR>
+</TABLE>
+
+<p></p>
+
+< color=navy>QBO teleconnections southern hemisphere
+<TABLE>
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{startdate}}-{{enddate}}-qbo{{QBOisobar}}hPa-uzm-SH.png>
+        Model zonal mean zonal wind</A>
+    <TH align=center><A href=obs/obs-qbo{{QBOisobar}}hPa-uzm-{{startdate}}-{{enddate}}-SH.png>
+    Reanalysis zonal mean zonal wind</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{startdate}}-{{enddate}}-qbo{{QBOisobar}}hPa-vt-SH.png>
+        Model eddy heat flux</A>
+    <TH align=center><A href=obs/obs-qbo{{QBOisobar}}hPa-vt-{{startdate}}-{{enddate}}-SH.png>
+    Reanalysis eddy heat flux</A>
+</TR>
+
+<TR>
+    <TH align=left>Model
+    <TH align=left>Reanalysis
+</TR>
+
+<TR>
+    <TH align=center><A href=model/{{CASENAME}}-{{startdate}}-{{enddate}}-qbo{{QBOisobar}}hPa-psl-SH.png>
+        Model sea level pressure</A>
+    <TH align=center><A href=obs/obs-qbo{{QBOisobar}}hPa-psl-{{startdate}}-{{enddate}}-SH.png>
+    Reanalysis sea level pressure</A>
+</TR>
+</TABLE>
+
+<p></p>

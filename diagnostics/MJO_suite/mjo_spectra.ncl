@@ -6,7 +6,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/diagnostics_cam.ncl"    
 load "$POD_HOME/my_cam_diags.ncl"
 
-setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+load "$POD_HOME/nc_format.ncl"
+setfileoption("nc", "Format", get_ncl_nc_format())
 
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 begin

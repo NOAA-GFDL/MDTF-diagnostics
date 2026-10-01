@@ -1,0 +1,30 @@
+CATALOG_FILE: "/home/a1r/github/aparna/MDTF-diagnostics/diagnostics/example_multicase/amip_c96L65_am5f3b1r0_pdclim1850F_combined.json"
+CASE_LIST:
+  c384L65_am5f3b1r0_amip:
+    case_name: c384L65_am5f3b1r0_amip
+    startdate: '19810101'
+    enddate: '19821231'
+    TAS_ASSOC_FILES: ''
+    TAS_FILE: /archive/am5/am5/am5f3b1r0/c384L65_am5f3b1r0_amip/gfdl.ncrc5-deploy-prod-openmp/pp/atmos_cmip/ts/daily/1yr/atmos_cmip.19810101-198121231.tas.nc 
+    date_int_offset: 0
+    lat_bnds: lat_bnds
+    lat_coord: lat
+    lon_bnds: lon_bnds
+    lon_coord: lon
+    tas_var: tas
+    time_bnds: time_bnds
+    time_coord: time
+  amip_c96L65_am5f3b1r0_pdclim1850F:
+    case_name: amip_c96L65_am5f3b1r0_pdclim1850F
+    startdate: '00050101'
+    enddate: '00061231'
+    TAS_ASSOC_FILES: ''
+    TAS_FILE: /archive/am5/am5/am5f3b1r0/c96L65_am5f3b1r0_pdclim1850F/gfdl.ncrc5-deploy-prod-openmp/pp/atmos_cmip/ts/daily/1yr/atmos_cmip.0005010100-0005123123.tas.nc
+    date_int_offset: 0
+    lat_bnds: lat_bnds
+    lat_coord: lat
+    lon_bnds: lon_bnds
+    lon_coord: lon
+    tas_var: tas
+    time_bnds: time_bnds
+    time_coord: time

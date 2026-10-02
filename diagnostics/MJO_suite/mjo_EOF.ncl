@@ -199,7 +199,17 @@ end if
   else
   x_season_w&time = time1
   end if
+  print("=== pre-EOF check ===")
+  printVarSummary(x_season_w)
+  printMinMax(x_season_w, True)
+  print(num(isnan_ieee(x_season_w)) + " NaNs")
+  print(num(ismissing(x_season_w)) + " missing of " + product(dimsizes(x_season_w)))
+  print("stddev = " + stddev(x_season_w))
   eof    = eofunc_Wrap(x_season_w, neof, False)
+  print("=== post-EOF check ===")
+  printMinMax(eof, True)
+  print(eof@eval)
+  print(eof@pcvar)
   eof_ts = eofunc_ts_Wrap(x_season_w,eof,False)
 
   delete(x_season)
@@ -269,7 +279,7 @@ end if
          res@gsnCenterString = ""
      end if
      res@gsnRightString  = sprintf("%5.1f", eof@pcvar(n)) +"%"
-     plot(n)=gsn_csm_contour_map_ce(wks,eof(n,:,:),res)
+     plot(n)=gsn_csm_contour_map_ce(wks,eof(n,:,:),res)  
   end do
   gsn_panel(wks,plot,(/neof,1/),resP)     ; now draw as one plot
 

@@ -1752,7 +1752,73 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 ds[c] = ds[c].rename(name_dict)
 
         return ds
+    
+    def clean_nc_var_encoding(self, var, name, ds_obj):
+        """Clean up the ``attrs`` and ``encoding`` dicts of *ds_obj*
+        prior to writing to a netCDF file, as a workaround for the following
+        known issues:
 
+        - Missing attributes may be set to the sentinel value ``ATTR_NOT_FOUND``
+          by :class:`xr_parser.DefaultDatasetParser`. Depending on context, this
+          may not be an error, but attributes with this value need to be deleted
+          before writing.
+        - Delete the ``_FillValue`` attribute for all independent variables
+          (coordinates and their bounds), which is specified in the CF conventions
+          but isn't the xarray default; see
+          `<https://github.com/pydata/xarray/issues/1598>`__.
+        - 'NaN' is not recognized as a valid ``_FillValue`` by NCL (see
+          `<https://www.ncl.ucar.edu/Support/talk_archives/2012/1689.html>`__),
+          so unset the attribute for this case.
+        - xarray `to_netcdf()
+          <https://xarray.pydata.org/en/stable/generated/xarray.Dataset.to_netcdf.html>`__
+          raises an error if attributes set on a variable have
+          the same name as those used in its encoding, even if their values are
+          the same. We delete these attributes prior to writing, after checking
+          equality of values.
+        """
+        encoding = getattr(ds_obj, 'encoding', dict())
+        attrs = getattr(ds_obj, 'attrs', dict())
+        attrs_to_delete = set([])
+
+        # mark attrs with sentinel value for deletion
+        for key, val in attrs.items():
+            if val == xr_parser.ATTR_NOT_FOUND:
+                var.log.debug("Caught unset attribute '%s' of '%s'.", key, name)
+                attrs_to_delete.add(key)
+        # clean up _FillValue
+        old_fillvalue = encoding.get('_FillValue', np.nan)
+        # _FillValue may already be None (unset by an earlier pass) or a non-float
+        try:
+            fill_is_nan = old_fillvalue is not None and bool(np.isnan(old_fillvalue))
+        except TypeError:
+            fill_is_nan = False
+        if name != var.translation.name \
+                or (self.output_to_ncl and fill_is_nan):
+            encoding['_FillValue'] = None
+            attrs['_FillValue'] = None
+            attrs_to_delete.add('_FillValue')
+        # mark attrs duplicating values in encoding for deletion
+        for k, v in encoding.items():
+            if k in attrs:
+                if isinstance(attrs[k], bytes):
+                    compare_ = False
+                elif isinstance(attrs[k], str) and isinstance(v, str):
+                    compare_ = (attrs[k].lower() != v.lower())
+                else:
+                    compare_ = (attrs[k] != v)
+                if compare_ and k.lower() != 'source':
+                    var.log.warning(
+                        "Conflict in '%s' attribute of '%s': '%s' != '%s'.",
+                        k, name, v, attrs[k], tags=util.ObjectLogTag.NC_HISTORY
+                    )
+                attrs_to_delete.add(k)
+
+        for k in attrs_to_delete:
+            if k in attrs:
+                del attrs[k]
+
+    '''
+    
     def clean_nc_var_encoding(self, var, name, ds_obj):
         """Clean up the ``attrs`` and ``encoding`` dicts of *ds_obj*
         prior to writing to a netCDF file, as a workaround for the following
@@ -1811,6 +1877,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         for k in attrs_to_delete:
             if k in attrs:
                 del attrs[k]
+    '''
     def clean_output_attrs(self,
                            var: varlist_util.VarlistEntry,
                            ds: xr.Dataset):

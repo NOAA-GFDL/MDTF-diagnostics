@@ -41,30 +41,30 @@ if not os.path.exists(os.path.join(os.environ['DATADIR'], 'day')):
     os.makedirs(os.path.join(os.environ['DATADIR'], 'day'))
 
 print("OBTAINING DAILY OUTPUT")
-generate_ncl_plots(os.environ["POD_HOME"]+"/daily_netcdf.ncl",flags="-x")
+generate_ncl_plots(os.environ["POD_HOME"]+"/daily_netcdf.ncl")
 
 print("COMPUTING DAILY ANOMALIES")
-generate_ncl_plots(os.environ["POD_HOME"]+"/daily_anom.ncl",flags="-x")
+generate_ncl_plots(os.environ["POD_HOME"]+"/daily_anom.ncl")
 
 print("COMPUTING MJO EOF (may take a while for long time samples)")
-generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_EOF.ncl",flags="-x")
+generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_EOF.ncl")
 
 print("MJO lag plots")
-generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_lag_lat_lon.ncl",flags="-x")
+generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_lag_lat_lon.ncl")
 
 print("MJO spectra")
-generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_spectra.ncl",flags="-x")
+generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_spectra.ncl")
 
 if os.path.isfile( os.environ["WORK_DIR"]+"/model/netCDF/MJO_PC_INDEX.nc"):
     print("WARNING: MJO_PC_INDEX.nc already exists. Not re-running.")
 else:
-    generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_EOF_cal.ncl",flags="-x")
+    generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_EOF_cal.ncl")
    
 print("MJO life cycle composite")
 
 # This has a loop to generate two sets of figures, on with -1*PC
-generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_life_cycle.ncl",flags="-x")
+generate_ncl_plots(os.environ["POD_HOME"]+"/mjo_life_cycle.ncl")
 
-generate_ncl_plots(os.environ["POD_HOME"]+"/mjo.ncl",flags="-x")
+generate_ncl_plots(os.environ["POD_HOME"]+"/mjo.ncl")
 
 print("MJO_suite.py finished.")

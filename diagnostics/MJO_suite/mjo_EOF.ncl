@@ -95,6 +95,13 @@ do ivars = 0,dimsizes(vars)-1
 ;***********************************************************
 ;   X       = f->$vName$(iStrt:iLast,{latS:latN},:) ; U_anom_sm
    X = f[ivars]->$vars(ivars)$(:,{latS:latN},:)
+   ; ---- NaN bug fix ----
+   if (isatt(X,"_FillValue")) then
+      delete(X@_FillValue)
+   end if
+   X@_FillValue = 1e20
+   X = where(isnan_ieee(X), X@_FillValue, X)
+   ; ------------------
 ;   printVarSummary(X)
 ;   printMinMax(X, True)
 
@@ -120,12 +127,12 @@ do ivars = 0,dimsizes(vars)-1
 ; Apply the band pass filter to the original anomalies
 ;************************************************
   x   = wgt_runave_Wrap (X(lat|:, lon|:, time|:), wgt, 0)
-
+  print(num(isnan_ieee(x)) + " NaNs after filter")   ; 
 ;************************************************
 ; remove means of band pass series: *not* necessary 
 ;************************************************
   x   =dim_rmvmean( x )
-  
+  print(num(isnan_ieee(x)) + " NaNs after rmvmean")  ; 
 ;************************************************
 ; two seasons, Nov to Apr & May to Oct
 ;************************************************

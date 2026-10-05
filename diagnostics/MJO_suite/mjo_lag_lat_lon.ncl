@@ -88,6 +88,13 @@ nameSeason = (/"winter","summer","annual"/)
 ;  end if
 
   pr = f->$vars(0)$(:,{latS_globe:latN_globe},:) 
+  ; ---- Yikes Bug fix NaN ----
+  if (isatt(pr,"_FillValue")) then
+     delete(pr@_FillValue)
+  end if
+  pr@_FillValue = 1e20
+  pr = where(isnan_ieee(pr), pr@_FillValue, pr)
+  ; ------------------
 
 ;  printVarSummary( pr )
 ;  printMinMax(pr, True)

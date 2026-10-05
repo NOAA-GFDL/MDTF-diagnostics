@@ -1,0 +1,32 @@
+{
+  "case_list" : [
+    {
+      "CASENAME" : "C192_fixco2", 
+      "model" : "UFS",
+      "convention" : "CMIP",
+      "FIRSTYR" : 2000,
+      "LASTYR" : 2002,
+      "pod_list": [
+  	  "MJO_suite"
+      ]
+    }
+  ],
+
+  "OBS_DATA_ROOT": "/work/Janice.Kim/mdtf_data/inputdata/obs_data",
+  "MODEL_DATA_ROOT": "/work/Janice.Kim/mdtf_data/fromQuanXW",
+  "WORKING_DIR": "/work/a1r/mdtf/out",
+  "OUTPUT_DIR": "/work/a1r/mdtf/out",
+  "conda_root": "$CONDA_ROOT",
+  "conda_env_root": "$CONDA_ENV_DIR",
+  // Location of the micromamba executable. Required if using micromamba
+  "environment_manager": "Conda",
+  "micromamba_exe": "/usr/local/bin/micromamba",
+  "data_manager": "Local_File",
+  "save_ps": false,
+  "save_nc": false,
+  "make_variab_tar": true,
+  "overwrite": false,
+  "verbose": 1,
+  "test_mode": false,
+  "dry_run": false
+}

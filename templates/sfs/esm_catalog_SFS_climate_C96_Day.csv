@@ -1,0 +1,6 @@
+activity_id,assoc_files,institution_id,member_id,realm,variable_id,table_id,source_id,source_type,cell_methods,cell_measures,experiment_id,variant_label,grid_label,units,time_range,chunk_freq,standard_name,long_name,frequency,file_name,path,start_time,end_time
+,,,,atmos,pr,,,,time: mean,,C192_fixco2,,,kg m-2 s-1,20000101-20291231,,precipitation_flux,Precipitation,day,,/work/Janice.Kim/mdtf_data/fromQuanXW/C192_fixco2/day/C192_fixco2.pr.day.nc,20000101,20291231
+,,,,atmos,rlut,,,,time: mean,,C192_fixco2,,,W m-2,20000101-20291231,,toa_outgoing_longwave_flux,TOA Outgoing Longwave Radiation,day,,/work/Janice.Kim/mdtf_data/fromQuanXW/C192_fixco2/day/C192_fixco2.rlut.day.nc,20000101,20291231
+,,,,atmos,ua,,,,time: mean,,C192_fixco2,,,m s-1,20000101-20291231,,eastward_wind,Eastward Wind,day,,/work/Janice.Kim/mdtf_data/fromQuanXW/C192_fixco2/day/C192_fixco2.ua.day.nc,20000101,20291231
+,,,,atmos,va,,,,time: mean,,C192_fixco2,,,m s-1,20000101-20291231,,northward_wind,Northward Wind,day,,/work/Janice.Kim/mdtf_data/fromQuanXW/C192_fixco2/day/C192_fixco2.va.day.nc,20000101,20291231
+,,,,atmos,zg,,,,time: mean,,C192_fixco2,,,m,20000101-20291231,,geopotential_height,Geopotential Height,day,,/work/Janice.Kim/mdtf_data/fromQuanXW/C192_fixco2/day/C192_fixco2.zg.day.nc,20000101,20291231

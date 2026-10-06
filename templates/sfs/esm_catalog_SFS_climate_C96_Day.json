@@ -1,0 +1,138 @@
+{
+  "esmcat_version": "0.0.1",
+  "attributes": [
+    {
+      "column_name": "activity_id",
+      "vocabulary": "",
+      "required": false
+    },
+    {
+      "column_name": "institution_id",
+      "vocabulary": "",
+      "required": false
+    },
+    {
+      "column_name": "source_id",
+      "vocabulary": "",
+      "required": false
+    },
+    {
+      "column_name": "experiment_id",
+      "vocabulary": "",
+      "required": true
+    },
+    {
+      "column_name": "frequency",
+      "vocabulary": "https://raw.githubusercontent.com/NOAA-GFDL/CMIP6_CVs/master/CMIP6_frequency.json",
+      "required": true
+    },
+    {
+      "column_name": "realm",
+      "vocabulary": "",
+      "required": true
+    },
+    {
+      "column_name": "table_id",
+      "vocabulary": "",
+      "required": false
+    },
+    {
+      "column_name": "member_id",
+      "vocabulary": "",
+      "required": false
+    },
+    {
+      "column_name": "grid_label",
+      "vocabulary": "",
+      "required": false
+    },
+    {
+      "column_name": "variable_id",
+      "vocabulary": "",
+      "required": true
+    },
+    {
+      "column_name": "time_range",
+      "vocabulary": "",
+      "required": true
+    },
+    {
+      "column_name": "chunk_freq",
+      "required": false
+    },
+    {
+      "column_name": "platform",
+      "vocabulary": "",
+      "required": false
+    },
+    {
+      "column_name": "target",
+      "vocabulary": "",
+      "required": false
+    },
+    {
+      "column_name": "cell_methods",
+      "vocabulary": "",
+      "required": "enhanced"
+    },
+    {
+      "column_name": "path",
+      "vocabulary": "",
+      "required": true
+    },
+    {
+      "column_name": "dimensions",
+      "vocabulary": "",
+      "required": "enhanced"
+    },
+    {
+      "column_name": "version_id",
+      "vocabulary": "",
+      "required": false
+    },
+    {
+      "column_name": "standard_name",
+      "vocabulary": "",
+      "required": "enhanced"
+    }
+  ],
+  "assets": {
+    "column_name": "path",
+    "format": "netcdf",
+    "format_column_name": null
+  },
+  "aggregation_control": {
+    "variable_column_name": "variable_id",
+    "groupby_attrs": [
+      "source_id",
+      "experiment_id",
+      "frequency",
+      "table_id",
+      "grid_label",
+      "realm",
+      "member_id",
+      "chunk_freq"
+    ],
+    "aggregations": [
+      {
+        "type": "union",
+        "attribute_name": "variable_id",
+        "options": {}
+      },
+      {
+        "type": "join_existing",
+        "attribute_name": "time_range",
+        "options": {
+          "dim": "time",
+          "coords": "minimal",
+          "compat": "override"
+        }
+      }
+    ]
+  },
+  "id": "esm_catalog_ESM4",
+  "description": null,
+  "title": null,
+  "last_updated": "2023-05-07T16:35:52Z",
+  "catalog_file": "/proj/wkdir/cats/esm_catalog_SFS_climate_C96_Day.csv"
+}

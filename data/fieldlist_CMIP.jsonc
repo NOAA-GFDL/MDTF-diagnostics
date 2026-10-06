@@ -31,7 +31,7 @@
     },
 "u200": {
     "name": "ua",                  // Link to 3D variable on disk
-    "alt_names": ["ucomp","ua"],
+    "alt_names": ["ucomp","ua","ua_unmsk"],
     "standard_name": "eastward_wind",
     "realm": "atmos_cmip",
     "units": "m s-1",
@@ -40,7 +40,7 @@
   },
   "u850": {
     "name": "ua",
-    "alt_names": ["ucomp","ua"],
+    "alt_names": ["ucomp","ua","ua_unmsk"],
     "standard_name": "eastward_wind",
     "realm": "atmos_cmip",
     "units": "m s-1",
@@ -49,7 +49,7 @@
   },
   "v200": {
     "name": "va",
-    "alt_names": ["vcomp","va"],
+    "alt_names": ["vcomp","va","va_unmsk"],
     "standard_name": "northward_wind",
     "realm": "atmos",
     "units": "m s-1",
@@ -58,7 +58,7 @@
   },
   "v850": {
     "name": "va",
-    "alt_names": ["vcomp","va_unmsk","va"],
+    "alt_names": ["vcomp","va","va_unmsk"],
     "standard_name": "northward_wind",
     "realm": "atmos",
     "units": "m s-1",

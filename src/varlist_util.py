@@ -153,6 +153,9 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
             provided dataset.
         path_variable: Name of env var containing path to local data.
         dest_path: Path to local data.
+        cell_methods: CF cell_methods of the requested data. "time: point" requests
+            instantaneous samples, found in the catalog under the CMIP6-style
+            frequency with a "Pt" suffix (e.g. 6hrPt); otherwise time means.
         alternates: List of lists of VarlistEntries.
         translation: :class:`translation.TranslatedVarlistEntry`, populated by DataSource.
         data: dict mapping experiment_keys to DataKeys. Populated by DataSource.
@@ -175,6 +178,7 @@ class VarlistEntry(VarlistEntryBase, util.MDTFObjectBase, data_model.DMVariable,
     long_name: str = dc.field(default="", compare=False)
     dest_path: str = ""
     convention: str = ""
+    cell_methods: str = ""
     requirement: VarlistEntryRequirement = dc.field(
         default=VarlistEntryRequirement.REQUIRED, compare=False
     )

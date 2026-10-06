@@ -29,6 +29,13 @@
       "realm": "ocean",
       "ndim": 3
     },
+    "ua": {
+      "standard_name": "eastward_wind",
+      "realm": "atmos",
+      "units": "m s-1",
+      "scalar_coord_templates": {"plev": "ua{value}"},
+      "ndim": 4
+    },
 "u200": {
     "name": "ua",                  // Link to 3D variable on disk
     "alt_names": ["ucomp","ua"],
@@ -70,6 +77,13 @@
       "units": "m s-1",
       "scalar_coord_templates": {"plev": "u10{value}"},
       "ndim": 3
+    },
+    "va": {
+      "standard_name": "northward_wind",
+      "realm": "atmos",
+      "units": "m s-1",
+      "scalar_coord_templates": {"plev": "va{value}"},
+      "ndim": 4
     },
      "wind_speed": {
       "standard_name": "wind_speed",

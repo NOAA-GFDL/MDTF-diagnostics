@@ -2,6 +2,7 @@
 once it's been downloaded`.
 """
 import os
+import sys
 import shutil
 import abc
 import dataclasses
@@ -1343,7 +1344,7 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         print("DEBUG try_new_query: ", case_d.query)
                         if cat_subset.df.empty:
                             raise util.DataRequestError(
-                                f"No assets matching query requirements found for {trans_name} for"
+                                f"No datasets matching query requirements found for POD settings variable {trans_name} for"
                                 f" case {case_name} in {data_catalog}")
                     else:
                         raise util.DataRequestError(
@@ -2408,15 +2409,25 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     var_xr_dataset = self.cat_subset_ds[case_name]
 
                 print(f"DEBUG process: Executing preprocessor functions for variable '{v.name}' (case: '{case_name}'), dataset={type(var_xr_dataset)}")
-
-                pp_func_dataset = self.execute_pp_functions(
-                    v,
-                    var_xr_dataset,
-                    case=case_name,
-                    work_dir=model_work_dir[case_name] if isinstance(model_work_dir, dict) else model_work_dir,
-                    case_name=case_name,
-                    config=config
-                )
+                #Exceptions not caught here especially when variable translation is missing and the returned datasets are None
+                #Improved error handling to catch exceptions and provide informative messages
+                try:
+                    pp_func_dataset = self.execute_pp_functions(
+                        v,
+                        var_xr_dataset,
+                        case=case_name,
+                        work_dir=model_work_dir[case_name] if isinstance(model_work_dir, dict) else model_work_dir,
+                        case_name=case_name,
+                        config=config
+                    )
+                except Exception as err:
+                # 1. Extract a clean string representation for variable name
+                     var_name = getattr(v, "name", getattr(v, "var_name", str(v).split()[0]))
+                # 2. Log full internal detail for developer debugging
+                     print(f"Post-processing function execution failed for variable '{var_name}' (Case: {case_name}): {err}")
+                # 3. Raise clean error for user without object dump details
+                     print(f"An error occurred while post-processing variable '{var_name}'. Please check your configuration - likely the variable translations and fieldlist settings.")
+                     sys.exit(1)
                 #print(f"DEBUG process: Preprocessor functions returned dataset of type {type(pp_func_dataset)} for variable '{v.name}' (case: '{case_name}')")
                 print(f"DEBUG process: returned type={type(pp_func_dataset)}; "
                       f"dims={dict(pp_func_dataset.dims) if hasattr(pp_func_dataset, 'dims') else None}")

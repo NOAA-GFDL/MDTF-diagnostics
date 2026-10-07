@@ -354,7 +354,27 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
                     log=var.log
                 )
             c.units = dest_c.units
-
+                # Convert scalar coordinates
+        for c in tv.scalar_coords:
+            if c.name in ds:
+                dest_c = var.axes[c.axis]
+                ds = units.convert_dataarray(
+                    ds, c.name, src_unit=None, dest_unit=dest_c.units,
+                    log=var.log
+                )
+                target = dest_c.value
+                print('DBG scalar:', c.name, 'c is dest_c:', c is dest_c, 'target:', target, 'dest units:', dest_c.units)
+                c.value = None
+                if len(ds[c.name]) > 1:
+                    for v in ds[c.name].values:
+                        if target is not None and int(v) / target == 100:  # v = dest_c in Pa
+                            c.value = target
+                        elif target is not None and int(v) == target:
+                            c.value = v
+                else:
+                    c.value = ds[c.name].item()
+                c.units = dest_c.units
+        '''
         # Convert scalar coordinates
         for c in tv.scalar_coords:
             if c.name in ds:
@@ -373,6 +393,7 @@ class ConvertUnitsFunction(PreprocessorFunctionBase):
                 else:
                     c.value = ds[c.name].item()
                 c.units = dest_c.units
+        '''
 
         var.log.info("Converted units on %s.", var.full_name)
         return ds
@@ -1053,6 +1074,17 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     time_vals[i] = '0' + time_vals[i]
         return time_vals
 
+
+    @staticmethod
+    #goes through alt_name until there is match with what is in the catalog variable_id  
+    def pick_catalog_name(alt_names, default, cat_df):
+        """Return the first name in alt_names that is a variable_id in the catalog."""
+        available = set(cat_df['variable_id'].astype(str))
+        for name in alt_names:
+            if name in available:
+                return name
+        return default
+
     def check_group_daterange(self, group_df: pd.DataFrame, case_dr,
                               log=_log) -> pd.DataFrame:
         """Sort the files found for each experiment by date, verify that
@@ -1118,7 +1150,12 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                     et = dl.dt_to_str(cat_row['end_time'])
                     stin = dl.Date(st) in case_dr
                     etin = dl.Date(et) in case_dr
-                if stin and etin:
+                # also keep a file whose time span contains the whole query range
+                try:
+                    spans_query = (dl.Date(st) <= case_dr.start) and (dl.Date(et) >= case_dr.end)
+                except Exception:
+                    spans_query = False
+                if (stin and etin) or spans_query:
                     return_df.append(cat_row.to_dict())
 
             return pd.DataFrame.from_dict(return_df)
@@ -1208,13 +1245,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             var.name,
                             target_convention
                         )
-                        print(f"DEBUG: get_fieldlist_alt_names for '{var.name}' -> {alt_names}")
+
+                      #  print(f"DEBUG: get_fieldlist_alt_names for '{var.name}' -> {alt_names}")
                     except Exception as fl_err:
                         print(f"DEBUG: Error in get_fieldlist_alt_names for '{var.name}': {fl_err}")
                 else:
                     print(f"DEBUG: fieldlist_path invalid or not found: '{fieldlist_path}'")
-
-                primary_raw_name = alt_names[1] if alt_names else var.name
+                primary_raw_name = self.pick_catalog_name(alt_names, var.name, cat.df)
+                #primary_raw_name = alt_names[1] if alt_names else var.name
                 print("TEST VAR TRANSLATION",getattr(var, 'translation', None))
 
                 if getattr(var, 'translation', None) is None:
@@ -1453,8 +1491,8 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 else:
                     print(f"DEBUG: fieldlist_path invalid or not found: '{fieldlist_path}'")
 
-                primary_raw_name = alt_names[0] if alt_names else var.name
-
+                #primary_raw_name = alt_names[0] if alt_names else var.name
+                primary_raw_name = self.pick_catalog_name(alt_names, var.name, cat.df)
                 if getattr(var, 'translation', None) is None:
                     if hasattr(case_d.varlist, 'translate_var'):
                         var.translation = case_d.varlist.translate_var(primary_raw_name)

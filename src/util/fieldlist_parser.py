@@ -21,6 +21,7 @@ def get_fieldlist_alt_names(fieldlist_path: str, pod_var_name: str, canonical_ta
         Deduplicated list of alternative variable names (e.g., ['ucomp', 'ua_unmsk']).
     """
     alts = []
+    print(f"DEBUG: pod_var_name={pod_var_name}, canonical_target_name={canonical_target_name}")
     if not fieldlist_path or not os.path.exists(fieldlist_path):
         return alts
 

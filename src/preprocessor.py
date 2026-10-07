@@ -18,7 +18,10 @@ import numpy as np
 import xarray as xr
 import collections
 import re
+from importlib.resources import files
 
+# Refers to the package directory `data` (e.g., from package_root.data)
+data_dir = files("data") # Or files("mdtf.data") depending on your package root
 
 import os
 import dask
@@ -1078,12 +1081,32 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
 
     @staticmethod
     #goes through alt_name until there is match with what is in the catalog variable_id  
-    def pick_catalog_name(alt_names, default, cat_df):
-        """Return the first name in alt_names that is a variable_id in the catalog."""
-        available = set(cat_df['variable_id'].astype(str))
+    #also match standard_name and realm 
+    
+    def pick_catalog_name(alt_names, default, cat_df, standard_name=None, realm=None, frequency=None):
+        """Return the first matching variable_id, optionally filtered by standard_name, realm, and frequency."""
+        df = cat_df.copy()
+
+        # Filter by standard_name if provided
+        if standard_name and 'standard_name' in df.columns:
+            df = df[df['standard_name'] == standard_name]
+
+        # Filter by realm if provided
+        realm_col = 'realm' if 'realm' in df.columns else 'modeling_realm'
+        if realm and realm_col in df.columns:
+            df = df[df[realm_col].astype(str).str.contains(realm, na=False)]
+
+        # Filter by frequency if provided
+        if frequency and 'frequency' in df.columns:
+            df = df[df['frequency'].astype(str) == str(frequency)]
+
+        # Return first alt_name found in the filtered catalog
+        available = set(df['variable_id'].astype(str))
         for name in alt_names:
             if name in available:
                 return name
+
+        # Fall back to default if no match found
         return default
 
     def check_group_daterange(self, group_df: pd.DataFrame, case_dr,
@@ -1230,14 +1253,22 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 # Extract fieldlist file path and convention from self, varlist, or config
                 fieldlist_path = (getattr(self, 'fieldlist_path', None) or 
                                   getattr(getattr(self, 'config', None), 'FIELDLIST_PATH', None))
-                if not fieldlist_path or not os.path.exists(fieldlist_path):
-                    #TODO DO NOT HARDCODE THE PATH HERE 
-                    fieldlist_path = "/proj/MDTF-diagnostics/data/fieldlist_CMIP.jsonc"
-                    print(f"DEBUG: fieldlist_path not set or invalid; defaulting to '{fieldlist_path}'")
                 target_convention = getattr(case_d.varlist, 'convention', 'CMIP')
                 if not isinstance(target_convention, str):
                     target_convention = getattr(target_convention, 'name', 'CMIP')
+                try:
+                  # Construct the file path dynamically
+                  fieldlist_filename = f"fieldlist_{target_convention}.jsonc"
+                  fieldlist_path = str(data_dir.joinpath(fieldlist_filename))
+                  print(f"DEBUG: Constructed fieldlist_path = '{fieldlist_path}'")
+                except Exception as e:
+                    print(f"DEBUG: Error constructing fieldlist_path: {e}")
+                    print(f"DEBUG: fieldlist_path not set or invalid; Variable translations are not possible")
+                    sys.exit(1)
 
+                if not fieldlist_path or not os.path.exists(fieldlist_path):
+                    print(f"DEBUG: fieldlist_path not set or invalid; Variable translations are not possible")
+                    sys.exit(1)
                 alt_names = []
                 if fieldlist_path and os.path.exists(fieldlist_path):
                     try:
@@ -1252,9 +1283,17 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                         print(f"DEBUG: Error in get_fieldlist_alt_names for '{var.name}': {fl_err}")
                 else:
                     print(f"DEBUG: fieldlist_path invalid or not found: '{fieldlist_path}'")
-                primary_raw_name = self.pick_catalog_name(alt_names, var.name, cat.df)
+                print("DEBUG: Variable translation alt_names from fieldlist_parser:", alt_names)
+                #standard name and realm are needed earlier on to get var translations
+                if var.translation and hasattr(var.translation, 'standard_name'):
+                    standardname = var.translation.standard_name
+
+                if cat.df.get('realm', None) is not None:
+                    realm = case_d.query.pop('realm')
+                freq = var.T.frequency
+                print(alt_names, var.name, standardname, realm, freq)
+                primary_raw_name = self.pick_catalog_name(alt_names, var.name, cat.df, standard_name=standardname, realm=realm, frequency=freq)
                 #primary_raw_name = alt_names[1] if alt_names else var.name
-                print("TEST VAR TRANSLATION",getattr(var, 'translation', None))
 
                 if getattr(var, 'translation', None) is None:
                     print(f"DEBUG: var.translation is None for '{var.name}'; attempting to translate using varlist.translate_var...")

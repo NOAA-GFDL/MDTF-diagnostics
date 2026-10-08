@@ -79,6 +79,9 @@ class DataSourceBase(util.MDTFObjectBase, util.CaseLoggerMixin):
             freq = freq.format_local()
         if freq == 'hr':
             freq = '1hr'
+        # instantaneous data is catalogued under CMIP6-style frequencies, e.g. 6hrPt
+        if not var.is_static and 'time: point' in var.cell_methods:
+            freq = freq + 'Pt'
         self.query['frequency'] = freq
 
         var_id = var.name

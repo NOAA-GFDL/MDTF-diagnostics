@@ -268,6 +268,13 @@ variable. Most settings here are optional, but the main ones are:
   Output frequency of data with a time dimension. May be specified for each variable with a time dimension, or in the data section if 
   all variables have the same frequency.
 
+``cell_methods``:
+  String, optional. CF `cell_methods <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#cell-methods>`__
+  of the requested data. Set to ``"time: point"`` to request instantaneous samples instead of time means; the
+  framework then queries the data catalog for the CMIP6-style frequency with a ``Pt`` suffix (e.g., ``"frequency": "6hr"``
+  with ``"cell_methods": "time: point"`` matches catalog entries with frequency ``6hrPt``). If not specified, the
+  catalog is queried for ``frequency`` as given.
+
 ``dimensions``:
   List of names of dimensions specified in the "dimensions" section, to specify the coordinate dependence of each
   variable.

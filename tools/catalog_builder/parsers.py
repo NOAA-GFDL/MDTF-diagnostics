@@ -151,19 +151,36 @@ def parse_nc_file(file_path: pathlib.Path, catalog_info: dict) -> dict:
                 if calendar == 'no_leap':
                     calendar = 'noleap'
             start_time = cftime.num2date(time_var.values[0], time_var.attrs['units'], calendar=calendar)
-            end_time = cftime.num2date(time_var.values[-1], time_var.attrs['units'])
+            end_time = cftime.num2date(time_var.values[-1], time_var.attrs['units'], calendar=calendar)
             time_range = start_time.strftime("%Y%m%d:%H%M%S") + '-' + end_time.strftime("%Y%m%d:%H%M%S")
             catalog_info.update({'time_range': time_range})
 
-        for var in variable_list:
-            if len(ds[var].attrs['long_name']) == 0 and len(ds[var].attrs['long_name']) == 0:
+        # Take metadata from the file's main variable only. Files also hold auxiliary
+        # variables (e.g. P0, datesec, time_bound/time_bounds) that would otherwise
+        # set variable_id or overwrite units/long_name. Use the variable_id set by
+        # the caller, else a file name part naming a data variable (CESM timeseries
+        # files are <case>.<VAR>.<freq>.nc), else the first variable found.
+        main_var = None
+        if catalog_info['variable_id'] in ds.data_vars:
+            main_var = catalog_info['variable_id']
+        else:
+            for part in pathlib.Path(file_path).stem.split('.'):
+                if part in ds.data_vars:
+                    main_var = part
+                    break
+        if main_var is None and any(variable_list):
+            main_var = variable_list[0]
+
+        if main_var is not None:
+            attrs = ds[main_var].attrs
+            if len(attrs.get('standard_name', '')) == 0 and len(attrs.get('long_name', '')) == 0:
                 print('Asset variable does not contain a standard_name or long_name attribute')
                 exit(1)
             for attr in catalog_keys:
-                if attr in ds[var].attrs:
-                    catalog_info.update({attr: ds[var].attrs[attr]})
+                if attr in attrs:
+                    catalog_info.update({attr: attrs[attr]})
             if catalog_info['variable_id'] == "":
-                catalog_info.update({'variable_id': var})
+                catalog_info.update({'variable_id': main_var})
 
         return catalog_info
 

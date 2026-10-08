@@ -1427,8 +1427,13 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 attrs_to_delete.add(key)
         # clean up _FillValue
         old_fillvalue = encoding.get('_FillValue', np.nan)
+        # _FillValue may already be None (unset by an earlier pass) or a non-float
+        try:
+            fill_is_nan = old_fillvalue is not None and bool(np.isnan(old_fillvalue))
+        except TypeError:
+            fill_is_nan = False
         if name != var.translation.name \
-                or (self.output_to_ncl and np.isnan(old_fillvalue)):
+                or (self.output_to_ncl and fill_is_nan):
             encoding['_FillValue'] = None
             attrs['_FillValue'] = None
             attrs_to_delete.add('_FillValue')
@@ -1585,9 +1590,9 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
         that child classes can modify it. Calls the :meth:`write_dataset` method
         implemented by the child class.
         """
-        for k, v in pod_reqs.items():
-            if 'ncl' in v:
-                self.output_to_ncl = True
+        # pod_reqs is keyed by language, e.g. {'python3': [...], 'ncl': [<ncl libs>]}
+        if any(k.lower() == 'ncl' for k in pod_reqs):
+            self.output_to_ncl = True
         for case_name, ds in catalog_subset.items():
             for var in case_list[case_name].varlist.iter_vars():
                 # var.log.info("Writing %d mb to %s", ds[var.name].variable.nbytes / (1024 * 1024), var.dest_path)
@@ -1775,9 +1780,9 @@ class NullPreprocessor(MDTFPreprocessorBase):
                  pod_reqs: dict):
         """Dummy method that just sets class attribute
         """
-        for k, v in pod_reqs.items():
-            if 'ncl' in v:
-                self.output_to_ncl = True
+        # pod_reqs is keyed by language, e.g. {'python3': [...], 'ncl': [<ncl libs>]}
+        if any(k.lower() == 'ncl' for k in pod_reqs):
+            self.output_to_ncl = True
 
     def write_pp_catalog(self,
                          cases: dict,

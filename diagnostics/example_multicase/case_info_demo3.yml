@@ -1,0 +1,30 @@
+CATALOG_FILE: "/work/Janice.Kim/mdtf_main/MDTF-diagnostics/diagnostics/example_multicase/esm_catalog_CMIP_synthetic_r1i1p1f1_gr1.json"
+CASE_LIST:
+  CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231:
+    case_name: CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231
+    startdate: '19800101120000'
+    enddate: '19841231000000'
+    TAS_ASSOC_FILES: ''
+    TAS_FILE:  /work/Janice.Kim/mdtf_main/mdtf_test_data/CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231/day/CMIP_Synthetic_r1i1p1f1_gr1_19800101-19841231.tas.day.nc
+    date_int_offset: 0
+    lat_bnds: lat_bnds
+    lat_coord: lat
+    lon_bnds: lon_bnds
+    lon_coord: lon
+    tas_var: tas
+    time_bnds: time_bnds
+    time_coord: time
+  CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231:
+    case_name: CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231
+    startdate: '19850101'
+    enddate: '19891231'
+    TAS_ASSOC_FILES: ''
+    TAS_FILE: /work/Janice.Kim/mdtf_main/mdtf_test_data/CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231/day/CMIP_Synthetic_r1i1p1f1_gr1_19850101-19891231.tas.day.nc
+    date_int_offset: 0
+    lat_bnds: lat_bnds
+    lat_coord: lat
+    lon_bnds: lon_bnds
+    lon_coord: lon
+    tas_var: tas
+    time_bnds: time_bnds
+    time_coord: time

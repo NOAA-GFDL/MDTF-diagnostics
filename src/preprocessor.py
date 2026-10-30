@@ -1272,12 +1272,20 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                 alt_names = []
                 if fieldlist_path and os.path.exists(fieldlist_path):
                     try:
+                        # Get the translated variable
+                        canonical_target_name = getattr(
+                            getattr(var, 'translation', None),
+                            'name',
+                            None
+                        ) or var.name
+
                         alt_names = fieldlist_parser.get_fieldlist_alt_names(
                             fieldlist_path,
                             var.name,
-                            target_convention
+                            canonical_target_name
                         )
-
+                        print(f"***JKDEBUG: var.name:{var.name}, alt_names:{alt_names}")
+                        print(f"***JKDEBUG: canonical_target_name:{canonical_target_name}, target_convention:{target_convention}")
                       #  print(f"DEBUG: get_fieldlist_alt_names for '{var.name}' -> {alt_names}")
                     except Exception as fl_err:
                         print(f"DEBUG: Error in get_fieldlist_alt_names for '{var.name}': {fl_err}")

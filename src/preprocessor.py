@@ -1284,8 +1284,6 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
                             var.name,
                             canonical_target_name
                         )
-                        print(f"***JKDEBUG: var.name:{var.name}, alt_names:{alt_names}")
-                        print(f"***JKDEBUG: canonical_target_name:{canonical_target_name}, target_convention:{target_convention}")
                       #  print(f"DEBUG: get_fieldlist_alt_names for '{var.name}' -> {alt_names}")
                     except Exception as fl_err:
                         print(f"DEBUG: Error in get_fieldlist_alt_names for '{var.name}': {fl_err}")

@@ -171,10 +171,12 @@
     },
     "wap500": {
       "standard_name": "lagrangian_tendency_of_air_pressure",
+      "alt_names": ["wap", "wap_unmsk"],
       "long_name": "lagrangian tendency of air pressure at 500 hPa",
       "realm": "atmos",
       "units": "Pa s-1",
-      "ndim": 3
+      "ndim": 3,
+      "scalar_coordinates": {"plev": 500}
     },
     "hur_unmsk": {
       "standard_name": "relative_humidity",

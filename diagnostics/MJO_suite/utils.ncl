@@ -262,6 +262,19 @@ else  ; DO WRITE NEW FILE
     var = var_1($time_coord$|i1:i2,{$lat_coord$|-40:40},$lon_coord$|:)
 
    end if ; if( isfilepresent(file_in) ) then
+
+   ; Fill missing values by linear interpolation in time at each grid point, as Wheeler_Kiladis
+   ; getVarSlice.ncl does (e.g. the 30 all-missing days of the NOAA daily OLR CDR, 1980-1989); the
+   ; band-pass filters and EOFs below cannot handle missing days. Series ends take the nearest valid
+   ; value; a point missing at every time stays missing.
+   if (isatt(var,"_FillValue")) then
+     nMsg = num(ismissing(var))
+     if (nMsg.gt.0) then
+       var = (/ linmsg_n(var, -1, 0) /)
+       print("read_model_file: "+var_name_out+": filled "+(nMsg-num(ismissing(var)))+" of "+nMsg+\
+             " missing values by linear interpolation in time")
+     end if
+   end if
    
    if ( interp_opts ) then
      if ( interp_opts@interp_to_var_name .eq. var_name_out ) then ; save

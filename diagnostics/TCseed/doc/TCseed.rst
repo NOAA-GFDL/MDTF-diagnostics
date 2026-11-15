@@ -11,7 +11,7 @@
 TC Seed Convective Organization Diagnostics
 ===============================
 
-Last Update: 11/6/26
+Last Update: 11/15/26
 
 This POD calculates convective organization metrics for developing and non-developing tropical cyclone seed disturbances. 
 These metrics include a simple fractional area of rainfall rates at and above the 95th Percentile and complex clustering metrics 
@@ -91,9 +91,3 @@ References
 2. Tobin I, Bony S, Roca R. 2012. Observational Evidence for Relationships between the Degree of Aggregation of Deep Convection, Water Vapor, Surface Fluxes, and Radiation. Journal of Climate 25(20), doi:10.1175/jcli-d-11-00258.1, URL http://dx.doi.org/10.1175/JCLI-D-11-00258.1.
 3. Biagioli G, Tompkins AM. 2023. Measuring Convective Organization. Journal of the Atmospheric Sciences 80(12), doi:10.1175/jas-d-23-0103.1, URL http://dx.doi.org/10.1175/JAS-D-23-0103.1.
 4. Tompkins AM, Semie AG. 2017. Organization of tropical convection in low vertical wind shears: Role of updraft entrainment. Journal of Advances in Modeling Earth Systems 9(2), doi:10.1002/2016ms000802, URL http://dx.doi.org/10.1002/2016MS000802.
-
-More about this diagnostic
---------------------------
-
-Additional References
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

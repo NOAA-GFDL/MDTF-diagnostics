@@ -11,7 +11,7 @@
 TC MSE Variance Budget Analysis
 ===============================
 
-Last Update: 9/4/26
+Last Update: 11/15/26
 
 This POD computes the column-integrated moist static energy (MSE) and terms in the budget for its spatial variance for tropical cyclones (TCs). The budget terms are computed along the tracks of individual simulated TCs and them composited as a function of the TC intensity (maximum near-surface wind speed) of each snapshot. The results are compared to equivalent calculations from 5 reanalysis datasets.
 

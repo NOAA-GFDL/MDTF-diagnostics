@@ -1,0 +1,121 @@
+{
+  "esmcat_version": "0.0.1",
+  "attributes": [
+    {
+      "column_name": "activity_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "assoc_files",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "institution_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "member_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "realm",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "variable_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "table_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "source_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "source_type",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "cell_methods",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "cell_measures",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "experiment_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "variant_label",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "grid_label",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "units",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "time_range",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "chunk_freq",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "standard_name",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "long_name",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "frequency",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "file_name",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "path",
+      "vocabulary": ""
+    }
+  ],
+  "assets": {
+    "column_name": "path",
+    "format": "netcdf",
+    "format_column_name": null
+  },
+  "aggregation_control": {
+    "variable_column_name": "variable_id",
+    "groupby_attrs": [
+      "activity_id",
+      "institution_id",
+      "experiment_id",
+      "frequency",
+      "member_id",
+      "realm"
+    ],
+    "aggregations": [
+      {
+        "type": "union",
+        "attribute_name": "variable_id",
+        "options": {}
+      }
+    ]
+  },
+  "id": "GFDL.CM4.AMIP_catalog",
+  "description": null,
+  "title": null,
+  "last_updated": "2026-09-03T22:38:31Z",
+  "catalog_file": "file:///home/awing/mdtf/MDTF-diagnostics/catalogs/GFDL.CM4.AMIP_catalog.csv"
+}

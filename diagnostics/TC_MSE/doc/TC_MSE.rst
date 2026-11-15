@@ -11,7 +11,7 @@
 TC MSE Variance Budget Analysis
 ===============================
 
-Last Update: 2/22/2023
+Last Update: 11/15/26
 
 This POD computes the column-integrated moist static energy (MSE) and terms in the budget for its spatial variance for tropical cyclones (TCs). The budget terms are computed along the tracks of individual simulated TCs and them composited as a function of the TC intensity (maximum near-surface wind speed) of each snapshot. The results are compared to equivalent calculations from 5 reanalysis datasets.
 
@@ -20,9 +20,10 @@ This POD computes the column-integrated moist static energy (MSE) and terms in t
 Version & Contact info
 ----------------------
 
-- Version/revision information: version 1 (2/22/2023)
+- Version/revision information: version 2 (notebook conversion 9/2026); version 1 (2/22/2023)
 - PI: Allison Wing, Florida State University, awing@fsu.edu
-- Developer/point of contact: Jarrett Starr, Florida State University, jstarr2@fsu.edu
+- Developer/point of contact (version 2): Allison Wing, Florida State University, awing@fsu.edu
+- Developer/point of contact (version 1): Jarrett Starr, Florida State University, jstarr2@fsu.edu
 - Other Contributors: Caitlin Dirkes, Suzana Camargo, Daehyun Kim
 
 .. Underline with '^'s to make a third-level heading.
@@ -39,22 +40,20 @@ Functionality
 In the current implementation of the POD, pre-calcluated tropical cyclone (TC) track data is also required as an input to the POD as obs data. The POD is currently written to accept track data as a formatted .txt file. The code extracts the TC center latitude and longitude, maximum near surface wind speed (vmax), and minimum sea level pressure at each time along the track of each storm. The code then extracts the necessary variables to compute the column-integrated moist static energy (MSE) and the longwave, shortwave, and surface flux feedbacks in the budget for the spatial variance of column-integrated MSE, in 10 x 10 degree boxes along the tracks of each TC. Then, the snapshots are trimmed to only account for times where the TC is intensifying (snapshots prior to each storms lifetime maximum intensity) and is equatorward of 30 degrees. The remaining TC snapshots are then binned by vmax in 3 m/s increment, and then composited over each bin. The model composites are then compared to 5 reanalysis 
 datasets (ERA-5, ERA-Interim, MERRA-2, CFSR, JRA-55) which have already been processed through the above framework. The plots include composite TC-relative spatial maps of the feedback terms and MSE anomaly for select bins, azimuthal averages of the feedback terms for select bins, and box-averages of the feedback terms for all bins. A normalized version of the box-average plot is also included, in which the feedbacks at each grid point are normalized by the value of the box-average MSE variance for that snapshot. The normalization is performed prior to compositing. Finally, the box-averaged feedbacks and normalized box-averaged feedbacks in select bins are plotted against the percent of storms intensifying from one bin to another.
 
-When and how each of the scripts are utilized in the driver script (TC_MSE_Driver.py) is as follows:
+This notebook mirrors the 3 stages of the original driver:
 
-1. TC_snapshot_MSE_calc.py is called first to extract the data and compute the MSE variance budget along the tracks of all the TCs. The resulting data is saved into a file for each year. 
-
-2. Binning_and_compositing.py is called which takes all of the files that were created in step 1, concatenates them, and then bins as well as composites each
-of the snapshots and its variables by vmax. The budget variables are also box-averaged and normalized in this step as well.
-
-3. Plotting.py is called which imports all of the plotting functions that are in the Plotting_Functions.py script and generates and saves the plots that are 
-desired. The user may comment out any of the plotting functions that are called in the Plotting.py script they do not want. 
+1. **Section 3a** (was `TC_snapshot_MSE_calc.py`): extract track/model data and compute
+   the MSE variance budget snapshots along the tracks of all TCs, saved per year.
+2. **Section 3b** (was `Binning_and_compositing.py`): concatenate the yearly snapshot
+   data, bin and composite by TC intensity, and box-average/normalize the feedbacks.
+3. **Section 4** (was `Plotting.py`): generate the composite/azimuthal-mean/box-average/
+   scatter plots using `Plotting_Functions.py`.The user may comment out any of the plotting functions that are called in the Plotting.py script they do not want. 
 
 Required programming language and libraries
 -------------------------------------------
 
-Written using conda version 4.10.1 and python version 3.10
-
-matplotlib, numpy, pandas, xarray, scipy, sys
+* Python >= 3.10
+* xarray, numpy, pandas, scipy, matplotlib, intake, yaml
 
 Required model output variables
 -------------------------------
@@ -86,12 +85,9 @@ In the current implementation of the POD, pre-calcluated TC track data is also r
 References
 ----------
 
-1. Wing, A. A., Camargo, S. J., Sobel, A. H., Kim, D., Moon, Y., Murakami, H., Reed, K. A., Vecchi, G. A., Wehner, M. F., 
-Zarzycki, C., & Zhao, M. (2019). Moist Static Energy Budget Analysis of Tropical Cyclone Intensification in High-Resolution Climate Models, 
-Journal of Climate, 32(18), 6071-6095, https://doi.org/10.1175/JCLI-D-18-0599.1.
-
-2. Dirkes, C. A., Wing, A. A., Camargo, S. J., Kim, D. (2022). Process-oriented diagnosis of tropical cyclones in reanalyses using a moist static
-energy variance budget, Journal of Climate (In review).
+1. Wing, A. A., Camargo, S. J., Sobel, A. H., Kim, D., Moon, Y., Murakami, H., Reed, K. A., Vecchi, G. A., Wehner, M. F., Zarzycki, C., & Zhao, M. (2019). Moist Static Energy Budget Analysis of Tropical Cyclone Intensification in High-Resolution Climate Models, Journal of Climate, 32(18), 6071-6095, https://doi.org/10.1175/JCLI-D-18-0599.1.
+2. Dirkes, C.A., A.A. Wing, S.J. Camargo, and D. Kim (2023): Process-oriented diagnosis of tropical cyclones in reanalyses using a moist static energy variance budget, J. Climate, 36, 5293-5317, https://doi.org/10.1175/JCLI-D-22-0384.1.
+3. Starr, J.C., A.A. Wing, S.J. Camargo, D. Kim, T.-Y. Lee, and J. Moon (2025): Using the Moist Static Energy Variance Budget to Evaluate Tropical Cyclones in Climate Models against Reanalyses and Satellite Observations, J. Climate, 38, 3353-3379, https://doi.org/10.1175/JCLI-D-24-0353.1.
 
 More about this diagnostic
 --------------------------

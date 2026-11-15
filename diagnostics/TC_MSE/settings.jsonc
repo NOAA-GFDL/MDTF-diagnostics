@@ -8,7 +8,7 @@
       // Name of the driver script. This should be a single script, taking no
       // command-line arguments, which runs the entire analysis (calling any other
       // scripts or subroutines as needed.)
-      "driver" : "TC_MSE_Driver.py",
+      "driver" : "TC_MSE_notebook.ipynb",
   
       // Human-readable name of the diagnostic. May contain spaces.
       "long_name" : "TC MSE Variance Budget diagnostic",
@@ -34,7 +34,7 @@
       // The framework will ensure everything listed here is on your diagnostic's
       // $PATH when it runs.
       "runtime_requirements": {
-          "python3": ["matplotlib", "xarray", "numpy", "pandas", "scipy"]
+          "python3": ["matplotlib", "xarray", "numpy", "pandas", "scipy","intake","yaml"]
       }
     },
   

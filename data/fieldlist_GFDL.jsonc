@@ -549,6 +549,14 @@
       "units": "K",
       "ndim": 3
     },
+    "tm": {
+      // TempestExtremes storm-tracking input: thickness-weighted mean temperature, no CF standard name
+      "standard_name": "",
+      "long_name": "mean 300-500 mb temp",
+      "realm": "atmos",
+      "units": "K",
+      "ndim": 3
+    },
     "ucomp": {
       "standard_name": "eastward_wind",
       "long_name": "zonal wind",
@@ -586,6 +594,14 @@
       "realm": "atmos",
       "units": "m s-1",
       "modifier": "atmos_height",
+      "ndim": 3
+    },
+    "vort850": {
+      // TempestExtremes storm-tracking input: relative vorticity at 850 hPa
+      "standard_name": "atmosphere_relative_vorticity",
+      "long_name": "850-mb vorticity",
+      "realm": "atmos",
+      "units": "s-1",
       "ndim": 3
     },
     "wat_conv_col": {

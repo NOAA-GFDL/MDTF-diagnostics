@@ -359,8 +359,11 @@ def azmean(xord, yord, data, xcen, ycen, r):
     # The atleast_2d creates a 2D, with 1,1000 dimension. I am doing that to do the dot product
     # and broadcast the operation.
 
-    # interp2 outputs another function F where you can call xcircle and ycircle
-    F = interpolate.interp2d(xord, yord, data)  # Use the function to interpolate the data
+    # interp2d is removed in recent scipy; RectBivariateSpline is the recommended replacement
+    # for interpolating on a regular grid. It expects z with shape (len(x), len(y)), the
+    # transpose of interp2d's (len(y), len(x)) convention, and kx=ky=1 reproduces interp2d's
+    # default 'linear' interpolation.
+    F = interpolate.RectBivariateSpline(xord, yord, np.asarray(data).T, kx=1, ky=1)
 
     # Because I have the 2D arrays, and they have one dimension in common (1), I can do
     # the "dot" product. The important thing is to get the right order and transpose order
@@ -372,7 +375,8 @@ def azmean(xord, yord, data, xcen, ycen, r):
     # you get a 1000x1000 array, and diagonal or firstrow or firstcolumn won't work. so need to loop
     for ix in range(0, nr):
         for i_nslice in range(0, nslice):
-            datai[i_nslice, ix] = F(xcircle[i_nslice, ix], ycircle[i_nslice, ix])
+            # RectBivariateSpline returns a (1,1) array for scalar inputs; extract the value
+            datai[i_nslice, ix] = F(xcircle[i_nslice, ix], ycircle[i_nslice, ix])[0, 0]
 
     # take azimuthal mean
     azmean = np.nanmean(datai, axis=0)
@@ -586,7 +590,7 @@ def AzmeanPlotting():
 
     # Final plot adjustments
     plt.suptitle('Multi-Bin Azimuthal Mean of Feedback Terms', fontweight='bold', fontsize=30)
-    plt.savefig(os.environ['WK_DIR'] + '/Multibin_Azmean_Plots.pdf')
+    plt.savefig(os.environ['WORK_DIR'] + '/Multibin_Azmean_Plots.pdf')
     plt.close()
 
 
@@ -722,7 +726,7 @@ def BoxAvLinePlotting():
     # Final plot adjustments
     plt.suptitle('Box Average of Bin Composite for Feedback Terms', fontweight='bold', fontsize=40)
     plt.subplots_adjust(hspace=0.35, wspace=0.3)
-    plt.savefig(os.environ['WK_DIR'] + '/Box_Average_Plots.pdf')
+    plt.savefig(os.environ['WORK_DIR'] + '/Box_Average_Plots.pdf')
     plt.close()
 
     # Now do the normalized version
@@ -845,7 +849,7 @@ def BoxAvLinePlotting():
     # Final plot adjustments
     plt.suptitle('Normalized Box Average of Bin Composites for Feedback Terms', fontweight='bold', fontsize=40)
     plt.subplots_adjust(hspace=0.35, wspace=0.3)
-    plt.savefig(os.environ['WK_DIR'] + '/Normalized_Box_Average_Plots.pdf')
+    plt.savefig(os.environ['WORK_DIR'] + '/Normalized_Box_Average_Plots.pdf')
     plt.close()
 
 

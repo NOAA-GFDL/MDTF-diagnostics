@@ -26,7 +26,7 @@
           "convention": "CMIP",
           "realm": "atmos", // optional list or str; use to refine query if dataset realm definition differs from POD realm
           "startdate": "19790101",
-          "enddate": "19831231"
+          "enddate": "19801231"
         }
     },
   // PATHS ---------------------------------------------------------------------
@@ -77,7 +77,7 @@
 
   // If true, leave pp data in OUTPUT_DIR after preprocessing; if false, delete pp data after PODs
   // run to completion
-  "save_pp_data": false,
+  "save_pp_data": true,
 
   // Set to true to save HTML and bitmap plots in a .tar file.
   "make_variab_tar": false,

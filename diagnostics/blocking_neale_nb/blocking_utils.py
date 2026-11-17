@@ -325,9 +325,16 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,file_opts
     ghgn_thresh = -5.
     ghgs_thresh = 0.
     
-    # Latitude range to read in
-    lat_s_in = 35.
-    lat_n_in = 75.
+    # Latitude range to read in. Must cover every latitude used below: the 1D
+    # index uses up to 78.85+3.75 = 82.6N and down to 41.25-3.75 = 37.5N; the 2D
+    # index uses 15 deg north and south of its 35-75N band (20-90N). (Was 35-75N,
+    # which clamped those latitudes to 35N/75N. The NCL POD read 20-85N.)
+    lat_s_in = 20.
+    lat_n_in = 90.
+
+    # Central latitudes of the 2D index (Davini et al. 2012)
+    lat_s_2d = 35.
+    lat_n_2d = 75.
 
     # Latitude range for moving 2D latitude ghg calculation.
 
@@ -370,8 +377,8 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,file_opts
             #  Grab data and variable        
             ens_z500 = ds_this_ens['Z500']   
     
-            # Subset required latitude limits.
-            ens_z500 = ens_z500.sel(lat=slice(lat_s_in,lat_n_in))
+            # Subset required latitude limits (latitude ascending, whatever the input order).
+            ens_z500 = ens_z500.sortby('lat').sel(lat=slice(lat_s_in,lat_n_in))
     
             # Grab actual latitudes nearest blats_x on the data grid
             blats_ng = ens_z500.lat.sel(lat=blats_n, method="nearest")
@@ -427,31 +434,16 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,file_opts
                 ### 2D (loop latitudes)
 
 
-                    # Initialize blocked boolean to False
-                 
-                    is_blocked = ens_z500.astype('bool').rename('is_blocked')
-                    is_blocked = xr.where(is_blocked, False, is_blocked)  # Initialize to False
+                    # For each central latitude phi0 in the 35-75N band, the heights at
+                    # phi0+15 and phi0-15 (nearest grid latitudes) give the north and
+                    # south gradients; a point is blocked when GHGS > 0 and GHGN < -5.
+                    z500_0 = ens_z500.sel(lat=slice(lat_s_2d, lat_n_2d))
+                    lat0 = z500_0.lat.values
+                    z500_n = ens_z500.sel(lat=lat0 + dlat_2d, method="nearest").assign_coords(lat=lat0)
+                    z500_s = ens_z500.sel(lat=lat0 - dlat_2d, method="nearest").assign_coords(lat=lat0)
+                    ghgn = (z500_n - z500_0) / dlat_2d
+                    ghgs = (z500_0 - z500_s) / dlat_2d
 
-                    ghgn = xr.zeros_like(ens_z500)
-                    ghgs = xr.zeros_like(ens_z500)
-                    for ilat,blat_0 in enumerate(ens_z500.lat.sel(lat=slice(lat_s_in,lat_n_in))):
-                        # blat_0 is the latitude being looped over
-                        # blat_n/blat_s are the latitudes north and south of it by dlat_2d (15 deg)               
-                        blat_n = blat_0+dlat_2d 
-                        blat_s = blat_0-dlat_2d
-                        
-                        z500_blat_n = ens_z500.sel(lat=blat_n, method="nearest")
-                        z500_blat_0 = ens_z500.sel(lat=blat_0, method="nearest")
-                        z500_blat_s = ens_z500.sel(lat=blat_s, method="nearest")
-                        
-                        # Use all times & all lons, choose lat = ilat
-                        # in this case, ilat = 0 (the index, not the lat value) )
-                        loc_dict = dict(time=slice(None), lat=blat_0, lon=slice(None))
-                        ghgn.loc[loc_dict] = (z500_blat_n-z500_blat_0) / (blat_n-blat_0)
-                        ghgs.loc[loc_dict] = (z500_blat_0-z500_blat_s) / (blat_0-blat_s)  
-
-                        
-                        
                     # Boolean for saying whether a time, lat and lon point is blocked or not 
                     is_blocked =  xr.where((ghgs > ghgs_thresh) & (ghgn < ghgn_thresh),True,False)
                 case _ :

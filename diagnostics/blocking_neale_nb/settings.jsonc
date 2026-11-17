@@ -30,7 +30,7 @@
     // The framework picks the conda env from the first language with a
     // non-empty package list, so the list must not be empty.
     "runtime_requirements": {
-      "python3": ["numpy", "pandas", "xarray", "scipy", "matplotlib", "cartopy", "esnb", "nbconvert"]
+      "python3": ["numpy", "pandas", "xarray", "scipy", "matplotlib", "cartopy", "intake-esm", "nbconvert"]
     }
   },
 

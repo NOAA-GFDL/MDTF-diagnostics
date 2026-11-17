@@ -11,14 +11,16 @@ A notebook POD can be run three ways:
   notebook as text in the same formats as the framework's files (an
   ``input_*.yml`` runtime config and the POD's ``settings.jsonc``).
 
-In the two stand-alone modes the notebook calls :func:`make_standalone_pod_page`
-at the end, which builds the POD's html page with the framework's own
-:class:`~src.output_manager.HTMLPodOutputManager`, so the page matches the one
-the framework would make. :func:`export_run_settings` writes the notebook's
-settings text out as files so the same run can be repeated in batch.
+In the two stand-alone modes the notebook calls :func:`make_standalone_output`
+at the end. It writes the same output layout the framework writes
+(``<WORK_DIR>/MDTF_output/`` with ``index.html``, the MDTF banner, the POD's
+page, logs and ``case_info.yml``, ``config_save.json``, and optionally
+``<WORK_DIR>/MDTF_output.tar``), using the framework's own html templates and
+:class:`~src.output_manager.HTMLPodOutputManager`.
 
-Only the per-POD page is built; the framework's top-level ``index.html`` and
-``<pod>.data.log`` need the full framework objects and are not made here.
+:func:`open_catalog_var` reads a case's model data from an ESM-intake catalog
+with the same query the framework uses, and :func:`export_run_settings` writes
+the notebook's settings text out as files so the run can be repeated in batch.
 """
 import os
 import io
@@ -40,6 +42,11 @@ RUNTIME_CONFIG_ENV = "MDTF_RUNTIME_CONFIG"
 # Optional environment variable pointing a headless run at a POD settings file
 # (default: settings.jsonc in the POD's code directory)
 POD_SETTINGS_ENV = "MDTF_POD_SETTINGS"
+# Set by the command-line runner (python -m src.standalone_html run ...): fixed
+# output directory, and leave the tar to the runner (made after nbconvert has
+# written the executed notebook, as in the framework)
+OUTPUT_DIR_ENV = "MDTF_STANDALONE_OUTPUT_DIR"
+DEFER_TAR_ENV = "MDTF_STANDALONE_DEFER_TAR"
 
 
 def repo_root() -> str:
@@ -148,8 +155,10 @@ def load_run_settings(pod_name: str, pod_code_dir: str,
         mode a minimal one built from the framework's case_info.yml),
         ``runtime_yml_text`` (None in framework mode), ``settings`` (full parsed settings.jsonc),
         ``pod_settings_text``, ``pod_env_vars`` (dict of str), ``case_list``
-        (see :func:`case_list_for_html`), ``work_dir`` (run's top WORK_DIR),
-        ``pod_work_dir``, ``obs_data`` and ``catalog``.
+        (see :func:`case_list_for_html`), ``work_dir`` (the run's output
+        directory holding the POD directory: ``<WORK_DIR>/MDTF_output`` as in
+        the framework, with a version suffix if it exists and ``overwrite`` is
+        false), ``pod_work_dir``, ``obs_data`` and ``catalog``.
     """
     mode = detect_run_mode()
     pod_code_dir = os.path.abspath(pod_code_dir)
@@ -205,7 +214,16 @@ def load_run_settings(pod_name: str, pod_code_dir: str,
             s.runtime_yml_text = runtime_yml_text
         s.runtime_cfg = parse_runtime_yml(s.runtime_yml_text)
         s.case_list = case_list_for_html(s.runtime_cfg)
-        s.work_dir = os.path.abspath(s.runtime_cfg['WORK_DIR'])
+        # Same output directory rule as the framework (src/util/path_utils.py):
+        # <OUTPUT_DIR or WORK_DIR>/MDTF_output, versioned if not overwriting.
+        base = s.runtime_cfg.get('OUTPUT_DIR') or s.runtime_cfg['WORK_DIR']
+        base = os.path.abspath(os.path.expandvars(os.path.expanduser(base)))
+        out_dir = base if 'MDTF_output' in base else os.path.join(base, 'MDTF_output')
+        if os.environ.get(OUTPUT_DIR_ENV):
+            out_dir = os.environ[OUTPUT_DIR_ENV]
+        elif not s.runtime_cfg.get('overwrite', False) and os.path.exists(out_dir):
+            out_dir, _ = util.bump_version(out_dir)
+        s.work_dir = out_dir
         s.pod_work_dir = os.path.join(s.work_dir, pod_name)
         obs_root = s.runtime_cfg.get('OBS_DATA_ROOT') or ''
         s.obs_data = os.path.join(obs_root, pod_name) if obs_root else ''
@@ -230,8 +248,7 @@ def make_standalone_pod_page(pod_name: str, pod_code_dir: str, work_dir: str,
                              settings: dict, case_list: dict,
                              driver: str = "", obs_data: str = "",
                              extra_env: dict = None, save_ps: bool = False,
-                             verify_links_flag: bool = True, make_tar: bool = False,
-                             log=None) -> str:
+                             verify_links_flag: bool = True, log=None) -> str:
     """Build the POD's html page in ``<work_dir>/<pod_name>/`` the same way the
     framework does, without running the framework.
 
@@ -256,10 +273,6 @@ def make_standalone_pod_page(pod_name: str, pod_code_dir: str, work_dir: str,
         save_ps: Keep ``model/PS`` and ``obs/PS`` after conversion.
         verify_links_flag: Check that files linked from the page exist; missing
             files are logged as warnings and returned in the log, not raised.
-        make_tar: Also write ``<work_dir>/<pod_name>.tar.gz`` holding the POD
-            output directory plus the MDTF banner, so the page displays
-            correctly when unpacked elsewhere (like the framework's
-            ``make_variab_tar``; netCDF and PS files are left out).
         log: Logger to use (default: this module's logger).
 
     Returns:
@@ -322,34 +335,7 @@ def make_standalone_pod_page(pod_name: str, pod_code_dir: str, work_dir: str,
                         pod_name, len(missing), ", ".join(missing))
         else:
             log.info("%s: all linked files found.", pod_name)
-    if make_tar:
-        tar_path = make_pod_tar(work_dir, pod_name)
-        print("Wrote", tar_path)
     return page
-
-
-def make_pod_tar(work_dir: str, pod_name: str) -> str:
-    """Write ``<work_dir>/<pod_name>.tar.gz`` with the POD's output directory and
-    the MDTF banner image (which POD pages link to as ``../mdtf_diag_banner.png``).
-    Leaves out netCDF and PostScript files, as the framework's tar option does.
-    """
-    import tarfile
-    skip_dirs = {'netCDF', 'PS'}
-    skip_ext = ('.nc', '.ps', '.eps', '.PS', '.EPS')
-
-    def _filter(ti):
-        parts = ti.name.split('/')
-        if any(p in skip_dirs for p in parts) or ti.name.endswith(skip_ext):
-            return None
-        return ti
-
-    tar_path = os.path.join(work_dir, pod_name + '.tar.gz')
-    with tarfile.open(tar_path, 'w:gz') as tar:
-        banner = os.path.join(work_dir, 'mdtf_diag_banner.png')
-        if os.path.isfile(banner):
-            tar.add(banner, arcname='mdtf_diag_banner.png')
-        tar.add(os.path.join(work_dir, pod_name), arcname=pod_name, filter=_filter)
-    return tar_path
 
 
 def find_missing_links(page: str, pod_name: str, log=None) -> list:
@@ -362,6 +348,186 @@ def find_missing_links(page: str, pod_name: str, log=None) -> list:
         page, os.path.dirname(pod_work_dir), verbose=False, log=log
     )
     return verifier.verify_pod_links(pod_name)
+
+
+# ---------------------------------------------------------------------------
+# Reading model data from a catalog (stand-alone runs)
+# ---------------------------------------------------------------------------
+
+def open_catalog_var(catalog: str, case_name: str, var_settings: dict,
+                     names=None, out_name: str = None, level=None):
+    """Open one variable of one case from an ESM-intake catalog.
+
+    Uses the same selection as the framework's preprocessor query
+    (src/preprocessor.py ``query_catalog``): the case name must appear in the
+    file path, and frequency, realm and standard_name must match the POD's
+    varlist entry. *names* (e.g. ``['Z500', 'zg']``) restricts ``variable_id``;
+    the first name that is found is used.
+
+    If the variable has a vertical dimension and *level* (hPa) is given (default:
+    the varlist entry's ``scalar_coordinates`` lev), that level is selected.
+
+    Returns:
+        (xarray.Dataset with the variable renamed to *out_name*, list of files)
+    """
+    import intake
+    import xarray as xr
+
+    cat = intake.open_esm_datastore(catalog)
+    df = cat.df
+    sel = df['path'].astype(str).str.contains(case_name, regex=False)
+    for col, key in (('frequency', 'frequency'), ('realm', 'realm'),
+                     ('standard_name', 'standard_name')):
+        if col in df.columns and var_settings.get(key):
+            sel &= df[col].astype(str) == str(var_settings[key])
+    sub = df[sel]
+    if names:
+        found = [n for n in names if (sub['variable_id'].astype(str) == n).any()]
+        if not found:
+            raise util.DataRequestError(
+                f"No catalog entries for case {case_name} with variable_id in {list(names)}, "
+                f"frequency {var_settings.get('frequency')}, standard_name "
+                f"{var_settings.get('standard_name')} in {catalog}.")
+        var_id = found[0]
+        sub = sub[sub['variable_id'].astype(str) == var_id]
+    else:
+        if sub.empty:
+            raise util.DataRequestError(f"No catalog entries for case {case_name} in {catalog}.")
+        var_id = str(sub['variable_id'].iloc[0])
+    files = sorted(sub['path'].astype(str).unique())
+    ds = xr.open_mfdataset(files, combine='by_coords', chunks={'time': 365})
+    ds = ds[[var_id]]
+
+    if level is None:
+        level = (var_settings.get('scalar_coordinates') or {}).get('lev')
+    zdims = [d for d in ds[var_id].dims if d in ('lev', 'plev', 'level', 'pressure', 'isobaric')]
+    if zdims and level is not None:
+        z = ds[zdims[0]]
+        lev = float(level) * (100. if float(z.max()) > 2000. else 1.)   # Pa or hPa coordinate
+        ds = ds.sel({zdims[0]: lev}, method='nearest').drop_vars(zdims[0], errors='ignore')
+    if out_name and out_name != var_id:
+        ds = ds.rename({var_id: out_name})
+    return ds, files
+
+
+# ---------------------------------------------------------------------------
+# Full framework-style output (index page, logs, tar)
+# ---------------------------------------------------------------------------
+
+def make_standalone_output(run, settings: dict = None, driver: str = "",
+                           data_files=None, pod_log_text: str = "",
+                           make_tar=None, log=None) -> str:
+    """Write the framework's output layout for a stand-alone run.
+
+    In ``run.work_dir`` (``<WORK_DIR>/MDTF_output``): the POD page and figures
+    (see :func:`make_standalone_pod_page`), ``<pod>/<pod>.log``,
+    ``<pod>/<pod>.data.log`` (also copied to the top level, as the framework
+    does), ``<pod>/case_info.yml``, a copy of the driver notebook,
+    ``MDTF_main.<date>.log``, ``config_save.json``, ``index.html`` built from the
+    framework's templates (src/html), and, if *make_tar* (default: the runtime
+    config's ``make_variab_tar``), ``<WORK_DIR>/MDTF_output.tar`` made with the
+    framework's tar command.
+
+    Returns:
+        Path of index.html.
+    """
+    log = _get_logger(log)
+    settings = settings if settings is not None else run.settings
+    pod, out_dir = run.pod_name, run.work_dir
+    pod_dir = run.pod_work_dir
+    os.makedirs(pod_dir, exist_ok=True)
+    now = datetime.datetime.now()
+    data_files = list(data_files or [])
+
+    page = make_standalone_pod_page(pod, run.pod_code_dir, out_dir, settings, run.case_list,
+                                    driver=driver, obs_data=run.obs_data, log=log,
+                                    save_ps=bool(run.runtime_cfg.get('save_ps', False)))
+
+    # driver copy (the framework runs a copy of the notebook in the POD dir)
+    if driver and os.path.isfile(driver):
+        dest = os.path.join(pod_dir, os.path.basename(driver))
+        if os.path.abspath(dest) != os.path.abspath(driver):
+            shutil.copy2(driver, dest)
+
+    # case_info.yml (same layout as the framework's case env file)
+    with io.open(os.path.join(pod_dir, 'case_info.yml'), 'w', encoding='utf-8') as f:
+        yaml.dump({'CATALOG_FILE': run.catalog, 'CASE_LIST': run.case_list}, f,
+                  allow_unicode=True, default_flow_style=False)
+
+    # data log, in the POD dir and at the top level
+    data_log = (f"# Input model data files used in this run of POD {pod}:\n"
+                + "".join(f"{p}\n" for p in data_files)
+                + f"\n# Preprocessed files used as input to POD {pod}:\n"
+                  "# (Stand-alone notebook run: no framework preprocessing.)\n")
+    for d in (pod_dir, out_dir):
+        with io.open(os.path.join(d, pod + '.data.log'), 'w', encoding='utf-8') as f:
+            f.write(data_log)
+
+    # POD log and main log
+    settings_block = settings.get('settings', settings)
+    head = util.mdtf_log_header(f"MDTF {pod} DIAGNOSTIC LOG")
+    pod_log = (head + f"Stand-alone notebook run ({run.mode}) of {driver}\n"
+               f"Finished {now:%Y-%m-%d %H:%M:%S}\n\n### POD settings (pod_env_vars):\n"
+               + "".join(f"  {k}: {v}\n" for k, v in run.pod_env_vars.items())
+               + "\n### Cases:\n"
+               + "".join(f"  {c}: {d.get('startdate', '')} - {d.get('enddate', '')}\n"
+                         for c, d in run.case_list.items())
+               + ("\n" + pod_log_text if pod_log_text else ""))
+    with io.open(os.path.join(pod_dir, pod + '.log'), 'w', encoding='utf-8') as f:
+        f.write(pod_log)
+    main_log = os.path.join(out_dir, f"MDTF_main.{now:%Y-%m-%d:%H.%M.%S}.log")
+    with io.open(main_log, 'w', encoding='utf-8') as f:
+        f.write(util.mdtf_log_header("MDTF STAND-ALONE NOTEBOOK RUN LOG"))
+        f.write(f"POD {pod} run stand-alone ({run.mode}) from {driver}\n"
+                f"Output: {out_dir}\nPOD page: {page}\n")
+
+    # config_save.json: the runtime config used
+    util.write_json(run.runtime_cfg, os.path.join(out_dir, 'config_save.json'), log=log)
+
+    # index.html from the framework's templates, as HTMLOutputManager.make_html does
+    html_dir = os.path.join(repo_root(), 'src', 'html')
+    tdict = {str(k): str(v) for k, v in run.pod_env_vars.items()}
+    tdict.update(output_manager.html_templating_dict(types.SimpleNamespace(
+        name=pod, pod_settings=settings_block, pod_env_vars=dict(tdict),
+        multicase_dict={'CASE_LIST': run.case_list},
+        driver=driver)))
+    tdict.update({'DATE_TIME': now.strftime("%A, %d %B %Y %I:%M%p (UTC)"),
+                  'PODNAME': pod, 'WORK_DIR': pod_dir, 'OUTPUT_DIR': pod_dir,
+                  'MAIN_LOG': main_log})
+    index = os.path.join(out_dir, 'index.html')
+    if os.path.exists(index):
+        os.remove(index)
+    util.append_html_template(os.path.join(html_dir, 'mdtf_header.html'), index, tdict)
+    with io.open(index, 'a', encoding='utf-8') as f:
+        f.write("<TABLE><TR><TD style='font-weight:bold'>Case Settings\n        ")
+        for case_name, case in run.case_list.items():
+            f.write(util._DoubleBraceTemplate("""
+        <TR><TD align=left>{{CASENAME}}\n
+        <TR><TD align=left>Date Range: {{startdate}} - {{enddate}}\n
+        <TR><TD align=left>Data Convention: {{convention}}\n
+        """).safe_substitute({str(k): str(v) for k, v in case.items()}))
+    util.append_html_template(os.path.join(html_dir, 'pod_result_snippet.html'), index, tdict)
+    util.append_html_template(os.path.join(html_dir, 'mdtf_footer.html'), index, tdict)
+    print("Wrote", index)
+
+    if make_tar is None:
+        make_tar = bool(run.runtime_cfg.get('make_variab_tar', False))
+    if make_tar and os.environ.get(DEFER_TAR_ENV):
+        print("Tar file will be made by the runner after the notebook finishes.")
+    elif make_tar:
+        print("Wrote", make_output_tar(out_dir))
+    return index
+
+
+def make_output_tar(out_dir: str) -> str:
+    """``<out_dir>.tar`` (gzip), made with the same command as the framework's
+    HTMLOutputManager.make_tar_file.
+    """
+    out_dir = out_dir.rstrip(os.sep)
+    out_path = out_dir + '.tar'
+    tar_flags = ' '.join(f"--exclude=.{s}" for s in ('netCDF', 'nc', 'ps', 'PS', 'eps'))
+    util.run_shell_command([f'tar {tar_flags} -czf {out_path} -C {out_dir} .'])
+    return out_path
 
 
 # ---------------------------------------------------------------------------
@@ -406,14 +572,88 @@ def export_run_settings(run, dest_dir: str = None, notebook: str = None,
         print("Installed", out['installed_settings'])
 
     nb = notebook or os.path.join(run.pod_code_dir, f"{run.pod_name}.ipynb")
-    nb_stem = os.path.splitext(os.path.basename(nb))[0]
-    settings_env = "" if install_pod_settings else f"{POD_SETTINGS_ENV}={out['settings_jsonc']} "
     print("\nTo repeat this run in batch:")
     print("  MDTF framework (reads settings.jsonc from the POD directory"
           + ("" if install_pod_settings else "; use install_pod_settings=True first") + "):")
     print(f"    cd {repo_root()} && ./mdtf -f {out['runtime_yml']}")
-    print("  Stand-alone notebook, no Jupyter:")
-    print(f"    cd {run.pod_code_dir} && {RUNTIME_CONFIG_ENV}={out['runtime_yml']} {settings_env}"
-          f"jupyter nbconvert --to html --execute {nb}"
-          f" --output-dir {run.pod_work_dir} --output {nb_stem}_ipynb")
+    print("  Stand-alone notebook, no Jupyter (same output layout as the framework):")
+    settings_opt = "" if install_pod_settings else f" --settings {out['settings_jsonc']}"
+    print(f"    cd {repo_root()} && python -m src.standalone_html run {nb}"
+          f" --config {out['runtime_yml']}{settings_opt}")
     return out
+
+
+# ---------------------------------------------------------------------------
+# Command-line runner for headless stand-alone runs
+# ---------------------------------------------------------------------------
+
+def run_notebook(notebook: str, config: str, settings: str = None,
+                 kernel: str = None) -> str:
+    """Run a notebook POD stand-alone without Jupyter, writing the framework's
+    output layout: executes the notebook with ``jupyter nbconvert --execute``
+    (the notebook builds the page and logs), saves the executed notebook as
+    ``<pod>/<notebook>_ipynb.html`` and then, if the runtime config sets
+    ``make_variab_tar``, makes ``MDTF_output.tar``.
+
+    Returns:
+        The run's output directory.
+    """
+    import subprocess
+    notebook = os.path.abspath(notebook)
+    pod_code_dir = os.path.dirname(notebook)
+    pod_name = os.path.basename(pod_code_dir)
+    env = dict(os.environ)
+    env[RUNTIME_CONFIG_ENV] = os.path.abspath(config)
+    if settings:
+        env[POD_SETTINGS_ENV] = os.path.abspath(settings)
+    for k in ('POD_HOME', 'case_env_file'):   # never look like a framework run
+        env.pop(k, None)
+    # resolve the output directory once, here, so notebook and runner agree
+    saved = {k: os.environ.get(k) for k in (RUNTIME_CONFIG_ENV, POD_SETTINGS_ENV, OUTPUT_DIR_ENV)}
+    os.environ[RUNTIME_CONFIG_ENV] = env[RUNTIME_CONFIG_ENV]
+    if settings:
+        os.environ[POD_SETTINGS_ENV] = env[POD_SETTINGS_ENV]
+    os.environ.pop(OUTPUT_DIR_ENV, None)
+    try:
+        run = load_run_settings(pod_name, pod_code_dir)
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+    os.makedirs(run.pod_work_dir, exist_ok=True)
+    env[OUTPUT_DIR_ENV] = run.work_dir
+    env[DEFER_TAR_ENV] = "1"
+    stem = os.path.splitext(os.path.basename(notebook))[0]
+    cmd = ['jupyter', 'nbconvert', '--to', 'html', '--execute', notebook,
+           '--ExecutePreprocessor.timeout=-1',
+           '--output-dir', run.pod_work_dir, '--output', stem + '_ipynb']
+    if kernel:
+        cmd.append(f'--ExecutePreprocessor.kernel_name={kernel}')
+    print("Running:", ' '.join(cmd))
+    subprocess.run(cmd, cwd=pod_code_dir, env=env, check=True)
+    if run.runtime_cfg.get('make_variab_tar', False):
+        print("Wrote", make_output_tar(run.work_dir))
+    print("Output:", os.path.join(run.work_dir, 'index.html'))
+    return run.work_dir
+
+
+def main(argv=None):
+    import argparse
+    p = argparse.ArgumentParser(
+        prog='python -m src.standalone_html',
+        description='Stand-alone runs of MDTF notebook PODs.')
+    sub = p.add_subparsers(dest='cmd', required=True)
+    r = sub.add_parser('run', help='run a notebook POD without Jupyter, framework-style output')
+    r.add_argument('notebook', help='path of the POD notebook')
+    r.add_argument('--config', '-f', required=True, help='runtime config (input_*.yml)')
+    r.add_argument('--settings', help="POD settings file (default: the POD's settings.jsonc)")
+    r.add_argument('--kernel', help='Jupyter kernel name (default: the notebook\'s)')
+    a = p.parse_args(argv)
+    if a.cmd == 'run':
+        run_notebook(a.notebook, a.config, a.settings, a.kernel)
+
+
+if __name__ == '__main__':
+    main()

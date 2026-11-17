@@ -7,7 +7,8 @@
 
 '''
     block_data - Reads in and processes data beofre sending back to be operated on
-    block_freq1d - Calculates 1D blocking frequencies (longitude) - D'Andrea et al. ƒ(1998)
+    block_freq1d - Calculates 1D blocking frequencies (longitude) - D'Andrea et al. (1998)
+    block_z500_freq(..., block_diag='1DAC') - annual cycle (day of year x longitude) of 1D blocking
     block_freq2d - Calculates 2D blocking frequencies (latitude/longitude) - 
 
 '''
@@ -196,11 +197,12 @@ def dataset_get(block_meta,var_name,season,diag_hem):
         year_end   = str(date_end)[:4]
 
      # MDTF cases might be already opened as xarray datasets. But need to add 'name' dimension.
-        type_run_file = type(run_files)
+        if not isinstance(run_names, list):
+            run_names = [run_names]
         if isinstance(run_files, xr.Dataset):
             print(fname,'Run file is already an xarray dataset, trying to use it as such')
-            ds_run = run_files
-            ds_run = ds_run.expand_dims(name=[ens_name])  # Add 'name' dimension
+            ds_run = run_files.sel(time=slice(year_start,year_end))
+            ds_this_ens = ds_run.expand_dims(name=run_names)  # Add 'name' dimension
         else:  
             # Open the files specified in the run_files list
             print(fname,'Opening run_files:',run_files)
@@ -215,7 +217,7 @@ def dataset_get(block_meta,var_name,season,diag_hem):
             
             
             # Grab each dataset separately (will require some work for CESM2 as they are in decadal files.)
-            
+            ds_runs = []
             for irun,run_file in enumerate(run_files):    
                 print(fname,' Opening file: ',irun,run_file, 'ensemble: ',ens_name)
                 match(ens_name):
@@ -237,32 +239,17 @@ def dataset_get(block_meta,var_name,season,diag_hem):
                             if ens_name in ['ERAI']:          # Re-index lat dim
                                     ds_run = ds_run.reindex(lat=ds_run.lat[::-1])
                             
-# Subset for years and season 
-        ds_run = ds_run.sel(time=slice(year_start,year_end))    
-        # Append datasets
+                # Subset for years (inside the run loop, so every member is used)
+                ds_run = ds_run.sel(time=slice(year_start,year_end))
+                ds_runs.append(ds_run)
 
-        if irun==0 :
-            ds_this_ens = ds_run
-        else:
-            # Add 'name' dimension so files to concat are the same
-            if 'name' not in ds_run.dims:
-                ds_run = ds_run.expand_dims({'name': [irun]})
-            else:
-                # if it already has 'name' dim but with wrong label/length, replace coord
-                ds_run = ds_run.assign_coords(name=('name', [irun]))
+            # Stack the members of this ensemble along a new 'name' dimension.
+            # Members share one grid, so use the first member's coordinates
+            # (avoids an outer join on tiny lat/lon differences).
+            ds_runs = [d.drop_dims('name') if 'name' in d.dims else d for d in ds_runs]
+            ds_this_ens = xr.concat(ds_runs, 'name', join='override', coords='minimal', compat='override')
+            ds_this_ens = ds_this_ens.assign_coords(name = ("name", run_names))
 
-            ds_this_ens = xr.concat([ds_this_ens, ds_run], 'name')
-
-        
-# Name the dataset dimension from from name
-        if not isinstance(run_names, list):
-            run_names = [run_names]
-        ds_this_ens = ds_this_ens.assign_coords(name = ("name", run_names))
-
-
-        if num_runs == 1:
-            ds_this_ens[var_name] = ds_this_ens[var_name].expand_dims(name=run_names)
-        
         ds_ens[ens_name] = ds_this_ens 
 
 # End of isinstance xr.dataset logic    
@@ -403,7 +390,7 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,file_opts
 
             match(block_diag):
                
-                case '1D':
+                case '1D' | '1DAC':
 
                     #### 1D : :This code flags each day as 'blocked' if the thresholds are met, for the 3 lat bounds (deltas)
                 
@@ -472,9 +459,17 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,file_opts
                     sys.errror(0)
             
             # Determine frequency
-            
-            block_days = is_blocked.sum(dim='time')
-            block_freq = block_days / is_blocked.sizes['time']
+            if block_diag == '1DAC':
+                # Annual cycle: daily climatology of the 1D blocked flag (all seasons), day 1-365
+                block_freq = is_blocked.astype('float32').groupby('time.dayofyear').mean('time')
+                block_freq = block_freq.sel(dayofyear=slice(1, 365))
+            else:
+                # Keep only the requested season (ANN = all days)
+                if bseason != 'ANN':
+                    in_season = (is_blocked['time.season'] == bseason).values
+                    is_blocked = is_blocked.isel(time=in_season)
+                block_days = is_blocked.sum(dim='time')
+                block_freq = block_days / is_blocked.sizes['time']
 
 
         # Read or write file of block values

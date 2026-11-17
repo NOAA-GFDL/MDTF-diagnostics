@@ -404,7 +404,7 @@ class SubprocessRuntimePODWrapper:
         """Produces the shell command(s) to run the POD.
         """
         if self.pod.program == 'jupyter':
-            output_name = os.path.basename(self.pod.driver).rstrip(".ipynb")+"_ipynb"
+            output_name = os.path.splitext(os.path.basename(self.pod.driver))[0] + "_ipynb"
             # I am really not a fan of this, but nbconvert does not have good output functions.
             # This means that I need to copy over the notebook and run it from the wkdir
             driver_copy = os.path.join(self.pod.pod_env_vars['WORK_DIR'], os.path.basename(self.pod.driver))

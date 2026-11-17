@@ -301,6 +301,17 @@ end if
 
 ; create individual plots
 
+  ; NCL calendar functions do not know "proleptic_gregorian" (same as gregorian after 1582)
+  if (isatt(time0,"calendar")) then
+    if (str_lower(time0@calendar) .eq. "proleptic_gregorian") then
+      time0@calendar = "gregorian"
+    end if
+  end if
+  if (isatt(time1,"calendar")) then
+    if (str_lower(time1@calendar) .eq. "proleptic_gregorian") then
+      time1@calendar = "gregorian"
+    end if
+  end if
   if(season.eq.0) then
   ;yyyymmdd= cd_calendar(time0, -2)
   yrfrac = cd_calendar(time0, 4)

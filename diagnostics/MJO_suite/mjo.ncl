@@ -22,8 +22,9 @@ yr1 = getenv("startdate")
 yr2 = getenv("enddate")
 time_coord = getenv("time_coord")
 
-firstyr = stringtointeger(yr1)
-lastyr = stringtointeger(yr2)
+; MDTF v4 passes startdate/enddate as YYYYMMDD (v3 passed years); use the year part
+firstyr = stringtointeger(str_get_cols(yr1,0,3))
+lastyr = stringtointeger(str_get_cols(yr2,0,3))
 ndays = (lastyr-firstyr+1)*365  ; noleap years in model
 
 f = addfile(file_dir+casename+".u200.day.nc","r")
@@ -37,6 +38,12 @@ u200 = f->u200(0:ndays-1,{-10:10},:)
 ; yrfrac = yyyymmdd2yyyyFrac(date(0:ndays-1),0) ; second arg is an offset
 ; yrfrac = yyyymmdd_to_yyyyfrac(date(0:ndays-1), 0.0) ; second arg is an offset
 yrfrac_time = f->$time_coord$
+; NCL calendar functions do not know "proleptic_gregorian" (same as gregorian after 1582)
+if (isatt(yrfrac_time,"calendar")) then
+  if (str_lower(yrfrac_time@calendar) .eq. "proleptic_gregorian") then
+    yrfrac_time@calendar = "gregorian"
+  end if
+end if
 yrfrac = cd_calendar(yrfrac_time(0:ndays-1), 4)
 yrfrac!0 = "date as fraction of year"
 

@@ -1432,9 +1432,20 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             fill_is_nan = old_fillvalue is not None and bool(np.isnan(old_fillvalue))
         except TypeError:
             fill_is_nan = False
-        if name != var.translation.name \
-                or (self.output_to_ncl and fill_is_nan):
+        if name != var.translation.name:
             encoding['_FillValue'] = None
+            attrs['_FillValue'] = None
+            attrs_to_delete.add('_FillValue')
+        elif self.output_to_ncl and (fill_is_nan or old_fillvalue is None):
+            # NCL does not treat NaN as missing. Dropping the fill entirely (as for coordinates) would
+            # leave missing data written as NaN with no _FillValue, and NCL would use the NaNs as numbers
+            # (e.g. Wheeler_Kiladis spectra of TRMM pr with a few missing cells never finished). Write
+            # missing data with NCL's default float fill value instead; the encoding (not attrs) carries it.
+            dtype = getattr(ds_obj, 'dtype', None)
+            if dtype is not None and np.issubdtype(dtype, np.floating):
+                encoding['_FillValue'] = dtype.type(9.969209968386869e+36)
+            else:
+                encoding['_FillValue'] = None
             attrs['_FillValue'] = None
             attrs_to_delete.add('_FillValue')
         # mark attrs duplicating values in encoding for deletion
@@ -1499,7 +1510,14 @@ class MDTFPreprocessorBase(metaclass=util.MDTFABCMeta):
             if t_coord.has_bounds:
                 ds[t_coord.bounds_var.name].encoding['units'] = ds_T.encoding['units']
 
+        var_dims = ds[var.translation.name].dims if var.translation.name in ds else None
         for v_name, ds_v in ds.variables.items():
+            if v_name != var.translation.name and v_name in ds.data_vars \
+                    and var_dims is not None and ds_v.dims == var_dims:
+                # ds can hold the case's other requested variables (e.g. PRECT while writing FLUT).
+                # Leave their encoding alone: clean_nc_var_encoding would treat them as coordinates
+                # and drop their _FillValue before they are written themselves.
+                continue
             self.clean_nc_var_encoding(var, v_name, ds_v)
         self.clean_nc_var_encoding(var, 'dataset', ds)
         return ds

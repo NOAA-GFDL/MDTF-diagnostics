@@ -23,6 +23,7 @@ with the same query the framework uses, and :func:`export_run_settings` writes
 the notebook's settings text out as files so the run can be repeated in batch.
 """
 import os
+import sys
 import io
 import re
 import shutil
@@ -581,6 +582,42 @@ def export_run_settings(run, dest_dir: str = None, notebook: str = None,
     print(f"    cd {repo_root()} && python -m src.standalone_html run {nb}"
           f" --config {out['runtime_yml']}{settings_opt}")
     return out
+
+
+def export_saved_notebook(notebook: str, out_dir: str, since: float = None) -> str:
+    """Interactive runs: write the SAVED copy of the notebook as
+    ``<out_dir>/<notebook>_ipynb.html`` (``jupyter nbconvert --to html``, not
+    re-executed), the same file a headless or framework run makes.
+
+    nbconvert reads the notebook file on disk, not the kernel, so the html only
+    shows the outputs as of the last save. If *since* (a ``time.time()`` value,
+    e.g. when the run started) is given and the file has not been saved since
+    then, nothing is written and a message asks the user to save first.
+
+    Returns:
+        Path of the html file, or "" if it was not written.
+    """
+    import subprocess
+    import time
+    stem = os.path.splitext(os.path.basename(notebook))[0]
+    html = os.path.join(out_dir, stem + '_ipynb.html')
+    if not os.path.isfile(notebook):
+        print(f"Executed notebook not written: {notebook} not found.")
+        return ""
+    if since is not None and os.path.getmtime(notebook) < since:
+        saved = time.strftime('%H:%M:%S', time.localtime(os.path.getmtime(notebook)))
+        print(f"Executed notebook not written: {os.path.basename(notebook)} was last saved at "
+              f"{saved}, before this run started, so it does not have this run's outputs.\n"
+              f"Save the notebook (Ctrl-S) and re-run this cell.")
+        return ""
+    cmd = [sys.executable, '-m', 'nbconvert', '--to', 'html', notebook,
+           '--output-dir', out_dir, '--output', stem + '_ipynb']
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode != 0:
+        print("Executed notebook not written, nbconvert failed:\n" + res.stderr[-2000:])
+        return ""
+    print(f"Wrote {html} (outputs as of the last save)")
+    return html
 
 
 # ---------------------------------------------------------------------------

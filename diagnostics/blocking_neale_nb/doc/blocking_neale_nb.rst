@@ -146,10 +146,13 @@ How to run
    setup or preprocessing.
 
 3. Interactive: open ``blocking_main.ipynb`` in Jupyter with an MDTF python3
-   kernel, edit the settings cells and run all cells. The last cell writes the
-   web page and the tar file. A notebook cannot save an executed copy of
-   itself, so the tar from an interactive run does not include
-   ``blocking_main_ipynb.html``; use method 2 for a complete tar.
+   kernel, edit the settings cells and run all cells. Save the notebook
+   (Ctrl-S) before the last cell runs, or save and then re-run the last cell.
+   That cell writes ``blocking_main_ipynb.html`` from the saved notebook
+   (``standalone_html.export_saved_notebook``; nbconvert reads the file on
+   disk, not the running kernel), then the web page and the tar file. If the
+   notebook has not been saved since the run started it skips the html and
+   says so. The html does not show the last cell's own output.
 
 Output
 ^^^^^^

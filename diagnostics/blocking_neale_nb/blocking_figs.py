@@ -301,7 +301,18 @@ def block_plot_2d(block_meta,ens_block_2d,block_season,fig_out=True,dir_fig='',e
          
             # Plot data with cyclic points including coasts, gridlines/labels and ens_name
     
-            ax_all = ax.contourf(iens_lon_cyc,iens_lat, iens_ave_cyc, levels=bcontours,norm=norm,transform=ccrs.PlateCarree(),cmap=cmapb,extend='max')   
+            # Contour in the map's own (projected) coordinates. Letting cartopy
+            # transform the filled contours (transform=PlateCarree) can invert a
+            # polygon so one colour fills the whole map (seen for a 20-year ANN
+            # case); projecting the grid first avoids that. The cyclic point
+            # closes the seam at 0E.
+            # (by hand: add_cyclic_point rejects the slightly uneven MERRA longitudes)
+            vals_cyc = np.concatenate([da_iens_ave.values, da_iens_ave.values[:, :1]], axis=1)
+            lon_cyc = np.append(iens_lon.values, iens_lon.values[0] + 360.)
+            lon2d, lat2d = np.meshgrid(lon_cyc, iens_lat.values)
+            xy = projection.transform_points(ccrs.PlateCarree(), lon2d, lat2d)
+            ax_all = ax.contourf(xy[..., 0], xy[..., 1], vals_cyc, levels=bcontours, norm=norm,
+                                 cmap=cmapb, extend='max')
     
             ax.coastlines()
             gl = ax.gridlines(color='C7',lw=1,ls=':',draw_labels=True,rotate_labels=False,ylocs=[40,60,80])

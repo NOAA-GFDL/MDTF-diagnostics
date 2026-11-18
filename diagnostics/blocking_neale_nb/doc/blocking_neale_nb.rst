@@ -75,7 +75,7 @@ Variable                        Default                 Meaning
 ==============================  ======================  ==============================================
 ``MDTF_BLOCKING_SEASON``        ``"DJF"``               Season for the seasonal line plot and maps:
                                                         DJF, MAM, JJA, SON or ANN
-``MDTF_BLOCKING_HEMISPHERE``    ``"nhem"``              Hemisphere (nhem; shem not yet tested)
+``MDTF_BLOCKING_HEMISPHERE``    ``"nhem"``              Hemisphere (only nhem is implemented)
 ``MDTF_BLOCKING_ENSEMBLES``     ``"ERA5,MERRA,CESM2"``  Observations and model ensembles to compare
                                                         against the MDTF case(s)
 ``MDTF_BLOCKING_ENS_MEMBERS``   ``"1,1,2"``             Number of members to use from each entry in
@@ -84,6 +84,11 @@ Variable                        Default                 Meaning
                                                         Blank: use the case years
 ``MDTF_BLOCKING_REF_LASTYR``    ``""``                  Last year for the comparison data.
                                                         Blank: use the case years
+``MDTF_BLOCKING_RECOMPUTE``     ``"False"``             Recompute cached blocking frequencies:
+                                                        "False", "True" (all) or dataset names,
+                                                        e.g. "CESM2,ERA5"
+``MDTF_BLOCKING_CACHE_DIR``     ``""``                  Where to keep blocking frequency files.
+                                                        Blank: this run's ``model/netCDF``
 ==============================  ======================  ==============================================
 
 The comparison data need to cover the reference years: with the defaults
@@ -168,10 +173,26 @@ All three methods write the framework layout under
 - ``blocking_neale_nb/blocking_main_ipynb.html`` (executed notebook)
 - ``<WORK_DIR>/MDTF_output.tar`` if ``make_variab_tar`` is True
 
-The blocking frequency files in ``model/netCDF`` are named by index, dataset,
-number of members, years and season. If a file already exists it is read
-instead of recomputed, so delete it (or use a new ``WORK_DIR``) after
-changing the code.
+Blocking frequency files
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Each blocking frequency result (1D, 2D and annual cycle, for each dataset) is
+saved as a netCDF file named by index, dataset, number of members, years and
+season, for example ``block_1D_CESM2_nens.5_1979-1999_ANN.nc``. A later run that
+needs the same result reads the file instead of recomputing it:
+
+- The files go in ``MDTF_BLOCKING_CACHE_DIR``. Blank means this run's
+  ``model/netCDF``, so results are reused only within the same output
+  directory. Set it to a shared directory to reuse the obs and model ensemble
+  results (most of the run time) across runs and cases. The files used are
+  always copied to ``model/netCDF`` as well, so the output is complete.
+- Each file records the version of the calculation
+  (``BLOCKING_CALC_VERSION`` in ``blocking_utils.py``). Files from another
+  version are recomputed automatically; increase the version whenever a code
+  change alters the results.
+- ``MDTF_BLOCKING_RECOMPUTE`` forces a recalculation: ``"True"`` for
+  everything, or a comma-separated list of datasets (e.g. a case whose data
+  were rewritten under the same name).
 
 
 Methodology
@@ -243,6 +264,7 @@ Code Overview
   4. Blocking frequencies: ``blocking_utils.block_z500_freq`` with
      ``block_diag='1D'`` (seasonal, by longitude), ``'2D'`` (seasonal maps)
      and ``'1DAC'`` (annual cycle, by day of year and longitude).
+     Results are cached (see Blocking frequency files above).
   5. Figures: ``blocking_figs.block_plot_1d``, ``block_plot_2d`` and
      ``block_plot_anncycle``.
   6. Output: ``standalone_html.make_standalone_output`` writes the web page
@@ -251,9 +273,10 @@ Code Overview
 
 - ``blocking_utils.py``: data setup and reading (``ens_setup``,
   ``find_ens_info``, ``dataset_get``) and the blocking calculations
-  (``block_z500_freq``, with the netCDF read/write helpers).
+  (``block_z500_freq``, with the cache helpers).
 - ``blocking_figs.py``: figures.
-- ``lens_simulations.py``: run names of the model ensemble members.
+- ``lens_simulations.py``: run names of the model ensemble members (from
+  Rich Neale's blocking scripts).
 - ``blocking_neale_nb.html``: the POD web page template.
 - ``src/standalone_html.py`` (MDTF framework source): settings handling,
   catalog reading, web page and output for stand-alone notebook runs, and the

@@ -457,16 +457,6 @@ def block_plot_anncycle(block_meta, ens_block_ac, ens_list, fig_title='', fig_ou
     return fig
 
 
-def block_plot_1d_pdf(block_meta,ens_block_2d,block_season,fig_out=True):
-
-    
-    
-    return
-
-def jet_var_plot():
-    return
-
-
 '''
  Small figure functions
 '''

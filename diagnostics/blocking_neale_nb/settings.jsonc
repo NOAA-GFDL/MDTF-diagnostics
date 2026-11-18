@@ -5,7 +5,7 @@
 {
   "settings" : {
     // Notebook run by the framework (jupyter nbconvert --execute)
-    "driver" : "blocking_main_esnb.ipynb",
+    "driver" : "blocking_main.ipynb",
     "long_name" : "Rich Neale's blocking diagnostic",
     "convention": "cesm",
     "description" : "Rich Neale's blocking diagnostic (notebook version)",

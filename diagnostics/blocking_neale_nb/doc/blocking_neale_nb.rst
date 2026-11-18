@@ -51,6 +51,9 @@ Comparison data
 
 - Observations: ERA5 (1979-2005) and MERRA (1979-2011), daily Z500,
   read from ``/glade/work/rneale/data/<OBS>/Z500.day.mean.nc``.
+- ``timeslice3``: the MDTF v3 timeslice CESM run (1995-2014) from the public
+  archive ``/glade/campaign/cgd/amp/bundy/mdtf/cesm_mdtfv3_timeslice_public``,
+  used as a reference in the same way as the observations (drawn with them).
 - Model ensembles: CESM2 Large Ensemble daily Z500 from
   ``/glade/campaign/cgd/cesm/CESM2-LE``. CESM1-LE, E3SMv1, E3SMv2, EAMv2 and
   CAM6 are also recognized (``blocking_utils.find_ens_info``,
@@ -80,10 +83,12 @@ Variable                        Default                 Meaning
                                                         against the MDTF case(s)
 ``MDTF_BLOCKING_ENS_MEMBERS``   ``"1,1,2"``             Number of members to use from each entry in
                                                         ``MDTF_BLOCKING_ENSEMBLES`` (same order)
-``MDTF_BLOCKING_REF_FIRSTYR``   ``""``                  First year for the comparison data.
+``MDTF_BLOCKING_REF_FIRSTYR``   ``""``                  First year for the comparison data: one
+                                                        year for all, or one per entry in
+                                                        ``MDTF_BLOCKING_ENSEMBLES``.
                                                         Blank: use the case years
-``MDTF_BLOCKING_REF_LASTYR``    ``""``                  Last year for the comparison data.
-                                                        Blank: use the case years
+``MDTF_BLOCKING_REF_LASTYR``    ``""``                  Last year for the comparison data (same
+                                                        rules)
 ``MDTF_BLOCKING_RECOMPUTE``     ``"False"``             Recompute cached blocking frequencies:
                                                         "False", "True" (all) or dataset names,
                                                         e.g. "CESM2,ERA5"
@@ -94,7 +99,16 @@ Variable                        Default                 Meaning
 The comparison data need to cover the reference years: with the defaults
 (blank), the case years must fall within the obs periods above. For a long
 comparison, for example, set ``MDTF_BLOCKING_REF_FIRSTYR = "1979"`` and
-``MDTF_BLOCKING_REF_LASTYR = "1999"``.
+``MDTF_BLOCKING_REF_LASTYR = "1999"``. The datasets cover different periods, so
+the years can also be given per dataset, e.g. with
+``MDTF_BLOCKING_ENSEMBLES = "ERA5,MERRA,timeslice3,CESM2"``:
+``MDTF_BLOCKING_REF_FIRSTYR = "1979,1979,1995,1979"`` and
+``MDTF_BLOCKING_REF_LASTYR = "1999,1999,2014,1999"``. A case with model years
+(e.g. a pre-industrial run, years 0001-0020) always needs these set.
+
+``MDTF_BLOCKING_SEASON`` defaults to DJF, the season with the most blocking and
+the one most often shown in the literature; ANN (all days) is also available.
+The annual-cycle figures do not depend on it.
 
 Run settings (``input_*.yml``)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

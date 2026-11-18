@@ -17,11 +17,14 @@
       "MDTF_BLOCKING_SEASON"      : "DJF",
       // Hemisphere: only nhem is implemented
       "MDTF_BLOCKING_HEMISPHERE"  : "nhem",
-      // Obs and model ensembles to compare with the MDTF case(s)
+      // Obs and model ensembles to compare with the MDTF case(s). Known names: ERA5, MERRA
+      // (obs); timeslice3 (MDTF v3 timeslice CESM run, 1995-2014, used as a reference like
+      // the obs); CESM1, CESM2, E3SMv1, E3SMv2, EAMv2, CAM6 (model ensembles)
       "MDTF_BLOCKING_ENSEMBLES"   : "ERA5,MERRA,CESM2",
       // Members to use from each ensemble above (same order)
       "MDTF_BLOCKING_ENS_MEMBERS" : "1,1,2",
-      // Years for the obs and model ensembles. Blank: use the MDTF case years.
+      // Years for the obs and model ensembles: one year for all, or one per entry in
+      // MDTF_BLOCKING_ENSEMBLES (same order). Blank: use the MDTF case years.
       // (The NCL version of this POD compared against 1979-1999.)
       "MDTF_BLOCKING_REF_FIRSTYR" : "",
       "MDTF_BLOCKING_REF_LASTYR"  : "",

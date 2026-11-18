@@ -131,17 +131,20 @@ def find_ens_info(ens_names,mem_num,ystart,yend):
                 if ens_name=='CAM6'  : file_templates=[fl.replace('DATE_RANGE','18800101-20150101',1) for fl in file_templates]
 
 
+            case 'timeslice3':  # MDTF v3 timeslice CESM run (1995-2014), public archive; a reference like the obs
+
+                ens_type = 'obs'
+                dir_ens0 = '/glade/campaign/cgd/amp/bundy/mdtf/cesm_mdtfv3_timeslice_public/atm/day/'
+                file_templates = [dir_ens0+'cesm_mdtfv3_timeslice.VAR_TBD.day.nc']
+
             case ens_name if ens_name in obs_sources:
                 
                 ens_type='obs'
                 dir_ens0 = '/glade/work/rneale/data/'+ens_name+'/'  
                 file_templates = [dir_ens0+'VAR_TBD.day.mean.nc']
                 
-            case _  : 
-                
-                print(f'Looking for case {ens_name}, assuming it is an MDTF case')
-                ens_type = 'model'
-                file_templates
+            case _  :
+                raise ValueError(f'{fname} Unknown ensemble or obs name {ens_name!r} in MDTF_BLOCKING_ENSEMBLES')
             #    print(ens_name+' is not a recognized case or ensemble set')
             #    sys.exit(0)       
 

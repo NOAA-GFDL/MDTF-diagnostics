@@ -330,23 +330,23 @@ Code Overview
 
 - ``blocking_main.ipynb``: the driver notebook. Sections:
 
-  1. Settings: the ``runtime_yml`` and ``pod_settings_jsonc`` text cells,
-     ``standalone_html.load_run_settings`` (works out the run mode and the
-     settings), and the export cell.
+  1. Settings: the ``runtime_yml`` (runtime config) and ``pod_settings_jsonc``
+     (POD settings) text cells, ``standalone_html.load_run_settings`` (works
+     out the run mode and the settings), and the export cell.
   2. Load model data: the framework's ``MODEL_DATA_PATH`` file in a framework
      run, otherwise ``standalone_html.open_catalog_var`` (intake-esm).
-  3. Comparison data: ``blocking_utils.ens_setup`` builds the ``block_meta``
-     table (one row per dataset: type obs/model/mdtf, number of members,
-     years, run names, files); the MDTF case(s) are added as rows; then
+  3. Diagnostics computation: ``blocking_utils.ens_setup`` builds the
+     ``block_meta`` table (one row per dataset: type obs/model/mdtf, number of
+     members, years, run names, files); the MDTF case(s) are added as rows;
      ``blocking_utils.EnsembleData`` opens a dataset's Z500 (with
-     ``dataset_get``) only if one of its results is not already available.
-  4. Blocking frequencies: ``blocking_utils.block_z500_freq`` with
-     ``block_diag='1D'`` (seasonal, by longitude), ``'2D'`` (seasonal maps)
-     and ``'1DAC'`` (annual cycle, by day of year and longitude).
-     Results are cached (see Blocking frequency files above).
-  5. Figures: ``blocking_figs.block_plot_1d``, ``block_plot_2d`` and
+     ``dataset_get``) only if one of its results is not already available;
+     then ``blocking_utils.block_z500_freq`` computes the blocking
+     frequencies with ``block_diag='1D'`` (seasonal, by longitude), ``'2D'``
+     (seasonal maps) and ``'1DAC'`` (annual cycle, by day of year and
+     longitude). Results are cached (see Blocking frequency files above).
+  4. Figures: ``blocking_figs.block_plot_1d``, ``block_plot_2d`` and
      ``block_plot_anncycle``.
-  6. Output: ``standalone_html.make_standalone_output`` writes the web page
+  5. Output: ``standalone_html.make_standalone_output`` writes the web page
      and the rest of the framework output (skipped in a framework run, where
      the framework does this).
 

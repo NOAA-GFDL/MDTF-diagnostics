@@ -494,7 +494,9 @@ def make_standalone_output(run, settings: dict = None, driver: str = "",
         driver=driver)))
     tdict.update({'DATE_TIME': now.strftime("%A, %d %B %Y %I:%M%p (UTC)"),
                   'PODNAME': pod, 'WORK_DIR': pod_dir, 'OUTPUT_DIR': pod_dir,
-                  'MAIN_LOG': main_log})
+                  # relative, so the link works when the output is moved or put on the web
+                  # (the framework writes the absolute path)
+                  'MAIN_LOG': os.path.basename(main_log)})
     index = os.path.join(out_dir, 'index.html')
     if os.path.exists(index):
         os.remove(index)

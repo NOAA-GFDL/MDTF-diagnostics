@@ -33,6 +33,15 @@ the same meridional 500mb height gradient test is applied at every latitude betw
 in latitude as well as longitude. Maps are shown for season {{MDTF_BLOCKING_SEASON}} for
 each case, observational product and model ensemble (ensemble mean).
 </p>
+<p>
+The two indices are not directly comparable. The 1D index (line plot) tests the gradients
+around 60N only (dashed circle on the maps) and counts a longitude as blocked if any of
+three tests shifted by -3.75, 0 and +3.75 degrees passes, so at 60N it is higher than the 2D
+index. The highest 2D frequencies, e.g. near 180E, are at 65-75N, north of the latitudes the
+1D index sees. This 2D index is a simplified version of Davini et al.: it uses the 1D
+thresholds and none of their extra conditions, so frequencies near the edges of the
+35-75N band (especially 70-75N) are likely too high.
+</p>
 
 <TABLE>
 <TR>
@@ -67,10 +76,11 @@ each case, observational product and model ensemble (ensemble mean).
 <TR><TD> MDTF_BLOCKING_HEMISPHERE <TD> "{{MDTF_BLOCKING_HEMISPHERE}}"
 <TR><TD> MDTF_BLOCKING_ENSEMBLES <TD> "{{MDTF_BLOCKING_ENSEMBLES}}"
 <TR><TD> MDTF_BLOCKING_ENS_MEMBERS <TD> "{{MDTF_BLOCKING_ENS_MEMBERS}}"
-<TR><TD> MDTF_BLOCKING_REF_FIRSTYR <TD> "{{MDTF_BLOCKING_REF_FIRSTYR}}" (blank: case years)
-<TR><TD> MDTF_BLOCKING_REF_LASTYR <TD> "{{MDTF_BLOCKING_REF_LASTYR}}" (blank: case years)
+<TR><TD> MDTF_BLOCKING_REF_FIRSTYR <TD> "{{MDTF_BLOCKING_REF_FIRSTYR}}" (one, or one per dataset; blank: case years)
+<TR><TD> MDTF_BLOCKING_REF_LASTYR <TD> "{{MDTF_BLOCKING_REF_LASTYR}}" (one, or one per dataset; blank: case years)
 <TR><TD> MDTF_BLOCKING_RECOMPUTE <TD> "{{MDTF_BLOCKING_RECOMPUTE}}"
 <TR><TD> MDTF_BLOCKING_CACHE_DIR <TD> "{{MDTF_BLOCKING_CACHE_DIR}}" (blank: model/netCDF)
+<TR><TD> MDTF_BLOCKING_RAW_CATALOG <TD> "{{MDTF_BLOCKING_RAW_CATALOG}}" (blank: shipped data only)
 </TABLE>
 </p>
 </body>

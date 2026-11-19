@@ -152,7 +152,8 @@ def block_plot_1d (block_meta,ens_block_1d,bseason,pshade='1',fig_out=False,dir_
 
     
         
-    ax.set_title(bseason+ ' '+yr_title+'  '+shade_title)
+    # The 1D index tests the Z500 gradients around 60N only (see the 2D maps for other latitudes)
+    ax.set_title('1D index (centred on 60N), '+bseason+ ' '+yr_title+'  '+shade_title)
     
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Blocking Frequency (%)')
@@ -321,6 +322,9 @@ def block_plot_2d(block_meta,ens_block_2d,block_season,fig_out=True,dir_fig='',e
     
            
             polarCentral_set_latlim((40,90),ax)
+            # 60N: the central latitude of the 1D index, for comparison with the line plot
+            lon_c = np.linspace(-180., 180., 361)
+            ax.plot(lon_c, np.full_like(lon_c, 60.), transform=ccrs.PlateCarree(), color='k', ls='--', lw=1.2)
             
             ax.set_title(ens_name, fontsize=text_size)
 
@@ -329,7 +333,8 @@ def block_plot_2d(block_meta,ens_block_2d,block_season,fig_out=True,dir_fig='',e
     
     # Specify the position of the colorbar
 
-    fig.suptitle('Blocking Frequency (%) - '+ block_season, fontsize=text_size,ha='center',va='bottom')
+    fig.suptitle('Blocking Frequency (%) - '+ block_season+', 2D index (35-75N); dashed: 60N, centre of the 1D index',
+                 fontsize=text_size,ha='center',va='bottom')
     
 #    fig.subplots_adjust(right=0.93,wspace=0.2, hspace=5)
 #    cbar_ax = fig.add_axes([0.95, 0.27, 0.03, 0.36])

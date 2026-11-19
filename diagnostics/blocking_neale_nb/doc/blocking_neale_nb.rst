@@ -1,4 +1,4 @@
-﻿.. Format guides/tools:
+.. Format guides/tools:
    https://docutils.sourceforge.io/docs/user/rst/quickref.html
    https://sublime-and-sphinx-guide.readthedocs.io/en/latest/code_blocks.html
    Rendered MDTF diagnostics/*/doc/example.rst https://mdtf-diagnostics.readthedocs.io/en/latest/sphinx_pods/example.html)
@@ -18,6 +18,11 @@ the MDTF framework, or stand-alone (interactively in Jupyter or from the
 command line). A stand-alone run writes the same output as a framework run:
 the POD web page, figures, executed notebook, logs, a top-level ``index.html``
 and (optionally) the tar file.
+
+Example output (MDTF v4 timeslice case, DJF):
+`blocking_neale_nb example <https://project.cgd.ucar.edu/projects/MDTF/mdtf_figures/blocking_neale_nb_project/index.html>`__
+(`POD page <https://project.cgd.ucar.edu/projects/MDTF/mdtf_figures/blocking_neale_nb_project/blocking_neale_nb/blocking_neale_nb.html>`__,
+`tar file <https://project.cgd.ucar.edu/projects/MDTF/mdtf_figures/blocking_neale_nb_project/MDTF_output.tar>`__).
 
 Version & Contact info
 ----------------------
@@ -49,18 +54,43 @@ levels, from which the framework extracts 500 hPa).
 Comparison data
 ^^^^^^^^^^^^^^^
 
-- Observations: ERA5 (1979-2005) and MERRA (1979-2011), daily Z500,
-  read from ``/glade/work/rneale/data/<OBS>/Z500.day.mean.nc``.
-- ``timeslice3``: the MDTF v3 timeslice CESM run (1995-2014) from the public
-  archive ``/glade/campaign/cgd/amp/bundy/mdtf/cesm_mdtfv3_timeslice_public``,
-  used as a reference in the same way as the observations (drawn with them).
-- Model ensembles: CESM2 Large Ensemble daily Z500 from
-  ``/glade/campaign/cgd/cesm/CESM2-LE``. CESM1-LE, E3SMv1, E3SMv2, EAMv2 and
-  CAM6 are also recognized (``blocking_utils.find_ens_info``,
-  ``lens_simulations.py``).
+The MDTF case is the only data the POD reads (from the catalog, or the
+framework's preprocessed file). The comparison data are shipped as digested
+data: the blocking frequencies already computed for each reference dataset, in
+the POD's obs data directory ``<OBS_DATA_ROOT>/blocking_neale_nb`` (a few MB of
+netCDF files named as in `Blocking frequency files`_ below):
 
-These paths are on NCAR's GLADE file system, so at present the comparison
-data are only available there.
+- Observations: ERA5 and MERRA, 1979-1999
+- Model ensembles: CESM2 Large Ensemble, 5 members, 1979-1999; and
+  ``timeslice3``, the MDTF v3 timeslice CESM run, 1995-2014 (one member)
+
+These are the defaults of ``MDTF_BLOCKING_ENSEMBLES``,
+``MDTF_BLOCKING_ENS_MEMBERS`` and the reference years. A different choice
+(other years, members, seasons or datasets) is computed from the raw daily
+Z500, read through an ESM-intake catalog given by
+``MDTF_BLOCKING_RAW_CATALOG``. The raw data are on NCAR's GLADE file system.
+Their locations are in one table, ``RAW_DATA`` in ``blocking_utils.py``, which
+is used only to build that catalog:
+
+``python blocking_utils.py --make-raw-catalog <catalog.json> [names...]``
+
+(run in the POD directory on GLADE; it writes ``<catalog>.json`` and
+``<catalog>.csv``, listing every file found). Datasets in the table:
+
+==============  ===========  =========================================================
+Name            Type         Status
+==============  ===========  =========================================================
+ERA5, MERRA     obs          tested; shipped
+CESM2           model        tested; shipped (5 members); 50 members in the catalog
+timeslice3      model        tested; shipped
+ERAI            obs          untested with the current version
+CESM1           model        untested with the current version (42 members)
+E3SMv1          model        untested with the current version (5 members)
+E3SMv2, EAMv2   model        untested with the current version (20, 10 members)
+CAM6            model        untested; raw files not found on GLADE (Nov 2026)
+==============  ===========  =========================================================
+
+The shipped files were made by the same code: see `Making the digested data`_.
 
 
 Settings/Environment Variables
@@ -79,32 +109,34 @@ Variable                        Default                 Meaning
 ``MDTF_BLOCKING_SEASON``        ``"DJF"``               Season for the seasonal line plot and maps:
                                                         DJF, MAM, JJA, SON or ANN
 ``MDTF_BLOCKING_HEMISPHERE``    ``"nhem"``              Hemisphere (only nhem is implemented)
-``MDTF_BLOCKING_ENSEMBLES``     ``"ERA5,MERRA,CESM2"``  Observations and model ensembles to compare
+``MDTF_BLOCKING_ENSEMBLES``     see below               Observations and model ensembles to compare
                                                         against the MDTF case(s)
-``MDTF_BLOCKING_ENS_MEMBERS``   ``"1,1,2"``             Number of members to use from each entry in
+``MDTF_BLOCKING_ENS_MEMBERS``   ``"1,1,1,5"``           Number of members to use from each entry in
                                                         ``MDTF_BLOCKING_ENSEMBLES`` (same order)
-``MDTF_BLOCKING_REF_FIRSTYR``   ``""``                  First year for the comparison data: one
+``MDTF_BLOCKING_REF_FIRSTYR``   see below               First year for the comparison data: one
                                                         year for all, or one per entry in
                                                         ``MDTF_BLOCKING_ENSEMBLES``.
                                                         Blank: use the case years
-``MDTF_BLOCKING_REF_LASTYR``    ``""``                  Last year for the comparison data (same
+``MDTF_BLOCKING_REF_LASTYR``    see below               Last year for the comparison data (same
                                                         rules)
 ``MDTF_BLOCKING_RECOMPUTE``     ``"False"``             Recompute cached blocking frequencies:
                                                         "False", "True" (all) or dataset names,
                                                         e.g. "CESM2,ERA5"
 ``MDTF_BLOCKING_CACHE_DIR``     ``""``                  Where to keep blocking frequency files.
                                                         Blank: this run's ``model/netCDF``
+``MDTF_BLOCKING_RAW_CATALOG``   ``""``                  ESM-intake catalog of the raw comparison
+                                                        data, for results not in the cache or
+                                                        ``$OBS_DATA``. Blank: shipped data only
 ==============================  ======================  ==============================================
 
-The comparison data need to cover the reference years: with the defaults
-(blank), the case years must fall within the obs periods above. For a long
-comparison, for example, set ``MDTF_BLOCKING_REF_FIRSTYR = "1979"`` and
-``MDTF_BLOCKING_REF_LASTYR = "1999"``. The datasets cover different periods, so
-the years can also be given per dataset, e.g. with
-``MDTF_BLOCKING_ENSEMBLES = "ERA5,MERRA,timeslice3,CESM2"``:
+The defaults select the shipped comparison data:
+``MDTF_BLOCKING_ENSEMBLES = "ERA5,MERRA,timeslice3,CESM2"``,
 ``MDTF_BLOCKING_REF_FIRSTYR = "1979,1979,1995,1979"`` and
-``MDTF_BLOCKING_REF_LASTYR = "1999,1999,2014,1999"``. A case with model years
-(e.g. a pre-industrial run, years 0001-0020) always needs these set.
+``MDTF_BLOCKING_REF_LASTYR = "1999,1999,2014,1999"``. The years are given per
+dataset because the datasets cover different periods; one value applies to
+all, and blank means the case years. The reference years do not have to
+overlap the case years (a pre-industrial case with model years 0001-0020
+works with the defaults).
 
 ``MDTF_BLOCKING_SEASON`` defaults to DJF, the season with the most blocking and
 the one most often shown in the literature; ANN (all days) is also available.
@@ -195,11 +227,13 @@ saved as a netCDF file named by index, dataset, number of members, years and
 season, for example ``block_1D_CESM2_nens.5_1979-1999_ANN.nc``. A later run that
 needs the same result reads the file instead of recomputing it:
 
-- The files go in ``MDTF_BLOCKING_CACHE_DIR``. Blank means this run's
-  ``model/netCDF``, so results are reused only within the same output
-  directory. Set it to a shared directory to reuse the obs and model ensemble
-  results (most of the run time) across runs and cases. The files used are
-  always copied to ``model/netCDF`` as well, so the output is complete.
+- Files are looked for first in ``MDTF_BLOCKING_CACHE_DIR`` (blank: this
+  run's ``model/netCDF``), then in the POD's obs data directory
+  (``$OBS_DATA``, read-only), which holds the shipped results. A dataset whose
+  results are all found is never opened. New results are written to
+  ``MDTF_BLOCKING_CACHE_DIR``; set it to a shared directory to reuse results
+  across runs and cases. The files used are always copied to
+  ``model/netCDF`` as well, so the output is complete.
 - Each file records the version of the calculation
   (``BLOCKING_CALC_VERSION`` in ``blocking_utils.py``). Files from another
   version are recomputed automatically; increase the version whenever a code
@@ -207,6 +241,18 @@ needs the same result reads the file instead of recomputing it:
 - ``MDTF_BLOCKING_RECOMPUTE`` forces a recalculation: ``"True"`` for
   everything, or a comma-separated list of datasets (e.g. a case whose data
   were rewritten under the same name).
+
+Making the digested data
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The shipped files are the notebook's own results. On GLADE, build the raw-data
+catalog (above), then run the notebook with ``MDTF_BLOCKING_RAW_CATALOG`` set to
+it, ``MDTF_BLOCKING_CACHE_DIR`` set to the new obs data directory and
+``MDTF_BLOCKING_RECOMPUTE = "ERA5,MERRA,timeslice3,CESM2"``, once for each
+season (DJF, MAM, JJA, SON, ANN; the annual cycle is written every time), then
+copy the ``block_*`` files for those datasets to
+``<OBS_DATA_ROOT>/blocking_neale_nb``. Increase ``BLOCKING_CALC_VERSION`` and
+regenerate them whenever a code change alters the results.
 
 
 Methodology
@@ -253,6 +299,24 @@ deg latitude (the same thresholds as the 1D index). The blocking frequency
 is the fraction of days in the season that each point is blocked, so the maps
 locate blocking in latitude as well as longitude.
 
+Comparing the 1D and 2D indices
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The line plot and the maps are not directly comparable:
+
+- The 1D index tests the gradients around 60N only (the dashed circle on the
+  maps). The 2D index tests every latitude from 35N to 75N. Where blocking
+  occurs well north or south of 60N, the maps show it and the 1D index does
+  not: near 180E in DJF the highest 2D frequencies (about 25-38%) are at
+  65-75N, while at 60N the 2D frequency is 8-20%.
+- At the same latitude, the 1D index is higher than the 2D index: a longitude
+  is blocked if any of three tests (shifted by -3.75, 0 and +3.75 deg)
+  passes, and its points are about 19 deg apart instead of 15.
+- This 2D index is a simplified form of Davini et al.'s: it uses the 1D
+  thresholds (GHGN < -5 m per deg) without their additional conditions, so
+  frequencies near the edges of the band (35N, and especially 70-75N) are
+  likely too high.
+
 Ensembles
 ^^^^^^^^^
 
@@ -274,7 +338,8 @@ Code Overview
   3. Comparison data: ``blocking_utils.ens_setup`` builds the ``block_meta``
      table (one row per dataset: type obs/model/mdtf, number of members,
      years, run names, files); the MDTF case(s) are added as rows; then
-     ``blocking_utils.dataset_get`` reads Z500 for each dataset.
+     ``blocking_utils.EnsembleData`` opens a dataset's Z500 (with
+     ``dataset_get``) only if one of its results is not already available.
   4. Blocking frequencies: ``blocking_utils.block_z500_freq`` with
      ``block_diag='1D'`` (seasonal, by longitude), ``'2D'`` (seasonal maps)
      and ``'1DAC'`` (annual cycle, by day of year and longitude).
@@ -316,19 +381,33 @@ Figures
 - Blocking frequency maps (2D index): polar stereographic maps of the
   seasonal blocking frequency, one panel per dataset.
 
-The figures below are from the NCL version of the POD.
+The figures below are from the example run linked at the top: the MDTF v4
+timeslice case (``mdtf_timeslice_v4.ne30L58``, model years 0001-0020, DJF)
+against ERA5, MERRA, timeslice3 and CESM2.
 
-.. figure:: figure_freq_season.png
+.. figure:: block_1d_freq_DJF.png
    :align: left
    :width: 75 %
 
-.. figure:: figure_anncycle.OBS.png
+   DJF blocking frequency by longitude (1D index, centred on 60N).
+
+.. figure:: block_freq_anncycle.OBS.png
    :align: left
    :width: 75 %
 
-.. figure:: figure_anncycle.CAM5.png
+   Annual cycle of blocking frequency, observations.
+
+.. figure:: block_freq_anncycle.timeslice4.png
    :align: left
    :width: 75 %
+
+   Annual cycle of blocking frequency, MDTF v4 timeslice case.
+
+.. figure:: block_2d_freq_DJF.png
+   :align: left
+   :width: 75 %
+
+   DJF blocking frequency maps (2D index, 35-75N); dashed circle: 60N.
 
 References
 ----------

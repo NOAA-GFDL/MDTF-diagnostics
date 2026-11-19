@@ -17,25 +17,34 @@
       "MDTF_BLOCKING_SEASON"      : "DJF",
       // Hemisphere: only nhem is implemented
       "MDTF_BLOCKING_HEMISPHERE"  : "nhem",
-      // Obs and model ensembles to compare with the MDTF case(s). Known names: ERA5, MERRA
-      // (obs); timeslice3 (MDTF v3 timeslice CESM run, 1995-2014, used as a reference like
-      // the obs); CESM1, CESM2, E3SMv1, E3SMv2, EAMv2, CAM6 (model ensembles)
-      "MDTF_BLOCKING_ENSEMBLES"   : "ERA5,MERRA,CESM2",
+      // Obs and model ensembles to compare with the MDTF case(s): ERA5, MERRA (obs);
+      // timeslice3 (MDTF v3 timeslice CESM run, 1995-2014) and CESM2 (large ensemble)
+      // (model ensembles). Their blocking frequencies are shipped as digested data in
+      // the POD's obs data ($OBS_DATA) for the members and years below, so their raw
+      // data are not read. Other choices need raw daily Z500 through
+      // MDTF_BLOCKING_RAW_CATALOG; also known, but untested with this version: ERAI,
+      // CESM1, E3SMv1, E3SMv2, EAMv2, CAM6 (see RAW_DATA in blocking_utils.py).
+      "MDTF_BLOCKING_ENSEMBLES"   : "ERA5,MERRA,timeslice3,CESM2",
       // Members to use from each ensemble above (same order)
-      "MDTF_BLOCKING_ENS_MEMBERS" : "1,1,2",
+      "MDTF_BLOCKING_ENS_MEMBERS" : "1,1,1,5",
       // Years for the obs and model ensembles: one year for all, or one per entry in
       // MDTF_BLOCKING_ENSEMBLES (same order). Blank: use the MDTF case years.
       // (The NCL version of this POD compared against 1979-1999.)
-      "MDTF_BLOCKING_REF_FIRSTYR" : "",
-      "MDTF_BLOCKING_REF_LASTYR"  : "",
+      "MDTF_BLOCKING_REF_FIRSTYR" : "1979,1979,1995,1979",
+      "MDTF_BLOCKING_REF_LASTYR"  : "1999,1999,2014,1999",
       // Blocking frequencies are saved as netCDF and reused when a later run needs the
       // same index, dataset, members, years and season. Results from an older version
       // of the calculation are recomputed automatically.
       // Recompute anyway: "False", "True" (everything) or dataset names, e.g. "CESM2,ERA5"
       "MDTF_BLOCKING_RECOMPUTE"   : "False",
       // Where to keep them. Blank: this run's output (model/netCDF). Set a shared
-      // directory to reuse the obs and ensemble results across runs and cases.
-      "MDTF_BLOCKING_CACHE_DIR"   : ""
+      // directory to reuse results across runs and cases. The shipped results in
+      // $OBS_DATA are read after this directory and are never written to.
+      "MDTF_BLOCKING_CACHE_DIR"   : "",
+      // ESM-intake catalog of the raw daily Z500 of the comparison datasets, used only
+      // for results not in the cache or $OBS_DATA (made by blocking_utils.make_raw_catalog;
+      // NCAR GLADE only). Blank: none, so only the shipped choices work.
+      "MDTF_BLOCKING_RAW_CATALOG" : ""
     },
 
     // The framework picks the conda env from the first language with a

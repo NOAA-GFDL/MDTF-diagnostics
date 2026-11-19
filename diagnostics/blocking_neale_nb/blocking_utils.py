@@ -354,6 +354,14 @@ def block_z500_freq(block_meta,ens_ds,fout_dir,bseason,block_diag=None,cache_dir
 
         if block_freq is None:   # not cached (or stale, or recompute requested): calculate
             ds_this_ens = ens_ds[ens_name]   # opens the data now if ens_ds is an EnsembleData
+            # Keep only the requested years (the case datasets are passed in whole)
+            years = ds_this_ens['time'].dt.year
+            ds_this_ens = ds_this_ens.isel(time=((years >= int(str(year_start)[:4])) &
+                                                 (years <= int(str(year_end)[:4]))).values)
+            if ds_this_ens.sizes['time'] == 0:
+                raise ValueError(f"{ens_name}: no data for {year_start}-{year_end}")
+            print(fname, f"{ens_name}: {ds_this_ens.sizes['time']} time steps, "
+                  f"{str(ds_this_ens['time'].values[0])[:10]} to {str(ds_this_ens['time'].values[-1])[:10]}")
             if 'name' not in ds_this_ens['Z500'].dims:
                 ds_this_ens['Z500'] = ds_this_ens['Z500'].expand_dims(name=[ens_name])
         

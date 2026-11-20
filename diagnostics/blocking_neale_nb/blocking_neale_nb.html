@@ -1,0 +1,87 @@
+<!--
+    HTML output template for the blocking_neale_nb POD (notebook version).
+    {{...}} values are filled in from settings.jsonc pod_env_vars and the case
+    list, by the MDTF framework or, for a stand-alone notebook run, by
+    src/standalone_html.py (same templating code). Links are relative to
+    <WORK_DIR>/blocking_neale_nb/.
+-->
+<html>
+<head>
+<title>Blocking Diagnostic (Rich Neale)</title>
+</head>
+<body>
+<img src="../mdtf_diag_banner.png">
+<h3>Blocking Diagnostic (Rich Neale)</h3>
+<p>
+The diagnostic evaluates the blocking frequency in a model by longitude and season
+as determined by the meridional gradient above a threshold value of daily
+500mb height following <a href="https://doi.org/10.1007/s003820050230">D'Andrea et al 1998</a>.
+</p>
+<p>
+Blocking frequency for case {{CASENAME}} ({{FIRSTYR}}-{{LASTYR}}) is compared with the
+observational and model ensembles {{MDTF_BLOCKING_ENSEMBLES}}. All cases, observations
+and ensembles are combined in a line plot of blocking frequency vs longitude for season
+{{MDTF_BLOCKING_SEASON}}. The annual cycle of blocking frequency is shown separately for
+the case, the observations and the model ensembles in Hovm&uuml;ller figures
+(longitude vs time of year).
+</p>
+<p>
+The blocking frequency maps (polar stereographic, Northern Hemisphere) use a 2D blocking
+index, following <a href="https://doi.org/10.1029/2012GL052315">Davini et al. 2012</a>:
+the same meridional 500mb height gradient test is applied at every latitude between
+35N and 75N, using the heights 15 degrees to the north and south, so blocking is located
+in latitude as well as longitude. Maps are shown for season {{MDTF_BLOCKING_SEASON}} for
+each case, observational product and model ensemble (ensemble mean).
+</p>
+<p>
+The two indices are not directly comparable. The 1D index (line plot) tests the gradients
+around 60N only (dashed circle on the maps) and counts a longitude as blocked if any of
+three tests shifted by -3.75, 0 and +3.75 degrees passes, so at 60N it is higher than the 2D
+index. The highest 2D frequencies, e.g. near 180E, are at 65-75N, north of the latitudes the
+1D index sees. This 2D index is a simplified version of Davini et al.: it uses the 1D
+thresholds and none of their extra conditions, so frequencies near the edges of the
+35-75N band (especially 70-75N) are likely too high.
+</p>
+
+<TABLE>
+<TR>
+<TH style='width: 220px' align=left>{{FIRSTYR}}-{{LASTYR}}
+<TH style='width: 160px' align=center>Combined
+<TH style='width: 220px' align=center>Case {{CASENAME}}
+<TH style='width: 160px' align=center>OBS
+<TH style='width: 160px' align=center>Model ensembles
+<TR>
+<TH align=left>Average seasonal cycle ({{MDTF_BLOCKING_SEASON}})
+<TD align=center><A href=model/block_1d_freq_{{MDTF_BLOCKING_SEASON}}.png>Combined</A>
+<TR>
+<TH align=left>Annual cycle
+<TD align=center>
+<TD align=center><A href=model/block_freq_anncycle.{{CASENAME}}.png>{{CASENAME}}</A>
+<TD align=center><A href=obs/block_freq_anncycle.OBS.png>OBS</A>
+<TD align=center><A href=model/block_freq_anncycle.ENSEMBLES.png>Ensembles</A>
+<TR>
+<TH align=left>Blocking frequency maps ({{MDTF_BLOCKING_SEASON}})
+<TD align=center><A href=model/block_2d_freq_{{MDTF_BLOCKING_SEASON}}.png>Combined</A>
+<TR>
+<TH align=left>Executed notebook
+<TD align=center><A href=blocking_main_ipynb.html>blocking_main</A>
+</TABLE>
+
+<p>
+<TABLE style="font-size:12px; color:gray">
+<TR><TH align=left>POD Settings
+<TR><TD> Case <TD> {{CASENAME}}
+<TR><TD> Years <TD> {{FIRSTYR}} - {{LASTYR}}
+<TR><TD> MDTF_BLOCKING_SEASON <TD> "{{MDTF_BLOCKING_SEASON}}"
+<TR><TD> MDTF_BLOCKING_HEMISPHERE <TD> "{{MDTF_BLOCKING_HEMISPHERE}}"
+<TR><TD> MDTF_BLOCKING_ENSEMBLES <TD> "{{MDTF_BLOCKING_ENSEMBLES}}"
+<TR><TD> MDTF_BLOCKING_ENS_MEMBERS <TD> "{{MDTF_BLOCKING_ENS_MEMBERS}}"
+<TR><TD> MDTF_BLOCKING_REF_FIRSTYR <TD> "{{MDTF_BLOCKING_REF_FIRSTYR}}" (one, or one per dataset; blank: case years)
+<TR><TD> MDTF_BLOCKING_REF_LASTYR <TD> "{{MDTF_BLOCKING_REF_LASTYR}}" (one, or one per dataset; blank: case years)
+<TR><TD> MDTF_BLOCKING_RECOMPUTE <TD> "{{MDTF_BLOCKING_RECOMPUTE}}"
+<TR><TD> MDTF_BLOCKING_CACHE_DIR <TD> "{{MDTF_BLOCKING_CACHE_DIR}}" (blank: model/netCDF)
+<TR><TD> MDTF_BLOCKING_RAW_CATALOG <TD> "{{MDTF_BLOCKING_RAW_CATALOG}}" (blank: shipped data only)
+</TABLE>
+</p>
+</body>
+</html>

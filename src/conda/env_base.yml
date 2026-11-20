@@ -25,7 +25,11 @@ dependencies:
 - cfunits=3.3.6
 - intake=0.7.0
 - intake-esm=2023.07.07
+# intake-esm 2023.07.07 assumes fsspec's LocalFileSystem.protocol is a string;
+# fsspec>=2023.10.0 changed it to a tuple ('file', 'local'), breaking catalog saves
+- fsspec=2023.9.0
 - subprocess32=3.5.4
 - pyyaml=6.0.1
 - click=8.1.7
 - ghostscript=10.02.1
+- setuptools<82.0.0

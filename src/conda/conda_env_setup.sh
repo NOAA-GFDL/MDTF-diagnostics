@@ -142,7 +142,7 @@ if [ "$make_envs" = "true" ]; then
     if [[ ! -x "$_INSTALL_EXE" ]]; then
         echo "Couldn't find mamba executable; installing in temp environment."
         mamba_temp="true"
-        conda create --force -qy -n _MDTF_install_temp
+        conda create -qy -n _MDTF_install_temp
         conda install -qy mamba -n _MDTF_install_temp -c conda-forge
         # still no idea why this works but "conda activate" doesn't
         conda activate _MDTF_install_temp
@@ -167,7 +167,7 @@ if [ "$make_envs" = "true" ]; then
             conda_prefix="${_CONDA_ENV_ROOT}/${env_name}"
         fi
         echo "Creating conda env ${env_name} in ${conda_prefix}..."
-        "$_INSTALL_EXE" env create --force -q -p="$conda_prefix" -f="$env_file"
+        "$_INSTALL_EXE" env create -q -p "$conda_prefix" -f "$env_file"
         echo "... conda env ${env_name} created."
     done
     "$_INSTALL_EXE" clean -aqy

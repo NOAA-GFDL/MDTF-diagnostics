@@ -242,8 +242,10 @@ def convert_dataarray(ds, da_name: str, src_unit=None, dest_unit=None, log=_log)
               da.name, std_name, src_unit, dest_unit
               )
     da_attrs = da.attrs.copy()
-    fac = conversion_factor(src_unit, dest_unit)
-    ds = ds.assign({da_name: fac * ds[da_name]})
+    src_unit, dest_unit = to_equivalent_units(src_unit, dest_unit)
+    offset = Units.conform(0.0, src_unit, dest_unit)
+    fac = Units.conform(1.0, src_unit, dest_unit) - offset
+    ds = ds.assign({da_name: fac * ds[da_name] + offset})
     ds[da_name].attrs = da_attrs
     ds[da_name].attrs['units'] = str(dest_unit)
     return ds

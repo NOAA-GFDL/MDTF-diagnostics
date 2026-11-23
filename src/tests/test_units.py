@@ -1,5 +1,6 @@
 import unittest
 from src import units
+import xarray as xr
 
 
 # TODO: better tests
@@ -12,6 +13,19 @@ class TestUnitConversionFactor(unittest.TestCase):
         self.assertAlmostEqual(units.conversion_factor('inch', 'cm'), 2.54)
         self.assertAlmostEqual(units.conversion_factor('cm', 'inch'), 1.0 / 2.54)
         self.assertAlmostEqual(units.conversion_factor((123, 'inch'), 'cm'), 123.0 * 2.54)
+
+    def test_convert_dataarray_with_offset_units(self):
+        dataset = xr.Dataset(
+            {"temperature": ("sample", [273.15, 293.15], {"units": "K"})}
+        )
+
+        converted = units.convert_dataarray(
+            dataset, "temperature", dest_unit="degC"
+        )
+
+        self.assertAlmostEqual(converted["temperature"].values[0], 0.0)
+        self.assertAlmostEqual(converted["temperature"].values[1], 20.0)
+        self.assertEqual(converted["temperature"].attrs["units"], "degC")
 
 
 class TestRefTime(unittest.TestCase):

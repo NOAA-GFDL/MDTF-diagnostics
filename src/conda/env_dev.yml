@@ -27,4 +27,5 @@ dependencies:
 - cfunits=3.3.6
 - intake=0.7.0
 - intake-esm=2023.07.07
+- fsspec=2023.9.0
 - cf_xarray=0.8.4

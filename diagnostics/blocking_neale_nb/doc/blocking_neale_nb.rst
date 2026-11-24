@@ -151,7 +151,15 @@ The usual MDTF runtime configuration: ``case_list`` (case name, convention,
 ``make_variab_tar``, ``overwrite``, etc. For a stand-alone run the case data
 are read from ``DATA_CATALOG`` with intake-esm, using the same query as the
 framework: the catalog path must contain the case name, and the variable is
-matched on frequency, realm and standard name.
+matched on frequency, realm and standard name. Its name is translated to the
+case's ``convention`` with the framework's variable translation
+(``src/translation.py`` and ``data/fieldlist_*.jsonc``): ``Z500`` for CESM,
+``zg500`` for CMIP, ``hght500`` for GFDL. If the catalog has only the full
+field on pressure levels (e.g. CMIP ``zg``), 500 hPa is selected from it;
+fields on model levels (e.g. CESM ``Z3``) need vertical interpolation, so use
+the MDTF framework for those. Units and coordinate names are converted with
+the framework's preprocessor functions. ``translate_data: False`` turns the
+translation off.
 
 Settings in the notebook
 ^^^^^^^^^^^^^^^^^^^^^^^^

@@ -19,7 +19,8 @@ page, logs and ``case_info.yml``, ``config_save.json``, and optionally
 :class:`~src.output_manager.HTMLPodOutputManager`.
 
 :func:`open_catalog_var` reads a case's model data from an ESM-intake catalog
-with the same query the framework uses, and :func:`export_run_settings` writes
+with the same query the framework uses (with the variable name translated to
+the case's convention by :func:`translate_pod_var`), and :func:`export_run_settings` writes
 the notebook's settings text out as files so the run can be repeated in batch.
 """
 import os
@@ -355,24 +356,92 @@ def find_missing_links(page: str, pod_name: str, log=None) -> list:
 # Reading model data from a catalog (stand-alone runs)
 # ---------------------------------------------------------------------------
 
+def translate_pod_var(var_name: str, settings: dict, data_convention: str,
+                      pod_name: str = "pod"):
+    """Translate one POD variable to the naming convention of the model data,
+    with the framework's variable translation (``src/translation.py`` and the
+    ``data/fieldlist_*.jsonc`` tables), as the framework does in a full run.
+
+    *settings* is the POD's parsed ``settings.jsonc``; its ``convention`` is
+    the POD's own convention and *var_name* a key of its ``varlist``.
+    *data_convention* is the case's ``convention`` from the runtime config
+    (e.g. ``CESM``, ``CMIP``, ``GFDL``).
+
+    Returns the POD's :class:`~src.varlist_util.VarlistEntry`, with the
+    translated variable in its ``translation`` attribute (e.g. ``zg`` at
+    500 hPa -> ``Z500`` for CESM, ``zg500`` for CMIP, ``hght500`` for GFDL).
+    """
+    from src.translation import VariableTranslator
+    from src.varlist_util import Varlist
+
+    translator = VariableTranslator(repo_root())     # singleton
+    if not translator.conventions:
+        translator.read_conventions(repo_root())
+    pod_convention = settings.get('settings', {}).get('convention', 'no_translation')
+    pod = types.SimpleNamespace(
+        name=pod_name, pod_data=settings.get('data', {}),
+        pod_dims=settings.get('dimensions', {}),
+        pod_vars={var_name: settings['varlist'][var_name]},
+        pod_settings={'convention': pod_convention}, _log_name=pod_name)
+    var = Varlist.from_struct(pod).vars[0]
+    var.translation = translator.translate(var, to_convention=data_convention,
+                                           from_convention=pod_convention)
+    return var
+
+
+def _full_field_names(var) -> list:
+    """Names, in the translated variable's convention, of the full (all
+    levels) field that a scalar-coordinate slice such as ``zg500`` is taken
+    from (e.g. ``zg``, ``Z3``, ``hght``): fieldlist entries with the same
+    standard_name and realm and one more dimension."""
+    from src.translation import VariableTranslator
+
+    tv = var.translation
+    if not tv.scalar_coords:
+        return []
+    try:
+        lut = VariableTranslator().get_convention(tv.convention).lut
+    except (AttributeError, KeyError):    # no_translation: no fieldlist
+        return []
+    ndim = len(tv.dims) + 1
+    return [name for name, att in lut.items()
+            if att.get('standard_name') == tv.standard_name
+            and att.get('realm', tv.realm) == tv.realm
+            and int(att.get('ndim', 0) or 0) == ndim]
+
+
 def open_catalog_var(catalog: str, case_name: str, var_settings: dict,
-                     names=None, out_name: str = None, level=None):
+                     names=None, out_name: str = None, level=None, var=None):
     """Open one variable of one case from an ESM-intake catalog.
 
     Uses the same selection as the framework's preprocessor query
     (src/preprocessor.py ``query_catalog``): the case name must appear in the
     file path, and frequency, realm and standard_name must match the POD's
-    varlist entry. *names* (e.g. ``['Z500', 'zg']``) restricts ``variable_id``;
-    the first name that is found is used.
+    varlist entry.
+
+    Variable names: with *var*, the POD variable translated to the case's
+    convention by :func:`translate_pod_var`, the catalog's ``variable_id`` is
+    the translated name (e.g. ``Z500``), or else the full field it is a slice
+    of (e.g. ``Z3``); the data are then converted to the POD's units and
+    coordinate names with the framework's preprocessor functions
+    (``ConvertUnitsFunction``, ``RenameVariablesFunction``). Without *var*,
+    *names* (e.g. ``['Z500', 'zg']``) restricts ``variable_id`` and the
+    first name that is found is used; with neither, the first variable found.
 
     If the variable has a vertical dimension and *level* (hPa) is given (default:
     the varlist entry's ``scalar_coordinates`` lev), that level is selected.
+    The variable is renamed to *out_name* (default: the POD's variable name
+    when *var* is given).
 
     Returns:
         (xarray.Dataset with the variable renamed to *out_name*, list of files)
     """
     import intake
     import xarray as xr
+
+    if var is not None:
+        names = [var.translation.name] + _full_field_names(var)
+        out_name = out_name or var.name
 
     cat = intake.open_esm_datastore(catalog)
     df = cat.df
@@ -404,8 +473,25 @@ def open_catalog_var(catalog: str, case_name: str, var_settings: dict,
     zdims = [d for d in ds[var_id].dims if d in ('lev', 'plev', 'level', 'pressure', 'isobaric')]
     if zdims and level is not None:
         z = ds[zdims[0]]
+        zdesc = f"{z.attrs.get('standard_name', '')} {z.attrs.get('long_name', '')}".lower()
+        if 'hybrid' in zdesc or 'sigma' in zdesc or 'formula_terms' in z.attrs:
+            raise util.DataRequestError(
+                f"{var_id} for case {case_name} is on model levels ({zdims[0]}: "
+                f"{z.attrs.get('long_name', '')}), not pressure levels; {level} hPa needs "
+                f"vertical interpolation, which stand-alone runs do not do. Add the "
+                f"pressure-level field to the catalog or run with the MDTF framework.")
         lev = float(level) * (100. if float(z.max()) > 2000. else 1.)   # Pa or hPa coordinate
         ds = ds.sel({zdims[0]: lev}, method='nearest').drop_vars(zdims[0], errors='ignore')
+
+    if var is not None:
+        # The framework's preprocessing steps for units and coordinate names
+        from src.preprocessor import ConvertUnitsFunction, RenameVariablesFunction
+        tv = var.translation
+        if var_id != tv.name:
+            ds = ds.rename({var_id: tv.name})
+        ds = ConvertUnitsFunction().execute(var, ds)
+        ds = RenameVariablesFunction().execute(var, ds)
+        var_id = tv.name
     if out_name and out_name != var_id:
         ds = ds.rename({var_id: out_name})
     return ds, files

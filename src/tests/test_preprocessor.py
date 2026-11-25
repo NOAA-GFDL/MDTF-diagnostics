@@ -42,17 +42,21 @@ class TestCleanFillValue(unittest.TestCase):
             translation=types.SimpleNamespace(name='rlut')
         )
 
-    def _clean(self, fill_value, output_to_ncl):
+    NCL_FILL = np.float32(9.969209968386869e+36)  # NCL's default float _FillValue
+
+    def _clean(self, fill_value, output_to_ncl, dtype='f4', name='rlut'):
         pp = _bare_preprocessor()
         pp.output_to_ncl = output_to_ncl
-        da = xr.DataArray(np.zeros(3, dtype='f4'), dims='time', name='rlut')
+        da = xr.DataArray(np.zeros(3, dtype=dtype), dims='time', name=name)
         da.encoding['_FillValue'] = fill_value
-        pp.clean_nc_var_encoding(self.var, 'rlut', da)
+        pp.clean_nc_var_encoding(self.var, name, da)
         return da
 
-    def test_nan_fill_removed_for_ncl(self):
+    def test_nan_fill_replaced_for_ncl(self):
+        # NCL does not treat NaN as missing: missing data is written with NCL's default fill instead
         da = self._clean(np.float32(np.nan), output_to_ncl=True)
-        self.assertIsNone(da.encoding['_FillValue'])
+        self.assertEqual(da.encoding['_FillValue'], self.NCL_FILL)
+        self.assertEqual(da.encoding['_FillValue'].dtype, np.float32)
         self.assertNotIn('_FillValue', da.attrs)
 
     def test_nan_fill_kept_without_ncl(self):
@@ -64,8 +68,19 @@ class TestCleanFillValue(unittest.TestCase):
         self.assertEqual(da.encoding['_FillValue'], np.float32(1.0e20))
 
     def test_none_fill_for_ncl(self):
-        # an already-unset _FillValue used to raise TypeError in np.isnan
+        # an already-unset _FillValue used to raise TypeError in np.isnan; it now gets NCL's fill, since
+        # xarray would otherwise write missing float data as NaN
         da = self._clean(None, output_to_ncl=True)
+        self.assertEqual(da.encoding['_FillValue'], self.NCL_FILL)
+
+    def test_none_fill_for_ncl_integer_var(self):
+        # integer variables get no float fill value
+        da = self._clean(None, output_to_ncl=True, dtype='i4')
+        self.assertIsNone(da.encoding['_FillValue'])
+
+    def test_coordinate_fill_removed(self):
+        # variables other than the POD's variable (coordinates, bounds) still have their fill dropped
+        da = self._clean(np.float32(np.nan), output_to_ncl=True, name='lat')
         self.assertIsNone(da.encoding['_FillValue'])
 
 

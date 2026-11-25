@@ -256,6 +256,17 @@ begin
 ;replace with  check_missing_values function
     if (isatt(x,"_FillValue")) then
        nMsg = num(ismissing(x))
+       ; First fill missing values by linear interpolation in time at each grid point (e.g. the 30
+       ; all-missing days of the NOAA daily OLR CDR, 1980-1989, which the zonal-average fill below
+       ; cannot fill). Series ends take the nearest valid value. Whatever is still missing (points
+       ; missing at every time) goes to the replacement functions below.
+       if (nMsg.gt.0) then
+         x = (/ linmsg_n(x, -1, 0) /)
+         nMsgT = num(ismissing(x))
+         print("getVarSlice: "+varName+": filled "+(nMsg-nMsgT)+" of "+nMsg+\
+               " missing values by linear interpolation in time")
+         nMsg = nMsgT
+       end if
        if (nMsg.gt.0) then
          nvals = num(x)
          npcnt = nMsg/nvals

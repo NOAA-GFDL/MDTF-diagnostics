@@ -6,7 +6,8 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$POD_HOME/calc_utils.ncl"
 
-setfileoption("nc", "Format", getenv("MDTF_NC_FORMAT"))
+load "$POD_HOME/nc_format.ncl"
+setfileoption("nc", "Format", get_ncl_nc_format())
 
 begin
 
@@ -16,7 +17,12 @@ time_coord = getenv("time_coord")
 lat_coord = getenv("lat_coord")
 lon_coord = getenv("lon_coord")
 
-file_dir = getenv("WORK_DIR")+"/model/"
+; Use a path relative to WORK_DIR (the process cwd, set by MDTF's
+; SubprocessRuntimeManager) instead of the full absolute path. NCL 6.6.2's
+; isfilepresent() copies its argument into a fixed 256-byte buffer and aborts
+; ("buffer overflow detected") once the path reaches 256 characters, which
+; long CESM case names reach because the case name repeats in the path.
+file_dir = "model/"
 datadir = getenv("DATADIR")
 yr1 = stringtointeger(getenv("startdate"))
 yr2 = stringtointeger(getenv("enddate"))

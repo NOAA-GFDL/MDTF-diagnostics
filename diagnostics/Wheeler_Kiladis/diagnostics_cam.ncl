@@ -978,7 +978,7 @@ local latN, latS, lonL, lonR, spd, fCrit, tim_taper        \
 ; contour intervals. 
 ;------------------------------------------------------
    varCnLevels = (/"FLUT" ,"OLR", "olr","U200","U850"   \
-                  ,"PRECT","OMEGA500" /)
+                  ,"PRECT" /)  ; OMEGA500 removed along with the omega500 input
 
    if (any(varCnLevels.eq.varName)) then
        res@cnLevelSelectionMode = "ExplicitLevels"
